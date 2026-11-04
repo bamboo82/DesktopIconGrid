@@ -83,6 +83,24 @@ public class LauncherSettingsTests
     }
 
     [Fact]
+    public void Normalize_validates_the_dock_edge_and_copies_docking()
+    {
+        var settings = new LauncherSettings { DockEdge = " Bottom " };
+        Assert.False(settings.Normalize());
+        Assert.Equal(LauncherSettings.DockBottom, settings.DockEdge);
+
+        settings.DockEdge = "middle";
+        Assert.True(settings.Normalize());
+        Assert.Equal(LauncherSettings.DockNone, settings.DockEdge);
+
+        var copy = new LauncherSettings();
+        copy.CopyFrom(new LauncherSettings { DockEdge = LauncherSettings.DockLeft, AutoHide = true });
+        Assert.Equal(LauncherSettings.DockLeft, copy.DockEdge);
+        Assert.True(copy.AutoHide);
+        Assert.Equal(LauncherSettings.DockNone, new LauncherSettings().DockEdge);
+    }
+
+    [Fact]
     public void Normalize_upper_cases_valid_colors()
     {
         var settings = new LauncherSettings { BackgroundColor = "#abcdef" };

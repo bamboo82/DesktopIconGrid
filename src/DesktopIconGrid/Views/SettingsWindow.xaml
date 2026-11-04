@@ -25,6 +25,7 @@
       <RowDefinition Height="Auto" />
       <RowDefinition Height="Auto" />
       <RowDefinition Height="Auto" />
+      <RowDefinition Height="Auto" />
     </Grid.RowDefinitions>
 
     <!-- Theme -->
@@ -142,9 +143,21 @@
                 IsEnabled="{Binding StartWithWindows}" Margin="22,4,0,0" />
     </StackPanel>
 
+    <!-- Dock to a screen edge -->
+    <TextBlock Grid.Row="8" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="Dock to edge:" Margin="0,0,12,10" VerticalAlignment="Top" />
+    <StackPanel Grid.Row="8" Grid.Column="1" Margin="0,0,0,10">
+      <ComboBox Width="200" HorizontalAlignment="Left" VerticalContentAlignment="Center"
+                ItemsSource="{Binding DockEdges}" SelectedItem="{Binding SelectedDockEdge}" DisplayMemberPath="Name"
+                AutomationProperties.Name="Dock to edge" />
+      <CheckBox Content="Auto-hide: slide away a second after the pointer leaves; touch the edge or press the hotkey to bring the bar back"
+                IsChecked="{Binding AutoHide}" IsEnabled="{Binding IsDocked}" Margin="0,6,0,0" />
+      <TextBlock Style="{StaticResource DialogHint}" Margin="0,6,0,0"
+                 Text="A docked bar spans the edge of its screen like the taskbar: maximised windows stop at it, it stays on top, and its thickness is the current height or width (drag the inner edge to change it). Full-screen programs hide it." />
+    </StackPanel>
+
     <!-- Transparency -->
-    <TextBlock Grid.Row="8" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="Transparency:" Margin="0,0,12,10" />
-    <DockPanel Grid.Row="8" Grid.Column="1" Margin="0,0,0,10">
+    <TextBlock Grid.Row="9" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="Transparency:" Margin="0,0,12,10" />
+    <DockPanel Grid.Row="9" Grid.Column="1" Margin="0,0,0,10">
       <TextBlock DockPanel.Dock="Right" Text="{Binding TransparencyText}" MinWidth="52" TextAlignment="Right" VerticalAlignment="Center" />
       <Slider Minimum="0" Maximum="{Binding MaxTransparency}"
               Value="{Binding Transparency}"
@@ -155,8 +168,8 @@
     </DockPanel>
 
     <!-- Hotkey -->
-    <TextBlock Grid.Row="9" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="Show/hide hotkey:" Margin="0,0,12,10" VerticalAlignment="Top" />
-    <StackPanel Grid.Row="9" Grid.Column="1" Margin="0,0,0,10">
+    <TextBlock Grid.Row="10" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="Show/hide hotkey:" Margin="0,0,12,10" VerticalAlignment="Top" />
+    <StackPanel Grid.Row="10" Grid.Column="1" Margin="0,0,0,10">
       <DockPanel>
         <Button DockPanel.Dock="Right" Content="Clear" Padding="10,3" Margin="8,0,0,0" Click="ClearHotkey_Click"
                 IsEnabled="{Binding HasHotkey}" />
@@ -172,7 +185,7 @@
     </StackPanel>
 
     <!-- Buttons -->
-    <StackPanel Grid.Row="10" Grid.Column="0" Grid.ColumnSpan="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,6,0,0">
+    <StackPanel Grid.Row="11" Grid.Column="0" Grid.ColumnSpan="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,6,0,0">
       <Button Content="Save" Style="{StaticResource DialogButton}" IsDefault="True"
               IsEnabled="{Binding CanSave}" Click="Save_Click" />
       <Button Content="Cancel" Style="{StaticResource DialogButton}" IsCancel="True" />

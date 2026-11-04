@@ -41,7 +41,8 @@
       </Grid.ColumnDefinitions>
 
       <!-- Move grip -->
-      <Border Grid.Column="0"
+      <Border x:Name="Grip"
+              Grid.Column="0"
               Style="{StaticResource GripStyle}"
               ToolTip="Drag to move the bar. Double-click to toggle always on top."
               AutomationProperties.Name="Move grip"

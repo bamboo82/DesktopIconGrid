@@ -17,6 +17,12 @@ version numbers follow [Semantic Versioning](https://semver.org/).
   group, loading a newer copy, an unreadable layout) still use a message box.
 - *Remove* no longer asks. A banner under the icons offers *Undo* for ten seconds (also `Ctrl+Z`)
   and puts the icon back where it was. Removing a group still asks and cannot be undone.
+- *Settings → Dock to edge* turns the bar into a desktop toolbar at the top, bottom, left or right
+  edge of its screen, like the taskbar: maximised windows stop at it, it stays on top, the grip is
+  hidden, and its thickness is the current height or width (drag the inner edge to change it). A
+  full-screen program hides it until it is gone. *Auto-hide* collapses the bar to a two-pixel strip a
+  second after the pointer leaves and brings it back when the pointer touches the edge, the hotkey is
+  pressed or the bar is shown from the tray. Undocking returns the bar to where it was.
 
 ## [0.3.0] – 2026-11-04
 

@@ -43,10 +43,12 @@ public partial class MainWindow : Window
             EnsureMinimumSize();
             ApplyHotkey(reportErrors: true);
             ApplyAppearance();
+            ApplyDocking();
         };
         Deactivated += OnDeactivated;
         SystemParameters.StaticPropertyChanged += OnSystemParametersChanged;
         MainGrid.MouseLeftButtonDown += GridBackground_MouseLeftButtonDown;
+        InitializeDocking();
     }
 
     protected override void OnSourceInitialized(EventArgs e)
@@ -63,6 +65,7 @@ public partial class MainWindow : Window
         }
 
         ApplyAppearance();
+        ApplyDocking();
         CreateTrayIcon();
     }
 
@@ -268,6 +271,7 @@ public partial class MainWindow : Window
     {
         SystemParameters.StaticPropertyChanged -= OnSystemParametersChanged;
         SystemEvents.DisplaySettingsChanged -= OnDisplaySettingsChanged;
+        DisposeDocking();
         _hotkey?.Dispose();
         _hotkey = null;
         _tray?.Dispose();
@@ -331,6 +335,11 @@ public partial class MainWindow : Window
         if (WindowState == WindowState.Minimized)
         {
             WindowState = WindowState.Normal;
+        }
+
+        if (IsAutoHide)
+        {
+            Expand();
         }
 
         Activate();
@@ -432,6 +441,12 @@ public partial class MainWindow : Window
 
     private void SavePlacement()
     {
+        if (DockedPlacementToSave() is { } free)
+        {
+            _viewModel.UpdateWindowPlacement(free);
+            return;
+        }
+
         var bounds = WindowState == WindowState.Normal
             ? new Rect(Left, Top, ActualWidth, ActualHeight)
             : RestoreBounds;

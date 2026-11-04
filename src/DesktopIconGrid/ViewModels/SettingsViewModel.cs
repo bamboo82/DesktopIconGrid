@@ -8,6 +8,9 @@ namespace DesktopIconGrid.ViewModels;
 /// <summary>One choice in the bar-background list.</summary>
 public sealed record BackdropOption(string Id, string Name);
 
+/// <summary>One choice in the dock-edge list.</summary>
+public sealed record DockEdgeOption(string Id, string Name);
+
 public sealed class SettingsViewModel : ObservableObject
 {
     public static readonly IReadOnlyList<string> ColorPresets =
@@ -21,6 +24,15 @@ public sealed class SettingsViewModel : ObservableObject
         new(LauncherSettings.BackdropSolid, "Solid colour"),
         new(LauncherSettings.BackdropMica, "Mica (Windows 11)"),
         new(LauncherSettings.BackdropAcrylic, "Acrylic (Windows 11)"),
+    ];
+
+    public static readonly IReadOnlyList<DockEdgeOption> DockEdgeOptions =
+    [
+        new(LauncherSettings.DockNone, "Not docked (free window)"),
+        new(LauncherSettings.DockTop, "Top edge"),
+        new(LauncherSettings.DockBottom, "Bottom edge"),
+        new(LauncherSettings.DockLeft, "Left edge"),
+        new(LauncherSettings.DockRight, "Right edge"),
     ];
 
     private int _iconSize;
@@ -37,6 +49,8 @@ public sealed class SettingsViewModel : ObservableObject
     private bool _closeToTray;
     private bool _startWithWindows;
     private bool _startHidden;
+    private DockEdgeOption _selectedDockEdge;
+    private bool _autoHide;
 
     public SettingsViewModel(LauncherSettings current)
     {
@@ -57,6 +71,8 @@ public sealed class SettingsViewModel : ObservableObject
         Themes = [.. ThemeCatalog.Builtin, ThemeCatalog.CreateCustom(current.BackgroundColor)];
         _selectedTheme = Themes.FirstOrDefault(t => string.Equals(t.Id, current.Theme, StringComparison.OrdinalIgnoreCase)) ?? Themes[0];
         _selectedBackdrop = BackdropOptions.FirstOrDefault(b => string.Equals(b.Id, current.BarBackdrop, StringComparison.OrdinalIgnoreCase)) ?? BackdropOptions[0];
+        _selectedDockEdge = DockEdgeOptions.FirstOrDefault(d => string.Equals(d.Id, current.DockEdge, StringComparison.OrdinalIgnoreCase)) ?? DockEdgeOptions[0];
+        _autoHide = current.AutoHide;
 
         SelectPresetCommand = new RelayCommand<string>(preset => BackgroundColor = preset);
     }
@@ -69,6 +85,8 @@ public sealed class SettingsViewModel : ObservableObject
     public IReadOnlyList<ThemePalette> Themes { get; }
 
     public IReadOnlyList<BackdropOption> Backdrops => BackdropOptions;
+
+    public IReadOnlyList<DockEdgeOption> DockEdges => DockEdgeOptions;
 
     public int MinCellPadding => LauncherSettings.MinCellPadding;
 
@@ -213,6 +231,28 @@ public sealed class SettingsViewModel : ObservableObject
         set => SetProperty(ref _startHidden, value);
     }
 
+    /// <summary>Free window, or docked to a screen edge as a desktop toolbar.</summary>
+    public DockEdgeOption SelectedDockEdge
+    {
+        get => _selectedDockEdge;
+        set
+        {
+            if (value is not null && SetProperty(ref _selectedDockEdge, value))
+            {
+                OnPropertyChanged(nameof(IsDocked));
+            }
+        }
+    }
+
+    public bool IsDocked => !string.Equals(_selectedDockEdge.Id, LauncherSettings.DockNone, StringComparison.Ordinal);
+
+    /// <summary>With a dock edge: collapse when the pointer leaves, return when it touches the edge.</summary>
+    public bool AutoHide
+    {
+        get => _autoHide;
+        set => SetProperty(ref _autoHide, value);
+    }
+
     /// <summary>0 = opaque, up to <see cref="MaxTransparency"/>.</summary>
     public int Transparency
     {
@@ -271,6 +311,8 @@ public sealed class SettingsViewModel : ObservableObject
             CloseToTray = _closeToTray,
             StartWithWindows = _startWithWindows,
             StartHidden = _startHidden,
+            DockEdge = _selectedDockEdge.Id,
+            AutoHide = _autoHide,
         };
         settings.Normalize();
         return settings;

@@ -26,6 +26,14 @@ public sealed partial class LauncherSettings
 
     public static readonly IReadOnlyList<string> Backdrops = [BackdropSolid, BackdropMica, BackdropAcrylic];
 
+    public const string DockNone = "none";
+    public const string DockTop = "top";
+    public const string DockBottom = "bottom";
+    public const string DockLeft = "left";
+    public const string DockRight = "right";
+
+    public static readonly IReadOnlyList<string> DockEdges = [DockNone, DockTop, DockBottom, DockLeft, DockRight];
+
     /// <summary>Icon edge length in device-independent pixels; one of <see cref="IconSizes"/>.</summary>
     public int IconSize { get; set; } = DefaultIconSize;
 
@@ -55,6 +63,12 @@ public sealed partial class LauncherSettings
 
     /// <summary>The close button hides the bar to the notification area instead of exiting.</summary>
     public bool CloseToTray { get; set; } = true;
+
+    /// <summary>Screen edge the bar is docked to as a desktop toolbar (maximised windows stay clear of it), one of <see cref="DockEdges"/>.</summary>
+    public string DockEdge { get; set; } = DockNone;
+
+    /// <summary>With a dock edge: collapse to a thin strip when the pointer leaves, come back when it touches the edge.</summary>
+    public bool AutoHide { get; set; }
 
     /// <summary>Register the app in the current user's Run key so it starts at sign-in.</summary>
     public bool StartWithWindows { get; set; }
@@ -87,6 +101,8 @@ public sealed partial class LauncherSettings
         CloseToTray = source.CloseToTray;
         StartWithWindows = source.StartWithWindows;
         StartHidden = source.StartHidden;
+        DockEdge = source.DockEdge;
+        AutoHide = source.AutoHide;
         Normalize();
     }
 
@@ -127,6 +143,17 @@ public sealed partial class LauncherSettings
         else
         {
             BarBackdrop = BackdropSolid;
+            changed = true;
+        }
+
+        var edge = DockEdge?.Trim().ToLowerInvariant() ?? string.Empty;
+        if (DockEdges.Contains(edge))
+        {
+            DockEdge = edge;
+        }
+        else
+        {
+            DockEdge = DockNone;
             changed = true;
         }
 
