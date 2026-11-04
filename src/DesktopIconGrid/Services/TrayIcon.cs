@@ -13,49 +13,71 @@ public sealed record TrayMenuEntry(string? Text, Action? Execute = null, bool Is
     public bool IsSeparator => Text is null;
 }
 
-/// <summary>The notification-area icon with a menu that is rebuilt every time it opens.</summary>
+/// <summary>
+/// The notification-area icon. The icon itself is a WinForms <c>NotifyIcon</c> (it re-adds itself when Explorer
+/// restarts); the menu is WPF, opened by the owner on <see cref="MenuRequested"/> so it takes the dialogs' theme.
+/// </summary>
 public sealed class TrayIcon : IDisposable
 {
     private const int SmCxSmIcon = 49;
 
     private readonly System.Windows.Forms.NotifyIcon _notifyIcon;
-    private readonly System.Windows.Forms.ContextMenuStrip _menu = new();
-    private readonly System.Drawing.Icon? _icon;
-    private Func<IEnumerable<TrayMenuEntry>>? _buildMenu;
+    private readonly ImageSource _image;
+    private System.Drawing.Icon? _icon;
     private bool _disposed;
 
     public TrayIcon(ImageSource image, string text)
     {
+        _image = image;
         _icon = CreateIcon(image, SmallIconSize());
         _notifyIcon = new System.Windows.Forms.NotifyIcon
         {
             Icon = _icon ?? System.Drawing.SystemIcons.Application,
             Text = text.Length > 63 ? text[..63] : text,
-            ContextMenuStrip = _menu,
             Visible = true,
         };
-        _notifyIcon.MouseClick += (_, e) =>
+        _notifyIcon.MouseUp += (_, e) =>
         {
-            if (e.Button == System.Windows.Forms.MouseButtons.Left)
+            switch (e.Button)
             {
-                Clicked?.Invoke(this, EventArgs.Empty);
+                case System.Windows.Forms.MouseButtons.Left:
+                    Clicked?.Invoke(this, EventArgs.Empty);
+                    break;
+                case System.Windows.Forms.MouseButtons.Right:
+                    MenuRequested?.Invoke(this, EventArgs.Empty);
+                    break;
             }
         };
-        _menu.Opening += (_, _) => Rebuild();
     }
 
     /// <summary>Left click on the icon.</summary>
     public event EventHandler? Clicked;
 
-    public void SetMenu(Func<IEnumerable<TrayMenuEntry>> buildMenu)
-    {
-        _buildMenu = buildMenu;
-        Rebuild();
-    }
+    /// <summary>Right click on the icon; the owner shows its menu at the pointer.</summary>
+    public event EventHandler? MenuRequested;
 
     /// <summary>Shows a balloon/toast from the icon.</summary>
     public void Notify(string title, string message) =>
         _notifyIcon.ShowBalloonTip(4000, title, message, System.Windows.Forms.ToolTipIcon.Info);
+
+    /// <summary>Re-renders the icon for the current DPI (after a monitor or scaling change).</summary>
+    public void Refresh()
+    {
+        if (_disposed)
+        {
+            return;
+        }
+
+        var fresh = CreateIcon(_image, SmallIconSize());
+        if (fresh is null)
+        {
+            return;
+        }
+
+        _notifyIcon.Icon = fresh;
+        _icon?.Dispose();
+        _icon = fresh;
+    }
 
     public void Dispose()
     {
@@ -67,39 +89,7 @@ public sealed class TrayIcon : IDisposable
         _disposed = true;
         _notifyIcon.Visible = false;
         _notifyIcon.Dispose();
-        _menu.Dispose();
         _icon?.Dispose();
-    }
-
-    private void Rebuild()
-    {
-        _menu.Items.Clear();
-        if (_buildMenu is null)
-        {
-            return;
-        }
-
-        foreach (var entry in _buildMenu())
-        {
-            if (entry.IsSeparator)
-            {
-                _menu.Items.Add(new System.Windows.Forms.ToolStripSeparator());
-                continue;
-            }
-
-            var item = new System.Windows.Forms.ToolStripMenuItem(entry.Text)
-            {
-                Checked = entry.IsChecked,
-                Enabled = entry.IsEnabled,
-            };
-            var execute = entry.Execute;
-            if (execute is not null)
-            {
-                item.Click += (_, _) => execute();
-            }
-
-            _menu.Items.Add(item);
-        }
     }
 
     /// <summary>The notification area's icon size at the system DPI: 16 px at 100 %, 24 at 150 %, 32 at 200 %.</summary>

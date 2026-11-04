@@ -385,18 +385,16 @@ Still open, in the order they should be taken:
 
 1. **Drive cache freshness** — compare `modifiedTime`/`md5Checksum`, not only size; reserved
    names (`CON`, `NUL`, `COM1`) in `SafeName`.
-2. **Native look, remaining** — a WPF (Fluent, dark-aware) tray menu instead of the WinForms strip;
-   the icon itself is DPI-correct now. Dialogs, backdrop, High Contrast and automation names are done
-   (0.3.0).
-3. **Multi-monitor** — per-monitor off-screen checks (`MonitorFromRect`) instead of the
-   virtual-screen bounding box; remember the monitor a bar was on.
-4. **Localisation** — strings in `.resx` with zh-TW/zh-CN, default text-icon font by UI culture.
-5. **Non-modal errors** — tray balloons for non-fatal failures; undo for Remove.
-6. **Table stakes** — start with Windows, auto-hide/dock to a screen edge (AppBar), installer
+2. **Multi-monitor** — remember the monitor a bar was on (device name) so it returns there after
+   monitors are re-enumerated; the visibility check already uses the real monitor layout.
+3. **Localisation** — strings in `.resx` with zh-TW/zh-CN, default text-icon font by UI culture.
+4. **Non-modal errors** — tray balloons for non-fatal failures; undo for Remove.
+5. **Table stakes** — start with Windows, auto-hide/dock to a screen edge (AppBar), installer
    (MSIX/winget), signed releases, versioning from the tag (the release workflow does this).
-7. **Engineering** — CI restricted to `main` and pull requests once development moves there,
-   app-execution aliases resolved through their reparse data so Store apps get the badge too,
-   `JsonException` in `SyncCoordinator.IsSyncError`, DPAPI for the stored client secret.
+6. **Engineering** — the tray icon itself still uses WinForms `NotifyIcon` (its menu is WPF); a
+   `Shell_NotifyIcon` message window would let WinForms go. App-execution aliases resolved through
+   their reparse data so Store apps get the badge too. CI builds `main` and `claude/**` branches;
+   restrict it to `main` plus pull requests once development moves there.
 
 ## 14. Out of scope (for now)
 

@@ -238,7 +238,7 @@ public partial class App : Application
 
     private static SyncService CreateSyncService()
     {
-        var settingsStore = new SyncSettingsStore(SyncSettingsStore.GetDefaultFilePath());
+        var settingsStore = new SyncSettingsStore(SyncSettingsStore.GetDefaultFilePath(), new DpapiSecretProtector());
         var settings = settingsStore.Load();
         var tokenStore = new DpapiTokenStore(Path.Combine(Path.GetDirectoryName(settingsStore.FilePath)!, "google-token.bin"));
         var auth = new GoogleAuthorization(Http, tokenStore, () => settings.Credentials);

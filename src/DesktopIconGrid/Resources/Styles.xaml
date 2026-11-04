@@ -39,6 +39,7 @@
   <SolidColorBrush x:Key="RunningBadgeBrush" Color="#FF34C759" />
   <SolidColorBrush x:Key="DialogHintBrush" Color="#FF6E6E6E" />
   <SolidColorBrush x:Key="WarningBrush" Color="#FFB55A00" />
+  <SolidColorBrush x:Key="ErrorTextBrush" Color="#FFC62828" />
   <SolidColorBrush x:Key="SwatchBorderBrush" Color="#FF9A9A9A" />
 
   <!-- Application icon: four tiles on a dark rounded square -->

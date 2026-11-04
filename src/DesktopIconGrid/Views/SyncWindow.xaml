@@ -43,8 +43,9 @@
               <TextBox Grid.Row="0" Grid.Column="1" Style="{StaticResource DialogTextBox}"
                        Text="{Binding ClientId, UpdateSourceTrigger=LostFocus}" IsEnabled="{Binding IsNotConnected}" />
               <TextBlock Grid.Row="1" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="Client secret:" Margin="0,0,12,8" />
-              <TextBox Grid.Row="1" Grid.Column="1" Style="{StaticResource DialogTextBox}"
-                       Text="{Binding ClientSecret, UpdateSourceTrigger=LostFocus}" IsEnabled="{Binding IsNotConnected}" />
+              <PasswordBox x:Name="SecretBox" Grid.Row="1" Grid.Column="1" Padding="4,3" VerticalContentAlignment="Center"
+                           IsEnabled="{Binding IsNotConnected}" LostFocus="SecretBox_LostFocus"
+                           AutomationProperties.Name="Client secret" />
             </Grid>
             <StackPanel Orientation="Horizontal">
               <Button Content="Import client_secret.json…" Padding="10,3" Click="ImportCredentials_Click" IsEnabled="{Binding IsNotConnected}" />

@@ -24,6 +24,7 @@ public partial class MainWindow : Window
     private GlobalHotkey? _hotkey;
     private string? _registeredHotkey;
     private TrayIcon? _tray;
+    private TrayMenuHost? _trayMenu;
     private bool _exiting;
     private bool _closing;
     private bool _backdropActive;
@@ -81,8 +82,15 @@ public partial class MainWindow : Window
         }
 
         _tray.Clicked += (_, _) => ToggleVisibility();
-        _tray.SetMenu(BuildTrayMenu);
+        _tray.MenuRequested += (_, _) => (_trayMenu ??= new TrayMenuHost()).Open(BuildTrayMenu());
         AppLog.Default.Debug("App", "Tray icon created");
+    }
+
+    /// <summary>The bar moved to a monitor with another scale (or the scale changed): the tray icon is re-rendered for it.</summary>
+    protected override void OnDpiChanged(DpiScale oldDpi, DpiScale newDpi)
+    {
+        base.OnDpiChanged(oldDpi, newDpi);
+        _tray?.Refresh();
     }
 
     private IEnumerable<TrayMenuEntry> BuildTrayMenu()
@@ -158,6 +166,11 @@ public partial class MainWindow : Window
         var settings = _viewModel.Model.Settings;
         var palette = ThemeManager.EffectivePalette(_viewModel.Palette);
         var wanted = SystemParameters.HighContrast ? LauncherSettings.BackdropSolid : settings.BarBackdrop; // High Contrast asks for flat colours
+        if (!string.Equals(wanted, LauncherSettings.BackdropSolid, StringComparison.Ordinal) && WindowBackdrop.IsSupported)
+        {
+            WindowAlpha.Apply(handle, LauncherSettings.MaxOpacity); // a layered window cannot take a backdrop: drop the style first
+        }
+
         var active = WindowBackdrop.Apply(handle, wanted, darkMode: ThemeCatalog.Luminance(palette.Background) <= 0.6);
         if (active != _backdropActive)
         {
@@ -225,7 +238,7 @@ public partial class MainWindow : Window
         var translucent = false;
         if (_backdropActive)
         {
-            translucent = WindowBackdrop.Apply(popupSource.Handle, LauncherSettings.BackdropAcrylic, darkMode: ThemeCatalog.Luminance(palette.Background) <= 0.6);
+            translucent = WindowBackdrop.ApplyToPopup(popupSource.Handle, darkMode: ThemeCatalog.Luminance(palette.Background) <= 0.6);
             if (translucent && popupSource.CompositionTarget is { } target)
             {
                 target.BackgroundColor = Colors.Transparent;
@@ -243,6 +256,8 @@ public partial class MainWindow : Window
         _hotkey = null;
         _tray?.Dispose();
         _tray = null;
+        _trayMenu?.Close();
+        _trayMenu = null;
         base.OnClosed(e);
     }
 
@@ -459,17 +474,9 @@ public partial class MainWindow : Window
         Top = area.Top + Math.Max(0, (area.Height - Height) / 2);
     }
 
-    private static bool IntersectsAScreen(WindowPlacement placement)
-    {
-        var virtualScreen = new Rect(
-            SystemParameters.VirtualScreenLeft,
-            SystemParameters.VirtualScreenTop,
-            SystemParameters.VirtualScreenWidth,
-            SystemParameters.VirtualScreenHeight);
-        var window = new Rect(placement.Left, placement.Top, placement.Width, placement.Height);
-        window.Intersect(virtualScreen);
-        return !window.IsEmpty && window.Width >= 40 && window.Height >= 24;
-    }
+    /// <summary>Checked against the real monitors, not the virtual screen's bounding box: an L-shaped layout has a dead corner.</summary>
+    private static bool IntersectsAScreen(WindowPlacement placement) =>
+        ScreenGeometry.IsVisibleOn(new Rect(placement.Left, placement.Top, placement.Width, placement.Height), ScreenGeometry.Monitors());
 
     private void EnsureMinimumSize()
     {

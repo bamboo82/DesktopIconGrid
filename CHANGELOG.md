@@ -19,13 +19,22 @@ bar itself looking as it did in 0.2.0.
 - Windows High Contrast: the bar switches to the system colours (and a solid background) while it is
   on, and back to the theme when it is turned off.
 - Screen readers get a name for every icon (its caption, with the location and state as help text)
-  and for the grip, close and options buttons; the close and options buttons can be reached with Tab.
+  and for the grip, close and options buttons; Tab now leaves the grid and reaches the close and
+  options buttons.
+- The Google client secret is stored encrypted for the Windows user (DPAPI) in `sync.json`; a value
+  saved in clear by an earlier version is encrypted the first time 0.3.0 runs. The Sync dialog shows
+  it as a password field.
 
 ### Changed
 
 - The tray icon is rendered at the notification area's size for the screen's DPI instead of being
   scaled down from 32 px.
 - Keyboard and mouse activation are told apart by the input device, not by a 150 ms timing window.
+- The tray menu is a WPF menu that takes the dialogs' look (light or dark) and the screen's DPI; the
+  tray icon is re-rendered when the bar moves to a screen with another scale.
+- Whether a saved bar position is still on a screen is checked against the real monitors instead of
+  the virtual screen's bounding box, so a bar lost in the dead corner of an L-shaped layout comes back.
+- Errors from the sync feature that are programming mistakes are no longer hidden behind a status line.
 
 ## [0.2.0] – 2026-11-04
 

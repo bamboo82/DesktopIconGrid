@@ -32,7 +32,7 @@
                     Focusable="False"
                     Margin="1"
                     KeyboardNavigation.DirectionalNavigation="Contained"
-                    KeyboardNavigation.TabNavigation="Cycle">
+                    KeyboardNavigation.TabNavigation="Continue">
         <ItemsControl.ItemsPanel>
           <ItemsPanelTemplate>
             <WrapPanel Orientation="Horizontal"

@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.IO;
 using System.Net.Http;
+using System.Text.Json;
 using System.Windows.Threading;
 using DesktopIconGrid.Core.Diagnostics;
 using DesktopIconGrid.Core.Models;
@@ -210,14 +211,17 @@ public sealed class SyncCoordinator : ObservableObject
     public static string Describe(DateTimeOffset? time) =>
         time is { } t ? t.LocalDateTime.ToString("g", CultureInfo.CurrentCulture) : "an unknown date";
 
-    /// <summary>Exceptions the sync feature reports to the user instead of crashing.</summary>
+    /// <summary>
+    /// Exceptions the sync feature reports to the user instead of crashing: network, Drive, sign-in, file and
+    /// data-format failures and cancellation. Programming errors (invalid operations, bad arguments) are not
+    /// in the list on purpose, so they surface instead of hiding behind a status line.
+    /// </summary>
     public static bool IsSyncError(Exception ex) => ex is DriveException
         or GoogleAuthException
         or HttpRequestException
+        or JsonException
         or FormatException
-        or ArgumentException
         or IOException
         or UnauthorizedAccessException
-        or InvalidOperationException
         or OperationCanceledException;
 }

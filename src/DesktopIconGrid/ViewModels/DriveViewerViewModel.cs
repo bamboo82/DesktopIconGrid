@@ -54,7 +54,7 @@ public sealed class DriveViewerViewModel : ObservableObject
         _uploader = uploader;
         _conflictPolicy = conflictPolicy;
         _cacheDirectory = cacheDirectory;
-        _downloader = new DriveDownloader(sync.Files ?? throw new InvalidOperationException("Google Drive access is not available."));
+        _downloader = new DriveDownloader(sync.Files ?? throw new DriveException("Google Drive access is not available."));
         Root = root;
         Crumbs.Add(root);
 

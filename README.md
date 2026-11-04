@@ -165,7 +165,7 @@ tests/DesktopIconGrid.App.Tests/   xunit tests for the WPF-side logic without UI
 | File (in `%LocalAppData%\DesktopIconGrid`) | Contents |
 | --- | --- |
 | `layout.json` | Settings, window position and items. Written atomically after every change; an unreadable file is renamed to `layout.json.corrupt-<timestamp>` and the bar starts empty. |
-| `sync.json` | Device name, Google API client credentials, the linked copy and when it was last synced. |
+| `sync.json` | Device name, Google API client id, the client secret encrypted for your Windows user (DPAPI), the linked copy and when it was last synced. |
 | `google-token.bin` | The Google sign-in token, encrypted with DPAPI for the current Windows user. |
 | `logs\app.log` | The application log shown in the log viewer (rotated to `app.previous.log` at 2 MB). |
 | `logs\` | Captured output of shortcuts that have logging turned on (ten newest runs per shortcut). |

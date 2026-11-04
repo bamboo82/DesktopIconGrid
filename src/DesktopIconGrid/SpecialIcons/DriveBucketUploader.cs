@@ -120,7 +120,7 @@ public sealed class DriveBucketUploader(SyncService sync, Action<string, string>
 
     private async Task UploadPathAsync(UploadJob job, CancellationToken cancellationToken)
     {
-        var files = sync.Files ?? throw new InvalidOperationException("Google Drive access is not available.");
+        var files = sync.Files ?? throw new DriveException("Google Drive access is not available.");
         if (Directory.Exists(job.Path))
         {
             await UploadDirectoryAsync(files, job.FolderId, job.Path, job.Policy, cancellationToken);

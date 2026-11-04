@@ -1,4 +1,5 @@
 using System.Text.Json;
+using DesktopIconGrid.Core.Diagnostics;
 using DesktopIconGrid.Core.Storage;
 
 namespace DesktopIconGrid.Core.Sync;
@@ -15,7 +16,11 @@ public sealed class SyncSettings
 
     public string? ClientId { get; set; }
 
+    /// <summary>The OAuth client secret in clear, in memory. On disk it is stored as <see cref="ClientSecretProtected"/> when a protector is available.</summary>
     public string? ClientSecret { get; set; }
+
+    /// <summary>The client secret as written by an <see cref="ISecretProtector"/>; present in <c>sync.json</c> instead of the clear value.</summary>
+    public string? ClientSecretProtected { get; set; }
 
     /// <summary>E-mail of the connected Google account, for display only.</summary>
     public string? AccountEmail { get; set; }
@@ -39,6 +44,8 @@ public sealed class SyncSettings
 
     public static string NewDeviceId() => Guid.NewGuid().ToString("N");
 
+    public SyncSettings Clone() => (SyncSettings)MemberwiseClone();
+
     public static string DefaultDeviceName()
     {
         var name = Environment.MachineName;
@@ -55,6 +62,7 @@ public sealed class SyncSettings
 
         ClientId = string.IsNullOrWhiteSpace(ClientId) ? null : ClientId.Trim();
         ClientSecret = string.IsNullOrWhiteSpace(ClientSecret) ? null : ClientSecret.Trim();
+        ClientSecretProtected = string.IsNullOrWhiteSpace(ClientSecretProtected) ? null : ClientSecretProtected.Trim();
         LinkedProfile = string.IsNullOrWhiteSpace(LinkedProfile) ? null : LinkedProfile.Trim();
         LinkedFileId = string.IsNullOrWhiteSpace(LinkedFileId) ? null : LinkedFileId.Trim();
         if (string.IsNullOrWhiteSpace(DeviceId))
@@ -64,18 +72,25 @@ public sealed class SyncSettings
     }
 }
 
-/// <summary>Loads and saves <see cref="SyncSettings"/> as JSON.</summary>
+/// <summary>
+/// Loads and saves <see cref="SyncSettings"/> as JSON. With a <see cref="Protector"/> the client secret is written
+/// encrypted (<see cref="SyncSettings.ClientSecretProtected"/>) and a clear value left by an earlier version is
+/// encrypted the first time the file is loaded.
+/// </summary>
 public sealed class SyncSettingsStore
 {
     public const string FileName = "sync.json";
 
-    public SyncSettingsStore(string filePath)
+    public SyncSettingsStore(string filePath, ISecretProtector? protector = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(filePath);
         FilePath = Path.GetFullPath(filePath);
+        Protector = protector;
     }
 
     public string FilePath { get; }
+
+    public ISecretProtector? Protector { get; }
 
     public static string GetDefaultFilePath() => Path.Combine(Path.GetDirectoryName(LayoutStorage.GetDefaultFilePath())!, FileName);
 
@@ -97,6 +112,25 @@ public sealed class SyncSettingsStore
 
         settings ??= new SyncSettings();
         settings.Normalize();
+
+        if (Protector is not null)
+        {
+            if (settings.ClientSecret is not null)
+            {
+                // A clear value from an earlier version (or edited by hand): encrypt it now.
+                Save(settings);
+            }
+            else if (settings.ClientSecretProtected is { } sealedSecret)
+            {
+                settings.ClientSecret = Protector.Unprotect(sealedSecret);
+                if (settings.ClientSecret is null)
+                {
+                    AppLog.Default.Warning("Sync", "The stored Google client secret could not be decrypted (another user or machine?); enter it again");
+                    settings.ClientSecretProtected = null;
+                }
+            }
+        }
+
         return settings;
     }
 
@@ -104,9 +138,18 @@ public sealed class SyncSettingsStore
     {
         ArgumentNullException.ThrowIfNull(settings);
         settings.Normalize();
+        var written = settings;
+        if (Protector is not null)
+        {
+            written = settings.Clone();
+            written.ClientSecretProtected = settings.ClientSecret is { } secret ? Protector.Protect(secret) : null;
+            written.ClientSecret = null;
+            settings.ClientSecretProtected = written.ClientSecretProtected;
+        }
+
         Directory.CreateDirectory(Path.GetDirectoryName(FilePath)!);
         var tempPath = FilePath + ".tmp";
-        File.WriteAllText(tempPath, JsonSerializer.Serialize(settings, LayoutStorage.JsonOptions));
+        File.WriteAllText(tempPath, JsonSerializer.Serialize(written, LayoutStorage.JsonOptions));
         File.Move(tempPath, FilePath, overwrite: true);
     }
 }

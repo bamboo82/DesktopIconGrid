@@ -16,6 +16,7 @@ public static class DialogTheme
     public const string HintBrushKey = "DialogHintBrush";
     public const string WarningBrushKey = "WarningBrush";
     public const string SwatchBorderBrushKey = "SwatchBorderBrush";
+    public const string ErrorBrushKey = "ErrorTextBrush";
 
     /// <summary>Mirrors <c>LauncherSettings.FluentDialogs</c>; read when a dialog is created.</summary>
     public static bool UseFluent { get; private set; } = true;
@@ -41,6 +42,7 @@ public static class DialogTheme
         resources[HintBrushKey] = Frozen(IsDark ? "#FFA8A8A8" : "#FF6E6E6E");
         resources[WarningBrushKey] = Frozen(IsDark ? "#FFFFB86B" : "#FFB55A00");
         resources[SwatchBorderBrushKey] = Frozen(IsDark ? "#FF5C5C5C" : "#FF9A9A9A");
+        resources[ErrorBrushKey] = Frozen(IsDark ? "#FFFF6B6B" : "#FFC62828");
     }
 
     /// <summary>Call after <c>InitializeComponent</c> in every dialog window (not the bar).</summary>
