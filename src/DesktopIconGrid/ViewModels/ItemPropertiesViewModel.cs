@@ -12,6 +12,7 @@ namespace DesktopIconGrid.ViewModels;
 public sealed class ItemPropertiesViewModel : ObservableObject
 {
     private const int PreviewSize = 32;
+    private static readonly TimeSpan PreviewDebounce = TimeSpan.FromMilliseconds(300);
 
     private readonly LauncherItem _target;
     private readonly IIconProvider _icons;
@@ -25,6 +26,7 @@ public sealed class ItemPropertiesViewModel : ObservableObject
     private bool _updatingAutomaticName;
     private ImageSource? _preview;
     private string? _warning;
+    private int _previewRequest;
 
     public ItemPropertiesViewModel(LauncherItem target, bool isNew, IIconProvider icons)
     {
@@ -41,8 +43,7 @@ public sealed class ItemPropertiesViewModel : ObservableObject
         _textIcon = target.TextIcon;
         _nameIsAutomatic = !IsGroup && isNew && (_name.Length == 0 || _name == ShortcutItem.SuggestName(_location));
 
-        UpdatePreview();
-        UpdateWarning();
+        RefreshPreviewAndWarning(immediate: true);
     }
 
     public bool IsGroup { get; }
@@ -94,8 +95,7 @@ public sealed class ItemPropertiesViewModel : ObservableObject
             }
 
             OnPropertyChanged(nameof(CanSave));
-            UpdatePreview();
-            UpdateWarning();
+            RefreshPreviewAndWarning();
         }
     }
 
@@ -215,8 +215,7 @@ public sealed class ItemPropertiesViewModel : ObservableObject
         OnPropertyChanged(nameof(PreviewFontSize));
         OnPropertyChanged(nameof(PreviewFontWeight));
         OnPropertyChanged(nameof(PreviewTextBrush));
-        UpdatePreview();
-        UpdateWarning();
+        RefreshPreviewAndWarning();
     }
 
     /// <summary>Copies the edited values into the item. Returns false when the form is not valid.</summary>
@@ -240,49 +239,76 @@ public sealed class ItemPropertiesViewModel : ObservableObject
         return true;
     }
 
-    private void UpdatePreview()
+    /// <summary>
+    /// Recomputes the preview image and the not-found notice on the icon worker a moment after the last edit, so
+    /// typing a path (which probes the file system, possibly a sleeping network share) never blocks the dialog.
+    /// </summary>
+    private void RefreshPreviewAndWarning(bool immediate = false)
+    {
+        var request = ++_previewRequest;
+        _ = RefreshAsync(request, immediate, _iconPath, _location, IsGroup, IsShortcut);
+    }
+
+    private async Task RefreshAsync(int request, bool immediate, string? iconPath, string location, bool isGroup, bool isShortcut)
+    {
+        if (!immediate)
+        {
+            await Task.Delay(PreviewDebounce);
+            if (request != _previewRequest)
+            {
+                return; // superseded while waiting
+            }
+        }
+
+        var icons = _icons;
+        var result = await IconWorker.Shared.RunAsync(() => Resolve(icons, iconPath, location, isGroup, isShortcut), IconWorker.LookupTimeout, location);
+        if (request != _previewRequest)
+        {
+            return;
+        }
+
+        Preview = result?.Preview;
+        Warning = result?.Warning;
+    }
+
+    private sealed record PreviewResult(ImageSource? Preview, string? Warning);
+
+    private static PreviewResult Resolve(IIconProvider icons, string? iconPath, string location, bool isGroup, bool isShortcut)
     {
         ImageSource? image = null;
-        if (_iconPath is not null && _icons.CanResolve(_iconPath))
+        if (iconPath is not null && icons.CanResolve(iconPath))
         {
-            image = _icons.GetIcon(_iconPath, PreviewSize * 2);
+            image = icons.GetIcon(iconPath, PreviewSize * 2);
         }
 
         if (image is null)
         {
-            if (IsGroup)
+            if (isGroup)
             {
-                image = _icons.GetFolderIcon(PreviewSize * 2);
+                image = icons.GetFolderIcon(PreviewSize * 2);
             }
-            else if (_icons.CanResolve(_location))
+            else if (icons.CanResolve(location))
             {
-                image = _icons.GetIcon(_location, PreviewSize * 2);
+                image = icons.GetIcon(location, PreviewSize * 2);
             }
         }
 
-        Preview = image;
-    }
-
-    private void UpdateWarning()
-    {
-        var location = Environment.ExpandEnvironmentVariables(_location.Trim());
-        if (IsShortcut
-            && location.Length > 0
-            && Path.IsPathRooted(location)
-            && !LaunchPlanner.IsUri(location)
-            && !File.Exists(location)
-            && !Directory.Exists(location))
+        string? warning = null;
+        var expanded = Environment.ExpandEnvironmentVariables(location.Trim());
+        if (isShortcut
+            && expanded.Length > 0
+            && Path.IsPathRooted(expanded)
+            && !LaunchPlanner.IsUri(expanded)
+            && !File.Exists(expanded)
+            && !Directory.Exists(expanded))
         {
-            Warning = "The location was not found. You can still save it (for example for a drive that is not connected right now).";
-            return;
+            warning = "The location was not found. You can still save it (for example for a drive that is not connected right now).";
+        }
+        else if (iconPath is not null && !icons.CanResolve(iconPath))
+        {
+            warning = "The icon file was not found; the default icon will be used until it is.";
         }
 
-        if (_iconPath is not null && !_icons.CanResolve(_iconPath))
-        {
-            Warning = "The icon file was not found; the default icon will be used until it is.";
-            return;
-        }
-
-        Warning = null;
+        return new PreviewResult(image, warning);
     }
 }

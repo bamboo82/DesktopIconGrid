@@ -64,9 +64,11 @@ public sealed class GoogleDriveClient : IDriveClient, IDriveFiles
     /// <summary>Limit for one upload request: a multipart upload (up to <see cref="MultipartLimit"/>) or one resumable chunk.</summary>
     public static readonly TimeSpan ChunkTimeout = TimeSpan.FromMinutes(10);
 
-    /// <summary>Waits before the n-th retry of a chunk (exponential backoff); replaced in tests.</summary>
-    internal Func<int, CancellationToken, Task> RetryDelay { get; set; } =
-        (attempt, cancellationToken) => Task.Delay(TimeSpan.FromSeconds(Math.Pow(2, attempt)), cancellationToken);
+    /// <summary>Waits before a retry (the delay comes from <see cref="BackoffDelay"/>); replaced in tests.</summary>
+    internal Func<TimeSpan, CancellationToken, Task> RetryDelay { get; set; } = Task.Delay;
+
+    /// <summary>Longest wait a Retry-After header may impose.</summary>
+    internal static readonly TimeSpan MaxRetryAfter = TimeSpan.FromMinutes(5);
 
     /// <summary>How long a download may stall before it is abandoned; replaced in tests.</summary>
     internal TimeSpan StallTimeout { get; set; } = RequestTimeout;
@@ -325,7 +327,7 @@ public sealed class GoogleDriveClient : IDriveClient, IDriveFiles
             if (offset >= length)
             {
                 // Everything was confirmed by 308 responses without a final answer: ask once more.
-                var finished = await ResumeAsync(uploadUri, length, attempt: 0, cancellationToken).ConfigureAwait(false);
+                var finished = await ResumeAsync(uploadUri, length, attempt: 0, retryAfter: null, cancellationToken).ConfigureAwait(false);
                 if (finished.Completed is not null)
                 {
                     progress?.Report(length);
@@ -381,7 +383,7 @@ public sealed class GoogleDriveClient : IDriveClient, IDriveFiles
                 }
 
                 AppLog.Default.Warning("Drive", $"Chunk at {offset:N0} of \"{name}\" {reason}; retry {attempt} of {MaxChunkAttempts - 1}");
-                var resumed = await ResumeAsync(uploadUri, length, attempt, cancellationToken).ConfigureAwait(false);
+                var resumed = await ResumeAsync(uploadUri, length, attempt, retryAfter: null, cancellationToken).ConfigureAwait(false);
                 if (resumed.Completed is not null)
                 {
                     progress?.Report(length);
@@ -429,7 +431,7 @@ public sealed class GoogleDriveClient : IDriveClient, IDriveFiles
                 }
 
                 AppLog.Default.Warning("Drive", $"Chunk at {offset:N0} of \"{name}\" rejected ({description}); retry {attempt} of {MaxChunkAttempts - 1}");
-                var recovered = await ResumeAsync(uploadUri, length, attempt, cancellationToken).ConfigureAwait(false);
+                var recovered = await ResumeAsync(uploadUri, length, attempt, RetryAfterOf(response), cancellationToken).ConfigureAwait(false);
                 if (recovered.Completed is not null)
                 {
                     progress?.Report(length);
@@ -442,11 +444,11 @@ public sealed class GoogleDriveClient : IDriveClient, IDriveFiles
     }
 
     /// <summary>After a failed chunk: backs off, then asks Drive how much it holds (<c>Content-Range: bytes */length</c>).</summary>
-    private async Task<(long? NextByte, DriveEntry? Completed)> ResumeAsync(Uri uploadUri, long length, int attempt, CancellationToken cancellationToken)
+    private async Task<(long? NextByte, DriveEntry? Completed)> ResumeAsync(Uri uploadUri, long length, int attempt, TimeSpan? retryAfter, CancellationToken cancellationToken)
     {
         if (attempt > 0)
         {
-            await RetryDelay(attempt, cancellationToken).ConfigureAwait(false);
+            await RetryDelay(BackoffDelay(attempt, retryAfter), cancellationToken).ConfigureAwait(false);
         }
 
         try
@@ -477,6 +479,34 @@ public sealed class GoogleDriveClient : IDriveClient, IDriveFiles
         {
             return (null, null);
         }
+    }
+
+    /// <summary>The server's Retry-After when it sent one, otherwise 2^attempt seconds with ±25 % jitter so retrying clients spread out.</summary>
+    internal static TimeSpan BackoffDelay(int attempt, TimeSpan? retryAfter)
+    {
+        if (retryAfter is { } wait && wait > TimeSpan.Zero)
+        {
+            return wait > MaxRetryAfter ? MaxRetryAfter : wait;
+        }
+
+        var seconds = Math.Pow(2, attempt) * (0.75 + Random.Shared.NextDouble() * 0.5);
+        return TimeSpan.FromSeconds(seconds);
+    }
+
+    private static TimeSpan? RetryAfterOf(HttpResponseMessage response)
+    {
+        var header = response.Headers.RetryAfter;
+        if (header is null)
+        {
+            return null;
+        }
+
+        if (header.Delta is { } delta)
+        {
+            return delta;
+        }
+
+        return header.Date is { } date ? date - DateTimeOffset.UtcNow : null;
     }
 
     /// <summary>Bytes Drive holds according to a 308 response's <c>Range: bytes=0-N</c> header; 0 when the header is absent.</summary>
@@ -566,28 +596,60 @@ public sealed class GoogleDriveClient : IDriveClient, IDriveFiles
             return _folderId;
         }
 
-        var query = $"name = '{FolderName}' and mimeType = '{FolderMimeType}' and trashed = false and 'root' in parents";
-        var found = await GetAsync<FileListDto>($"files?q={Uri.EscapeDataString(query)}&fields=files(id,name)&pageSize=10", cancellationToken).ConfigureAwait(false);
-        var existing = found?.Files?.FirstOrDefault();
-        if (existing?.Id is not null)
+        var existing = await OldestAppFolderAsync(cancellationToken).ConfigureAwait(false);
+        if (existing is not null)
         {
-            return _folderId = existing.Id;
+            return _folderId = existing;
         }
 
         var metadata = new { name = FolderName, mimeType = FolderMimeType };
-        using var response = await SendAsync(
-            () => new HttpRequestMessage(HttpMethod.Post, $"{ApiBase}files?fields=id,name")
-            {
-                Content = new StringContent(JsonSerializer.Serialize(metadata, JsonOptions), Encoding.UTF8, JsonMimeType),
-            },
-            cancellationToken).ConfigureAwait(false);
-        var created = await ReadJsonAsync<FileDto>(response, cancellationToken).ConfigureAwait(false);
+        FileDto? created;
+        using (var response = await SendAsync(
+                   () => new HttpRequestMessage(HttpMethod.Post, $"{ApiBase}files?fields=id,name,createdTime")
+                   {
+                       Content = new StringContent(JsonSerializer.Serialize(metadata, JsonOptions), Encoding.UTF8, JsonMimeType),
+                   },
+                   cancellationToken).ConfigureAwait(false))
+        {
+            created = await ReadJsonAsync<FileDto>(response, cancellationToken).ConfigureAwait(false);
+        }
+
         if (created?.Id is null)
         {
             throw new DriveException("Google Drive did not return the id of the new folder.");
         }
 
+        // Two devices connecting for the first time can both have found nothing: look again and keep the
+        // folder created first, removing the one just created when another device won the race.
+        var oldest = await OldestAppFolderAsync(cancellationToken).ConfigureAwait(false);
+        if (oldest is not null && !string.Equals(oldest, created.Id, StringComparison.Ordinal))
+        {
+            AppLog.Default.Info("Drive", $"Another device created the {FolderName} folder at the same time; using the older one");
+            try
+            {
+                await DeleteAsync(created.Id, cancellationToken).ConfigureAwait(false);
+            }
+            catch (DriveException)
+            {
+                // Best effort; an empty extra folder is harmless.
+            }
+
+            return _folderId = oldest;
+        }
+
         return _folderId = created.Id;
+    }
+
+    /// <summary>The id of the app folder that was created first, or <see langword="null"/> when there is none.</summary>
+    private async Task<string?> OldestAppFolderAsync(CancellationToken cancellationToken)
+    {
+        var query = $"name = '{FolderName}' and mimeType = '{FolderMimeType}' and trashed = false and 'root' in parents";
+        var found = await GetAsync<FileListDto>($"files?q={Uri.EscapeDataString(query)}&fields=files(id,name,createdTime)&orderBy=createdTime&pageSize=10", cancellationToken).ConfigureAwait(false);
+        return (found?.Files ?? [])
+            .Where(f => !string.IsNullOrEmpty(f.Id))
+            .OrderBy(f => f.CreatedTime ?? DateTimeOffset.MaxValue)
+            .ThenBy(f => f.Id, StringComparer.Ordinal)
+            .FirstOrDefault()?.Id;
     }
 
     private async Task<T?> GetAsync<T>(string relativeUrl, CancellationToken cancellationToken)
@@ -729,6 +791,8 @@ public sealed class GoogleDriveClient : IDriveClient, IDriveFiles
         public string? MimeType { get; set; }
 
         public DateTimeOffset? ModifiedTime { get; set; }
+
+        public DateTimeOffset? CreatedTime { get; set; }
 
         /// <summary>Drive reports sizes as strings.</summary>
         public string? Size { get; set; }

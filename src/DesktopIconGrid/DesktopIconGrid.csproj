@@ -26,4 +26,8 @@
     <ProjectReference Include="../DesktopIconGrid.Core/DesktopIconGrid.Core.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="DesktopIconGrid.App.Tests" />
+  </ItemGroup>
+
 </Project>

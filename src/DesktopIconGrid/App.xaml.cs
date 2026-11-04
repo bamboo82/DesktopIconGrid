@@ -156,6 +156,7 @@ public partial class App : Application
         }
 
         _ = _sync.RunStartupCheckAsync();
+        _ = viewModel.WarmCatalogIconsAsync();
     }
 
     protected override void OnExit(ExitEventArgs e)

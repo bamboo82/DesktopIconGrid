@@ -9,6 +9,7 @@ using System.Windows.Threading;
 using DesktopIconGrid.Core.Launching;
 using DesktopIconGrid.Core.Models;
 using DesktopIconGrid.Core.SpecialItems;
+using DesktopIconGrid.Services;
 using DesktopIconGrid.SpecialIcons;
 using DesktopIconGrid.ViewModels;
 
@@ -683,11 +684,17 @@ public partial class IconGridControl : UserControl
         host.IsEnabled = host.Items.Count > 0;
     }
 
-    private static Image? CreateMenuIcon(LauncherViewModel root, SpecialItemDefinition definition)
+    /// <summary>The menu entry's icon, filled in when the icon worker has resolved it (twenty shell lookups must not block the UI thread).</summary>
+    private static Image CreateMenuIcon(LauncherViewModel root, SpecialItemDefinition definition)
     {
-        var source = root.Icons.GetIcon(definition.IconPath ?? definition.Location, 16);
-        return source is null
-            ? null
-            : new Image { Source = source, Width = 16, Height = 16, Stretch = Stretch.Uniform };
+        var image = new Image { Width = 16, Height = 16, Stretch = Stretch.Uniform };
+        var source = definition.IconPath ?? definition.Location;
+        IconWorker.Shared.RunAsync(() => root.Icons.GetIcon(source, 16), IconWorker.LookupTimeout, source)
+            .ContinueWith(
+                task => image.Source = task.IsCompletedSuccessfully ? task.Result : null,
+                CancellationToken.None,
+                TaskContinuationOptions.None,
+                TaskScheduler.FromCurrentSynchronizationContext());
+        return image;
     }
 }

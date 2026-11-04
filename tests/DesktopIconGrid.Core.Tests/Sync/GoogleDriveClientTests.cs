@@ -22,7 +22,8 @@ public class GoogleDriveClientTests
     {
         var handler = new FakeHttpHandler()
             .Enqueue(HttpStatusCode.OK, EmptyList)
-            .Enqueue(HttpStatusCode.OK, """{"id":"newfolder","name":"DesktopIconGrid"}""")
+            .Enqueue(HttpStatusCode.OK, """{"id":"newfolder","name":"DesktopIconGrid","createdTime":"2026-11-04T10:00:00.000Z"}""")
+            .Enqueue(HttpStatusCode.OK, """{"files":[{"id":"newfolder","name":"DesktopIconGrid","createdTime":"2026-11-04T10:00:00.000Z"}]}""")
             .Enqueue(HttpStatusCode.OK, """
                 {"files":[
                   {"id":"f1","name":"Work.json","modifiedTime":"2026-11-04T10:00:00.000Z","size":"1234","appProperties":{"device":"PC-1","savedAt":"2026-11-04T09:59:00+00:00","profile":"Work"}},
@@ -34,12 +35,13 @@ public class GoogleDriveClientTests
 
         var files = await client.ListFilesAsync(CancellationToken.None);
 
-        Assert.Equal(3, handler.Requests.Count);
+        Assert.Equal(4, handler.Requests.Count);
         Assert.All(handler.Requests, r => Assert.Equal("tok", r.BearerToken));
         Assert.Contains("mimeType%20%3D%20%27application%2Fvnd.google-apps.folder%27", handler.Requests[0].Url);
         Assert.Equal(HttpMethod.Post, handler.Requests[1].Method);
         Assert.Contains("\"name\":\"DesktopIconGrid\"", handler.Requests[1].Body);
-        Assert.Contains("%27newfolder%27%20in%20parents", handler.Requests[2].Url);
+        Assert.Contains("orderBy=createdTime", handler.Requests[2].Url); // looks again in case another device created one too
+        Assert.Contains("%27newfolder%27%20in%20parents", handler.Requests[3].Url);
 
         Assert.Equal(2, files.Count);
         Assert.Equal("f1", files[0].Id);
@@ -52,7 +54,26 @@ public class GoogleDriveClientTests
         // The folder id is cached: a second listing only issues the list call.
         handler.Enqueue(HttpStatusCode.OK, EmptyList);
         await client.ListFilesAsync(CancellationToken.None);
-        Assert.Equal(4, handler.Requests.Count);
+        Assert.Equal(5, handler.Requests.Count);
+    }
+
+    [Fact]
+    public async Task First_use_on_two_devices_keeps_the_folder_created_first()
+    {
+        var handler = new FakeHttpHandler()
+            .Enqueue(HttpStatusCode.OK, EmptyList)
+            .Enqueue(HttpStatusCode.OK, """{"id":"mine","name":"DesktopIconGrid","createdTime":"2026-11-04T10:00:01.000Z"}""")
+            .Enqueue(HttpStatusCode.OK, """{"files":[{"id":"theirs","name":"DesktopIconGrid","createdTime":"2026-11-04T10:00:00.000Z"},{"id":"mine","name":"DesktopIconGrid","createdTime":"2026-11-04T10:00:01.000Z"}]}""")
+            .Enqueue(HttpStatusCode.NoContent, string.Empty)
+            .Enqueue(HttpStatusCode.OK, EmptyList);
+        var client = new GoogleDriveClient(new HttpClient(handler), new StaticTokens("tok"));
+
+        await client.ListFilesAsync(CancellationToken.None);
+
+        Assert.Equal(5, handler.Requests.Count);
+        Assert.Equal(HttpMethod.Delete, handler.Requests[3].Method);
+        Assert.Contains("files/mine", handler.Requests[3].Url);
+        Assert.Contains("%27theirs%27%20in%20parents", handler.Requests[4].Url);
     }
 
     [Fact]

@@ -35,7 +35,7 @@ public static class RunningProcesses
         }
 
         var count = (int)(needed / sizeof(uint));
-        var buffer = new char[1024];
+        var buffer = new char[32768]; // long paths: the app manifest is longPathAware
         for (var i = 0; i < count; i++)
         {
             var handle = NativeMethods.OpenProcess(ProcessQueryLimitedInformation, false, ids[i]);

@@ -13,6 +13,7 @@ public sealed class DriveBucketUploader(SyncService sync, Action<string, string>
 {
     private readonly Queue<UploadJob> _pending = new();
     private readonly List<string> _failures = [];
+    private readonly Dictionary<string, List<DriveEntry>> _listings = new(StringComparer.Ordinal);
     private CancellationTokenSource? _cancellation;
     private GaugeState? _gauge;
     private int _total;
@@ -58,6 +59,7 @@ public sealed class DriveBucketUploader(SyncService sync, Action<string, string>
         var token = _cancellation.Token;
         _done = 0;
         _failures.Clear();
+        _listings.Clear();
         var lastFolder = string.Empty;
         ShowGauge(0, "Preparing upload…");
 
@@ -141,15 +143,13 @@ public sealed class DriveBucketUploader(SyncService sync, Action<string, string>
             name = directory;
         }
 
-        var siblings = await files.ListChildrenAsync(parentId, cancellationToken);
-        var existingFolder = siblings.FirstOrDefault(e => e.IsFolder && string.Equals(e.Name, name, StringComparison.OrdinalIgnoreCase));
-        var target = existingFolder ?? await files.CreateFolderAsync(parentId, name, cancellationToken);
-
-        // One listing serves every file in this folder (a folder created just now is empty).
-        IReadOnlyList<DriveEntry>? targetChildren = null;
-        if (!string.Equals(policy, DriveBucketHandler.KeepBoth, StringComparison.OrdinalIgnoreCase))
+        var siblings = await ListingAsync(files, parentId, cancellationToken);
+        var target = siblings.FirstOrDefault(e => e.IsFolder && string.Equals(e.Name, name, StringComparison.OrdinalIgnoreCase));
+        if (target is null)
         {
-            targetChildren = existingFolder is null ? [] : await files.ListChildrenAsync(target.Id, cancellationToken);
+            target = await files.CreateFolderAsync(parentId, name, cancellationToken);
+            siblings.Add(target);
+            _listings[target.Id] = []; // created just now, so it is empty: no listing needed
         }
 
         foreach (var file in Directory.EnumerateFiles(directory))
@@ -157,7 +157,7 @@ public sealed class DriveBucketUploader(SyncService sync, Action<string, string>
             cancellationToken.ThrowIfCancellationRequested();
             try
             {
-                await UploadFileAsync(files, target.Id, file, policy, cancellationToken, targetChildren);
+                await UploadFileAsync(files, target.Id, file, policy, cancellationToken);
             }
             catch (Exception ex) when (SyncCoordinator.IsSyncError(ex) && ex is not OperationCanceledException)
             {
@@ -172,14 +172,14 @@ public sealed class DriveBucketUploader(SyncService sync, Action<string, string>
         }
     }
 
-    /// <param name="siblings">The folder's current entries, when the caller already listed them.</param>
-    private async Task UploadFileAsync(IDriveFiles files, string parentId, string path, string policy, CancellationToken cancellationToken, IReadOnlyList<DriveEntry>? siblings = null)
+    private async Task UploadFileAsync(IDriveFiles files, string parentId, string path, string policy, CancellationToken cancellationToken)
     {
         var name = Path.GetFileName(path);
         string? existingId = null;
+        List<DriveEntry>? siblings = null;
         if (!string.Equals(policy, DriveBucketHandler.KeepBoth, StringComparison.OrdinalIgnoreCase))
         {
-            siblings ??= await files.ListChildrenAsync(parentId, cancellationToken);
+            siblings = await ListingAsync(files, parentId, cancellationToken);
             var match = siblings.FirstOrDefault(e => !e.IsFolder && string.Equals(e.Name, name, StringComparison.OrdinalIgnoreCase));
             if (match is not null)
             {
@@ -200,8 +200,25 @@ public sealed class DriveBucketUploader(SyncService sync, Action<string, string>
         var progress = new Progress<long>(sent => ShowGauge(length == 0 ? 100 : sent * 100.0 / length, label));
 
         await using var stream = File.OpenRead(path);
-        await files.UploadAsync(parentId, name, MimeTypes.FromFileName(name), stream, length, existingId, progress, cancellationToken);
+        var uploaded = await files.UploadAsync(parentId, name, MimeTypes.FromFileName(name), stream, length, existingId, progress, cancellationToken);
+        if (siblings is not null && existingId is null)
+        {
+            siblings.Add(uploaded); // keep the cached listing current for the rest of this run
+        }
+
         AppLog.Default.Info("Bucket", $"{(existingId is null ? "Uploaded" : "Replaced")} {name} ({length:N0} bytes)");
+    }
+
+    /// <summary>The folder's entries, listed once per upload run (not once per file) and kept current as files are added.</summary>
+    private async Task<List<DriveEntry>> ListingAsync(IDriveFiles files, string folderId, CancellationToken cancellationToken)
+    {
+        if (!_listings.TryGetValue(folderId, out var listing))
+        {
+            listing = (await files.ListChildrenAsync(folderId, cancellationToken)).ToList();
+            _listings[folderId] = listing;
+        }
+
+        return listing;
     }
 
     private void ShowGauge(double percent, string detail)

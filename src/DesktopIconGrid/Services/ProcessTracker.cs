@@ -212,8 +212,17 @@ public sealed class ProcessTracker : IDisposable
     }
 
     /// <summary>
+    /// Where Windows keeps app-execution aliases (Store apps, winget, Windows Terminal): 0-byte stubs whose real
+    /// process has another image path, so shortcuts to them rely on launched-process tracking only. Settable for tests.
+    /// </summary>
+    internal static string AppAliasDirectory { get; set; } = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData, Environment.SpecialFolderOption.DoNotVerify),
+        "Microsoft", "WindowsApps");
+
+    /// <summary>
     /// The full path of the executable a shortcut starts, for executables and bare commands; <see langword="null"/>
-    /// for documents, links, folders, shell locations and the Windows shell itself (which is always running).
+    /// for documents, links, folders, shell locations, app-execution aliases and the Windows shell itself (which is
+    /// always running).
     /// </summary>
     internal static string? ExecutablePathOf(string? location)
     {
@@ -243,7 +252,23 @@ public sealed class ProcessTracker : IDisposable
             return null;
         }
 
-        return full is not null && string.Equals(Path.GetFileName(full), "explorer.exe", StringComparison.OrdinalIgnoreCase) ? null : full;
+        if (full is null
+            || string.Equals(Path.GetFileName(full), "explorer.exe", StringComparison.OrdinalIgnoreCase)
+            || IsAppAlias(full))
+        {
+            return null;
+        }
+
+        return full;
+    }
+
+    private static bool IsAppAlias(string path)
+    {
+        var aliases = AppAliasDirectory.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+        return aliases.Length > 0
+               && path.Length > aliases.Length
+               && path.StartsWith(aliases, StringComparison.OrdinalIgnoreCase)
+               && (path[aliases.Length] == Path.DirectorySeparatorChar || path[aliases.Length] == Path.AltDirectorySeparatorChar);
     }
 
     private void TrimOldLogs(string prefix)

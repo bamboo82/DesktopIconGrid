@@ -1,0 +1,63 @@
+name: Release
+
+# Pushing a tag such as v0.2.0 builds, tests and publishes that version and attaches the zips to a
+# GitHub release whose notes are the matching section of CHANGELOG.md.
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Version from tag
+        id: version
+        shell: pwsh
+        run: |
+          $version = "${{ github.ref_name }}".TrimStart("v")
+          "version=$version" >> $env:GITHUB_OUTPUT
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --no-restore -c Release -p:Version=${{ steps.version.outputs.version }}
+
+      - name: Test
+        run: dotnet test --no-build -c Release
+
+      - name: Publish (needs the .NET 10 Desktop Runtime)
+        run: dotnet publish src/DesktopIconGrid -c Release -r win-x64 --self-contained false -p:PublishSingleFile=true -p:Version=${{ steps.version.outputs.version }} -o publish/framework-dependent
+
+      - name: Publish (self-contained)
+        run: dotnet publish src/DesktopIconGrid -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:Version=${{ steps.version.outputs.version }} -o publish/self-contained
+
+      - name: Zip
+        shell: pwsh
+        run: |
+          Compress-Archive -Path publish/framework-dependent/* -DestinationPath DesktopIconGrid-${{ steps.version.outputs.version }}-win-x64.zip
+          Compress-Archive -Path publish/self-contained/* -DestinationPath DesktopIconGrid-${{ steps.version.outputs.version }}-win-x64-self-contained.zip
+
+      - name: Release notes from CHANGELOG.md
+        shell: pwsh
+        run: |
+          $text = Get-Content CHANGELOG.md -Raw
+          $version = [regex]::Escape("${{ steps.version.outputs.version }}")
+          $pattern = "(?s)## \[$version\][^\n]*\n(.*?)(\n## \[|$)"
+          $notes = if ($text -match $pattern) { $Matches[1].Trim() } else { "See CHANGELOG.md." }
+          Set-Content -Path notes.md -Value $notes
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          body_path: notes.md
+          files: |
+            DesktopIconGrid-*.zip

@@ -226,7 +226,7 @@ public sealed class LauncherViewModel : ObservableObject
 
         var model = viewModel.Model;
         var size = IconSize;
-        IconWorker.Shared.RunAsync(() => Icons.GetItemIcon(model, size))
+        IconWorker.Shared.RunAsync(() => Icons.GetItemIcon(model, size), IconWorker.LookupTimeout, model.Name)
             .ContinueWith(
                 task =>
                 {
@@ -238,6 +238,20 @@ public sealed class LauncherViewModel : ObservableObject
                 CancellationToken.None,
                 TaskContinuationOptions.None,
                 _uiScheduler);
+    }
+
+    /// <summary>
+    /// Resolves the icons of the Add Windows item menu on the icon worker ahead of time, one at a time after the
+    /// bar's own icons, so opening the menu for the first time does not wait for twenty shell lookups.
+    /// </summary>
+    public async Task WarmCatalogIconsAsync()
+    {
+        await Task.Delay(TimeSpan.FromSeconds(5));
+        foreach (var definition in SpecialItemSections.SelectMany(s => s.Items))
+        {
+            var source = definition.IconPath ?? definition.Location;
+            await IconWorker.Shared.RunAsync(() => Icons.GetIcon(source, 16), IconWorker.LookupTimeout, source);
+        }
     }
 
     public ItemViewModel GetOrCreateViewModel(LauncherItem item)

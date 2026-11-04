@@ -108,6 +108,11 @@ created in your Drive.
 
 ## Building
 
+Ready-made builds are attached to each [release](https://github.com/bamboo82/DesktopIconGrid/releases):
+a small zip that needs the .NET 10 Desktop Runtime and a self-contained one that does not. Every push
+also leaves a `DesktopIconGrid-win-x64` artifact on its Actions run. Changes are listed in
+[CHANGELOG.md](CHANGELOG.md).
+
 Requirements: Windows 10/11 and the [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0).
 
 ```bash
@@ -118,7 +123,8 @@ dotnet build
 dotnet run --project src/DesktopIconGrid
 ```
 
-Run the unit tests (they cover the platform-neutral core and run on any OS):
+Run the unit tests. The core tests run on any OS; the `DesktopIconGrid.App.Tests` project (WPF-side
+logic such as the icon worker and the running badge's path matching) needs Windows and is skipped elsewhere:
 
 ```bash
 dotnet test
@@ -132,6 +138,13 @@ dotnet publish src/DesktopIconGrid -c Release -r win-x64 --self-contained false 
 
 Add `--self-contained true` to bundle the runtime as well.
 
+To publish a release, add its section to `CHANGELOG.md` and push a tag; the release workflow builds,
+tests, publishes both zips and creates the GitHub release with that section as its notes:
+
+```bash
+git tag v0.2.0 && git push origin v0.2.0
+```
+
 The solution also compiles on Linux and macOS (`EnableWindowsTargeting` is set), which is
 how CI builds it, but the app itself only runs on Windows.
 
@@ -140,7 +153,8 @@ how CI builds it, but the app itself only runs on Windows.
 ```
 src/DesktopIconGrid.Core/        models, ordering/grouping logic, JSON storage, launch planning, Google OAuth/Drive, sync (no WPF)
 src/DesktopIconGrid/             WPF app: bar window, icon grid control, dialogs, shell interop, view models
-tests/DesktopIconGrid.Core.Tests/  xunit tests for the core library
+tests/DesktopIconGrid.Core.Tests/  xunit tests for the core library (any OS)
+tests/DesktopIconGrid.App.Tests/   xunit tests for the WPF-side logic without UI (Windows only)
 ```
 
 ## Local files

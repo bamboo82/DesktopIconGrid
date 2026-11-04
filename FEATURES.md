@@ -359,20 +359,21 @@ Global show/hide hotkey; tray icon with show/hide, reset position and the common
 
 ## 13. Reliability and polish backlog
 
-Two independent review rounds (of commits 85a52e9 and 1ce4e3c) have been worked through. Done
-from them: single instance with show-on-relaunch and foreground handover (the show event exists
-before the window does), no window-less process after a startup error, unknown item kinds and
-newer layout versions preserved (the version number too, so the newer app does not migrate its
-items twice), durable saves with `layout.json.bak`, sync conflicts decided by Drive's clock and a
-per-install device id with the linked file id used for every overwrite, Mark-of-the-Web with the
-source URLs on downloads and no direct launch of executables, timeouts on every HTTP phase
-(metadata, multipart and chunk uploads, download headers, stalled bodies, icon downloads with a
-Cancel button), resumable uploads that honour `Range` on 308, probe the session before retrying
-and back off on 429/5xx, one folder listing per dropped directory, revoked-token recovery,
-complete run logs, Windows argument quoting, hotkey registration that keeps the old key on
-failure, per-instance MCI alias, the pending upload flushed on exit (including one already in
-flight, with the bar disabled meanwhile), icon lookups on one STA worker with stale results
-dropped and one shell call per path, running badge by executable path.
+Three independent review rounds (of commits 85a52e9, 1ce4e3c and b150bbe) have been worked
+through; 0.2.0 is the result (see CHANGELOG.md). Done from them: single instance with
+show-on-relaunch and foreground handover, no window-less process after a startup error, unknown
+item kinds and newer layout versions preserved (the version number too), durable saves with
+`layout.json.bak`, sync conflicts decided by Drive's clock and a per-install device id with the
+linked file id used for every overwrite, one `DesktopIconGrid` folder even when two devices
+connect at once, Mark-of-the-Web with source URLs on downloads and no direct launch of
+executables, timeouts on every HTTP phase, resumable uploads that honour `Range` on 308, probe
+the session, back off with jitter and honour `Retry-After`, one folder listing per upload run,
+revoked-token recovery, complete run logs, Windows argument quoting, hotkey registration that
+keeps the old key on failure, per-instance MCI alias, the pending upload flushed on exit
+(including one already in flight), icon lookups on one message-pumping STA worker with a 20 s
+deadline, stale results dropped, one shell call per path, the properties preview and the
+Windows-item menu icons off the UI thread, running badge by executable path (never the shell or
+an app-execution alias), a release workflow, and a Windows-only test project for the WPF side.
 
 Still open, in the order they should be taken:
 
@@ -389,10 +390,11 @@ Still open, in the order they should be taken:
 5. **Localisation** — strings in `.resx` with zh-TW/zh-CN, default text-icon font by UI culture.
 6. **Non-modal errors** — tray balloons for non-fatal failures; undo for Remove.
 7. **Table stakes** — start with Windows, auto-hide/dock to a screen edge (AppBar), installer
-   (MSIX/winget), signed releases on tags, versioning from the tag.
-8. **Engineering** — a `net10.0-windows` test project for the WPF-side pure functions (icon
-   worker, process tracker path matching, sync coordinator flush), CI on tags, narrower
-   exception filters in `SyncCoordinator.IsSyncError`, DPAPI for the stored client secret.
+   (MSIX/winget), signed releases, versioning from the tag (the release workflow does this).
+8. **Engineering** — a `SyncCoordinator` flush test (needs a test double for the launcher view
+   model), app-execution aliases resolved through their reparse data so Store apps get the badge
+   too, narrower exception filters in `SyncCoordinator.IsSyncError`, DPAPI for the stored client
+   secret.
 
 ## 14. Out of scope (for now)
 

@@ -1,4 +1,5 @@
 using System.Net;
+using System.Net.Http.Headers;
 using System.Text;
 using DesktopIconGrid.Core.Sync;
 
@@ -211,23 +212,100 @@ public class DriveFilesTests
             .Enqueue(_ => Incomplete(GoogleDriveClient.ChunkSize))
             .Enqueue(HttpStatusCode.OK, """{"id":"retry","name":"big.bin","mimeType":"application/octet-stream"}""");
         var client = Client(handler);
-        var delays = new List<int>();
-        client.RetryDelay = (attempt, _) =>
+        var delays = new List<TimeSpan>();
+        client.RetryDelay = (delay, _) =>
         {
-            delays.Add(attempt);
+            delays.Add(delay);
             return Task.CompletedTask;
         };
 
         var entry = await client.UploadAsync("parent1", "big.bin", "application/octet-stream", new MemoryStream(data), size, null, null, CancellationToken.None);
 
         Assert.Equal("retry", entry.Id);
-        Assert.Equal([1], delays);
+        Assert.InRange(Assert.Single(delays).TotalSeconds, 1.5, 2.5); // 2^1 s with ±25 % jitter
         var probe = handler.Requests[2];
         Assert.Equal(HttpMethod.Put, probe.Method);
         Assert.Equal($"bytes */{size}", probe.ContentRange);
         Assert.Equal(0, probe.BodyLength);
         Assert.Equal($"bytes 4096-{GoogleDriveClient.ChunkSize - 1}/{size}", handler.Requests[3].ContentRange);
         Assert.Equal($"bytes {GoogleDriveClient.ChunkSize}-{size - 1}/{size}", handler.Requests[4].ContentRange);
+    }
+
+    [Fact]
+    public async Task Resumable_upload_waits_for_Retry_After_on_a_rate_limit()
+    {
+        var size = GoogleDriveClient.MultipartLimit + 1;
+        var sessionUri = new Uri("https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable&upload_id=limited");
+        var handler = new FakeHttpHandler()
+            .Enqueue(_ => Session(sessionUri))
+            .Enqueue(_ =>
+            {
+                var limited = new HttpResponseMessage((HttpStatusCode)429) { Content = new StringContent("""{"error":{"message":"Rate Limit Exceeded"}}""") };
+                limited.Headers.RetryAfter = new RetryConditionHeaderValue(TimeSpan.FromSeconds(7));
+                return limited;
+            })
+            .Enqueue(_ => Incomplete(0))
+            .Enqueue(HttpStatusCode.OK, """{"id":"limited","name":"big.bin","mimeType":"application/octet-stream"}""");
+        var client = Client(handler);
+        var delays = new List<TimeSpan>();
+        client.RetryDelay = (delay, _) =>
+        {
+            delays.Add(delay);
+            return Task.CompletedTask;
+        };
+
+        var entry = await client.UploadAsync("parent1", "big.bin", "application/octet-stream", new MemoryStream(new byte[size]), size, null, null, CancellationToken.None);
+
+        Assert.Equal("limited", entry.Id);
+        Assert.Equal(TimeSpan.FromSeconds(7), Assert.Single(delays));
+        Assert.Equal(0, handler.Pending);
+    }
+
+    [Fact]
+    public void Backoff_grows_with_jitter_and_caps_Retry_After()
+    {
+        for (var i = 0; i < 20; i++)
+        {
+            Assert.InRange(GoogleDriveClient.BackoffDelay(1, null).TotalSeconds, 1.5, 2.5);
+            Assert.InRange(GoogleDriveClient.BackoffDelay(3, null).TotalSeconds, 6, 10);
+        }
+
+        Assert.Equal(TimeSpan.FromSeconds(30), GoogleDriveClient.BackoffDelay(1, TimeSpan.FromSeconds(30)));
+        Assert.Equal(GoogleDriveClient.MaxRetryAfter, GoogleDriveClient.BackoffDelay(1, TimeSpan.FromHours(2)));
+        Assert.InRange(GoogleDriveClient.BackoffDelay(2, TimeSpan.Zero).TotalSeconds, 3, 5); // a zero header is ignored
+    }
+
+    [Fact]
+    public async Task Resumable_upload_rewinds_a_seekable_stream_when_Drive_lost_data()
+    {
+        var size = GoogleDriveClient.ChunkSize + 100;
+        var sessionUri = new Uri("https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable&upload_id=rewind");
+        var handler = new FakeHttpHandler()
+            .Enqueue(_ => Session(sessionUri))
+            .Enqueue(_ => Incomplete(GoogleDriveClient.ChunkSize)) // chunk 1 accepted
+            .Enqueue(_ => Incomplete(1000)) // chunk 2: Drive now claims to hold only 1000 bytes
+            .Enqueue(HttpStatusCode.OK, """{"id":"rewind","name":"big.bin","mimeType":"application/octet-stream"}""");
+
+        await Client(handler).UploadAsync("parent1", "big.bin", "application/octet-stream", new MemoryStream(new byte[size]), size, null, null, CancellationToken.None);
+
+        Assert.Equal($"bytes {GoogleDriveClient.ChunkSize}-{size - 1}/{size}", handler.Requests[2].ContentRange);
+        Assert.Equal($"bytes 1000-{size - 1}/{size}", handler.Requests[3].ContentRange);
+        Assert.Equal(size - 1000, handler.Requests[3].BodyLength);
+    }
+
+    [Fact]
+    public async Task Resumable_upload_cannot_rewind_a_forward_only_stream()
+    {
+        var size = GoogleDriveClient.ChunkSize + 100;
+        var sessionUri = new Uri("https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable&upload_id=forward");
+        var handler = new FakeHttpHandler()
+            .Enqueue(_ => Session(sessionUri))
+            .Enqueue(_ => Incomplete(GoogleDriveClient.ChunkSize))
+            .Enqueue(_ => Incomplete(1000));
+
+        var ex = await Assert.ThrowsAsync<DriveException>(() => Client(handler).UploadAsync("parent1", "big.bin", "application/octet-stream", new ForwardOnlyStream(new byte[size]), size, null, null, CancellationToken.None));
+
+        Assert.Contains("cannot be re-read", ex.Message);
     }
 
     [Fact]
@@ -284,6 +362,40 @@ public class DriveFilesTests
         }
 
         return response;
+    }
+
+    /// <summary>A readable stream that cannot seek (like a pipe), to exercise the rewind failure.</summary>
+    private sealed class ForwardOnlyStream(byte[] data) : Stream
+    {
+        private readonly MemoryStream _inner = new(data);
+
+        public override bool CanRead => true;
+
+        public override bool CanSeek => false;
+
+        public override bool CanWrite => false;
+
+        public override long Length => throw new NotSupportedException();
+
+        public override long Position
+        {
+            get => throw new NotSupportedException();
+            set => throw new NotSupportedException();
+        }
+
+        public override ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken) => _inner.ReadAsync(buffer, cancellationToken);
+
+        public override int Read(byte[] buffer, int offset, int count) => _inner.Read(buffer, offset, count);
+
+        public override void Flush()
+        {
+        }
+
+        public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
+
+        public override void SetLength(long value) => throw new NotSupportedException();
+
+        public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
     }
 
     /// <summary>A body whose reads never complete unless cancelled.</summary>
