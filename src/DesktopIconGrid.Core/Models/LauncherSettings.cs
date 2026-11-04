@@ -25,7 +25,13 @@ public sealed partial class LauncherSettings
 
     public bool AlwaysOnTop { get; set; }
 
-    /// <summary>Bar background as <c>#RRGGBB</c>.</summary>
+    /// <summary>
+    /// Id of a theme in <see cref="ThemeCatalog"/>, or <c>custom</c> to derive one from <see cref="BackgroundColor"/>.
+    /// <see langword="null"/> only occurs for layouts saved before themes existed; <see cref="Normalize"/> migrates it.
+    /// </summary>
+    public string? Theme { get; set; } = ThemeCatalog.ClassicId;
+
+    /// <summary>Bar background as <c>#RRGGBB</c>, used by the custom theme.</summary>
     public string BackgroundColor { get; set; } = DefaultBackgroundColor;
 
     public LauncherSettings Clone() => (LauncherSettings)MemberwiseClone();
@@ -38,6 +44,7 @@ public sealed partial class LauncherSettings
         ShowLabels = source.ShowLabels;
         DoubleClickToLaunch = source.DoubleClickToLaunch;
         AlwaysOnTop = source.AlwaysOnTop;
+        Theme = source.Theme;
         BackgroundColor = source.BackgroundColor;
         Normalize();
     }
@@ -69,6 +76,21 @@ public sealed partial class LauncherSettings
         else if (BackgroundColor != BackgroundColor.ToUpperInvariant())
         {
             BackgroundColor = BackgroundColor.ToUpperInvariant();
+        }
+
+        if (Theme is null)
+        {
+            // Layout saved before themes existed: keep a changed colour as the custom theme.
+            Theme = BackgroundColor == DefaultBackgroundColor ? ThemeCatalog.ClassicId : ThemeCatalog.CustomId;
+        }
+        else if (!ThemeCatalog.IsKnown(Theme))
+        {
+            Theme = ThemeCatalog.ClassicId;
+            changed = true;
+        }
+        else
+        {
+            Theme = Theme.Trim().ToLowerInvariant();
         }
 
         return changed;

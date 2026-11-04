@@ -21,7 +21,7 @@ button at the top-right and a small options arrow at the bottom-right.
 | Close button (`×`) | Phase 1: exits the app. Phase 3: hides the bar to the tray instead. |
 | Bottom-right arrow | Opens the options menu: *Settings…*, *Launch Multi Launch group*, *About*, *Exit*. |
 | Edges / corners | Resizable (WindowChrome resize border, no caption). The icon grid reflows to the new width. |
-| Background | Flat colour, configurable in Settings (default: the olive grey of the reference). |
+| Background | A theme: Classic (the olive grey of the reference), Graphite, Paper, Midnight, Sand, or a Custom colour with automatically matched text and highlight colours. See [docs/THEMES.md](docs/THEMES.md). |
 
 - Icons are laid out in reading order and **wrap** to fill the width: the number of
   columns is `floor(availableWidth / cellSize)`. Rows grow as needed; a vertical
@@ -189,7 +189,7 @@ Both dialogs follow the reference layout: a labelled form, an icon preview with
 | Show labels | off |
 | Launch on | single click (or double click) |
 | Always on top | off |
-| Background colour | olive grey |
+| Theme | Classic (Graphite, Paper, Midnight, Sand, or Custom colour) |
 | Start with Windows | off — Phase 3 (Run registry key) |
 | Show/hide hotkey | none — Phase 3 |
 
@@ -208,7 +208,7 @@ Settings live in the same JSON file as the layout and apply immediately on *Save
   "version": 1,
   "settings": { "iconSize": 32, "cellPadding": 10, "showLabels": false,
                 "doubleClickToLaunch": false, "alwaysOnTop": false,
-                "backgroundColor": "#73806E" },
+                "theme": "classic", "backgroundColor": "#73806E" },
   "window": { "left": 100, "top": 100, "width": 520, "height": 180 },
   "items": [
     { "$type": "shortcut", "id": "…", "name": "WinSCP", "location": "U:\\E\\WinSCP\\WinSCP.exe",

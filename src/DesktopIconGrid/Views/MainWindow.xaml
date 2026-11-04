@@ -29,9 +29,9 @@
     <KeyBinding Key="Escape" Command="{Binding CloseGroupPopupCommand}" />
   </Window.InputBindings>
 
-  <Border BorderBrush="{StaticResource BarBorderBrush}"
+  <Border BorderBrush="{DynamicResource Theme.Border}"
           BorderThickness="1"
-          Background="{Binding BackgroundBrush}">
+          Background="{DynamicResource Theme.Background}">
     <Grid>
       <Grid.ColumnDefinitions>
         <ColumnDefinition Width="14" />
@@ -54,7 +54,6 @@
       <!-- Close and options -->
       <Grid Grid.Column="2" Margin="0,2,2,2">
         <Button Style="{StaticResource BarButtonStyle}"
-                Foreground="{Binding ForegroundBrush}"
                 VerticalAlignment="Top"
                 ToolTip="Exit"
                 Click="Close_Click">
@@ -62,7 +61,6 @@
         </Button>
         <Button x:Name="OptionsButton"
                 Style="{StaticResource BarButtonStyle}"
-                Foreground="{Binding ForegroundBrush}"
                 VerticalAlignment="Bottom"
                 ToolTip="Options"
                 Click="Options_Click">
@@ -93,8 +91,8 @@
              Placement="Bottom"
              PopupAnimation="Fade"
              AllowsTransparency="False">
-        <Border Background="{Binding BackgroundBrush}"
-                BorderBrush="{StaticResource BarBorderBrush}"
+        <Border Background="{DynamicResource Theme.Background}"
+                BorderBrush="{DynamicResource Theme.Border}"
                 BorderThickness="1"
                 Padding="3"
                 Width="{Binding PopupWidth}"
@@ -102,7 +100,7 @@
           <DockPanel>
             <TextBlock DockPanel.Dock="Top"
                        Text="{Binding OpenGroup.Name}"
-                       Foreground="{Binding ForegroundBrush}"
+                       Foreground="{DynamicResource Theme.Foreground}"
                        FontSize="11"
                        FontWeight="SemiBold"
                        Margin="4,1,4,3"

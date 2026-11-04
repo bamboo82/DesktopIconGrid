@@ -19,15 +19,15 @@ Google sign-in token.
 - **Multi Launch group** — flag any shortcuts and start them all together.
 - **Drag and drop** — reorder icons, drop files or folders from Explorer, drop links
   from a browser.
-- **Settings** — icon size, spacing, labels, single or double click, always on top,
-  background colour.
+- **Themes and settings** — Classic, Graphite, Paper, Midnight, Sand or a custom colour;
+  icon size, spacing, labels, single or double click, always on top.
 - **Google Drive sync** — keep named copies of your settings on Google Drive ("Work",
   "Home", …), load them on another PC, and let linked devices upload changes automatically.
 - Everything is saved automatically to `%LocalAppData%\DesktopIconGrid\layout.json`.
 
 See [FEATURES.md](FEATURES.md) for the full feature plan and delivery phases, and
 [docs/SPECIAL_ICONS.md](docs/SPECIAL_ICONS.md) for the design of special icons such as the
-Google Drive Bucket.
+Google Drive Bucket, and [docs/THEMES.md](docs/THEMES.md) for the themes.
 
 ## Using it
 

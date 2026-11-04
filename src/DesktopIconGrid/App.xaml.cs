@@ -36,6 +36,9 @@ public partial class App : Application
             launcher,
             action => Dispatcher.BeginInvoke(DispatcherPriority.Background, action));
 
+        ThemeManager.Apply(viewModel.Palette);
+        viewModel.SettingsChanged += (_, _) => ThemeManager.Apply(viewModel.Palette);
+
         var sync = CreateSyncCoordinator(viewModel, dialogs);
         dialogs.SyncViewModelFactory = () => new SyncViewModel(sync, dialogs);
 

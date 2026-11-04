@@ -1,6 +1,7 @@
 using System.Windows.Media;
 using DesktopIconGrid.Core.Models;
 using DesktopIconGrid.Infrastructure;
+using DesktopIconGrid.Services;
 
 namespace DesktopIconGrid.ViewModels;
 
@@ -18,6 +19,7 @@ public sealed class SettingsViewModel : ObservableObject
     private bool _doubleClickToLaunch;
     private bool _alwaysOnTop;
     private string _backgroundColor;
+    private ThemePalette _selectedTheme;
 
     public SettingsViewModel(LauncherSettings current)
     {
@@ -28,12 +30,19 @@ public sealed class SettingsViewModel : ObservableObject
         _doubleClickToLaunch = current.DoubleClickToLaunch;
         _alwaysOnTop = current.AlwaysOnTop;
         _backgroundColor = current.BackgroundColor;
+
+        Themes = [.. ThemeCatalog.Builtin, ThemeCatalog.CreateCustom(current.BackgroundColor)];
+        _selectedTheme = Themes.FirstOrDefault(t => string.Equals(t.Id, current.Theme, StringComparison.OrdinalIgnoreCase)) ?? Themes[0];
+
         SelectPresetCommand = new RelayCommand<string>(preset => BackgroundColor = preset);
     }
 
     public IReadOnlyList<int> IconSizes => LauncherSettings.IconSizes;
 
     public IReadOnlyList<string> Presets => ColorPresets;
+
+    /// <summary>Built-in themes followed by "Custom".</summary>
+    public IReadOnlyList<ThemePalette> Themes { get; }
 
     public int MinCellPadding => LauncherSettings.MinCellPadding;
 
@@ -89,6 +98,21 @@ public sealed class SettingsViewModel : ObservableObject
         set => SetProperty(ref _alwaysOnTop, value);
     }
 
+    public ThemePalette SelectedTheme
+    {
+        get => _selectedTheme;
+        set
+        {
+            if (value is not null && SetProperty(ref _selectedTheme, value))
+            {
+                OnPropertyChanged(nameof(IsCustomTheme));
+                OnPropertyChanged(nameof(PreviewBrush));
+            }
+        }
+    }
+
+    public bool IsCustomTheme => _selectedTheme.IsCustom;
+
     public string BackgroundColor
     {
         get => _backgroundColor;
@@ -105,18 +129,12 @@ public sealed class SettingsViewModel : ObservableObject
 
     public bool IsColorValid => LauncherSettings.IsValidColor(_backgroundColor);
 
-    public Brush PreviewBrush
-    {
-        get
-        {
-            var color = LauncherViewModel.TryParseColor(_backgroundColor) ?? Colors.Transparent;
-            var brush = new SolidColorBrush(color);
-            brush.Freeze();
-            return brush;
-        }
-    }
+    /// <summary>The bar background the current choice produces.</summary>
+    public Brush PreviewBrush => IsCustomTheme
+        ? (IsColorValid ? ThemeManager.ToBrush(_backgroundColor) : Brushes.Transparent)
+        : ThemeManager.ToBrush(_selectedTheme.Background);
 
-    public bool CanSave => IsColorValid;
+    public bool CanSave => !IsCustomTheme || IsColorValid;
 
     public RelayCommand<string> SelectPresetCommand { get; }
 
@@ -129,7 +147,8 @@ public sealed class SettingsViewModel : ObservableObject
             ShowLabels = _showLabels,
             DoubleClickToLaunch = _doubleClickToLaunch,
             AlwaysOnTop = _alwaysOnTop,
-            BackgroundColor = _backgroundColor,
+            Theme = _selectedTheme.Id,
+            BackgroundColor = IsColorValid ? _backgroundColor : LauncherSettings.DefaultBackgroundColor,
         };
         settings.Normalize();
         return settings;

@@ -8,14 +8,31 @@
   <conv:InverseBooleanConverter x:Key="InverseBool" />
   <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
 
-  <!-- Brushes -->
-  <SolidColorBrush x:Key="BarBorderBrush" Color="#FF333333" />
-  <SolidColorBrush x:Key="GripBrush" Color="#70FFFFFF" />
-  <SolidColorBrush x:Key="HoverBrush" Color="#2EFFFFFF" />
-  <SolidColorBrush x:Key="HoverBorderBrush" Color="#50FFFFFF" />
-  <SolidColorBrush x:Key="PressedBrush" Color="#50FFFFFF" />
-  <SolidColorBrush x:Key="AccentBrush" Color="#FF4C8BF5" />
-  <SolidColorBrush x:Key="DropTargetBrush" Color="#4A4C8BF5" />
+  <!--
+    Theme brushes. These defaults are the "Classic" palette; ThemeManager replaces them at runtime
+    and everything that uses them with DynamicResource follows.
+  -->
+  <SolidColorBrush x:Key="Theme.Background" Color="#FF73806E" />
+  <SolidColorBrush x:Key="Theme.Border" Color="#FF333333" />
+  <SolidColorBrush x:Key="Theme.Foreground" Color="#FFFFFFFF" />
+  <SolidColorBrush x:Key="Theme.Hint" Color="#FFFFFFFF" Opacity="0.65" />
+  <SolidColorBrush x:Key="Theme.Hover" Color="#2EFFFFFF" />
+  <SolidColorBrush x:Key="Theme.HoverBorder" Color="#50FFFFFF" />
+  <SolidColorBrush x:Key="Theme.Pressed" Color="#50FFFFFF" />
+  <SolidColorBrush x:Key="Theme.Grip" Color="#70FFFFFF" />
+  <SolidColorBrush x:Key="Theme.Accent" Color="#FF4C8BF5" />
+  <SolidColorBrush x:Key="Theme.DropTarget" Color="#4A4C8BF5" />
+  <DrawingBrush x:Key="Theme.GripPattern" TileMode="Tile" Viewport="0,0,4,4" ViewportUnits="Absolute" Viewbox="0,0,4,4" ViewboxUnits="Absolute">
+    <DrawingBrush.Drawing>
+      <GeometryDrawing Brush="#70FFFFFF">
+        <GeometryDrawing.Geometry>
+          <EllipseGeometry Center="2,2" RadiusX="1" RadiusY="1" />
+        </GeometryDrawing.Geometry>
+      </GeometryDrawing>
+    </DrawingBrush.Drawing>
+  </DrawingBrush>
+
+  <!-- Fixed brushes (dialogs and badges) -->
   <SolidColorBrush x:Key="BadgeBrush" Color="#FFF5A623" />
   <SolidColorBrush x:Key="DialogHintBrush" Color="#FF6E6E6E" />
   <SolidColorBrush x:Key="WarningBrush" Color="#FFB55A00" />
@@ -79,19 +96,8 @@
     </DrawingImage.Drawing>
   </DrawingImage>
 
-  <!-- Dotted pattern for the move grip -->
-  <DrawingBrush x:Key="GripDotsBrush" TileMode="Tile" Viewport="0,0,4,4" ViewportUnits="Absolute" Viewbox="0,0,4,4" ViewboxUnits="Absolute">
-    <DrawingBrush.Drawing>
-      <GeometryDrawing Brush="{StaticResource GripBrush}">
-        <GeometryDrawing.Geometry>
-          <EllipseGeometry Center="2,2" RadiusX="1" RadiusY="1" />
-        </GeometryDrawing.Geometry>
-      </GeometryDrawing>
-    </DrawingBrush.Drawing>
-  </DrawingBrush>
-
   <Style x:Key="GripStyle" TargetType="Border">
-    <Setter Property="Background" Value="{StaticResource GripDotsBrush}" />
+    <Setter Property="Background" Value="{DynamicResource Theme.GripPattern}" />
     <Setter Property="Margin" Value="4,6,3,6" />
     <Setter Property="Cursor" Value="SizeAll" />
   </Style>
@@ -101,6 +107,7 @@
     <Setter Property="Width" Value="16" />
     <Setter Property="Height" Value="18" />
     <Setter Property="Background" Value="Transparent" />
+    <Setter Property="Foreground" Value="{DynamicResource Theme.Foreground}" />
     <Setter Property="BorderThickness" Value="0" />
     <Setter Property="Padding" Value="0" />
     <Setter Property="Cursor" Value="Hand" />
@@ -115,10 +122,10 @@
           </Border>
           <ControlTemplate.Triggers>
             <Trigger Property="IsMouseOver" Value="True">
-              <Setter TargetName="Root" Property="Background" Value="{StaticResource HoverBrush}" />
+              <Setter TargetName="Root" Property="Background" Value="{DynamicResource Theme.Hover}" />
             </Trigger>
             <Trigger Property="IsPressed" Value="True">
-              <Setter TargetName="Root" Property="Background" Value="{StaticResource PressedBrush}" />
+              <Setter TargetName="Root" Property="Background" Value="{DynamicResource Theme.Pressed}" />
             </Trigger>
           </ControlTemplate.Triggers>
         </ControlTemplate>
@@ -151,18 +158,18 @@
           </Border>
           <ControlTemplate.Triggers>
             <Trigger Property="IsMouseOver" Value="True">
-              <Setter TargetName="Root" Property="Background" Value="{StaticResource HoverBrush}" />
-              <Setter TargetName="Root" Property="BorderBrush" Value="{StaticResource HoverBorderBrush}" />
+              <Setter TargetName="Root" Property="Background" Value="{DynamicResource Theme.Hover}" />
+              <Setter TargetName="Root" Property="BorderBrush" Value="{DynamicResource Theme.HoverBorder}" />
             </Trigger>
             <Trigger Property="IsPressed" Value="True">
-              <Setter TargetName="Root" Property="Background" Value="{StaticResource PressedBrush}" />
+              <Setter TargetName="Root" Property="Background" Value="{DynamicResource Theme.Pressed}" />
             </Trigger>
             <Trigger Property="IsKeyboardFocused" Value="True">
-              <Setter TargetName="Root" Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+              <Setter TargetName="Root" Property="BorderBrush" Value="{DynamicResource Theme.Accent}" />
             </Trigger>
             <DataTrigger Binding="{Binding IsDropTarget}" Value="True">
-              <Setter TargetName="Root" Property="Background" Value="{StaticResource DropTargetBrush}" />
-              <Setter TargetName="Root" Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+              <Setter TargetName="Root" Property="Background" Value="{DynamicResource Theme.DropTarget}" />
+              <Setter TargetName="Root" Property="BorderBrush" Value="{DynamicResource Theme.Accent}" />
             </DataTrigger>
           </ControlTemplate.Triggers>
         </ControlTemplate>

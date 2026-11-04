@@ -1,7 +1,6 @@
 using System.IO;
 using System.Reflection;
 using System.Windows.Input;
-using System.Windows.Media;
 using DesktopIconGrid.Core;
 using DesktopIconGrid.Core.Launching;
 using DesktopIconGrid.Core.Models;
@@ -30,8 +29,6 @@ public sealed class LauncherViewModel : ObservableObject
     private bool _isGroupPopupOpen;
     private Guid _lastLaunchedId;
     private DateTime _lastLaunchedAt;
-    private Brush? _backgroundBrush;
-    private Brush? _foregroundBrush;
 
     public LauncherViewModel(
         LauncherModel model,
@@ -102,10 +99,8 @@ public sealed class LauncherViewModel : ObservableObject
         }
     }
 
-    public Brush BackgroundBrush => _backgroundBrush ??= CreateBrush(Model.Settings.BackgroundColor);
-
-    /// <summary>Black or white, whichever reads better on the background.</summary>
-    public Brush ForegroundBrush => _foregroundBrush ??= CreateForegroundBrush(Model.Settings.BackgroundColor);
+    /// <summary>The colours the bar is currently drawn with.</summary>
+    public ThemePalette Palette => ThemeCatalog.Resolve(Model.Settings);
 
     public bool HasMultiLaunchMembers => Model.MultiLaunchMembers().Any();
 
@@ -493,8 +488,6 @@ public sealed class LauncherViewModel : ObservableObject
     {
         var previousIconSize = IconSize;
         Model.ApplySettings(settings);
-        _backgroundBrush = null;
-        _foregroundBrush = null;
         NotifyAppearanceChanged();
 
         if (IconSize != previousIconSize)
@@ -533,8 +526,6 @@ public sealed class LauncherViewModel : ObservableObject
         IsGroupPopupOpen = false;
         Model = model;
         _viewModels.Clear();
-        _backgroundBrush = null;
-        _foregroundBrush = null;
 
         RootItems.Sync();
         NotifyAppearanceChanged();
@@ -589,8 +580,7 @@ public sealed class LauncherViewModel : ObservableObject
         OnPropertyChanged(nameof(CellWidth));
         OnPropertyChanged(nameof(CellHeight));
         OnPropertyChanged(nameof(AlwaysOnTop));
-        OnPropertyChanged(nameof(BackgroundBrush));
-        OnPropertyChanged(nameof(ForegroundBrush));
+        OnPropertyChanged(nameof(Palette));
         OnPropertyChanged(nameof(PopupWidth));
         OnPropertyChanged(nameof(PopupMaxHeight));
         OnPropertyChanged(nameof(HasMultiLaunchMembers));
@@ -613,33 +603,6 @@ public sealed class LauncherViewModel : ObservableObject
         }
     }
 
-    private static SolidColorBrush CreateBrush(string hex)
-    {
-        var color = TryParseColor(hex) ?? Colors.Gray;
-        var brush = new SolidColorBrush(color);
-        brush.Freeze();
-        return brush;
-    }
-
-    private static SolidColorBrush CreateForegroundBrush(string hex)
-    {
-        var color = TryParseColor(hex) ?? Colors.Gray;
-        var luminance = (0.299 * color.R + 0.587 * color.G + 0.114 * color.B) / 255.0;
-        var brush = new SolidColorBrush(luminance > 0.6 ? Color.FromRgb(0x1F, 0x1F, 0x1F) : Colors.White);
-        brush.Freeze();
-        return brush;
-    }
-
-    public static Color? TryParseColor(string? hex)
-    {
-        if (!LauncherSettings.IsValidColor(hex))
-        {
-            return null;
-        }
-
-        var value = Convert.ToInt32(hex![1..], 16);
-        return Color.FromRgb((byte)(value >> 16), (byte)(value >> 8), (byte)value);
-    }
 }
 
 public sealed class GroupActivatedEventArgs(ItemViewModel group, object? anchor) : EventArgs

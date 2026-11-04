@@ -89,7 +89,7 @@
 
                 <TextBlock Grid.Row="1"
                            Text="{Binding Name}"
-                           Foreground="{Binding Root.ForegroundBrush}"
+                           Foreground="{DynamicResource Theme.Foreground}"
                            FontSize="11"
                            TextAlignment="Center"
                            TextTrimming="CharacterEllipsis"
@@ -103,8 +103,7 @@
     </ScrollViewer>
 
     <TextBlock Text="{Binding EmptyHint}"
-               Foreground="{Binding Root.ForegroundBrush}"
-               Opacity="0.65"
+               Foreground="{DynamicResource Theme.Hint}"
                FontSize="12"
                HorizontalAlignment="Center" VerticalAlignment="Center"
                TextWrapping="Wrap" TextAlignment="Center"
@@ -115,7 +114,7 @@
     <Canvas x:Name="Overlay" IsHitTestVisible="False" ClipToBounds="True">
       <Border x:Name="DropIndicator"
               Width="3"
-              Background="{StaticResource AccentBrush}"
+              Background="{DynamicResource Theme.Accent}"
               CornerRadius="1.5"
               Visibility="Collapsed" />
     </Canvas>
