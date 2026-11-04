@@ -5,6 +5,7 @@ using DesktopIconGrid.Core.Launching;
 using DesktopIconGrid.Core.Models;
 using DesktopIconGrid.Infrastructure;
 using DesktopIconGrid.Services;
+using DesktopIconGrid.SpecialIcons;
 
 namespace DesktopIconGrid.ViewModels;
 
@@ -14,6 +15,7 @@ public sealed class ItemViewModel : ObservableObject
     private ImageSource? _image;
     private bool _isDropTarget;
     private ItemListViewModel? _children;
+    private GaugeState? _gauge;
 
     public ItemViewModel(LauncherViewModel root, LauncherItem model)
     {
@@ -27,6 +29,8 @@ public sealed class ItemViewModel : ObservableObject
         OpenLocationCommand = new RelayCommand(() => Root.RevealItem(this), () => IsShortcut);
         NewShortcutAfterCommand = new RelayCommand(() => Root.NewShortcutAfter(this));
         NewGroupAfterCommand = new RelayCommand(() => Root.NewGroupAfter(this), () => IsAtRoot);
+        ShowLogCommand = new RelayCommand(() => Root.ShowLog(this), () => CapturesLog);
+        RebuildGauge();
     }
 
     public LauncherViewModel Root { get; }
@@ -40,6 +44,16 @@ public sealed class ItemViewModel : ObservableObject
 
     public bool IsShortcut => Model is ShortcutItem;
 
+    public bool IsSpecial => Model is SpecialIconItem;
+
+    /// <summary>The handler for a special icon; the placeholder handler for other kinds of item.</summary>
+    public ISpecialIconHandler SpecialHandler => Root.SpecialIcons.Resolve((Model as SpecialIconItem)?.Kind);
+
+    /// <summary>Live gauge of a monitor icon; <see langword="null"/> for other items.</summary>
+    public GaugeState? Gauge => _gauge;
+
+    public bool ShowsGauge => _gauge is not null && !Model.HasCustomIcon && Model.TextIcon is null;
+
     public string Name => Model.Name;
 
     public string? Location => (Model as ShortcutItem)?.Location;
@@ -50,6 +64,11 @@ public sealed class ItemViewModel : ObservableObject
 
     public string MultiLaunchMenuHeader => IsMultiLaunch ? "Remove from Multi Launch group" : "Add to Multi Launch group";
 
+    /// <summary>True while a program started from this shortcut (or its executable) is running.</summary>
+    public bool IsRunning => IsShortcut && Root.Tracker.IsRunning(Id);
+
+    public bool CapturesLog => Model is ShortcutItem { CaptureLog: true };
+
     public int ChildCount => (Model as GroupItem)?.Items.Count ?? 0;
 
     // ----- text icons -----------------------------------------------------------------------------
@@ -57,7 +76,7 @@ public sealed class ItemViewModel : ObservableObject
     /// <summary>True when the icon is drawn as text; an explicit icon image takes precedence.</summary>
     public bool HasTextIcon => !Model.HasCustomIcon && Model.TextIcon is not null;
 
-    public bool ShowsImage => !HasTextIcon;
+    public bool ShowsImage => !HasTextIcon && !ShowsGauge;
 
     public string TextIconText => Model.TextIcon?.Text ?? string.Empty;
 
@@ -93,9 +112,15 @@ public sealed class ItemViewModel : ObservableObject
                 return ChildCount == 1 ? $"{Name}\n1 item" : $"{Name}\n{ChildCount} items";
             }
 
+            if (IsSpecial)
+            {
+                return $"{Name}\n{_gauge?.Detail ?? SpecialHandler.Description}";
+            }
+
             var location = string.IsNullOrEmpty(Parameters) ? Location : $"{Location} {Parameters}";
             var multi = IsMultiLaunch ? "\nMulti Launch group member" : string.Empty;
-            return $"{Name}\n{location}{multi}";
+            var running = IsRunning ? "\nRunning" : string.Empty;
+            return $"{Name}\n{location}{multi}{running}";
         }
     }
 
@@ -130,7 +155,34 @@ public sealed class ItemViewModel : ObservableObject
 
     public ICommand NewGroupAfterCommand { get; }
 
-    public void LoadImage() => Image = HasTextIcon ? null : Root.Icons.GetItemIcon(Model, Root.IconSize);
+    public ICommand ShowLogCommand { get; }
+
+    /// <summary>Called by the root when the tracker reports a change for this item.</summary>
+    public void NotifyRunningChanged()
+    {
+        OnPropertyChanged(nameof(IsRunning));
+        OnPropertyChanged(nameof(ToolTipText));
+    }
+
+    public void LoadImage() => Image = HasTextIcon || ShowsGauge ? null : Root.Icons.GetItemIcon(Model, Root.IconSize);
+
+    /// <summary>Creates (or recreates after editing) the live state of a special icon.</summary>
+    public void RebuildGauge()
+    {
+        _gauge?.Detach();
+        _gauge = Model is SpecialIconItem special ? SpecialHandler.CreateState(special) : null;
+        if (_gauge is not null)
+        {
+            _gauge.PropertyChanged += (_, _) => OnPropertyChanged(nameof(ToolTipText));
+        }
+
+        OnPropertyChanged(nameof(Gauge));
+        OnPropertyChanged(nameof(ShowsGauge));
+        OnPropertyChanged(nameof(ShowsImage));
+    }
+
+    /// <summary>Stops live updates; called when the item leaves the bar.</summary>
+    public void Detach() => _gauge?.Detach();
 
     /// <summary>Re-reads every derived property after the model was edited.</summary>
     public void RefreshFromModel() => OnAllPropertiesChanged();

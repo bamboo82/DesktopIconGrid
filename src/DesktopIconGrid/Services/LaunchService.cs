@@ -1,3 +1,6 @@
+using System.ComponentModel;
+using System.Diagnostics;
+using System.IO;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using DesktopIconGrid.Core.Launching;
@@ -5,28 +8,16 @@ using DesktopIconGrid.Core.Models;
 
 namespace DesktopIconGrid.Services;
 
-/// <summary>Executes a <see cref="LaunchPlan"/>: starts processes, or drives the Shell COM object for special actions.</summary>
-public sealed class LaunchService : ILaunchService
+/// <summary>
+/// Executes a <see cref="LaunchPlan"/>: starts processes (with output logging when the shortcut asks for it),
+/// hands them to the <see cref="ProcessTracker"/>, or drives the Shell COM object for special actions.
+/// </summary>
+public sealed class LaunchService(ProcessTracker tracker) : ILaunchService
 {
     public LaunchResult Launch(ShortcutItem shortcut)
     {
-        LaunchPlan plan;
-        try
-        {
-            plan = LaunchPlanner.Plan(shortcut);
-        }
-        catch (ArgumentException ex)
-        {
-            return LaunchResult.Failure(ex.Message);
-        }
-
-        return plan.Action switch
-        {
-            LaunchAction.StartProcess => ProcessLauncher.Start(plan.StartInfo!),
-            LaunchAction.ShowDesktop => InvokeShell("ToggleDesktop"),
-            LaunchAction.RunDialog => InvokeShell("FileRun"),
-            _ => LaunchResult.Failure("Unsupported action."),
-        };
+        ArgumentNullException.ThrowIfNull(shortcut);
+        return LaunchCore(shortcut);
     }
 
     public LaunchResult LaunchWith(ShortcutItem shortcut, IReadOnlyList<string> paths)
@@ -48,7 +39,7 @@ public sealed class LaunchService : ILaunchService
         {
             var launch = (ShortcutItem)shortcut.Clone();
             launch.Parameters = arguments;
-            var result = Launch(launch);
+            var result = LaunchCore(launch);
             switch (result.Outcome)
             {
                 case LaunchOutcome.Cancelled:
@@ -60,6 +51,63 @@ public sealed class LaunchService : ILaunchService
         }
 
         return failures.Count == 0 ? LaunchResult.Started : LaunchResult.Failure(string.Join("\n", failures.Distinct()));
+    }
+
+    private LaunchResult LaunchCore(ShortcutItem shortcut)
+    {
+        LaunchPlan plan;
+        try
+        {
+            plan = LaunchPlanner.Plan(shortcut);
+        }
+        catch (ArgumentException ex)
+        {
+            return LaunchResult.Failure(ex.Message);
+        }
+
+        switch (plan.Action)
+        {
+            case LaunchAction.ShowDesktop:
+                return InvokeShell("ToggleDesktop");
+            case LaunchAction.RunDialog:
+                return InvokeShell("FileRun");
+        }
+
+        var startInfo = plan.StartInfo!;
+        if (shortcut.CaptureLog && !LaunchPlanner.IsShellNamespace(shortcut.Location) && OutputCapture.CanCapture(startInfo))
+        {
+            return StartWithLog(shortcut, OutputCapture.WithCapture(startInfo));
+        }
+
+        var result = ProcessLauncher.Start(startInfo);
+        if (result.Process is { } process)
+        {
+            tracker.Track(shortcut.Id, process);
+        }
+
+        return result;
+    }
+
+    private LaunchResult StartWithLog(ShortcutItem shortcut, ProcessStartInfo startInfo)
+    {
+        Process? process;
+        try
+        {
+            process = Process.Start(startInfo);
+        }
+        catch (Exception ex) when (ex is Win32Exception or InvalidOperationException or FileNotFoundException or DirectoryNotFoundException)
+        {
+            return LaunchResult.Failure(ex.Message);
+        }
+
+        if (process is null)
+        {
+            return LaunchResult.Failure("The program could not be started.");
+        }
+
+        tracker.StartLog(shortcut, process, startInfo);
+        tracker.Track(shortcut.Id, process);
+        return LaunchResult.Started;
     }
 
     private static LaunchResult InvokeShell(string method)

@@ -21,6 +21,7 @@ button at the top-right and a small options arrow at the bottom-right.
 | Close button (`×`) | Phase 1: exits the app. Phase 3: hides the bar to the tray instead. |
 | Bottom-right arrow | Opens the options menu: *Settings…*, *Launch Multi Launch group*, *About*, *Exit*. |
 | Edges / corners | Resizable (WindowChrome resize border, no caption). The icon grid reflows to the new width. |
+| Transparency | Settings → Transparency (0–80 %) lets the desktop show through the bar and the group popup. |
 | Show/hide hotkey | A system-wide combination set in Settings (e.g. `Ctrl+Alt+Space`) hides the bar or brings it to the front from any program. |
 | Background | A theme: Classic (the olive grey of the reference), Graphite, Paper, Midnight, Sand, or a Custom colour with automatically matched text and highlight colours. See [docs/THEMES.md](docs/THEMES.md). |
 
@@ -47,6 +48,14 @@ A launchable entry. Fields come straight from the *Shortcut Properties* dialog:
 | Location | A file, a folder or a URL. `%ENV%` variables are expanded at launch. The `…` button opens a file picker. |
 | Parameters | Command-line arguments passed to the program. |
 | Icon | Default = extracted from the Location. *Change icon…* picks a `.png/.jpg/.ico/.bmp` image or an `.exe/.dll/.ico` resource (`path,index` is accepted). *Text icon…* draws text instead (see below). *Use default* clears the override. |
+
+**Running badge and output log.** A green dot in the corner of a shortcut shows that a program
+started from it is still running (processes started from the bar are followed until they exit;
+executables are also matched by process name every few seconds, so a program started elsewhere
+counts too). *Keep a log of the program's output* in the properties starts console programs and
+batch files with their output redirected to `%LocalAppData%\DesktopIconGrid\logs\<name>_<time>.log`
+(the ten newest per shortcut are kept) and adds *Show log…* to the context menu: a live window with
+the command line, start time, output, errors and exit code.
 
 **Text icons.** Any shortcut or group can show text on a tile instead of an image: up to
 12 characters (e.g. 宋體 characters or an abbreviation) in a chosen font family, size (6–72),
@@ -114,10 +123,15 @@ handled in-app. Icons for `shell:` folders are taken from their CLSID parsing na
 
 ### 2.4 Special icons (active icons)
 
-A special icon has behaviour of its own: a click action, drops of files onto it, progress
-and a kind-specific properties dialog. The first one is the **Google Drive Bucket**: drop
-files to upload them into a Drive folder, click to open that folder in the browser.
-The item model, handler interface and the bucket are specified in
+A special icon has behaviour of its own: a click action, a live value, drops of files onto it
+and a kind-specific properties dialog. Available now from *Add special icon ▸*:
+
+- **CPU usage** — the processor's busy percentage, refreshed every 2 seconds; click opens Task Manager.
+- **Disk usage** — how full a drive of your choice is, refreshed every 10 seconds; click opens the drive.
+
+Both draw the value in a design you pick (ring, bar or number) with green/amber/red levels.
+The planned **Google Drive Bucket** (drop files to upload them, click to open the folder) and
+the item model, handler interface and registry are specified in
 [docs/SPECIAL_ICONS.md](docs/SPECIAL_ICONS.md).
 
 ## 3. Grid interactions
@@ -199,6 +213,7 @@ Both dialogs follow the reference layout: a labelled form, an icon preview with
 | Theme | Classic (Graphite, Paper, Midnight, Sand, or Custom colour) |
 | Start with Windows | off — Phase 3 (Run registry key) |
 | Show/hide hotkey | none (set in Settings; needs Ctrl, Alt or Win) |
+| Transparency | 0 % (opaque) |
 
 Settings live in the same JSON file as the layout and apply immediately on *Save*.
 
@@ -288,9 +303,10 @@ Multi Launch membership and launch-all.
 Named settings copies on Drive, device name, save/load/delete, linked copy with
 automatic upload and startup check, OAuth with automatic token renewal.
 
-**Phase 4 — special icons**
-Special icon item kind and handler registry; Google Drive Bucket (click to open the
-folder, drop files to upload) as specified in [docs/SPECIAL_ICONS.md](docs/SPECIAL_ICONS.md).
+**Phase 4 — special icons** *(framework, CPU and disk gauges done)*
+Special icon item kind and handler registry; CPU and disk usage gauges; Google Drive Bucket
+(click to open the folder, drop files to upload) as specified in
+[docs/SPECIAL_ICONS.md](docs/SPECIAL_ICONS.md).
 
 **Phase 5 — desktop integration**
 Global show/hide hotkey *(done)*; tray icon (close hides to tray), start with Windows,

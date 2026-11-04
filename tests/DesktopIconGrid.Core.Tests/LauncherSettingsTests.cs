@@ -29,6 +29,22 @@ public class LauncherSettingsTests
     }
 
     [Fact]
+    public void Normalize_clamps_opacity()
+    {
+        var settings = new LauncherSettings { Opacity = 5 };
+        Assert.True(settings.Normalize());
+        Assert.Equal(LauncherSettings.MinOpacity, settings.Opacity);
+
+        settings.Opacity = 250;
+        settings.Normalize();
+        Assert.Equal(100, settings.Opacity);
+
+        var copy = new LauncherSettings();
+        copy.CopyFrom(new LauncherSettings { Opacity = 60 });
+        Assert.Equal(60, copy.Opacity);
+    }
+
+    [Fact]
     public void Normalize_trims_hotkey_and_copies_it()
     {
         var settings = new LauncherSettings { ToggleHotkey = "  Ctrl+Alt+Space " };

@@ -1,4 +1,5 @@
 using DesktopIconGrid.Core.Models;
+using DesktopIconGrid.ViewModels;
 
 namespace DesktopIconGrid.Services;
 
@@ -18,4 +19,7 @@ public interface IDialogService
 
     /// <summary>Shows the Google Drive sync dialog.</summary>
     void ShowSync();
+
+    /// <summary>Opens a non-modal window with a shortcut's captured output.</summary>
+    void ShowLog(LogViewerViewModel viewModel);
 }

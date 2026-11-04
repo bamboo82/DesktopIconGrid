@@ -21,6 +21,7 @@ public sealed class SettingsViewModel : ObservableObject
     private string _backgroundColor;
     private ThemePalette _selectedTheme;
     private string _toggleHotkey;
+    private int _transparency;
 
     public SettingsViewModel(LauncherSettings current)
     {
@@ -32,6 +33,7 @@ public sealed class SettingsViewModel : ObservableObject
         _alwaysOnTop = current.AlwaysOnTop;
         _backgroundColor = current.BackgroundColor;
         _toggleHotkey = current.ToggleHotkey ?? string.Empty;
+        _transparency = LauncherSettings.MaxOpacity - current.Opacity;
 
         Themes = [.. ThemeCatalog.Builtin, ThemeCatalog.CreateCustom(current.BackgroundColor)];
         _selectedTheme = Themes.FirstOrDefault(t => string.Equals(t.Id, current.Theme, StringComparison.OrdinalIgnoreCase)) ?? Themes[0];
@@ -136,6 +138,23 @@ public sealed class SettingsViewModel : ObservableObject
         ? (IsColorValid ? ThemeManager.ToBrush(_backgroundColor) : Brushes.Transparent)
         : ThemeManager.ToBrush(_selectedTheme.Background);
 
+    /// <summary>0 = opaque, up to <see cref="MaxTransparency"/>.</summary>
+    public int Transparency
+    {
+        get => _transparency;
+        set
+        {
+            if (SetProperty(ref _transparency, Math.Clamp(value, 0, MaxTransparency)))
+            {
+                OnPropertyChanged(nameof(TransparencyText));
+            }
+        }
+    }
+
+    public int MaxTransparency => LauncherSettings.MaxOpacity - LauncherSettings.MinOpacity;
+
+    public string TransparencyText => _transparency == 0 ? "opaque" : $"{_transparency} %";
+
     /// <summary>Text form of the show/hide hotkey, e.g. "Ctrl+Alt+Space"; empty for none.</summary>
     public string ToggleHotkey
     {
@@ -171,6 +190,7 @@ public sealed class SettingsViewModel : ObservableObject
             Theme = _selectedTheme.Id,
             BackgroundColor = IsColorValid ? _backgroundColor : LauncherSettings.DefaultBackgroundColor,
             ToggleHotkey = IsHotkeyValid && HasHotkey ? _toggleHotkey : null,
+            Opacity = LauncherSettings.MaxOpacity - _transparency,
         };
         settings.Normalize();
         return settings;

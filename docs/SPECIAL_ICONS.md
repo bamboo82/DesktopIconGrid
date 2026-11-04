@@ -70,7 +70,27 @@ ISpecialIconHandler
 - Context menu for a special icon: `New shortcut…`, `New group…`, `Add Windows item ▸`,
   `Add special icon ▸`, separator, handler entries, separator, `Remove…`, separator, `Properties`.
 
-## 4. Google Drive Bucket
+## 4. Monitor icons (implemented)
+
+The first two kinds show a live percentage and were the pilot for the framework above.
+
+| Kind | Value | Refresh | Click | Properties |
+| --- | --- | --- | --- | --- |
+| **CPU usage** (`cpu-usage`) | Busy share of all logical processors, from the kernel's idle/kernel/user time counters (`GetSystemTimes`), no performance-counter dependency. | 2 s | Opens Task Manager. | Name, design. |
+| **Disk usage** (`disk-usage`) | Used share of a drive's capacity (`DriveInfo`); tooltip shows free and total space and the volume label. | 10 s | Opens the drive in File Explorer. | Name, drive (fixed, removable and network drives), design. |
+
+Designs, chosen per icon:
+
+- **Ring** — a track with an arc that fills clockwise, the number in the middle.
+- **Bar** — the caption above a horizontal bar, the number beneath.
+- **Number** — a large number coloured by level, the caption beneath.
+
+The level colour is green, then amber (CPU ≥ 70 %, disk ≥ 80 %) and red (≥ 90 %); an unreadable
+value shows "…" in grey. A custom image or text icon set in the common fields replaces the gauge.
+Gauges live in a `GaugeState` that a `SystemMonitor` timer updates; states are detached when the
+icon is removed so sampling stops. Settings keys: `style` (`ring`/`bar`/`number`) and `drive` (`C:\`).
+
+## 5. Google Drive Bucket
 
 ### 4.1 What it does
 
@@ -152,7 +172,7 @@ when the bucket is in an error state. The common *Icon* override applies.
 - The app never deletes or moves files in Drive from a bucket; *Replace* only rewrites content
   of a file with the same name in that folder.
 
-## 5. Testing
+## 6. Testing
 
 - Core: `SpecialIconItem` JSON round trip including unknown kinds; settings wrapper defaults;
   folder-link parsing; conflict-policy decision table; resumable-upload chunking and
@@ -162,10 +182,11 @@ when the bucket is in an error state. The common *Icon* override applies.
   upload; offline drop; folder deleted on Drive; account without the `drive` scope; unknown kind
   in the layout file.
 
-## 6. Delivery
+## 7. Delivery
 
 | Phase | Scope |
 | --- | --- |
-| A | Item model, handler registry, menu rename, progress overlay; Google Drive Bucket with click-to-open, file drops with *keep both*, resumable uploads, link/ID entry in properties, incremental consent. |
+| 0 *(done)* | Item model (`SpecialIconItem`, `$type: "special"`), handler interface and registry, *Add special icon ▸* menu, CPU and disk gauges with three designs. |
+| A | Progress overlay; Google Drive Bucket with click-to-open, file drops with *keep both*, resumable uploads, link/ID entry in properties, incremental consent. |
 | B | Folder picker, recursive folder drops, *Replace* and *Skip* policies, cancel, "Open folder picker…" menu entry. |
 | C | Further kinds, each a separate design note: e.g. *Clipboard note* (drop text to keep, click to copy), *Screenshot bucket* (click captures the screen to a folder), *Recycle Bin* with fill state. |

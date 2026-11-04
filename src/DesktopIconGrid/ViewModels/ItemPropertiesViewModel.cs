@@ -18,6 +18,7 @@ public sealed class ItemPropertiesViewModel : ObservableObject
     private string _name;
     private string _location;
     private string _parameters;
+    private bool _captureLog;
     private string? _iconPath;
     private TextIcon? _textIcon;
     private bool _nameIsAutomatic;
@@ -35,6 +36,7 @@ public sealed class ItemPropertiesViewModel : ObservableObject
         _name = target.Name;
         _location = (target as ShortcutItem)?.Location ?? string.Empty;
         _parameters = (target as ShortcutItem)?.Parameters ?? string.Empty;
+        _captureLog = (target as ShortcutItem)?.CaptureLog ?? false;
         _iconPath = target.IconPath;
         _textIcon = target.TextIcon;
         _nameIsAutomatic = !IsGroup && isNew && (_name.Length == 0 || _name == ShortcutItem.SuggestName(_location));
@@ -102,6 +104,17 @@ public sealed class ItemPropertiesViewModel : ObservableObject
         get => _parameters;
         set => SetProperty(ref _parameters, value ?? string.Empty);
     }
+
+    /// <summary>Capture the program's output to a log file when it is started from the bar.</summary>
+    public bool CaptureLog
+    {
+        get => _captureLog;
+        set => SetProperty(ref _captureLog, value);
+    }
+
+    public string CaptureLogHint =>
+        "Console programs and batch files only: the program runs without its own window, its output goes to a log file " +
+        "and the icon's Show log command displays it live.";
 
     public string? IconPath
     {
@@ -221,6 +234,7 @@ public sealed class ItemPropertiesViewModel : ObservableObject
         {
             shortcut.Location = _location.Trim();
             shortcut.Parameters = string.IsNullOrWhiteSpace(_parameters) ? null : _parameters.Trim();
+            shortcut.CaptureLog = _captureLog;
         }
 
         return true;

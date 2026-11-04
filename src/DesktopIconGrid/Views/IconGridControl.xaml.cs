@@ -7,6 +7,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using DesktopIconGrid.Core.Launching;
 using DesktopIconGrid.Core.SpecialItems;
+using DesktopIconGrid.SpecialIcons;
 using DesktopIconGrid.ViewModels;
 
 namespace DesktopIconGrid.Views;
@@ -469,6 +470,7 @@ public partial class IconGridControl : UserControl
         if (sender is ContextMenu menu && List is { } list)
         {
             PopulateWindowsItems(menu, definition => list.Root.AddSpecialItem(definition, list, int.MaxValue));
+            PopulateSpecialIcons(menu, handler => list.Root.AddSpecialIcon(handler, list, int.MaxValue));
         }
     }
 
@@ -477,7 +479,32 @@ public partial class IconGridControl : UserControl
         if (sender is ContextMenu menu && menu.DataContext is ItemViewModel item)
         {
             PopulateWindowsItems(menu, definition => item.Root.AddSpecialItemAfter(definition, item));
+            PopulateSpecialIcons(menu, handler => item.Root.AddSpecialIconAfter(handler, item));
         }
+    }
+
+    private void PopulateSpecialIcons(ContextMenu menu, Action<ISpecialIconHandler> onPick)
+    {
+        var host = menu.Items.OfType<MenuItem>().FirstOrDefault(m => Equals(m.Tag, "special-icons"));
+        if (host is null || List is null)
+        {
+            return;
+        }
+
+        host.Items.Clear();
+        foreach (var handler in List.Root.SpecialIcons.Handlers)
+        {
+            var entry = new MenuItem
+            {
+                Header = handler.DisplayName.Replace("_", "__", StringComparison.Ordinal),
+                ToolTip = handler.Description,
+            };
+            var captured = handler;
+            entry.Click += (_, _) => onPick(captured);
+            host.Items.Add(entry);
+        }
+
+        host.IsEnabled = host.Items.Count > 0;
     }
 
     private void PopulateWindowsItems(ContextMenu menu, Action<SpecialItemDefinition> onPick)

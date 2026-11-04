@@ -34,6 +34,7 @@
 
   <!-- Fixed brushes (dialogs and badges) -->
   <SolidColorBrush x:Key="BadgeBrush" Color="#FFF5A623" />
+  <SolidColorBrush x:Key="RunningBadgeBrush" Color="#FF34C759" />
   <SolidColorBrush x:Key="DialogHintBrush" Color="#FF6E6E6E" />
   <SolidColorBrush x:Key="WarningBrush" Color="#FFB55A00" />
   <SolidColorBrush x:Key="SwatchBorderBrush" Color="#FF9A9A9A" />

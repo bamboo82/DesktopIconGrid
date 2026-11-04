@@ -13,8 +13,8 @@ public static class ProcessLauncher
         ArgumentNullException.ThrowIfNull(startInfo);
         try
         {
-            using var process = Process.Start(startInfo);
-            return LaunchResult.Started;
+            var process = Process.Start(startInfo);
+            return process is null ? LaunchResult.Started : LaunchResult.Started with { Process = process };
         }
         catch (Win32Exception ex) when (ex.NativeErrorCode == ErrorCancelled)
         {

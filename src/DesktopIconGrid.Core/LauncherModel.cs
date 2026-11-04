@@ -99,6 +99,15 @@ public sealed class LauncherModel
                 shortcut.Name = ShortcutItem.SuggestName(shortcut.Location);
             }
         }
+        else if (item is SpecialIconItem special)
+        {
+            special.Kind = special.Kind?.Trim() ?? string.Empty;
+            special.Settings ??= new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            if (item.Name.Length == 0)
+            {
+                item.Name = special.Kind.Length == 0 ? "Special icon" : special.Kind;
+            }
+        }
         else if (item.Name.Length == 0)
         {
             item.Name = "Group";
@@ -111,9 +120,9 @@ public sealed class LauncherModel
         {
             switch (child)
             {
-                case ShortcutItem shortcut:
-                    Adopt(shortcut, seen);
-                    target.Add(shortcut);
+                case ShortcutItem or SpecialIconItem:
+                    Adopt(child, seen);
+                    target.Add(child);
                     break;
                 case GroupItem nested:
                     RepairCount++;

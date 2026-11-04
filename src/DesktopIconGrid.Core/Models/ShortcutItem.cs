@@ -15,6 +15,12 @@ public sealed class ShortcutItem : LauncherItem
     /// <summary>Member of the Multi Launch group (see <see cref="LauncherModel.MultiLaunchMembers"/>).</summary>
     public bool MultiLaunch { get; set; }
 
+    /// <summary>
+    /// Start the program with its output captured to a log file (console programs and batch files only;
+    /// the program then runs without a console window of its own).
+    /// </summary>
+    public bool CaptureLog { get; set; }
+
     public override LauncherItem Clone() => (ShortcutItem)MemberwiseClone();
 
     public override void CopyContentFrom(LauncherItem source)
@@ -25,6 +31,7 @@ public sealed class ShortcutItem : LauncherItem
             Location = shortcut.Location.Trim();
             Parameters = string.IsNullOrWhiteSpace(shortcut.Parameters) ? null : shortcut.Parameters.Trim();
             MultiLaunch = shortcut.MultiLaunch;
+            CaptureLog = shortcut.CaptureLog;
         }
     }
 

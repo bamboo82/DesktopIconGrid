@@ -12,6 +12,8 @@ public sealed partial class LauncherSettings
     public const int MaxCellPadding = 32;
     public const int DefaultCellPadding = 10;
     public const string DefaultBackgroundColor = "#73806E";
+    public const int MinOpacity = 20;
+    public const int MaxOpacity = 100;
 
     /// <summary>Icon edge length in device-independent pixels; one of <see cref="IconSizes"/>.</summary>
     public int IconSize { get; set; } = DefaultIconSize;
@@ -34,6 +36,9 @@ public sealed partial class LauncherSettings
     /// <summary>Bar background as <c>#RRGGBB</c>, used by the custom theme.</summary>
     public string BackgroundColor { get; set; } = DefaultBackgroundColor;
 
+    /// <summary>Bar opacity in percent, <see cref="MinOpacity"/>–100.</summary>
+    public int Opacity { get; set; } = MaxOpacity;
+
     /// <summary>System-wide key combination that shows or hides the bar, e.g. <c>Ctrl+Alt+Space</c>; <see langword="null"/> for none.</summary>
     public string? ToggleHotkey { get; set; }
 
@@ -50,6 +55,7 @@ public sealed partial class LauncherSettings
         Theme = source.Theme;
         BackgroundColor = source.BackgroundColor;
         ToggleHotkey = source.ToggleHotkey;
+        Opacity = source.Opacity;
         Normalize();
     }
 
@@ -83,6 +89,13 @@ public sealed partial class LauncherSettings
         }
 
         ToggleHotkey = string.IsNullOrWhiteSpace(ToggleHotkey) ? null : ToggleHotkey.Trim();
+
+        var opacity = Math.Clamp(Opacity, MinOpacity, MaxOpacity);
+        if (opacity != Opacity)
+        {
+            Opacity = opacity;
+            changed = true;
+        }
 
         if (Theme is null)
         {

@@ -20,6 +20,7 @@
           <MenuItem Header="New group…" Command="{Binding NewGroupCommand}"
                     Visibility="{Binding IsRoot, Converter={StaticResource BoolToVisibility}}" />
           <MenuItem Header="Add Windows item" Tag="windows-items" />
+          <MenuItem Header="Add special icon" Tag="special-icons" />
           <Separator />
           <MenuItem Header="Launch Multi Launch group" Command="{Binding Root.LaunchMultiLaunchCommand}" />
           <MenuItem Header="Settings…" Command="{Binding Root.OpenSettingsCommand}" />
@@ -56,12 +57,15 @@
                   <MenuItem Header="New group…" Command="{Binding NewGroupAfterCommand}"
                             Visibility="{Binding IsAtRoot, Converter={StaticResource BoolToVisibility}}" />
                   <MenuItem Header="Add Windows item" Tag="windows-items" />
+                  <MenuItem Header="Add special icon" Tag="special-icons" />
                   <Separator />
                   <MenuItem Header="Remove…" Command="{Binding RemoveCommand}" />
                   <MenuItem Header="{Binding MultiLaunchMenuHeader}" Command="{Binding ToggleMultiLaunchCommand}"
                             Visibility="{Binding IsShortcut, Converter={StaticResource BoolToVisibility}}" />
                   <MenuItem Header="Open file location" Command="{Binding OpenLocationCommand}"
                             Visibility="{Binding IsShortcut, Converter={StaticResource BoolToVisibility}}" />
+                  <MenuItem Header="Show log…" Command="{Binding ShowLogCommand}"
+                            Visibility="{Binding CapturesLog, Converter={StaticResource BoolToVisibility}}" />
                   <Separator />
                   <MenuItem Header="Properties" Command="{Binding PropertiesCommand}" />
                 </ContextMenu>
@@ -103,12 +107,60 @@
                       </TextBlock.Style>
                     </TextBlock>
                   </Border>
+                  <Viewbox Stretch="Uniform" Visibility="{Binding ShowsGauge, Converter={StaticResource BoolToVisibility}}">
+                    <Grid Width="100" Height="100" DataContext="{Binding Gauge}">
+                      <!-- Ring -->
+                      <Grid Visibility="{Binding IsRing, Converter={StaticResource BoolToVisibility}}">
+                        <Ellipse Width="88" Height="88" Stroke="{DynamicResource Theme.HoverBorder}" StrokeThickness="12" />
+                        <Path Data="{Binding ArcGeometry}" Stroke="{Binding LevelBrush}" StrokeThickness="12"
+                              StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
+                        <TextBlock Text="{Binding Label}" FontSize="26" FontWeight="SemiBold"
+                                   Foreground="{DynamicResource Theme.Foreground}"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                      </Grid>
+                      <!-- Bar -->
+                      <Grid Visibility="{Binding IsBar, Converter={StaticResource BoolToVisibility}}">
+                        <TextBlock Text="{Binding Caption}" FontSize="24" FontWeight="SemiBold"
+                                   Foreground="{DynamicResource Theme.Foreground}"
+                                   HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,6,0,0" />
+                        <Border Height="22" Margin="8,0,8,30" VerticalAlignment="Bottom" CornerRadius="6" ClipToBounds="True"
+                                Background="{DynamicResource Theme.HoverBorder}">
+                          <Grid>
+                            <Grid.ColumnDefinitions>
+                              <ColumnDefinition Width="{Binding FillStar}" />
+                              <ColumnDefinition Width="{Binding RemainderStar}" />
+                            </Grid.ColumnDefinitions>
+                            <Border Grid.Column="0" Background="{Binding LevelBrush}" CornerRadius="6" />
+                          </Grid>
+                        </Border>
+                        <TextBlock Text="{Binding Label}" FontSize="22"
+                                   Foreground="{DynamicResource Theme.Foreground}"
+                                   HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,2" />
+                      </Grid>
+                      <!-- Number -->
+                      <Grid Visibility="{Binding IsNumber, Converter={StaticResource BoolToVisibility}}">
+                        <TextBlock Text="{Binding Label}" FontSize="42" FontWeight="Bold"
+                                   Foreground="{Binding LevelBrush}"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,-14,0,0" />
+                        <TextBlock Text="{Binding Caption}" FontSize="22"
+                                   Foreground="{DynamicResource Theme.Foreground}"
+                                   HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,2" />
+                      </Grid>
+                    </Grid>
+                  </Viewbox>
                   <Ellipse Width="8" Height="8"
                            Fill="{StaticResource BadgeBrush}"
                            Stroke="#80000000" StrokeThickness="1"
                            HorizontalAlignment="Right" VerticalAlignment="Bottom"
                            Margin="0,0,-2,-2"
                            Visibility="{Binding IsMultiLaunch, Converter={StaticResource BoolToVisibility}}" />
+                  <Ellipse Width="8" Height="8"
+                           Fill="{StaticResource RunningBadgeBrush}"
+                           Stroke="#80000000" StrokeThickness="1"
+                           HorizontalAlignment="Left" VerticalAlignment="Bottom"
+                           Margin="-2,0,0,-2"
+                           ToolTip="Running"
+                           Visibility="{Binding IsRunning, Converter={StaticResource BoolToVisibility}}" />
                 </Grid>
 
                 <TextBlock Grid.Row="1"

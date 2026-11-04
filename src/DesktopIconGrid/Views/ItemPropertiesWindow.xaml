@@ -24,6 +24,7 @@
       <RowDefinition Height="Auto" />
       <RowDefinition Height="Auto" />
       <RowDefinition Height="Auto" />
+      <RowDefinition Height="Auto" />
     </Grid.RowDefinitions>
 
     <!-- Name -->
@@ -70,9 +71,18 @@
                IsEnabled="{Binding IsShortcut}"
                Visibility="{Binding IsShortcut, Converter={StaticResource BoolToVisibility}}" />
 
+    <!-- Output log -->
+    <TextBlock Grid.Row="5" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="Log:" VerticalAlignment="Top" Margin="0,2,12,0"
+               Visibility="{Binding IsShortcut, Converter={StaticResource BoolToVisibility}}" />
+    <StackPanel Grid.Row="5" Grid.Column="1" Grid.ColumnSpan="2" Margin="0,0,0,10"
+                Visibility="{Binding IsShortcut, Converter={StaticResource BoolToVisibility}}">
+      <CheckBox Content="Keep a log of the program's output" IsChecked="{Binding CaptureLog}" />
+      <TextBlock Style="{StaticResource DialogHint}" Margin="0,4,0,0" Text="{Binding CaptureLogHint}" />
+    </StackPanel>
+
     <!-- Icon -->
-    <TextBlock Grid.Row="5" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="Icon:" VerticalAlignment="Top" Margin="0,6,12,0" />
-    <StackPanel Grid.Row="5" Grid.Column="1" Grid.ColumnSpan="2" Orientation="Horizontal" Margin="0,0,0,8">
+    <TextBlock Grid.Row="6" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="Icon:" VerticalAlignment="Top" Margin="0,6,12,0" />
+    <StackPanel Grid.Row="6" Grid.Column="1" Grid.ColumnSpan="2" Orientation="Horizontal" Margin="0,0,0,8">
       <Border Width="36" Height="36" Margin="0,0,10,0" VerticalAlignment="Center">
         <Grid>
           <Image Source="{Binding Preview, TargetNullValue={StaticResource PlaceholderIconImage}}"
@@ -102,7 +112,7 @@
     </StackPanel>
 
     <!-- Warning -->
-    <TextBlock Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="3"
+    <TextBlock Grid.Row="7" Grid.Column="0" Grid.ColumnSpan="3"
                Text="{Binding Warning}"
                Foreground="{StaticResource WarningBrush}"
                TextWrapping="Wrap"
@@ -110,7 +120,7 @@
                Visibility="{Binding HasWarning, Converter={StaticResource BoolToVisibility}}" />
 
     <!-- Buttons -->
-    <StackPanel Grid.Row="7" Grid.Column="0" Grid.ColumnSpan="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,6,0,0">
+    <StackPanel Grid.Row="8" Grid.Column="0" Grid.ColumnSpan="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,6,0,0">
       <Button Content="Save" Style="{StaticResource DialogButton}" IsDefault="True"
               IsEnabled="{Binding CanSave}" Click="Save_Click" />
       <Button Content="Cancel" Style="{StaticResource DialogButton}" IsCancel="True" />

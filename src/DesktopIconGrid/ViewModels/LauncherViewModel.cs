@@ -8,6 +8,7 @@ using DesktopIconGrid.Core.SpecialItems;
 using DesktopIconGrid.Core.Storage;
 using DesktopIconGrid.Infrastructure;
 using DesktopIconGrid.Services;
+using DesktopIconGrid.SpecialIcons;
 
 namespace DesktopIconGrid.ViewModels;
 
@@ -36,6 +37,8 @@ public sealed class LauncherViewModel : ObservableObject
         IIconProvider icons,
         IDialogService dialogs,
         ILaunchService launcher,
+        ProcessTracker tracker,
+        SpecialIconRegistry specialIcons,
         Action<Action>? defer = null)
     {
         Model = model;
@@ -43,7 +46,16 @@ public sealed class LauncherViewModel : ObservableObject
         Icons = icons;
         _dialogs = dialogs;
         _launcher = launcher;
+        Tracker = tracker;
+        SpecialIcons = specialIcons;
         _defer = defer ?? (action => action());
+        tracker.RunningChanged += (_, id) =>
+        {
+            if (_viewModels.TryGetValue(id, out var viewModel))
+            {
+                viewModel.NotifyRunningChanged();
+            }
+        };
 
         SpecialItemSections = SpecialItemCatalog.GetAvailableSections();
         RootItems = new ItemListViewModel(this, null);
@@ -63,6 +75,10 @@ public sealed class LauncherViewModel : ObservableObject
 
     public IIconProvider Icons { get; }
 
+    public ProcessTracker Tracker { get; }
+
+    public SpecialIconRegistry SpecialIcons { get; }
+
     public ItemListViewModel RootItems { get; }
 
     public IReadOnlyList<SpecialItemSection> SpecialItemSections { get; }
@@ -78,6 +94,9 @@ public sealed class LauncherViewModel : ObservableObject
     public bool ShowLabels => Model.Settings.ShowLabels;
 
     public bool DoubleClickToLaunch => Model.Settings.DoubleClickToLaunch;
+
+    /// <summary>Bar opacity in percent.</summary>
+    public int Opacity => Model.Settings.Opacity;
 
     public double CellWidth => IconSize + 2 * CellPadding + (ShowLabels ? 24 : 0);
 
@@ -176,6 +195,10 @@ public sealed class LauncherViewModel : ObservableObject
             viewModel = new ItemViewModel(this, item);
             _viewModels[item.Id] = viewModel;
             _defer(viewModel.LoadImage);
+            if (item is ShortcutItem shortcut)
+            {
+                Tracker.Watch(shortcut);
+            }
         }
 
         return viewModel;
@@ -200,6 +223,18 @@ public sealed class LauncherViewModel : ObservableObject
         if (item.IsGroup)
         {
             ToggleGroupPopup(item, anchor);
+            return;
+        }
+
+        if (item.Model is SpecialIconItem special)
+        {
+            var specialResult = item.SpecialHandler.Activate(special);
+            if (specialResult.Outcome == LaunchOutcome.Failed)
+            {
+                _dialogs.ShowError($"\"{item.Name}\"", specialResult.ErrorMessage ?? "Unknown error");
+            }
+
+            IsGroupPopupOpen = false;
             return;
         }
 
@@ -310,6 +345,26 @@ public sealed class LauncherViewModel : ObservableObject
         AddSpecialItem(definition, list, index + 1);
     }
 
+    /// <summary>Creates a special icon of the handler's kind after its properties dialog was confirmed.</summary>
+    public void AddSpecialIcon(ISpecialIconHandler handler, ItemListViewModel list, int index)
+    {
+        var item = handler.CreateItem();
+        if (!handler.ShowProperties(item, isNew: true))
+        {
+            return;
+        }
+
+        Model.Insert(item, list.Group, index);
+        list.Sync();
+        Save();
+    }
+
+    public void AddSpecialIconAfter(ISpecialIconHandler handler, ItemViewModel item)
+    {
+        var list = ListContaining(item, out var index);
+        AddSpecialIcon(handler, list, index + 1);
+    }
+
     /// <summary>Creates one shortcut per dropped path, inserting them in order at <paramref name="index"/>.</summary>
     public void AddPaths(IEnumerable<string> paths, ItemListViewModel list, int index)
     {
@@ -368,16 +423,40 @@ public sealed class LauncherViewModel : ObservableObject
     public void EditItem(ItemViewModel item)
     {
         var draft = item.Model.Clone();
-        if (!_dialogs.ShowItemProperties(draft, isNew: false))
+        var saved = draft is SpecialIconItem specialDraft
+            ? item.SpecialHandler.ShowProperties(specialDraft, isNew: false)
+            : _dialogs.ShowItemProperties(draft, isNew: false);
+        if (!saved)
         {
             return;
         }
 
         Model.Update(draft);
         item.RefreshFromModel();
+        if (item.IsSpecial)
+        {
+            item.RebuildGauge();
+        }
+
         item.LoadImage();
+        if (item.Model is ShortcutItem edited)
+        {
+            Tracker.Watch(edited);
+        }
+
         OnPropertyChanged(nameof(HasMultiLaunchMembers));
         Save();
+    }
+
+    /// <summary>Opens the live log of the shortcut's latest captured run.</summary>
+    public void ShowLog(ItemViewModel item)
+    {
+        if (!item.IsShortcut)
+        {
+            return;
+        }
+
+        _dialogs.ShowLog(new LogViewerViewModel(item.Name, Tracker.LatestLog(item.Id), Tracker.LogDirectory));
     }
 
     public void RemoveItem(ItemViewModel item)
@@ -403,7 +482,12 @@ public sealed class LauncherViewModel : ObservableObject
         {
             foreach (var child in group.Items)
             {
-                _viewModels.Remove(child.Id);
+                if (_viewModels.Remove(child.Id, out var childViewModel))
+                {
+                    childViewModel.Detach();
+                }
+
+                Tracker.Unwatch(child.Id);
             }
 
             if (OpenGroup == item)
@@ -412,7 +496,9 @@ public sealed class LauncherViewModel : ObservableObject
             }
         }
 
+        item.Detach();
         _viewModels.Remove(item.Id);
+        Tracker.Unwatch(item.Id);
         ListFor(parent).Sync();
         OnPropertyChanged(nameof(HasMultiLaunchMembers));
         Save();
@@ -525,7 +611,13 @@ public sealed class LauncherViewModel : ObservableObject
 
         IsGroupPopupOpen = false;
         Model = model;
+        foreach (var viewModel in _viewModels.Values)
+        {
+            viewModel.Detach();
+        }
+
         _viewModels.Clear();
+        Tracker.UnwatchAll();
 
         RootItems.Sync();
         NotifyAppearanceChanged();
@@ -580,6 +672,7 @@ public sealed class LauncherViewModel : ObservableObject
         OnPropertyChanged(nameof(CellWidth));
         OnPropertyChanged(nameof(CellHeight));
         OnPropertyChanged(nameof(AlwaysOnTop));
+        OnPropertyChanged(nameof(Opacity));
         OnPropertyChanged(nameof(Palette));
         OnPropertyChanged(nameof(PopupWidth));
         OnPropertyChanged(nameof(PopupMaxHeight));

@@ -31,6 +31,7 @@ public partial class MainWindow : Window
         {
             EnsureMinimumSize();
             ApplyHotkey(reportErrors: true);
+            ApplyOpacity();
         };
         Deactivated += OnDeactivated;
         MainGrid.MouseLeftButtonDown += GridBackground_MouseLeftButtonDown;
@@ -46,6 +47,25 @@ public partial class MainWindow : Window
             _hotkey = new GlobalHotkey(source);
             _hotkey.Pressed += (_, _) => ToggleVisibility();
             ApplyHotkey(reportErrors: true);
+        }
+
+        ApplyOpacity();
+    }
+
+    private void ApplyOpacity()
+    {
+        WindowAlpha.Apply(new WindowInteropHelper(this).Handle, _viewModel.Opacity);
+        if (GroupPopup.IsOpen && GroupPopup.Child is { } child && PresentationSource.FromVisual(child) is HwndSource popupSource)
+        {
+            WindowAlpha.Apply(popupSource.Handle, _viewModel.Opacity);
+        }
+    }
+
+    private void GroupPopup_Opened(object? sender, EventArgs e)
+    {
+        if (GroupPopup.Child is { } child && PresentationSource.FromVisual(child) is HwndSource popupSource)
+        {
+            WindowAlpha.Apply(popupSource.Handle, _viewModel.Opacity);
         }
     }
 

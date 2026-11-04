@@ -9,6 +9,7 @@ namespace DesktopIconGrid.Core.Models;
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "$type")]
 [JsonDerivedType(typeof(ShortcutItem), "shortcut")]
 [JsonDerivedType(typeof(GroupItem), "group")]
+[JsonDerivedType(typeof(SpecialIconItem), "special")]
 public abstract class LauncherItem
 {
     public Guid Id { get; set; } = Guid.NewGuid();

@@ -90,7 +90,8 @@
              StaysOpen="True"
              Placement="Bottom"
              PopupAnimation="Fade"
-             AllowsTransparency="False">
+             AllowsTransparency="False"
+             Opened="GroupPopup_Opened">
         <Border Background="{DynamicResource Theme.Background}"
                 BorderBrush="{DynamicResource Theme.Border}"
                 BorderThickness="1"

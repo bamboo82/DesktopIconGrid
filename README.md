@@ -18,6 +18,10 @@ Google sign-in token.
 - **Windows items** — one-click entries for This PC, Control Panel, Recycle Bin,
   Show Desktop, Notepad, Command Prompt, Windows Terminal and more.
 - **Multi Launch group** — flag any shortcuts and start them all together.
+- **Special icons** — live gauges for CPU usage and the fill level of a drive, drawn as a
+  ring, a bar or a number; click to open Task Manager or the drive.
+- **Running badge and run logs** — a green dot shows while a shortcut's program runs; console
+  programs can be started with their output captured to a log and shown live.
 - **Drag and drop** — reorder icons, drop files or folders from Explorer, drop links
   from a browser.
 - **Themes and settings** — Classic, Graphite, Paper, Midnight, Sand or a custom colour;
@@ -37,6 +41,7 @@ Google Drive Bucket, and [docs/THEMES.md](docs/THEMES.md) for the themes.
 | Add a shortcut | Right-click the bar → *New shortcut…*, drop a file onto the bar, or `Ctrl+N` |
 | Add a group | Right-click → *New group…* or `Ctrl+G` |
 | Add a Windows location or tool | Right-click → *Add Windows item ▸* |
+| Add a CPU or disk gauge | Right-click → *Add special icon ▸* |
 | Open an item | Click it (or double-click, see Settings). `Enter` when focused |
 | Rearrange | Drag an icon to a new position; the blue line shows where it lands |
 | Put a shortcut in a group | Drag it onto the group icon |
@@ -45,6 +50,8 @@ Google Drive Bucket, and [docs/THEMES.md](docs/THEMES.md) for the themes.
 | Open a file with a program on the bar | Drag the file from Explorer onto the program's icon (`{file}`/`{files}` in Parameters control where it goes) |
 | Add a shortcut by dragging | Drop a file on empty space, or right-drag it anywhere on the bar |
 | Show or hide the bar from anywhere | Set a hotkey in Settings (e.g. `Ctrl+Alt+Space`) |
+| See a program's output | *Properties → Keep a log of the program's output*, then right-click → *Show log…* |
+| Make the bar translucent | Settings → *Transparency* |
 | Remove an item | Right-click → *Remove…*, or `Delete` |
 | Multi Launch | Right-click a shortcut → *Add to Multi Launch group*; start them all from the options menu (▸) |
 | Move the bar | Drag the dotted grip on the left or any empty background. Double-click the grip to toggle *always on top* |
@@ -122,3 +129,4 @@ tests/DesktopIconGrid.Core.Tests/  xunit tests for the core library
 | `layout.json` | Settings, window position and items. Written atomically after every change; an unreadable file is renamed to `layout.json.corrupt-<timestamp>` and the bar starts empty. |
 | `sync.json` | Device name, Google API client credentials, the linked copy and when it was last synced. |
 | `google-token.bin` | The Google sign-in token, encrypted with DPAPI for the current Windows user. |
+| `logs\` | Captured output of shortcuts that have logging turned on (ten newest runs per shortcut). |

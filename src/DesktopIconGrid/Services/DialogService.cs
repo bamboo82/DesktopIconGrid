@@ -36,6 +36,13 @@ public sealed class DialogService(IIconProvider icons) : IDialogService
         return window.ShowDialog() == true ? viewModel.ToSettings() : null;
     }
 
+    public void ShowLog(LogViewerViewModel viewModel)
+    {
+        var window = new LogViewerWindow { DataContext = viewModel, Owner = Application.Current?.MainWindow };
+        window.Show();
+        window.Activate();
+    }
+
     public bool Confirm(string title, string message) =>
         Show(message, title, MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes;
 

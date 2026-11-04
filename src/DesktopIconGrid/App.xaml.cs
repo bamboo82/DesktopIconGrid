@@ -7,6 +7,7 @@ using DesktopIconGrid.Core;
 using DesktopIconGrid.Core.Storage;
 using DesktopIconGrid.Core.Sync;
 using DesktopIconGrid.Services;
+using DesktopIconGrid.SpecialIcons;
 using DesktopIconGrid.ViewModels;
 using DesktopIconGrid.Views;
 
@@ -15,6 +16,8 @@ namespace DesktopIconGrid;
 public partial class App : Application
 {
     private static readonly HttpClient Http = CreateHttpClient();
+    private ProcessTracker? _tracker;
+    private SystemMonitor? _monitor;
 
     protected override void OnStartup(StartupEventArgs e)
     {
@@ -27,13 +30,22 @@ public partial class App : Application
 
         var icons = new ShellIconProvider();
         var dialogs = new DialogService(icons);
-        var launcher = new LaunchService();
+        _tracker = new ProcessTracker(Dispatcher, Path.Combine(storage.Directory, "logs"));
+        _monitor = new SystemMonitor(Dispatcher);
+        Func<Window?> owner = () => Current?.MainWindow;
+        var specialIcons = new SpecialIconRegistry([
+            new CpuUsageHandler(_monitor, owner),
+            new DiskUsageHandler(_monitor, owner),
+        ]);
+        var launcher = new LaunchService(_tracker);
         var viewModel = new LauncherViewModel(
             model,
             storage,
             icons,
             dialogs,
             launcher,
+            _tracker,
+            specialIcons,
             action => Dispatcher.BeginInvoke(DispatcherPriority.Background, action));
 
         ThemeManager.Apply(viewModel.Palette);
@@ -63,6 +75,13 @@ public partial class App : Application
         }
 
         _ = sync.RunStartupCheckAsync();
+    }
+
+    protected override void OnExit(ExitEventArgs e)
+    {
+        _monitor?.Dispose();
+        _tracker?.Dispose();
+        base.OnExit(e);
     }
 
     private static SyncCoordinator CreateSyncCoordinator(LauncherViewModel viewModel, IDialogService dialogs)
