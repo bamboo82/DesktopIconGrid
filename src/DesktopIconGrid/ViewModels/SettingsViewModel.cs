@@ -35,6 +35,8 @@ public sealed class SettingsViewModel : ObservableObject
     private string _toggleHotkey;
     private int _transparency;
     private bool _closeToTray;
+    private bool _startWithWindows;
+    private bool _startHidden;
 
     public SettingsViewModel(LauncherSettings current)
     {
@@ -49,6 +51,8 @@ public sealed class SettingsViewModel : ObservableObject
         _transparency = LauncherSettings.MaxOpacity - current.Opacity;
         _closeToTray = current.CloseToTray;
         _fluentDialogs = current.FluentDialogs;
+        _startWithWindows = current.StartWithWindows;
+        _startHidden = current.StartHidden;
 
         Themes = [.. ThemeCatalog.Builtin, ThemeCatalog.CreateCustom(current.BackgroundColor)];
         _selectedTheme = Themes.FirstOrDefault(t => string.Equals(t.Id, current.Theme, StringComparison.OrdinalIgnoreCase)) ?? Themes[0];
@@ -195,6 +199,20 @@ public sealed class SettingsViewModel : ObservableObject
         set => SetProperty(ref _closeToTray, value);
     }
 
+    /// <summary>Start at sign-in through the current user's Run key.</summary>
+    public bool StartWithWindows
+    {
+        get => _startWithWindows;
+        set => SetProperty(ref _startWithWindows, value);
+    }
+
+    /// <summary>Only meaningful with <see cref="StartWithWindows"/>: begin in the tray, without showing the bar.</summary>
+    public bool StartHidden
+    {
+        get => _startHidden;
+        set => SetProperty(ref _startHidden, value);
+    }
+
     /// <summary>0 = opaque, up to <see cref="MaxTransparency"/>.</summary>
     public int Transparency
     {
@@ -251,6 +269,8 @@ public sealed class SettingsViewModel : ObservableObject
             ToggleHotkey = IsHotkeyValid && HasHotkey ? _toggleHotkey : null,
             Opacity = LauncherSettings.MaxOpacity - _transparency,
             CloseToTray = _closeToTray,
+            StartWithWindows = _startWithWindows,
+            StartHidden = _startHidden,
         };
         settings.Normalize();
         return settings;

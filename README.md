@@ -67,6 +67,7 @@ Google Drive Bucket, and [docs/THEMES.md](docs/THEMES.md) for the themes.
 | Open a file with a program on the bar | Drag the file from Explorer onto the program's icon (`{file}`/`{files}` in Parameters control where it goes) |
 | Add a shortcut by dragging | Drop a file on empty space, or right-drag it anywhere on the bar |
 | Show or hide the bar from anywhere | Set a hotkey in Settings (e.g. `Ctrl+Alt+Space`) |
+| Start with Windows | Settings → *Window* → *Start with Windows*; tick *Start hidden* to begin in the tray (the same as running `DesktopIconGrid.exe --hidden`) |
 | See a program's output | *Properties → Keep a log of the program's output*, then right-click → *Show log…* |
 | Let the desktop show through the bar | Settings → *Bar background* → Mica or Acrylic (Windows 11; the blur is tinted with the theme), or *Transparency* for a solid colour |
 | Classic dialogs instead of the Windows 11 look | Settings → *Window* → untick *Windows 11 style dialogs* |

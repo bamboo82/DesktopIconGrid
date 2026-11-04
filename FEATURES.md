@@ -257,7 +257,8 @@ warnings and errors. The last 2000 entries stay in memory and all of them are ap
 | Theme | Classic (Graphite, Paper, Midnight, Sand, or Custom colour) |
 | Bar background | solid colour (Mica or Acrylic on Windows 11 22H2+, tinted with the theme) |
 | Windows 11 style dialogs | on (follow the system light/dark mode) |
-| Start with Windows | off — Phase 3 (Run registry key) |
+| Start with Windows | off (current user's Run key; repaired when the program moves) |
+| Start hidden | off (with Start with Windows: only the tray icon until shown) |
 | Show/hide hotkey | none (set in Settings; needs Ctrl, Alt or Win) |
 | Transparency | 0 % (opaque) |
 | Close button hides to tray | on |
@@ -391,8 +392,8 @@ Still open, in the order they should be taken:
    display scale, and only resets when none of them shows the bar).
 3. **Localisation** — strings in `.resx` with zh-TW/zh-CN, default text-icon font by UI culture.
 4. **Non-modal errors** — tray balloons for non-fatal failures; undo for Remove.
-5. **Table stakes** — start with Windows, auto-hide/dock to a screen edge (AppBar), installer
-   (MSIX/winget), signed releases, versioning from the tag (the release workflow does this).
+5. **Table stakes** — auto-hide/dock to a screen edge (AppBar), installer (MSIX/winget), signed
+   releases, versioning from the tag (the release workflow does this). Start with Windows is done (0.4.0).
 6. **Engineering** — the tray icon itself still uses WinForms `NotifyIcon` (its menu is WPF); a
    `Shell_NotifyIcon` message window would let WinForms go. App-execution aliases resolved through
    their reparse data so Store apps get the badge too. CI builds `main` and `claude/**` branches;

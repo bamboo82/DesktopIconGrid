@@ -137,6 +137,9 @@
       <CheckBox Content="Always on top" IsChecked="{Binding AlwaysOnTop}" />
       <CheckBox Content="The close button hides the bar to the tray (Exit is in the tray and options menus)" IsChecked="{Binding CloseToTray}" Margin="0,4,0,0" />
       <CheckBox Content="Windows 11 style dialogs that follow light or dark mode (applies to dialogs opened from now on)" IsChecked="{Binding FluentDialogs}" Margin="0,4,0,0" />
+      <CheckBox Content="Start with Windows" IsChecked="{Binding StartWithWindows}" Margin="0,10,0,0" />
+      <CheckBox Content="Start hidden: only the tray icon, until the bar is shown from the tray or with the hotkey" IsChecked="{Binding StartHidden}"
+                IsEnabled="{Binding StartWithWindows}" Margin="22,4,0,0" />
     </StackPanel>
 
     <!-- Transparency -->

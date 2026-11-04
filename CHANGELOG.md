@@ -3,7 +3,16 @@
 All notable changes to Desktop Icon Grid. The format follows [Keep a Changelog](https://keepachangelog.com/);
 version numbers follow [Semantic Versioning](https://semver.org/).
 
-## [0.3.0] – Unreleased
+## [0.4.0] – Unreleased
+
+### Added
+
+- *Settings → Window → Start with Windows* registers the app in the current user's Run key, and
+  *Start hidden* keeps the bar in the tray until it is shown from the tray icon or with the hotkey.
+  The entry is repaired at startup when the program was moved and removed when the setting is
+  turned off. Starting the executable with `--hidden` has the same effect once.
+
+## [0.3.0] – 2026-11-04
 
 The first release that changes what you see. Each change is a setting, and the defaults keep the
 bar itself looking as it did in 0.2.0. Note for whoever tests this build: the dialogs have fixed

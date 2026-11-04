@@ -1,11 +1,14 @@
 using System.IO;
 using System.Net.Http;
 using System.Reflection;
+using System.Security;
 using System.Threading;
 using System.Windows;
+using System.Windows.Interop;
 using System.Windows.Threading;
 using DesktopIconGrid.Core;
 using DesktopIconGrid.Core.Diagnostics;
+using DesktopIconGrid.Core.Models;
 using DesktopIconGrid.Core.Storage;
 using DesktopIconGrid.Core.Sync;
 using DesktopIconGrid.Services;
@@ -48,7 +51,7 @@ public partial class App : Application
 
         try
         {
-            Start();
+            Start(startHidden: e.Args.Any(a => string.Equals(a, StartupRegistration.HiddenArgument, StringComparison.OrdinalIgnoreCase)));
         }
         catch (Exception ex)
         {
@@ -62,7 +65,8 @@ public partial class App : Application
         }
     }
 
-    private void Start()
+    /// <param name="startHidden">From <c>--hidden</c> (the Run entry written by "start hidden"): create the bar but leave it in the tray.</param>
+    private void Start(bool startHidden)
     {
         // Claim the instance before touching app.log, so a second copy neither shares the file nor rotates it.
         if (!ClaimSingleInstance())
@@ -126,9 +130,24 @@ public partial class App : Application
         viewModel.FlushBeforeExit = () => _sync.FlushPendingAsync(TimeSpan.FromSeconds(5));
         _ = Task.Run(() => DriveCache.Purge(cacheDirectory, TimeSpan.FromDays(1)));
 
+        var startup = CreateStartupRegistration();
+        ApplyStartupRegistration(startup, viewModel.Model.Settings);
+        viewModel.SettingsChanged += (_, _) => ApplyStartupRegistration(startup, viewModel.Model.Settings);
+
         var window = new MainWindow(viewModel);
         MainWindow = window;
-        window.Show();
+        if (startHidden)
+        {
+            // The handle is enough: SourceInitialized creates the tray icon and registers the hotkey, and the bar
+            // appears on the first Show() from either of them.
+            new WindowInteropHelper(window).EnsureHandle();
+            AppLog.Default.Info("App", "Started hidden; the bar waits in the tray");
+        }
+        else
+        {
+            window.Show();
+        }
+
         ListenForShowRequests(window);
 
         if (load.CorruptFileBackupPath is not null && !load.RecoveredFromBackup)
@@ -233,6 +252,36 @@ public partial class App : Application
         if (e.Category == UserPreferenceCategory.General && _fluentDialogsSetting is { } setting)
         {
             Dispatcher.BeginInvoke(() => DialogTheme.Configure(setting()));
+        }
+    }
+
+    /// <summary>The Run-key registration for this executable, or <see langword="null"/> when the executable path is unknown.</summary>
+    private static StartupRegistration? CreateStartupRegistration()
+    {
+        var executable = Environment.ProcessPath;
+        return string.IsNullOrEmpty(executable) ? null : new StartupRegistration(new RegistryRunKey(), executable);
+    }
+
+    /// <summary>Writes, repairs or removes the Run entry so it matches the settings; registry trouble is logged, never fatal.</summary>
+    private static void ApplyStartupRegistration(StartupRegistration? startup, LauncherSettings settings)
+    {
+        if (startup is null)
+        {
+            return;
+        }
+
+        try
+        {
+            if (startup.Apply(settings.StartWithWindows, settings.StartHidden))
+            {
+                AppLog.Default.Info("App", settings.StartWithWindows
+                    ? $"Registered to start with Windows{(settings.StartHidden ? " (hidden)" : string.Empty)}: {startup.ExecutablePath}"
+                    : "No longer starts with Windows");
+            }
+        }
+        catch (Exception ex) when (ex is SecurityException or UnauthorizedAccessException or IOException)
+        {
+            AppLog.Default.Warning("App", $"The Run registry entry could not be updated: {ex.Message}");
         }
     }
 

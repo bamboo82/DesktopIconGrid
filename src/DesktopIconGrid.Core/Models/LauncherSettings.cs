@@ -56,6 +56,12 @@ public sealed partial class LauncherSettings
     /// <summary>The close button hides the bar to the notification area instead of exiting.</summary>
     public bool CloseToTray { get; set; } = true;
 
+    /// <summary>Register the app in the current user's Run key so it starts at sign-in.</summary>
+    public bool StartWithWindows { get; set; }
+
+    /// <summary>When started with Windows, keep the bar hidden until it is shown from the tray or the hotkey.</summary>
+    public bool StartHidden { get; set; }
+
     /// <summary>Bar opacity in percent, <see cref="MinOpacity"/>–100 (solid background only).</summary>
     public int Opacity { get; set; } = MaxOpacity;
 
@@ -79,6 +85,8 @@ public sealed partial class LauncherSettings
         ToggleHotkey = source.ToggleHotkey;
         Opacity = source.Opacity;
         CloseToTray = source.CloseToTray;
+        StartWithWindows = source.StartWithWindows;
+        StartHidden = source.StartHidden;
         Normalize();
     }
 

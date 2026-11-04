@@ -72,9 +72,12 @@ public class LauncherSettingsTests
         Assert.Equal(LauncherSettings.BackdropSolid, settings.BarBackdrop);
 
         var copy = new LauncherSettings();
-        copy.CopyFrom(new LauncherSettings { BarBackdrop = LauncherSettings.BackdropAcrylic, FluentDialogs = false });
+        copy.CopyFrom(new LauncherSettings { BarBackdrop = LauncherSettings.BackdropAcrylic, FluentDialogs = false, StartWithWindows = true, StartHidden = true });
         Assert.Equal(LauncherSettings.BackdropAcrylic, copy.BarBackdrop);
         Assert.False(copy.FluentDialogs);
+        Assert.True(copy.StartWithWindows);
+        Assert.True(copy.StartHidden);
+        Assert.False(new LauncherSettings().StartWithWindows);
         Assert.True(new LauncherSettings().FluentDialogs);
         Assert.Equal(LauncherSettings.BackdropSolid, new LauncherSettings().BarBackdrop);
     }
