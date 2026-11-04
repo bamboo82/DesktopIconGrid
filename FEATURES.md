@@ -21,6 +21,7 @@ button at the top-right and a small options arrow at the bottom-right.
 | Close button (`×`) | Phase 1: exits the app. Phase 3: hides the bar to the tray instead. |
 | Bottom-right arrow | Opens the options menu: *Settings…*, *Launch Multi Launch group*, *About*, *Exit*. |
 | Edges / corners | Resizable (WindowChrome resize border, no caption). The icon grid reflows to the new width. |
+| Tray icon | While the app runs, an icon in the notification area offers: Show/Hide bar, Reset bar position (moves it to the middle of the primary screen when it is lost on a disconnected monitor), New shortcut, New group, Launch Multi Launch group, Always on top, Settings, Sync with Google Drive, Open layout file location, About, Exit. Left-click toggles the bar. The close button hides the bar to the tray (setting). |
 | Transparency | Settings → Transparency (0–80 %) lets the desktop show through the bar and the group popup. |
 | Show/hide hotkey | A system-wide combination set in Settings (e.g. `Ctrl+Alt+Space`) hides the bar or brings it to the front from any program. |
 | Background | A theme: Classic (the olive grey of the reference), Graphite, Paper, Midnight, Sand, or a Custom colour with automatically matched text and highlight colours. See [docs/THEMES.md](docs/THEMES.md). |
@@ -130,8 +131,15 @@ and a kind-specific properties dialog. Available now from *Add special icon ▸*
 - **Disk usage** — how full a drive of your choice is, refreshed every 10 seconds; click opens the drive.
 
 Both draw the value in a design you pick (ring, bar or number) with green/amber/red levels.
-The planned **Google Drive Bucket** (drop files to upload them, click to open the folder) and
-the item model, handler interface and registry are specified in
+
+- **Google Drive Bucket** — a Google Drive folder. Drop files or folders on it to upload them
+  (progress ring on the icon; same-name policy: keep both, replace or skip); click to open the
+  folder in the browser; **Ctrl+click** or *Browse…* opens the Bucket Viewer, an Explorer-like
+  window to browse the folder, open files, *Download to…* a local folder, drag items out to the
+  desktop or Explorer (they are downloaded first), and drop files in to upload. Needs full Drive
+  access, which the app asks for the first time (see the sync section for the credentials setup).
+
+The item model, handler interface, registry and the bucket are specified in
 [docs/SPECIAL_ICONS.md](docs/SPECIAL_ICONS.md).
 
 ## 3. Grid interactions
@@ -214,6 +222,7 @@ Both dialogs follow the reference layout: a labelled form, an icon preview with
 | Start with Windows | off — Phase 3 (Run registry key) |
 | Show/hide hotkey | none (set in Settings; needs Ctrl, Alt or Win) |
 | Transparency | 0 % (opaque) |
+| Close button hides to tray | on |
 
 Settings live in the same JSON file as the layout and apply immediately on *Save*.
 
@@ -303,14 +312,14 @@ Multi Launch membership and launch-all.
 Named settings copies on Drive, device name, save/load/delete, linked copy with
 automatic upload and startup check, OAuth with automatic token renewal.
 
-**Phase 4 — special icons** *(framework, CPU and disk gauges done)*
+**Phase 4 — special icons** *(done: framework, CPU and disk gauges, Google Drive Bucket with viewer)*
 Special icon item kind and handler registry; CPU and disk usage gauges; Google Drive Bucket
-(click to open the folder, drop files to upload) as specified in
-[docs/SPECIAL_ICONS.md](docs/SPECIAL_ICONS.md).
+(click to open the folder, drop files to upload, Ctrl+click to browse and download) as
+specified in [docs/SPECIAL_ICONS.md](docs/SPECIAL_ICONS.md).
 
-**Phase 5 — desktop integration**
-Global show/hide hotkey *(done)*; tray icon (close hides to tray), start with Windows,
-optional auto-hide at a screen edge.
+**Phase 5 — desktop integration** *(hotkey and tray done)*
+Global show/hide hotkey; tray icon with show/hide, reset position and the common commands
+(close hides to tray); still open: start with Windows, optional auto-hide at a screen edge.
 
 ## 13. Out of scope (for now)
 

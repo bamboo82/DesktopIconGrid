@@ -4,13 +4,23 @@
     <OutputType>WinExe</OutputType>
     <TargetFramework>net10.0-windows</TargetFramework>
     <UseWPF>true</UseWPF>
+    <!-- Only for the notification-area icon (NotifyIcon); all UI is WPF. -->
+    <UseWindowsForms>true</UseWindowsForms>
     <RootNamespace>DesktopIconGrid</RootNamespace>
     <AssemblyName>DesktopIconGrid</AssemblyName>
     <AssemblyTitle>Desktop Icon Grid</AssemblyTitle>
     <Description>A compact launcher bar that shows programs, folders and links as a grid of icons.</Description>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <RollForward>LatestMinor</RollForward>
+    <!-- WFO0003: WinForms wants DPI settings outside the manifest, but WPF needs them there. -->
+    <NoWarn>$(NoWarn);WFO0003</NoWarn>
   </PropertyGroup>
+
+  <ItemGroup>
+    <!-- WinForms is referenced only for NotifyIcon; keep its namespaces out of the implicit usings so WPF types win. -->
+    <Using Remove="System.Windows.Forms" />
+    <Using Remove="System.Drawing" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="../DesktopIconGrid.Core/DesktopIconGrid.Core.csproj" />

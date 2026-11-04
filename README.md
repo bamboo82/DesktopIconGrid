@@ -19,7 +19,10 @@ Google sign-in token.
   Show Desktop, Notepad, Command Prompt, Windows Terminal and more.
 - **Multi Launch group** — flag any shortcuts and start them all together.
 - **Special icons** — live gauges for CPU usage and the fill level of a drive, drawn as a
-  ring, a bar or a number; click to open Task Manager or the drive.
+  ring, a bar or a number; and the **Google Drive Bucket**: drop files on it to upload them to a
+  Drive folder, click to open the folder, Ctrl+click to browse it and copy files to your PC.
+- **Tray icon** — show or hide the bar, reset its position when it is lost on a disconnected
+  monitor, and reach the common commands; the close button hides the bar to the tray.
 - **Running badge and run logs** — a green dot shows while a shortcut's program runs; console
   programs can be started with their output captured to a log and shown live.
 - **Drag and drop** — reorder icons, drop files or folders from Explorer, drop links
@@ -42,6 +45,10 @@ Google Drive Bucket, and [docs/THEMES.md](docs/THEMES.md) for the themes.
 | Add a group | Right-click → *New group…* or `Ctrl+G` |
 | Add a Windows location or tool | Right-click → *Add Windows item ▸* |
 | Add a CPU or disk gauge | Right-click → *Add special icon ▸* |
+| Upload files to Google Drive | Right-click → *Add special icon ▸ Google Drive Bucket*, paste the folder link, then drop files on the icon |
+| Browse and download from Google Drive | Ctrl+click a Google Drive Bucket (or right-click → *Browse…*); drag items to the desktop or use *Download to…* |
+| Find a lost bar | Tray icon → *Reset bar position* |
+| Exit | Tray icon → *Exit*, or options menu (▸) → *Exit* (the close button only hides the bar) |
 | Open an item | Click it (or double-click, see Settings). `Enter` when focused |
 | Rearrange | Drag an icon to a new position; the blue line shows where it lands |
 | Put a shortcut in a group | Drag it onto the group icon |

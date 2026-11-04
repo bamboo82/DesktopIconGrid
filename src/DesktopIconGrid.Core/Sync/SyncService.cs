@@ -35,7 +35,8 @@ public sealed class SyncService
         SyncSettings settings,
         Action saveSettings,
         string? appVersion = null,
-        Func<DateTimeOffset>? clock = null)
+        Func<DateTimeOffset>? clock = null,
+        IDriveFiles? files = null)
     {
         _auth = auth;
         _drive = drive;
@@ -43,9 +44,30 @@ public sealed class SyncService
         _saveSettings = saveSettings;
         _appVersion = appVersion;
         _clock = clock ?? (() => DateTimeOffset.UtcNow);
+        Files = files ?? drive as IDriveFiles;
     }
 
     public SyncSettings Settings { get; }
+
+    /// <summary>Browsing and transfers for arbitrary Drive files; <see langword="null"/> when the client cannot do that.</summary>
+    public IDriveFiles? Files { get; }
+
+    /// <summary>True when the stored sign-in covers the whole Drive (needed by Google Drive Buckets).</summary>
+    public bool HasFullDriveAccess => _auth.HasScope(GoogleAuthorization.FullDriveScope);
+
+    /// <summary>Signs in (again) with the full Drive scope unless it was already granted.</summary>
+    public async Task EnsureFullDriveAccessAsync(CancellationToken cancellationToken)
+    {
+        if (HasFullDriveAccess)
+        {
+            return;
+        }
+
+        await _auth.AuthorizeAsync(cancellationToken, [GoogleAuthorization.FullDriveScope]).ConfigureAwait(false);
+        var user = await _drive.GetUserAsync(cancellationToken).ConfigureAwait(false);
+        Settings.AccountEmail = user.EmailAddress;
+        SaveSettings();
+    }
 
     public bool HasCredentials => Settings.Credentials.IsComplete;
 

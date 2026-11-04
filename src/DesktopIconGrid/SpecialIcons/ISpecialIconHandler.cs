@@ -1,7 +1,20 @@
+using System.Windows.Media;
 using DesktopIconGrid.Core.Launching;
 using DesktopIconGrid.Core.Models;
 
 namespace DesktopIconGrid.SpecialIcons;
+
+[Flags]
+public enum ActivationModifiers
+{
+    None = 0,
+    Control = 1,
+    Shift = 2,
+    Alt = 4,
+}
+
+/// <summary>An extra context-menu entry a special icon offers.</summary>
+public sealed record SpecialIconAction(string Header, Action Execute, bool IsEnabled = true);
 
 /// <summary>Behaviour of one special icon kind. Handlers are registered in <see cref="SpecialIconRegistry"/>.</summary>
 public interface ISpecialIconHandler
@@ -19,11 +32,24 @@ public interface ISpecialIconHandler
     /// <summary>Live state the icon template binds to, or <see langword="null"/> when the kind has none.</summary>
     GaugeState? CreateState(SpecialIconItem item);
 
-    /// <summary>Single click / Enter.</summary>
-    LaunchResult Activate(SpecialIconItem item);
+    /// <summary>The default icon image; <see langword="null"/> shows the placeholder (or the gauge when one is visible).</summary>
+    ImageSource? GetIcon(SpecialIconItem item) => null;
+
+    /// <summary>Extra tooltip line shown when no gauge detail is visible.</summary>
+    string? GetToolTip(SpecialIconItem item) => null;
+
+    /// <summary>Single click / Enter, with the modifier keys held at the time.</summary>
+    LaunchResult Activate(SpecialIconItem item, ActivationModifiers modifiers);
 
     /// <summary>Shows the kind-specific properties dialog, editing <paramref name="item"/> in place. True when saved.</summary>
     bool ShowProperties(SpecialIconItem item, bool isNew);
+
+    bool AcceptsFileDrops(SpecialIconItem item) => false;
+
+    Task<LaunchResult> DropFilesAsync(SpecialIconItem item, IReadOnlyList<string> paths) =>
+        Task.FromResult(LaunchResult.Failure("This icon does not accept files."));
+
+    IReadOnlyList<SpecialIconAction> GetActions(SpecialIconItem item) => [];
 }
 
 /// <summary>Looks up handlers by kind; unknown kinds get a placeholder handler.</summary>
@@ -61,7 +87,7 @@ public sealed class UnknownSpecialIconHandler : ISpecialIconHandler
 
     public GaugeState? CreateState(SpecialIconItem item) => null;
 
-    public LaunchResult Activate(SpecialIconItem item) => LaunchResult.Failure(Description);
+    public LaunchResult Activate(SpecialIconItem item, ActivationModifiers modifiers) => LaunchResult.Failure(Description);
 
     public bool ShowProperties(SpecialIconItem item, bool isNew) => false;
 }

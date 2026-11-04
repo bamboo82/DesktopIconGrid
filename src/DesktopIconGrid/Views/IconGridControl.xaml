@@ -59,6 +59,7 @@
                   <MenuItem Header="Add Windows item" Tag="windows-items" />
                   <MenuItem Header="Add special icon" Tag="special-icons" />
                   <Separator />
+                  <MenuItem Tag="special-actions-anchor" Visibility="Collapsed" />
                   <MenuItem Header="Remove…" Command="{Binding RemoveCommand}" />
                   <MenuItem Header="{Binding MultiLaunchMenuHeader}" Command="{Binding ToggleMultiLaunchCommand}"
                             Visibility="{Binding IsShortcut, Converter={StaticResource BoolToVisibility}}" />

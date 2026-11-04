@@ -44,6 +44,34 @@ public class GoogleAuthorizationTests
     }
 
     [Fact]
+    public void Extra_scopes_are_added_to_the_url_and_granted_scopes_are_remembered()
+    {
+        var url = GoogleAuthorization.BuildAuthorizationUrl(Credentials, "http://127.0.0.1:5000/", "c", "s", [GoogleAuthorization.Scopes[0], GoogleAuthorization.FullDriveScope, GoogleAuthorization.Scopes[0]]);
+        Assert.Contains("scope=https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fdrive.file%20https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fdrive&", url);
+        Assert.Contains("include_granted_scopes=true", url);
+
+        var store = new InMemoryTokenStore { Token = new OAuthToken("at", "rt", Now.AddHours(1), "https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/drive") };
+        var auth = new GoogleAuthorization(new HttpClient(new FakeHttpHandler()), store, () => Credentials, clock: () => Now);
+        Assert.True(auth.HasScope(GoogleAuthorization.FullDriveScope));
+        Assert.Equal(2, auth.GrantedScopes.Count);
+
+        var limited = new GoogleAuthorization(new HttpClient(new FakeHttpHandler()), new InMemoryTokenStore { Token = new OAuthToken("at", "rt", Now.AddHours(1), null) }, () => Credentials, clock: () => Now);
+        Assert.False(limited.HasScope(GoogleAuthorization.FullDriveScope));
+    }
+
+    [Fact]
+    public async Task Refresh_keeps_the_granted_scopes_when_the_response_omits_them()
+    {
+        var handler = new FakeHttpHandler().Enqueue(HttpStatusCode.OK, """{"access_token":"new","expires_in":3600}""");
+        var store = new InMemoryTokenStore { Token = new OAuthToken("old", "rt", Now, "https://www.googleapis.com/auth/drive") };
+        var auth = new GoogleAuthorization(new HttpClient(handler), store, () => Credentials, clock: () => Now);
+
+        await auth.GetAccessTokenAsync(CancellationToken.None);
+
+        Assert.True(auth.HasScope("https://www.googleapis.com/auth/drive"));
+    }
+
+    [Fact]
     public void Token_response_is_parsed()
     {
         var token = GoogleAuthorization.ParseTokenResponse(

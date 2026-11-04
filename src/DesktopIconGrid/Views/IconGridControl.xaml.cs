@@ -69,7 +69,7 @@ public partial class IconGridControl : UserControl
             return; // handled by MouseDoubleClick in that mode
         }
 
-        List.Root.Activate(item, sender);
+        List.Root.Activate(item, sender, CurrentModifiers());
         e.Handled = true;
     }
 
@@ -82,9 +82,31 @@ public partial class IconGridControl : UserControl
 
         if (List.Root.DoubleClickToLaunch)
         {
-            List.Root.Activate(item, sender);
+            List.Root.Activate(item, sender, CurrentModifiers());
             e.Handled = true;
         }
+    }
+
+    private static ActivationModifiers CurrentModifiers()
+    {
+        var modifiers = ActivationModifiers.None;
+        var keys = Keyboard.Modifiers;
+        if (keys.HasFlag(ModifierKeys.Control))
+        {
+            modifiers |= ActivationModifiers.Control;
+        }
+
+        if (keys.HasFlag(ModifierKeys.Shift))
+        {
+            modifiers |= ActivationModifiers.Shift;
+        }
+
+        if (keys.HasFlag(ModifierKeys.Alt))
+        {
+            modifiers |= ActivationModifiers.Alt;
+        }
+
+        return modifiers;
     }
 
     private void Item_KeyDown(object sender, KeyEventArgs e)
@@ -480,7 +502,40 @@ public partial class IconGridControl : UserControl
         {
             PopulateWindowsItems(menu, definition => item.Root.AddSpecialItemAfter(definition, item));
             PopulateSpecialIcons(menu, handler => item.Root.AddSpecialIconAfter(handler, item));
+            PopulateSpecialActions(menu, item);
         }
+    }
+
+    /// <summary>Inserts the special icon's own entries (e.g. "Browse…") above "Remove…".</summary>
+    private static void PopulateSpecialActions(ContextMenu menu, ItemViewModel item)
+    {
+        foreach (var stale in menu.Items.OfType<FrameworkElement>().Where(i => Equals(i.Tag, "special-action")).ToList())
+        {
+            menu.Items.Remove(stale);
+        }
+
+        var anchor = menu.Items.OfType<MenuItem>().FirstOrDefault(m => Equals(m.Tag, "special-actions-anchor"));
+        if (anchor is null || item.Model is not Core.Models.SpecialIconItem special)
+        {
+            return;
+        }
+
+        var actions = item.SpecialHandler.GetActions(special);
+        if (actions.Count == 0)
+        {
+            return;
+        }
+
+        var index = menu.Items.IndexOf(anchor);
+        foreach (var action in actions)
+        {
+            var entry = new MenuItem { Header = action.Header.Replace("_", "__", StringComparison.Ordinal), IsEnabled = action.IsEnabled, Tag = "special-action" };
+            var execute = action.Execute;
+            entry.Click += (_, _) => execute();
+            menu.Items.Insert(index++, entry);
+        }
+
+        menu.Items.Insert(index, new Separator { Tag = "special-action" });
     }
 
     private void PopulateSpecialIcons(ContextMenu menu, Action<ISpecialIconHandler> onPick)

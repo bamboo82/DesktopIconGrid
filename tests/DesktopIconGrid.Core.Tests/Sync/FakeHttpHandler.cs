@@ -26,13 +26,23 @@ public sealed class FakeHttpHandler : HttpMessageHandler
 
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
-        var body = request.Content is null ? null : await request.Content.ReadAsStringAsync(cancellationToken);
+        string? body = null;
+        long bodyLength = 0;
+        if (request.Content is not null)
+        {
+            var bytes = await request.Content.ReadAsByteArrayAsync(cancellationToken);
+            bodyLength = bytes.Length;
+            body = Encoding.UTF8.GetString(bytes);
+        }
+
         Requests.Add(new RecordedRequest(
             request.Method,
             request.RequestUri!.AbsoluteUri,
             request.Headers.Authorization?.Parameter,
             body,
-            request.Content?.Headers.ContentType?.MediaType));
+            bodyLength,
+            request.Content?.Headers.ContentType?.MediaType,
+            request.Content?.Headers.ContentRange?.ToString()));
 
         if (_responses.Count == 0)
         {
@@ -42,5 +52,12 @@ public sealed class FakeHttpHandler : HttpMessageHandler
         return _responses.Dequeue()(request);
     }
 
-    public sealed record RecordedRequest(HttpMethod Method, string Url, string? BearerToken, string? Body, string? MediaType);
+    public sealed record RecordedRequest(
+        HttpMethod Method,
+        string Url,
+        string? BearerToken,
+        string? Body,
+        long BodyLength,
+        string? MediaType,
+        string? ContentRange);
 }

@@ -52,7 +52,7 @@ public sealed class ItemViewModel : ObservableObject
     /// <summary>Live gauge of a monitor icon; <see langword="null"/> for other items.</summary>
     public GaugeState? Gauge => _gauge;
 
-    public bool ShowsGauge => _gauge is not null && !Model.HasCustomIcon && Model.TextIcon is null;
+    public bool ShowsGauge => _gauge is { IsVisible: true } && !Model.HasCustomIcon && Model.TextIcon is null;
 
     public string Name => Model.Name;
 
@@ -90,8 +90,13 @@ public sealed class ItemViewModel : ObservableObject
 
     public Brush? TextIconBrush => Model.TextIcon?.Color is { } color ? ThemeManager.ToBrush(color) : null;
 
-    /// <summary>True when files dropped on this icon should be opened with its program.</summary>
-    public bool AcceptsDroppedFiles => Model is ShortcutItem shortcut && DropArguments.SupportsOpenWith(shortcut);
+    /// <summary>True when files dropped on this icon are handled by it: opened with a shortcut's program, or taken by a special icon.</summary>
+    public bool AcceptsDroppedFiles => Model switch
+    {
+        ShortcutItem shortcut => DropArguments.SupportsOpenWith(shortcut),
+        SpecialIconItem special => SpecialHandler.AcceptsFileDrops(special),
+        _ => false,
+    };
 
     /// <summary>True when the item sits in the root list (so a group may be created next to it).</summary>
     public bool IsAtRoot
@@ -112,9 +117,12 @@ public sealed class ItemViewModel : ObservableObject
                 return ChildCount == 1 ? $"{Name}\n1 item" : $"{Name}\n{ChildCount} items";
             }
 
-            if (IsSpecial)
+            if (Model is SpecialIconItem special)
             {
-                return $"{Name}\n{_gauge?.Detail ?? SpecialHandler.Description}";
+                var detail = _gauge is { IsVisible: true } && _gauge.Detail.Length > 0
+                    ? _gauge.Detail
+                    : SpecialHandler.GetToolTip(special) ?? SpecialHandler.Description;
+                return $"{Name}\n{detail}";
             }
 
             var location = string.IsNullOrEmpty(Parameters) ? Location : $"{Location} {Parameters}";
@@ -164,7 +172,11 @@ public sealed class ItemViewModel : ObservableObject
         OnPropertyChanged(nameof(ToolTipText));
     }
 
-    public void LoadImage() => Image = HasTextIcon || ShowsGauge ? null : Root.Icons.GetItemIcon(Model, Root.IconSize);
+    public void LoadImage() => Image = HasTextIcon
+        ? null
+        : Model is SpecialIconItem special && !Model.HasCustomIcon
+            ? SpecialHandler.GetIcon(special)
+            : Root.Icons.GetItemIcon(Model, Root.IconSize);
 
     /// <summary>Creates (or recreates after editing) the live state of a special icon.</summary>
     public void RebuildGauge()
@@ -173,7 +185,15 @@ public sealed class ItemViewModel : ObservableObject
         _gauge = Model is SpecialIconItem special ? SpecialHandler.CreateState(special) : null;
         if (_gauge is not null)
         {
-            _gauge.PropertyChanged += (_, _) => OnPropertyChanged(nameof(ToolTipText));
+            _gauge.PropertyChanged += (_, e) =>
+            {
+                OnPropertyChanged(nameof(ToolTipText));
+                if (e.PropertyName is null or "" or nameof(GaugeState.IsVisible))
+                {
+                    OnPropertyChanged(nameof(ShowsGauge));
+                    OnPropertyChanged(nameof(ShowsImage));
+                }
+            };
         }
 
         OnPropertyChanged(nameof(Gauge));

@@ -116,8 +116,11 @@
     </StackPanel>
 
     <!-- Window -->
-    <TextBlock Grid.Row="6" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="Window:" Margin="0,0,12,10" />
-    <CheckBox Grid.Row="6" Grid.Column="1" Content="Always on top" IsChecked="{Binding AlwaysOnTop}" Margin="0,0,0,10" VerticalAlignment="Center" />
+    <TextBlock Grid.Row="6" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="Window:" Margin="0,0,12,10" VerticalAlignment="Top" />
+    <StackPanel Grid.Row="6" Grid.Column="1" Margin="0,0,0,10">
+      <CheckBox Content="Always on top" IsChecked="{Binding AlwaysOnTop}" />
+      <CheckBox Content="The close button hides the bar to the tray (Exit is in the tray and options menus)" IsChecked="{Binding CloseToTray}" Margin="0,4,0,0" />
+    </StackPanel>
 
     <!-- Transparency -->
     <TextBlock Grid.Row="7" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="Transparency:" Margin="0,0,12,10" />

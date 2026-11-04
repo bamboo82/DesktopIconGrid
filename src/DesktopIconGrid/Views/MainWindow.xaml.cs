@@ -18,6 +18,8 @@ public partial class MainWindow : Window
     private readonly LauncherViewModel _viewModel;
     private GlobalHotkey? _hotkey;
     private string? _registeredHotkey;
+    private TrayIcon? _tray;
+    private bool _exiting;
 
     public MainWindow(LauncherViewModel viewModel)
     {
@@ -26,7 +28,7 @@ public partial class MainWindow : Window
         InitializeComponent();
 
         viewModel.GroupActivated += OnGroupActivated;
-        viewModel.ExitRequested += (_, _) => Close();
+        viewModel.ExitRequested += (_, _) => ExitApplication();
         viewModel.SettingsChanged += (_, _) =>
         {
             EnsureMinimumSize();
@@ -50,6 +52,76 @@ public partial class MainWindow : Window
         }
 
         ApplyOpacity();
+        CreateTrayIcon();
+    }
+
+    private void CreateTrayIcon()
+    {
+        if (TryFindResource("AppIconImage") is not ImageSource image)
+        {
+            return;
+        }
+
+        try
+        {
+            _tray = new TrayIcon(image, "Desktop Icon Grid");
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or System.ComponentModel.Win32Exception)
+        {
+            return;
+        }
+
+        _tray.Clicked += (_, _) => ToggleVisibility();
+        _tray.SetMenu(BuildTrayMenu);
+    }
+
+    private IEnumerable<TrayMenuEntry> BuildTrayMenu()
+    {
+        var shown = IsVisible && WindowState != WindowState.Minimized;
+        yield return new TrayMenuEntry(shown ? "Hide bar" : "Show bar", ToggleVisibility);
+        yield return new TrayMenuEntry("Reset bar position", ResetPosition);
+        yield return TrayMenuEntry.Separator;
+        yield return new TrayMenuEntry("New shortcut…", () => RunOnBar(() => _viewModel.NewShortcutCommand.Execute(null)));
+        yield return new TrayMenuEntry("New group…", () => RunOnBar(() => _viewModel.NewGroupCommand.Execute(null)));
+        yield return new TrayMenuEntry("Launch Multi Launch group", () => _viewModel.LaunchMultiLaunchCommand.Execute(null), IsEnabled: _viewModel.HasMultiLaunchMembers);
+        yield return new TrayMenuEntry("Always on top", () => _viewModel.AlwaysOnTop = !_viewModel.AlwaysOnTop, IsChecked: _viewModel.AlwaysOnTop);
+        yield return TrayMenuEntry.Separator;
+        yield return new TrayMenuEntry("Settings…", () => RunOnBar(() => _viewModel.OpenSettingsCommand.Execute(null)));
+        yield return new TrayMenuEntry("Sync with Google Drive…", () => RunOnBar(() => _viewModel.OpenSyncCommand.Execute(null)));
+        yield return new TrayMenuEntry("Open layout file location", () => _viewModel.OpenLayoutFolderCommand.Execute(null));
+        yield return new TrayMenuEntry("About…", () => _viewModel.AboutCommand.Execute(null));
+        yield return TrayMenuEntry.Separator;
+        yield return new TrayMenuEntry("Exit", ExitApplication);
+    }
+
+    /// <summary>Brings the bar to the front before running an action that opens a dialog owned by it.</summary>
+    private void RunOnBar(Action action)
+    {
+        if (!IsVisible)
+        {
+            ToggleVisibility();
+        }
+
+        Dispatcher.BeginInvoke(action);
+    }
+
+    /// <summary>Moves the bar to the middle of the primary screen's work area (for when it got lost on a disconnected monitor).</summary>
+    public void ResetPosition()
+    {
+        Show();
+        WindowState = WindowState.Normal;
+        var area = SystemParameters.WorkArea;
+        Width = Math.Min(Width, area.Width);
+        Height = Math.Min(Height, area.Height);
+        Left = area.Left + Math.Max(0, (area.Width - Width) / 2);
+        Top = area.Top + Math.Max(0, (area.Height - Height) / 2);
+        Activate();
+    }
+
+    public void ExitApplication()
+    {
+        _exiting = true;
+        Close();
     }
 
     private void ApplyOpacity()
@@ -73,6 +145,8 @@ public partial class MainWindow : Window
     {
         _hotkey?.Dispose();
         _hotkey = null;
+        _tray?.Dispose();
+        _tray = null;
         base.OnClosed(e);
     }
 
@@ -136,6 +210,20 @@ public partial class MainWindow : Window
             return;
         }
 
+        if (!_exiting && _viewModel.CloseToTray && _tray is not null)
+        {
+            e.Cancel = true;
+            _viewModel.IsGroupPopupOpen = false;
+            SavePlacement();
+            Hide();
+            return;
+        }
+
+        SavePlacement();
+    }
+
+    private void SavePlacement()
+    {
         var bounds = WindowState == WindowState.Normal
             ? new Rect(Left, Top, ActualWidth, ActualHeight)
             : RestoreBounds;
@@ -276,7 +364,17 @@ public partial class MainWindow : Window
         }
     }
 
-    private void Close_Click(object sender, RoutedEventArgs e) => Close();
+    private void Close_Click(object sender, RoutedEventArgs e)
+    {
+        if (_viewModel.CloseToTray && _tray is not null)
+        {
+            Close(); // cancelled in OnClosing and turned into Hide()
+        }
+        else
+        {
+            ExitApplication();
+        }
+    }
 
     private void Options_Click(object sender, RoutedEventArgs e)
     {

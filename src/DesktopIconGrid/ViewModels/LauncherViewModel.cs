@@ -98,6 +98,8 @@ public sealed class LauncherViewModel : ObservableObject
     /// <summary>Bar opacity in percent.</summary>
     public int Opacity => Model.Settings.Opacity;
 
+    public bool CloseToTray => Model.Settings.CloseToTray;
+
     public double CellWidth => IconSize + 2 * CellPadding + (ShowLabels ? 24 : 0);
 
     public double CellHeight => IconSize + 2 * CellPadding + (ShowLabels ? LabelHeight + 2 : 0);
@@ -218,7 +220,9 @@ public sealed class LauncherViewModel : ObservableObject
 
     // ----- actions ------------------------------------------------------------------------------
 
-    public void Activate(ItemViewModel item, object? anchor)
+    public void Activate(ItemViewModel item, object? anchor) => Activate(item, anchor, ActivationModifiers.None);
+
+    public void Activate(ItemViewModel item, object? anchor, ActivationModifiers modifiers)
     {
         if (item.IsGroup)
         {
@@ -228,7 +232,7 @@ public sealed class LauncherViewModel : ObservableObject
 
         if (item.Model is SpecialIconItem special)
         {
-            var specialResult = item.SpecialHandler.Activate(special);
+            var specialResult = item.SpecialHandler.Activate(special, modifiers);
             if (specialResult.Outcome == LaunchOutcome.Failed)
             {
                 _dialogs.ShowError($"\"{item.Name}\"", specialResult.ErrorMessage ?? "Unknown error");
@@ -257,9 +261,15 @@ public sealed class LauncherViewModel : ObservableObject
         IsGroupPopupOpen = false;
     }
 
-    /// <summary>Opens files dropped onto a shortcut with that shortcut's program.</summary>
+    /// <summary>Opens files dropped onto a shortcut with that shortcut's program, or hands them to a special icon.</summary>
     public void OpenWith(ItemViewModel target, IReadOnlyList<string> paths)
     {
+        if (target.Model is SpecialIconItem special)
+        {
+            _ = DropOnSpecialAsync(target, special, paths);
+            return;
+        }
+
         if (target.Model is not ShortcutItem shortcut || !DropArguments.SupportsOpenWith(shortcut))
         {
             return;
@@ -273,6 +283,15 @@ public sealed class LauncherViewModel : ObservableObject
         }
 
         IsGroupPopupOpen = false;
+    }
+
+    private async Task DropOnSpecialAsync(ItemViewModel target, SpecialIconItem special, IReadOnlyList<string> paths)
+    {
+        var result = await target.SpecialHandler.DropFilesAsync(special, paths);
+        if (result.Outcome == LaunchOutcome.Failed)
+        {
+            _dialogs.ShowError($"\"{target.Name}\"", result.ErrorMessage ?? "Unknown error");
+        }
     }
 
     public void ToggleGroupPopup(ItemViewModel group, object? anchor)

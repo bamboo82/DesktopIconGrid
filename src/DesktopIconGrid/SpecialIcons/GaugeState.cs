@@ -24,6 +24,7 @@ public sealed class GaugeState : ObservableObject
     private readonly double _criticalAt;
     private double? _percent;
     private string _detail;
+    private bool _isVisible = true;
 
     public GaugeState(string caption, GaugeStyle style, double warningAt, double criticalAt, string initialDetail)
     {
@@ -46,6 +47,13 @@ public sealed class GaugeState : ObservableObject
 
     /// <summary>Set when the owning icon is removed so the monitor stops sampling it.</summary>
     public bool IsDetached { get; private set; }
+
+    /// <summary>False hides the gauge and shows the icon image instead (e.g. a bucket that is not uploading).</summary>
+    public bool IsVisible
+    {
+        get => _isVisible;
+        set => SetProperty(ref _isVisible, value);
+    }
 
     public double? Percent => _percent;
 

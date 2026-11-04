@@ -90,9 +90,9 @@ value shows "…" in grey. A custom image or text icon set in the common fields 
 Gauges live in a `GaugeState` that a `SystemMonitor` timer updates; states are detached when the
 icon is removed so sampling stops. Settings keys: `style` (`ring`/`bar`/`number`) and `drive` (`C:\`).
 
-## 5. Google Drive Bucket
+## 5. Google Drive Bucket (implemented: Phase A and the viewer)
 
-### 4.1 What it does
+### 5.1 What it does
 
 | Action | Behaviour |
 | --- | --- |
@@ -100,9 +100,10 @@ icon is removed so sampling stops. Settings keys: `style` (`ring`/`bar`/`number`
 | Drop files from Explorer | Uploads each file into the folder. Progress shows on the icon; a summary dialog appears only when something failed. |
 | Drop folders | Recreates the folder tree inside the bucket folder and uploads the files (Phase B). |
 | Drop a link or text | Not accepted (the drop cursor shows "not allowed"). |
-| Context menu | *Open in browser*, *Open folder picker…*, *Cancel uploads* (while uploading), *Properties*. |
+| Ctrl + click | Opens the Bucket Viewer (§5.7) to browse the folder and copy files to the local disk. |
+| Context menu | *Open in browser*, *Browse…* (the viewer), *Open folder picker…*, *Cancel uploads* (while uploading), *Properties*. |
 
-### 4.2 Properties dialog ("Google Drive Bucket Properties")
+### 5.2 Properties dialog ("Google Drive Bucket Properties")
 
 | Field | Notes |
 | --- | --- |
@@ -112,7 +113,7 @@ icon is removed so sampling stops. Settings keys: `style` (`ring`/`bar`/`number`
 | Icon | Default is a Drive-folder glyph; *Change icon…* / *Use default* as for other items. |
 | Requires | A connected Google account with full Drive access (§4.3). The dialog offers to connect or to grant the extra access inline. |
 
-### 4.3 Permissions
+### 5.3 Permissions
 
 The sync feature only needs `drive.file` (files the app created). Uploading into an
 arbitrary folder, and browsing folders, needs the full `https://www.googleapis.com/auth/drive`
@@ -131,7 +132,7 @@ publishing the consent screen to "In production" keeps refresh tokens from expir
 seven days (Testing status). Token renewal is automatic in all cases: access tokens are
 refreshed silently a minute before they expire and on any 401.
 
-### 4.4 Folder picker
+### 5.4 Folder picker
 
 A modal dialog that lists folders from *My Drive* using the Drive API
 (`mimeType = 'application/vnd.google-apps.folder' and '<parent>' in parents and trashed = false`),
@@ -140,7 +141,7 @@ folder fills in its id and name. Pasting a link such as
 `https://drive.google.com/drive/folders/1AbC…` or `https://drive.google.com/drive/u/0/folders/1AbC…`
 is parsed to the id and resolved with `files.get` to confirm access and fetch the name.
 
-### 4.5 Uploads
+### 5.5 Uploads
 
 - Uses Drive's **resumable upload** (`uploadType=resumable`): one POST to open a session, then
   PUT requests in 8 MiB chunks with `Content-Range`. This gives per-file progress, survives
@@ -158,12 +159,37 @@ is parsed to the id and resolved with `files.get` to confirm access and fetch th
   grant access.
 - Cancelling (context menu) aborts the current chunk and skips the rest of the queue.
 
-### 4.6 Icon
+### 5.6 Icon
 
 A vector Drive-folder glyph (triangle logo on a folder) in the app's resources, recoloured
 when the bucket is in an error state. The common *Icon* override applies.
 
-### 4.7 Security and privacy
+### 5.7 Bucket Viewer (Ctrl + click)
+
+Holding **Ctrl** while clicking a bucket (or choosing *Browse…* from its menu) opens the
+**Google Drive Bucket Viewer**: a window that looks like File Explorer and browses the bucket's
+folder on Drive.
+
+| Area | Behaviour |
+| --- | --- |
+| Toolbar | *Back*, *Up*, a breadcrumb (`My Drive › Projects › Receipts`), *Refresh*, *Download to…*, *Open in browser*. |
+| List | Columns *Name*, *Type*, *Size*, *Modified*; folders first, then files, natural sort. Icons come from the shell icon for the file's extension, a folder icon for folders and a document icon for Google Docs formats. |
+| Status bar | Item count, selection size, and the progress of the current transfer. |
+| Navigation | Double-click a folder to enter it; *Back*/*Up* and breadcrumb segments move around; `Backspace` goes up. |
+| Open a file | Double-click downloads the file to the cache and opens it with its default app; Google Docs, Sheets and Slides open in the browser instead. |
+| Download | *Download to…* asks for a destination folder and downloads the selection (folders recursively), naming duplicates `name (2).ext`. |
+| Drag out | Dragging selected items onto the desktop, Explorer or any program that accepts files **copies them to the local disk**: the items are first downloaded into `%LocalAppData%\DesktopIconGrid\drive-cache\<fileId>\<name>` (progress in the status bar), then an ordinary file drag starts, so the receiver copies real local files. Google Docs formats are exported (`files.export`) as `.docx`, `.xlsx`, `.pptx` or `.pdf`. The cache is purged of entries older than a day at startup. |
+| Drop in | Dropping files from Explorer into the list uploads them into the folder currently shown (same code path as dropping on the bucket icon). |
+| Not in v1 | Renaming, deleting, moving or sharing Drive files; search; thumbnails. |
+
+API calls: `files.list` with `'<folder>' in parents and trashed = false`, fields
+`id,name,mimeType,size,modifiedTime`, `orderBy=folder,name_natural`, 200 per page with paging;
+`files.get?alt=media` streamed to disk with `Content-Length` for progress; `files.export` for
+Google formats; folder downloads walk the tree with the same listing call. A virtual-file drag
+(`CFSTR_FILEDESCRIPTOR` / `CFSTR_FILECONTENTS`, which lets Explorer pull the bytes on drop without a
+cache) is a possible later refinement.
+
+### 5.8 Security and privacy
 
 - Nothing is uploaded without an explicit drop onto a bucket.
 - Tokens stay DPAPI-encrypted in `%LocalAppData%\DesktopIconGrid`; folder ids are stored in
@@ -187,6 +213,6 @@ when the bucket is in an error state. The common *Icon* override applies.
 | Phase | Scope |
 | --- | --- |
 | 0 *(done)* | Item model (`SpecialIconItem`, `$type: "special"`), handler interface and registry, *Add special icon ▸* menu, CPU and disk gauges with three designs. |
-| A | Progress overlay; Google Drive Bucket with click-to-open, file drops with *keep both*, resumable uploads, link/ID entry in properties, incremental consent. |
-| B | Folder picker, recursive folder drops, *Replace* and *Skip* policies, cancel, "Open folder picker…" menu entry. |
+| A *(done)* | Progress ring on the icon; Google Drive Bucket with click-to-open, file and folder drops, resumable uploads, link/ID entry with *Check* in properties, incremental consent; Bucket Viewer with browsing, open, *Download to…*, drag-out of files and folders (downloaded to the cache first), drop-in upload, exports of Google formats, *Replace* and *Skip* policies, cancel uploads. |
+| B | Folder picker dialog, virtual-file drag without the cache, thumbnails. |
 | C | Further kinds, each a separate design note: e.g. *Clipboard note* (drop text to keep, click to copy), *Screenshot bucket* (click captures the screen to a folder), *Recycle Bin* with fill state. |

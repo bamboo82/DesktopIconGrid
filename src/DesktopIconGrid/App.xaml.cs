@@ -33,9 +33,12 @@ public partial class App : Application
         _tracker = new ProcessTracker(Dispatcher, Path.Combine(storage.Directory, "logs"));
         _monitor = new SystemMonitor(Dispatcher);
         Func<Window?> owner = () => Current?.MainWindow;
+        var syncService = CreateSyncService();
+        var cacheDirectory = Path.Combine(storage.Directory, "drive-cache");
         var specialIcons = new SpecialIconRegistry([
             new CpuUsageHandler(_monitor, owner),
             new DiskUsageHandler(_monitor, owner),
+            new DriveBucketHandler(syncService, dialogs, owner, icons, cacheDirectory, Dispatcher),
         ]);
         var launcher = new LaunchService(_tracker);
         var viewModel = new LauncherViewModel(
@@ -51,8 +54,9 @@ public partial class App : Application
         ThemeManager.Apply(viewModel.Palette);
         viewModel.SettingsChanged += (_, _) => ThemeManager.Apply(viewModel.Palette);
 
-        var sync = CreateSyncCoordinator(viewModel, dialogs);
+        var sync = new SyncCoordinator(syncService, viewModel, dialogs);
         dialogs.SyncViewModelFactory = () => new SyncViewModel(sync, dialogs);
+        _ = Task.Run(() => DriveCache.Purge(cacheDirectory, TimeSpan.FromDays(1)));
 
         var window = new MainWindow(viewModel);
         MainWindow = window;
@@ -84,7 +88,7 @@ public partial class App : Application
         base.OnExit(e);
     }
 
-    private static SyncCoordinator CreateSyncCoordinator(LauncherViewModel viewModel, IDialogService dialogs)
+    private static SyncService CreateSyncService()
     {
         var settingsStore = new SyncSettingsStore(SyncSettingsStore.GetDefaultFilePath());
         var settings = settingsStore.Load();
@@ -92,8 +96,7 @@ public partial class App : Application
         var auth = new GoogleAuthorization(Http, tokenStore, () => settings.Credentials);
         var drive = new GoogleDriveClient(Http, auth);
         var version = Assembly.GetExecutingAssembly().GetName().Version?.ToString(3);
-        var service = new SyncService(auth, drive, settings, () => settingsStore.Save(settings), version);
-        return new SyncCoordinator(service, viewModel, dialogs);
+        return new SyncService(auth, drive, settings, () => settingsStore.Save(settings), version, files: drive);
     }
 
     private static HttpClient CreateHttpClient()

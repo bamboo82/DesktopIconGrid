@@ -72,6 +72,39 @@
     </DrawingImage.Drawing>
   </DrawingImage>
 
+  <!-- Google Drive Bucket: a folder with the three-colour Drive triangle -->
+  <DrawingImage x:Key="DriveBucketIconImage">
+    <DrawingImage.Drawing>
+      <DrawingGroup>
+        <GeometryDrawing Brush="#FFE0A82E">
+          <GeometryDrawing.Geometry>
+            <PathGeometry Figures="M2,6 L2,27 A2,2 0 0 0 4,29 L28,29 A2,2 0 0 0 30,27 L30,9 A2,2 0 0 0 28,7 L15,7 L12,4 L4,4 A2,2 0 0 0 2,6 Z" />
+          </GeometryDrawing.Geometry>
+        </GeometryDrawing>
+        <GeometryDrawing Brush="#FFF4C64F">
+          <GeometryDrawing.Geometry>
+            <PathGeometry Figures="M2,11 L30,11 L30,27 A2,2 0 0 1 28,29 L4,29 A2,2 0 0 1 2,27 Z" />
+          </GeometryDrawing.Geometry>
+        </GeometryDrawing>
+        <GeometryDrawing Brush="#FF1FA463">
+          <GeometryDrawing.Geometry>
+            <PathGeometry Figures="M13,14 L19,14 L13,24 L10,19 Z" />
+          </GeometryDrawing.Geometry>
+        </GeometryDrawing>
+        <GeometryDrawing Brush="#FFFFC107">
+          <GeometryDrawing.Geometry>
+            <PathGeometry Figures="M19,14 L22,19 L16,24 L13,24 Z" />
+          </GeometryDrawing.Geometry>
+        </GeometryDrawing>
+        <GeometryDrawing Brush="#FF4285F4">
+          <GeometryDrawing.Geometry>
+            <PathGeometry Figures="M10,19 L22,19 L19.5,23 L12.5,23 Z" />
+          </GeometryDrawing.Geometry>
+        </GeometryDrawing>
+      </DrawingGroup>
+    </DrawingImage.Drawing>
+  </DrawingImage>
+
   <!-- Placeholder shown while an icon loads or when none can be resolved -->
   <DrawingImage x:Key="PlaceholderIconImage">
     <DrawingImage.Drawing>

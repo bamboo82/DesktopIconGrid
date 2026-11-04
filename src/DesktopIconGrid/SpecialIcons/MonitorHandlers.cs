@@ -26,7 +26,7 @@ public abstract class MonitorHandlerBase(SystemMonitor monitor, Func<Window?> ow
 
     public abstract GaugeState? CreateState(SpecialIconItem item);
 
-    public abstract LaunchResult Activate(SpecialIconItem item);
+    public abstract LaunchResult Activate(SpecialIconItem item, ActivationModifiers modifiers);
 
     public bool ShowProperties(SpecialIconItem item, bool isNew)
     {
@@ -75,7 +75,7 @@ public sealed class CpuUsageHandler(SystemMonitor monitor, Func<Window?> ownerPr
         return state;
     }
 
-    public override LaunchResult Activate(SpecialIconItem item) => Open("taskmgr.exe");
+    public override LaunchResult Activate(SpecialIconItem item, ActivationModifiers modifiers) => Open("taskmgr.exe");
 }
 
 /// <summary>Shows how full a drive is; click opens the drive in File Explorer.</summary>
@@ -106,7 +106,7 @@ public sealed class DiskUsageHandler(SystemMonitor monitor, Func<Window?> ownerP
         return state;
     }
 
-    public override LaunchResult Activate(SpecialIconItem item)
+    public override LaunchResult Activate(SpecialIconItem item, ActivationModifiers modifiers)
     {
         var drive = MonitorIconSettings.From(item).Drive;
         return drive is null ? LaunchResult.Failure("No drive is selected for this icon. Open Properties to pick one.") : Open(drive);

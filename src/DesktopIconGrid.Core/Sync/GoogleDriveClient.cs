@@ -2,7 +2,6 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 
 namespace DesktopIconGrid.Core.Sync;
 
@@ -37,15 +36,23 @@ public interface IDriveClient
 }
 
 /// <summary>Google Drive v3 REST calls over <see cref="HttpClient"/>, with one automatic token refresh on 401.</summary>
-public sealed class GoogleDriveClient : IDriveClient
+public sealed class GoogleDriveClient : IDriveClient, IDriveFiles
 {
     public const string FolderName = "DesktopIconGrid";
     public const string ApiBase = "https://www.googleapis.com/drive/v3/";
     public const string UploadBase = "https://www.googleapis.com/upload/drive/v3/";
 
-    private const string FolderMimeType = "application/vnd.google-apps.folder";
+    /// <summary>Files above this size use resumable uploads.</summary>
+    public const long MultipartLimit = 5 * 1024 * 1024;
+
+    /// <summary>Resumable upload chunk size; Google requires multiples of 256 KiB.</summary>
+    public const int ChunkSize = 8 * 1024 * 1024;
+
+    private const string FolderMimeType = DriveEntry.FolderMimeType;
     private const string JsonMimeType = "application/json";
     private const string FileFields = "id,name,modifiedTime,size,appProperties";
+    private const string EntryFields = "id,name,mimeType,size,modifiedTime";
+    private const int MaxChunkAttempts = 3;
 
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
@@ -58,6 +65,8 @@ public sealed class GoogleDriveClient : IDriveClient
         _http = http;
         _tokens = tokens;
     }
+
+    // ----- sync (app folder) ---------------------------------------------------------------------
 
     public async Task<DriveUser> GetUserAsync(CancellationToken cancellationToken)
     {
@@ -125,6 +134,272 @@ public sealed class GoogleDriveClient : IDriveClient
             cancellationToken).ConfigureAwait(false);
     }
 
+    // ----- browsing and transfers (buckets, viewer) ---------------------------------------------------
+
+    public async Task<DriveEntry?> GetEntryAsync(string id, CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(id);
+        try
+        {
+            var dto = await GetAsync<FileDto>($"files/{Uri.EscapeDataString(id)}?fields={EntryFields}&supportsAllDrives=true", cancellationToken).ConfigureAwait(false);
+            return dto is null ? null : ToEntry(dto);
+        }
+        catch (DriveException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
+        {
+            return null;
+        }
+    }
+
+    public async Task<IReadOnlyList<DriveEntry>> ListChildrenAsync(string folderId, CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(folderId);
+        var entries = new List<DriveEntry>();
+        string? pageToken = null;
+        var query = Uri.EscapeDataString($"'{folderId}' in parents and trashed = false");
+        var fields = Uri.EscapeDataString($"nextPageToken,files({EntryFields})");
+        do
+        {
+            var url = $"files?q={query}&fields={fields}&orderBy=folder,name_natural&pageSize=200&supportsAllDrives=true&includeItemsFromAllDrives=true";
+            if (pageToken is not null)
+            {
+                url += "&pageToken=" + Uri.EscapeDataString(pageToken);
+            }
+
+            var page = await GetAsync<FileListDto>(url, cancellationToken).ConfigureAwait(false);
+            entries.AddRange((page?.Files ?? []).Select(ToEntry));
+            pageToken = page?.NextPageToken;
+        }
+        while (!string.IsNullOrEmpty(pageToken));
+
+        return entries;
+    }
+
+    public async Task<DriveEntry> CreateFolderAsync(string parentId, string name, CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(parentId);
+        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        var metadata = new { name, mimeType = FolderMimeType, parents = new[] { parentId } };
+        using var response = await SendAsync(
+            () => new HttpRequestMessage(HttpMethod.Post, $"{ApiBase}files?fields={EntryFields}&supportsAllDrives=true")
+            {
+                Content = new StringContent(JsonSerializer.Serialize(metadata, JsonOptions), Encoding.UTF8, JsonMimeType),
+            },
+            cancellationToken).ConfigureAwait(false);
+        var dto = await ReadJsonAsync<FileDto>(response, cancellationToken).ConfigureAwait(false)
+                  ?? throw new DriveException("Google Drive did not describe the new folder.");
+        return ToEntry(dto);
+    }
+
+    public async Task<DriveEntry> UploadAsync(string parentId, string name, string mimeType, Stream content, long length, string? existingFileId, IProgress<long>? progress, CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        ArgumentNullException.ThrowIfNull(content);
+        mimeType = string.IsNullOrWhiteSpace(mimeType) ? MimeTypes.Binary : mimeType;
+
+        return length <= MultipartLimit
+            ? await UploadMultipartAsync(parentId, name, mimeType, content, length, existingFileId, progress, cancellationToken).ConfigureAwait(false)
+            : await UploadResumableAsync(parentId, name, mimeType, content, length, existingFileId, progress, cancellationToken).ConfigureAwait(false);
+    }
+
+    public async Task DownloadAsync(string fileId, Stream destination, IProgress<long>? progress, CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(fileId);
+        using var response = await SendAsync(
+            () => new HttpRequestMessage(HttpMethod.Get, $"{ApiBase}files/{Uri.EscapeDataString(fileId)}?alt=media&supportsAllDrives=true"),
+            cancellationToken,
+            HttpCompletionOption.ResponseHeadersRead).ConfigureAwait(false);
+        await CopyWithProgressAsync(response, destination, progress, cancellationToken).ConfigureAwait(false);
+    }
+
+    public async Task ExportAsync(string fileId, string exportMimeType, Stream destination, CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(fileId);
+        ArgumentException.ThrowIfNullOrWhiteSpace(exportMimeType);
+        using var response = await SendAsync(
+            () => new HttpRequestMessage(HttpMethod.Get, $"{ApiBase}files/{Uri.EscapeDataString(fileId)}/export?mimeType={Uri.EscapeDataString(exportMimeType)}"),
+            cancellationToken,
+            HttpCompletionOption.ResponseHeadersRead).ConfigureAwait(false);
+        await CopyWithProgressAsync(response, destination, null, cancellationToken).ConfigureAwait(false);
+    }
+
+    private async Task<DriveEntry> UploadMultipartAsync(string parentId, string name, string mimeType, Stream content, long length, string? existingFileId, IProgress<long>? progress, CancellationToken cancellationToken)
+    {
+        var metadata = new Dictionary<string, object> { ["name"] = name };
+        if (existingFileId is null)
+        {
+            metadata["parents"] = new[] { parentId };
+        }
+
+        var url = existingFileId is null
+            ? $"{UploadBase}files?uploadType=multipart&fields={EntryFields}&supportsAllDrives=true"
+            : $"{UploadBase}files/{Uri.EscapeDataString(existingFileId)}?uploadType=multipart&fields={EntryFields}&supportsAllDrives=true";
+        var method = existingFileId is null ? HttpMethod.Post : HttpMethod.Patch;
+
+        var bytes = new byte[length];
+        var read = 0;
+        while (read < length)
+        {
+            var count = await content.ReadAsync(bytes.AsMemory(read, (int)(length - read)), cancellationToken).ConfigureAwait(false);
+            if (count == 0)
+            {
+                break;
+            }
+
+            read += count;
+        }
+
+        using var response = await SendAsync(() =>
+        {
+            var body = new MultipartContent("related");
+            body.Add(new StringContent(JsonSerializer.Serialize(metadata, JsonOptions), Encoding.UTF8, JsonMimeType));
+            var media = new ByteArrayContent(bytes, 0, read);
+            media.Headers.ContentType = new MediaTypeHeaderValue(mimeType);
+            body.Add(media);
+            return new HttpRequestMessage(method, url) { Content = body };
+        }, cancellationToken).ConfigureAwait(false);
+
+        progress?.Report(read);
+        var dto = await ReadJsonAsync<FileDto>(response, cancellationToken).ConfigureAwait(false)
+                  ?? throw new DriveException("Google Drive did not describe the uploaded file.");
+        return ToEntry(dto);
+    }
+
+    private async Task<DriveEntry> UploadResumableAsync(string parentId, string name, string mimeType, Stream content, long length, string? existingFileId, IProgress<long>? progress, CancellationToken cancellationToken)
+    {
+        // 1. Open the session.
+        var metadata = new Dictionary<string, object> { ["name"] = name };
+        if (existingFileId is null)
+        {
+            metadata["parents"] = new[] { parentId };
+        }
+
+        var sessionUrl = existingFileId is null
+            ? $"{UploadBase}files?uploadType=resumable&fields={EntryFields}&supportsAllDrives=true"
+            : $"{UploadBase}files/{Uri.EscapeDataString(existingFileId)}?uploadType=resumable&fields={EntryFields}&supportsAllDrives=true";
+        var method = existingFileId is null ? HttpMethod.Post : HttpMethod.Patch;
+
+        Uri uploadUri;
+        using (var open = await SendAsync(() =>
+               {
+                   var request = new HttpRequestMessage(method, sessionUrl)
+                   {
+                       Content = new StringContent(JsonSerializer.Serialize(metadata, JsonOptions), Encoding.UTF8, JsonMimeType),
+                   };
+                   request.Headers.Add("X-Upload-Content-Type", mimeType);
+                   request.Headers.Add("X-Upload-Content-Length", length.ToString(System.Globalization.CultureInfo.InvariantCulture));
+                   return request;
+               }, cancellationToken).ConfigureAwait(false))
+        {
+            uploadUri = open.Headers.Location ?? throw new DriveException("Google Drive did not open an upload session.");
+        }
+
+        // 2. Send the chunks.
+        var buffer = new byte[ChunkSize];
+        long offset = 0;
+        while (offset < length)
+        {
+            var chunkLength = 0;
+            while (chunkLength < buffer.Length && offset + chunkLength < length)
+            {
+                var count = await content.ReadAsync(buffer.AsMemory(chunkLength, (int)Math.Min(buffer.Length - chunkLength, length - offset - chunkLength)), cancellationToken).ConfigureAwait(false);
+                if (count == 0)
+                {
+                    break;
+                }
+
+                chunkLength += count;
+            }
+
+            if (chunkLength == 0)
+            {
+                throw new DriveException("The file ended before the expected length was read.");
+            }
+
+            var start = offset;
+            var end = offset + chunkLength - 1;
+            HttpResponseMessage? response = null;
+            for (var attempt = 1; ; attempt++)
+            {
+                using var request = new HttpRequestMessage(HttpMethod.Put, uploadUri)
+                {
+                    Content = new ByteArrayContent(buffer, 0, chunkLength),
+                };
+                request.Content.Headers.ContentType = new MediaTypeHeaderValue(mimeType);
+                request.Content.Headers.ContentRange = new ContentRangeHeaderValue(start, end, length);
+
+                try
+                {
+                    response = await _http.SendAsync(request, cancellationToken).ConfigureAwait(false);
+                }
+                catch (HttpRequestException ex) when (attempt < MaxChunkAttempts)
+                {
+                    await Task.Delay(TimeSpan.FromSeconds(attempt * 2), cancellationToken).ConfigureAwait(false);
+                    _ = ex;
+                    continue;
+                }
+                catch (HttpRequestException ex)
+                {
+                    throw new DriveException($"The upload was interrupted: {ex.Message}");
+                }
+
+                if ((int)response.StatusCode >= 500 && attempt < MaxChunkAttempts)
+                {
+                    response.Dispose();
+                    response = null;
+                    await Task.Delay(TimeSpan.FromSeconds(attempt * 2), cancellationToken).ConfigureAwait(false);
+                    continue;
+                }
+
+                break;
+            }
+
+            using (response)
+            {
+                if (response is null)
+                {
+                    throw new DriveException("The upload was interrupted.");
+                }
+
+                if ((int)response.StatusCode == 308)
+                {
+                    offset = end + 1;
+                    progress?.Report(offset);
+                    continue;
+                }
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    var body = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+                    throw new DriveException(DescribeError(body, response.StatusCode), response.StatusCode);
+                }
+
+                offset = end + 1;
+                progress?.Report(offset);
+                var dto = await ReadJsonAsync<FileDto>(response, cancellationToken).ConfigureAwait(false)
+                          ?? throw new DriveException("Google Drive did not describe the uploaded file.");
+                return ToEntry(dto);
+            }
+        }
+
+        throw new DriveException("The upload finished without a confirmation from Google Drive.");
+    }
+
+    private static async Task CopyWithProgressAsync(HttpResponseMessage response, Stream destination, IProgress<long>? progress, CancellationToken cancellationToken)
+    {
+        await using var source = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
+        var buffer = new byte[81920];
+        long total = 0;
+        int read;
+        while ((read = await source.ReadAsync(buffer, cancellationToken).ConfigureAwait(false)) > 0)
+        {
+            await destination.WriteAsync(buffer.AsMemory(0, read), cancellationToken).ConfigureAwait(false);
+            total += read;
+            progress?.Report(total);
+        }
+    }
+
+    // ----- plumbing -------------------------------------------------------------------------------------
+
     private async Task<string> EnsureFolderAsync(CancellationToken cancellationToken)
     {
         if (_folderId is not null)
@@ -183,7 +458,7 @@ public sealed class GoogleDriveClient : IDriveClient
     }
 
     /// <summary>Sends a request with a bearer token; on 401 refreshes the token once and retries.</summary>
-    private async Task<HttpResponseMessage> SendAsync(Func<HttpRequestMessage> createRequest, CancellationToken cancellationToken)
+    private async Task<HttpResponseMessage> SendAsync(Func<HttpRequestMessage> createRequest, CancellationToken cancellationToken, HttpCompletionOption completion = HttpCompletionOption.ResponseContentRead)
     {
         for (var attempt = 0; ; attempt++)
         {
@@ -193,7 +468,7 @@ public sealed class GoogleDriveClient : IDriveClient
             HttpResponseMessage response;
             try
             {
-                response = await _http.SendAsync(request, cancellationToken).ConfigureAwait(false);
+                response = await _http.SendAsync(request, completion, cancellationToken).ConfigureAwait(false);
             }
             catch (HttpRequestException ex)
             {
@@ -247,8 +522,8 @@ public sealed class GoogleDriveClient : IDriveClient
         return status switch
         {
             HttpStatusCode.Unauthorized => "Google Drive rejected the sign-in. Connect again.",
-            HttpStatusCode.Forbidden => "Google Drive refused the request (HTTP 403). Check that the Drive API is enabled for the project.",
-            HttpStatusCode.NotFound => "The file no longer exists on Google Drive.",
+            HttpStatusCode.Forbidden => "Google Drive refused the request (HTTP 403). Check that the Drive API is enabled for the project and that the app was granted access to your Drive.",
+            HttpStatusCode.NotFound => "The file or folder no longer exists on Google Drive, or the app cannot see it.",
             _ => $"Google Drive returned HTTP {(int)status}.",
         };
     }
@@ -260,9 +535,18 @@ public sealed class GoogleDriveClient : IDriveClient
         long.TryParse(dto.Size, out var size) ? size : null,
         dto.AppProperties ?? new Dictionary<string, string>());
 
+    private static DriveEntry ToEntry(FileDto dto) => new(
+        dto.Id ?? string.Empty,
+        dto.Name ?? string.Empty,
+        dto.MimeType ?? MimeTypes.Binary,
+        long.TryParse(dto.Size, out var size) ? size : null,
+        dto.ModifiedTime);
+
     private sealed class FileListDto
     {
         public List<FileDto>? Files { get; set; }
+
+        public string? NextPageToken { get; set; }
     }
 
     private sealed class FileDto
@@ -270,6 +554,8 @@ public sealed class GoogleDriveClient : IDriveClient
         public string? Id { get; set; }
 
         public string? Name { get; set; }
+
+        public string? MimeType { get; set; }
 
         public DateTimeOffset? ModifiedTime { get; set; }
 

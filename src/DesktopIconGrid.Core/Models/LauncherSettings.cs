@@ -36,6 +36,9 @@ public sealed partial class LauncherSettings
     /// <summary>Bar background as <c>#RRGGBB</c>, used by the custom theme.</summary>
     public string BackgroundColor { get; set; } = DefaultBackgroundColor;
 
+    /// <summary>The close button hides the bar to the notification area instead of exiting.</summary>
+    public bool CloseToTray { get; set; } = true;
+
     /// <summary>Bar opacity in percent, <see cref="MinOpacity"/>–100.</summary>
     public int Opacity { get; set; } = MaxOpacity;
 
@@ -56,6 +59,7 @@ public sealed partial class LauncherSettings
         BackgroundColor = source.BackgroundColor;
         ToggleHotkey = source.ToggleHotkey;
         Opacity = source.Opacity;
+        CloseToTray = source.CloseToTray;
         Normalize();
     }
 

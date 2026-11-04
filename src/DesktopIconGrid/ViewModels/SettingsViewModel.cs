@@ -22,6 +22,7 @@ public sealed class SettingsViewModel : ObservableObject
     private ThemePalette _selectedTheme;
     private string _toggleHotkey;
     private int _transparency;
+    private bool _closeToTray;
 
     public SettingsViewModel(LauncherSettings current)
     {
@@ -34,6 +35,7 @@ public sealed class SettingsViewModel : ObservableObject
         _backgroundColor = current.BackgroundColor;
         _toggleHotkey = current.ToggleHotkey ?? string.Empty;
         _transparency = LauncherSettings.MaxOpacity - current.Opacity;
+        _closeToTray = current.CloseToTray;
 
         Themes = [.. ThemeCatalog.Builtin, ThemeCatalog.CreateCustom(current.BackgroundColor)];
         _selectedTheme = Themes.FirstOrDefault(t => string.Equals(t.Id, current.Theme, StringComparison.OrdinalIgnoreCase)) ?? Themes[0];
@@ -138,6 +140,12 @@ public sealed class SettingsViewModel : ObservableObject
         ? (IsColorValid ? ThemeManager.ToBrush(_backgroundColor) : Brushes.Transparent)
         : ThemeManager.ToBrush(_selectedTheme.Background);
 
+    public bool CloseToTray
+    {
+        get => _closeToTray;
+        set => SetProperty(ref _closeToTray, value);
+    }
+
     /// <summary>0 = opaque, up to <see cref="MaxTransparency"/>.</summary>
     public int Transparency
     {
@@ -191,6 +199,7 @@ public sealed class SettingsViewModel : ObservableObject
             BackgroundColor = IsColorValid ? _backgroundColor : LauncherSettings.DefaultBackgroundColor,
             ToggleHotkey = IsHotkeyValid && HasHotkey ? _toggleHotkey : null,
             Opacity = LauncherSettings.MaxOpacity - _transparency,
+            CloseToTray = _closeToTray,
         };
         settings.Normalize();
         return settings;

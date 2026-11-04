@@ -28,8 +28,11 @@ public sealed class GoogleAuthorization : IAccessTokenProvider
     public const string TokenEndpoint = "https://oauth2.googleapis.com/token";
     public const string RevokeEndpoint = "https://oauth2.googleapis.com/revoke";
 
-    /// <summary>Files the app creates in Drive, nothing else.</summary>
+    /// <summary>Files the app creates in Drive, nothing else. Always requested.</summary>
     public static readonly IReadOnlyList<string> Scopes = ["https://www.googleapis.com/auth/drive.file"];
+
+    /// <summary>Everything in the user's Drive; requested only when a Google Drive Bucket needs it.</summary>
+    public const string FullDriveScope = "https://www.googleapis.com/auth/drive";
 
     private static readonly TimeSpan RefreshMargin = TimeSpan.FromMinutes(1);
     private static readonly TimeSpan SignInTimeout = TimeSpan.FromMinutes(5);
@@ -60,19 +63,29 @@ public sealed class GoogleAuthorization : IAccessTokenProvider
     /// <summary>True when a refresh token is on file, i.e. the user has connected and not disconnected.</summary>
     public bool IsAuthorized => _token?.RefreshToken is not null;
 
-    public static string BuildAuthorizationUrl(OAuthClientCredentials credentials, string redirectUri, string codeChallenge, string state)
+    /// <summary>Scopes Google granted to the stored token.</summary>
+    public IReadOnlyCollection<string> GrantedScopes =>
+        (_token?.Scope ?? string.Empty).Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+    public bool HasScope(string scope) => IsAuthorized && GrantedScopes.Contains(scope, StringComparer.Ordinal);
+
+    public static string BuildAuthorizationUrl(OAuthClientCredentials credentials, string redirectUri, string codeChallenge, string state) =>
+        BuildAuthorizationUrl(credentials, redirectUri, codeChallenge, state, Scopes);
+
+    public static string BuildAuthorizationUrl(OAuthClientCredentials credentials, string redirectUri, string codeChallenge, string state, IEnumerable<string> scopes)
     {
         var query = new Dictionary<string, string>
         {
             ["client_id"] = credentials.ClientId,
             ["redirect_uri"] = redirectUri,
             ["response_type"] = "code",
-            ["scope"] = string.Join(' ', Scopes),
+            ["scope"] = string.Join(' ', scopes.Distinct(StringComparer.Ordinal)),
             ["code_challenge"] = codeChallenge,
             ["code_challenge_method"] = "S256",
             ["state"] = state,
             ["access_type"] = "offline",
             ["prompt"] = "consent",
+            ["include_granted_scopes"] = "true",
         };
 
         var builder = new StringBuilder(AuthorizationEndpoint).Append('?');
@@ -91,9 +104,13 @@ public sealed class GoogleAuthorization : IAccessTokenProvider
         return builder.ToString();
     }
 
-    /// <summary>Runs the interactive sign-in. Throws <see cref="GoogleAuthException"/> when it fails or is cancelled.</summary>
-    public async Task AuthorizeAsync(CancellationToken cancellationToken)
+    /// <summary>
+    /// Runs the interactive sign-in, asking for the base scopes plus <paramref name="additionalScopes"/> and
+    /// whatever was granted before. Throws <see cref="GoogleAuthException"/> when it fails or is cancelled.
+    /// </summary>
+    public async Task AuthorizeAsync(CancellationToken cancellationToken, IEnumerable<string>? additionalScopes = null)
     {
+        var scopes = Scopes.Concat(GrantedScopes).Concat(additionalScopes ?? []).ToList();
         var credentials = _credentials();
         if (!credentials.IsComplete)
         {
@@ -108,7 +125,7 @@ public sealed class GoogleAuthorization : IAccessTokenProvider
         timeout.CancelAfter(SignInTimeout);
 
         using var listener = new LoopbackListener();
-        var url = BuildAuthorizationUrl(credentials, listener.RedirectUri, challenge, state);
+        var url = BuildAuthorizationUrl(credentials, listener.RedirectUri, challenge, state, scopes);
         await _openBrowser(url).ConfigureAwait(false);
 
         string code;
@@ -154,7 +171,11 @@ public sealed class GoogleAuthorization : IAccessTokenProvider
             }
 
             var refreshed = await RefreshAsync(_credentials(), token.RefreshToken, cancellationToken).ConfigureAwait(false);
-            _token = refreshed with { RefreshToken = refreshed.RefreshToken ?? token.RefreshToken };
+            _token = refreshed with
+            {
+                RefreshToken = refreshed.RefreshToken ?? token.RefreshToken,
+                Scope = refreshed.Scope ?? token.Scope,
+            };
             _store.Save(_token);
             return _token.AccessToken;
         }
