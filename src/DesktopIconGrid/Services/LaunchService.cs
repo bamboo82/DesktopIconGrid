@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using DesktopIconGrid.Core.Diagnostics;
 using DesktopIconGrid.Core.Launching;
 using DesktopIconGrid.Core.Models;
 
@@ -17,7 +18,26 @@ public sealed class LaunchService(ProcessTracker tracker) : ILaunchService
     public LaunchResult Launch(ShortcutItem shortcut)
     {
         ArgumentNullException.ThrowIfNull(shortcut);
-        return LaunchCore(shortcut);
+        var result = LaunchCore(shortcut);
+        Log(shortcut, result);
+        return result;
+    }
+
+    private static void Log(ShortcutItem shortcut, LaunchResult result)
+    {
+        var what = string.IsNullOrEmpty(shortcut.Parameters) ? shortcut.Location : $"{shortcut.Location} {shortcut.Parameters}";
+        switch (result.Outcome)
+        {
+            case LaunchOutcome.Started:
+                AppLog.Default.Info("Launch", $"Started \"{shortcut.Name}\": {what}{(shortcut.CaptureLog ? " (output captured)" : string.Empty)}");
+                break;
+            case LaunchOutcome.Cancelled:
+                AppLog.Default.Info("Launch", $"Cancelled \"{shortcut.Name}\" ({what})");
+                break;
+            default:
+                AppLog.Default.Warning("Launch", $"Failed \"{shortcut.Name}\" ({what}): {result.ErrorMessage}");
+                break;
+        }
     }
 
     public LaunchResult LaunchWith(ShortcutItem shortcut, IReadOnlyList<string> paths)
@@ -40,6 +60,7 @@ public sealed class LaunchService(ProcessTracker tracker) : ILaunchService
             var launch = (ShortcutItem)shortcut.Clone();
             launch.Parameters = arguments;
             var result = LaunchCore(launch);
+            Log(launch, result);
             switch (result.Outcome)
             {
                 case LaunchOutcome.Cancelled:

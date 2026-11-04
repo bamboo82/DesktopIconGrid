@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
+using DesktopIconGrid.Core.Diagnostics;
 
 namespace DesktopIconGrid.Core.Sync;
 
@@ -293,6 +294,8 @@ public sealed class GoogleDriveClient : IDriveClient, IDriveFiles
             uploadUri = open.Headers.Location ?? throw new DriveException("Google Drive did not open an upload session.");
         }
 
+        AppLog.Default.Debug("Drive", $"Resumable upload of \"{name}\" ({length:N0} bytes) started");
+
         // 2. Send the chunks.
         var buffer = new byte[ChunkSize];
         long offset = 0;
@@ -472,6 +475,7 @@ public sealed class GoogleDriveClient : IDriveClient, IDriveFiles
             }
             catch (HttpRequestException ex)
             {
+                AppLog.Default.Error("Drive", $"{request.Method} {request.RequestUri?.AbsolutePath}: could not be reached", ex);
                 throw new DriveException($"Google Drive could not be reached: {ex.Message}");
             }
 
@@ -490,7 +494,9 @@ public sealed class GoogleDriveClient : IDriveClient, IDriveFiles
             var body = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
             var status = response.StatusCode;
             response.Dispose();
-            throw new DriveException(DescribeError(body, status), status);
+            var description = DescribeError(body, status);
+            AppLog.Default.Warning("Drive", $"{request.Method} {request.RequestUri?.AbsolutePath}: {description}");
+            throw new DriveException(description, status);
         }
     }
 

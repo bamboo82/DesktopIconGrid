@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Windows.Input;
 using System.Windows.Media;
+using DesktopIconGrid.Core.Diagnostics;
 using DesktopIconGrid.Core.Launching;
 using DesktopIconGrid.Core.Sync;
 using DesktopIconGrid.Infrastructure;
@@ -194,6 +195,7 @@ public sealed class DriveViewerViewModel : ObservableObject
                     if (path is not null)
                     {
                         paths.Add(path);
+                        AppLog.Default.Info("Bucket", $"Downloaded \"{row.Name}\" to the cache for drag-out/open");
                     }
                 }
                 catch (Exception ex) when (SyncCoordinator.IsSyncError(ex) && ex is not OperationCanceledException)
@@ -215,14 +217,16 @@ public sealed class DriveViewerViewModel : ObservableObject
                 token.ThrowIfCancellationRequested();
                 try
                 {
-                    if (await _downloader.DownloadEntryAsync(row.Entry, destination, overwrite: false, progress, token) is not null)
+                    if (await _downloader.DownloadEntryAsync(row.Entry, destination, overwrite: false, progress, token) is { } saved)
                     {
                         done++;
+                        AppLog.Default.Info("Bucket", $"Downloaded \"{row.Name}\" to {saved}");
                     }
                 }
                 catch (Exception ex) when (SyncCoordinator.IsSyncError(ex) && ex is not OperationCanceledException)
                 {
                     StatusText = $"{row.Name}: {ex.Message}";
+                    AppLog.Default.Error("Bucket", $"Download of \"{row.Name}\" failed", ex);
                 }
             }
         }, $"Downloaded {done} item(s) to {destination}.");

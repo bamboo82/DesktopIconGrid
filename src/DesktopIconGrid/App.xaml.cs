@@ -4,6 +4,7 @@ using System.Reflection;
 using System.Windows;
 using System.Windows.Threading;
 using DesktopIconGrid.Core;
+using DesktopIconGrid.Core.Diagnostics;
 using DesktopIconGrid.Core.Storage;
 using DesktopIconGrid.Core.Sync;
 using DesktopIconGrid.Services;
@@ -27,9 +28,19 @@ public partial class App : Application
         base.OnStartup(e);
         DispatcherUnhandledException += OnDispatcherUnhandledException;
 
+        AppLog.Default.AttachFile(Path.Combine(AppPaths.LogsDirectory, "app.log"));
+        AppLog.Default.Info("App", $"Desktop Icon Grid {Assembly.GetExecutingAssembly().GetName().Version?.ToString(3)} starting");
+
         var storage = new LayoutStorage(LayoutStorage.GetDefaultFilePath());
         var load = storage.Load();
         var model = LauncherModel.FromLayout(load.Layout);
+        AppLog.Default.Info("App", load.IsFirstRun
+            ? "No layout file yet; starting with an empty bar"
+            : $"Layout loaded: {model.Items.Count} top-level items, {model.TotalShortcutCount} shortcuts{(model.RepairCount > 0 ? $", {model.RepairCount} repaired" : string.Empty)}");
+        if (load.Error is not null)
+        {
+            AppLog.Default.Error("App", $"Layout file could not be read: {load.Error}");
+        }
 
         var icons = new ShellIconProvider();
         var dialogs = new DialogService(icons);
@@ -87,6 +98,7 @@ public partial class App : Application
 
     protected override void OnExit(ExitEventArgs e)
     {
+        AppLog.Default.Info("App", "Exiting");
         _monitor?.Dispose();
         _tracker?.Dispose();
         base.OnExit(e);
@@ -112,6 +124,7 @@ public partial class App : Application
 
     private static void OnDispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
     {
+        AppLog.Default.Error("App", "Unhandled exception", e.Exception);
         MessageBox.Show(
             $"{e.Exception.Message}\n\n{e.Exception}",
             "Desktop Icon Grid – unexpected error",

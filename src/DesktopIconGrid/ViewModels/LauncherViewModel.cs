@@ -2,6 +2,7 @@ using System.IO;
 using System.Reflection;
 using System.Windows.Input;
 using DesktopIconGrid.Core;
+using DesktopIconGrid.Core.Diagnostics;
 using DesktopIconGrid.Core.Launching;
 using DesktopIconGrid.Core.Models;
 using DesktopIconGrid.Core.SpecialItems;
@@ -70,6 +71,7 @@ public sealed class LauncherViewModel : ObservableObject
         CloseGroupPopupCommand = new RelayCommand(() => IsGroupPopupOpen = false);
         OpenSyncCommand = new RelayCommand(() => _dialogs.ShowSync());
         OpenNameTableCommand = new RelayCommand(() => _dialogs.ShowNameTable(this));
+        OpenLogViewerCommand = new RelayCommand(() => _dialogs.ShowAppLog());
     }
 
     public LauncherModel Model { get; private set; }
@@ -180,6 +182,8 @@ public sealed class LauncherViewModel : ObservableObject
     public ICommand OpenSyncCommand { get; }
 
     public ICommand OpenNameTableCommand { get; }
+
+    public ICommand OpenLogViewerCommand { get; }
 
     /// <summary>Raised when a group icon is clicked; the view positions the popup at the anchor element.</summary>
     public event EventHandler<GroupActivatedEventArgs>? GroupActivated;
@@ -402,6 +406,7 @@ public sealed class LauncherViewModel : ObservableObject
         {
             list.Sync();
             Save();
+            AppLog.Default.Info("Layout", $"Added dropped item(s) as shortcuts into \"{list.Group?.Name ?? "the bar"}\"");
         }
     }
 
@@ -500,6 +505,8 @@ public sealed class LauncherViewModel : ObservableObject
             return;
         }
 
+        AppLog.Default.Info("Layout", $"Removed \"{item.Name}\"");
+
         if (item.Model is GroupItem group)
         {
             foreach (var child in group.Items)
@@ -597,6 +604,7 @@ public sealed class LauncherViewModel : ObservableObject
         var previousIconSize = IconSize;
         Model.ApplySettings(settings);
         NotifyAppearanceChanged();
+        AppLog.Default.Info("Settings", $"Settings applied: theme {Model.Settings.Theme}, icons {IconSize} px, padding {CellPadding}, labels {(ShowLabels ? "on" : "off")}, {(DoubleClickToLaunch ? "double" : "single")} click, opacity {Opacity}%, hotkey {Model.Settings.ToggleHotkey ?? "none"}");
 
         if (IconSize != previousIconSize)
         {
@@ -651,6 +659,7 @@ public sealed class LauncherViewModel : ObservableObject
         ArgumentNullException.ThrowIfNull(layout);
         var model = LauncherModel.FromLayout(layout);
         model.Window = Model.Window;
+        AppLog.Default.Info("Layout", $"Replaced the layout with a loaded copy ({model.Items.Count} top-level items)");
 
         IsGroupPopupOpen = false;
         Model = model;

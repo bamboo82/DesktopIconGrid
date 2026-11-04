@@ -4,6 +4,7 @@ using System.Globalization;
 using System.IO;
 using System.Text;
 using System.Windows.Threading;
+using DesktopIconGrid.Core.Diagnostics;
 using DesktopIconGrid.Core.Launching;
 using DesktopIconGrid.Core.Models;
 
@@ -94,12 +95,25 @@ public sealed class ProcessTracker : IDisposable
         }
 
         pids.Add(pid);
-        process.Exited += (_, _) => _dispatcher.BeginInvoke(() =>
+        process.Exited += (_, _) =>
         {
-            pids.Remove(pid);
-            process.Dispose();
-            RunningChanged?.Invoke(this, id);
-        });
+            int? exitCode = null;
+            try
+            {
+                exitCode = process.ExitCode;
+            }
+            catch (InvalidOperationException)
+            {
+            }
+
+            AppLog.Default.Debug("Launch", $"Process {pid} exited{(exitCode.HasValue ? $" with code {exitCode.Value}" : string.Empty)}");
+            _dispatcher.BeginInvoke(() =>
+            {
+                pids.Remove(pid);
+                process.Dispose();
+                RunningChanged?.Invoke(this, id);
+            });
+        };
 
         if (process.HasExited)
         {

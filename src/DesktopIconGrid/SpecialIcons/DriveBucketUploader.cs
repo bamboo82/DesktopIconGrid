@@ -1,4 +1,5 @@
 using System.IO;
+using DesktopIconGrid.Core.Diagnostics;
 using DesktopIconGrid.Core.Sync;
 using DesktopIconGrid.Services;
 
@@ -32,11 +33,15 @@ public sealed class DriveBucketUploader(SyncService sync, Action<string, string>
 
     public void Enqueue(string folderId, string policy, IEnumerable<string> paths)
     {
+        var queued = 0;
         foreach (var path in paths.Where(p => !string.IsNullOrWhiteSpace(p)))
         {
             _pending.Enqueue(new UploadJob(folderId, policy, path));
             _total++;
+            queued++;
         }
+
+        AppLog.Default.Info("Bucket", $"Queued {queued} item(s) for upload to Drive folder {folderId} (policy: {policy})");
 
         if (!IsBusy && _pending.Count > 0)
         {
@@ -73,6 +78,7 @@ public sealed class DriveBucketUploader(SyncService sync, Action<string, string>
                 catch (Exception ex) when (SyncCoordinator.IsSyncError(ex))
                 {
                     _failures.Add($"{Path.GetFileName(job.Path.TrimEnd(Path.DirectorySeparatorChar))}: {ex.Message}");
+                    AppLog.Default.Error("Bucket", $"Upload of {job.Path} failed", ex);
                 }
 
                 _done++;
@@ -81,6 +87,7 @@ public sealed class DriveBucketUploader(SyncService sync, Action<string, string>
         catch (OperationCanceledException)
         {
             _pending.Clear();
+            AppLog.Default.Warning("Bucket", "Uploads cancelled");
         }
         finally
         {
@@ -91,6 +98,7 @@ public sealed class DriveBucketUploader(SyncService sync, Action<string, string>
             HideGauge();
 
             var failures = _failures.ToList();
+            AppLog.Default.Info("Bucket", $"Upload run finished: {_done} item(s) processed, {failures.Count} failed");
             if (failures.Count > 0)
             {
                 showError("Some files were not uploaded", string.Join("\n", failures));
@@ -162,6 +170,7 @@ public sealed class DriveBucketUploader(SyncService sync, Action<string, string>
                 if (string.Equals(policy, DriveBucketHandler.Skip, StringComparison.OrdinalIgnoreCase))
                 {
                     ShowGauge(100, $"Skipped {name} (already on Drive)");
+                    AppLog.Default.Info("Bucket", $"Skipped {name}: a file with that name is already in the folder");
                     return;
                 }
 
@@ -176,6 +185,7 @@ public sealed class DriveBucketUploader(SyncService sync, Action<string, string>
 
         await using var stream = File.OpenRead(path);
         await files.UploadAsync(parentId, name, MimeTypes.FromFileName(name), stream, length, existingId, progress, cancellationToken);
+        AppLog.Default.Info("Bucket", $"{(existingId is null ? "Uploaded" : "Replaced")} {name} ({length:N0} bytes)");
     }
 
     private void ShowGauge(double percent, string detail)

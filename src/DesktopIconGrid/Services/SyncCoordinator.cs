@@ -2,6 +2,7 @@ using System.Globalization;
 using System.IO;
 using System.Net.Http;
 using System.Windows.Threading;
+using DesktopIconGrid.Core.Diagnostics;
 using DesktopIconGrid.Core.Models;
 using DesktopIconGrid.Core.Sync;
 using DesktopIconGrid.Infrastructure;
@@ -44,7 +45,24 @@ public sealed class SyncCoordinator : ObservableObject
     public string Status
     {
         get => _status;
-        private set => SetProperty(ref _status, value);
+        private set
+        {
+            if (SetProperty(ref _status, value) && value.Length > 0)
+            {
+                if (value.StartsWith("Upload failed", StringComparison.Ordinal) || value.StartsWith("Startup check failed", StringComparison.Ordinal))
+                {
+                    AppLog.Default.Error("Sync", value);
+                }
+                else if (value.StartsWith("Not uploaded", StringComparison.Ordinal) || value.StartsWith("A newer", StringComparison.Ordinal))
+                {
+                    AppLog.Default.Warning("Sync", value);
+                }
+                else
+                {
+                    AppLog.Default.Info("Sync", value);
+                }
+            }
+        }
     }
 
     public LauncherLayout ExportLayout() => _launcher.ExportLayout();

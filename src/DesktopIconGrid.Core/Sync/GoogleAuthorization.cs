@@ -3,6 +3,7 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
+using DesktopIconGrid.Core.Diagnostics;
 
 namespace DesktopIconGrid.Core.Sync;
 
@@ -126,6 +127,7 @@ public sealed class GoogleAuthorization : IAccessTokenProvider
 
         using var listener = new LoopbackListener();
         var url = BuildAuthorizationUrl(credentials, listener.RedirectUri, challenge, state, scopes);
+        AppLog.Default.Info("Auth", $"Opening the browser for Google sign-in (scopes: {string.Join(' ', scopes.Distinct())})");
         await _openBrowser(url).ConfigureAwait(false);
 
         string code;
@@ -135,6 +137,7 @@ public sealed class GoogleAuthorization : IAccessTokenProvider
         }
         catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
         {
+            AppLog.Default.Warning("Auth", "Google sign-in timed out");
             throw new GoogleAuthException("The sign-in timed out. Try again and finish signing in within five minutes.");
         }
 
@@ -146,6 +149,7 @@ public sealed class GoogleAuthorization : IAccessTokenProvider
 
         _token = token;
         _store.Save(token);
+        AppLog.Default.Info("Auth", $"Signed in to Google; granted scopes: {token.Scope ?? "(not reported)"}");
     }
 
     public async Task<string> GetAccessTokenAsync(CancellationToken cancellationToken)
@@ -177,6 +181,7 @@ public sealed class GoogleAuthorization : IAccessTokenProvider
                 Scope = refreshed.Scope ?? token.Scope,
             };
             _store.Save(_token);
+            AppLog.Default.Debug("Auth", $"Access token refreshed; valid until {_token.ExpiresAt.LocalDateTime:HH:mm:ss}");
             return _token.AccessToken;
         }
         finally
@@ -199,6 +204,7 @@ public sealed class GoogleAuthorization : IAccessTokenProvider
         var token = _token;
         _token = null;
         _store.Save(null);
+        AppLog.Default.Info("Auth", "Signed out of Google; stored token removed");
 
         if (token is null)
         {
@@ -264,7 +270,9 @@ public sealed class GoogleAuthorization : IAccessTokenProvider
         var body = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
         if (!response.IsSuccessStatusCode)
         {
-            throw new GoogleAuthException(DescribeTokenError(body, response.StatusCode));
+            var description = DescribeTokenError(body, response.StatusCode);
+            AppLog.Default.Warning("Auth", $"Token request failed: {description}");
+            throw new GoogleAuthException(description);
         }
 
         try

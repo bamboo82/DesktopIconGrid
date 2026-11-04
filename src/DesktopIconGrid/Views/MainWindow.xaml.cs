@@ -6,6 +6,7 @@ using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Media3D;
+using DesktopIconGrid.Core.Diagnostics;
 using DesktopIconGrid.Core.Models;
 using DesktopIconGrid.Services;
 using DesktopIconGrid.ViewModels;
@@ -73,6 +74,7 @@ public partial class MainWindow : Window
 
         _tray.Clicked += (_, _) => ToggleVisibility();
         _tray.SetMenu(BuildTrayMenu);
+        AppLog.Default.Debug("App", "Tray icon created");
     }
 
     private IEnumerable<TrayMenuEntry> BuildTrayMenu()
@@ -89,6 +91,7 @@ public partial class MainWindow : Window
         yield return TrayMenuEntry.Separator;
         yield return new TrayMenuEntry("Settings…", () => RunOnBar(() => _viewModel.OpenSettingsCommand.Execute(null)));
         yield return new TrayMenuEntry("Sync with Google Drive…", () => RunOnBar(() => _viewModel.OpenSyncCommand.Execute(null)));
+        yield return new TrayMenuEntry("Log viewer…", () => _viewModel.OpenLogViewerCommand.Execute(null));
         yield return new TrayMenuEntry("Open layout file location", () => _viewModel.OpenLayoutFolderCommand.Execute(null));
         yield return new TrayMenuEntry("About…", () => _viewModel.AboutCommand.Execute(null));
         yield return TrayMenuEntry.Separator;
@@ -109,6 +112,7 @@ public partial class MainWindow : Window
     /// <summary>Moves the bar to the middle of the primary screen's work area (for when it got lost on a disconnected monitor).</summary>
     public void ResetPosition()
     {
+        AppLog.Default.Info("App", "Bar position reset to the primary screen");
         Show();
         WindowState = WindowState.Normal;
         var area = SystemParameters.WorkArea;
@@ -158,10 +162,12 @@ public partial class MainWindow : Window
         {
             _viewModel.IsGroupPopupOpen = false;
             Hide();
+            AppLog.Default.Debug("App", "Bar hidden");
             return;
         }
 
         Show();
+        AppLog.Default.Debug("App", "Bar shown");
         if (WindowState == WindowState.Minimized)
         {
             WindowState = WindowState.Normal;
@@ -192,6 +198,7 @@ public partial class MainWindow : Window
         if (!_hotkey.Register(gesture, out var error))
         {
             _registeredHotkey = null;
+            AppLog.Default.Warning("Hotkey", error ?? "Hotkey could not be registered");
             if (reportErrors && error is not null)
             {
                 MessageBox.Show(this, error, "Show/hide hotkey", MessageBoxButton.OK, MessageBoxImage.Warning);
@@ -201,6 +208,7 @@ public partial class MainWindow : Window
         }
 
         _registeredHotkey = text;
+        AppLog.Default.Info("Hotkey", gesture is null ? "Show/hide hotkey cleared" : $"Show/hide hotkey registered: {gesture}");
     }
 
     protected override void OnClosing(CancelEventArgs e)

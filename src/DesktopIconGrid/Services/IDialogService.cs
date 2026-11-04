@@ -25,4 +25,7 @@ public interface IDialogService
 
     /// <summary>Shows the table of all item names and applies the edits.</summary>
     void ShowNameTable(LauncherViewModel launcher);
+
+    /// <summary>Opens (or brings to the front) the application log viewer.</summary>
+    void ShowAppLog();
 }

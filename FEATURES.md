@@ -21,7 +21,7 @@ button at the top-right and a small options arrow at the bottom-right.
 | Close button (`×`) | Phase 1: exits the app. Phase 3: hides the bar to the tray instead. |
 | Bottom-right arrow | Opens the options menu: *Settings…*, *Launch Multi Launch group*, *About*, *Exit*. |
 | Edges / corners | Resizable (WindowChrome resize border, no caption). The icon grid reflows to the new width. |
-| Tray icon | While the app runs, an icon in the notification area offers: Show/Hide bar, Reset bar position (moves it to the middle of the primary screen when it is lost on a disconnected monitor), New shortcut, New group, Launch Multi Launch group, Always on top, Settings, Sync with Google Drive, Open layout file location, About, Exit. Left-click toggles the bar. The close button hides the bar to the tray (setting). |
+| Tray icon | While the app runs, an icon in the notification area offers: Show/Hide bar, Reset bar position (moves it to the middle of the primary screen when it is lost on a disconnected monitor), New shortcut, New group, Edit names, Launch Multi Launch group, Always on top, Settings, Sync with Google Drive, Log viewer, Open layout file location, About, Exit. Left-click toggles the bar. The close button hides the bar to the tray (setting). |
 | Transparency | Settings → Transparency (0–80 %) lets the desktop show through the bar and the group popup. |
 | Show/hide hotkey | A system-wide combination set in Settings (e.g. `Ctrl+Alt+Space`) hides the bar or brings it to the front from any program. |
 | Background | A theme: Classic (the olive grey of the reference), Graphite, Paper, Midnight, Sand, or a Custom colour with automatically matched text and highlight colours. See [docs/THEMES.md](docs/THEMES.md). |
@@ -222,6 +222,27 @@ added or last edited) and *Location*. Click a column header to sort; *Use origin
 resets the selected rows, *Use original names for all* resets everything; *Save* applies all
 changes at once. The given names are the captions on the bar and will be the phrases for
 voice commands in a later design, so this is where that vocabulary is maintained.
+
+### 6.2 Log viewer
+
+Tray → *Log viewer…* (also in the options menu) opens the application log: everything the
+app did and what happened to it, newest at the bottom, live. Entries have a time (to the
+millisecond), a level (Debug, Info, Warning, Error) and a category: *App* (start, layout loaded,
+bar shown/hidden, position reset, exit, crashes), *Auth* (browser sign-in, granted scopes,
+token refreshes, sign-out, token errors), *Sync* (connect, save/load/delete copies, auto-upload
+results, conflicts, startup checks), *Drive* (API errors with status codes, resumable uploads),
+*Bucket* (queued, uploaded, replaced, skipped, downloaded, cancelled, failures), *Launch*
+(started, cancelled, failed shortcuts, process exits), *Layout* (added, removed, replaced
+items), *Settings* (every applied change) and *Hotkey*.
+
+Viewer features: filters by minimum level, category, time range (last 15 minutes, last hour,
+today) and free text (`Ctrl+F`, `Esc` clears); *Reset* clears all filters; *Follow* keeps the
+newest entry in view; a details pane shows the selected entry in full; *Copy* copies the visible
+lines, `Ctrl+C` the selected ones, double-click one line; *Save as…* (`Ctrl+S`) writes the
+visible entries to a text file; *Open log file* opens `app.log`; the context menu offers *Copy
+line*, *Copy message*, *Show only this category* and *Reset filters*; the status line counts
+warnings and errors. The last 2000 entries stay in memory and all of them are appended to
+`%LocalAppData%\DesktopIconGrid\logs\app.log` (rotated to `app.previous.log` at 2 MB).
 
 ## 7. Settings
 

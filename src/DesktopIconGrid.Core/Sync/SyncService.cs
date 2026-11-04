@@ -1,3 +1,4 @@
+using DesktopIconGrid.Core.Diagnostics;
 using DesktopIconGrid.Core.Models;
 
 namespace DesktopIconGrid.Core.Sync;
@@ -67,6 +68,7 @@ public sealed class SyncService
         var user = await _drive.GetUserAsync(cancellationToken).ConfigureAwait(false);
         Settings.AccountEmail = user.EmailAddress;
         SaveSettings();
+        AppLog.Default.Info("Sync", $"Full Google Drive access granted for {user.EmailAddress ?? "the account"}");
     }
 
     public bool HasCredentials => Settings.Credentials.IsComplete;
@@ -82,6 +84,7 @@ public sealed class SyncService
         var user = await _drive.GetUserAsync(cancellationToken).ConfigureAwait(false);
         Settings.AccountEmail = user.EmailAddress;
         SaveSettings();
+        AppLog.Default.Info("Sync", $"Connected to Google Drive as {user.EmailAddress ?? "an account"}");
         return user;
     }
 
@@ -92,6 +95,7 @@ public sealed class SyncService
         Settings.LinkedProfile = null;
         Settings.LastSyncedAt = null;
         SaveSettings();
+        AppLog.Default.Info("Sync", "Disconnected from Google Drive");
     }
 
     public async Task<IReadOnlyList<RemoteProfile>> ListProfilesAsync(CancellationToken cancellationToken)
@@ -125,6 +129,7 @@ public sealed class SyncService
         Settings.LinkedProfile = profile.Name;
         Settings.LastSyncedAt = now;
         SaveSettings();
+        AppLog.Default.Info("Sync", $"Saved settings copy \"{profile.Name}\" to Google Drive ({layout.Items.Count} items, {(existing is null ? "new" : "replaced")})");
 
         return RemoteProfile.FromFile(file) ?? new RemoteProfile(profile.Name, file.Id, now, Settings.DeviceName, file.Size);
     }
@@ -143,6 +148,7 @@ public sealed class SyncService
         Settings.LinkedProfile = remote.Name;
         Settings.LastSyncedAt = remote.SavedAt ?? profile.SavedAt;
         SaveSettings();
+        AppLog.Default.Info("Sync", $"Loaded settings copy \"{remote.Name}\" (saved by {profile.SavedBy} on {profile.SavedAt.LocalDateTime:g}, {profile.Layout.Items.Count} items)");
         return profile;
     }
 
@@ -150,6 +156,7 @@ public sealed class SyncService
     {
         ArgumentNullException.ThrowIfNull(remote);
         await _drive.DeleteAsync(remote.FileId, cancellationToken).ConfigureAwait(false);
+        AppLog.Default.Info("Sync", $"Deleted settings copy \"{remote.Name}\" from Google Drive");
         if (string.Equals(Settings.LinkedProfile, remote.Name, StringComparison.OrdinalIgnoreCase))
         {
             Settings.LinkedProfile = null;
@@ -198,6 +205,7 @@ public sealed class SyncService
         var remote = await FindLinkedProfileAsync(cancellationToken).ConfigureAwait(false);
         if (remote is not null && IsNewerThanLocal(remote, Settings))
         {
+            AppLog.Default.Warning("Sync", $"Auto-upload skipped: \"{remote.Name}\" was saved by {remote.SavedBy ?? "another device"} after this device last synced");
             return new AutoUploadResult(AutoUploadOutcome.Conflict, remote);
         }
 

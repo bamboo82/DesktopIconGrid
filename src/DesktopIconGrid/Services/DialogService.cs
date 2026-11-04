@@ -1,4 +1,5 @@
 using System.Windows;
+using DesktopIconGrid.Core.Diagnostics;
 using DesktopIconGrid.Core.Models;
 using DesktopIconGrid.ViewModels;
 using DesktopIconGrid.Views;
@@ -7,8 +8,24 @@ namespace DesktopIconGrid.Services;
 
 public sealed class DialogService(IIconProvider icons) : IDialogService
 {
+    private AppLogWindow? _logWindow;
+
     /// <summary>Creates the view model for the sync dialog; set once sync is wired up.</summary>
     public Func<SyncViewModel>? SyncViewModelFactory { get; set; }
+
+    public void ShowAppLog()
+    {
+        if (_logWindow is { IsLoaded: true })
+        {
+            _logWindow.Activate();
+            return;
+        }
+
+        var dispatcher = Application.Current?.Dispatcher ?? System.Windows.Threading.Dispatcher.CurrentDispatcher;
+        _logWindow = new AppLogWindow { DataContext = new AppLogViewModel(AppLog.Default, dispatcher), Owner = Application.Current?.MainWindow };
+        _logWindow.Closed += (_, _) => _logWindow = null;
+        _logWindow.Show();
+    }
 
     public void ShowSync()
     {

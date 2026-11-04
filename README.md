@@ -25,6 +25,8 @@ Google sign-in token.
   to loop the recording, click to stop.
 - **Edit names table** — rename all shortcuts in one sortable grid (given vs. original name);
   these names are the future voice-command phrases.
+- **Log viewer** — a live, filterable log of what the app does: sign-ins, sync, Drive uploads
+  and downloads, launches, settings changes, errors (tray → *Log viewer…*; also in `logs\app.log`).
 - **Tray icon** — show or hide the bar, reset its position when it is lost on a disconnected
   monitor, and reach the common commands; the close button hides the bar to the tray.
 - **Running badge and run logs** — a green dot shows while a shortcut's program runs; console
@@ -52,6 +54,7 @@ Google Drive Bucket, and [docs/THEMES.md](docs/THEMES.md) for the themes.
 | Upload files to Google Drive | Right-click → *Add special icon ▸ Google Drive Bucket*, paste the folder link, then drop files on the icon |
 | Browse and download from Google Drive | Ctrl+click a Google Drive Bucket (or right-click → *Browse…*); drag items to the desktop or use *Download to…* |
 | Find a lost bar | Tray icon → *Reset bar position* |
+| See what the app is doing | Tray icon → *Log viewer…* (filter by level, category, time or text; save or copy) |
 | Exit | Tray icon → *Exit*, or options menu (▸) → *Exit* (the close button only hides the bar) |
 | Open an item | Click it (or double-click, see Settings). `Enter` when focused |
 | Rearrange | Drag an icon to a new position; the blue line shows where it lands |
@@ -143,6 +146,7 @@ tests/DesktopIconGrid.Core.Tests/  xunit tests for the core library
 | `layout.json` | Settings, window position and items. Written atomically after every change; an unreadable file is renamed to `layout.json.corrupt-<timestamp>` and the bar starts empty. |
 | `sync.json` | Device name, Google API client credentials, the linked copy and when it was last synced. |
 | `google-token.bin` | The Google sign-in token, encrypted with DPAPI for the current Windows user. |
+| `logs\app.log` | The application log shown in the log viewer (rotated to `app.previous.log` at 2 MB). |
 | `logs\` | Captured output of shortcuts that have logging turned on (ten newest runs per shortcut). |
 | `icons\` | Icons downloaded from web addresses (256 px PNG). |
 | `sounds\` | Recordings of Sound Replayer icons (WAV). |
