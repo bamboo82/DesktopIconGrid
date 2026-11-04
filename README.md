@@ -11,7 +11,8 @@ Google sign-in token.
 - **Launcher bar** — a borderless, resizable window with a grip on the left to move it,
   a close button and an options menu. Icons flow into as many columns as fit.
 - **Shortcuts** — any file, folder or URL, with optional parameters and a custom icon.
-  Icons are extracted the same way File Explorer shows them.
+  Icons are extracted the same way File Explorer shows them, or drawn as text (for example
+  宋體 characters) in a font, size and colour of your choice.
 - **Groups** — a group is a folder on the bar. Click it to open a popup with its own
   grid of shortcuts; drag shortcuts in and out.
 - **Windows items** — one-click entries for This PC, Control Panel, Recycle Bin,
@@ -40,6 +41,10 @@ Google Drive Bucket, and [docs/THEMES.md](docs/THEMES.md) for the themes.
 | Rearrange | Drag an icon to a new position; the blue line shows where it lands |
 | Put a shortcut in a group | Drag it onto the group icon |
 | Edit an item | Right-click → *Properties*, or `F2` |
+| Use text instead of an icon image | *Properties → Text icon…*: text, font (default 宋體), size, bold, colour |
+| Open a file with a program on the bar | Drag the file from Explorer onto the program's icon (`{file}`/`{files}` in Parameters control where it goes) |
+| Add a shortcut by dragging | Drop a file on empty space, or right-drag it anywhere on the bar |
+| Show or hide the bar from anywhere | Set a hotkey in Settings (e.g. `Ctrl+Alt+Space`) |
 | Remove an item | Right-click → *Remove…*, or `Delete` |
 | Multi Launch | Right-click a shortcut → *Add to Multi Launch group*; start them all from the options menu (▸) |
 | Move the bar | Drag the dotted grip on the left or any empty background. Double-click the grip to toggle *always on top* |

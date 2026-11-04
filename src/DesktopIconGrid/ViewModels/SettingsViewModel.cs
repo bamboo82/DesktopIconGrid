@@ -20,6 +20,7 @@ public sealed class SettingsViewModel : ObservableObject
     private bool _alwaysOnTop;
     private string _backgroundColor;
     private ThemePalette _selectedTheme;
+    private string _toggleHotkey;
 
     public SettingsViewModel(LauncherSettings current)
     {
@@ -30,6 +31,7 @@ public sealed class SettingsViewModel : ObservableObject
         _doubleClickToLaunch = current.DoubleClickToLaunch;
         _alwaysOnTop = current.AlwaysOnTop;
         _backgroundColor = current.BackgroundColor;
+        _toggleHotkey = current.ToggleHotkey ?? string.Empty;
 
         Themes = [.. ThemeCatalog.Builtin, ThemeCatalog.CreateCustom(current.BackgroundColor)];
         _selectedTheme = Themes.FirstOrDefault(t => string.Equals(t.Id, current.Theme, StringComparison.OrdinalIgnoreCase)) ?? Themes[0];
@@ -134,7 +136,26 @@ public sealed class SettingsViewModel : ObservableObject
         ? (IsColorValid ? ThemeManager.ToBrush(_backgroundColor) : Brushes.Transparent)
         : ThemeManager.ToBrush(_selectedTheme.Background);
 
-    public bool CanSave => !IsCustomTheme || IsColorValid;
+    /// <summary>Text form of the show/hide hotkey, e.g. "Ctrl+Alt+Space"; empty for none.</summary>
+    public string ToggleHotkey
+    {
+        get => _toggleHotkey;
+        set
+        {
+            if (SetProperty(ref _toggleHotkey, value?.Trim() ?? string.Empty))
+            {
+                OnPropertyChanged(nameof(IsHotkeyValid));
+                OnPropertyChanged(nameof(HasHotkey));
+                OnPropertyChanged(nameof(CanSave));
+            }
+        }
+    }
+
+    public bool HasHotkey => _toggleHotkey.Length > 0;
+
+    public bool IsHotkeyValid => _toggleHotkey.Length == 0 || HotkeyGesture.TryParse(_toggleHotkey, out _);
+
+    public bool CanSave => (!IsCustomTheme || IsColorValid) && IsHotkeyValid;
 
     public RelayCommand<string> SelectPresetCommand { get; }
 
@@ -149,6 +170,7 @@ public sealed class SettingsViewModel : ObservableObject
             AlwaysOnTop = _alwaysOnTop,
             Theme = _selectedTheme.Id,
             BackgroundColor = IsColorValid ? _backgroundColor : LauncherSettings.DefaultBackgroundColor,
+            ToggleHotkey = IsHotkeyValid && HasHotkey ? _toggleHotkey : null,
         };
         settings.Normalize();
         return settings;

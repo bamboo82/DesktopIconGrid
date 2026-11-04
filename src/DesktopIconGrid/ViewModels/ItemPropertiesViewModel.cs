@@ -4,6 +4,7 @@ using DesktopIconGrid.Core.Launching;
 using DesktopIconGrid.Core.Models;
 using DesktopIconGrid.Infrastructure;
 using DesktopIconGrid.Services;
+using System.Windows;
 
 namespace DesktopIconGrid.ViewModels;
 
@@ -18,6 +19,7 @@ public sealed class ItemPropertiesViewModel : ObservableObject
     private string _location;
     private string _parameters;
     private string? _iconPath;
+    private TextIcon? _textIcon;
     private bool _nameIsAutomatic;
     private bool _updatingAutomaticName;
     private ImageSource? _preview;
@@ -34,6 +36,7 @@ public sealed class ItemPropertiesViewModel : ObservableObject
         _location = (target as ShortcutItem)?.Location ?? string.Empty;
         _parameters = (target as ShortcutItem)?.Parameters ?? string.Empty;
         _iconPath = target.IconPath;
+        _textIcon = target.TextIcon;
         _nameIsAutomatic = !IsGroup && isNew && (_name.Length == 0 || _name == ShortcutItem.SuggestName(_location));
 
         UpdatePreview();
@@ -108,14 +111,54 @@ public sealed class ItemPropertiesViewModel : ObservableObject
             var normalized = string.IsNullOrWhiteSpace(value) ? null : value.Trim();
             if (SetProperty(ref _iconPath, normalized))
             {
-                OnPropertyChanged(nameof(HasCustomIcon));
-                UpdatePreview();
-                UpdateWarning();
+                if (normalized is not null)
+                {
+                    _textIcon = null; // an image replaces a text icon
+                }
+
+                NotifyIconChanged();
             }
         }
     }
 
-    public bool HasCustomIcon => _iconPath is not null;
+    /// <summary>Text drawn instead of an image. Setting it clears a custom image.</summary>
+    public TextIcon? TextIcon
+    {
+        get => _textIcon;
+        set
+        {
+            var normalized = value?.Normalized();
+            if (!Equals(_textIcon, normalized))
+            {
+                _textIcon = normalized;
+                if (normalized is not null)
+                {
+                    _iconPath = null;
+                }
+
+                NotifyIconChanged();
+            }
+        }
+    }
+
+    /// <summary>True when either an image or a text icon overrides the default.</summary>
+    public bool HasCustomIcon => _iconPath is not null || _textIcon is not null;
+
+    public bool HasTextIcon => _iconPath is null && _textIcon is not null;
+
+    public bool ShowsImagePreview => !HasTextIcon;
+
+    public string PreviewText => _textIcon?.Text ?? string.Empty;
+
+    public FontFamily PreviewFontFamily => TextIconFonts.Resolve(_textIcon?.FontFamily);
+
+    public double PreviewFontSize => Math.Min(_textIcon?.FontSize ?? TextIcon.DefaultFontSize, 28);
+
+    public FontWeight PreviewFontWeight => _textIcon?.Bold == true ? FontWeights.Bold : FontWeights.Normal;
+
+    public Brush PreviewTextBrush => _textIcon?.Color is { } color
+        ? ThemeManager.ToBrush(color)
+        : Application.Current?.TryFindResource(ThemeManager.ForegroundKey) as Brush ?? Brushes.White;
 
     public ImageSource? Preview
     {
@@ -140,7 +183,28 @@ public sealed class ItemPropertiesViewModel : ObservableObject
 
     public bool CanSave => _name.Trim().Length > 0 && (IsGroup || _location.Trim().Length > 0);
 
-    public void UseDefaultIcon() => IconPath = null;
+    public void UseDefaultIcon()
+    {
+        _iconPath = null;
+        _textIcon = null;
+        NotifyIconChanged();
+    }
+
+    private void NotifyIconChanged()
+    {
+        OnPropertyChanged(nameof(IconPath));
+        OnPropertyChanged(nameof(TextIcon));
+        OnPropertyChanged(nameof(HasCustomIcon));
+        OnPropertyChanged(nameof(HasTextIcon));
+        OnPropertyChanged(nameof(ShowsImagePreview));
+        OnPropertyChanged(nameof(PreviewText));
+        OnPropertyChanged(nameof(PreviewFontFamily));
+        OnPropertyChanged(nameof(PreviewFontSize));
+        OnPropertyChanged(nameof(PreviewFontWeight));
+        OnPropertyChanged(nameof(PreviewTextBrush));
+        UpdatePreview();
+        UpdateWarning();
+    }
 
     /// <summary>Copies the edited values into the item. Returns false when the form is not valid.</summary>
     public bool Apply()
@@ -152,6 +216,7 @@ public sealed class ItemPropertiesViewModel : ObservableObject
 
         _target.Name = _name.Trim();
         _target.IconPath = _iconPath;
+        _target.TextIcon = _textIcon;
         if (_target is ShortcutItem shortcut)
         {
             shortcut.Location = _location.Trim();

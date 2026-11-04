@@ -34,6 +34,9 @@ public sealed partial class LauncherSettings
     /// <summary>Bar background as <c>#RRGGBB</c>, used by the custom theme.</summary>
     public string BackgroundColor { get; set; } = DefaultBackgroundColor;
 
+    /// <summary>System-wide key combination that shows or hides the bar, e.g. <c>Ctrl+Alt+Space</c>; <see langword="null"/> for none.</summary>
+    public string? ToggleHotkey { get; set; }
+
     public LauncherSettings Clone() => (LauncherSettings)MemberwiseClone();
 
     public void CopyFrom(LauncherSettings source)
@@ -46,6 +49,7 @@ public sealed partial class LauncherSettings
         AlwaysOnTop = source.AlwaysOnTop;
         Theme = source.Theme;
         BackgroundColor = source.BackgroundColor;
+        ToggleHotkey = source.ToggleHotkey;
         Normalize();
     }
 
@@ -77,6 +81,8 @@ public sealed partial class LauncherSettings
         {
             BackgroundColor = BackgroundColor.ToUpperInvariant();
         }
+
+        ToggleHotkey = string.IsNullOrWhiteSpace(ToggleHotkey) ? null : ToggleHotkey.Trim();
 
         if (Theme is null)
         {

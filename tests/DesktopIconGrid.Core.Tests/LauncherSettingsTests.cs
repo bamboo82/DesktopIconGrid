@@ -29,6 +29,22 @@ public class LauncherSettingsTests
     }
 
     [Fact]
+    public void Normalize_trims_hotkey_and_copies_it()
+    {
+        var settings = new LauncherSettings { ToggleHotkey = "  Ctrl+Alt+Space " };
+        settings.Normalize();
+        Assert.Equal("Ctrl+Alt+Space", settings.ToggleHotkey);
+
+        var blank = new LauncherSettings { ToggleHotkey = "   " };
+        blank.Normalize();
+        Assert.Null(blank.ToggleHotkey);
+
+        var copy = new LauncherSettings();
+        copy.CopyFrom(settings);
+        Assert.Equal("Ctrl+Alt+Space", copy.ToggleHotkey);
+    }
+
+    [Fact]
     public void Normalize_upper_cases_valid_colors()
     {
         var settings = new LauncherSettings { BackgroundColor = "#abcdef" };

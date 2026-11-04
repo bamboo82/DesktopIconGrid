@@ -22,8 +22,14 @@ public abstract class LauncherItem
     /// </summary>
     public string? IconPath { get; set; }
 
+    /// <summary>Optional text drawn instead of an image. <see cref="IconPath"/> wins when both are set.</summary>
+    public TextIcon? TextIcon { get; set; }
+
     [JsonIgnore]
     public bool HasCustomIcon => !string.IsNullOrWhiteSpace(IconPath);
+
+    [JsonIgnore]
+    public bool HasTextIcon => TextIcon is not null;
 
     /// <summary>Deep copy, keeping the same <see cref="Id"/>.</summary>
     public abstract LauncherItem Clone();
@@ -34,5 +40,6 @@ public abstract class LauncherItem
         ArgumentNullException.ThrowIfNull(source);
         Name = source.Name;
         IconPath = string.IsNullOrWhiteSpace(source.IconPath) ? null : source.IconPath.Trim();
+        TextIcon = source.TextIcon?.Normalized();
     }
 }

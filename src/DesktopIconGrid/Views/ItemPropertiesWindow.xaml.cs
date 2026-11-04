@@ -95,6 +95,21 @@ public partial class ItemPropertiesWindow : Window
         }
     }
 
+    private void TextIcon_Click(object sender, RoutedEventArgs e)
+    {
+        if (ViewModel is not { } viewModel)
+        {
+            return;
+        }
+
+        var editor = new TextIconViewModel(viewModel.TextIcon, viewModel.Name);
+        var window = new TextIconWindow { DataContext = editor, Owner = this };
+        if (window.ShowDialog() == true)
+        {
+            viewModel.TextIcon = editor.ToTextIcon();
+        }
+    }
+
     private void UseDefaultIcon_Click(object sender, RoutedEventArgs e) => ViewModel?.UseDefaultIcon();
 
     private void Save_Click(object sender, RoutedEventArgs e)

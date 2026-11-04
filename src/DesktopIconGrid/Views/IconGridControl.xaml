@@ -43,7 +43,7 @@
           <DataTemplate DataType="{x:Type vm:ItemViewModel}">
             <Button Style="{StaticResource IconButtonStyle}"
                     ToolTip="{Binding ToolTipText}"
-                    ToolTipService.InitialShowDelay="500"
+                    ToolTipService.InitialShowDelay="350"
                     PreviewMouseLeftButtonDown="Item_PreviewMouseLeftButtonDown"
                     PreviewMouseMove="Item_PreviewMouseMove"
                     PreviewMouseLeftButtonUp="Item_PreviewMouseLeftButtonUp"
@@ -78,7 +78,31 @@
                   <Image Source="{Binding Image, TargetNullValue={StaticResource PlaceholderIconImage}}"
                          Stretch="Uniform"
                          RenderOptions.BitmapScalingMode="HighQuality"
-                         SnapsToDevicePixels="True" />
+                         SnapsToDevicePixels="True"
+                         Visibility="{Binding ShowsImage, Converter={StaticResource BoolToVisibility}}" />
+                  <Border CornerRadius="6" ClipToBounds="True"
+                          Background="{DynamicResource Theme.Hover}"
+                          BorderBrush="{DynamicResource Theme.HoverBorder}" BorderThickness="1"
+                          Visibility="{Binding HasTextIcon, Converter={StaticResource BoolToVisibility}}">
+                    <TextBlock Text="{Binding TextIconText}"
+                               FontFamily="{Binding TextIconFontFamily}"
+                               FontSize="{Binding TextIconFontSize}"
+                               FontWeight="{Binding TextIconFontWeight}"
+                               TextAlignment="Center" TextWrapping="Wrap"
+                               HorizontalAlignment="Center" VerticalAlignment="Center"
+                               Margin="1">
+                      <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                          <Setter Property="Foreground" Value="{DynamicResource Theme.Foreground}" />
+                          <Style.Triggers>
+                            <DataTrigger Binding="{Binding HasTextIconColor}" Value="True">
+                              <Setter Property="Foreground" Value="{Binding TextIconBrush}" />
+                            </DataTrigger>
+                          </Style.Triggers>
+                        </Style>
+                      </TextBlock.Style>
+                    </TextBlock>
+                  </Border>
                   <Ellipse Width="8" Height="8"
                            Fill="{StaticResource BadgeBrush}"
                            Stroke="#80000000" StrokeThickness="1"

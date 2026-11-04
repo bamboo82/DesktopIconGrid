@@ -90,6 +90,7 @@ public sealed class LauncherModel
         }
 
         item.Name = item.Name?.Trim() ?? string.Empty;
+        item.TextIcon = item.TextIcon?.Normalized();
         if (item is ShortcutItem shortcut)
         {
             shortcut.Location = shortcut.Location?.Trim() ?? string.Empty;

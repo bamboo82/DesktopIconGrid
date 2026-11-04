@@ -74,12 +74,29 @@
     <TextBlock Grid.Row="5" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="Icon:" VerticalAlignment="Top" Margin="0,6,12,0" />
     <StackPanel Grid.Row="5" Grid.Column="1" Grid.ColumnSpan="2" Orientation="Horizontal" Margin="0,0,0,8">
       <Border Width="36" Height="36" Margin="0,0,10,0" VerticalAlignment="Center">
-        <Image Source="{Binding Preview, TargetNullValue={StaticResource PlaceholderIconImage}}"
-               Width="32" Height="32"
-               Stretch="Uniform"
-               RenderOptions.BitmapScalingMode="HighQuality" />
+        <Grid>
+          <Image Source="{Binding Preview, TargetNullValue={StaticResource PlaceholderIconImage}}"
+                 Width="32" Height="32"
+                 Stretch="Uniform"
+                 RenderOptions.BitmapScalingMode="HighQuality"
+                 Visibility="{Binding ShowsImagePreview, Converter={StaticResource BoolToVisibility}}" />
+          <Border Width="34" Height="34" CornerRadius="5" ClipToBounds="True"
+                  Background="{DynamicResource Theme.Background}"
+                  BorderBrush="{DynamicResource Theme.Border}" BorderThickness="1"
+                  Visibility="{Binding HasTextIcon, Converter={StaticResource BoolToVisibility}}">
+            <TextBlock Text="{Binding PreviewText}"
+                       FontFamily="{Binding PreviewFontFamily}"
+                       FontSize="{Binding PreviewFontSize}"
+                       FontWeight="{Binding PreviewFontWeight}"
+                       Foreground="{Binding PreviewTextBrush}"
+                       TextAlignment="Center" TextWrapping="Wrap"
+                       HorizontalAlignment="Center" VerticalAlignment="Center" />
+          </Border>
+        </Grid>
       </Border>
       <Button Content="Change icon…" Padding="10,3" VerticalAlignment="Center" Click="ChangeIcon_Click" />
+      <Button Content="Text icon…" Padding="10,3" Margin="8,0,0,0" VerticalAlignment="Center" Click="TextIcon_Click"
+              ToolTip="Draw text (for example 宋體 characters) instead of an image" />
       <Button Content="Use default" Padding="10,3" Margin="8,0,0,0" VerticalAlignment="Center"
               IsEnabled="{Binding HasCustomIcon}" Click="UseDefaultIcon_Click" />
     </StackPanel>

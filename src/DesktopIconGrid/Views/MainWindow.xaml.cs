@@ -3,9 +3,11 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
+using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Media3D;
 using DesktopIconGrid.Core.Models;
+using DesktopIconGrid.Services;
 using DesktopIconGrid.ViewModels;
 
 namespace DesktopIconGrid.Views;
@@ -14,6 +16,8 @@ namespace DesktopIconGrid.Views;
 public partial class MainWindow : Window
 {
     private readonly LauncherViewModel _viewModel;
+    private GlobalHotkey? _hotkey;
+    private string? _registeredHotkey;
 
     public MainWindow(LauncherViewModel viewModel)
     {
@@ -23,7 +27,11 @@ public partial class MainWindow : Window
 
         viewModel.GroupActivated += OnGroupActivated;
         viewModel.ExitRequested += (_, _) => Close();
-        viewModel.SettingsChanged += (_, _) => EnsureMinimumSize();
+        viewModel.SettingsChanged += (_, _) =>
+        {
+            EnsureMinimumSize();
+            ApplyHotkey(reportErrors: true);
+        };
         Deactivated += OnDeactivated;
         MainGrid.MouseLeftButtonDown += GridBackground_MouseLeftButtonDown;
     }
@@ -32,6 +40,72 @@ public partial class MainWindow : Window
     {
         base.OnSourceInitialized(e);
         ApplyPlacement();
+
+        if (HwndSource.FromHwnd(new WindowInteropHelper(this).Handle) is { } source)
+        {
+            _hotkey = new GlobalHotkey(source);
+            _hotkey.Pressed += (_, _) => ToggleVisibility();
+            ApplyHotkey(reportErrors: true);
+        }
+    }
+
+    protected override void OnClosed(EventArgs e)
+    {
+        _hotkey?.Dispose();
+        _hotkey = null;
+        base.OnClosed(e);
+    }
+
+    /// <summary>Hides the bar, or brings it back to the front. Bound to the global hotkey.</summary>
+    public void ToggleVisibility()
+    {
+        if (IsVisible && WindowState != WindowState.Minimized)
+        {
+            _viewModel.IsGroupPopupOpen = false;
+            Hide();
+            return;
+        }
+
+        Show();
+        if (WindowState == WindowState.Minimized)
+        {
+            WindowState = WindowState.Normal;
+        }
+
+        Activate();
+    }
+
+    private void ApplyHotkey(bool reportErrors)
+    {
+        if (_hotkey is null)
+        {
+            return;
+        }
+
+        var text = _viewModel.Model.Settings.ToggleHotkey;
+        if (string.Equals(text, _registeredHotkey, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        HotkeyGesture? gesture = null;
+        if (!string.IsNullOrWhiteSpace(text) && !HotkeyGesture.TryParse(text, out gesture))
+        {
+            gesture = null;
+        }
+
+        if (!_hotkey.Register(gesture, out var error))
+        {
+            _registeredHotkey = null;
+            if (reportErrors && error is not null)
+            {
+                MessageBox.Show(this, error, "Show/hide hotkey", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+
+            return;
+        }
+
+        _registeredHotkey = text;
     }
 
     protected override void OnClosing(CancelEventArgs e)

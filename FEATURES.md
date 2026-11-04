@@ -21,6 +21,7 @@ button at the top-right and a small options arrow at the bottom-right.
 | Close button (`×`) | Phase 1: exits the app. Phase 3: hides the bar to the tray instead. |
 | Bottom-right arrow | Opens the options menu: *Settings…*, *Launch Multi Launch group*, *About*, *Exit*. |
 | Edges / corners | Resizable (WindowChrome resize border, no caption). The icon grid reflows to the new width. |
+| Show/hide hotkey | A system-wide combination set in Settings (e.g. `Ctrl+Alt+Space`) hides the bar or brings it to the front from any program. |
 | Background | A theme: Classic (the olive grey of the reference), Graphite, Paper, Midnight, Sand, or a Custom colour with automatically matched text and highlight colours. See [docs/THEMES.md](docs/THEMES.md). |
 
 - Icons are laid out in reading order and **wrap** to fill the width: the number of
@@ -45,7 +46,13 @@ A launchable entry. Fields come straight from the *Shortcut Properties* dialog:
 | Name | Caption (shown as tooltip, and as label when labels are enabled). Pre-filled from the file name. |
 | Location | A file, a folder or a URL. `%ENV%` variables are expanded at launch. The `…` button opens a file picker. |
 | Parameters | Command-line arguments passed to the program. |
-| Icon | Default = extracted from the Location. *Change icon…* picks a `.png/.jpg/.ico/.bmp` image or an `.exe/.dll/.ico` resource (`path,index` is accepted). *Use default* clears the override. |
+| Icon | Default = extracted from the Location. *Change icon…* picks a `.png/.jpg/.ico/.bmp` image or an `.exe/.dll/.ico` resource (`path,index` is accepted). *Text icon…* draws text instead (see below). *Use default* clears the override. |
+
+**Text icons.** Any shortcut or group can show text on a tile instead of an image: up to
+12 characters (e.g. 宋體 characters or an abbreviation) in a chosen font family, size (6–72),
+weight and colour. The default family is 宋體 (SimSun), falling back to 新細明體 (PMingLiU) and
+Segoe UI when it is not installed; the colour defaults to the theme's text colour. Hovering an
+icon shows its name and location in a tooltip regardless of how the icon is drawn.
 
 Extra flags kept out of the dialog's main layout but supported:
 
@@ -191,7 +198,7 @@ Both dialogs follow the reference layout: a labelled form, an icon preview with
 | Always on top | off |
 | Theme | Classic (Graphite, Paper, Midnight, Sand, or Custom colour) |
 | Start with Windows | off — Phase 3 (Run registry key) |
-| Show/hide hotkey | none — Phase 3 |
+| Show/hide hotkey | none (set in Settings; needs Ctrl, Alt or Win) |
 
 Settings live in the same JSON file as the layout and apply immediately on *Save*.
 
@@ -286,7 +293,7 @@ Special icon item kind and handler registry; Google Drive Bucket (click to open 
 folder, drop files to upload) as specified in [docs/SPECIAL_ICONS.md](docs/SPECIAL_ICONS.md).
 
 **Phase 5 — desktop integration**
-Tray icon (close hides to tray), start with Windows, global show/hide hotkey,
+Global show/hide hotkey *(done)*; tray icon (close hides to tray), start with Windows,
 optional auto-hide at a screen edge.
 
 ## 13. Out of scope (for now)
