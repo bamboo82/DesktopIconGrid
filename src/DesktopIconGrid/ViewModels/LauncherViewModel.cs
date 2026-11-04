@@ -585,6 +585,9 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
 
     public ICommand UndoRemoveCommand { get; }
 
+    /// <summary>Completes when the current Undo offer has expired (at once when there is none); tests await it.</summary>
+    internal Task UndoExpiry { get; private set; } = Task.CompletedTask;
+
     /// <summary>
     /// Removes a shortcut or special icon at once and offers Undo for <see cref="UndoWindow"/>. Removing a group
     /// takes everything in it with it, so that still asks first and cannot be undone.
@@ -662,7 +665,7 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
         _pendingRemoval = removal;
         var version = ++_removalVersion;
         NotifyUndoChanged();
-        _ = ExpireUndoAsync(version);
+        UndoExpiry = ExpireUndoAsync(version);
     }
 
     private async Task ExpireUndoAsync(int version)

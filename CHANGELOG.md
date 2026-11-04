@@ -3,7 +3,12 @@
 All notable changes to Desktop Icon Grid. The format follows [Keep a Changelog](https://keepachangelog.com/);
 version numbers follow [Semantic Versioning](https://semver.org/).
 
-## [0.4.0] – Unreleased
+## [0.4.0] – 2026-11-04
+
+The bar can start with Windows and live at a screen edge, and removing an icon no longer asks.
+Note for whoever tests this build: docking, auto-hide and the hand-off to full-screen programs talk
+to the shell through `SHAppBarMessage` and have been checked in code and unit tests only, not yet on
+a screen. The defaults (free window, message boxes for questions) are unchanged.
 
 ### Added
 

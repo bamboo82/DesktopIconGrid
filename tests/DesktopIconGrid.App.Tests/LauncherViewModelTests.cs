@@ -140,14 +140,14 @@ public sealed class LauncherViewModelTests : IDisposable
     public async Task The_undo_offer_expires()
     {
         var previous = LauncherViewModel.UndoWindow;
-        LauncherViewModel.UndoWindow = TimeSpan.FromMilliseconds(100);
+        LauncherViewModel.UndoWindow = TimeSpan.FromMilliseconds(50);
         try
         {
             var (viewModel, model, _) = Create();
             viewModel.RemoveItem(viewModel.RootItems.Items[0]);
             Assert.True(viewModel.CanUndoRemove);
 
-            await Task.Delay(600);
+            await viewModel.UndoExpiry; // the offer's own timer, however busy the test host is
 
             Assert.False(viewModel.CanUndoRemove);
             viewModel.UndoRemove();
