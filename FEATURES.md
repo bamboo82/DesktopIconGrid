@@ -373,7 +373,11 @@ keeps the old key on failure, per-instance MCI alias, the pending upload flushed
 (including one already in flight), icon lookups on one message-pumping STA worker with a 20 s
 deadline, stale results dropped, one shell call per path, the properties preview and the
 Windows-item menu icons off the UI thread, running badge by executable path (never the shell or
-an app-execution alias), a release workflow, and a Windows-only test project for the WPF side.
+an app-execution alias), a release workflow with checksums and embedded symbols, and a Windows-only
+test project for the WPF side (icon worker, path matching, frozen icons, sync flush, uploader
+listings, properties debounce). A hung icon lookup retires the worker and a fresh one takes over
+the queue, local lookups go before network ones, and settings copies are listed from every app
+folder on Drive.
 
 Still open, in the order they should be taken:
 
@@ -391,10 +395,9 @@ Still open, in the order they should be taken:
 6. **Non-modal errors** — tray balloons for non-fatal failures; undo for Remove.
 7. **Table stakes** — start with Windows, auto-hide/dock to a screen edge (AppBar), installer
    (MSIX/winget), signed releases, versioning from the tag (the release workflow does this).
-8. **Engineering** — a `SyncCoordinator` flush test (needs a test double for the launcher view
-   model), app-execution aliases resolved through their reparse data so Store apps get the badge
-   too, narrower exception filters in `SyncCoordinator.IsSyncError`, DPAPI for the stored client
-   secret.
+8. **Engineering** — a `main` branch as the default with CI restricted to it and pull requests,
+   app-execution aliases resolved through their reparse data so Store apps get the badge too,
+   narrower exception filters in `SyncCoordinator.IsSyncError`, DPAPI for the stored client secret.
 
 ## 14. Out of scope (for now)
 

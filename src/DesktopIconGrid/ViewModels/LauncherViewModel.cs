@@ -14,7 +14,7 @@ using DesktopIconGrid.SpecialIcons;
 namespace DesktopIconGrid.ViewModels;
 
 /// <summary>Root view model: owns the model, persists every change and exposes bar-wide commands.</summary>
-public sealed class LauncherViewModel : ObservableObject
+public sealed class LauncherViewModel : ObservableObject, ISyncHost
 {
     public const int LabelHeight = 16;
     private const int PopupMaxColumns = 8;
@@ -226,7 +226,8 @@ public sealed class LauncherViewModel : ObservableObject
 
         var model = viewModel.Model;
         var size = IconSize;
-        IconWorker.Shared.RunAsync(() => Icons.GetItemIcon(model, size), IconWorker.LookupTimeout, model.Name)
+        var slow = IconWorker.IsOnSlowStorage(model.IconPath) || IconWorker.IsOnSlowStorage((model as ShortcutItem)?.Location);
+        IconWorker.Shared.RunAsync(() => Icons.GetItemIcon(model, size), IconWorker.LookupTimeout, model.Name, slow)
             .ContinueWith(
                 task =>
                 {
@@ -250,7 +251,14 @@ public sealed class LauncherViewModel : ObservableObject
         foreach (var definition in SpecialItemSections.SelectMany(s => s.Items))
         {
             var source = definition.IconPath ?? definition.Location;
-            await IconWorker.Shared.RunAsync(() => Icons.GetIcon(source, 16), IconWorker.LookupTimeout, source);
+            try
+            {
+                await IconWorker.Shared.RunAsync(() => Icons.GetIcon(source, 16), IconWorker.LookupTimeout, source);
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                AppLog.Default.Debug("Icons", $"Catalog icon for {source} could not be resolved ahead of time: {ex.Message}");
+            }
         }
     }
 

@@ -116,7 +116,7 @@ public partial class App : Application
         ThemeManager.Apply(viewModel.Palette);
         viewModel.SettingsChanged += (_, _) => ThemeManager.Apply(viewModel.Palette);
 
-        _sync = new SyncCoordinator(syncService, viewModel, dialogs);
+        _sync = new SyncCoordinator(syncService, viewModel, dialogs.Confirm);
         dialogs.SyncViewModelFactory = () => new SyncViewModel(_sync, dialogs);
         viewModel.FlushBeforeExit = () => _sync.FlushPendingAsync(TimeSpan.FromSeconds(5));
         _ = Task.Run(() => DriveCache.Purge(cacheDirectory, TimeSpan.FromDays(1)));

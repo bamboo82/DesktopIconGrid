@@ -13,6 +13,9 @@ from 0.1.0:
   written by a newer version, a one-time copy `layout.json.v<N>.json`.
 - Items a version does not understand are kept as placeholders instead of being dropped, and the
   file keeps the newer version number, so you can go back and forth between versions safely.
+- If 0.1.0 created two `DesktopIconGrid` folders in your Google Drive (it could, when two devices
+  connected for the first time at the same moment), copies from both are still listed; new saves go to
+  the folder that was created first, and the log notes that two folders exist.
 
 ### Changed
 

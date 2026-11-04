@@ -58,6 +58,22 @@ public class GoogleDriveClientTests
     }
 
     [Fact]
+    public async Task Copies_in_every_app_folder_are_listed_and_new_ones_go_to_the_oldest()
+    {
+        var handler = new FakeHttpHandler()
+            .Enqueue(HttpStatusCode.OK, """{"files":[{"id":"older","name":"DesktopIconGrid","createdTime":"2026-01-01T00:00:00Z"},{"id":"newer","name":"DesktopIconGrid","createdTime":"2026-02-01T00:00:00Z"}]}""")
+            .Enqueue(HttpStatusCode.OK, EmptyList)
+            .Enqueue(HttpStatusCode.OK, """{"id":"f9","name":"Work.json"}""");
+        var client = new GoogleDriveClient(new HttpClient(handler), new StaticTokens("tok"));
+
+        await client.ListFilesAsync(CancellationToken.None);
+        await client.UploadJsonAsync("Work.json", "{}", new Dictionary<string, string>(), null, CancellationToken.None);
+
+        Assert.Contains("%27older%27%20in%20parents%20or%20%27newer%27%20in%20parents", handler.Requests[1].Url);
+        Assert.Contains("\"parents\":[\"older\"]", handler.Requests[2].Body);
+    }
+
+    [Fact]
     public async Task First_use_on_two_devices_keeps_the_folder_created_first()
     {
         var handler = new FakeHttpHandler()

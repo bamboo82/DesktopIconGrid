@@ -109,8 +109,10 @@ created in your Drive.
 ## Building
 
 Ready-made builds are attached to each [release](https://github.com/bamboo82/DesktopIconGrid/releases):
-a small zip that needs the .NET 10 Desktop Runtime and a self-contained one that does not. Every push
-also leaves a `DesktopIconGrid-win-x64` artifact on its Actions run. Changes are listed in
+a small zip that needs the .NET 10 Desktop Runtime and a self-contained one that does not, plus
+`SHA256SUMS.txt`. The builds are not code-signed yet, so compare a download's hash before running it
+(`Get-FileHash <zip>` in PowerShell) and expect a SmartScreen prompt the first time. Every push also
+leaves a `DesktopIconGrid-win-x64` artifact on its Actions run. Changes are listed in
 [CHANGELOG.md](CHANGELOG.md).
 
 Requirements: Windows 10/11 and the [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0).

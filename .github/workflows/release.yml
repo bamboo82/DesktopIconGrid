@@ -1,7 +1,7 @@
 name: Release
 
-# Pushing a tag such as v0.2.0 builds, tests and publishes that version and attaches the zips to a
-# GitHub release whose notes are the matching section of CHANGELOG.md.
+# Pushing a tag such as v0.2.0 builds, tests and publishes that version and attaches the zips (plus their
+# SHA-256 checksums) to a GitHub release whose notes are the matching section of CHANGELOG.md.
 on:
   push:
     tags: ["v*"]
@@ -36,16 +36,18 @@ jobs:
         run: dotnet test --no-build -c Release
 
       - name: Publish (needs the .NET 10 Desktop Runtime)
-        run: dotnet publish src/DesktopIconGrid -c Release -r win-x64 --self-contained false -p:PublishSingleFile=true -p:Version=${{ steps.version.outputs.version }} -o publish/framework-dependent
+        run: dotnet publish src/DesktopIconGrid -c Release -r win-x64 --self-contained false -p:PublishSingleFile=true -p:DebugType=embedded -p:Version=${{ steps.version.outputs.version }} -o publish/framework-dependent
 
       - name: Publish (self-contained)
-        run: dotnet publish src/DesktopIconGrid -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:Version=${{ steps.version.outputs.version }} -o publish/self-contained
+        run: dotnet publish src/DesktopIconGrid -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:DebugType=embedded -p:Version=${{ steps.version.outputs.version }} -o publish/self-contained
 
-      - name: Zip
+      - name: Zip and checksum
         shell: pwsh
         run: |
           Compress-Archive -Path publish/framework-dependent/* -DestinationPath DesktopIconGrid-${{ steps.version.outputs.version }}-win-x64.zip
           Compress-Archive -Path publish/self-contained/* -DestinationPath DesktopIconGrid-${{ steps.version.outputs.version }}-win-x64-self-contained.zip
+          Get-ChildItem DesktopIconGrid-*.zip | ForEach-Object { "$((Get-FileHash $_ -Algorithm SHA256).Hash.ToLower())  $($_.Name)" } | Set-Content -Path SHA256SUMS.txt -Encoding ascii
+          Get-Content SHA256SUMS.txt
 
       - name: Release notes from CHANGELOG.md
         shell: pwsh
@@ -61,3 +63,4 @@ jobs:
           body_path: notes.md
           files: |
             DesktopIconGrid-*.zip
+            SHA256SUMS.txt

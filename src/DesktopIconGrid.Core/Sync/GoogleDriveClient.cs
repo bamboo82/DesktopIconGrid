@@ -78,6 +78,7 @@ public sealed class GoogleDriveClient : IDriveClient, IDriveFiles
     private readonly HttpClient _http;
     private readonly IAccessTokenProvider _tokens;
     private string? _folderId;
+    private IReadOnlyList<string> _folderIds = [];
 
     public GoogleDriveClient(HttpClient http, IAccessTokenProvider tokens)
     {
@@ -96,7 +97,11 @@ public sealed class GoogleDriveClient : IDriveClient, IDriveFiles
     public async Task<IReadOnlyList<DriveFile>> ListFilesAsync(CancellationToken cancellationToken)
     {
         var folderId = await EnsureFolderAsync(cancellationToken).ConfigureAwait(false);
-        var query = $"'{folderId}' in parents and trashed = false and mimeType = '{JsonMimeType}'";
+        IReadOnlyList<string> folders = _folderIds.Count > 0 ? _folderIds : [folderId];
+        var parents = folders.Count == 1
+            ? $"'{folders[0]}' in parents"
+            : "(" + string.Join(" or ", folders.Select(id => $"'{id}' in parents")) + ")";
+        var query = $"{parents} and trashed = false and mimeType = '{JsonMimeType}'";
         var url = $"files?q={Uri.EscapeDataString(query)}&fields={Uri.EscapeDataString($"files({FileFields})")}&pageSize=200&orderBy=name_natural";
         var response = await GetAsync<FileListDto>(url, cancellationToken).ConfigureAwait(false);
         return (response?.Files ?? []).Select(ToDriveFile).ToList();
@@ -596,10 +601,11 @@ public sealed class GoogleDriveClient : IDriveClient, IDriveFiles
             return _folderId;
         }
 
-        var existing = await OldestAppFolderAsync(cancellationToken).ConfigureAwait(false);
-        if (existing is not null)
+        var folders = await AppFoldersAsync(cancellationToken).ConfigureAwait(false);
+        if (folders.Count > 0)
         {
-            return _folderId = existing;
+            RememberFolders(folders);
+            return _folderId = folders[0];
         }
 
         var metadata = new { name = FolderName, mimeType = FolderMimeType };
@@ -621,8 +627,8 @@ public sealed class GoogleDriveClient : IDriveClient, IDriveFiles
 
         // Two devices connecting for the first time can both have found nothing: look again and keep the
         // folder created first, removing the one just created when another device won the race.
-        var oldest = await OldestAppFolderAsync(cancellationToken).ConfigureAwait(false);
-        if (oldest is not null && !string.Equals(oldest, created.Id, StringComparison.Ordinal))
+        var again = await AppFoldersAsync(cancellationToken).ConfigureAwait(false);
+        if (again.Count > 0 && !string.Equals(again[0], created.Id, StringComparison.Ordinal))
         {
             AppLog.Default.Info("Drive", $"Another device created the {FolderName} folder at the same time; using the older one");
             try
@@ -634,14 +640,16 @@ public sealed class GoogleDriveClient : IDriveClient, IDriveFiles
                 // Best effort; an empty extra folder is harmless.
             }
 
-            return _folderId = oldest;
+            RememberFolders(again.Where(id => !string.Equals(id, created.Id, StringComparison.Ordinal)).ToList());
+            return _folderId = again[0];
         }
 
+        RememberFolders(again.Count > 0 ? again : new List<string> { created.Id });
         return _folderId = created.Id;
     }
 
-    /// <summary>The id of the app folder that was created first, or <see langword="null"/> when there is none.</summary>
-    private async Task<string?> OldestAppFolderAsync(CancellationToken cancellationToken)
+    /// <summary>Ids of every app folder in the Drive root, the one created first at index 0.</summary>
+    private async Task<List<string>> AppFoldersAsync(CancellationToken cancellationToken)
     {
         var query = $"name = '{FolderName}' and mimeType = '{FolderMimeType}' and trashed = false and 'root' in parents";
         var found = await GetAsync<FileListDto>($"files?q={Uri.EscapeDataString(query)}&fields=files(id,name,createdTime)&orderBy=createdTime&pageSize=10", cancellationToken).ConfigureAwait(false);
@@ -649,7 +657,22 @@ public sealed class GoogleDriveClient : IDriveClient, IDriveFiles
             .Where(f => !string.IsNullOrEmpty(f.Id))
             .OrderBy(f => f.CreatedTime ?? DateTimeOffset.MaxValue)
             .ThenBy(f => f.Id, StringComparer.Ordinal)
-            .FirstOrDefault()?.Id;
+            .Select(f => f.Id!)
+            .ToList();
+    }
+
+    /// <summary>
+    /// Keeps every app folder for listing: version 0.1.0 could create two when a user's first connections raced,
+    /// and the copies saved into the second one must not vanish from the list. New copies go to the folder
+    /// created first.
+    /// </summary>
+    private void RememberFolders(IReadOnlyList<string> folders)
+    {
+        _folderIds = folders;
+        if (folders.Count > 1)
+        {
+            AppLog.Default.Warning("Drive", $"{folders.Count} \"{FolderName}\" folders exist on this Drive (an earlier version could create two); copies are listed from all of them and new copies go to the one created first");
+        }
     }
 
     private async Task<T?> GetAsync<T>(string relativeUrl, CancellationToken cancellationToken)

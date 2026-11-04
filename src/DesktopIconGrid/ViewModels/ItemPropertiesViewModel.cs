@@ -261,7 +261,8 @@ public sealed class ItemPropertiesViewModel : ObservableObject
         }
 
         var icons = _icons;
-        var result = await IconWorker.Shared.RunAsync(() => Resolve(icons, iconPath, location, isGroup, isShortcut), IconWorker.LookupTimeout, location);
+        var slow = IconWorker.IsOnSlowStorage(location) || IconWorker.IsOnSlowStorage(iconPath);
+        var result = await IconWorker.Shared.RunAsync(() => Resolve(icons, iconPath, location, isGroup, isShortcut), IconWorker.LookupTimeout, location, slow);
         if (request != _previewRequest)
         {
             return;

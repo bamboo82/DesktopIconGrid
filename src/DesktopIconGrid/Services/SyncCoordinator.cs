@@ -6,7 +6,6 @@ using DesktopIconGrid.Core.Diagnostics;
 using DesktopIconGrid.Core.Models;
 using DesktopIconGrid.Core.Sync;
 using DesktopIconGrid.Infrastructure;
-using DesktopIconGrid.ViewModels;
 
 namespace DesktopIconGrid.Services;
 
@@ -18,26 +17,27 @@ public sealed class SyncCoordinator : ObservableObject
 {
     private static readonly TimeSpan UploadDelay = TimeSpan.FromSeconds(5);
 
-    private readonly LauncherViewModel _launcher;
-    private readonly IDialogService _dialogs;
+    private readonly ISyncHost _host;
+    private readonly Func<string, string, bool> _confirm;
     private readonly DispatcherTimer _timer;
     private Task? _current;
     private bool _uploadRequestedWhileBusy;
     private bool _shuttingDown;
     private string _status = string.Empty;
 
-    public SyncCoordinator(SyncService service, LauncherViewModel launcher, IDialogService dialogs)
+    /// <param name="confirm">Asks the user a yes/no question (title, message) when a newer copy is found at startup.</param>
+    public SyncCoordinator(SyncService service, ISyncHost host, Func<string, string, bool> confirm)
     {
         Service = service;
-        _launcher = launcher;
-        _dialogs = dialogs;
+        _host = host;
+        _confirm = confirm;
         _timer = new DispatcherTimer { Interval = UploadDelay };
         _timer.Tick += async (_, _) =>
         {
             _timer.Stop();
             await UploadNowAsync();
         };
-        launcher.LayoutChanged += (_, _) => ScheduleUpload();
+        host.LayoutChanged += (_, _) => ScheduleUpload();
     }
 
     public SyncService Service { get; }
@@ -69,7 +69,10 @@ public sealed class SyncCoordinator : ObservableObject
     /// <summary>True while an upload is running.</summary>
     public bool IsUploading => _current is { IsCompleted: false };
 
-    public LauncherLayout ExportLayout() => _launcher.ExportLayout();
+    /// <summary>True while the debounce timer is armed (an upload will start in a few seconds).</summary>
+    internal bool IsUploadScheduled => _timer.IsEnabled;
+
+    public LauncherLayout ExportLayout() => _host.ExportLayout();
 
     public void ScheduleUpload()
     {
@@ -137,7 +140,7 @@ public sealed class SyncCoordinator : ObservableObject
     {
         try
         {
-            var result = await Service.AutoUploadAsync(_launcher.ExportLayout(), CancellationToken.None);
+            var result = await Service.AutoUploadAsync(_host.ExportLayout(), CancellationToken.None);
             Status = result.Outcome switch
             {
                 AutoUploadOutcome.Uploaded => $"Uploaded to \"{result.Remote?.Name}\" at {DateTime.Now.ToString("t", CultureInfo.CurrentCulture)}.",
@@ -178,7 +181,7 @@ public sealed class SyncCoordinator : ObservableObject
                 return;
             }
 
-            var load = _dialogs.Confirm(
+            var load = _confirm(
                 "Newer settings copy on Google Drive",
                 $"\"{newer.Name}\" was saved by {newer.SavedBy ?? "another device"} on {Describe(newer.SavedAt)}.\n\n" +
                 "Load it now? The settings and icons on this device will be replaced.");
@@ -200,7 +203,7 @@ public sealed class SyncCoordinator : ObservableObject
     public async Task LoadAndApplyAsync(RemoteProfile remote, CancellationToken cancellationToken)
     {
         var profile = await Service.LoadProfileAsync(remote, cancellationToken);
-        _launcher.ReplaceLayout(profile.Layout);
+        _host.ReplaceLayout(profile.Layout);
         Status = $"Loaded \"{remote.Name}\" (saved by {profile.SavedBy} on {Describe(profile.SavedAt)}).";
     }
 

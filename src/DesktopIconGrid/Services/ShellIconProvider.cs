@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Windows;
@@ -92,14 +93,32 @@ public sealed class ShellIconProvider : IIconProvider
         return image;
     }
 
+    /// <summary>
+    /// Icons cross from the worker thread to the UI thread, so every image handed out must be frozen; a bitmap that
+    /// cannot be frozen in place (some decoder frames and interop bitmaps) is copied into one that can.
+    /// </summary>
     private static ImageSource? Frozen(ImageSource? image)
     {
-        if (image is { CanFreeze: true })
+        if (image is null || image.IsFrozen)
         {
-            image.Freeze();
+            return image;
         }
 
-        return image;
+        if (image.CanFreeze)
+        {
+            image.Freeze();
+            return image;
+        }
+
+        if (image is BitmapSource bitmap)
+        {
+            var copy = new WriteableBitmap(bitmap);
+            copy.Freeze();
+            return copy;
+        }
+
+        Debug.Fail($"Unfreezable icon of type {image.GetType().Name}");
+        return null;
     }
 
     public bool CanResolve(string? source)
