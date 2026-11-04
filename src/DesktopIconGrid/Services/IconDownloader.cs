@@ -18,6 +18,9 @@ public static class IconDownloader
     public const int TargetSize = 256;
     public const long MaxBytes = 10 * 1024 * 1024;
 
+    /// <summary>Images larger than this on a side are decoded at a reduced size.</summary>
+    public const int MaxDecodedSide = 2048;
+
     public static bool IsImageUrl(string? text) =>
         Uri.TryCreate(text?.Trim(), UriKind.Absolute, out var uri)
         && (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps);
@@ -86,12 +89,30 @@ public static class IconDownloader
     /// <summary>Largest frame, scaled to fit <see cref="TargetSize"/>, centred on a transparent square, as PNG bytes.</summary>
     public static byte[] Normalise(byte[] imageBytes)
     {
-        BitmapFrame frame;
+        BitmapSource frame;
         try
         {
-            using var input = new MemoryStream(imageBytes);
-            var decoder = BitmapDecoder.Create(input, BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.OnLoad);
-            frame = decoder.Frames.OrderByDescending(f => f.PixelWidth * f.PixelHeight).First();
+            using var probe = new MemoryStream(imageBytes);
+            var header = BitmapDecoder.Create(probe, BitmapCreateOptions.DelayCreation, BitmapCacheOption.None);
+            var largest = header.Frames.OrderByDescending(f => (long)f.PixelWidth * f.PixelHeight).First();
+            if (Math.Max(largest.PixelWidth, largest.PixelHeight) > MaxDecodedSide)
+            {
+                // Decode huge images at a reduced size instead of allocating their full bitmap.
+                var reduced = new BitmapImage();
+                reduced.BeginInit();
+                reduced.StreamSource = new MemoryStream(imageBytes);
+                reduced.CacheOption = BitmapCacheOption.OnLoad;
+                reduced.DecodePixelWidth = largest.PixelWidth >= largest.PixelHeight ? MaxDecodedSide : 0;
+                reduced.DecodePixelHeight = largest.PixelWidth >= largest.PixelHeight ? 0 : MaxDecodedSide;
+                reduced.EndInit();
+                frame = reduced;
+            }
+            else
+            {
+                using var input = new MemoryStream(imageBytes);
+                var decoder = BitmapDecoder.Create(input, BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.OnLoad);
+                frame = decoder.Frames.OrderByDescending(f => (long)f.PixelWidth * f.PixelHeight).First();
+            }
         }
         catch (Exception ex) when (ex is NotSupportedException or FileFormatException or InvalidOperationException or ArgumentException)
         {

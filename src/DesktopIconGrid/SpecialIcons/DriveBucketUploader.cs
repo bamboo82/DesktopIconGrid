@@ -87,7 +87,15 @@ public sealed class DriveBucketUploader(SyncService sync, Action<string, string>
         catch (OperationCanceledException)
         {
             _pending.Clear();
-            AppLog.Default.Warning("Bucket", "Uploads cancelled");
+            if (token.IsCancellationRequested)
+            {
+                AppLog.Default.Warning("Bucket", "Uploads cancelled");
+            }
+            else
+            {
+                _failures.Add("The upload timed out.");
+                AppLog.Default.Error("Bucket", "Uploads stopped: a request timed out");
+            }
         }
         finally
         {

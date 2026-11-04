@@ -22,6 +22,7 @@ public sealed class LauncherViewModel : ObservableObject
     private static readonly TimeSpan LaunchDebounce = TimeSpan.FromMilliseconds(400);
 
     private readonly Dictionary<Guid, ItemViewModel> _viewModels = [];
+    private readonly TaskScheduler _uiScheduler;
     private readonly LayoutStorage _storage;
     private readonly IDialogService _dialogs;
     private readonly ILaunchService _launcher;
@@ -50,6 +51,7 @@ public sealed class LauncherViewModel : ObservableObject
         Tracker = tracker;
         SpecialIcons = specialIcons;
         _defer = defer ?? (action => action());
+        _uiScheduler = SynchronizationContext.Current is null ? TaskScheduler.Default : TaskScheduler.FromCurrentSynchronizationContext();
         tracker.RunningChanged += (_, id) =>
         {
             if (_viewModels.TryGetValue(id, out var viewModel))
@@ -102,6 +104,11 @@ public sealed class LauncherViewModel : ObservableObject
     public int Opacity => Model.Settings.Opacity;
 
     public bool CloseToTray => Model.Settings.CloseToTray;
+
+    public string CloseButtonToolTip => CloseToTray ? "Hide to tray (Exit is in the tray and options menus)" : "Exit";
+
+    /// <summary>Set by the host to flush pending background work (e.g. a debounced sync upload) before exiting.</summary>
+    public Func<Task>? FlushBeforeExit { get; set; }
 
     public double CellWidth => IconSize + 2 * CellPadding + (ShowLabels ? 24 : 0);
 
@@ -197,6 +204,31 @@ public sealed class LauncherViewModel : ObservableObject
 
     // ----- view-model plumbing ------------------------------------------------------------------
 
+    /// <summary>Resolves an item's icon on a worker thread (shell calls can block on slow or missing drives) and applies it on the UI thread.</summary>
+    public void LoadImageAsync(ItemViewModel viewModel)
+    {
+        if (!viewModel.NeedsImage)
+        {
+            viewModel.SetImage(null);
+            return;
+        }
+
+        if (viewModel.Model is SpecialIconItem special && !viewModel.Model.HasCustomIcon)
+        {
+            viewModel.SetImage(viewModel.SpecialHandler.GetIcon(special));
+            return;
+        }
+
+        var model = viewModel.Model;
+        var size = IconSize;
+        Task.Run(() => Icons.GetItemIcon(model, size))
+            .ContinueWith(
+                task => viewModel.SetImage(task.IsCompletedSuccessfully ? task.Result : null),
+                CancellationToken.None,
+                TaskContinuationOptions.None,
+                _uiScheduler);
+    }
+
     public ItemViewModel GetOrCreateViewModel(LauncherItem item)
     {
         if (!_viewModels.TryGetValue(item.Id, out var viewModel))
@@ -237,6 +269,21 @@ public sealed class LauncherViewModel : ObservableObject
             return;
         }
 
+        var now = DateTime.UtcNow;
+        if (item.Id == _lastLaunchedId && now - _lastLaunchedAt < LaunchDebounce)
+        {
+            return; // a natural double-click in single-click mode
+        }
+
+        _lastLaunchedId = item.Id;
+        _lastLaunchedAt = now;
+
+        if (item.Model is UnknownItem)
+        {
+            _dialogs.ShowInfo(item.Name, "This item was made by a newer version of Desktop Icon Grid and cannot be opened here. It is kept so nothing is lost.");
+            return;
+        }
+
         if (item.Model is SpecialIconItem special)
         {
             var specialResult = item.SpecialHandler.Activate(special, modifiers);
@@ -249,16 +296,12 @@ public sealed class LauncherViewModel : ObservableObject
             return;
         }
 
-        var now = DateTime.UtcNow;
-        if (item.Id == _lastLaunchedId && now - _lastLaunchedAt < LaunchDebounce)
+        if (item.Model is not ShortcutItem shortcutToLaunch)
         {
             return;
         }
 
-        _lastLaunchedId = item.Id;
-        _lastLaunchedAt = now;
-
-        var result = _launcher.Launch((ShortcutItem)item.Model);
+        var result = _launcher.Launch(shortcutToLaunch);
         if (result.Outcome == LaunchOutcome.Failed)
         {
             _dialogs.ShowError($"Can't open \"{item.Name}\"", $"{result.ErrorMessage}\n\n{item.Location}");
@@ -449,6 +492,12 @@ public sealed class LauncherViewModel : ObservableObject
 
     public void EditItem(ItemViewModel item)
     {
+        if (item.Model is UnknownItem)
+        {
+            _dialogs.ShowInfo(item.Name, "This item was made by a newer version of Desktop Icon Grid and cannot be edited here.");
+            return;
+        }
+
         var draft = item.Model.Clone();
         var saved = draft is SpecialIconItem specialDraft
             ? item.SpecialHandler.ShowProperties(specialDraft, isNew: false)

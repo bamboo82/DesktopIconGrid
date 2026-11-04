@@ -26,12 +26,13 @@ public sealed class ProcessTracker : IDisposable
     private readonly Dictionary<Guid, ProcessLogSession> _logs = [];
     private readonly DispatcherTimer _scanTimer;
     private HashSet<string> _runningNames = new(StringComparer.OrdinalIgnoreCase);
+    private bool _scanning;
 
     public ProcessTracker(Dispatcher dispatcher, string logDirectory)
     {
         _dispatcher = dispatcher;
         LogDirectory = logDirectory;
-        _scanTimer = new DispatcherTimer(ScanInterval, DispatcherPriority.Background, (_, _) => Scan(), dispatcher);
+        _scanTimer = new DispatcherTimer(ScanInterval, DispatcherPriority.Background, (_, _) => _ = ScanAsync(), dispatcher);
         _scanTimer.Stop();
     }
 
@@ -73,8 +74,11 @@ public sealed class ProcessTracker : IDisposable
         UpdateTimer();
     }
 
-    /// <summary>Follows a process started from the shortcut until it exits.</summary>
-    public void Track(Guid id, Process process)
+    /// <summary>
+    /// Follows a process started from the shortcut until it exits. With <paramref name="disposeOnExit"/> the
+    /// tracker disposes the <see cref="Process"/> afterwards; a log session that still reads its output owns it instead.
+    /// </summary>
+    public void Track(Guid id, Process process, bool disposeOnExit = true)
     {
         ArgumentNullException.ThrowIfNull(process);
         int pid;
@@ -85,7 +89,11 @@ public sealed class ProcessTracker : IDisposable
         }
         catch (Exception ex) when (ex is InvalidOperationException or Win32Exception)
         {
-            process.Dispose();
+            if (disposeOnExit)
+            {
+                process.Dispose();
+            }
+
             return;
         }
 
@@ -110,7 +118,11 @@ public sealed class ProcessTracker : IDisposable
             _dispatcher.BeginInvoke(() =>
             {
                 pids.Remove(pid);
-                process.Dispose();
+                if (disposeOnExit)
+                {
+                    process.Dispose();
+                }
+
                 RunningChanged?.Invoke(this, id);
             });
         };
@@ -124,16 +136,21 @@ public sealed class ProcessTracker : IDisposable
         RunningChanged?.Invoke(this, id);
     }
 
-    /// <summary>Begins writing the process's output to a new log file for the shortcut.</summary>
+    /// <summary>Begins writing the process's output to a new log file for the shortcut. The session owns the process.</summary>
     public ProcessLogSession StartLog(ShortcutItem shortcut, Process process, ProcessStartInfo startInfo)
     {
         ArgumentNullException.ThrowIfNull(shortcut);
         Directory.CreateDirectory(LogDirectory);
-        var safeName = SafeFileName(shortcut.Name.Length == 0 ? "shortcut" : shortcut.Name);
-        TrimOldLogs(safeName);
+        var prefix = shortcut.Id.ToString("N");
+        TrimOldLogs(prefix);
 
-        var path = Path.Combine(LogDirectory, $"{safeName}_{DateTime.Now:yyyyMMdd-HHmmss}.log");
+        var path = Path.Combine(LogDirectory, $"{prefix}_{DateTime.Now:yyyyMMdd-HHmmss}.log");
         var session = new ProcessLogSession(shortcut.Id, shortcut.Name, path, process, startInfo, _dispatcher);
+        if (_logs.Remove(shortcut.Id, out var previous))
+        {
+            previous.Dispose();
+        }
+
         _logs[shortcut.Id] = session;
         return session;
     }
@@ -161,47 +178,71 @@ public sealed class ProcessTracker : IDisposable
         else if (!_scanTimer.IsEnabled)
         {
             _scanTimer.Start();
-            Scan();
+            _ = ScanAsync();
         }
     }
 
-    private void Scan()
+    /// <summary>Enumerates processes on a worker thread (it can take tens of milliseconds) and compares on the UI thread.</summary>
+    private async Task ScanAsync()
     {
-        var names = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        Process[] processes;
-        try
-        {
-            processes = Process.GetProcesses();
-        }
-        catch (Exception ex) when (ex is InvalidOperationException or Win32Exception)
+        if (_scanning)
         {
             return;
         }
 
-        foreach (var process in processes)
+        _scanning = true;
+        try
         {
-            try
+            var names = await Task.Run(static () =>
             {
-                names.Add(process.ProcessName);
+                var set = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                Process[] processes;
+                try
+                {
+                    processes = Process.GetProcesses();
+                }
+                catch (Exception ex) when (ex is InvalidOperationException or Win32Exception)
+                {
+                    return null;
+                }
+
+                foreach (var process in processes)
+                {
+                    try
+                    {
+                        set.Add(process.ProcessName);
+                    }
+                    catch (Exception ex) when (ex is InvalidOperationException or Win32Exception)
+                    {
+                        // The process went away while we looked at it.
+                    }
+                    finally
+                    {
+                        process.Dispose();
+                    }
+                }
+
+                return set;
+            });
+
+            if (names is null)
+            {
+                return;
             }
-            catch (Exception ex) when (ex is InvalidOperationException or Win32Exception)
+
+            var previous = _runningNames;
+            _runningNames = names;
+            foreach (var (id, name) in _watchedProcessNames)
             {
-                // The process went away while we looked at it.
-            }
-            finally
-            {
-                process.Dispose();
+                if (previous.Contains(name) != names.Contains(name))
+                {
+                    RunningChanged?.Invoke(this, id);
+                }
             }
         }
-
-        var previous = _runningNames;
-        _runningNames = names;
-        foreach (var (id, name) in _watchedProcessNames)
+        finally
         {
-            if (previous.Contains(name) != names.Contains(name))
-            {
-                RunningChanged?.Invoke(this, id);
-            }
+            _scanning = false;
         }
     }
 
@@ -228,25 +269,12 @@ public sealed class ProcessTracker : IDisposable
         return null;
     }
 
-    private static string SafeFileName(string name)
-    {
-        var invalid = Path.GetInvalidFileNameChars();
-        var builder = new StringBuilder(name.Length);
-        foreach (var c in name.Trim())
-        {
-            builder.Append(invalid.Contains(c) ? '_' : c);
-        }
-
-        var result = builder.ToString();
-        return result.Length > 40 ? result[..40] : result;
-    }
-
-    private void TrimOldLogs(string safeName)
+    private void TrimOldLogs(string prefix)
     {
         try
         {
             var files = new DirectoryInfo(LogDirectory)
-                .GetFiles($"{safeName}_*.log")
+                .GetFiles($"{prefix}_*.log")
                 .OrderByDescending(f => f.LastWriteTimeUtc)
                 .Skip(LogFilesToKeepPerShortcut - 1);
             foreach (var file in files)
@@ -261,7 +289,10 @@ public sealed class ProcessTracker : IDisposable
     }
 }
 
-/// <summary>One captured run: writes the output to a log file and keeps the last lines in memory for the viewer.</summary>
+/// <summary>
+/// One captured run: writes the output to a log file and keeps the last lines in memory for the viewer.
+/// Owns the <see cref="Process"/>: it waits for the output streams to drain after exit, then disposes it.
+/// </summary>
 public sealed class ProcessLogSession : IDisposable
 {
     private const int MaxLinesInMemory = 5000;
@@ -269,7 +300,9 @@ public sealed class ProcessLogSession : IDisposable
     private readonly object _lock = new();
     private readonly List<string> _lines = [];
     private readonly Dispatcher _dispatcher;
+    private readonly Process _process;
     private StreamWriter? _writer;
+    private bool _processDisposed;
 
     public ProcessLogSession(Guid itemId, string itemName, string logPath, Process process, ProcessStartInfo startInfo, Dispatcher dispatcher)
     {
@@ -278,6 +311,7 @@ public sealed class ProcessLogSession : IDisposable
         LogPath = logPath;
         StartedAt = DateTime.Now;
         _dispatcher = dispatcher;
+        _process = process;
 
         try
         {
@@ -309,23 +343,7 @@ public sealed class ProcessLogSession : IDisposable
                 Append("[stderr] " + e.Data);
             }
         };
-        process.Exited += (_, _) =>
-        {
-            int? exitCode = null;
-            try
-            {
-                exitCode = process.ExitCode;
-            }
-            catch (InvalidOperationException)
-            {
-            }
-
-            ExitCode = exitCode;
-            IsFinished = true;
-            Append($"[{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture)}] exited with code {(exitCode.HasValue ? exitCode.Value.ToString(CultureInfo.InvariantCulture) : "?")}");
-            Dispose();
-            _dispatcher.BeginInvoke(() => Finished?.Invoke(this, EventArgs.Empty));
-        };
+        process.Exited += (_, _) => _ = Task.Run(FinishAsync);
 
         try
         {
@@ -353,7 +371,7 @@ public sealed class ProcessLogSession : IDisposable
     /// <summary>Raised on the UI thread for every line.</summary>
     public event EventHandler<string>? LineAdded;
 
-    /// <summary>Raised on the UI thread when the process exits.</summary>
+    /// <summary>Raised on the UI thread when the process exited and its output has been fully read.</summary>
     public event EventHandler? Finished;
 
     public IReadOnlyList<string> Snapshot()
@@ -370,7 +388,32 @@ public sealed class ProcessLogSession : IDisposable
         {
             _writer?.Dispose();
             _writer = null;
+            if (!_processDisposed && IsFinished)
+            {
+                _processDisposed = true;
+                _process.Dispose();
+            }
         }
+    }
+
+    /// <summary>Runs off the UI thread after exit: drains the redirected streams, records the exit code, closes the file.</summary>
+    private void FinishAsync()
+    {
+        int? exitCode = null;
+        try
+        {
+            _process.WaitForExit(); // without a timeout this also waits for the async output readers to reach end of stream
+            exitCode = _process.ExitCode;
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or SystemException)
+        {
+        }
+
+        ExitCode = exitCode;
+        IsFinished = true;
+        Append($"[{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture)}] exited with code {(exitCode.HasValue ? exitCode.Value.ToString(CultureInfo.InvariantCulture) : "?")}");
+        Dispose();
+        _dispatcher.BeginInvoke(() => Finished?.Invoke(this, EventArgs.Empty));
     }
 
     private void Append(string line)

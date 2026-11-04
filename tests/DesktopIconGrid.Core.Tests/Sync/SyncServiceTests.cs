@@ -167,6 +167,9 @@ public class SyncServiceTests
         var settings = new SyncSettings { DeviceName = "PC-1", LastSyncedAt = Now };
 
         Assert.False(SyncService.IsNewerThanLocal(new RemoteProfile("W", "id", Now.AddMinutes(5), "PC-1", null), settings));
+        // Same machine name on another installation still counts as another device when ids are present.
+        Assert.True(SyncService.IsNewerThanLocal(new RemoteProfile("W", "id", Now.AddMinutes(5), "PC-1", null) { SavedById = "elsewhere" }, settings));
+        Assert.False(SyncService.IsNewerThanLocal(new RemoteProfile("W", "id", Now.AddMinutes(5), "Other name", null) { SavedById = settings.DeviceId }, settings));
         Assert.False(SyncService.IsNewerThanLocal(new RemoteProfile("W", "id", Now.AddSeconds(1), "PC-2", null), settings));
         Assert.True(SyncService.IsNewerThanLocal(new RemoteProfile("W", "id", Now.AddSeconds(5), "PC-2", null), settings));
         Assert.False(SyncService.IsNewerThanLocal(new RemoteProfile("W", "id", null, "PC-2", null), settings));
@@ -183,6 +186,7 @@ public class SyncServiceTests
         // Simulate another device saving the same copy later.
         var (file, (content, properties)) = drive.Files.Single();
         properties["device"] = "PC-2";
+        properties["deviceId"] = "other-install";
         properties["savedAt"] = Now.AddMinutes(10).ToString("O");
         drive.Files[file] = (content, properties);
 
@@ -210,6 +214,7 @@ public class SyncServiceTests
 
         var (file, (content, properties)) = drive.Files.Single();
         properties["device"] = "PC-2";
+        properties["deviceId"] = "other-install";
         properties["savedAt"] = Now.AddMinutes(10).ToString("O");
         drive.Files[file] = (content, properties);
 
@@ -252,6 +257,7 @@ public class SyncServiceTests
         {
             ["profile"] = "Work",
             ["device"] = "PC-2",
+            ["deviceId"] = "abc",
             ["savedAt"] = Now.AddMinutes(-1).ToString("O"),
         });
 
@@ -259,7 +265,9 @@ public class SyncServiceTests
 
         Assert.Equal("Work", profile.Name);
         Assert.Equal("PC-2", profile.SavedBy);
-        Assert.Equal(Now.AddMinutes(-1), profile.SavedAt);
+        Assert.Equal("abc", profile.SavedById);
+        Assert.Equal(Now, profile.SavedAt); // Drive's modifiedTime wins over the device's own clock
+        Assert.Equal(Now.AddMinutes(-1), RemoteProfile.FromFile(new DriveFile("id", "Work.json", null, 10, file.AppProperties))!.SavedAt);
         Assert.Equal("Work.json", profile.FileName);
         Assert.Null(RemoteProfile.FromFile(new DriveFile("id", "notes.txt", null, null, new Dictionary<string, string>())));
         Assert.Equal(Now, RemoteProfile.FromFile(new DriveFile("id", "Plain.json", Now, null, new Dictionary<string, string>()))!.SavedAt);
@@ -284,6 +292,8 @@ public class SyncServiceTests
 
             var loaded = store.Load();
             Assert.Equal("Laptop", loaded.DeviceName);
+            Assert.Equal(fresh.DeviceId, loaded.DeviceId);
+            Assert.Equal(32, loaded.DeviceId.Length);
             Assert.Equal("id", loaded.ClientId);
             Assert.Equal("Work", loaded.LinkedProfile);
             Assert.Equal(Now, loaded.LastSyncedAt);

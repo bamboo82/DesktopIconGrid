@@ -6,7 +6,8 @@ namespace DesktopIconGrid.Services;
 /// <summary>Records from the default microphone to a WAV file through the Windows MCI wave audio device.</summary>
 public sealed class MciRecorder : IDisposable
 {
-    private const string Alias = "dig_capture";
+    private static int _counter;
+    private readonly string Alias = $"dig_capture_{Interlocked.Increment(ref _counter)}";
     private bool _open;
 
     public bool IsRecording { get; private set; }

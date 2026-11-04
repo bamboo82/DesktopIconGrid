@@ -80,7 +80,7 @@ public partial class IconGridControl : UserControl
         }
 
         var fromMouse = Environment.TickCount64 - _lastMouseUpTicks < ClickFromMouseWindowMs;
-        if (fromMouse && item.IsShortcut && List.Root.DoubleClickToLaunch)
+        if (fromMouse && !item.IsGroup && List.Root.DoubleClickToLaunch)
         {
             return; // handled by MouseDoubleClick in that mode
         }
@@ -91,7 +91,7 @@ public partial class IconGridControl : UserControl
 
     private void Item_MouseDoubleClick(object sender, MouseButtonEventArgs e)
     {
-        if (e.ChangedButton != MouseButton.Left || ItemOf(sender) is not { IsShortcut: true } item || List is null)
+        if (e.ChangedButton != MouseButton.Left || ItemOf(sender) is not { IsGroup: false } item || List is null)
         {
             return;
         }
@@ -193,8 +193,24 @@ public partial class IconGridControl : UserControl
 
         _dragCandidate = null; // holding, not dragging
         _dragButton = null;
-        _holdActive = candidate;
-        candidate.SpecialHandler.HoldStarted(special);
+        if (candidate.SpecialHandler.HoldStarted(special))
+        {
+            _holdActive = candidate;
+        }
+    }
+
+    /// <summary>A dialog, Alt+Tab or another window can take the capture mid-press; end any hold so the grid never gets stuck.</summary>
+    private void Item_LostMouseCapture(object sender, MouseEventArgs e)
+    {
+        _holdTimer.Stop();
+        _holdCandidate = null;
+        _dragCandidate = null;
+        _dragButton = null;
+        if (_holdActive is { Model: SpecialIconItem special } active)
+        {
+            _holdActive = null;
+            active.SpecialHandler.HoldEnded(special);
+        }
     }
 
     private void Item_PreviewMouseMove(object sender, MouseEventArgs e)
@@ -264,10 +280,22 @@ public partial class IconGridControl : UserControl
             return;
         }
 
-        var root = List.Root;
+        // Read the data now, but act after the OLE drop call has returned: dialogs opened from inside the
+        // Drop callback would keep Explorer (the drag source) frozen until they are dismissed.
+        var list = List;
+        Guid? draggedId = e.Data.GetDataPresent(DragState.ItemFormat)
+            && Guid.TryParse(e.Data.GetData(DragState.ItemFormat) as string, out var id)
+            ? id
+            : null;
+        var paths = draggedId is null ? GetDroppedPaths(e.Data) : [];
 
-        if (e.Data.GetDataPresent(DragState.ItemFormat)
-            && Guid.TryParse(e.Data.GetData(DragState.ItemFormat) as string, out var id))
+        Dispatcher.BeginInvoke(DispatcherPriority.Input, () => CompleteDrop(list, target, draggedId, paths));
+    }
+
+    private static void CompleteDrop(ItemListViewModel list, DropTarget target, Guid? draggedId, IReadOnlyList<string> paths)
+    {
+        var root = list.Root;
+        if (draggedId is { } id)
         {
             if (target.Action == DropAction.IntoGroup && target.Item is not null)
             {
@@ -275,13 +303,12 @@ public partial class IconGridControl : UserControl
             }
             else
             {
-                root.MoveItem(id, List, target.Index);
+                root.MoveItem(id, list, target.Index);
             }
 
             return;
         }
 
-        var paths = GetDroppedPaths(e.Data);
         if (paths.Count == 0)
         {
             return;
@@ -296,7 +323,7 @@ public partial class IconGridControl : UserControl
                 root.AddPaths(paths, groupList, int.MaxValue);
                 break;
             default:
-                root.AddPaths(paths, List, target.Index);
+                root.AddPaths(paths, list, target.Index);
                 break;
         }
     }

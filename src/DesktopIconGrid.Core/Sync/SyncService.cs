@@ -68,6 +68,12 @@ public sealed class SyncService
         var user = await _drive.GetUserAsync(cancellationToken).ConfigureAwait(false);
         Settings.AccountEmail = user.EmailAddress;
         SaveSettings();
+        if (!HasFullDriveAccess)
+        {
+            AppLog.Default.Warning("Sync", "Full Google Drive access was not granted on the consent screen");
+            throw new GoogleAuthException("Access to your whole Google Drive was not granted. Sign in again and tick the Drive permission.");
+        }
+
         AppLog.Default.Info("Sync", $"Full Google Drive access granted for {user.EmailAddress ?? "the account"}");
     }
 
@@ -118,7 +124,7 @@ public sealed class SyncService
             .FirstOrDefault(p => string.Equals(p.Name, name, StringComparison.OrdinalIgnoreCase));
 
         var now = _clock();
-        var profile = SyncProfile.FromLayout(existing?.Name ?? name, layout, Settings.DeviceName, now, _appVersion);
+        var profile = SyncProfile.FromLayout(existing?.Name ?? name, layout, Settings.DeviceName, now, _appVersion, Settings.DeviceId);
         var file = await _drive.UploadJsonAsync(
             profile.Name + RemoteProfile.FileExtension,
             profile.ToJson(),
@@ -127,7 +133,8 @@ public sealed class SyncService
             cancellationToken).ConfigureAwait(false);
 
         Settings.LinkedProfile = profile.Name;
-        Settings.LastSyncedAt = now;
+        Settings.LinkedFileId = file.Id;
+        Settings.LastSyncedAt = file.ModifiedTime ?? now; // Drive's clock, not this PC's
         SaveSettings();
         AppLog.Default.Info("Sync", $"Saved settings copy \"{profile.Name}\" to Google Drive ({layout.Items.Count} items, {(existing is null ? "new" : "replaced")})");
 
@@ -146,6 +153,7 @@ public sealed class SyncService
         }
 
         Settings.LinkedProfile = remote.Name;
+        Settings.LinkedFileId = remote.FileId;
         Settings.LastSyncedAt = remote.SavedAt ?? profile.SavedAt;
         SaveSettings();
         AppLog.Default.Info("Sync", $"Loaded settings copy \"{remote.Name}\" (saved by {profile.SavedBy} on {profile.SavedAt.LocalDateTime:g}, {profile.Layout.Items.Count} items)");
@@ -157,17 +165,17 @@ public sealed class SyncService
         ArgumentNullException.ThrowIfNull(remote);
         await _drive.DeleteAsync(remote.FileId, cancellationToken).ConfigureAwait(false);
         AppLog.Default.Info("Sync", $"Deleted settings copy \"{remote.Name}\" from Google Drive");
-        if (string.Equals(Settings.LinkedProfile, remote.Name, StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(Settings.LinkedFileId, remote.FileId, StringComparison.Ordinal)
+            || (Settings.LinkedFileId is null && string.Equals(Settings.LinkedProfile, remote.Name, StringComparison.OrdinalIgnoreCase)))
         {
-            Settings.LinkedProfile = null;
-            Settings.LastSyncedAt = null;
-            SaveSettings();
+            Unlink();
         }
     }
 
     public void Unlink()
     {
         Settings.LinkedProfile = null;
+        Settings.LinkedFileId = null;
         Settings.LastSyncedAt = null;
         SaveSettings();
     }
@@ -181,7 +189,8 @@ public sealed class SyncService
         }
 
         var profiles = await ListProfilesAsync(cancellationToken).ConfigureAwait(false);
-        return profiles.FirstOrDefault(p => string.Equals(p.Name, Settings.LinkedProfile, StringComparison.OrdinalIgnoreCase));
+        return profiles.FirstOrDefault(p => Settings.LinkedFileId is not null && string.Equals(p.FileId, Settings.LinkedFileId, StringComparison.Ordinal))
+               ?? profiles.FirstOrDefault(p => string.Equals(p.Name, Settings.LinkedProfile, StringComparison.OrdinalIgnoreCase));
     }
 
     /// <summary>The linked copy, when another device saved it after this device last synced.</summary>
@@ -223,7 +232,10 @@ public sealed class SyncService
             return false;
         }
 
-        if (string.Equals(remote.SavedBy, settings.DeviceName, StringComparison.OrdinalIgnoreCase))
+        var sameDevice = remote.SavedById is not null
+            ? string.Equals(remote.SavedById, settings.DeviceId, StringComparison.Ordinal)
+            : string.Equals(remote.SavedBy, settings.DeviceName, StringComparison.OrdinalIgnoreCase);
+        if (sameDevice)
         {
             return false;
         }

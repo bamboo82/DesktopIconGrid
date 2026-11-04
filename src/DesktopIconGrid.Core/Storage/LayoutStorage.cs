@@ -1,10 +1,14 @@
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using DesktopIconGrid.Core.Models;
 
 namespace DesktopIconGrid.Core.Storage;
 
-/// <summary>Loads and saves the layout file as JSON. Saves are atomic (temp file + rename).</summary>
+/// <summary>
+/// Loads and saves the layout file as JSON. Saves are durable (written through to disk, then swapped
+/// in while the previous file becomes <c>layout.json.bak</c>); loading falls back to the backup.
+/// </summary>
 public sealed class LayoutStorage
 {
     public const string ApplicationFolderName = "DesktopIconGrid";
@@ -17,7 +21,11 @@ public sealed class LayoutStorage
         ReadCommentHandling = JsonCommentHandling.Skip,
         AllowTrailingCommas = true,
         AllowOutOfOrderMetadataProperties = true,
+        Converters = { new LauncherItemConverter() },
     };
+
+    private int? _loadedNewerVersion;
+    private bool _newerVersionPreserved;
 
     public LayoutStorage(string filePath)
     {
@@ -26,6 +34,8 @@ public sealed class LayoutStorage
     }
 
     public string FilePath { get; }
+
+    public string BackupPath => FilePath + ".bak";
 
     public string Directory => Path.GetDirectoryName(FilePath)!;
 
@@ -37,64 +47,147 @@ public sealed class LayoutStorage
 
     public LoadResult Load()
     {
+        _loadedNewerVersion = null;
+        _newerVersionPreserved = false;
+
         if (!File.Exists(FilePath))
         {
+            if (TryRead(BackupPath, out var fromBackup, out _))
+            {
+                return Finish(fromBackup, isFirstRun: false, corruptBackup: null, error: null, recoveredFromBackup: true);
+            }
+
             return new LoadResult(new LauncherLayout(), IsFirstRun: true, CorruptFileBackupPath: null, Error: null);
         }
 
-        string json;
-        try
+        if (TryRead(FilePath, out var layout, out var error))
         {
-            json = File.ReadAllText(FilePath);
-        }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-        {
-            return new LoadResult(new LauncherLayout(), IsFirstRun: false, CorruptFileBackupPath: null, Error: ex.Message);
+            return Finish(layout, isFirstRun: false, corruptBackup: null, error: null, recoveredFromBackup: false);
         }
 
-        LauncherLayout? layout = null;
-        string? error = null;
-        try
+        // The main file is unreadable: keep it for inspection and fall back to the last good save.
+        var quarantined = QuarantineCorruptFile();
+        if (TryRead(BackupPath, out var backup, out _))
         {
-            layout = JsonSerializer.Deserialize<LauncherLayout>(json, JsonOptions);
-        }
-        catch (JsonException ex)
-        {
-            error = ex.Message;
-        }
-        catch (NotSupportedException ex)
-        {
-            error = ex.Message;
+            return Finish(backup, isFirstRun: false, corruptBackup: quarantined, error: error, recoveredFromBackup: true);
         }
 
-        if (layout is null)
-        {
-            var backup = BackupCorruptFile();
-            return new LoadResult(new LauncherLayout(), IsFirstRun: false, CorruptFileBackupPath: backup, Error: error ?? "The layout file is empty.");
-        }
-
-        layout.Settings ??= new LauncherSettings();
-        layout.Items ??= [];
-        return new LoadResult(layout, IsFirstRun: false, CorruptFileBackupPath: null, Error: null);
+        return new LoadResult(new LauncherLayout(), IsFirstRun: false, CorruptFileBackupPath: quarantined, Error: error ?? "The layout file is empty.");
     }
 
     public void Save(LauncherLayout layout)
     {
         ArgumentNullException.ThrowIfNull(layout);
         System.IO.Directory.CreateDirectory(Directory);
+        PreserveNewerVersionOnce();
 
-        var tempPath = FilePath + ".tmp";
-        File.WriteAllText(tempPath, JsonSerializer.Serialize(layout, JsonOptions));
-        File.Move(tempPath, FilePath, overwrite: true);
-    }
-
-    private string? BackupCorruptFile()
-    {
-        var backupPath = $"{FilePath}.corrupt-{DateTime.Now:yyyyMMdd-HHmmss}";
+        var json = JsonSerializer.Serialize(layout, JsonOptions);
+        var tempPath = Path.Combine(Directory, Path.GetRandomFileName() + ".tmp");
         try
         {
-            File.Move(FilePath, backupPath, overwrite: true);
-            return backupPath;
+            using (var stream = new FileStream(tempPath, FileMode.CreateNew, FileAccess.Write, FileShare.None, 4096, FileOptions.WriteThrough))
+            {
+                var bytes = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false).GetBytes(json);
+                stream.Write(bytes, 0, bytes.Length);
+                stream.Flush(flushToDisk: true);
+            }
+
+            if (File.Exists(FilePath))
+            {
+                File.Replace(tempPath, FilePath, BackupPath, ignoreMetadataErrors: true);
+            }
+            else
+            {
+                File.Move(tempPath, FilePath);
+            }
+        }
+        finally
+        {
+            if (File.Exists(tempPath))
+            {
+                try
+                {
+                    File.Delete(tempPath);
+                }
+                catch (IOException)
+                {
+                }
+            }
+        }
+    }
+
+    private LoadResult Finish(LauncherLayout layout, bool isFirstRun, string? corruptBackup, string? error, bool recoveredFromBackup)
+    {
+        layout.Settings ??= new LauncherSettings();
+        layout.Items ??= [];
+        int? newerVersion = layout.Version > LauncherLayout.CurrentVersion ? layout.Version : null;
+        _loadedNewerVersion = newerVersion;
+        return new LoadResult(layout, isFirstRun, corruptBackup, error)
+        {
+            RecoveredFromBackup = recoveredFromBackup,
+            NewerVersion = newerVersion,
+        };
+    }
+
+    private static bool TryRead(string path, out LauncherLayout layout, out string? error)
+    {
+        layout = new LauncherLayout();
+        error = null;
+        if (!File.Exists(path))
+        {
+            error = "The file does not exist.";
+            return false;
+        }
+
+        try
+        {
+            var json = File.ReadAllText(path);
+            var parsed = JsonSerializer.Deserialize<LauncherLayout>(json, JsonOptions);
+            if (parsed is null)
+            {
+                error = "The layout file is empty.";
+                return false;
+            }
+
+            layout = parsed;
+            return true;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException or NotSupportedException)
+        {
+            error = ex.Message;
+            return false;
+        }
+    }
+
+    /// <summary>Before the first save over a layout written by a newer version, keep that original next to the file.</summary>
+    private void PreserveNewerVersionOnce()
+    {
+        if (_loadedNewerVersion is not { } version || _newerVersionPreserved)
+        {
+            return;
+        }
+
+        _newerVersionPreserved = true;
+        try
+        {
+            if (File.Exists(FilePath))
+            {
+                File.Copy(FilePath, $"{FilePath}.v{version}.json", overwrite: true);
+            }
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            // Best effort; the unknown items are preserved inside the normal save anyway.
+        }
+    }
+
+    private string? QuarantineCorruptFile()
+    {
+        var quarantinePath = $"{FilePath}.corrupt-{DateTime.Now:yyyyMMdd-HHmmss}";
+        try
+        {
+            File.Move(FilePath, quarantinePath, overwrite: true);
+            return quarantinePath;
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
@@ -104,4 +197,11 @@ public sealed class LayoutStorage
 }
 
 /// <summary>Outcome of <see cref="LayoutStorage.Load"/>. Always carries a usable layout.</summary>
-public sealed record LoadResult(LauncherLayout Layout, bool IsFirstRun, string? CorruptFileBackupPath, string? Error);
+public sealed record LoadResult(LauncherLayout Layout, bool IsFirstRun, string? CorruptFileBackupPath, string? Error)
+{
+    /// <summary>True when the main file was missing or unreadable and <c>layout.json.bak</c> was used instead.</summary>
+    public bool RecoveredFromBackup { get; init; }
+
+    /// <summary>Set when the file was written by a newer version of the app; its unknown items are kept as placeholders.</summary>
+    public int? NewerVersion { get; init; }
+}

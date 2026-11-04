@@ -53,12 +53,40 @@ public sealed class DriveDownloader(IDriveFiles files)
             }
 
             File.Move(temporary, target, overwrite: true);
+            MarkAsFromInternet(target);
             return target;
         }
         catch
         {
             TryDelete(temporary);
             throw;
+        }
+    }
+
+    /// <summary>Extensions Windows treats as executable; the viewer reveals these instead of running them.</summary>
+    public static readonly HashSet<string> ExecutableExtensions = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ".exe", ".com", ".bat", ".cmd", ".scr", ".pif", ".msi", ".msp", ".lnk", ".url", ".hta", ".js", ".jse",
+        ".vbs", ".vbe", ".wsf", ".wsh", ".ps1", ".psm1", ".reg", ".cpl", ".jar", ".appref-ms", ".application",
+    };
+
+    public static bool IsExecutable(string path) => ExecutableExtensions.Contains(Path.GetExtension(path));
+
+    /// <summary>Writes the Zone.Identifier stream so SmartScreen and Office's Protected View treat the file as downloaded.</summary>
+    public static void MarkAsFromInternet(string path)
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        try
+        {
+            File.WriteAllText(path + ":Zone.Identifier", "[ZoneTransfer]\r\nZoneId=3\r\n");
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or NotSupportedException)
+        {
+            // Not NTFS (or the stream is refused); the file is still usable.
         }
     }
 

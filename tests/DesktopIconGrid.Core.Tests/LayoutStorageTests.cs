@@ -137,6 +137,70 @@ public sealed class LayoutStorageTests : IDisposable
     }
 
     [Fact]
+    public void Unknown_item_kinds_survive_a_round_trip_and_newer_versions_are_preserved()
+    {
+        Directory.CreateDirectory(Path.GetDirectoryName(FilePath)!);
+        File.WriteAllText(FilePath, """
+            {
+              "version": 7,
+              "items": [
+                { "$type": "shortcut", "id": "11111111-1111-1111-1111-111111111111", "name": "Known", "location": "x.exe" },
+                { "$type": "hologram", "id": "22222222-2222-2222-2222-222222222222", "name": "Future", "beam": { "power": 9 } },
+                { "$type": "group", "id": "33333333-3333-3333-3333-333333333333", "name": "G",
+                  "items": [ { "$type": "wormhole", "id": "44444444-4444-4444-4444-444444444444", "name": "Deep", "x": 1 } ] }
+              ]
+            }
+            """);
+        var storage = new LayoutStorage(FilePath);
+
+        var result = storage.Load();
+
+        Assert.Equal(7, result.NewerVersion);
+        Assert.Null(result.Error);
+        var unknown = Assert.IsType<UnknownItem>(result.Layout.Items[1]);
+        Assert.Equal("hologram", unknown.TypeDiscriminator);
+        Assert.Equal("Future", unknown.Name);
+        var model = LauncherModel.FromLayout(result.Layout);
+        Assert.Equal(0, model.RepairCount);
+        Assert.IsType<UnknownItem>(Assert.Single(Assert.IsType<GroupItem>(model.Items[2]).Items));
+
+        model.Rename(unknown.Id, "Future renamed");
+        storage.Save(model.ToLayout());
+
+        Assert.True(File.Exists(FilePath + ".v7.json"));
+        using var saved = JsonDocument.Parse(File.ReadAllText(FilePath));
+        var items = saved.RootElement.GetProperty("items");
+        Assert.Equal("hologram", items[1].GetProperty("$type").GetString());
+        Assert.Equal("Future renamed", items[1].GetProperty("name").GetString());
+        Assert.Equal(9, items[1].GetProperty("beam").GetProperty("power").GetInt32());
+        Assert.Equal("wormhole", items[2].GetProperty("items")[0].GetProperty("$type").GetString());
+        Assert.Equal("shortcut", items[0].GetProperty("$type").GetString());
+    }
+
+    [Fact]
+    public void Backup_is_kept_on_save_and_used_when_the_main_file_is_unreadable()
+    {
+        var storage = new LayoutStorage(FilePath);
+        storage.Save(new LauncherLayout { Items = [new ShortcutItem { Name = "first", Location = "a" }] });
+        storage.Save(new LauncherLayout { Items = [new ShortcutItem { Name = "second", Location = "b" }] });
+
+        Assert.True(File.Exists(storage.BackupPath));
+        Assert.Empty(Directory.GetFiles(Path.GetDirectoryName(FilePath)!, "*.tmp"));
+
+        File.WriteAllText(FilePath, string.Empty); // what a power cut can leave behind
+        var result = storage.Load();
+
+        Assert.True(result.RecoveredFromBackup);
+        Assert.NotNull(result.CorruptFileBackupPath);
+        Assert.Equal("first", Assert.Single(result.Layout.Items).Name);
+
+        File.Delete(FilePath);
+        var missing = storage.Load();
+        Assert.True(missing.RecoveredFromBackup);
+        Assert.False(missing.IsFirstRun);
+    }
+
+    [Fact]
     public void Default_path_is_under_local_app_data()
     {
         var path = LayoutStorage.GetDefaultFilePath();

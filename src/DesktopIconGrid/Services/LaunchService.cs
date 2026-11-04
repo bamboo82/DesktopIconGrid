@@ -48,7 +48,9 @@ public sealed class LaunchService(ProcessTracker tracker) : ILaunchService
             return LaunchResult.Failure("This shortcut cannot open files.");
         }
 
-        var argumentSets = DropArguments.BuildArgumentSets(shortcut.Parameters, paths);
+        // Expand the template first so dropped paths containing '%' are never re-expanded.
+        var template = string.IsNullOrWhiteSpace(shortcut.Parameters) ? null : Environment.ExpandEnvironmentVariables(shortcut.Parameters);
+        var argumentSets = DropArguments.BuildArgumentSets(template, paths);
         if (argumentSets.Count == 0)
         {
             return LaunchResult.Failure("Nothing to open.");
@@ -59,7 +61,7 @@ public sealed class LaunchService(ProcessTracker tracker) : ILaunchService
         {
             var launch = (ShortcutItem)shortcut.Clone();
             launch.Parameters = arguments;
-            var result = LaunchCore(launch);
+            var result = LaunchCore(launch, expandParameters: false);
             Log(launch, result);
             switch (result.Outcome)
             {
@@ -74,12 +76,12 @@ public sealed class LaunchService(ProcessTracker tracker) : ILaunchService
         return failures.Count == 0 ? LaunchResult.Started : LaunchResult.Failure(string.Join("\n", failures.Distinct()));
     }
 
-    private LaunchResult LaunchCore(ShortcutItem shortcut)
+    private LaunchResult LaunchCore(ShortcutItem shortcut, bool expandParameters = true)
     {
         LaunchPlan plan;
         try
         {
-            plan = LaunchPlanner.Plan(shortcut);
+            plan = LaunchPlanner.Plan(shortcut, expandParameters);
         }
         catch (ArgumentException ex)
         {
@@ -127,7 +129,7 @@ public sealed class LaunchService(ProcessTracker tracker) : ILaunchService
         }
 
         tracker.StartLog(shortcut, process, startInfo);
-        tracker.Track(shortcut.Id, process);
+        tracker.Track(shortcut.Id, process, disposeOnExit: false); // the log session drains the output, then disposes
         return LaunchResult.Started;
     }
 

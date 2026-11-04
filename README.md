@@ -91,16 +91,20 @@ Google requires every app to use its own OAuth client, so a one-time setup is ne
    project (or pick one).
 2. *APIs & Services → Library*: enable the **Google Drive API**.
 3. *OAuth consent screen*: choose *External*, fill in the app name and your e-mail, then
-   **publish** the app. Publishing needs no verification for the scope this app uses
-   (`drive.file`, files the app itself created) and avoids the 7-day sign-in expiry that
-   "Testing" status imposes.
+   **publish** the app. Publishing avoids the 7-day sign-in expiry that "Testing" status
+   imposes. Settings sync only needs the `drive.file` scope (files the app itself created),
+   which needs no verification. Google Drive Buckets additionally ask for the full `drive`
+   scope the first time you use one; it is a restricted scope, so an unverified app shows
+   Google's "unverified app" warning that you, as the project owner, can accept.
 4. *Credentials → Create credentials → OAuth client ID → Desktop app*. Download the JSON.
 5. In Desktop Icon Grid: options menu (▸) → *Sync with Google Drive…* → *Import
    client_secret.json…* (or paste the client ID and secret), then *Connect…* and sign in
    in the browser.
 
-Sign-in tokens are stored encrypted for your Windows user and renewed automatically. The app
-can only see files it created in your Drive.
+Sign-in tokens are stored encrypted for your Windows user and renewed automatically. If
+Google revokes the token (for example after the 7-day Testing expiry), the dialog offers
+*Connect…* again. Until you create a Google Drive Bucket, the app can only see files it
+created in your Drive.
 
 ## Building
 

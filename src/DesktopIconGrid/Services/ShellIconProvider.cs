@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Windows;
@@ -27,7 +28,7 @@ public sealed class ShellIconProvider : IIconProvider
         ".exe", ".dll", ".ico", ".icl", ".cpl", ".ocx", ".scr", ".mun",
     };
 
-    private readonly Dictionary<string, ImageSource?> _cache = new(StringComparer.OrdinalIgnoreCase);
+    private readonly ConcurrentDictionary<string, ImageSource?> _cache = new(StringComparer.OrdinalIgnoreCase);
 
     public ImageSource? GetIcon(string source, int pixelSize)
     {

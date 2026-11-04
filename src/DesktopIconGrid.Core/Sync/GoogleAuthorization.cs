@@ -266,12 +266,37 @@ public sealed class GoogleAuthorization : IAccessTokenProvider
         using var request = new HttpRequestMessage(HttpMethod.Post, TokenEndpoint) { Content = content };
         request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
-        using var response = await _http.SendAsync(request, cancellationToken).ConfigureAwait(false);
+        HttpResponseMessage response;
+        try
+        {
+            using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            timeout.CancelAfter(TimeSpan.FromSeconds(60));
+            response = await _http.SendAsync(request, timeout.Token).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            throw new GoogleAuthException("Google did not answer the token request in time.");
+        }
+        catch (HttpRequestException ex)
+        {
+            throw new GoogleAuthException($"Google could not be reached: {ex.Message}");
+        }
+
+        using var _ = response;
         var body = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
         if (!response.IsSuccessStatusCode)
         {
             var description = DescribeTokenError(body, response.StatusCode);
             AppLog.Default.Warning("Auth", $"Token request failed: {description}");
+            if (IsPermanentTokenError(body))
+            {
+                // The refresh token is dead (revoked, expired after 7 days in Testing status, wrong client):
+                // forget it so the UI offers Connect again instead of failing forever.
+                _token = null;
+                _store.Save(null);
+                AppLog.Default.Warning("Auth", "Stored Google sign-in discarded; connect again");
+            }
+
             throw new GoogleAuthException(description);
         }
 
@@ -282,6 +307,21 @@ public sealed class GoogleAuthorization : IAccessTokenProvider
         catch (JsonException)
         {
             throw new GoogleAuthException("Google's response could not be read.");
+        }
+    }
+
+    private static bool IsPermanentTokenError(string body)
+    {
+        try
+        {
+            using var document = JsonDocument.Parse(body);
+            return document.RootElement.TryGetProperty("error", out var e)
+                && e.ValueKind == JsonValueKind.String
+                && e.GetString() is "invalid_grant" or "invalid_client" or "unauthorized_client";
+        }
+        catch (JsonException)
+        {
+            return false;
         }
     }
 
@@ -313,7 +353,15 @@ public sealed class GoogleAuthorization : IAccessTokenProvider
 
     private static Task OpenInDefaultBrowser(string url)
     {
-        using var process = Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
+        try
+        {
+            using var process = Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
+        }
+        catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or InvalidOperationException)
+        {
+            throw new GoogleAuthException($"The browser could not be opened: {ex.Message}");
+        }
+
         return Task.CompletedTask;
     }
 
@@ -322,8 +370,8 @@ public sealed class GoogleAuthorization : IAccessTokenProvider
     {
         private const string SuccessPage =
             "<!doctype html><html><head><meta charset=\"utf-8\"><title>Desktop Icon Grid</title></head>" +
-            "<body style=\"font-family:Segoe UI,sans-serif;margin:48px\"><h2>Connected to Google Drive</h2>" +
-            "<p>You can close this window and return to Desktop Icon Grid.</p></body></html>";
+            "<body style=\"font-family:Segoe UI,sans-serif;margin:48px\"><h2>Sign-in received</h2>" +
+            "<p>You can close this window and return to Desktop Icon Grid, which is finishing the connection.</p></body></html>";
 
         private const string FailurePage =
             "<!doctype html><html><head><meta charset=\"utf-8\"><title>Desktop Icon Grid</title></head>" +
@@ -370,19 +418,20 @@ public sealed class GoogleAuthorization : IAccessTokenProvider
                     continue; // favicon requests and the like
                 }
 
-                var ok = error is null && code is not null && state == expectedState;
-                await RespondAsync(context, 200, ok ? SuccessPage : FailurePage).ConfigureAwait(false);
+                if (state != expectedState)
+                {
+                    // A stale tab or a stray request; keep waiting for the real redirect.
+                    await RespondAsync(context, 400, FailurePage).ConfigureAwait(false);
+                    continue;
+                }
+
+                await RespondAsync(context, 200, error is null ? SuccessPage : FailurePage).ConfigureAwait(false);
 
                 if (error is not null)
                 {
                     throw new GoogleAuthException(error == "access_denied"
                         ? "Access was denied in the browser."
                         : $"Google reported an error: {error}.");
-                }
-
-                if (state != expectedState)
-                {
-                    throw new GoogleAuthException("The sign-in response did not match this request. Try again.");
                 }
 
                 return code!;

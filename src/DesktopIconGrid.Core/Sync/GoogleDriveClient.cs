@@ -55,6 +55,12 @@ public sealed class GoogleDriveClient : IDriveClient, IDriveFiles
     private const string EntryFields = "id,name,mimeType,size,modifiedTime";
     private const int MaxChunkAttempts = 3;
 
+    /// <summary>Limit for metadata calls; transfers are only bounded by their own progress and the caller's token.</summary>
+    public static readonly TimeSpan RequestTimeout = TimeSpan.FromSeconds(100);
+
+    /// <summary>Limit per 8 MiB chunk of a resumable upload.</summary>
+    public static readonly TimeSpan ChunkTimeout = TimeSpan.FromMinutes(10);
+
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
     private readonly HttpClient _http;
@@ -332,17 +338,21 @@ public sealed class GoogleDriveClient : IDriveClient, IDriveFiles
 
                 try
                 {
-                    response = await _http.SendAsync(request, cancellationToken).ConfigureAwait(false);
+                    using var chunkTimeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                    chunkTimeout.CancelAfter(ChunkTimeout);
+                    response = await _http.SendAsync(request, chunkTimeout.Token).ConfigureAwait(false);
                 }
-                catch (HttpRequestException ex) when (attempt < MaxChunkAttempts)
+                catch (Exception ex) when (ex is HttpRequestException || (ex is OperationCanceledException && !cancellationToken.IsCancellationRequested))
                 {
-                    await Task.Delay(TimeSpan.FromSeconds(attempt * 2), cancellationToken).ConfigureAwait(false);
-                    _ = ex;
-                    continue;
-                }
-                catch (HttpRequestException ex)
-                {
-                    throw new DriveException($"The upload was interrupted: {ex.Message}");
+                    if (attempt < MaxChunkAttempts)
+                    {
+                        await Task.Delay(TimeSpan.FromSeconds(attempt * 2), cancellationToken).ConfigureAwait(false);
+                        continue;
+                    }
+
+                    throw new DriveException(ex is OperationCanceledException
+                        ? "The upload timed out."
+                        : $"The upload was interrupted: {ex.Message}");
                 }
 
                 if ((int)response.StatusCode >= 500 && attempt < MaxChunkAttempts)
@@ -471,12 +481,24 @@ public sealed class GoogleDriveClient : IDriveClient, IDriveFiles
             HttpResponseMessage response;
             try
             {
-                response = await _http.SendAsync(request, completion, cancellationToken).ConfigureAwait(false);
+                // Metadata calls get a timeout; streamed transfers (headers-read) rely on the caller's token.
+                using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                if (completion == HttpCompletionOption.ResponseContentRead)
+                {
+                    timeout.CancelAfter(RequestTimeout);
+                }
+
+                response = await _http.SendAsync(request, completion, timeout.Token).ConfigureAwait(false);
             }
             catch (HttpRequestException ex)
             {
                 AppLog.Default.Error("Drive", $"{request.Method} {request.RequestUri?.AbsolutePath}: could not be reached", ex);
                 throw new DriveException($"Google Drive could not be reached: {ex.Message}");
+            }
+            catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+            {
+                AppLog.Default.Warning("Drive", $"{request.Method} {request.RequestUri?.AbsolutePath}: timed out");
+                throw new DriveException("Google Drive did not answer in time.");
             }
 
             if (response.StatusCode == HttpStatusCode.Unauthorized && attempt == 0)

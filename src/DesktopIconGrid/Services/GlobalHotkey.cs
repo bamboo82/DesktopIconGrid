@@ -151,11 +151,13 @@ public sealed record HotkeyGesture(ModifierKeys Modifiers, Key Key)
 public sealed class GlobalHotkey : IDisposable
 {
     private const int WmHotkey = 0x0312;
-    private const int HotkeyId = 0x4A11;
+    private const int FirstId = 0x4A11;
+    private const int SecondId = 0x4A12;
     private const uint ModNoRepeat = 0x4000;
+    private const int ErrorHotkeyAlreadyRegistered = 1409;
 
     private readonly HwndSource _source;
-    private bool _registered;
+    private int? _registeredId;
     private bool _disposed;
 
     public GlobalHotkey(HwndSource source)
@@ -170,28 +172,34 @@ public sealed class GlobalHotkey : IDisposable
     public bool Register(HotkeyGesture? gesture, out string? error)
     {
         error = null;
-        Unregister();
         if (gesture is null)
         {
+            Unregister();
             return true;
         }
 
-        if (!NativeMethods.RegisterHotKey(_source.Handle, HotkeyId, gesture.NativeModifiers | ModNoRepeat, gesture.VirtualKey))
+        // Register the new combination under the other id first, so a rejected gesture keeps the working one.
+        var newId = _registeredId == FirstId ? SecondId : FirstId;
+        if (!NativeMethods.RegisterHotKey(_source.Handle, newId, gesture.NativeModifiers | ModNoRepeat, gesture.VirtualKey))
         {
-            error = $"The hotkey {gesture} could not be registered. Another program is probably using it already.";
+            var code = Marshal.GetLastWin32Error();
+            error = code == ErrorHotkeyAlreadyRegistered
+                ? $"The hotkey {gesture} is already used by another program. The previous hotkey stays active."
+                : $"The hotkey {gesture} could not be registered (Windows error {code}). The previous hotkey stays active.";
             return false;
         }
 
-        _registered = true;
+        Unregister();
+        _registeredId = newId;
         return true;
     }
 
     public void Unregister()
     {
-        if (_registered)
+        if (_registeredId is { } id)
         {
-            NativeMethods.UnregisterHotKey(_source.Handle, HotkeyId);
-            _registered = false;
+            NativeMethods.UnregisterHotKey(_source.Handle, id);
+            _registeredId = null;
         }
     }
 
@@ -209,7 +217,7 @@ public sealed class GlobalHotkey : IDisposable
 
     private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
     {
-        if (msg == WmHotkey && wParam.ToInt32() == HotkeyId)
+        if (msg == WmHotkey && _registeredId is { } id && wParam.ToInt32() == id)
         {
             Pressed?.Invoke(this, EventArgs.Empty);
             handled = true;

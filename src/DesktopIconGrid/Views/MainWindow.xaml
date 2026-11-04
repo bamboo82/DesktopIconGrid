@@ -7,7 +7,7 @@
         ResizeMode="CanResize"
         MinWidth="120"
         MinHeight="64"
-        ShowInTaskbar="True"
+        ShowInTaskbar="False"
         Topmost="{Binding AlwaysOnTop}"
         Icon="{StaticResource AppIconImage}"
         UseLayoutRounding="True"
@@ -55,7 +55,7 @@
       <Grid Grid.Column="2" Margin="0,2,2,2">
         <Button Style="{StaticResource BarButtonStyle}"
                 VerticalAlignment="Top"
-                ToolTip="Exit"
+                ToolTip="{Binding CloseButtonToolTip}"
                 Click="Close_Click">
           <TextBlock Text="✕" />
         </Button>

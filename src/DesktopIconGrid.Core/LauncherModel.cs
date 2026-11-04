@@ -120,7 +120,7 @@ public sealed class LauncherModel
         {
             switch (child)
             {
-                case ShortcutItem or SpecialIconItem:
+                case ShortcutItem or SpecialIconItem or UnknownItem:
                     Adopt(child, seen);
                     target.Add(child);
                     break;

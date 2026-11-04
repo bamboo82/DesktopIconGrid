@@ -1,4 +1,5 @@
 <Window x:Class="DesktopIconGrid.Views.AppLogWindow"
+        x:Name="LogWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Log viewer — Desktop Icon Grid"
@@ -11,9 +12,9 @@
         Icon="{StaticResource AppIconImage}"
         Closed="Window_Closed">
   <Window.InputBindings>
-    <KeyBinding Key="F" Modifiers="Control" Command="{Binding FocusFilterCommand, RelativeSource={RelativeSource AncestorType=Window}}" />
-    <KeyBinding Key="S" Modifiers="Control" Command="{Binding SaveCommand, RelativeSource={RelativeSource AncestorType=Window}}" />
-    <KeyBinding Key="End" Modifiers="Control" Command="{Binding ScrollToEndCommand, RelativeSource={RelativeSource AncestorType=Window}}" />
+    <KeyBinding Key="F" Modifiers="Control" Command="{Binding FocusFilterCommand, ElementName=LogWindow}" />
+    <KeyBinding Key="S" Modifiers="Control" Command="{Binding SaveCommand, ElementName=LogWindow}" />
+    <KeyBinding Key="End" Modifiers="Control" Command="{Binding ScrollToEndCommand, ElementName=LogWindow}" />
   </Window.InputBindings>
   <DockPanel Margin="10">
     <!-- Filters -->

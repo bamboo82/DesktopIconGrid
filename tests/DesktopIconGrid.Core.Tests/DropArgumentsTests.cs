@@ -36,6 +36,24 @@ public class DropArgumentsTests
         Assert.Equal(["\"C:\\a.txt\" \"C:\\b.txt\" /merge"], sets);
     }
 
+    [Theory]
+    [InlineData("C:\\", "\"C:\\\\\"")]
+    [InlineData("C:\\dir\\", "\"C:\\dir\\\\\"")]
+    [InlineData("C:\\a b\\x.txt", "\"C:\\a b\\x.txt\"")]
+    [InlineData("say \"hi\"", "\"say \\\"hi\\\"\"")]
+    [InlineData("tail\\\"", "\"tail\\\\\\\"\"")]
+    public void Quote_follows_windows_rules(string argument, string expected)
+    {
+        Assert.Equal(expected, DropArguments.Quote(argument));
+    }
+
+    [Fact]
+    public void Quoted_placeholders_are_not_double_quoted()
+    {
+        Assert.Equal(["-f \"C:\\a.txt\""], DropArguments.BuildArgumentSets("-f \"{file}\"", ["C:\\a.txt"]));
+        Assert.Equal(["\"C:\\a.txt\" \"C:\\b.txt\""], DropArguments.BuildArgumentSets("\"{files}\"", ["C:\\a.txt", "C:\\b.txt"]));
+    }
+
     [Fact]
     public void Blank_paths_are_ignored()
     {

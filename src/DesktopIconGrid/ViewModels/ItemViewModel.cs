@@ -46,6 +46,9 @@ public sealed class ItemViewModel : ObservableObject
 
     public bool IsSpecial => Model is SpecialIconItem;
 
+    /// <summary>An item from a newer version: kept, shown as a placeholder, not openable or editable.</summary>
+    public bool IsUnknown => Model is UnknownItem;
+
     /// <summary>The handler for a special icon; the placeholder handler for other kinds of item.</summary>
     public ISpecialIconHandler SpecialHandler => Root.SpecialIcons.Resolve((Model as SpecialIconItem)?.Kind);
 
@@ -125,6 +128,11 @@ public sealed class ItemViewModel : ObservableObject
                 return $"{Name}\n{detail}";
             }
 
+            if (IsUnknown)
+            {
+                return $"{Name}\nMade by a newer version of Desktop Icon Grid; kept as a placeholder.";
+            }
+
             var location = string.IsNullOrEmpty(Parameters) ? Location : $"{Location} {Parameters}";
             var multi = IsMultiLaunch ? "\nMulti Launch group member" : string.Empty;
             var running = IsRunning ? "\nRunning" : string.Empty;
@@ -172,11 +180,12 @@ public sealed class ItemViewModel : ObservableObject
         OnPropertyChanged(nameof(ToolTipText));
     }
 
-    public void LoadImage() => Image = HasTextIcon
-        ? null
-        : Model is SpecialIconItem special && !Model.HasCustomIcon
-            ? SpecialHandler.GetIcon(special)
-            : Root.Icons.GetItemIcon(Model, Root.IconSize);
+    /// <summary>False when the icon is drawn as text or a gauge and no image is needed.</summary>
+    public bool NeedsImage => !HasTextIcon && !ShowsGauge;
+
+    public void LoadImage() => Root.LoadImageAsync(this);
+
+    internal void SetImage(ImageSource? image) => Image = image;
 
     /// <summary>Creates (or recreates after editing) the live state of a special icon.</summary>
     public void RebuildGauge()

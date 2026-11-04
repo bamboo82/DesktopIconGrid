@@ -10,6 +10,9 @@ public sealed class SyncSettings
 
     public string DeviceName { get; set; } = DefaultDeviceName();
 
+    /// <summary>Random id of this installation; tells devices apart even when two PCs share a name.</summary>
+    public string DeviceId { get; set; } = NewDeviceId();
+
     public string? ClientId { get; set; }
 
     public string? ClientSecret { get; set; }
@@ -19,6 +22,9 @@ public sealed class SyncSettings
 
     /// <summary>The copy this device uploads to and checks for updates. <see langword="null"/> when not linked.</summary>
     public string? LinkedProfile { get; set; }
+
+    /// <summary>Drive file id of the linked copy, so it is found even when another copy has the same name.</summary>
+    public string? LinkedFileId { get; set; }
 
     /// <summary>When the linked copy was last uploaded from or downloaded to this device.</summary>
     public DateTimeOffset? LastSyncedAt { get; set; }
@@ -30,6 +36,8 @@ public sealed class SyncSettings
     public bool CheckAtStartup { get; set; } = true;
 
     public OAuthClientCredentials Credentials => new(ClientId?.Trim() ?? string.Empty, ClientSecret?.Trim() ?? string.Empty);
+
+    public static string NewDeviceId() => Guid.NewGuid().ToString("N");
 
     public static string DefaultDeviceName()
     {
@@ -48,6 +56,11 @@ public sealed class SyncSettings
         ClientId = string.IsNullOrWhiteSpace(ClientId) ? null : ClientId.Trim();
         ClientSecret = string.IsNullOrWhiteSpace(ClientSecret) ? null : ClientSecret.Trim();
         LinkedProfile = string.IsNullOrWhiteSpace(LinkedProfile) ? null : LinkedProfile.Trim();
+        LinkedFileId = string.IsNullOrWhiteSpace(LinkedFileId) ? null : LinkedFileId.Trim();
+        if (string.IsNullOrWhiteSpace(DeviceId))
+        {
+            DeviceId = NewDeviceId();
+        }
     }
 }
 

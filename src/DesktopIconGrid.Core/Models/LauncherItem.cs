@@ -3,13 +3,11 @@ using System.Text.Json.Serialization;
 namespace DesktopIconGrid.Core.Models;
 
 /// <summary>
-/// Base type for everything that can sit in a cell of the bar: a <see cref="ShortcutItem"/>
-/// or a <see cref="GroupItem"/> (a folder of shortcuts).
+/// Base type for everything that can sit in a cell of the bar: a <see cref="ShortcutItem"/>,
+/// a <see cref="GroupItem"/> (a folder of shortcuts), a <see cref="SpecialIconItem"/>, or an
+/// <see cref="UnknownItem"/> kept from a newer version. Serialized with a <c>$type</c> discriminator
+/// by <see cref="Storage.LauncherItemConverter"/>.
 /// </summary>
-[JsonPolymorphic(TypeDiscriminatorPropertyName = "$type")]
-[JsonDerivedType(typeof(ShortcutItem), "shortcut")]
-[JsonDerivedType(typeof(GroupItem), "group")]
-[JsonDerivedType(typeof(SpecialIconItem), "special")]
 public abstract class LauncherItem
 {
     public Guid Id { get; set; } = Guid.NewGuid();

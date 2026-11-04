@@ -48,6 +48,7 @@
                     PreviewMouseLeftButtonDown="Item_PreviewMouseLeftButtonDown"
                     PreviewMouseMove="Item_PreviewMouseMove"
                     PreviewMouseLeftButtonUp="Item_PreviewMouseLeftButtonUp"
+                    LostMouseCapture="Item_LostMouseCapture"
                     Click="Item_Click"
                     MouseDoubleClick="Item_MouseDoubleClick"
                     KeyDown="Item_KeyDown">

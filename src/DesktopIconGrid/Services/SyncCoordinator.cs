@@ -49,11 +49,11 @@ public sealed class SyncCoordinator : ObservableObject
         {
             if (SetProperty(ref _status, value) && value.Length > 0)
             {
-                if (value.StartsWith("Upload failed", StringComparison.Ordinal) || value.StartsWith("Startup check failed", StringComparison.Ordinal))
+                if (value.StartsWith("Upload failed", StringComparison.Ordinal))
                 {
                     AppLog.Default.Error("Sync", value);
                 }
-                else if (value.StartsWith("Not uploaded", StringComparison.Ordinal) || value.StartsWith("A newer", StringComparison.Ordinal))
+                else if (value.StartsWith("Not uploaded", StringComparison.Ordinal) || value.StartsWith("A newer", StringComparison.Ordinal) || value.StartsWith("Startup check failed", StringComparison.Ordinal))
                 {
                     AppLog.Default.Warning("Sync", value);
                 }
@@ -76,6 +76,25 @@ public sealed class SyncCoordinator : ObservableObject
 
         _timer.Stop();
         _timer.Start();
+    }
+
+    /// <summary>Runs a pending debounced upload right away (used before exit). Returns false when it did not finish within <paramref name="timeout"/>.</summary>
+    public async Task<bool> FlushPendingAsync(TimeSpan timeout)
+    {
+        if (!_timer.IsEnabled && !_uploading)
+        {
+            return true;
+        }
+
+        _timer.Stop();
+        var upload = UploadNowAsync();
+        var finished = await Task.WhenAny(upload, Task.Delay(timeout)) == upload;
+        if (!finished)
+        {
+            AppLog.Default.Warning("Sync", "Exiting before the pending upload finished");
+        }
+
+        return finished;
     }
 
     public async Task UploadNowAsync()

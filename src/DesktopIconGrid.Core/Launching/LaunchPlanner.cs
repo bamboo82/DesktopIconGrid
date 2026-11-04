@@ -25,7 +25,10 @@ public static class LaunchPlanner
     public const string ShowDesktopLocation = SpecialScheme + "show-desktop";
     public const string RunDialogLocation = SpecialScheme + "run";
 
-    public static LaunchPlan Plan(ShortcutItem shortcut)
+    public static LaunchPlan Plan(ShortcutItem shortcut) => Plan(shortcut, expandParameters: true);
+
+    /// <summary>Plans the launch; pass <paramref name="expandParameters"/> = false when the parameters were already expanded (dropped paths may contain <c>%</c>).</summary>
+    public static LaunchPlan Plan(ShortcutItem shortcut, bool expandParameters)
     {
         ArgumentNullException.ThrowIfNull(shortcut);
 
@@ -47,7 +50,7 @@ public static class LaunchPlanner
 
         var parameters = string.IsNullOrWhiteSpace(shortcut.Parameters)
             ? null
-            : Environment.ExpandEnvironmentVariables(shortcut.Parameters.Trim());
+            : expandParameters ? Environment.ExpandEnvironmentVariables(shortcut.Parameters.Trim()) : shortcut.Parameters.Trim();
 
         ProcessStartInfo startInfo;
         if (location.StartsWith(ShellScheme, StringComparison.OrdinalIgnoreCase))

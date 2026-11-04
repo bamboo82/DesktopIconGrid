@@ -1,4 +1,6 @@
 using System.ComponentModel;
+using System.IO;
+using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -6,6 +8,7 @@ using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Media3D;
+using System.Windows.Threading;
 using DesktopIconGrid.Core.Diagnostics;
 using DesktopIconGrid.Core.Models;
 using DesktopIconGrid.Services;
@@ -45,6 +48,7 @@ public partial class MainWindow : Window
         base.OnSourceInitialized(e);
         ApplyPlacement();
 
+        HideFromAltTab();
         if (HwndSource.FromHwnd(new WindowInteropHelper(this).Handle) is { } source)
         {
             _hotkey = new GlobalHotkey(source);
@@ -155,6 +159,33 @@ public partial class MainWindow : Window
         base.OnClosed(e);
     }
 
+    /// <summary>A utility bar with a tray icon should not also sit in Alt+Tab.</summary>
+    private void HideFromAltTab()
+    {
+        const int GwlExStyle = -20;
+        const long WsExToolWindow = 0x00000080;
+        var handle = new WindowInteropHelper(this).Handle;
+        if (handle == IntPtr.Zero)
+        {
+            return;
+        }
+
+        var style = NativeMethods.GetWindowLongPtr(handle, GwlExStyle).ToInt64();
+        NativeMethods.SetWindowLongPtr(handle, GwlExStyle, new IntPtr(style | WsExToolWindow));
+    }
+
+    /// <summary>Called when a second copy of the app was started: make the bar visible and bring it forward.</summary>
+    public void ShowFromOtherInstance()
+    {
+        Show();
+        if (WindowState == WindowState.Minimized)
+        {
+            WindowState = WindowState.Normal;
+        }
+
+        Activate();
+    }
+
     /// <summary>Hides the bar, or brings it back to the front. Bound to the global hotkey.</summary>
     public void ToggleVisibility()
     {
@@ -229,6 +260,37 @@ public partial class MainWindow : Window
         }
 
         SavePlacement();
+        WaitForPendingWork();
+    }
+
+    /// <summary>Lets a pending sync upload finish (bounded) while still pumping messages, so "tidy up, then quit" reaches Drive.</summary>
+    private void WaitForPendingWork()
+    {
+        if (_viewModel.FlushBeforeExit is not { } flush)
+        {
+            return;
+        }
+
+        Task task;
+        try
+        {
+            task = flush();
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or IOException)
+        {
+            return;
+        }
+
+        if (task.IsCompleted)
+        {
+            return;
+        }
+
+        var frame = new DispatcherFrame();
+        task.ContinueWith(_ => frame.Continue = false, TaskScheduler.Default);
+        var guard = new DispatcherTimer(TimeSpan.FromSeconds(6), DispatcherPriority.Normal, (_, _) => frame.Continue = false, Dispatcher);
+        Dispatcher.PushFrame(frame);
+        guard.Stop();
     }
 
     private void SavePlacement()
@@ -431,5 +493,14 @@ public partial class MainWindow : Window
         }
 
         return null;
+    }
+
+    private static class NativeMethods
+    {
+        [DllImport("user32.dll", EntryPoint = "GetWindowLongPtrW")]
+        public static extern IntPtr GetWindowLongPtr(IntPtr hWnd, int nIndex);
+
+        [DllImport("user32.dll", EntryPoint = "SetWindowLongPtrW")]
+        public static extern IntPtr SetWindowLongPtr(IntPtr hWnd, int nIndex, IntPtr dwNewLong);
     }
 }

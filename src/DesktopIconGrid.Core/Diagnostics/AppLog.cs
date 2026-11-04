@@ -12,8 +12,14 @@ public enum LogLevel
 
 public sealed record LogEntry(DateTimeOffset Time, LogLevel Level, string Category, string Message)
 {
-    public string Format() =>
-        $"{Time.LocalDateTime.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture)} [{Level,-7}] {Category}: {Message}";
+    /// <summary>Multi-line details such as a stack trace; shown in the viewer's details pane and written to the file.</summary>
+    public string? Details { get; init; }
+
+    public string Format()
+    {
+        var line = $"{Time.LocalDateTime.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture)} [{Level,-7}] {Category}: {Message}";
+        return string.IsNullOrEmpty(Details) ? line : line + Environment.NewLine + Details;
+    }
 }
 
 /// <summary>
@@ -75,7 +81,7 @@ public sealed class AppLog
     public void Warning(string category, string message) => Add(LogLevel.Warning, category, message);
 
     public void Error(string category, string message, Exception? exception = null) =>
-        Add(LogLevel.Error, category, exception is null ? message : $"{message} — {exception.GetType().Name}: {exception.Message}");
+        Add(LogLevel.Error, category, exception is null ? message : $"{message} — {exception.GetType().Name}: {exception.Message}", exception?.ToString());
 
     public void Clear()
     {
@@ -85,9 +91,9 @@ public sealed class AppLog
         }
     }
 
-    private void Add(LogLevel level, string category, string message)
+    private void Add(LogLevel level, string category, string message, string? details = null)
     {
-        var entry = new LogEntry(_clock(), level, category?.Trim() ?? string.Empty, message ?? string.Empty);
+        var entry = new LogEntry(_clock(), level, category?.Trim() ?? string.Empty, message ?? string.Empty) { Details = details };
         lock (_lock)
         {
             _entries.Enqueue(entry);

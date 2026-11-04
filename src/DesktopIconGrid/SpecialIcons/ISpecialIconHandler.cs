@@ -54,10 +54,8 @@ public interface ISpecialIconHandler
     /// <summary>True when pressing and holding the icon (rather than clicking) means something.</summary>
     bool SupportsPressAndHold(SpecialIconItem item) => false;
 
-    /// <summary>The button has been held down long enough to count as a hold.</summary>
-    void HoldStarted(SpecialIconItem item)
-    {
-    }
+    /// <summary>The button has been held down long enough to count as a hold. Returns false when nothing started (then the release is an ordinary click).</summary>
+    bool HoldStarted(SpecialIconItem item) => false;
 
     /// <summary>The button was released after <see cref="HoldStarted"/>.</summary>
     void HoldEnded(SpecialIconItem item)

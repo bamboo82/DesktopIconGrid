@@ -171,6 +171,19 @@ public sealed class DriveViewerViewModel : ObservableObject
         var paths = await PrepareLocalCopiesAsync([row]);
         if (paths.Count == 1)
         {
+            if (DriveDownloader.IsExecutable(paths[0]))
+            {
+                // Never run programs pulled from a shared folder on a double-click; show them in Explorer instead.
+                StatusText = $"\"{row.Name}\" is a program; it was downloaded and shown in Explorer, not started.";
+                var reveal = ShellHelper.RevealInExplorer(paths[0]);
+                if (reveal.Outcome == LaunchOutcome.Failed)
+                {
+                    StatusText = reveal.ErrorMessage ?? StatusText;
+                }
+
+                return;
+            }
+
             var result = ProcessLauncher.Start(new ProcessStartInfo(paths[0]) { UseShellExecute = true });
             result.Process?.Dispose();
             if (result.Outcome == LaunchOutcome.Failed)

@@ -60,6 +60,14 @@ public class LaunchPlannerTests
     }
 
     [Fact]
+    public void Parameter_expansion_can_be_skipped_for_already_built_arguments()
+    {
+        var shortcut = new ShortcutItem { Location = "notepad.exe", Parameters = "\"C:\\reports\\100%done%final.txt\"" };
+
+        Assert.Equal("\"C:\\reports\\100%done%final.txt\"", LaunchPlanner.Plan(shortcut, expandParameters: false).StartInfo!.Arguments);
+    }
+
+    [Fact]
     public void Shell_namespace_locations_go_through_explorer()
     {
         var plan = LaunchPlanner.Plan(new ShortcutItem { Location = "shell:MyComputerFolder" });

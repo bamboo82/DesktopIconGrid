@@ -81,7 +81,6 @@ public partial class DriveViewerWindow : Window
         var rows = SelectedRows;
         if (rows.Count == 0)
         {
-            viewModel.Upload([]);
             MessageBox.Show(this, "Select the files or folders to download first.", "Download to…", MessageBoxButton.OK, MessageBoxImage.Information);
             return;
         }

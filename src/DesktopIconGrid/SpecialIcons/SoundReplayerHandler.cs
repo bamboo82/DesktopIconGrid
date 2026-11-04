@@ -76,12 +76,12 @@ public sealed class SoundReplayerHandler : ISpecialIconHandler
 
     public bool SupportsPressAndHold(SpecialIconItem item) => true;
 
-    public void HoldStarted(SpecialIconItem item)
+    public bool HoldStarted(SpecialIconItem item)
     {
         var state = State(item);
         if (state.Mode != Mode.Stopped)
         {
-            return;
+            return false;
         }
 
         var recorder = new MciRecorder();
@@ -92,8 +92,10 @@ public sealed class SoundReplayerHandler : ISpecialIconHandler
         catch (InvalidOperationException ex)
         {
             recorder.Dispose();
-            MessageBox.Show(_owner(), ex.Message, DisplayName, MessageBoxButton.OK, MessageBoxImage.Warning);
-            return;
+            // Report after the mouse interaction has finished; a modal here would steal the capture mid-press.
+            var message = ex.Message;
+            _dispatcher.BeginInvoke(() => MessageBox.Show(_owner(), message, DisplayName, MessageBoxButton.OK, MessageBoxImage.Warning));
+            return false;
         }
 
         state.Recorder = recorder;
@@ -101,6 +103,7 @@ public sealed class SoundReplayerHandler : ISpecialIconHandler
         state.StartedAt = DateTime.Now;
         ShowMode(state);
         StartTicker(state);
+        return true;
     }
 
     public void HoldEnded(SpecialIconItem item)
