@@ -36,11 +36,30 @@ public class ScreenGeometryTests
     }
 
     [Fact]
-    public void Monitors_are_enumerated_or_the_virtual_screen_is_used()
+    public void A_mixed_dpi_layout_never_produces_a_false_off_screen_verdict()
     {
-        var monitors = ScreenGeometry.Monitors();
+        // Laptop at 150 % (primary, 2880×1620 px) with a 100 % monitor to its right (1920×1080 px).
+        var laptop = new Rect(0, 0, 2880, 1620);
+        var external = new Rect(2880, 0, 1920, 1080);
+
+        // A bar saved while on the external monitor is in that monitor's units (100 %): at the primary's 150 %
+        // it would be computed as off every screen, at 100 % it is on the external monitor, so it stays put.
+        var barOnExternal = new Rect(3500, 300, 400, 80);
+        Assert.False(ScreenGeometry.IsVisibleOn(new Rect(5250, 450, 600, 120), [laptop, external]));
+        Assert.True(ScreenGeometry.IsVisibleAtAnyScale(barOnExternal, [laptop, external], primaryScale: 1.5));
+
+        // A bar far outside every monitor at every plausible scale is reset.
+        Assert.False(ScreenGeometry.IsVisibleAtAnyScale(new Rect(6000, 4000, 400, 80), [laptop, external], primaryScale: 1.5));
+        Assert.False(ScreenGeometry.IsVisibleAtAnyScale(new Rect(-900, -900, 400, 80), [laptop, external], primaryScale: 1.5));
+    }
+
+    [Fact]
+    public void Monitors_are_enumerated_in_pixels_or_the_virtual_screen_is_used()
+    {
+        var monitors = ScreenGeometry.MonitorsInPixels();
 
         Assert.NotEmpty(monitors);
         Assert.All(monitors, m => Assert.True(m.Width > 0 && m.Height > 0));
+        Assert.InRange(ScreenGeometry.PrimaryScale(), 0.5, 5.0);
     }
 }

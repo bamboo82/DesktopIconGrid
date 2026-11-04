@@ -7,6 +7,12 @@ namespace DesktopIconGrid.Services;
 /// Where the monitors are, for deciding whether a saved bar position is still on a screen. The virtual-screen
 /// bounding box is not enough: an L-shaped layout has a dead rectangle inside it where a bar would be invisible.
 /// </summary>
+/// <remarks>
+/// Monitor rectangles come in device pixels; the saved placement is in WPF units, whose scale depends on the
+/// monitor the bar was on. Rather than guess that scale, <see cref="IsVisibleAtAnyScale"/> tries every plausible
+/// one and only reports "off screen" when none of them lands on a monitor, so a mixed-DPI layout can never move
+/// a visible bar by a false verdict (a lost bar still has the tray's Reset position).
+/// </remarks>
 public static class ScreenGeometry
 {
     /// <summary>At least this much of the bar must lie on one monitor to count as visible.</summary>
@@ -14,9 +20,12 @@ public static class ScreenGeometry
 
     public const double MinVisibleHeight = 24;
 
+    /// <summary>Display scales Windows offers, 100 % to 250 %.</summary>
+    public static readonly IReadOnlyList<double> PlausibleScales = [1.0, 1.25, 1.5, 1.75, 2.0, 2.25, 2.5];
+
     private const int SmCxScreen = 0;
 
-    /// <summary>True when at least <see cref="MinVisibleWidth"/> × <see cref="MinVisibleHeight"/> of <paramref name="window"/> lies on one of <paramref name="monitors"/>.</summary>
+    /// <summary>True when at least <see cref="MinVisibleWidth"/> × <see cref="MinVisibleHeight"/> of <paramref name="window"/> lies on one of <paramref name="monitors"/> (same units).</summary>
     public static bool IsVisibleOn(Rect window, IEnumerable<Rect> monitors)
     {
         ArgumentNullException.ThrowIfNull(monitors);
@@ -33,19 +42,51 @@ public static class ScreenGeometry
     }
 
     /// <summary>
-    /// Bounds of every monitor in WPF units (device pixels divided by the primary monitor's scale, the unit that
-    /// <c>Window.Left</c>/<c>Top</c> use); the virtual screen when enumeration is unavailable.
+    /// True when the bar, saved in WPF units, would be visible on one of <paramref name="monitorsInPixels"/> at the
+    /// primary monitor's scale or at any plausible display scale. Conservative on purpose: see the class remarks.
     /// </summary>
-    public static IReadOnlyList<Rect> Monitors()
+    public static bool IsVisibleAtAnyScale(Rect windowInUnits, IEnumerable<Rect> monitorsInPixels, double primaryScale)
+    {
+        ArgumentNullException.ThrowIfNull(monitorsInPixels);
+        var monitors = monitorsInPixels as IReadOnlyList<Rect> ?? monitorsInPixels.ToList();
+        foreach (var scale in PlausibleScales.Prepend(primaryScale).Distinct())
+        {
+            if (scale <= 0)
+            {
+                continue;
+            }
+
+            var windowInPixels = new Rect(windowInUnits.X * scale, windowInUnits.Y * scale, windowInUnits.Width * scale, windowInUnits.Height * scale);
+            if (IsVisibleOn(windowInPixels, monitors))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>Scale of the primary monitor (device pixels per WPF unit), 1.0 when unknown.</summary>
+    public static double PrimaryScale()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return 1.0;
+        }
+
+        var pixelWidth = NativeMethods.GetSystemMetrics(SmCxScreen);
+        return pixelWidth > 0 && SystemParameters.PrimaryScreenWidth > 0 ? pixelWidth / SystemParameters.PrimaryScreenWidth : 1.0;
+    }
+
+    /// <summary>Bounds of every monitor in device pixels; the virtual screen (as pixels at the primary scale) when enumeration is unavailable.</summary>
+    public static IReadOnlyList<Rect> MonitorsInPixels()
     {
         var result = new List<Rect>();
         if (OperatingSystem.IsWindows())
         {
-            var pixelWidth = NativeMethods.GetSystemMetrics(SmCxScreen);
-            var scale = pixelWidth > 0 ? SystemParameters.PrimaryScreenWidth / pixelWidth : 1.0;
             NativeMethods.MonitorEnumProc callback = (IntPtr _, IntPtr _, ref NativeMethods.RECT rect, IntPtr _) =>
             {
-                result.Add(new Rect(rect.Left * scale, rect.Top * scale, (rect.Right - rect.Left) * scale, (rect.Bottom - rect.Top) * scale));
+                result.Add(new Rect(rect.Left, rect.Top, rect.Right - rect.Left, rect.Bottom - rect.Top));
                 return true;
             };
             try
@@ -62,11 +103,12 @@ public static class ScreenGeometry
 
         if (result.Count == 0)
         {
+            var scale = PrimaryScale();
             result.Add(new Rect(
-                SystemParameters.VirtualScreenLeft,
-                SystemParameters.VirtualScreenTop,
-                SystemParameters.VirtualScreenWidth,
-                SystemParameters.VirtualScreenHeight));
+                SystemParameters.VirtualScreenLeft * scale,
+                SystemParameters.VirtualScreenTop * scale,
+                SystemParameters.VirtualScreenWidth * scale,
+                SystemParameters.VirtualScreenHeight * scale));
         }
 
         return result;

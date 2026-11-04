@@ -14,6 +14,7 @@ using DesktopIconGrid.Core.Diagnostics;
 using DesktopIconGrid.Core.Models;
 using DesktopIconGrid.Services;
 using DesktopIconGrid.ViewModels;
+using Microsoft.Win32;
 
 namespace DesktopIconGrid.Views;
 
@@ -83,15 +84,12 @@ public partial class MainWindow : Window
 
         _tray.Clicked += (_, _) => ToggleVisibility();
         _tray.MenuRequested += (_, _) => (_trayMenu ??= new TrayMenuHost()).Open(BuildTrayMenu());
+        SystemEvents.DisplaySettingsChanged += OnDisplaySettingsChanged;
         AppLog.Default.Debug("App", "Tray icon created");
     }
 
-    /// <summary>The bar moved to a monitor with another scale (or the scale changed): the tray icon is re-rendered for it.</summary>
-    protected override void OnDpiChanged(DpiScale oldDpi, DpiScale newDpi)
-    {
-        base.OnDpiChanged(oldDpi, newDpi);
-        _tray?.Refresh();
-    }
+    /// <summary>The display settings changed (scale, monitors): the tray icon is re-rendered for the system DPI.</summary>
+    private void OnDisplaySettingsChanged(object? sender, EventArgs e) => Dispatcher.BeginInvoke(() => _tray?.Refresh());
 
     private IEnumerable<TrayMenuEntry> BuildTrayMenu()
     {
@@ -252,6 +250,7 @@ public partial class MainWindow : Window
     protected override void OnClosed(EventArgs e)
     {
         SystemParameters.StaticPropertyChanged -= OnSystemParametersChanged;
+        SystemEvents.DisplaySettingsChanged -= OnDisplaySettingsChanged;
         _hotkey?.Dispose();
         _hotkey = null;
         _tray?.Dispose();
@@ -474,9 +473,15 @@ public partial class MainWindow : Window
         Top = area.Top + Math.Max(0, (area.Height - Height) / 2);
     }
 
-    /// <summary>Checked against the real monitors, not the virtual screen's bounding box: an L-shaped layout has a dead corner.</summary>
+    /// <summary>
+    /// Checked against the real monitors, not the virtual screen's bounding box (an L-shaped layout has a dead
+    /// corner), and at every plausible display scale, so a mixed-DPI layout never moves a visible bar by mistake.
+    /// </summary>
     private static bool IntersectsAScreen(WindowPlacement placement) =>
-        ScreenGeometry.IsVisibleOn(new Rect(placement.Left, placement.Top, placement.Width, placement.Height), ScreenGeometry.Monitors());
+        ScreenGeometry.IsVisibleAtAnyScale(
+            new Rect(placement.Left, placement.Top, placement.Width, placement.Height),
+            ScreenGeometry.MonitorsInPixels(),
+            ScreenGeometry.PrimaryScale());
 
     private void EnsureMinimumSize()
     {

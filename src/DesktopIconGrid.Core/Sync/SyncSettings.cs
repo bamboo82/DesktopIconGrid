@@ -117,8 +117,16 @@ public sealed class SyncSettingsStore
         {
             if (settings.ClientSecret is not null)
             {
-                // A clear value from an earlier version (or edited by hand): encrypt it now.
-                Save(settings);
+                // A clear value from an earlier version (or edited by hand): encrypt it now. A file that cannot be
+                // written (read-only, locked share) must not stop the app; the value stays usable in memory.
+                try
+                {
+                    Save(settings);
+                }
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+                {
+                    AppLog.Default.Warning("Sync", $"The client secret could not be re-saved encrypted yet: {ex.Message}");
+                }
             }
             else if (settings.ClientSecretProtected is { } sealedSecret)
             {

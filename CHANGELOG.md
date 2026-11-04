@@ -6,7 +6,9 @@ version numbers follow [Semantic Versioning](https://semver.org/).
 ## [0.3.0] – Unreleased
 
 The first release that changes what you see. Each change is a setting, and the defaults keep the
-bar itself looking as it did in 0.2.0.
+bar itself looking as it did in 0.2.0. Note for whoever tests this build: the dialogs have fixed
+widths and the Fluent controls are taller than the classic ones; their layouts have been checked in
+code only, not yet on a screen in light and dark mode.
 
 ### Added
 
@@ -34,6 +36,7 @@ bar itself looking as it did in 0.2.0.
   tray icon is re-rendered when the bar moves to a screen with another scale.
 - Whether a saved bar position is still on a screen is checked against the real monitors instead of
   the virtual screen's bounding box, so a bar lost in the dead corner of an L-shaped layout comes back.
+  On layouts that mix display scales the check errs on the side of leaving the bar where it is.
 - Errors from the sync feature that are programming mistakes are no longer hidden behind a status line.
 
 ## [0.2.0] – 2026-11-04

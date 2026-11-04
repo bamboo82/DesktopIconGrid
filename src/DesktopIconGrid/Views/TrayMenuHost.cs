@@ -10,13 +10,15 @@ namespace DesktopIconGrid.Views;
 
 /// <summary>
 /// A window that is never shown but owns the tray icon's WPF context menu, so the menu takes the dialogs' look
-/// (Fluent, light or dark) and the DPI of the screen it opens on, instead of the WinForms menu strip.
+/// (Fluent, light or dark) instead of the WinForms menu strip. The menu opens at the mouse pointer in the
+/// pointer's own DPI and is given the foreground once its popup exists, so Esc and arrow keys work and a click
+/// elsewhere closes it.
 /// </summary>
 public sealed class TrayMenuHost : Window
 {
     private readonly ContextMenu _menu = new()
     {
-        Placement = PlacementMode.AbsolutePoint,
+        Placement = PlacementMode.MousePoint,
         StaysOpen = false,
     };
 
@@ -67,17 +69,6 @@ public sealed class TrayMenuHost : Window
             _menu.Items.Add(item);
         }
 
-        var cursor = CursorPosition();
-        _menu.HorizontalOffset = cursor.X;
-        _menu.VerticalOffset = cursor.Y;
-
-        // Without the foreground, keys would not reach the menu and a click elsewhere would not close it.
-        var handle = new WindowInteropHelper(this).Handle;
-        if (handle != IntPtr.Zero)
-        {
-            NativeMethods.SetForegroundWindow(handle);
-        }
-
         try
         {
             _menu.IsOpen = true;
@@ -85,34 +76,19 @@ public sealed class TrayMenuHost : Window
         catch (InvalidOperationException ex)
         {
             AppLog.Default.Error("App", "The tray menu could not be opened", ex);
+            return;
         }
-    }
 
-    /// <summary>The pointer in this window's units, so the menu lands under it on any monitor.</summary>
-    private Point CursorPosition()
-    {
-        if (!NativeMethods.GetCursorPos(out var device))
+        // The host itself is invisible and cannot take the foreground; the popup's own window can. Without it,
+        // keys would not reach the menu and a click elsewhere would not close it.
+        if (PresentationSource.FromVisual(_menu) is HwndSource popup && popup.Handle != IntPtr.Zero)
         {
-            return new Point(0, 0);
+            NativeMethods.SetForegroundWindow(popup.Handle);
         }
-
-        var point = new Point(device.X, device.Y);
-        return PresentationSource.FromVisual(this)?.CompositionTarget?.TransformFromDevice.Transform(point) ?? point;
     }
 
     private static class NativeMethods
     {
-        [StructLayout(LayoutKind.Sequential)]
-        public struct POINT
-        {
-            public int X;
-            public int Y;
-        }
-
-        [DllImport("user32.dll")]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        public static extern bool GetCursorPos(out POINT point);
-
         [DllImport("user32.dll")]
         [return: MarshalAs(UnmanagedType.Bool)]
         public static extern bool SetForegroundWindow(IntPtr hWnd);

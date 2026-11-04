@@ -385,8 +385,10 @@ Still open, in the order they should be taken:
 
 1. **Drive cache freshness** — compare `modifiedTime`/`md5Checksum`, not only size; reserved
    names (`CON`, `NUL`, `COM1`) in `SafeName`.
-2. **Multi-monitor** — remember the monitor a bar was on (device name) so it returns there after
-   monitors are re-enumerated; the visibility check already uses the real monitor layout.
+2. **Multi-monitor** — save the placement in device pixels with the monitor's device name, so a bar
+   returns to its monitor after re-enumeration and the visibility check no longer has to try every
+   plausible scale (today it compares the real monitor layout at the primary scale and at each Windows
+   display scale, and only resets when none of them shows the bar).
 3. **Localisation** — strings in `.resx` with zh-TW/zh-CN, default text-icon font by UI culture.
 4. **Non-modal errors** — tray balloons for non-fatal failures; undo for Remove.
 5. **Table stakes** — start with Windows, auto-hide/dock to a screen edge (AppBar), installer

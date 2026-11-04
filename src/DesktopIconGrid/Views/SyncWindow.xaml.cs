@@ -39,7 +39,7 @@ public partial class SyncWindow : Window
 
     private void ViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName == nameof(SyncViewModel.ClientSecret) && ViewModel is { } viewModel && SecretBox.Password != viewModel.ClientSecret)
+        if (e.PropertyName == nameof(SyncViewModel.ClientSecret) && ViewModel is { } viewModel && !SameSecret(SecretBox.Password, viewModel.ClientSecret))
         {
             SecretBox.Password = viewModel.ClientSecret; // e.g. after Import client_secret.json
         }
@@ -55,11 +55,14 @@ public partial class SyncWindow : Window
 
     private void CommitSecret(SyncViewModel viewModel)
     {
-        if (viewModel.ClientSecret != SecretBox.Password)
+        if (!SameSecret(viewModel.ClientSecret, SecretBox.Password))
         {
             viewModel.ClientSecret = SecretBox.Password;
         }
     }
+
+    private static bool SameSecret(string? a, string? b) =>
+        string.Equals(a ?? string.Empty, b ?? string.Empty, StringComparison.Ordinal);
 
     private void ImportCredentials_Click(object sender, RoutedEventArgs e)
     {

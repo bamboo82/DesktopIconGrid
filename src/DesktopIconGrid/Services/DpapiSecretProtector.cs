@@ -7,6 +7,8 @@ namespace DesktopIconGrid.Services;
 /// <summary>Protects the Google client secret with DPAPI for the current Windows user (Base64 of the ciphertext).</summary>
 public sealed class DpapiSecretProtector : ISecretProtector
 {
+    // Optional entropy is a salt that ties the blob to this purpose, not a secret: DPAPI's protection comes from the
+    // user's key. It is fine that this string is compiled into the binary.
     private static readonly byte[] Entropy = Encoding.UTF8.GetBytes("DesktopIconGrid.ClientSecret.v1");
 
     public string Protect(string secret)
