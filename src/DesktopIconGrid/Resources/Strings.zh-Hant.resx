@@ -1088,7 +1088,7 @@
     <value>最低層級</value>
   </data>
   <data name="Log_TimeRangeToolTip" xml:space="preserve">
-    <value>時間範圔</value>
+    <value>時間範圍</value>
   </data>
   <data name="Log_SearchToolTip" xml:space="preserve">
     <value>只顯示含有此文字的項目（Ctrl+F，Esc 清除）</value>
