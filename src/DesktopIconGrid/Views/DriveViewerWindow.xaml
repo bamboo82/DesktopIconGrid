@@ -31,7 +31,7 @@
           <ItemsControl.ItemTemplate>
             <DataTemplate>
               <StackPanel Orientation="Horizontal">
-                <TextBlock Text="›" Margin="4,0" VerticalAlignment="Center" Foreground="{StaticResource DialogHintBrush}" />
+                <TextBlock Text="›" Margin="4,0" VerticalAlignment="Center" Foreground="{DynamicResource DialogHintBrush}" />
                 <Button Content="{Binding Name}" Padding="6,2" BorderThickness="0" Background="Transparent" Cursor="Hand"
                         Click="Crumb_Click" />
               </StackPanel>

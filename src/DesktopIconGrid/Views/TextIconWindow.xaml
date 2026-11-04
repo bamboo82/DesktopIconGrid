@@ -68,7 +68,7 @@
                 Text="{Binding FontSizeText, UpdateSourceTrigger=PropertyChanged}" />
       <TextBlock Text="6–72" Style="{StaticResource DialogHint}" Margin="8,0,0,0" VerticalAlignment="Center"
                  Visibility="{Binding IsFontSizeValid, Converter={StaticResource InverseBoolToVisibility}}"
-                 Foreground="{StaticResource WarningBrush}" />
+                 Foreground="{DynamicResource WarningBrush}" />
       <CheckBox Content="Bold" IsChecked="{Binding Bold}" VerticalAlignment="Center" Margin="16,0,0,0" />
     </StackPanel>
 

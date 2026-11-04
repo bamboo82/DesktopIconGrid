@@ -45,6 +45,8 @@
             <Button Style="{StaticResource IconButtonStyle}"
                     ToolTip="{Binding ToolTipText}"
                     ToolTipService.InitialShowDelay="350"
+                    AutomationProperties.Name="{Binding Name}"
+                    AutomationProperties.HelpText="{Binding ToolTipText}"
                     PreviewMouseLeftButtonDown="Item_PreviewMouseLeftButtonDown"
                     PreviewMouseMove="Item_PreviewMouseMove"
                     PreviewMouseLeftButtonUp="Item_PreviewMouseLeftButtonUp"

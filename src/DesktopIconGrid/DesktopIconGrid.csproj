@@ -13,7 +13,8 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <RollForward>LatestMinor</RollForward>
     <!-- WFO0003: WinForms wants DPI settings outside the manifest, but WPF needs them there. -->
-    <NoWarn>$(NoWarn);WFO0003</NoWarn>
+    <!-- WPF0001: ThemeMode (Fluent theme) is still marked experimental in the reference assemblies. -->
+    <NoWarn>$(NoWarn);WFO0003;WPF0001</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

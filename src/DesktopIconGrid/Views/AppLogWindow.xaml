@@ -57,10 +57,10 @@
           <Setter Property="ToolTip" Value="{Binding Message}" />
           <Style.Triggers>
             <DataTrigger Binding="{Binding IsDebug}" Value="True">
-              <Setter Property="Foreground" Value="{StaticResource DialogHintBrush}" />
+              <Setter Property="Foreground" Value="{DynamicResource DialogHintBrush}" />
             </DataTrigger>
             <DataTrigger Binding="{Binding IsWarning}" Value="True">
-              <Setter Property="Foreground" Value="{StaticResource WarningBrush}" />
+              <Setter Property="Foreground" Value="{DynamicResource WarningBrush}" />
             </DataTrigger>
             <DataTrigger Binding="{Binding IsError}" Value="True">
               <Setter Property="Foreground" Value="#FFC62828" />

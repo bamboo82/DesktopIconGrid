@@ -10,6 +10,7 @@ public partial class SettingsWindow : Window
     public SettingsWindow()
     {
         InitializeComponent();
+        DialogTheme.Apply(this);
     }
 
     private SettingsViewModel? ViewModel => DataContext as SettingsViewModel;

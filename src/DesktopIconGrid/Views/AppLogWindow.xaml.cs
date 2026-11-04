@@ -24,6 +24,7 @@ public partial class AppLogWindow : Window
         SaveCommand = new RelayCommand(() => Save_Click(this, new RoutedEventArgs()));
         ScrollToEndCommand = new RelayCommand(ScrollToEnd);
         InitializeComponent();
+        DialogTheme.Apply(this);
         DataContextChanged += (_, _) => Attach();
     }
 

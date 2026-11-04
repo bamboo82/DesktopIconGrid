@@ -12,6 +12,7 @@ public partial class LogViewerWindow : Window
     public LogViewerWindow()
     {
         InitializeComponent();
+        DialogTheme.Apply(this);
     }
 
     private void Window_Loaded(object sender, RoutedEventArgs e)

@@ -17,6 +17,7 @@ public partial class BusyWindow : Window
     {
         _cancellation = cancellation;
         InitializeComponent();
+        DialogTheme.Apply(this);
     }
 
     /// <summary>Shows the window (not modal) over <paramref name="owner"/>, which is disabled until <see cref="Finish"/>.</summary>

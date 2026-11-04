@@ -8,6 +8,7 @@ public partial class NameTableWindow : Window
     public NameTableWindow()
     {
         InitializeComponent();
+        DialogTheme.Apply(this);
     }
 
     private NameTableViewModel? ViewModel => DataContext as NameTableViewModel;

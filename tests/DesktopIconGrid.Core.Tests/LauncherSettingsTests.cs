@@ -61,6 +61,25 @@ public class LauncherSettingsTests
     }
 
     [Fact]
+    public void Normalize_falls_back_to_a_solid_backdrop_and_copies_the_look_settings()
+    {
+        var settings = new LauncherSettings { BarBackdrop = " MICA " };
+        Assert.False(settings.Normalize()); // case and spacing are not a change of meaning
+        Assert.Equal(LauncherSettings.BackdropMica, settings.BarBackdrop);
+
+        settings.BarBackdrop = "frost";
+        Assert.True(settings.Normalize());
+        Assert.Equal(LauncherSettings.BackdropSolid, settings.BarBackdrop);
+
+        var copy = new LauncherSettings();
+        copy.CopyFrom(new LauncherSettings { BarBackdrop = LauncherSettings.BackdropAcrylic, FluentDialogs = false });
+        Assert.Equal(LauncherSettings.BackdropAcrylic, copy.BarBackdrop);
+        Assert.False(copy.FluentDialogs);
+        Assert.True(new LauncherSettings().FluentDialogs);
+        Assert.Equal(LauncherSettings.BackdropSolid, new LauncherSettings().BarBackdrop);
+    }
+
+    [Fact]
     public void Normalize_upper_cases_valid_colors()
     {
         var settings = new LauncherSettings { BackgroundColor = "#abcdef" };

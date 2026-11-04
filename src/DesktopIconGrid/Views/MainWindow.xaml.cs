@@ -8,6 +8,7 @@ using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Media3D;
+using System.Windows.Shell;
 using System.Windows.Threading;
 using DesktopIconGrid.Core.Diagnostics;
 using DesktopIconGrid.Core.Models;
@@ -25,6 +26,7 @@ public partial class MainWindow : Window
     private TrayIcon? _tray;
     private bool _exiting;
     private bool _closing;
+    private bool _backdropActive;
 
     public MainWindow(LauncherViewModel viewModel)
     {
@@ -38,9 +40,10 @@ public partial class MainWindow : Window
         {
             EnsureMinimumSize();
             ApplyHotkey(reportErrors: true);
-            ApplyOpacity();
+            ApplyAppearance();
         };
         Deactivated += OnDeactivated;
+        SystemParameters.StaticPropertyChanged += OnSystemParametersChanged;
         MainGrid.MouseLeftButtonDown += GridBackground_MouseLeftButtonDown;
     }
 
@@ -57,7 +60,7 @@ public partial class MainWindow : Window
             ApplyHotkey(reportErrors: true);
         }
 
-        ApplyOpacity();
+        ApplyAppearance();
         CreateTrayIcon();
     }
 
@@ -139,25 +142,103 @@ public partial class MainWindow : Window
         Close();
     }
 
-    private void ApplyOpacity()
+    /// <summary>
+    /// Theme brushes, the Windows 11 backdrop and the opacity, in that order: the backdrop decides whether the bar
+    /// background is a tint and whether the layered alpha applies. Runs once the window has a handle, and again on
+    /// every settings change and when Windows High Contrast is switched.
+    /// </summary>
+    private void ApplyAppearance()
     {
-        WindowAlpha.Apply(new WindowInteropHelper(this).Handle, _viewModel.Opacity);
-        if (GroupPopup.IsOpen && GroupPopup.Child is { } child && PresentationSource.FromVisual(child) is HwndSource popupSource)
+        var handle = new WindowInteropHelper(this).Handle;
+        if (handle == IntPtr.Zero)
         {
-            WindowAlpha.Apply(popupSource.Handle, _viewModel.Opacity);
+            return; // before SourceInitialized; it calls again
+        }
+
+        var settings = _viewModel.Model.Settings;
+        var palette = ThemeManager.EffectivePalette(_viewModel.Palette);
+        var wanted = SystemParameters.HighContrast ? LauncherSettings.BackdropSolid : settings.BarBackdrop; // High Contrast asks for flat colours
+        var active = WindowBackdrop.Apply(handle, wanted, darkMode: ThemeCatalog.Luminance(palette.Background) <= 0.6);
+        if (active != _backdropActive)
+        {
+            _backdropActive = active;
+
+            // For DWM to paint behind the client area WPF must not: extend the frame into it and leave the window transparent.
+            WindowChrome.SetWindowChrome(this, new WindowChrome
+            {
+                CaptionHeight = 0,
+                ResizeBorderThickness = new Thickness(6),
+                GlassFrameThickness = active ? new Thickness(-1) : new Thickness(0),
+                CornerRadius = new CornerRadius(0),
+                UseAeroCaptionButtons = false,
+            });
+            if (active)
+            {
+                Background = Brushes.Transparent;
+                if (HwndSource.FromHwnd(handle) is { CompositionTarget: { } target })
+                {
+                    target.BackgroundColor = Colors.Transparent;
+                }
+            }
+            else
+            {
+                ClearValue(BackgroundProperty);
+            }
+
+            AppLog.Default.Info("App", active ? $"Bar background: {wanted} backdrop" : "Bar background: solid colour");
+        }
+
+        ThemeManager.Apply(palette, translucentBar: active, tintOpacity: _viewModel.Opacity / 100.0);
+        DialogTheme.Configure(settings.FluentDialogs);
+        ApplyOpacity();
+    }
+
+    private void OnSystemParametersChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName is null or nameof(SystemParameters.HighContrast))
+        {
+            Dispatcher.BeginInvoke(ApplyAppearance);
         }
     }
 
+    /// <summary>With a backdrop the tint already carries the transparency; the layered alpha would fade the icons as well.</summary>
+    private int EffectiveOpacity => _backdropActive ? LauncherSettings.MaxOpacity : _viewModel.Opacity;
+
+    private void ApplyOpacity()
+    {
+        WindowAlpha.Apply(new WindowInteropHelper(this).Handle, EffectiveOpacity);
+        if (GroupPopup.IsOpen && GroupPopup.Child is { } child && PresentationSource.FromVisual(child) is HwndSource popupSource)
+        {
+            WindowAlpha.Apply(popupSource.Handle, EffectiveOpacity);
+        }
+    }
+
+    /// <summary>The popup has its own window: give it an Acrylic backdrop when the bar has one, else the solid colour.</summary>
     private void GroupPopup_Opened(object? sender, EventArgs e)
     {
-        if (GroupPopup.Child is { } child && PresentationSource.FromVisual(child) is HwndSource popupSource)
+        if (GroupPopup.Child is not { } child || PresentationSource.FromVisual(child) is not HwndSource popupSource)
         {
-            WindowAlpha.Apply(popupSource.Handle, _viewModel.Opacity);
+            return;
         }
+
+        var palette = ThemeManager.EffectivePalette(_viewModel.Palette);
+        var translucent = false;
+        if (_backdropActive)
+        {
+            translucent = WindowBackdrop.Apply(popupSource.Handle, LauncherSettings.BackdropAcrylic, darkMode: ThemeCatalog.Luminance(palette.Background) <= 0.6);
+            if (translucent && popupSource.CompositionTarget is { } target)
+            {
+                target.BackgroundColor = Colors.Transparent;
+            }
+        }
+
+        ThemeManager.SetPopupBackground(palette, translucent, _viewModel.Opacity / 100.0);
+        WindowAlpha.Apply(popupSource.Handle, EffectiveOpacity);
     }
 
     protected override void OnClosed(EventArgs e)
     {
+        SystemParameters.StaticPropertyChanged -= OnSystemParametersChanged;
         _hotkey?.Dispose();
         _hotkey = null;
         _tray?.Dispose();

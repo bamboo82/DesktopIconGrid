@@ -68,7 +68,8 @@ Google Drive Bucket, and [docs/THEMES.md](docs/THEMES.md) for the themes.
 | Add a shortcut by dragging | Drop a file on empty space, or right-drag it anywhere on the bar |
 | Show or hide the bar from anywhere | Set a hotkey in Settings (e.g. `Ctrl+Alt+Space`) |
 | See a program's output | *Properties → Keep a log of the program's output*, then right-click → *Show log…* |
-| Make the bar translucent | Settings → *Transparency* |
+| Let the desktop show through the bar | Settings → *Bar background* → Mica or Acrylic (Windows 11; the blur is tinted with the theme), or *Transparency* for a solid colour |
+| Classic dialogs instead of the Windows 11 look | Settings → *Window* → untick *Windows 11 style dialogs* |
 | Remove an item | Right-click → *Remove…*, or `Delete` |
 | Multi Launch | Right-click a shortcut → *Add to Multi Launch group*; start them all from the options menu (▸) |
 | Move the bar | Drag the dotted grip on the left or any empty background. Double-click the grip to toggle *always on top* |

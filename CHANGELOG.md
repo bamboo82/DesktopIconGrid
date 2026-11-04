@@ -3,6 +3,30 @@
 All notable changes to Desktop Icon Grid. The format follows [Keep a Changelog](https://keepachangelog.com/);
 version numbers follow [Semantic Versioning](https://semver.org/).
 
+## [0.3.0] – Unreleased
+
+The first release that changes what you see. Each change is a setting, and the defaults keep the
+bar itself looking as it did in 0.2.0.
+
+### Added
+
+- Dialogs use the Windows 11 (Fluent) look and follow the system light/dark mode; *Settings → Window*
+  turns this off and brings the classic dialogs back. Hint and warning text recolour for dark surfaces.
+- *Settings → Bar background*: **Mica** or **Acrylic** (Windows 11 22H2 or later) lets the desktop
+  show through the bar with a blur, tinted with the theme colour; the transparency slider then sets how
+  much of the blur shows while the icons stay sharp. The group popup gets the same treatment. Older
+  Windows keeps the solid colour with whole-window transparency.
+- Windows High Contrast: the bar switches to the system colours (and a solid background) while it is
+  on, and back to the theme when it is turned off.
+- Screen readers get a name for every icon (its caption, with the location and state as help text)
+  and for the grip, close and options buttons; the close and options buttons can be reached with Tab.
+
+### Changed
+
+- The tray icon is rendered at the notification area's size for the screen's DPI instead of being
+  scaled down from 32 px.
+- Keyboard and mouse activation are told apart by the input device, not by a 150 ms timing window.
+
 ## [0.2.0] – 2026-11-04
 
 Reliability release after three independent code-review rounds. No new icons or dialogs; everything

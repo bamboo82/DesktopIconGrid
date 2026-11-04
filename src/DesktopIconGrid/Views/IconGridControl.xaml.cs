@@ -26,13 +26,11 @@ namespace DesktopIconGrid.Views;
 /// </remarks>
 public partial class IconGridControl : UserControl
 {
-    private const int ClickFromMouseWindowMs = 150;
     private static readonly TimeSpan HoldDelay = TimeSpan.FromMilliseconds(300);
 
     private Point _dragStart;
     private ItemViewModel? _dragCandidate;
     private Button? _dragButton;
-    private long _lastMouseUpTicks;
     private ItemViewModel? _hoveredItem;
     private DragDropKeyStates _lastDragButtons;
     private readonly DispatcherTimer _holdTimer;
@@ -80,7 +78,7 @@ public partial class IconGridControl : UserControl
             return;
         }
 
-        var fromMouse = Environment.TickCount64 - _lastMouseUpTicks < ClickFromMouseWindowMs;
+        var fromMouse = !IsKeyboardActivation(InputManager.Current.MostRecentInputDevice);
         if (fromMouse && !item.IsGroup && !item.IsSpecial && List.Root.DoubleClickToLaunch)
         {
             return; // handled by MouseDoubleClick in that mode; groups and special icons always act on one click
@@ -103,6 +101,12 @@ public partial class IconGridControl : UserControl
             e.Handled = true;
         }
     }
+
+    /// <summary>
+    /// Enter or Space on a focused icon must launch in both click modes, while a mouse click in double-click mode
+    /// waits for the second click; the device that produced the Click event tells them apart.
+    /// </summary>
+    internal static bool IsKeyboardActivation(InputDevice? mostRecent) => mostRecent is KeyboardDevice;
 
     private static ActivationModifiers CurrentModifiers()
     {
@@ -168,7 +172,6 @@ public partial class IconGridControl : UserControl
 
     private void Item_PreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
     {
-        _lastMouseUpTicks = Environment.TickCount64;
         _dragCandidate = null;
         _dragButton = null;
         _holdTimer.Stop();

@@ -12,6 +12,7 @@ using DesktopIconGrid.Services;
 using DesktopIconGrid.SpecialIcons;
 using DesktopIconGrid.ViewModels;
 using DesktopIconGrid.Views;
+using Microsoft.Win32;
 
 namespace DesktopIconGrid;
 
@@ -28,6 +29,7 @@ public partial class App : Application
     private ProcessTracker? _tracker;
     private SystemMonitor? _monitor;
     private SyncCoordinator? _sync;
+    private Func<bool>? _fluentDialogsSetting;
 
     /// <summary>The app-wide HTTP client (Google APIs, icon downloads). Per-request timeouts are applied by the callers.</summary>
     public static HttpClient SharedHttp => Http;
@@ -113,8 +115,11 @@ public partial class App : Application
             specialIcons,
             action => Dispatcher.BeginInvoke(DispatcherPriority.Background, action));
 
-        ThemeManager.Apply(viewModel.Palette);
-        viewModel.SettingsChanged += (_, _) => ThemeManager.Apply(viewModel.Palette);
+        // First paint; the bar window refines this once it has a handle (backdrop, High Contrast, settings changes).
+        ThemeManager.Apply(ThemeManager.EffectivePalette(viewModel.Palette));
+        _fluentDialogsSetting = () => viewModel.Model.Settings.FluentDialogs;
+        DialogTheme.Configure(_fluentDialogsSetting());
+        SystemEvents.UserPreferenceChanged += OnUserPreferenceChanged;
 
         _sync = new SyncCoordinator(syncService, viewModel, dialogs.Confirm);
         dialogs.SyncViewModelFactory = () => new SyncViewModel(_sync, dialogs);
@@ -162,6 +167,7 @@ public partial class App : Application
     protected override void OnExit(ExitEventArgs e)
     {
         AppLog.Default.Info("App", "Exiting");
+        SystemEvents.UserPreferenceChanged -= OnUserPreferenceChanged;
         _showWait?.Unregister(null);
         _showEvent?.Dispose();
         _monitor?.Dispose();
@@ -219,6 +225,15 @@ public partial class App : Application
             null,
             Timeout.Infinite,
             executeOnlyOnce: false);
+    }
+
+    /// <summary>Windows switched between light and dark mode: recolour the dialog brushes (the Fluent theme itself follows on its own).</summary>
+    private void OnUserPreferenceChanged(object sender, UserPreferenceChangedEventArgs e)
+    {
+        if (e.Category == UserPreferenceCategory.General && _fluentDialogsSetting is { } setting)
+        {
+            Dispatcher.BeginInvoke(() => DialogTheme.Configure(setting()));
+        }
     }
 
     private static SyncService CreateSyncService()

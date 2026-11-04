@@ -39,7 +39,19 @@ Existing layouts that only had a background colour keep their look: when a layou
   `Theme.Accent`, `Theme.DropTarget`).
 - Every style and template that paints the bar references those keys with `DynamicResource`, so
   switching themes restyles the bar, the group popup and the drop indicator immediately, without
-  rebuilding any view. Dialogs keep the standard Windows look.
+  rebuilding any view. Dialogs are not themed by the palette: they use the Windows 11 Fluent look
+  that follows the system light/dark mode (a setting; off brings the classic dialogs back), and
+  `DialogTheme` recolours the few fixed dialog brushes (hints, warnings, swatch borders) for dark
+  surfaces.
+- **Backdrop** (*Settings → Bar background*). On Windows 11 22H2 or later the bar can ask DWM for a
+  Mica or Acrylic backdrop (`WindowBackdrop`). The window then paints nothing itself, the root border
+  uses `Theme.BarBackground`, a tint of the theme colour whose opacity is the transparency setting, and
+  the icons stay sharp. The group popup gets Acrylic on its own window (`Theme.PopupBackground`). When
+  Windows refuses or is older, both keys fall back to the solid colour and the whole-window layered
+  alpha applies instead.
+- **High Contrast**. While Windows High Contrast is on, `ThemeManager.EffectivePalette` replaces the
+  palette with the system colours (window, text, highlight, frame) and the backdrop is turned off;
+  the bar follows the switch live.
 - The theme is part of the settings, so it travels with Google Drive sync copies and is applied
   when a copy is loaded.
 
@@ -51,8 +63,7 @@ Existing layouts that only had a background colour keep their look: when a layou
 
 ## Possible later work
 
-- **Translucent themes** (e.g. "Frost"): a semi-transparent background with the desktop blurred
-  behind it. Needs `AllowsTransparency` on the bar window or the Windows 11 backdrop API, which
-  interacts with the resize borders and the popup; kept out until the core themes have settled.
+- **Translucent themes** are covered by the Mica/Acrylic backdrop; a "Frost" preset would only be a
+  theme plus a default backdrop.
 - **Cell shape** per theme (corner radius, hover outline thickness) and a **label font size**.
 - **Follow Windows light/dark mode** automatically, mapping to Paper and Graphite.

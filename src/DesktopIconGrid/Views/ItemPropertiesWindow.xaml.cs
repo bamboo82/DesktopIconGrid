@@ -20,6 +20,7 @@ public partial class ItemPropertiesWindow : Window
     public ItemPropertiesWindow()
     {
         InitializeComponent();
+        DialogTheme.Apply(this);
     }
 
     private ItemPropertiesViewModel? ViewModel => DataContext as ItemPropertiesViewModel;

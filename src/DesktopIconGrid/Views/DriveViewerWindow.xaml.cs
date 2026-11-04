@@ -17,6 +17,7 @@ public partial class DriveViewerWindow : Window
     public DriveViewerWindow()
     {
         InitializeComponent();
+        DialogTheme.Apply(this);
     }
 
     private DriveViewerViewModel? ViewModel => DataContext as DriveViewerViewModel;

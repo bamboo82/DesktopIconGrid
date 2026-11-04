@@ -15,6 +15,17 @@ public sealed partial class LauncherSettings
     public const int MinOpacity = 20;
     public const int MaxOpacity = 100;
 
+    /// <summary>The bar is painted in the theme colour.</summary>
+    public const string BackdropSolid = "solid";
+
+    /// <summary>Windows 11 Mica: the wallpaper shows through, blurred and tinted with the theme colour.</summary>
+    public const string BackdropMica = "mica";
+
+    /// <summary>Windows 11 Acrylic: whatever is behind the bar shows through, blurred and tinted.</summary>
+    public const string BackdropAcrylic = "acrylic";
+
+    public static readonly IReadOnlyList<string> Backdrops = [BackdropSolid, BackdropMica, BackdropAcrylic];
+
     /// <summary>Icon edge length in device-independent pixels; one of <see cref="IconSizes"/>.</summary>
     public int IconSize { get; set; } = DefaultIconSize;
 
@@ -36,10 +47,16 @@ public sealed partial class LauncherSettings
     /// <summary>Bar background as <c>#RRGGBB</c>, used by the custom theme.</summary>
     public string BackgroundColor { get; set; } = DefaultBackgroundColor;
 
+    /// <summary>What the bar is painted on: the theme colour, or a Windows 11 backdrop tinted with it (one of <see cref="Backdrops"/>).</summary>
+    public string BarBackdrop { get; set; } = BackdropSolid;
+
+    /// <summary>Dialogs use the Windows 11 (Fluent) look and follow the system light/dark mode.</summary>
+    public bool FluentDialogs { get; set; } = true;
+
     /// <summary>The close button hides the bar to the notification area instead of exiting.</summary>
     public bool CloseToTray { get; set; } = true;
 
-    /// <summary>Bar opacity in percent, <see cref="MinOpacity"/>–100.</summary>
+    /// <summary>Bar opacity in percent, <see cref="MinOpacity"/>–100 (solid background only).</summary>
     public int Opacity { get; set; } = MaxOpacity;
 
     /// <summary>System-wide key combination that shows or hides the bar, e.g. <c>Ctrl+Alt+Space</c>; <see langword="null"/> for none.</summary>
@@ -57,6 +74,8 @@ public sealed partial class LauncherSettings
         AlwaysOnTop = source.AlwaysOnTop;
         Theme = source.Theme;
         BackgroundColor = source.BackgroundColor;
+        BarBackdrop = source.BarBackdrop;
+        FluentDialogs = source.FluentDialogs;
         ToggleHotkey = source.ToggleHotkey;
         Opacity = source.Opacity;
         CloseToTray = source.CloseToTray;
@@ -90,6 +109,17 @@ public sealed partial class LauncherSettings
         else if (BackgroundColor != BackgroundColor.ToUpperInvariant())
         {
             BackgroundColor = BackgroundColor.ToUpperInvariant();
+        }
+
+        var backdrop = BarBackdrop?.Trim().ToLowerInvariant() ?? string.Empty;
+        if (Backdrops.Contains(backdrop))
+        {
+            BarBackdrop = backdrop;
+        }
+        else
+        {
+            BarBackdrop = BackdropSolid;
+            changed = true;
         }
 
         ToggleHotkey = string.IsNullOrWhiteSpace(ToggleHotkey) ? null : ToggleHotkey.Trim();

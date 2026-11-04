@@ -22,7 +22,7 @@ button at the top-right and a small options arrow at the bottom-right.
 | Bottom-right arrow | Opens the options menu: *Settings…*, *Launch Multi Launch group*, *About*, *Exit*. |
 | Edges / corners | Resizable (WindowChrome resize border, no caption). The icon grid reflows to the new width. |
 | Tray icon | While the app runs, an icon in the notification area offers: Show/Hide bar, Reset bar position (moves it to the middle of the primary screen when it is lost on a disconnected monitor), New shortcut, New group, Edit names, Launch Multi Launch group, Always on top, Settings, Sync with Google Drive, Log viewer, Open layout file location, About, Exit. Left-click toggles the bar. The close button hides the bar to the tray (setting). |
-| Transparency | Settings → Transparency (0–80 %) lets the desktop show through the bar and the group popup. |
+| Transparency | Settings → Transparency (0–80 %) lets the desktop show through the bar and the group popup; with a Mica or Acrylic background it sets how much of the blurred backdrop shows while the icons stay sharp. |
 | Show/hide hotkey | A system-wide combination set in Settings (e.g. `Ctrl+Alt+Space`) hides the bar or brings it to the front from any program. |
 | Background | A theme: Classic (the olive grey of the reference), Graphite, Paper, Midnight, Sand, or a Custom colour with automatically matched text and highlight colours. See [docs/THEMES.md](docs/THEMES.md). |
 
@@ -255,6 +255,8 @@ warnings and errors. The last 2000 entries stay in memory and all of them are ap
 | Launch on | single click (or double click) |
 | Always on top | off |
 | Theme | Classic (Graphite, Paper, Midnight, Sand, or Custom colour) |
+| Bar background | solid colour (Mica or Acrylic on Windows 11 22H2+, tinted with the theme) |
+| Windows 11 style dialogs | on (follow the system light/dark mode) |
 | Start with Windows | off — Phase 3 (Run registry key) |
 | Show/hide hotkey | none (set in Settings; needs Ctrl, Alt or Win) |
 | Transparency | 0 % (opaque) |
@@ -383,21 +385,18 @@ Still open, in the order they should be taken:
 
 1. **Drive cache freshness** — compare `modifiedTime`/`md5Checksum`, not only size; reserved
    names (`CON`, `NUL`, `COM1`) in `SafeName`.
-2. **Native look** — Fluent theme for the dialogs (`Application.ThemeMode`) with dark mode;
-   background-only transparency or Mica/Acrylic via `DwmSetWindowAttribute` instead of
-   whole-window alpha; a WPF tray menu (or a DPI-aware icon) instead of the WinForms strip.
-3. **Accessibility** — `AutomationProperties.Name`/`HelpText` on icon buttons, system brushes
-   under High Contrast, keyboard/mouse click disambiguation via `InputManager` instead of a
-   150 ms timing window.
-4. **Multi-monitor** — per-monitor off-screen checks (`MonitorFromRect`) instead of the
-   virtual-screen bounding box.
-5. **Localisation** — strings in `.resx` with zh-TW/zh-CN, default text-icon font by UI culture.
-6. **Non-modal errors** — tray balloons for non-fatal failures; undo for Remove.
-7. **Table stakes** — start with Windows, auto-hide/dock to a screen edge (AppBar), installer
+2. **Native look, remaining** — a WPF (Fluent, dark-aware) tray menu instead of the WinForms strip;
+   the icon itself is DPI-correct now. Dialogs, backdrop, High Contrast and automation names are done
+   (0.3.0).
+3. **Multi-monitor** — per-monitor off-screen checks (`MonitorFromRect`) instead of the
+   virtual-screen bounding box; remember the monitor a bar was on.
+4. **Localisation** — strings in `.resx` with zh-TW/zh-CN, default text-icon font by UI culture.
+5. **Non-modal errors** — tray balloons for non-fatal failures; undo for Remove.
+6. **Table stakes** — start with Windows, auto-hide/dock to a screen edge (AppBar), installer
    (MSIX/winget), signed releases, versioning from the tag (the release workflow does this).
-8. **Engineering** — a `main` branch as the default with CI restricted to it and pull requests,
+7. **Engineering** — CI restricted to `main` and pull requests once development moves there,
    app-execution aliases resolved through their reparse data so Store apps get the badge too,
-   narrower exception filters in `SyncCoordinator.IsSyncError`, DPAPI for the stored client secret.
+   `JsonException` in `SyncCoordinator.IsSyncError`, DPAPI for the stored client secret.
 
 ## 14. Out of scope (for now)
 

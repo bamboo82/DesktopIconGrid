@@ -31,7 +31,7 @@
 
   <Border BorderBrush="{DynamicResource Theme.Border}"
           BorderThickness="1"
-          Background="{DynamicResource Theme.Background}">
+          Background="{DynamicResource Theme.BarBackground}">
     <Grid>
       <Grid.ColumnDefinitions>
         <ColumnDefinition Width="14" />
@@ -43,6 +43,7 @@
       <Border Grid.Column="0"
               Style="{StaticResource GripStyle}"
               ToolTip="Drag to move the bar. Double-click to toggle always on top."
+              AutomationProperties.Name="Move grip"
               MouseLeftButtonDown="Grip_MouseLeftButtonDown" />
 
       <!-- Icons -->
@@ -56,6 +57,7 @@
         <Button Style="{StaticResource BarButtonStyle}"
                 VerticalAlignment="Top"
                 ToolTip="{Binding CloseButtonToolTip}"
+                AutomationProperties.Name="{Binding CloseButtonToolTip}"
                 Click="Close_Click">
           <TextBlock Text="✕" />
         </Button>
@@ -63,6 +65,7 @@
                 Style="{StaticResource BarButtonStyle}"
                 VerticalAlignment="Bottom"
                 ToolTip="Options"
+                AutomationProperties.Name="Options menu"
                 Click="Options_Click">
           <TextBlock Text="▸" FontSize="11" />
           <Button.ContextMenu>
@@ -94,7 +97,7 @@
              PopupAnimation="Fade"
              AllowsTransparency="False"
              Opened="GroupPopup_Opened">
-        <Border Background="{DynamicResource Theme.Background}"
+        <Border Background="{DynamicResource Theme.PopupBackground}"
                 BorderBrush="{DynamicResource Theme.Border}"
                 BorderThickness="1"
                 Padding="3"

@@ -5,12 +5,22 @@ using DesktopIconGrid.Services;
 
 namespace DesktopIconGrid.ViewModels;
 
+/// <summary>One choice in the bar-background list.</summary>
+public sealed record BackdropOption(string Id, string Name);
+
 public sealed class SettingsViewModel : ObservableObject
 {
     public static readonly IReadOnlyList<string> ColorPresets =
     [
         LauncherSettings.DefaultBackgroundColor, "#2B2B2B", "#3C3F41", "#1E1E2E", "#2D4A6E",
         "#4A3B5C", "#5B6B3A", "#F3F3F3", "#E6E1D8", "#FFFFFF",
+    ];
+
+    public static readonly IReadOnlyList<BackdropOption> BackdropOptions =
+    [
+        new(LauncherSettings.BackdropSolid, "Solid colour"),
+        new(LauncherSettings.BackdropMica, "Mica (Windows 11)"),
+        new(LauncherSettings.BackdropAcrylic, "Acrylic (Windows 11)"),
     ];
 
     private int _iconSize;
@@ -20,6 +30,8 @@ public sealed class SettingsViewModel : ObservableObject
     private bool _alwaysOnTop;
     private string _backgroundColor;
     private ThemePalette _selectedTheme;
+    private BackdropOption _selectedBackdrop;
+    private bool _fluentDialogs;
     private string _toggleHotkey;
     private int _transparency;
     private bool _closeToTray;
@@ -36,9 +48,11 @@ public sealed class SettingsViewModel : ObservableObject
         _toggleHotkey = current.ToggleHotkey ?? string.Empty;
         _transparency = LauncherSettings.MaxOpacity - current.Opacity;
         _closeToTray = current.CloseToTray;
+        _fluentDialogs = current.FluentDialogs;
 
         Themes = [.. ThemeCatalog.Builtin, ThemeCatalog.CreateCustom(current.BackgroundColor)];
         _selectedTheme = Themes.FirstOrDefault(t => string.Equals(t.Id, current.Theme, StringComparison.OrdinalIgnoreCase)) ?? Themes[0];
+        _selectedBackdrop = BackdropOptions.FirstOrDefault(b => string.Equals(b.Id, current.BarBackdrop, StringComparison.OrdinalIgnoreCase)) ?? BackdropOptions[0];
 
         SelectPresetCommand = new RelayCommand<string>(preset => BackgroundColor = preset);
     }
@@ -49,6 +63,8 @@ public sealed class SettingsViewModel : ObservableObject
 
     /// <summary>Built-in themes followed by "Custom".</summary>
     public IReadOnlyList<ThemePalette> Themes { get; }
+
+    public IReadOnlyList<BackdropOption> Backdrops => BackdropOptions;
 
     public int MinCellPadding => LauncherSettings.MinCellPadding;
 
@@ -140,6 +156,39 @@ public sealed class SettingsViewModel : ObservableObject
         ? (IsColorValid ? ThemeManager.ToBrush(_backgroundColor) : Brushes.Transparent)
         : ThemeManager.ToBrush(_selectedTheme.Background);
 
+    /// <summary>Solid colour, Mica or Acrylic.</summary>
+    public BackdropOption SelectedBackdrop
+    {
+        get => _selectedBackdrop;
+        set
+        {
+            if (value is not null && SetProperty(ref _selectedBackdrop, value))
+            {
+                OnPropertyChanged(nameof(IsSolidBackdrop));
+                if (!IsSolidBackdrop && Transparency == 0)
+                {
+                    Transparency = 35; // a backdrop behind an opaque bar is invisible; give it something to show through
+                }
+            }
+        }
+    }
+
+    public bool IsSolidBackdrop => string.Equals(_selectedBackdrop.Id, LauncherSettings.BackdropSolid, StringComparison.Ordinal);
+
+    /// <summary>Mica and Acrylic need Windows 11 22H2; elsewhere the list stays on the solid colour.</summary>
+    public bool IsBackdropSupported => WindowBackdrop.IsSupported;
+
+    public string BackdropHint => IsBackdropSupported
+        ? "Mica and Acrylic let the desktop show through with a blur; the theme colour tints it and the transparency slider sets how much of the blur shows. Icons stay sharp."
+        : "Mica and Acrylic need Windows 11 (version 22H2 or later).";
+
+    /// <summary>Dialogs use the Windows 11 look and follow the system light/dark mode.</summary>
+    public bool FluentDialogs
+    {
+        get => _fluentDialogs;
+        set => SetProperty(ref _fluentDialogs, value);
+    }
+
     public bool CloseToTray
     {
         get => _closeToTray;
@@ -197,6 +246,8 @@ public sealed class SettingsViewModel : ObservableObject
             AlwaysOnTop = _alwaysOnTop,
             Theme = _selectedTheme.Id,
             BackgroundColor = IsColorValid ? _backgroundColor : LauncherSettings.DefaultBackgroundColor,
+            BarBackdrop = _selectedBackdrop.Id,
+            FluentDialogs = _fluentDialogs,
             ToggleHotkey = IsHotkeyValid && HasHotkey ? _toggleHotkey : null,
             Opacity = LauncherSettings.MaxOpacity - _transparency,
             CloseToTray = _closeToTray,

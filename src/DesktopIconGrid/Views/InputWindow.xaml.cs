@@ -8,6 +8,7 @@ public partial class InputWindow : Window
     public InputWindow()
     {
         InitializeComponent();
+        DialogTheme.Apply(this);
     }
 
     public string Value => ValueBox.Text;

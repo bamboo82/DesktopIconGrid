@@ -16,6 +16,8 @@ public sealed record TrayMenuEntry(string? Text, Action? Execute = null, bool Is
 /// <summary>The notification-area icon with a menu that is rebuilt every time it opens.</summary>
 public sealed class TrayIcon : IDisposable
 {
+    private const int SmCxSmIcon = 49;
+
     private readonly System.Windows.Forms.NotifyIcon _notifyIcon;
     private readonly System.Windows.Forms.ContextMenuStrip _menu = new();
     private readonly System.Drawing.Icon? _icon;
@@ -24,7 +26,7 @@ public sealed class TrayIcon : IDisposable
 
     public TrayIcon(ImageSource image, string text)
     {
-        _icon = CreateIcon(image);
+        _icon = CreateIcon(image, SmallIconSize());
         _notifyIcon = new System.Windows.Forms.NotifyIcon
         {
             Icon = _icon ?? System.Drawing.SystemIcons.Application,
@@ -100,18 +102,32 @@ public sealed class TrayIcon : IDisposable
         }
     }
 
-    /// <summary>Renders a WPF image (the app's vector icon) into a 32×32 GDI icon.</summary>
-    private static System.Drawing.Icon? CreateIcon(ImageSource image)
+    /// <summary>The notification area's icon size at the system DPI: 16 px at 100 %, 24 at 150 %, 32 at 200 %.</summary>
+    internal static int SmallIconSize()
+    {
+        try
+        {
+            var size = NativeMethods.GetSystemMetricsForDpi(SmCxSmIcon, NativeMethods.GetDpiForSystem());
+            return size > 0 ? size : 16;
+        }
+        catch (EntryPointNotFoundException)
+        {
+            return 16; // before Windows 10 1607
+        }
+    }
+
+    /// <summary>Renders a WPF image (the app's vector icon) into a GDI icon of exactly <paramref name="size"/> pixels, so it is crisp at any DPI.</summary>
+    private static System.Drawing.Icon? CreateIcon(ImageSource image, int size)
     {
         try
         {
             var visual = new DrawingVisual();
             using (var context = visual.RenderOpen())
             {
-                context.DrawImage(image, new Rect(0, 0, 32, 32));
+                context.DrawImage(image, new Rect(0, 0, size, size));
             }
 
-            var bitmap = new RenderTargetBitmap(32, 32, 96, 96, PixelFormats.Pbgra32);
+            var bitmap = new RenderTargetBitmap(size, size, 96, 96, PixelFormats.Pbgra32);
             bitmap.Render(visual);
             var encoder = new PngBitmapEncoder();
             encoder.Frames.Add(BitmapFrame.Create(bitmap));
@@ -143,5 +159,11 @@ public sealed class TrayIcon : IDisposable
         [System.Runtime.InteropServices.DllImport("user32.dll")]
         [return: System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.Bool)]
         public static extern bool DestroyIcon(IntPtr hIcon);
+
+        [System.Runtime.InteropServices.DllImport("user32.dll")]
+        public static extern uint GetDpiForSystem();
+
+        [System.Runtime.InteropServices.DllImport("user32.dll")]
+        public static extern int GetSystemMetricsForDpi(int nIndex, uint dpi);
     }
 }

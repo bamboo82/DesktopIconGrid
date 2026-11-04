@@ -121,7 +121,7 @@
     <!-- Warning -->
     <TextBlock Grid.Row="7" Grid.Column="0" Grid.ColumnSpan="3"
                Text="{Binding Warning}"
-               Foreground="{StaticResource WarningBrush}"
+               Foreground="{DynamicResource WarningBrush}"
                TextWrapping="Wrap"
                Margin="0,0,0,8"
                Visibility="{Binding HasWarning, Converter={StaticResource BoolToVisibility}}" />

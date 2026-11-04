@@ -13,6 +13,8 @@
     and everything that uses them with DynamicResource follows.
   -->
   <SolidColorBrush x:Key="Theme.Background" Color="#FF73806E" />
+  <SolidColorBrush x:Key="Theme.BarBackground" Color="#FF73806E" />
+  <SolidColorBrush x:Key="Theme.PopupBackground" Color="#FF73806E" />
   <SolidColorBrush x:Key="Theme.Border" Color="#FF333333" />
   <SolidColorBrush x:Key="Theme.Foreground" Color="#FFFFFFFF" />
   <SolidColorBrush x:Key="Theme.Hint" Color="#FFFFFFFF" Opacity="0.65" />
@@ -32,7 +34,7 @@
     </DrawingBrush.Drawing>
   </DrawingBrush>
 
-  <!-- Fixed brushes (dialogs and badges) -->
+  <!-- Badge brushes sit on the bar and stay fixed; the three dialog brushes are recoloured by DialogTheme for dark mode -->
   <SolidColorBrush x:Key="BadgeBrush" Color="#FFF5A623" />
   <SolidColorBrush x:Key="RunningBadgeBrush" Color="#FF34C759" />
   <SolidColorBrush x:Key="DialogHintBrush" Color="#FF6E6E6E" />
@@ -172,12 +174,11 @@
     <Setter Property="Padding" Value="0" />
     <Setter Property="Cursor" Value="Hand" />
     <Setter Property="FocusVisualStyle" Value="{x:Null}" />
-    <Setter Property="Focusable" Value="False" />
     <Setter Property="FontSize" Value="10" />
     <Setter Property="Template">
       <Setter.Value>
         <ControlTemplate TargetType="Button">
-          <Border x:Name="Root" Background="{TemplateBinding Background}" CornerRadius="3" SnapsToDevicePixels="True">
+          <Border x:Name="Root" Background="{TemplateBinding Background}" BorderBrush="Transparent" BorderThickness="1" CornerRadius="3" SnapsToDevicePixels="True">
             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
           </Border>
           <ControlTemplate.Triggers>
@@ -186,6 +187,9 @@
             </Trigger>
             <Trigger Property="IsPressed" Value="True">
               <Setter TargetName="Root" Property="Background" Value="{DynamicResource Theme.Pressed}" />
+            </Trigger>
+            <Trigger Property="IsKeyboardFocused" Value="True">
+              <Setter TargetName="Root" Property="BorderBrush" Value="{DynamicResource Theme.Accent}" />
             </Trigger>
           </ControlTemplate.Triggers>
         </ControlTemplate>
@@ -261,7 +265,7 @@
   </Style>
 
   <Style x:Key="DialogHint" TargetType="TextBlock">
-    <Setter Property="Foreground" Value="{StaticResource DialogHintBrush}" />
+    <Setter Property="Foreground" Value="{DynamicResource DialogHintBrush}" />
     <Setter Property="TextWrapping" Value="Wrap" />
     <Setter Property="Margin" Value="0,-4,0,8" />
     <Style.Triggers>
