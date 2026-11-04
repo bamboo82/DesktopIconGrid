@@ -52,8 +52,9 @@ A launchable entry. Fields come straight from the *Shortcut Properties* dialog:
 
 **Running badge and output log.** A green dot in the corner of a shortcut shows that a program
 started from it is still running (processes started from the bar are followed until they exit;
-executables are also matched by process name every few seconds, so a program started elsewhere
-counts too). *Keep a log of the program's output* in the properties starts console programs and
+executables are also matched by their full path against the running processes every few seconds,
+so a program started elsewhere counts too, while a same-named program elsewhere and the Windows
+shell itself do not). *Keep a log of the program's output* in the properties starts console programs and
 batch files with their output redirected to `%LocalAppData%\DesktopIconGrid\logs\<name>_<time>.log`
 (the ten newest per shortcut are kept) and adds *Show log…* to the context menu: a live window with
 the command line, start time, output, errors and exit code.
@@ -150,7 +151,7 @@ The item model, handler interface, registry and the bucket are specified in
 
 | Action | Result |
 | --- | --- |
-| Left click an icon | Launch (shortcut) or open popup (group). Option: double-click instead. Repeated clicks within 400 ms launch once. |
+| Left click an icon | Launch (shortcut) or open popup (group). Option: double-click instead (groups and special icons still act on one click). Repeated clicks within 400 ms launch once. |
 | Right click an icon | Item context menu (§4). |
 | Right click empty space | Bar context menu (§4). |
 | Drag an icon | Reorder: a drop indicator shows the insertion point; dropping inserts there. |
@@ -358,38 +359,40 @@ Global show/hide hotkey; tray icon with show/hide, reset position and the common
 
 ## 13. Reliability and polish backlog
 
-Review findings (from an independent code review of commit 85a52e9) that are not done yet,
-in the order they should be taken. Items 1–12 of that review are implemented (single
-instance, no window-less process after a startup error, unknown item kinds and newer layout
-versions preserved, durable saves with `layout.json.bak`, sync conflicts decided by Drive's
-clock and a per-install device id, Mark-of-the-Web on downloads with no direct launch of
-executables, per-request HTTP timeouts, revoked-token recovery, complete run logs, Windows
-argument quoting, hotkey registration that keeps the old key on failure, per-instance MCI
-alias, honest close tooltip, no taskbar/Alt+Tab entry, icon resolution off the UI thread).
+Two independent review rounds (of commits 85a52e9 and 1ce4e3c) have been worked through. Done
+from them: single instance with show-on-relaunch and foreground handover (the show event exists
+before the window does), no window-less process after a startup error, unknown item kinds and
+newer layout versions preserved (the version number too, so the newer app does not migrate its
+items twice), durable saves with `layout.json.bak`, sync conflicts decided by Drive's clock and a
+per-install device id with the linked file id used for every overwrite, Mark-of-the-Web with the
+source URLs on downloads and no direct launch of executables, timeouts on every HTTP phase
+(metadata, multipart and chunk uploads, download headers, stalled bodies, icon downloads with a
+Cancel button), resumable uploads that honour `Range` on 308, probe the session before retrying
+and back off on 429/5xx, one folder listing per dropped directory, revoked-token recovery,
+complete run logs, Windows argument quoting, hotkey registration that keeps the old key on
+failure, per-instance MCI alias, the pending upload flushed on exit (including one already in
+flight, with the bar disabled meanwhile), icon lookups on one STA worker with stale results
+dropped and one shell call per path, running badge by executable path.
 
-1. **Running badge accuracy** — match full image paths (`QueryFullProcessImageName`) instead
-   of process names, so "File Explorer" and "Command Prompt" do not light up for the shell.
-2. **Resumable uploads** — honour the `Range` header on 308, probe with `bytes */length`
-   before retrying, back off on 429/403/5xx, list a folder once per directory drop.
-3. **Sync copies by id everywhere** — the linked file id is stored now; also use it when
-   listing/overwriting so duplicate names on Drive cannot be confused.
-4. **Drive cache freshness** — compare `modifiedTime`/`md5Checksum`, not only size; reserved
+Still open, in the order they should be taken:
+
+1. **Drive cache freshness** — compare `modifiedTime`/`md5Checksum`, not only size; reserved
    names (`CON`, `NUL`, `COM1`) in `SafeName`.
-5. **Native look** — Fluent theme for the dialogs (`Application.ThemeMode`) with dark mode;
+2. **Native look** — Fluent theme for the dialogs (`Application.ThemeMode`) with dark mode;
    background-only transparency or Mica/Acrylic via `DwmSetWindowAttribute` instead of
    whole-window alpha; a WPF tray menu (or a DPI-aware icon) instead of the WinForms strip.
-6. **Accessibility** — `AutomationProperties.Name`/`HelpText` on icon buttons, system brushes
+3. **Accessibility** — `AutomationProperties.Name`/`HelpText` on icon buttons, system brushes
    under High Contrast, keyboard/mouse click disambiguation via `InputManager` instead of a
    150 ms timing window.
-7. **Multi-monitor** — per-monitor off-screen checks (`MonitorFromRect`) instead of the
+4. **Multi-monitor** — per-monitor off-screen checks (`MonitorFromRect`) instead of the
    virtual-screen bounding box.
-8. **Localisation** — strings in `.resx` with zh-TW/zh-CN, default text-icon font by UI culture.
-9. **Non-modal errors** — tray balloons for non-fatal failures; undo for Remove.
-10. **Table stakes** — start with Windows, auto-hide/dock to a screen edge (AppBar), installer
-    (MSIX/winget), signed releases on tags, versioning from the tag.
-11. **Engineering** — a `net10.0-windows` test project for the WPF-side pure functions, CI on
-    tags, narrower exception filters in `SyncCoordinator.IsSyncError`, DPAPI for the stored
-    client secret.
+5. **Localisation** — strings in `.resx` with zh-TW/zh-CN, default text-icon font by UI culture.
+6. **Non-modal errors** — tray balloons for non-fatal failures; undo for Remove.
+7. **Table stakes** — start with Windows, auto-hide/dock to a screen edge (AppBar), installer
+   (MSIX/winget), signed releases on tags, versioning from the tag.
+8. **Engineering** — a `net10.0-windows` test project for the WPF-side pure functions (icon
+   worker, process tracker path matching, sync coordinator flush), CI on tags, narrower
+   exception filters in `SyncCoordinator.IsSyncError`, DPAPI for the stored client secret.
 
 ## 14. Out of scope (for now)
 

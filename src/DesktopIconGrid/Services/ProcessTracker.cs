@@ -12,8 +12,9 @@ namespace DesktopIconGrid.Services;
 
 /// <summary>
 /// Knows which shortcuts currently have a running program: processes started from the bar are
-/// followed until they exit, and executables are also matched by process name every few seconds
-/// (so a program started elsewhere still shows as running). Also owns the output logs.
+/// followed until they exit, and executables are also matched by full image path against the
+/// running processes every few seconds (so a program started elsewhere still shows as running,
+/// while a same-named program somewhere else does not). Also owns the output logs.
 /// </summary>
 public sealed class ProcessTracker : IDisposable
 {
@@ -22,10 +23,10 @@ public sealed class ProcessTracker : IDisposable
 
     private readonly Dispatcher _dispatcher;
     private readonly Dictionary<Guid, HashSet<int>> _launched = [];
-    private readonly Dictionary<Guid, string> _watchedProcessNames = [];
+    private readonly Dictionary<Guid, string> _watchedPaths = [];
     private readonly Dictionary<Guid, ProcessLogSession> _logs = [];
     private readonly DispatcherTimer _scanTimer;
-    private HashSet<string> _runningNames = new(StringComparer.OrdinalIgnoreCase);
+    private HashSet<string> _runningPaths = new(StringComparer.OrdinalIgnoreCase);
     private bool _scanning;
 
     public ProcessTracker(Dispatcher dispatcher, string logDirectory)
@@ -43,20 +44,20 @@ public sealed class ProcessTracker : IDisposable
 
     public bool IsRunning(Guid id) =>
         (_launched.TryGetValue(id, out var pids) && pids.Count > 0)
-        || (_watchedProcessNames.TryGetValue(id, out var name) && _runningNames.Contains(name));
+        || (_watchedPaths.TryGetValue(id, out var path) && _runningPaths.Contains(path));
 
-    /// <summary>Starts matching the shortcut's executable by process name (no effect for documents, links and shell folders).</summary>
+    /// <summary>Starts matching the shortcut's executable by full path (no effect for documents, links and shell folders).</summary>
     public void Watch(ShortcutItem shortcut)
     {
         ArgumentNullException.ThrowIfNull(shortcut);
-        var name = ProcessNameOf(shortcut.Location);
-        if (name is null)
+        var path = ExecutablePathOf(shortcut.Location);
+        if (path is null)
         {
-            _watchedProcessNames.Remove(shortcut.Id);
+            _watchedPaths.Remove(shortcut.Id);
         }
         else
         {
-            _watchedProcessNames[shortcut.Id] = name;
+            _watchedPaths[shortcut.Id] = path;
         }
 
         UpdateTimer();
@@ -64,13 +65,13 @@ public sealed class ProcessTracker : IDisposable
 
     public void Unwatch(Guid id)
     {
-        _watchedProcessNames.Remove(id);
+        _watchedPaths.Remove(id);
         UpdateTimer();
     }
 
     public void UnwatchAll()
     {
-        _watchedProcessNames.Clear();
+        _watchedPaths.Clear();
         UpdateTimer();
     }
 
@@ -170,10 +171,10 @@ public sealed class ProcessTracker : IDisposable
 
     private void UpdateTimer()
     {
-        if (_watchedProcessNames.Count == 0)
+        if (_watchedPaths.Count == 0)
         {
             _scanTimer.Stop();
-            _runningNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            _runningPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         }
         else if (!_scanTimer.IsEnabled)
         {
@@ -182,7 +183,7 @@ public sealed class ProcessTracker : IDisposable
         }
     }
 
-    /// <summary>Enumerates processes on a worker thread (it can take tens of milliseconds) and compares on the UI thread.</summary>
+    /// <summary>Snapshots the running executables on a worker thread (it can take tens of milliseconds) and compares on the UI thread.</summary>
     private async Task ScanAsync()
     {
         if (_scanning)
@@ -193,48 +194,12 @@ public sealed class ProcessTracker : IDisposable
         _scanning = true;
         try
         {
-            var names = await Task.Run(static () =>
+            var paths = await Task.Run(static () => RunningProcesses.ImagePaths());
+            var previous = _runningPaths;
+            _runningPaths = paths;
+            foreach (var (id, path) in _watchedPaths)
             {
-                var set = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-                Process[] processes;
-                try
-                {
-                    processes = Process.GetProcesses();
-                }
-                catch (Exception ex) when (ex is InvalidOperationException or Win32Exception)
-                {
-                    return null;
-                }
-
-                foreach (var process in processes)
-                {
-                    try
-                    {
-                        set.Add(process.ProcessName);
-                    }
-                    catch (Exception ex) when (ex is InvalidOperationException or Win32Exception)
-                    {
-                        // The process went away while we looked at it.
-                    }
-                    finally
-                    {
-                        process.Dispose();
-                    }
-                }
-
-                return set;
-            });
-
-            if (names is null)
-            {
-                return;
-            }
-
-            var previous = _runningNames;
-            _runningNames = names;
-            foreach (var (id, name) in _watchedProcessNames)
-            {
-                if (previous.Contains(name) != names.Contains(name))
+                if (previous.Contains(path) != paths.Contains(path))
                 {
                     RunningChanged?.Invoke(this, id);
                 }
@@ -246,8 +211,11 @@ public sealed class ProcessTracker : IDisposable
         }
     }
 
-    /// <summary>The process name (file name without extension) for executables and bare commands; null otherwise.</summary>
-    internal static string? ProcessNameOf(string? location)
+    /// <summary>
+    /// The full path of the executable a shortcut starts, for executables and bare commands; <see langword="null"/>
+    /// for documents, links, folders, shell locations and the Windows shell itself (which is always running).
+    /// </summary>
+    internal static string? ExecutablePathOf(string? location)
     {
         var expanded = Environment.ExpandEnvironmentVariables(location?.Trim() ?? string.Empty);
         if (expanded.Length == 0 || LaunchPlanner.IsUri(expanded) || LaunchPlanner.IsSpecial(expanded) || LaunchPlanner.IsShellNamespace(expanded))
@@ -256,17 +224,26 @@ public sealed class ProcessTracker : IDisposable
         }
 
         var extension = Path.GetExtension(expanded);
-        if (extension.Equals(".exe", StringComparison.OrdinalIgnoreCase) || extension.Equals(".com", StringComparison.OrdinalIgnoreCase))
+        var looksExecutable = extension.Equals(".exe", StringComparison.OrdinalIgnoreCase)
+                              || extension.Equals(".com", StringComparison.OrdinalIgnoreCase)
+                              || (extension.Length == 0 && !Directory.Exists(expanded));
+        if (!looksExecutable)
         {
-            return Path.GetFileNameWithoutExtension(expanded);
+            return null;
         }
 
-        if (extension.Length == 0 && !Directory.Exists(expanded))
+        string? full;
+        try
         {
-            return Path.GetFileName(expanded);
+            var found = ExecutableLocator.Find(expanded);
+            full = found is null ? null : Path.GetFullPath(found);
+        }
+        catch (Exception ex) when (ex is ArgumentException or IOException or NotSupportedException or System.Security.SecurityException)
+        {
+            return null;
         }
 
-        return null;
+        return full is not null && string.Equals(Path.GetFileName(full), "explorer.exe", StringComparison.OrdinalIgnoreCase) ? null : full;
     }
 
     private void TrimOldLogs(string prefix)
@@ -405,8 +382,9 @@ public sealed class ProcessLogSession : IDisposable
             _process.WaitForExit(); // without a timeout this also waits for the async output readers to reach end of stream
             exitCode = _process.ExitCode;
         }
-        catch (Exception ex) when (ex is InvalidOperationException or SystemException)
+        catch (Exception ex) when (ex is InvalidOperationException or Win32Exception)
         {
+            // No process handle any more; the exit code stays unknown.
         }
 
         ExitCode = exitCode;

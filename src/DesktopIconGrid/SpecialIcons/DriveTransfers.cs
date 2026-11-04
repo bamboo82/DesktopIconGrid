@@ -53,7 +53,7 @@ public sealed class DriveDownloader(IDriveFiles files)
             }
 
             File.Move(temporary, target, overwrite: true);
-            MarkAsFromInternet(target);
+            MarkAsFromInternet(target, entry.Id);
             return target;
         }
         catch
@@ -72,17 +72,23 @@ public sealed class DriveDownloader(IDriveFiles files)
 
     public static bool IsExecutable(string path) => ExecutableExtensions.Contains(Path.GetExtension(path));
 
-    /// <summary>Writes the Zone.Identifier stream so SmartScreen and Office's Protected View treat the file as downloaded.</summary>
-    public static void MarkAsFromInternet(string path)
+    /// <summary>
+    /// Writes the Zone.Identifier stream so SmartScreen and Office's Protected View treat the file as downloaded
+    /// and can name Google Drive (and the file itself, when <paramref name="fileId"/> is known) as its source.
+    /// </summary>
+    public static void MarkAsFromInternet(string path, string? fileId = null)
     {
         if (!OperatingSystem.IsWindows())
         {
             return;
         }
 
+        var host = string.IsNullOrEmpty(fileId)
+            ? "https://drive.google.com/"
+            : $"https://drive.google.com/file/d/{Uri.EscapeDataString(fileId)}/view";
         try
         {
-            File.WriteAllText(path + ":Zone.Identifier", "[ZoneTransfer]\r\nZoneId=3\r\n");
+            File.WriteAllText(path + ":Zone.Identifier", $"[ZoneTransfer]\r\nZoneId=3\r\nReferrerUrl=https://drive.google.com/\r\nHostUrl={host}\r\n");
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or NotSupportedException)
         {

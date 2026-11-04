@@ -24,6 +24,7 @@ public partial class MainWindow : Window
     private string? _registeredHotkey;
     private TrayIcon? _tray;
     private bool _exiting;
+    private bool _closing;
 
     public MainWindow(LauncherViewModel viewModel)
     {
@@ -129,6 +130,11 @@ public partial class MainWindow : Window
 
     public void ExitApplication()
     {
+        if (_closing)
+        {
+            return; // already on the way out (a pending upload is being flushed)
+        }
+
         _exiting = true;
         Close();
     }
@@ -181,6 +187,17 @@ public partial class MainWindow : Window
         if (WindowState == WindowState.Minimized)
         {
             WindowState = WindowState.Normal;
+        }
+
+        // A request from another process carries no foreground rights of its own: the second copy called
+        // AllowSetForegroundWindow for us, and flipping Topmost is the fallback when Windows still refuses
+        // (there is no taskbar button to flash for a tool window).
+        var handle = new WindowInteropHelper(this).Handle;
+        if (handle == IntPtr.Zero || !NativeMethods.SetForegroundWindow(handle))
+        {
+            var wasTopmost = Topmost;
+            Topmost = true;
+            Topmost = wasTopmost;
         }
 
         Activate();
@@ -250,6 +267,12 @@ public partial class MainWindow : Window
             return;
         }
 
+        if (_closing)
+        {
+            e.Cancel = true; // a second Exit while the pending upload is being flushed below
+            return;
+        }
+
         if (!_exiting && _viewModel.CloseToTray && _tray is not null)
         {
             e.Cancel = true;
@@ -259,6 +282,8 @@ public partial class MainWindow : Window
             return;
         }
 
+        _closing = true;
+        IsEnabled = false; // the message loop keeps running in WaitForPendingWork; no more clicks on the bar
         SavePlacement();
         WaitForPendingWork();
     }
@@ -502,5 +527,9 @@ public partial class MainWindow : Window
 
         [DllImport("user32.dll", EntryPoint = "SetWindowLongPtrW")]
         public static extern IntPtr SetWindowLongPtr(IntPtr hWnd, int nIndex, IntPtr dwNewLong);
+
+        [DllImport("user32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        public static extern bool SetForegroundWindow(IntPtr hWnd);
     }
 }

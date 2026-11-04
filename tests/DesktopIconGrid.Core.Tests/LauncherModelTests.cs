@@ -278,6 +278,17 @@ public class LauncherModelTests
     }
 
     [Fact]
+    public void ToLayout_keeps_the_newer_format_version_of_a_loaded_layout()
+    {
+        var newer = LauncherModel.FromLayout(new LauncherLayout { Version = LauncherLayout.CurrentVersion + 6 });
+        var older = LauncherModel.FromLayout(new LauncherLayout { Version = 0 });
+
+        Assert.Equal(LauncherLayout.CurrentVersion + 6, newer.ToLayout().Version);
+        Assert.Equal(LauncherLayout.CurrentVersion, older.ToLayout().Version);
+        Assert.Equal(LauncherLayout.CurrentVersion, new LauncherModel().ToLayout().Version);
+    }
+
+    [Fact]
     public void ToLayout_returns_copies()
     {
         var model = ModelWith("a");

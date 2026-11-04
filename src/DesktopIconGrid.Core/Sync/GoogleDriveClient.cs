@@ -53,13 +53,23 @@ public sealed class GoogleDriveClient : IDriveClient, IDriveFiles
     private const string JsonMimeType = "application/json";
     private const string FileFields = "id,name,modifiedTime,size,appProperties";
     private const string EntryFields = "id,name,mimeType,size,modifiedTime";
-    private const int MaxChunkAttempts = 3;
+    private const int MaxChunkAttempts = 4;
 
-    /// <summary>Limit for metadata calls; transfers are only bounded by their own progress and the caller's token.</summary>
+    /// <summary>
+    /// Limit for metadata calls and for the header phase of streamed downloads; also how long a download
+    /// may go without delivering any bytes.
+    /// </summary>
     public static readonly TimeSpan RequestTimeout = TimeSpan.FromSeconds(100);
 
-    /// <summary>Limit per 8 MiB chunk of a resumable upload.</summary>
+    /// <summary>Limit for one upload request: a multipart upload (up to <see cref="MultipartLimit"/>) or one resumable chunk.</summary>
     public static readonly TimeSpan ChunkTimeout = TimeSpan.FromMinutes(10);
+
+    /// <summary>Waits before the n-th retry of a chunk (exponential backoff); replaced in tests.</summary>
+    internal Func<int, CancellationToken, Task> RetryDelay { get; set; } =
+        (attempt, cancellationToken) => Task.Delay(TimeSpan.FromSeconds(Math.Pow(2, attempt)), cancellationToken);
+
+    /// <summary>How long a download may stall before it is abandoned; replaced in tests.</summary>
+    internal TimeSpan StallTimeout { get; set; } = RequestTimeout;
 
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
@@ -263,7 +273,7 @@ public sealed class GoogleDriveClient : IDriveClient, IDriveFiles
             media.Headers.ContentType = new MediaTypeHeaderValue(mimeType);
             body.Add(media);
             return new HttpRequestMessage(method, url) { Content = body };
-        }, cancellationToken).ConfigureAwait(false);
+        }, cancellationToken, timeout: ChunkTimeout).ConfigureAwait(false);
 
         progress?.Report(read);
         var dto = await ReadJsonAsync<FileDto>(response, cancellationToken).ConfigureAwait(false)
@@ -302,112 +312,248 @@ public sealed class GoogleDriveClient : IDriveClient, IDriveFiles
 
         AppLog.Default.Debug("Drive", $"Resumable upload of \"{name}\" ({length:N0} bytes) started");
 
-        // 2. Send the chunks.
+        // 2. Send the chunks. `offset` is the first byte Drive has not confirmed yet; the buffer holds
+        // [bufferStart, bufferStart + bufferLength) of the file so a partly accepted chunk can be re-sent.
+        var origin = content.CanSeek ? content.Position : 0;
         var buffer = new byte[ChunkSize];
         long offset = 0;
-        while (offset < length)
+        long bufferStart = 0;
+        var bufferLength = 0;
+        var attempt = 0;
+        while (true)
         {
-            var chunkLength = 0;
-            while (chunkLength < buffer.Length && offset + chunkLength < length)
+            if (offset >= length)
             {
-                var count = await content.ReadAsync(buffer.AsMemory(chunkLength, (int)Math.Min(buffer.Length - chunkLength, length - offset - chunkLength)), cancellationToken).ConfigureAwait(false);
-                if (count == 0)
+                // Everything was confirmed by 308 responses without a final answer: ask once more.
+                var finished = await ResumeAsync(uploadUri, length, attempt: 0, cancellationToken).ConfigureAwait(false);
+                if (finished.Completed is not null)
                 {
-                    break;
+                    progress?.Report(length);
+                    return finished.Completed;
                 }
 
-                chunkLength += count;
+                throw new DriveException("The upload finished without a confirmation from Google Drive.");
             }
 
-            if (chunkLength == 0)
+            if (offset < bufferStart || offset >= bufferStart + bufferLength)
             {
-                throw new DriveException("The file ended before the expected length was read.");
+                if (offset != bufferStart + bufferLength)
+                {
+                    if (!content.CanSeek)
+                    {
+                        throw new DriveException("Google Drive lost part of the upload and the file cannot be re-read.");
+                    }
+
+                    content.Position = origin + offset;
+                }
+
+                bufferStart = offset;
+                bufferLength = await FillAsync(content, buffer, (int)Math.Min(buffer.Length, length - offset), cancellationToken).ConfigureAwait(false);
+                if (bufferLength == 0)
+                {
+                    throw new DriveException("The file ended before the expected length was read.");
+                }
             }
 
-            var start = offset;
-            var end = offset + chunkLength - 1;
-            HttpResponseMessage? response = null;
-            for (var attempt = 1; ; attempt++)
+            var sliceStart = (int)(offset - bufferStart);
+            var sliceLength = bufferLength - sliceStart;
+            var end = offset + sliceLength - 1;
+
+            HttpResponseMessage response;
+            try
             {
                 using var request = new HttpRequestMessage(HttpMethod.Put, uploadUri)
                 {
-                    Content = new ByteArrayContent(buffer, 0, chunkLength),
+                    Content = new ByteArrayContent(buffer, sliceStart, sliceLength),
                 };
                 request.Content.Headers.ContentType = new MediaTypeHeaderValue(mimeType);
-                request.Content.Headers.ContentRange = new ContentRangeHeaderValue(start, end, length);
-
-                try
+                request.Content.Headers.ContentRange = new ContentRangeHeaderValue(offset, end, length);
+                using var chunkTimeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                chunkTimeout.CancelAfter(ChunkTimeout);
+                response = await _http.SendAsync(request, chunkTimeout.Token).ConfigureAwait(false);
+            }
+            catch (Exception ex) when (ex is HttpRequestException || (ex is OperationCanceledException && !cancellationToken.IsCancellationRequested))
+            {
+                var reason = ex is OperationCanceledException ? "timed out" : ex.Message;
+                if (++attempt >= MaxChunkAttempts)
                 {
-                    using var chunkTimeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-                    chunkTimeout.CancelAfter(ChunkTimeout);
-                    response = await _http.SendAsync(request, chunkTimeout.Token).ConfigureAwait(false);
-                }
-                catch (Exception ex) when (ex is HttpRequestException || (ex is OperationCanceledException && !cancellationToken.IsCancellationRequested))
-                {
-                    if (attempt < MaxChunkAttempts)
-                    {
-                        await Task.Delay(TimeSpan.FromSeconds(attempt * 2), cancellationToken).ConfigureAwait(false);
-                        continue;
-                    }
-
-                    throw new DriveException(ex is OperationCanceledException
-                        ? "The upload timed out."
-                        : $"The upload was interrupted: {ex.Message}");
+                    throw new DriveException(ex is OperationCanceledException ? "The upload timed out." : $"The upload was interrupted: {ex.Message}");
                 }
 
-                if ((int)response.StatusCode >= 500 && attempt < MaxChunkAttempts)
+                AppLog.Default.Warning("Drive", $"Chunk at {offset:N0} of \"{name}\" {reason}; retry {attempt} of {MaxChunkAttempts - 1}");
+                var resumed = await ResumeAsync(uploadUri, length, attempt, cancellationToken).ConfigureAwait(false);
+                if (resumed.Completed is not null)
                 {
-                    response.Dispose();
-                    response = null;
-                    await Task.Delay(TimeSpan.FromSeconds(attempt * 2), cancellationToken).ConfigureAwait(false);
-                    continue;
+                    progress?.Report(length);
+                    return resumed.Completed;
                 }
 
-                break;
+                offset = resumed.NextByte ?? offset;
+                continue;
             }
 
             using (response)
             {
-                if (response is null)
+                var status = response.StatusCode;
+                if ((int)status == 308)
                 {
-                    throw new DriveException("The upload was interrupted.");
-                }
+                    var confirmed = Math.Min(ConfirmedBytes(response), length);
+                    if (confirmed > offset)
+                    {
+                        attempt = 0;
+                    }
+                    else if (++attempt >= MaxChunkAttempts)
+                    {
+                        throw new DriveException("Google Drive is not accepting the uploaded data.");
+                    }
 
-                if ((int)response.StatusCode == 308)
-                {
-                    offset = end + 1;
+                    offset = confirmed;
                     progress?.Report(offset);
                     continue;
                 }
 
-                if (!response.IsSuccessStatusCode)
+                if (response.IsSuccessStatusCode)
                 {
-                    var body = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
-                    throw new DriveException(DescribeError(body, response.StatusCode), response.StatusCode);
+                    progress?.Report(length);
+                    var dto = await ReadJsonAsync<FileDto>(response, cancellationToken).ConfigureAwait(false)
+                              ?? throw new DriveException("Google Drive did not describe the uploaded file.");
+                    return ToEntry(dto);
                 }
 
-                offset = end + 1;
-                progress?.Report(offset);
-                var dto = await ReadJsonAsync<FileDto>(response, cancellationToken).ConfigureAwait(false)
-                          ?? throw new DriveException("Google Drive did not describe the uploaded file.");
-                return ToEntry(dto);
+                var body = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+                var description = DescribeError(body, status);
+                if (!IsRetryable(status, body) || ++attempt >= MaxChunkAttempts)
+                {
+                    AppLog.Default.Warning("Drive", $"Upload of \"{name}\" failed: {description}");
+                    throw new DriveException(description, status);
+                }
+
+                AppLog.Default.Warning("Drive", $"Chunk at {offset:N0} of \"{name}\" rejected ({description}); retry {attempt} of {MaxChunkAttempts - 1}");
+                var recovered = await ResumeAsync(uploadUri, length, attempt, cancellationToken).ConfigureAwait(false);
+                if (recovered.Completed is not null)
+                {
+                    progress?.Report(length);
+                    return recovered.Completed;
+                }
+
+                offset = recovered.NextByte ?? offset;
+            }
+        }
+    }
+
+    /// <summary>After a failed chunk: backs off, then asks Drive how much it holds (<c>Content-Range: bytes */length</c>).</summary>
+    private async Task<(long? NextByte, DriveEntry? Completed)> ResumeAsync(Uri uploadUri, long length, int attempt, CancellationToken cancellationToken)
+    {
+        if (attempt > 0)
+        {
+            await RetryDelay(attempt, cancellationToken).ConfigureAwait(false);
+        }
+
+        try
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Put, uploadUri) { Content = new ByteArrayContent([]) };
+            request.Content.Headers.ContentRange = new ContentRangeHeaderValue(length);
+            using var limit = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            limit.CancelAfter(RequestTimeout);
+            using var response = await _http.SendAsync(request, limit.Token).ConfigureAwait(false);
+            if ((int)response.StatusCode == 308)
+            {
+                return (Math.Min(ConfirmedBytes(response), length), null);
+            }
+
+            if (response.IsSuccessStatusCode)
+            {
+                var dto = await ReadJsonAsync<FileDto>(response, cancellationToken).ConfigureAwait(false);
+                return dto is null ? (null, null) : (length, ToEntry(dto));
+            }
+
+            return (null, null); // e.g. 404: the session expired; the next chunk attempt reports it
+        }
+        catch (HttpRequestException)
+        {
+            return (null, null);
+        }
+        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            return (null, null);
+        }
+    }
+
+    /// <summary>Bytes Drive holds according to a 308 response's <c>Range: bytes=0-N</c> header; 0 when the header is absent.</summary>
+    internal static long ConfirmedBytes(HttpResponseMessage response)
+    {
+        if (!response.Headers.TryGetValues("Range", out var values))
+        {
+            return 0;
+        }
+
+        foreach (var value in values)
+        {
+            var dash = value.LastIndexOf('-');
+            if (dash > 0 && long.TryParse(value.AsSpan(dash + 1).Trim(), System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var last))
+            {
+                return last + 1;
             }
         }
 
-        throw new DriveException("The upload finished without a confirmation from Google Drive.");
+        return 0;
     }
 
-    private static async Task CopyWithProgressAsync(HttpResponseMessage response, Stream destination, IProgress<long>? progress, CancellationToken cancellationToken)
+    /// <summary>Rate limits and server errors are worth a retry; everything else is final.</summary>
+    private static bool IsRetryable(HttpStatusCode status, string body) =>
+        (int)status == 429
+        || (int)status >= 500
+        || (status == HttpStatusCode.Forbidden && body.Contains("ateLimitExceeded", StringComparison.Ordinal));
+
+    private static async Task<int> FillAsync(Stream source, byte[] buffer, int count, CancellationToken cancellationToken)
     {
-        await using var source = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
-        var buffer = new byte[81920];
-        long total = 0;
-        int read;
-        while ((read = await source.ReadAsync(buffer, cancellationToken).ConfigureAwait(false)) > 0)
+        var filled = 0;
+        while (filled < count)
         {
-            await destination.WriteAsync(buffer.AsMemory(0, read), cancellationToken).ConfigureAwait(false);
-            total += read;
-            progress?.Report(total);
+            var read = await source.ReadAsync(buffer.AsMemory(filled, count - filled), cancellationToken).ConfigureAwait(false);
+            if (read == 0)
+            {
+                break;
+            }
+
+            filled += read;
+        }
+
+        return filled;
+    }
+
+    /// <summary>Copies the body to <paramref name="destination"/>; a read that delivers nothing for <see cref="StallTimeout"/> abandons the transfer.</summary>
+    private async Task CopyWithProgressAsync(HttpResponseMessage response, Stream destination, IProgress<long>? progress, CancellationToken cancellationToken)
+    {
+        using var idle = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        try
+        {
+            idle.CancelAfter(StallTimeout);
+            await using var source = await response.Content.ReadAsStreamAsync(idle.Token).ConfigureAwait(false);
+            var buffer = new byte[81920];
+            long total = 0;
+            while (true)
+            {
+                idle.CancelAfter(StallTimeout);
+                var read = await source.ReadAsync(buffer, idle.Token).ConfigureAwait(false);
+                if (read <= 0)
+                {
+                    break;
+                }
+
+                await destination.WriteAsync(buffer.AsMemory(0, read), cancellationToken).ConfigureAwait(false);
+                total += read;
+                progress?.Report(total);
+            }
+        }
+        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            AppLog.Default.Warning("Drive", "Download stalled: no data for " + StallTimeout.TotalSeconds.ToString("0", System.Globalization.CultureInfo.InvariantCulture) + " s");
+            throw new DriveException("The download stalled: Google Drive stopped sending data.");
+        }
+        catch (HttpRequestException ex)
+        {
+            throw new DriveException($"The download was interrupted: {ex.Message}");
         }
     }
 
@@ -471,7 +617,7 @@ public sealed class GoogleDriveClient : IDriveClient, IDriveFiles
     }
 
     /// <summary>Sends a request with a bearer token; on 401 refreshes the token once and retries.</summary>
-    private async Task<HttpResponseMessage> SendAsync(Func<HttpRequestMessage> createRequest, CancellationToken cancellationToken, HttpCompletionOption completion = HttpCompletionOption.ResponseContentRead)
+    private async Task<HttpResponseMessage> SendAsync(Func<HttpRequestMessage> createRequest, CancellationToken cancellationToken, HttpCompletionOption completion = HttpCompletionOption.ResponseContentRead, TimeSpan? timeout = null)
     {
         for (var attempt = 0; ; attempt++)
         {
@@ -481,14 +627,11 @@ public sealed class GoogleDriveClient : IDriveClient, IDriveFiles
             HttpResponseMessage response;
             try
             {
-                // Metadata calls get a timeout; streamed transfers (headers-read) rely on the caller's token.
-                using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-                if (completion == HttpCompletionOption.ResponseContentRead)
-                {
-                    timeout.CancelAfter(RequestTimeout);
-                }
-
-                response = await _http.SendAsync(request, completion, timeout.Token).ConfigureAwait(false);
+                // Bounds the whole call for buffered responses and the header phase for streamed ones (with
+                // ResponseHeadersRead the token does not govern body reads; CopyWithProgressAsync bounds those).
+                using var limit = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                limit.CancelAfter(timeout ?? RequestTimeout);
+                response = await _http.SendAsync(request, completion, limit.Token).ConfigureAwait(false);
             }
             catch (HttpRequestException ex)
             {

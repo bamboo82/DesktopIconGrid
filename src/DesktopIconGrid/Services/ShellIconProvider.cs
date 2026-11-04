@@ -28,7 +28,7 @@ public sealed class ShellIconProvider : IIconProvider
         ".exe", ".dll", ".ico", ".icl", ".cpl", ".ocx", ".scr", ".mun",
     };
 
-    private readonly ConcurrentDictionary<string, ImageSource?> _cache = new(StringComparer.OrdinalIgnoreCase);
+    private readonly ConcurrentDictionary<string, Lazy<ImageSource?>> _cache = new(StringComparer.OrdinalIgnoreCase);
 
     public ImageSource? GetIcon(string source, int pixelSize)
     {
@@ -37,24 +37,8 @@ public sealed class ShellIconProvider : IIconProvider
             return null;
         }
 
-        var key = $"{pixelSize}|{source.Trim()}";
-        if (_cache.TryGetValue(key, out var cached))
-        {
-            return cached;
-        }
-
-        var image = Load(source.Trim(), Math.Clamp(pixelSize, 16, 256));
-        if (image is not null)
-        {
-            if (image.CanFreeze)
-            {
-                image.Freeze();
-            }
-
-            _cache[key] = image;
-        }
-
-        return image;
+        var trimmed = source.Trim();
+        return Cached($"{pixelSize}|{trimmed}", () => Load(trimmed, Math.Clamp(pixelSize, 16, 256)));
     }
 
     public ImageSource? GetItemIcon(LauncherItem item, int pixelSize)
@@ -79,22 +63,42 @@ public sealed class ShellIconProvider : IIconProvider
         };
     }
 
-    public ImageSource? GetFolderIcon(int pixelSize)
+    public ImageSource? GetFolderIcon(int pixelSize) =>
+        Cached($"{pixelSize}|folder", () => TrySystemImageListIcon("folder", pixelSize, NativeMethods.FILE_ATTRIBUTE_DIRECTORY));
+
+    /// <summary>
+    /// One lookup per key even when several cells ask at the same time (the others wait for it); misses are
+    /// not kept, so a drive that comes back later is asked again.
+    /// </summary>
+    private ImageSource? Cached(string key, Func<ImageSource?> load)
     {
-        const string key = "folder";
-        var cacheKey = $"{pixelSize}|{key}";
-        if (_cache.TryGetValue(cacheKey, out var cached))
+        var entry = _cache.GetOrAdd(key, _ => new Lazy<ImageSource?>(() => Frozen(load()), LazyThreadSafetyMode.ExecutionAndPublication));
+        ImageSource? image;
+        try
         {
-            return cached;
+            image = entry.Value;
+        }
+        catch
+        {
+            _cache.TryRemove(KeyValuePair.Create(key, entry));
+            throw;
         }
 
-        var image = TrySystemImageListIcon("folder", pixelSize, NativeMethods.FILE_ATTRIBUTE_DIRECTORY);
-        if (image is not null && image.CanFreeze)
+        if (image is null)
+        {
+            _cache.TryRemove(KeyValuePair.Create(key, entry));
+        }
+
+        return image;
+    }
+
+    private static ImageSource? Frozen(ImageSource? image)
+    {
+        if (image is { CanFreeze: true })
         {
             image.Freeze();
         }
 
-        _cache[cacheKey] = image;
         return image;
     }
 

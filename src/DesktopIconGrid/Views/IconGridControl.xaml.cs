@@ -80,9 +80,9 @@ public partial class IconGridControl : UserControl
         }
 
         var fromMouse = Environment.TickCount64 - _lastMouseUpTicks < ClickFromMouseWindowMs;
-        if (fromMouse && !item.IsGroup && List.Root.DoubleClickToLaunch)
+        if (fromMouse && !item.IsGroup && !item.IsSpecial && List.Root.DoubleClickToLaunch)
         {
-            return; // handled by MouseDoubleClick in that mode
+            return; // handled by MouseDoubleClick in that mode; groups and special icons always act on one click
         }
 
         List.Root.Activate(item, sender, CurrentModifiers());
@@ -91,7 +91,7 @@ public partial class IconGridControl : UserControl
 
     private void Item_MouseDoubleClick(object sender, MouseButtonEventArgs e)
     {
-        if (e.ChangedButton != MouseButton.Left || ItemOf(sender) is not { IsGroup: false } item || List is null)
+        if (e.ChangedButton != MouseButton.Left || ItemOf(sender) is not { IsGroup: false, IsSpecial: false } item || List is null)
         {
             return;
         }

@@ -33,6 +33,12 @@ public sealed class LauncherModel
     /// <summary>Number of items that were moved, renamed or re-identified while loading a layout.</summary>
     public int RepairCount { get; private set; }
 
+    /// <summary>
+    /// The layout format this model is saved as: this app's version, or the higher version of the file it was
+    /// loaded from, so a newer app that reads the file again does not migrate its own items a second time.
+    /// </summary>
+    public int FormatVersion { get; private set; } = LauncherLayout.CurrentVersion;
+
     /// <summary>Shortcuts at the root plus the shortcuts inside every group.</summary>
     public int TotalShortcutCount => AllShortcuts().Count();
 
@@ -42,7 +48,10 @@ public sealed class LauncherModel
     public static LauncherModel FromLayout(LauncherLayout layout)
     {
         ArgumentNullException.ThrowIfNull(layout);
-        var model = new LauncherModel(layout.Settings?.Clone() ?? new LauncherSettings(), layout.Window);
+        var model = new LauncherModel(layout.Settings?.Clone() ?? new LauncherSettings(), layout.Window)
+        {
+            FormatVersion = Math.Max(layout.Version, LauncherLayout.CurrentVersion),
+        };
         if (layout.Window is { IsUsable: false })
         {
             model.Window = null;
@@ -74,7 +83,7 @@ public sealed class LauncherModel
 
     public LauncherLayout ToLayout() => new()
     {
-        Version = LauncherLayout.CurrentVersion,
+        Version = FormatVersion,
         Settings = Settings.Clone(),
         Window = Window,
         Items = _items.Select(i => i.Clone()).ToList(),

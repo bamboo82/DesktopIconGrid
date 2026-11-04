@@ -204,9 +204,14 @@ public sealed class LauncherViewModel : ObservableObject
 
     // ----- view-model plumbing ------------------------------------------------------------------
 
-    /// <summary>Resolves an item's icon on a worker thread (shell calls can block on slow or missing drives) and applies it on the UI thread.</summary>
+    /// <summary>
+    /// Resolves an item's icon on the shared icon worker (shell calls can block on slow or missing drives) and applies
+    /// it on the UI thread. A lookup that a newer request for the same item has superseded is dropped, so an edit
+    /// followed by an icon-size change cannot end with the stale image.
+    /// </summary>
     public void LoadImageAsync(ItemViewModel viewModel)
     {
+        var request = viewModel.BeginImageRequest();
         if (!viewModel.NeedsImage)
         {
             viewModel.SetImage(null);
@@ -221,9 +226,15 @@ public sealed class LauncherViewModel : ObservableObject
 
         var model = viewModel.Model;
         var size = IconSize;
-        Task.Run(() => Icons.GetItemIcon(model, size))
+        IconWorker.Shared.RunAsync(() => Icons.GetItemIcon(model, size))
             .ContinueWith(
-                task => viewModel.SetImage(task.IsCompletedSuccessfully ? task.Result : null),
+                task =>
+                {
+                    if (viewModel.IsCurrentImageRequest(request))
+                    {
+                        viewModel.SetImage(task.IsCompletedSuccessfully ? task.Result : null);
+                    }
+                },
                 CancellationToken.None,
                 TaskContinuationOptions.None,
                 _uiScheduler);

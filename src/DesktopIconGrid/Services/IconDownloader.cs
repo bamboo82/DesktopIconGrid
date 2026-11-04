@@ -21,6 +21,9 @@ public static class IconDownloader
     /// <summary>Images larger than this on a side are decoded at a reduced size.</summary>
     public const int MaxDecodedSide = 2048;
 
+    /// <summary>A download that delivers nothing for this long is abandoned.</summary>
+    public static readonly TimeSpan StallTimeout = TimeSpan.FromSeconds(30);
+
     public static bool IsImageUrl(string? text) =>
         Uri.TryCreate(text?.Trim(), UriKind.Absolute, out var uri)
         && (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps);
@@ -35,9 +38,11 @@ public static class IconDownloader
 
         var uri = new Uri(url.Trim());
         byte[] bytes;
+        using var idle = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         try
         {
-            using var response = await http.GetAsync(uri, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+            idle.CancelAfter(StallTimeout);
+            using var response = await http.GetAsync(uri, HttpCompletionOption.ResponseHeadersRead, idle.Token);
             if (!response.IsSuccessStatusCode)
             {
                 throw new InvalidOperationException($"The server answered {(int)response.StatusCode} {response.ReasonPhrase}.");
@@ -54,12 +59,18 @@ public static class IconDownloader
                 throw new InvalidOperationException("The image is larger than 10 MB.");
             }
 
-            await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
+            await using var stream = await response.Content.ReadAsStreamAsync(idle.Token);
             using var buffer = new MemoryStream();
             var chunk = new byte[81920];
-            int read;
-            while ((read = await stream.ReadAsync(chunk, cancellationToken)) > 0)
+            while (true)
             {
+                idle.CancelAfter(StallTimeout); // the limit is per read, so a slow but live download may take longer
+                var read = await stream.ReadAsync(chunk, idle.Token);
+                if (read <= 0)
+                {
+                    break;
+                }
+
                 buffer.Write(chunk, 0, read);
                 if (buffer.Length > MaxBytes)
                 {
@@ -72,6 +83,10 @@ public static class IconDownloader
         catch (HttpRequestException ex)
         {
             throw new InvalidOperationException($"The image could not be downloaded: {ex.Message}", ex);
+        }
+        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            throw new InvalidOperationException($"The download timed out: the server sent nothing for {StallTimeout.TotalSeconds:0} seconds.");
         }
 
         var normalised = Normalise(bytes);

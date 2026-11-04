@@ -169,6 +169,7 @@ public sealed class LayoutStorageTests : IDisposable
 
         Assert.True(File.Exists(FilePath + ".v7.json"));
         using var saved = JsonDocument.Parse(File.ReadAllText(FilePath));
+        Assert.Equal(7, saved.RootElement.GetProperty("version").GetInt32()); // the newer app must not migrate its own items again
         var items = saved.RootElement.GetProperty("items");
         Assert.Equal("hologram", items[1].GetProperty("$type").GetString());
         Assert.Equal("Future renamed", items[1].GetProperty("name").GetString());

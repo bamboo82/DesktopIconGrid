@@ -116,19 +116,30 @@ public partial class ItemPropertiesWindow : Window
             return;
         }
 
-        IsEnabled = false;
+        string? error = null;
+        using var cancellation = new CancellationTokenSource();
+        var busy = BusyWindow.Open(this, "Icon from the web", $"Downloading {url.Trim()}…", cancellation);
         try
         {
-            var path = await IconDownloader.DownloadAsync(App.SharedHttp, url, AppPaths.IconsDirectory, CancellationToken.None);
+            var path = await IconDownloader.DownloadAsync(App.SharedHttp, url, AppPaths.IconsDirectory, cancellation.Token);
             viewModel.IconPath = path;
         }
-        catch (Exception ex) when (ex is InvalidOperationException or OperationCanceledException or System.IO.IOException or UnauthorizedAccessException)
+        catch (OperationCanceledException) when (cancellation.IsCancellationRequested)
         {
-            MessageBox.Show(this, ex.Message, "Icon from the web", MessageBoxButton.OK, MessageBoxImage.Warning);
+            // Cancelled by the user.
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or OperationCanceledException or IOException or UnauthorizedAccessException)
+        {
+            error = ex.Message;
         }
         finally
         {
-            IsEnabled = true;
+            busy.Finish();
+        }
+
+        if (error is not null)
+        {
+            MessageBox.Show(this, error, "Icon from the web", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
     }
 

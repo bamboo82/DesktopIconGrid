@@ -115,13 +115,23 @@ public sealed class SyncService
     }
 
     /// <summary>Saves the layout as the copy called <paramref name="name"/>, replacing an existing copy with that name, and links this device to it.</summary>
-    public async Task<RemoteProfile> SaveProfileAsync(string name, LauncherLayout layout, CancellationToken cancellationToken)
+    public Task<RemoteProfile> SaveProfileAsync(string name, LauncherLayout layout, CancellationToken cancellationToken) =>
+        SaveProfileAsync(name, layout, fileId: null, cancellationToken);
+
+    /// <summary>
+    /// Saves the layout as the copy called <paramref name="name"/> and links this device to it. The copy that is
+    /// replaced is <paramref name="fileId"/> when given, otherwise the linked copy when its name matches, otherwise
+    /// the first copy with that name; duplicate names on Drive therefore never swap files.
+    /// </summary>
+    public async Task<RemoteProfile> SaveProfileAsync(string name, LauncherLayout layout, string? fileId, CancellationToken cancellationToken)
     {
         name = NormalizeProfileName(name);
         ArgumentNullException.ThrowIfNull(layout);
 
-        var existing = (await ListProfilesAsync(cancellationToken).ConfigureAwait(false))
-            .FirstOrDefault(p => string.Equals(p.Name, name, StringComparison.OrdinalIgnoreCase));
+        var profiles = await ListProfilesAsync(cancellationToken).ConfigureAwait(false);
+        fileId ??= string.Equals(Settings.LinkedProfile, name, StringComparison.OrdinalIgnoreCase) ? Settings.LinkedFileId : null;
+        var existing = (fileId is null ? null : profiles.FirstOrDefault(p => string.Equals(p.FileId, fileId, StringComparison.Ordinal)))
+                       ?? profiles.FirstOrDefault(p => string.Equals(p.Name, name, StringComparison.OrdinalIgnoreCase));
 
         var now = _clock();
         var profile = SyncProfile.FromLayout(existing?.Name ?? name, layout, Settings.DeviceName, now, _appVersion, Settings.DeviceId);
@@ -218,7 +228,7 @@ public sealed class SyncService
             return new AutoUploadResult(AutoUploadOutcome.Conflict, remote);
         }
 
-        var saved = await SaveProfileAsync(Settings.LinkedProfile!, layout, cancellationToken).ConfigureAwait(false);
+        var saved = await SaveProfileAsync(Settings.LinkedProfile!, layout, remote?.FileId ?? Settings.LinkedFileId, cancellationToken).ConfigureAwait(false);
         return new AutoUploadResult(AutoUploadOutcome.Uploaded, saved);
     }
 

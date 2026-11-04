@@ -62,15 +62,16 @@ public partial class App : Application
 
     private void Start()
     {
-        AppLog.Default.AttachFile(Path.Combine(AppPaths.LogsDirectory, "app.log"));
-        AppLog.Default.Info("App", $"Desktop Icon Grid {Assembly.GetExecutingAssembly().GetName().Version?.ToString(3)} starting");
-
+        // Claim the instance before touching app.log, so a second copy neither shares the file nor rotates it.
         if (!ClaimSingleInstance())
         {
-            AppLog.Default.Info("App", "Another instance is already running; asking it to show the bar");
+            System.Diagnostics.Debug.WriteLine("Desktop Icon Grid is already running; asked it to show the bar.");
             Shutdown(0);
             return;
         }
+
+        AppLog.Default.AttachFile(Path.Combine(AppPaths.LogsDirectory, "app.log"));
+        AppLog.Default.Info("App", $"Desktop Icon Grid {Assembly.GetExecutingAssembly().GetName().Version?.ToString(3)} starting");
 
         var storage = new LayoutStorage(LayoutStorage.GetDefaultFilePath());
         var load = storage.Load();
@@ -168,18 +169,25 @@ public partial class App : Application
         base.OnExit(e);
     }
 
-    /// <summary>Takes the single-instance mutex; when another instance holds it, signals that instance and returns false.</summary>
+    /// <summary>
+    /// Takes the single-instance mutex and creates the show event; when another instance holds the mutex,
+    /// signals that instance and returns false.
+    /// </summary>
     private bool ClaimSingleInstance()
     {
         _instanceMutex = new Mutex(initiallyOwned: true, InstanceMutexName, out var createdNew);
         if (createdNew)
         {
+            // Create the event right away: a second copy started during this one's startup must find it.
+            _showEvent = new EventWaitHandle(false, EventResetMode.AutoReset, ShowEventName);
             return true;
         }
 
         try
         {
             using var show = EventWaitHandle.OpenExisting(ShowEventName);
+            // This process is the one the user just started, so it may hand the foreground to the running instance.
+            NativeMethods.AllowSetForegroundWindow(NativeMethods.ASFW_ANY);
             show.Set();
         }
         catch (Exception ex) when (ex is WaitHandleCannotBeOpenedException or UnauthorizedAccessException or IOException)
@@ -195,7 +203,11 @@ public partial class App : Application
     /// <summary>Waits (off the UI thread) for a second instance to ask for the bar, then shows it.</summary>
     private void ListenForShowRequests(MainWindow window)
     {
-        _showEvent = new EventWaitHandle(false, EventResetMode.AutoReset, ShowEventName);
+        if (_showEvent is null)
+        {
+            return;
+        }
+
         _showWait = ThreadPool.RegisterWaitForSingleObject(
             _showEvent,
             (_, _) => Dispatcher.BeginInvoke(() =>

@@ -13,6 +13,7 @@ namespace DesktopIconGrid.ViewModels;
 public sealed class ItemViewModel : ObservableObject
 {
     private ImageSource? _image;
+    private int _imageRequest;
     private bool _isDropTarget;
     private ItemListViewModel? _children;
     private GaugeState? _gauge;
@@ -186,6 +187,11 @@ public sealed class ItemViewModel : ObservableObject
     public void LoadImage() => Root.LoadImageAsync(this);
 
     internal void SetImage(ImageSource? image) => Image = image;
+
+    /// <summary>Starts a new icon lookup; the results of earlier lookups for this item are then ignored.</summary>
+    internal int BeginImageRequest() => ++_imageRequest;
+
+    internal bool IsCurrentImageRequest(int request) => request == _imageRequest;
 
     /// <summary>Creates (or recreates after editing) the live state of a special icon.</summary>
     public void RebuildGauge()

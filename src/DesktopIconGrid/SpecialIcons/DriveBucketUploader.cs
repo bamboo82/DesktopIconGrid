@@ -142,15 +142,22 @@ public sealed class DriveBucketUploader(SyncService sync, Action<string, string>
         }
 
         var siblings = await files.ListChildrenAsync(parentId, cancellationToken);
-        var target = siblings.FirstOrDefault(e => e.IsFolder && string.Equals(e.Name, name, StringComparison.OrdinalIgnoreCase))
-                     ?? await files.CreateFolderAsync(parentId, name, cancellationToken);
+        var existingFolder = siblings.FirstOrDefault(e => e.IsFolder && string.Equals(e.Name, name, StringComparison.OrdinalIgnoreCase));
+        var target = existingFolder ?? await files.CreateFolderAsync(parentId, name, cancellationToken);
+
+        // One listing serves every file in this folder (a folder created just now is empty).
+        IReadOnlyList<DriveEntry>? targetChildren = null;
+        if (!string.Equals(policy, DriveBucketHandler.KeepBoth, StringComparison.OrdinalIgnoreCase))
+        {
+            targetChildren = existingFolder is null ? [] : await files.ListChildrenAsync(target.Id, cancellationToken);
+        }
 
         foreach (var file in Directory.EnumerateFiles(directory))
         {
             cancellationToken.ThrowIfCancellationRequested();
             try
             {
-                await UploadFileAsync(files, target.Id, file, policy, cancellationToken);
+                await UploadFileAsync(files, target.Id, file, policy, cancellationToken, targetChildren);
             }
             catch (Exception ex) when (SyncCoordinator.IsSyncError(ex) && ex is not OperationCanceledException)
             {
@@ -165,13 +172,14 @@ public sealed class DriveBucketUploader(SyncService sync, Action<string, string>
         }
     }
 
-    private async Task UploadFileAsync(IDriveFiles files, string parentId, string path, string policy, CancellationToken cancellationToken)
+    /// <param name="siblings">The folder's current entries, when the caller already listed them.</param>
+    private async Task UploadFileAsync(IDriveFiles files, string parentId, string path, string policy, CancellationToken cancellationToken, IReadOnlyList<DriveEntry>? siblings = null)
     {
         var name = Path.GetFileName(path);
         string? existingId = null;
         if (!string.Equals(policy, DriveBucketHandler.KeepBoth, StringComparison.OrdinalIgnoreCase))
         {
-            var siblings = await files.ListChildrenAsync(parentId, cancellationToken);
+            siblings ??= await files.ListChildrenAsync(parentId, cancellationToken);
             var match = siblings.FirstOrDefault(e => !e.IsFolder && string.Equals(e.Name, name, StringComparison.OrdinalIgnoreCase));
             if (match is not null)
             {

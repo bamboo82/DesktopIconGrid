@@ -3,8 +3,8 @@
 A compact launcher bar for Windows. Put programs, folders and web links on it as
 icons, arrange them in a grid, and open any of them with one click.
 
-Built with .NET 10 and WPF. The only package is Microsoft's DPAPI wrapper, used to encrypt the
-Google sign-in token.
+Built with .NET 10 and WPF, with no third-party packages. The Google sign-in token is encrypted
+with Windows DPAPI.
 
 ## Features
 

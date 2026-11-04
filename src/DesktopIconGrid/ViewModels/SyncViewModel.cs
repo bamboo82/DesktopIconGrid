@@ -303,7 +303,7 @@ public sealed class SyncViewModel : ObservableObject
             return Task.CompletedTask;
         }
 
-        return SaveToAsync(name);
+        return SaveToAsync(name, existing?.FileId);
     }
 
     private Task OverwriteAsync()
@@ -318,12 +318,12 @@ public sealed class SyncViewModel : ObservableObject
             return Task.CompletedTask;
         }
 
-        return SaveToAsync(selected.Name);
+        return SaveToAsync(selected.Name, selected.FileId);
     }
 
-    private Task SaveToAsync(string name) => RunAsync($"Saving \"{name}\"…", async ct =>
+    private Task SaveToAsync(string name, string? fileId) => RunAsync($"Saving \"{name}\"…", async ct =>
     {
-        var saved = await Service.SaveProfileAsync(name, _sync.ExportLayout(), ct);
+        var saved = await Service.SaveProfileAsync(name, _sync.ExportLayout(), fileId, ct);
         await RefreshProfilesAsync(ct);
         SelectedProfile = Profiles.FirstOrDefault(p => p.FileId == saved.FileId);
         StatusText = $"Saved \"{saved.Name}\". This device is now linked to it.";

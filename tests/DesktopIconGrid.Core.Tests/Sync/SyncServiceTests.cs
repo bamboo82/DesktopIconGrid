@@ -111,6 +111,24 @@ public class SyncServiceTests
     }
 
     [Fact]
+    public async Task Save_replaces_the_linked_file_even_when_another_copy_has_the_same_name()
+    {
+        var (service, drive, settings, _) = CreateService();
+        var properties = new Dictionary<string, string> { ["app"] = "DesktopIconGrid", ["profile"] = "Work" };
+        await drive.UploadJsonAsync("Work.json", "{}", properties, null, CancellationToken.None); // id1
+        await drive.UploadJsonAsync("Work.json", "{}", properties, null, CancellationToken.None); // id2
+        settings.LinkedProfile = "Work";
+        settings.LinkedFileId = "id2";
+
+        await service.SaveProfileAsync("Work", SampleLayout(), CancellationToken.None);
+        await service.SaveProfileAsync("Work", SampleLayout(), "id1", CancellationToken.None);
+
+        Assert.Equal(2, drive.Files.Count);
+        Assert.Equal(["update id2", "update id1"], drive.Log.Where(l => l.StartsWith("update", StringComparison.Ordinal)));
+        Assert.Equal("id1", settings.LinkedFileId);
+    }
+
+    [Fact]
     public async Task List_returns_profiles_sorted_by_name()
     {
         var (service, _, _, _) = CreateService();

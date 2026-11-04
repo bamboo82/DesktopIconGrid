@@ -164,7 +164,7 @@ public class DriveFilesTests
                 response.Headers.Location = sessionUri;
                 return response;
             })
-            .Enqueue(_ => new HttpResponseMessage((HttpStatusCode)308) { Content = new StringContent(string.Empty) })
+            .Enqueue(_ => Incomplete(GoogleDriveClient.ChunkSize))
             .Enqueue(HttpStatusCode.OK, """{"id":"existing","name":"big.bin","mimeType":"application/octet-stream"}""");
 
         await Client(handler).UploadAsync("parent1", "big.bin", "application/octet-stream", new MemoryStream(data), size, "existing", null, CancellationToken.None);
@@ -173,6 +173,153 @@ public class DriveFilesTests
         Assert.DoesNotContain("parents", handler.Requests[0].Body);
         Assert.Equal($"bytes 0-{GoogleDriveClient.ChunkSize - 1}/{size}", handler.Requests[1].ContentRange);
         Assert.Equal($"bytes {GoogleDriveClient.ChunkSize}-{size - 1}/{size}", handler.Requests[2].ContentRange);
+    }
+
+    [Fact]
+    public async Task Resumable_upload_resends_the_bytes_Drive_did_not_receive()
+    {
+        var size = GoogleDriveClient.ChunkSize + 100;
+        var data = new byte[size];
+        Random.Shared.NextBytes(data);
+        var sessionUri = new Uri("https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable&upload_id=partial");
+        var handler = new FakeHttpHandler()
+            .Enqueue(_ => Session(sessionUri))
+            .Enqueue(_ => Incomplete(1000)) // only the first 1000 bytes of the chunk arrived
+            .Enqueue(_ => Incomplete(GoogleDriveClient.ChunkSize))
+            .Enqueue(HttpStatusCode.OK, """{"id":"partial","name":"big.bin","mimeType":"application/octet-stream"}""");
+
+        var entry = await Client(handler).UploadAsync("parent1", "big.bin", "application/octet-stream", new MemoryStream(data), size, null, null, CancellationToken.None);
+
+        Assert.Equal("partial", entry.Id);
+        Assert.Equal($"bytes 0-{GoogleDriveClient.ChunkSize - 1}/{size}", handler.Requests[1].ContentRange);
+        Assert.Equal($"bytes 1000-{GoogleDriveClient.ChunkSize - 1}/{size}", handler.Requests[2].ContentRange);
+        Assert.Equal(GoogleDriveClient.ChunkSize - 1000, handler.Requests[2].BodyLength);
+        Assert.Equal($"bytes {GoogleDriveClient.ChunkSize}-{size - 1}/{size}", handler.Requests[3].ContentRange);
+        Assert.Equal(100, handler.Requests[3].BodyLength);
+    }
+
+    [Fact]
+    public async Task Resumable_upload_retries_after_a_server_error_and_asks_Drive_what_it_holds()
+    {
+        var size = GoogleDriveClient.ChunkSize + 100;
+        var data = new byte[size];
+        var sessionUri = new Uri("https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable&upload_id=retry");
+        var handler = new FakeHttpHandler()
+            .Enqueue(_ => Session(sessionUri))
+            .Enqueue(HttpStatusCode.ServiceUnavailable, """{"error":{"message":"Backend Error"}}""")
+            .Enqueue(_ => Incomplete(4096)) // the probe: Drive kept 4096 bytes
+            .Enqueue(_ => Incomplete(GoogleDriveClient.ChunkSize))
+            .Enqueue(HttpStatusCode.OK, """{"id":"retry","name":"big.bin","mimeType":"application/octet-stream"}""");
+        var client = Client(handler);
+        var delays = new List<int>();
+        client.RetryDelay = (attempt, _) =>
+        {
+            delays.Add(attempt);
+            return Task.CompletedTask;
+        };
+
+        var entry = await client.UploadAsync("parent1", "big.bin", "application/octet-stream", new MemoryStream(data), size, null, null, CancellationToken.None);
+
+        Assert.Equal("retry", entry.Id);
+        Assert.Equal([1], delays);
+        var probe = handler.Requests[2];
+        Assert.Equal(HttpMethod.Put, probe.Method);
+        Assert.Equal($"bytes */{size}", probe.ContentRange);
+        Assert.Equal(0, probe.BodyLength);
+        Assert.Equal($"bytes 4096-{GoogleDriveClient.ChunkSize - 1}/{size}", handler.Requests[3].ContentRange);
+        Assert.Equal($"bytes {GoogleDriveClient.ChunkSize}-{size - 1}/{size}", handler.Requests[4].ContentRange);
+    }
+
+    [Fact]
+    public async Task Resumable_upload_gives_up_after_repeated_server_errors()
+    {
+        var size = GoogleDriveClient.MultipartLimit + 1;
+        var sessionUri = new Uri("https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable&upload_id=down");
+        var handler = new FakeHttpHandler().Enqueue(_ => Session(sessionUri));
+        for (var i = 0; i < 3; i++)
+        {
+            handler.Enqueue(HttpStatusCode.ServiceUnavailable, """{"error":{"message":"Backend Error"}}""")
+                   .Enqueue(_ => Incomplete(0));
+        }
+
+        handler.Enqueue(HttpStatusCode.ServiceUnavailable, """{"error":{"message":"Backend Error"}}""");
+        var client = Client(handler);
+        client.RetryDelay = (_, _) => Task.CompletedTask;
+
+        var ex = await Assert.ThrowsAsync<DriveException>(() => client.UploadAsync("parent1", "big.bin", "application/octet-stream", new MemoryStream(new byte[size]), size, null, null, CancellationToken.None));
+
+        Assert.Contains("Backend Error", ex.Message);
+        Assert.Equal(0, handler.Pending);
+        Assert.All(handler.Requests.Skip(1).Where((_, i) => i % 2 == 0), r => Assert.Equal($"bytes 0-{size - 1}/{size}", r.ContentRange));
+    }
+
+    [Fact]
+    public async Task Download_that_stops_delivering_data_is_abandoned()
+    {
+        var handler = new FakeHttpHandler()
+            .Enqueue(_ => new HttpResponseMessage(HttpStatusCode.OK) { Content = new StreamContent(new StalledStream()) });
+        var client = Client(handler);
+        client.StallTimeout = TimeSpan.FromMilliseconds(100);
+        using var destination = new MemoryStream();
+
+        var ex = await Assert.ThrowsAsync<DriveException>(() => client.DownloadAsync("f1", destination, null, CancellationToken.None));
+
+        Assert.Contains("stalled", ex.Message);
+    }
+
+    private static HttpResponseMessage Session(Uri sessionUri)
+    {
+        var response = new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(string.Empty) };
+        response.Headers.Location = sessionUri;
+        return response;
+    }
+
+    /// <summary>Drive's 308 "Resume Incomplete" with the bytes it holds so far (none when <paramref name="received"/> is 0).</summary>
+    private static HttpResponseMessage Incomplete(long received)
+    {
+        var response = new HttpResponseMessage((HttpStatusCode)308) { Content = new StringContent(string.Empty) };
+        if (received > 0)
+        {
+            response.Headers.TryAddWithoutValidation("Range", $"bytes=0-{received - 1}");
+        }
+
+        return response;
+    }
+
+    /// <summary>A body whose reads never complete unless cancelled.</summary>
+    private sealed class StalledStream : Stream
+    {
+        public override bool CanRead => true;
+
+        public override bool CanSeek => false;
+
+        public override bool CanWrite => false;
+
+        public override long Length => throw new NotSupportedException();
+
+        public override long Position
+        {
+            get => throw new NotSupportedException();
+            set => throw new NotSupportedException();
+        }
+
+        public override async ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken)
+        {
+            await Task.Delay(Timeout.Infinite, cancellationToken);
+            return 0;
+        }
+
+        public override int Read(byte[] buffer, int offset, int count) => throw new NotSupportedException();
+
+        public override void Flush()
+        {
+        }
+
+        public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
+
+        public override void SetLength(long value) => throw new NotSupportedException();
+
+        public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
     }
 
     [Fact]

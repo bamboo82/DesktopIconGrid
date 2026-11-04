@@ -21,8 +21,9 @@ public sealed class SyncCoordinator : ObservableObject
     private readonly LauncherViewModel _launcher;
     private readonly IDialogService _dialogs;
     private readonly DispatcherTimer _timer;
-    private bool _uploading;
+    private Task? _current;
     private bool _uploadRequestedWhileBusy;
+    private bool _shuttingDown;
     private string _status = string.Empty;
 
     public SyncCoordinator(SyncService service, LauncherViewModel launcher, IDialogService dialogs)
@@ -65,11 +66,14 @@ public sealed class SyncCoordinator : ObservableObject
         }
     }
 
+    /// <summary>True while an upload is running.</summary>
+    public bool IsUploading => _current is { IsCompleted: false };
+
     public LauncherLayout ExportLayout() => _launcher.ExportLayout();
 
     public void ScheduleUpload()
     {
-        if (!Service.IsLinked || !Service.Settings.AutoUpload)
+        if (_shuttingDown || !Service.IsLinked || !Service.Settings.AutoUpload)
         {
             return;
         }
@@ -78,17 +82,36 @@ public sealed class SyncCoordinator : ObservableObject
         _timer.Start();
     }
 
-    /// <summary>Runs a pending debounced upload right away (used before exit). Returns false when it did not finish within <paramref name="timeout"/>.</summary>
+    /// <summary>
+    /// Before exit: waits for an upload that is already running and then runs the pending debounced upload, if any,
+    /// without re-arming the timer afterwards. Returns false when that did not finish within <paramref name="timeout"/>.
+    /// </summary>
     public async Task<bool> FlushPendingAsync(TimeSpan timeout)
     {
-        if (!_timer.IsEnabled && !_uploading)
+        _shuttingDown = true;
+        var pending = _timer.IsEnabled || _uploadRequestedWhileBusy;
+        _timer.Stop();
+        if (!pending && !IsUploading)
         {
             return true;
         }
 
-        _timer.Stop();
-        var upload = UploadNowAsync();
-        var finished = await Task.WhenAny(upload, Task.Delay(timeout)) == upload;
+        var deadline = Task.Delay(timeout);
+        var finished = true;
+        if (_current is { IsCompleted: false } inFlight)
+        {
+            AppLog.Default.Info("Sync", "Waiting for the running upload before exit");
+            finished = await Task.WhenAny(inFlight, deadline) == inFlight;
+            pending |= _uploadRequestedWhileBusy; // changes made while it ran
+        }
+
+        if (finished && pending)
+        {
+            _uploadRequestedWhileBusy = false;
+            var upload = UploadNowAsync();
+            finished = await Task.WhenAny(upload, deadline) == upload;
+        }
+
         if (!finished)
         {
             AppLog.Default.Warning("Sync", "Exiting before the pending upload finished");
@@ -97,15 +120,21 @@ public sealed class SyncCoordinator : ObservableObject
         return finished;
     }
 
-    public async Task UploadNowAsync()
+    /// <summary>Uploads now; when an upload is already running, returns that one and remembers to run again afterwards.</summary>
+    public Task UploadNowAsync()
     {
-        if (_uploading)
+        if (_current is { IsCompleted: false } inFlight)
         {
             _uploadRequestedWhileBusy = true;
-            return;
+            return inFlight;
         }
 
-        _uploading = true;
+        _current = RunUploadAsync();
+        return _current;
+    }
+
+    private async Task RunUploadAsync()
+    {
         try
         {
             var result = await Service.AutoUploadAsync(_launcher.ExportLayout(), CancellationToken.None);
@@ -124,8 +153,7 @@ public sealed class SyncCoordinator : ObservableObject
         }
         finally
         {
-            _uploading = false;
-            if (_uploadRequestedWhileBusy)
+            if (_uploadRequestedWhileBusy && !_shuttingDown)
             {
                 _uploadRequestedWhileBusy = false;
                 ScheduleUpload();

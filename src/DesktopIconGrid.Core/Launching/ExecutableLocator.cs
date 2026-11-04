@@ -1,8 +1,13 @@
 namespace DesktopIconGrid.Core.Launching;
 
-/// <summary>Finds executables the way the shell would: absolute paths, then <c>PATH</c>, plus the Windows app-alias folder.</summary>
+/// <summary>
+/// Finds executables the way the shell would: absolute paths, then <c>PATH</c>, plus the Windows app-alias
+/// folder. A name without an extension also matches <c>.exe</c> and <c>.com</c> (the start of <c>PATHEXT</c>).
+/// </summary>
 public static class ExecutableLocator
 {
+    private static readonly string[] DefaultExtensions = [".exe", ".com"];
+
     public static bool Exists(string executable) => Find(executable) is not null;
 
     public static string? Find(string executable)
@@ -15,15 +20,37 @@ public static class ExecutableLocator
         var expanded = Environment.ExpandEnvironmentVariables(executable.Trim());
         if (Path.IsPathRooted(expanded))
         {
-            return File.Exists(expanded) ? expanded : null;
+            return FirstExisting(expanded);
         }
 
         foreach (var directory in SearchDirectories())
         {
-            var candidate = Path.Combine(directory, expanded);
-            if (File.Exists(candidate))
+            var found = FirstExisting(Path.Combine(directory, expanded));
+            if (found is not null)
             {
-                return candidate;
+                return found;
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>The candidate itself, or the candidate with a default executable extension when it has none.</summary>
+    private static string? FirstExisting(string candidate)
+    {
+        if (File.Exists(candidate))
+        {
+            return candidate;
+        }
+
+        if (Path.GetExtension(candidate).Length == 0)
+        {
+            foreach (var extension in DefaultExtensions)
+            {
+                if (File.Exists(candidate + extension))
+                {
+                    return candidate + extension;
+                }
             }
         }
 
