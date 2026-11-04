@@ -13,6 +13,18 @@ public sealed class DialogService(IIconProvider icons) : IDialogService
     /// <summary>Creates the view model for the sync dialog; set once sync is wired up.</summary>
     public Func<SyncViewModel>? SyncViewModelFactory { get; set; }
 
+    /// <summary>Shows a notice without interrupting (the tray balloon); returns false when it cannot, so a message box is used instead.</summary>
+    public Func<string, string, bool>? Notifier { get; set; }
+
+    public void Notify(string title, string message)
+    {
+        AppLog.Default.Warning("App", $"{title}: {message.ReplaceLineEndings(" ")}");
+        if (Notifier is null || !Notifier(title, message))
+        {
+            Show(message, title, MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
+    }
+
     public void ShowAppLog()
     {
         if (_logWindow is { IsLoaded: true })

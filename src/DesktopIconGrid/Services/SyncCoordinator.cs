@@ -54,10 +54,12 @@ public sealed class SyncCoordinator : ObservableObject
                 if (value.StartsWith("Upload failed", StringComparison.Ordinal))
                 {
                     AppLog.Default.Error("Sync", value);
+                    Notify?.Invoke("Google Drive sync", value);
                 }
                 else if (value.StartsWith("Not uploaded", StringComparison.Ordinal) || value.StartsWith("A newer", StringComparison.Ordinal) || value.StartsWith("Startup check failed", StringComparison.Ordinal))
                 {
                     AppLog.Default.Warning("Sync", value);
+                    Notify?.Invoke("Google Drive sync", value);
                 }
                 else
                 {
@@ -66,6 +68,9 @@ public sealed class SyncCoordinator : ObservableObject
             }
         }
     }
+
+    /// <summary>Where failures and conflicts are announced without interrupting (the tray balloon); optional.</summary>
+    public Action<string, string>? Notify { get; set; }
 
     /// <summary>True while an upload is running.</summary>
     public bool IsUploading => _current is { IsCompleted: false };

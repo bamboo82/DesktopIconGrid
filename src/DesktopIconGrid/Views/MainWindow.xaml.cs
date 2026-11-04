@@ -84,8 +84,25 @@ public partial class MainWindow : Window
 
         _tray.Clicked += (_, _) => ToggleVisibility();
         _tray.MenuRequested += (_, _) => (_trayMenu ??= new TrayMenuHost()).Open(BuildTrayMenu());
+        _tray.BalloonClicked += (_, _) => _viewModel.OpenLogViewerCommand.Execute(null);
         SystemEvents.DisplaySettingsChanged += OnDisplaySettingsChanged;
         AppLog.Default.Debug("App", "Tray icon created");
+        TrayReady?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>Raised once the tray icon exists, so notices can go there instead of message boxes.</summary>
+    public event EventHandler? TrayReady;
+
+    /// <summary>Shows a balloon from the tray icon; false when there is none.</summary>
+    public bool TryNotify(string title, string message)
+    {
+        if (_tray is null)
+        {
+            return false;
+        }
+
+        _tray.Notify(title, message);
+        return true;
     }
 
     /// <summary>The display settings changed (scale, monitors): the tray icon is re-rendered for the system DPI.</summary>

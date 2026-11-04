@@ -171,7 +171,7 @@ New group…
 Add Windows item        ▸
 Add special icon        ▸
 ────────────────────────
-Remove…
+Remove                (Undo for ten seconds in a banner under the icons)
 Add to Multi Launch group    (becomes "Remove from Multi Launch group" when it is a member; hidden for groups)
 Open file location
 ────────────────────────
@@ -191,7 +191,8 @@ Settings…
 ```
 
 *New shortcut…* / *New group…* open the properties dialog with an empty item and
-insert it at the clicked position (or at the end). *Remove…* asks for confirmation.
+insert it at the clicked position (or at the end). *Remove* acts at once and offers *Undo* for ten
+seconds in a banner under the icons (also `Ctrl+Z`); removing a group still asks first.
 
 ## 5. Multi Launch group
 
@@ -391,7 +392,8 @@ Still open, in the order they should be taken:
    plausible scale (today it compares the real monitor layout at the primary scale and at each Windows
    display scale, and only resets when none of them shows the bar).
 3. **Localisation** — strings in `.resx` with zh-TW/zh-CN, default text-icon font by UI culture.
-4. **Non-modal errors** — tray balloons for non-fatal failures; undo for Remove.
+4. **Non-modal errors** — done in 0.4.0 (tray notifications with the log viewer one click away;
+   Undo for Remove). Still open: a toast with actions instead of the classic balloon.
 5. **Table stakes** — auto-hide/dock to a screen edge (AppBar), installer (MSIX/winget), signed
    releases, versioning from the tag (the release workflow does this). Start with Windows is done (0.4.0).
 6. **Engineering** — the tray icon itself still uses WinForms `NotifyIcon` (its menu is WPF); a

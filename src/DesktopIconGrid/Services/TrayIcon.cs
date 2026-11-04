@@ -36,6 +36,7 @@ public sealed class TrayIcon : IDisposable
             Text = text.Length > 63 ? text[..63] : text,
             Visible = true,
         };
+        _notifyIcon.BalloonTipClicked += (_, _) => BalloonClicked?.Invoke(this, EventArgs.Empty);
         _notifyIcon.MouseUp += (_, e) =>
         {
             switch (e.Button)
@@ -56,9 +57,24 @@ public sealed class TrayIcon : IDisposable
     /// <summary>Right click on the icon; the owner shows its menu at the pointer.</summary>
     public event EventHandler? MenuRequested;
 
-    /// <summary>Shows a balloon/toast from the icon.</summary>
-    public void Notify(string title, string message) =>
-        _notifyIcon.ShowBalloonTip(4000, title, message, System.Windows.Forms.ToolTipIcon.Info);
+    /// <summary>The user clicked a balloon shown by <see cref="Notify"/>.</summary>
+    public event EventHandler? BalloonClicked;
+
+    /// <summary>Shows a balloon/toast from the icon (Windows caps the title at 63 and the text at 255 characters).</summary>
+    public void Notify(string title, string message)
+    {
+        if (_disposed)
+        {
+            return;
+        }
+
+        var text = string.IsNullOrWhiteSpace(message) ? title : message;
+        _notifyIcon.ShowBalloonTip(
+            5000,
+            title.Length > 63 ? title[..63] : title,
+            text.Length > 255 ? text[..252] + "…" : text,
+            System.Windows.Forms.ToolTipIcon.Warning);
+    }
 
     /// <summary>Re-renders the icon for the current DPI (after a monitor or scaling change).</summary>
     public void Refresh()

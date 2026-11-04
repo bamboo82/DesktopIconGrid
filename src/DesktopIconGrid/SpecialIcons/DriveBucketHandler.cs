@@ -146,7 +146,7 @@ public sealed class DriveBucketHandler : ISpecialIconHandler
     {
         if (!_uploaders.TryGetValue(item.Id, out var uploader))
         {
-            uploader = new DriveBucketUploader(_sync, (title, message) => _dialogs.ShowError(title, message));
+            uploader = new DriveBucketUploader(_sync, (title, message) => _dialogs.Notify(title, message));
             _uploaders[item.Id] = uploader;
         }
 
@@ -177,7 +177,7 @@ public sealed class DriveBucketHandler : ISpecialIconHandler
     {
         if (_sync.Files is null)
         {
-            _dialogs.ShowError("Google Drive", "Google Drive access is not available in this build.");
+            _dialogs.Notify("Google Drive", "Google Drive access is not available in this build.");
             return false;
         }
 
@@ -209,7 +209,7 @@ public sealed class DriveBucketHandler : ISpecialIconHandler
         }
         catch (Exception ex) when (SyncCoordinator.IsSyncError(ex))
         {
-            _dialogs.ShowError("Google Drive access", ex.Message);
+            _dialogs.Notify("Google Drive access", ex.Message);
             return false;
         }
     }

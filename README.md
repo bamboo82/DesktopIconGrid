@@ -54,7 +54,7 @@ Google Drive Bucket, and [docs/THEMES.md](docs/THEMES.md) for the themes.
 | Upload files to Google Drive | Right-click → *Add special icon ▸ Google Drive Bucket*, paste the folder link, then drop files on the icon |
 | Browse and download from Google Drive | Ctrl+click a Google Drive Bucket (or right-click → *Browse…*); drag items to the desktop or use *Download to…* |
 | Find a lost bar | Tray icon → *Reset bar position* |
-| See what the app is doing | Tray icon → *Log viewer…* (filter by level, category, time or text; save or copy) |
+| See what the app is doing | Tray icon → *Log viewer…* (filter by level, category, time or text; save or copy). Failures appear as tray notifications; clicking one opens the log viewer |
 | Exit | Tray icon → *Exit*, or options menu (▸) → *Exit* (the close button only hides the bar) |
 | Open an item | Click it (or double-click, see Settings). `Enter` when focused |
 | Rearrange | Drag an icon to a new position; the blue line shows where it lands |
@@ -71,7 +71,7 @@ Google Drive Bucket, and [docs/THEMES.md](docs/THEMES.md) for the themes.
 | See a program's output | *Properties → Keep a log of the program's output*, then right-click → *Show log…* |
 | Let the desktop show through the bar | Settings → *Bar background* → Mica or Acrylic (Windows 11; the blur is tinted with the theme), or *Transparency* for a solid colour |
 | Classic dialogs instead of the Windows 11 look | Settings → *Window* → untick *Windows 11 style dialogs* |
-| Remove an item | Right-click → *Remove…*, or `Delete` |
+| Remove an item | Right-click → *Remove*, or `Delete`; *Undo* in the banner under the icons (or `Ctrl+Z`) within ten seconds |
 | Multi Launch | Right-click a shortcut → *Add to Multi Launch group*; start them all from the options menu (▸) |
 | Move the bar | Drag the dotted grip on the left or any empty background. Double-click the grip to toggle *always on top* |
 | Resize the bar | Drag any edge or corner |

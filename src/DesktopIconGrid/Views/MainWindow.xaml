@@ -27,6 +27,7 @@
     <KeyBinding Key="G" Modifiers="Control" Command="{Binding NewGroupCommand}" />
     <KeyBinding Key="OemComma" Modifiers="Control" Command="{Binding OpenSettingsCommand}" />
     <KeyBinding Key="Escape" Command="{Binding CloseGroupPopupCommand}" />
+    <KeyBinding Key="Z" Modifiers="Control" Command="{Binding UndoRemoveCommand}" />
   </Window.InputBindings>
 
   <Border BorderBrush="{DynamicResource Theme.Border}"
@@ -46,11 +47,34 @@
               AutomationProperties.Name="Move grip"
               MouseLeftButtonDown="Grip_MouseLeftButtonDown" />
 
-      <!-- Icons -->
-      <views:IconGridControl x:Name="MainGrid"
-                             Grid.Column="1"
-                             DataContext="{Binding RootItems}"
-                             Margin="0,2" />
+      <!-- Icons, with the removal banner under them -->
+      <DockPanel Grid.Column="1">
+        <Border DockPanel.Dock="Bottom"
+                Visibility="{Binding CanUndoRemove, Converter={StaticResource BoolToVisibility}}"
+                Background="{DynamicResource Theme.Hover}"
+                BorderBrush="{DynamicResource Theme.HoverBorder}"
+                BorderThickness="1"
+                CornerRadius="4"
+                Margin="2,0,2,2"
+                Padding="6,1">
+          <DockPanel>
+            <Button DockPanel.Dock="Right"
+                    Style="{StaticResource BarTextButtonStyle}"
+                    Content="Undo"
+                    ToolTip="Put the removed icon back (Ctrl+Z)"
+                    AutomationProperties.Name="Undo remove"
+                    Command="{Binding UndoRemoveCommand}" />
+            <TextBlock Text="{Binding UndoText}"
+                       Foreground="{DynamicResource Theme.Foreground}"
+                       FontSize="11"
+                       VerticalAlignment="Center"
+                       TextTrimming="CharacterEllipsis" />
+          </DockPanel>
+        </Border>
+        <views:IconGridControl x:Name="MainGrid"
+                               DataContext="{Binding RootItems}"
+                               Margin="0,2" />
+      </DockPanel>
 
       <!-- Close and options -->
       <Grid Grid.Column="2" Margin="0,2,2,2">

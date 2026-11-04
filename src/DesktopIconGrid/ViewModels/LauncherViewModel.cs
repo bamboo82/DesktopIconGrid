@@ -32,6 +32,8 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
     private bool _isGroupPopupOpen;
     private Guid _lastLaunchedId;
     private DateTime _lastLaunchedAt;
+    private PendingRemoval? _pendingRemoval;
+    private int _removalVersion;
 
     public LauncherViewModel(
         LauncherModel model,
@@ -74,6 +76,7 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
         OpenSyncCommand = new RelayCommand(() => _dialogs.ShowSync());
         OpenNameTableCommand = new RelayCommand(() => _dialogs.ShowNameTable(this));
         OpenLogViewerCommand = new RelayCommand(() => _dialogs.ShowAppLog());
+        UndoRemoveCommand = new RelayCommand(UndoRemove);
     }
 
     public LauncherModel Model { get; private set; }
@@ -313,7 +316,7 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
 
         if (item.Model is UnknownItem)
         {
-            _dialogs.ShowInfo(item.Name, "This item was made by a newer version of Desktop Icon Grid and cannot be opened here. It is kept so nothing is lost.");
+            _dialogs.Notify(item.Name, "This item was made by a newer version of Desktop Icon Grid and cannot be opened here. It is kept so nothing is lost.");
             return;
         }
 
@@ -322,7 +325,7 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
             var specialResult = item.SpecialHandler.Activate(special, modifiers);
             if (specialResult.Outcome == LaunchOutcome.Failed)
             {
-                _dialogs.ShowError($"\"{item.Name}\"", specialResult.ErrorMessage ?? "Unknown error");
+                _dialogs.Notify(item.Name, specialResult.ErrorMessage ?? "Unknown error");
             }
 
             IsGroupPopupOpen = false;
@@ -337,7 +340,7 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
         var result = _launcher.Launch(shortcutToLaunch);
         if (result.Outcome == LaunchOutcome.Failed)
         {
-            _dialogs.ShowError($"Can't open \"{item.Name}\"", $"{result.ErrorMessage}\n\n{item.Location}");
+            _dialogs.Notify($"Can't open \"{item.Name}\"", $"{result.ErrorMessage}\n{item.Location}");
             return;
         }
 
@@ -361,7 +364,7 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
         var result = _launcher.LaunchWith(shortcut, paths);
         if (result.Outcome == LaunchOutcome.Failed)
         {
-            _dialogs.ShowError($"Can't open with \"{target.Name}\"", $"{result.ErrorMessage}\n\n{shortcut.Location}");
+            _dialogs.Notify($"Can't open with \"{target.Name}\"", $"{result.ErrorMessage}\n{shortcut.Location}");
             return;
         }
 
@@ -373,7 +376,7 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
         var result = await target.SpecialHandler.DropFilesAsync(special, paths);
         if (result.Outcome == LaunchOutcome.Failed)
         {
-            _dialogs.ShowError($"\"{target.Name}\"", result.ErrorMessage ?? "Unknown error");
+            _dialogs.Notify(target.Name, result.ErrorMessage ?? "Unknown error");
         }
     }
 
@@ -527,7 +530,7 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
     {
         if (item.Model is UnknownItem)
         {
-            _dialogs.ShowInfo(item.Name, "This item was made by a newer version of Desktop Icon Grid and cannot be edited here.");
+            _dialogs.Notify(item.Name, "This item was made by a newer version of Desktop Icon Grid and cannot be edited here.");
             return;
         }
 
@@ -568,20 +571,54 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
         _dialogs.ShowLog(new LogViewerViewModel(item.Name, Tracker.LatestLog(item.Id), Tracker.LogDirectory));
     }
 
+    // ----- remove with undo -------------------------------------------------------------------
+
+    /// <summary>How long the Undo offer stays after a removal; shortened by tests.</summary>
+    internal static TimeSpan UndoWindow { get; set; } = TimeSpan.FromSeconds(10);
+
+    private sealed record PendingRemoval(LauncherItem Item, Guid? ParentId, int Index);
+
+    /// <summary>True while the last removal can still be undone (the banner under the icons is showing).</summary>
+    public bool CanUndoRemove => _pendingRemoval is not null;
+
+    public string UndoText => _pendingRemoval is null ? string.Empty : $"Removed \"{_pendingRemoval.Item.Name}\"";
+
+    public ICommand UndoRemoveCommand { get; }
+
+    /// <summary>
+    /// Removes a shortcut or special icon at once and offers Undo for <see cref="UndoWindow"/>. Removing a group
+    /// takes everything in it with it, so that still asks first and cannot be undone.
+    /// </summary>
     public void RemoveItem(ItemViewModel item)
     {
-        var message = item.IsGroup
-            ? item.ChildCount == 0
+        if (item.IsGroup)
+        {
+            var message = item.ChildCount == 0
                 ? $"Remove the group \"{item.Name}\"?"
-                : $"Remove the group \"{item.Name}\" and the {item.ChildCount} shortcut(s) in it?"
-            : $"Remove \"{item.Name}\" from the bar?\n\nThe program or file itself is not affected.";
+                : $"Remove the group \"{item.Name}\" and the {item.ChildCount} shortcut(s) in it?";
+            if (!_dialogs.Confirm("Remove group", message))
+            {
+                return;
+            }
+        }
 
-        if (!_dialogs.Confirm("Remove", message))
+        var removed = Model.Find(item.Id, out var parent);
+        if (removed is null)
         {
             return;
         }
 
-        Model.Find(item.Id, out var parent);
+        var index = 0;
+        foreach (var candidate in Model.ItemsOf(parent))
+        {
+            if (candidate.Id == item.Id)
+            {
+                break;
+            }
+
+            index++;
+        }
+
         if (!Model.Remove(item.Id))
         {
             return;
@@ -613,6 +650,60 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
         ListFor(parent).Sync();
         OnPropertyChanged(nameof(HasMultiLaunchMembers));
         Save();
+
+        if (!item.IsGroup)
+        {
+            OfferUndo(new PendingRemoval(removed, parent?.Id, index));
+        }
+    }
+
+    private void OfferUndo(PendingRemoval removal)
+    {
+        _pendingRemoval = removal;
+        var version = ++_removalVersion;
+        NotifyUndoChanged();
+        _ = ExpireUndoAsync(version);
+    }
+
+    private async Task ExpireUndoAsync(int version)
+    {
+        await Task.Delay(UndoWindow);
+        if (version == _removalVersion && _pendingRemoval is not null)
+        {
+            _pendingRemoval = null;
+            NotifyUndoChanged();
+        }
+    }
+
+    /// <summary>Puts the last removed item back where it was; at the end of the root when its group has gone since.</summary>
+    public void UndoRemove()
+    {
+        if (_pendingRemoval is not { } removal)
+        {
+            return;
+        }
+
+        _pendingRemoval = null;
+        _removalVersion++;
+        NotifyUndoChanged();
+        if (Model.Contains(removal.Item.Id))
+        {
+            return;
+        }
+
+        var parent = removal.ParentId is { } parentId ? Model.FindGroup(parentId) : null;
+        var index = removal.ParentId is not null && parent is null ? int.MaxValue : removal.Index;
+        Model.Insert(removal.Item, parent, index);
+        AppLog.Default.Info("Layout", $"Restored \"{removal.Item.Name}\"");
+        ListFor(parent).Sync();
+        OnPropertyChanged(nameof(HasMultiLaunchMembers));
+        Save();
+    }
+
+    private void NotifyUndoChanged()
+    {
+        OnPropertyChanged(nameof(CanUndoRemove));
+        OnPropertyChanged(nameof(UndoText));
     }
 
     public void ToggleMultiLaunch(ItemViewModel item)
@@ -638,7 +729,7 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
         var result = ShellHelper.RevealInExplorer(item.Location);
         if (result.Outcome == LaunchOutcome.Failed)
         {
-            _dialogs.ShowError("Can't open the location", $"{result.ErrorMessage}\n\n{item.Location}");
+            _dialogs.Notify("Can't open the location", $"{result.ErrorMessage}\n{item.Location}");
         }
     }
 
@@ -647,7 +738,7 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
         var members = Model.MultiLaunchMembers().ToList();
         if (members.Count == 0)
         {
-            _dialogs.ShowInfo(
+            _dialogs.Notify(
                 "Multi Launch group is empty",
                 "Right-click a shortcut and choose \"Add to Multi Launch group\". Every member starts together when you launch the group.");
             return;
@@ -668,7 +759,7 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
 
         if (failures.Count > 0)
         {
-            _dialogs.ShowError("Some shortcuts did not start", string.Join("\n", failures));
+            _dialogs.Notify("Some shortcuts did not start", string.Join("\n", failures));
         }
     }
 
@@ -766,7 +857,7 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
             : LaunchResult.Failure("The layout file has not been created yet.");
         if (result.Outcome == LaunchOutcome.Failed)
         {
-            _dialogs.ShowInfo("Layout file", $"{result.ErrorMessage}\n\n{_storage.FilePath}");
+            _dialogs.Notify("Layout file", $"{result.ErrorMessage}\n{_storage.FilePath}");
         }
     }
 
@@ -821,7 +912,7 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            _dialogs.ShowError("Couldn't save the layout", $"{ex.Message}\n\n{_storage.FilePath}");
+            _dialogs.Notify("Couldn't save the layout", $"{ex.Message}\n{_storage.FilePath}");
         }
 
         if (contentChanged)

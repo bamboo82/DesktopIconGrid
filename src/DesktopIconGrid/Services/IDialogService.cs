@@ -17,6 +17,9 @@ public interface IDialogService
 
     void ShowInfo(string title, string message);
 
+    /// <summary>A notice that needs no decision: shown without interrupting (tray balloon), and logged.</summary>
+    void Notify(string title, string message);
+
     /// <summary>Shows the Google Drive sync dialog.</summary>
     void ShowSync();
 

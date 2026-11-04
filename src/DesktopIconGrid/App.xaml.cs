@@ -125,7 +125,7 @@ public partial class App : Application
         DialogTheme.Configure(_fluentDialogsSetting());
         SystemEvents.UserPreferenceChanged += OnUserPreferenceChanged;
 
-        _sync = new SyncCoordinator(syncService, viewModel, dialogs.Confirm);
+        _sync = new SyncCoordinator(syncService, viewModel, dialogs.Confirm) { Notify = dialogs.Notify };
         dialogs.SyncViewModelFactory = () => new SyncViewModel(_sync, dialogs);
         viewModel.FlushBeforeExit = () => _sync.FlushPendingAsync(TimeSpan.FromSeconds(5));
         _ = Task.Run(() => DriveCache.Purge(cacheDirectory, TimeSpan.FromDays(1)));
@@ -136,6 +136,7 @@ public partial class App : Application
 
         var window = new MainWindow(viewModel);
         MainWindow = window;
+        window.TrayReady += (_, _) => dialogs.Notifier = window.TryNotify;
         if (startHidden)
         {
             // The handle is enough: SourceInitialized creates the tray icon and registers the hotkey, and the bar

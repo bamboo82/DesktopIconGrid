@@ -11,6 +11,12 @@ version numbers follow [Semantic Versioning](https://semver.org/).
   *Start hidden* keeps the bar in the tray until it is shown from the tray icon or with the hotkey.
   The entry is repaired at startup when the program was moved and removed when the setting is
   turned off. Starting the executable with `--hidden` has the same effect once.
+- Failures that need no decision (a shortcut that does not start, a file that cannot be opened with
+  a program, a bucket or sync upload that fails, a layout that cannot be saved) appear as tray
+  notifications instead of message boxes; clicking one opens the log viewer. Questions (removing a
+  group, loading a newer copy, an unreadable layout) still use a message box.
+- *Remove* no longer asks. A banner under the icons offers *Undo* for ten seconds (also `Ctrl+Z`)
+  and puts the icon back where it was. Removing a group still asks and cannot be undone.
 
 ## [0.3.0] – 2026-11-04
 
