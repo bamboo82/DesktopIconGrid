@@ -1,0 +1,61 @@
+<Window x:Class="DesktopIconGrid.Views.NameTableWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Edit names"
+        Width="860"
+        Height="520"
+        MinWidth="520"
+        MinHeight="300"
+        WindowStartupLocation="CenterOwner"
+        ShowInTaskbar="False"
+        Icon="{StaticResource AppIconImage}">
+  <DockPanel Margin="12">
+    <TextBlock DockPanel.Dock="Top" Text="{Binding Hint}" Style="{StaticResource DialogHint}" Margin="0,0,0,8" />
+
+    <DockPanel DockPanel.Dock="Bottom" Margin="0,10,0,0">
+      <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+        <Button Content="Save" Style="{StaticResource DialogButton}" IsDefault="True" Click="Save_Click" />
+        <Button Content="Cancel" Style="{StaticResource DialogButton}" IsCancel="True" />
+      </StackPanel>
+      <StackPanel Orientation="Horizontal">
+        <Button Content="Use original name" Padding="10,3" Click="UseOriginal_Click" ToolTip="Reset the selected rows to their original names" />
+        <Button Content="Use original names for all" Padding="10,3" Margin="8,0,0,0" Command="{Binding UseOriginalForAllCommand}" />
+      </StackPanel>
+    </DockPanel>
+
+    <DataGrid x:Name="Grid"
+              ItemsSource="{Binding Rows}"
+              AutoGenerateColumns="False"
+              CanUserAddRows="False"
+              CanUserDeleteRows="False"
+              CanUserSortColumns="True"
+              CanUserReorderColumns="True"
+              CanUserResizeRows="False"
+              SelectionMode="Extended"
+              SelectionUnit="FullRow"
+              HeadersVisibility="Column"
+              GridLinesVisibility="Horizontal"
+              RowHeight="26"
+              IsReadOnly="False">
+      <DataGrid.Columns>
+        <DataGridTextColumn Header="Given name" Width="200" SortMemberPath="GivenName"
+                            Binding="{Binding GivenName, UpdateSourceTrigger=PropertyChanged}" />
+        <DataGridTextColumn Header="Original name" Width="180" IsReadOnly="True" Binding="{Binding OriginalName}" />
+        <DataGridTextColumn Header="Kind" Width="110" IsReadOnly="True" Binding="{Binding Kind}" />
+        <DataGridTextColumn Header="In group" Width="110" IsReadOnly="True" Binding="{Binding GroupName}" />
+        <DataGridTextColumn Header="Modified" Width="140" IsReadOnly="True" SortMemberPath="ModifiedAt"
+                            Binding="{Binding ModifiedAt, StringFormat=g}" />
+        <DataGridTextColumn Header="Location" Width="*" IsReadOnly="True" Binding="{Binding Location}" />
+      </DataGrid.Columns>
+      <DataGrid.RowStyle>
+        <Style TargetType="DataGridRow">
+          <Style.Triggers>
+            <DataTrigger Binding="{Binding IsChanged}" Value="True">
+              <Setter Property="FontWeight" Value="SemiBold" />
+            </DataTrigger>
+          </Style.Triggers>
+        </Style>
+      </DataGrid.RowStyle>
+    </DataGrid>
+  </DockPanel>
+</Window>

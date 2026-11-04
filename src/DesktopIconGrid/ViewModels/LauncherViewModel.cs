@@ -69,6 +69,7 @@ public sealed class LauncherViewModel : ObservableObject
         ExitCommand = new RelayCommand(() => ExitRequested?.Invoke(this, EventArgs.Empty));
         CloseGroupPopupCommand = new RelayCommand(() => IsGroupPopupOpen = false);
         OpenSyncCommand = new RelayCommand(() => _dialogs.ShowSync());
+        OpenNameTableCommand = new RelayCommand(() => _dialogs.ShowNameTable(this));
     }
 
     public LauncherModel Model { get; private set; }
@@ -177,6 +178,8 @@ public sealed class LauncherViewModel : ObservableObject
     public ICommand CloseGroupPopupCommand { get; }
 
     public ICommand OpenSyncCommand { get; }
+
+    public ICommand OpenNameTableCommand { get; }
 
     /// <summary>Raised when a group icon is clicked; the view positions the popup at the anchor element.</summary>
     public event EventHandler<GroupActivatedEventArgs>? GroupActivated;
@@ -613,7 +616,28 @@ public sealed class LauncherViewModel : ObservableObject
         Save(contentChanged: false);
     }
 
-    public void SaveNow() => Save(contentChanged: false);
+    public void SaveNow(bool contentChanged = false) => Save(contentChanged);
+
+    /// <summary>Changes an item's caption. Returns false when nothing changed.</summary>
+    public bool RenameItem(Guid id, string name, bool save = true)
+    {
+        if (!Model.Rename(id, name))
+        {
+            return false;
+        }
+
+        if (_viewModels.TryGetValue(id, out var viewModel))
+        {
+            viewModel.RefreshFromModel();
+        }
+
+        if (save)
+        {
+            Save();
+        }
+
+        return true;
+    }
 
     /// <summary>A copy of the current settings, items and window placement.</summary>
     public LauncherLayout ExportLayout() => Model.ToLayout();

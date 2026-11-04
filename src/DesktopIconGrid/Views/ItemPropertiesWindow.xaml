@@ -104,7 +104,14 @@
           </Border>
         </Grid>
       </Border>
-      <Button Content="Change icon…" Padding="10,3" VerticalAlignment="Center" Click="ChangeIcon_Click" />
+      <Button Content="Change icon…" Padding="10,3" VerticalAlignment="Center" Click="ChangeIcon_Click">
+        <Button.ContextMenu>
+          <ContextMenu>
+            <MenuItem Header="Browse for an image or icon file…" Click="ChangeIconFile_Click" />
+            <MenuItem Header="From a web address…" Click="ChangeIconUrl_Click" />
+          </ContextMenu>
+        </Button.ContextMenu>
+      </Button>
       <Button Content="Text icon…" Padding="10,3" Margin="8,0,0,0" VerticalAlignment="Center" Click="TextIcon_Click"
               ToolTip="Draw text (for example 宋體 characters) instead of an image" />
       <Button Content="Use default" Padding="10,3" Margin="8,0,0,0" VerticalAlignment="Center"

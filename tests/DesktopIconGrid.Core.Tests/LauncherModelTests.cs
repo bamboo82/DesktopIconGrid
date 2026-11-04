@@ -165,6 +165,32 @@ public class LauncherModelTests
     }
 
     [Fact]
+    public void Insert_update_and_rename_stamp_the_modified_time()
+    {
+        var before = DateTimeOffset.UtcNow.AddSeconds(-1);
+        var model = ModelWith("a");
+        var item = model.Items[0];
+        Assert.NotNull(item.ModifiedAt);
+        Assert.True(item.ModifiedAt >= before);
+
+        var stamped = item.ModifiedAt;
+        var edited = (ShortcutItem)item.Clone();
+        edited.Parameters = "x";
+        model.Update(edited);
+        Assert.True(item.ModifiedAt >= stamped);
+
+        Assert.True(model.Rename(item.Id, "  Renamed "));
+        Assert.Equal("Renamed", item.Name);
+        Assert.False(model.Rename(item.Id, "Renamed"));
+        Assert.False(model.Rename(item.Id, "  "));
+        Assert.False(model.Rename(Guid.NewGuid(), "x"));
+
+        var preset = new ShortcutItem { Name = "old", Location = "x", ModifiedAt = before.AddDays(-1) };
+        model.Add(preset);
+        Assert.Equal(before.AddDays(-1), preset.ModifiedAt);
+    }
+
+    [Fact]
     public void Update_rejects_kind_change()
     {
         var model = ModelWith("a");

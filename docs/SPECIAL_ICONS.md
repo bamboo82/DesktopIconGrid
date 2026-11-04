@@ -198,7 +198,23 @@ cache) is a possible later refinement.
 - The app never deletes or moves files in Drive from a bucket; *Replace* only rewrites content
   of a file with the same name in that folder.
 
-## 6. Testing
+## 6. Sound Replayer (implemented)
+
+| Interaction | Behaviour |
+| --- | --- |
+| Press and hold (≥ 300 ms) while stopped | Starts recording from the default microphone (MCI wave audio, 16-bit mono 22.05 kHz). The icon shows **REC** in red and the seconds elapsed. |
+| Release | Stops recording, saves `%LocalAppData%\DesktopIconGrid\sounds\<itemId>.wav` and starts looping it. The icon shows **LOOP** in green. |
+| Single click while looping | Stops playback; the icon shows the microphone again. |
+| Single click while stopped | Replays the last recording in a loop (nothing happens without one). |
+| Context menu | *Stop*, *Play recording*, *Delete recording*, *Open sounds folder*, plus the usual entries. |
+| Properties | Name only. |
+
+A hold is detected by the grid: a press on a press-and-hold icon starts a 300 ms timer; moving
+the mouse before it fires still begins an ordinary drag, after it fires the release ends the hold
+instead of counting as a click. Playback uses `System.Media.SoundPlayer.PlayLooping`. If
+Windows blocks microphone access for desktop apps, the MCI error is shown and nothing is recorded.
+
+## 7. Testing
 
 - Core: `SpecialIconItem` JSON round trip including unknown kinds; settings wrapper defaults;
   folder-link parsing; conflict-policy decision table; resumable-upload chunking and
@@ -208,7 +224,7 @@ cache) is a possible later refinement.
   upload; offline drop; folder deleted on Drive; account without the `drive` scope; unknown kind
   in the layout file.
 
-## 7. Delivery
+## 8. Delivery
 
 | Phase | Scope |
 | --- | --- |

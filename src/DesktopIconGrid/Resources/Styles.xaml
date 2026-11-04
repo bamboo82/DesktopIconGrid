@@ -105,6 +105,32 @@
     </DrawingImage.Drawing>
   </DrawingImage>
 
+  <!-- Sound Replayer: a microphone -->
+  <DrawingImage x:Key="SoundReplayerIconImage">
+    <DrawingImage.Drawing>
+      <DrawingGroup>
+        <GeometryDrawing Brush="#FF3B3B3B">
+          <GeometryDrawing.Geometry>
+            <RectangleGeometry Rect="11,2,10,17" RadiusX="5" RadiusY="5" />
+          </GeometryDrawing.Geometry>
+        </GeometryDrawing>
+        <GeometryDrawing Brush="#FFE5484D">
+          <GeometryDrawing.Geometry>
+            <RectangleGeometry Rect="13,4,6,8" RadiusX="3" RadiusY="3" />
+          </GeometryDrawing.Geometry>
+        </GeometryDrawing>
+        <GeometryDrawing>
+          <GeometryDrawing.Pen>
+            <Pen Brush="#FF3B3B3B" Thickness="2.2" StartLineCap="Round" EndLineCap="Round" />
+          </GeometryDrawing.Pen>
+          <GeometryDrawing.Geometry>
+            <PathGeometry Figures="M7,13 A9,9 0 0 0 25,13 M16,22 L16,27 M11,28 L21,28" />
+          </GeometryDrawing.Geometry>
+        </GeometryDrawing>
+      </DrawingGroup>
+    </DrawingImage.Drawing>
+  </DrawingImage>
+
   <!-- Placeholder shown while an icon loads or when none can be resolved -->
   <DrawingImage x:Key="PlaceholderIconImage">
     <DrawingImage.Drawing>

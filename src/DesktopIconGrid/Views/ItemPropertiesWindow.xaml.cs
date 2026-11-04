@@ -2,6 +2,7 @@ using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
+using DesktopIconGrid.Services;
 using DesktopIconGrid.ViewModels;
 using Microsoft.Win32;
 
@@ -75,6 +76,63 @@ public partial class ItemPropertiesWindow : Window
     }
 
     private void ChangeIcon_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button { ContextMenu: { } menu } button)
+        {
+            menu.PlacementTarget = button;
+            menu.Placement = PlacementMode.Bottom;
+            menu.IsOpen = true;
+        }
+    }
+
+    private async void ChangeIconUrl_Click(object sender, RoutedEventArgs e)
+    {
+        if (ViewModel is not { } viewModel)
+        {
+            return;
+        }
+
+        string? initial = null;
+        try
+        {
+            if (Clipboard.ContainsText() && IconDownloader.IsImageUrl(Clipboard.GetText()))
+            {
+                initial = Clipboard.GetText().Trim();
+            }
+        }
+        catch (System.Runtime.InteropServices.COMException)
+        {
+            // Clipboard busy; no prefill.
+        }
+
+        var url = InputWindow.Show(
+            this,
+            "Icon from the web",
+            "Address of the image (right-click a picture in your browser → Copy image address):",
+            initial,
+            "The image is downloaded once, scaled to 256 px, centred on a transparent square and saved as PNG in the app's icons folder.");
+        if (string.IsNullOrWhiteSpace(url))
+        {
+            return;
+        }
+
+        IsEnabled = false;
+        try
+        {
+            var path = await IconDownloader.DownloadAsync(App.SharedHttp, url, AppPaths.IconsDirectory, CancellationToken.None);
+            viewModel.IconPath = path;
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or OperationCanceledException or System.IO.IOException or UnauthorizedAccessException)
+        {
+            MessageBox.Show(this, ex.Message, "Icon from the web", MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
+        finally
+        {
+            IsEnabled = true;
+        }
+    }
+
+    private void ChangeIconFile_Click(object sender, RoutedEventArgs e)
     {
         if (ViewModel is not { } viewModel)
         {

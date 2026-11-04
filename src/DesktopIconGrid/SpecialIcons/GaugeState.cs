@@ -25,6 +25,7 @@ public sealed class GaugeState : ObservableObject
     private double? _percent;
     private string _detail;
     private bool _isVisible = true;
+    private string? _labelText;
 
     public GaugeState(string caption, GaugeStyle style, double warningAt, double criticalAt, string initialDetail)
     {
@@ -57,7 +58,20 @@ public sealed class GaugeState : ObservableObject
 
     public double? Percent => _percent;
 
-    public string Label => _percent is { } p ? $"{Math.Round(p).ToString(CultureInfo.CurrentCulture)}%" : "…";
+    /// <summary>Replaces the percentage text (e.g. "REC"); <see langword="null"/> shows the percentage.</summary>
+    public string? LabelText
+    {
+        get => _labelText;
+        set
+        {
+            if (SetProperty(ref _labelText, value))
+            {
+                OnPropertyChanged(nameof(Label));
+            }
+        }
+    }
+
+    public string Label => _labelText ?? (_percent is { } p ? $"{Math.Round(p).ToString(CultureInfo.CurrentCulture)}%" : "…");
 
     /// <summary>Tooltip line, e.g. "C:\ — 120 GB free of 500 GB".</summary>
     public string Detail => _detail;

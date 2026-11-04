@@ -22,4 +22,7 @@ public interface IDialogService
 
     /// <summary>Opens a non-modal window with a shortcut's captured output.</summary>
     void ShowLog(LogViewerViewModel viewModel);
+
+    /// <summary>Shows the table of all item names and applies the edits.</summary>
+    void ShowNameTable(LauncherViewModel launcher);
 }

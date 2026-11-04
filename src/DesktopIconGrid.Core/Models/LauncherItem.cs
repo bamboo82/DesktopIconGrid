@@ -26,6 +26,9 @@ public abstract class LauncherItem
     /// <summary>Optional text drawn instead of an image. <see cref="IconPath"/> wins when both are set.</summary>
     public TextIcon? TextIcon { get; set; }
 
+    /// <summary>When the item was added or last edited through the app.</summary>
+    public DateTimeOffset? ModifiedAt { get; set; }
+
     [JsonIgnore]
     public bool HasCustomIcon => !string.IsNullOrWhiteSpace(IconPath);
 

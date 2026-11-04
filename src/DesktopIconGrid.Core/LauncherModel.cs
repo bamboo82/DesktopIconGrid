@@ -214,6 +214,7 @@ public sealed class LauncherModel
             throw new InvalidOperationException("Groups cannot be placed inside other groups.");
         }
 
+        item.ModifiedAt ??= DateTimeOffset.UtcNow;
         var list = ListOf(parent);
         list.Insert(Math.Clamp(index, 0, list.Count), item);
     }
@@ -281,6 +282,22 @@ public sealed class LauncherModel
         }
 
         existing.CopyContentFrom(edited);
+        existing.ModifiedAt = DateTimeOffset.UtcNow;
+    }
+
+    /// <summary>Changes an item's caption. Returns false when the item is unknown, the name is blank, or nothing changed.</summary>
+    public bool Rename(Guid id, string name)
+    {
+        var trimmed = name?.Trim() ?? string.Empty;
+        var item = Find(id);
+        if (item is null || trimmed.Length == 0 || string.Equals(item.Name, trimmed, StringComparison.Ordinal))
+        {
+            return false;
+        }
+
+        item.Name = trimmed;
+        item.ModifiedAt = DateTimeOffset.UtcNow;
+        return true;
     }
 
     public void ApplySettings(LauncherSettings settings) => Settings.CopyFrom(settings);

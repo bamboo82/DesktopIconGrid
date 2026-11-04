@@ -21,6 +21,10 @@ Google sign-in token.
 - **Special icons** — live gauges for CPU usage and the fill level of a drive, drawn as a
   ring, a bar or a number; and the **Google Drive Bucket**: drop files on it to upload them to a
   Drive folder, click to open the folder, Ctrl+click to browse it and copy files to your PC.
+- **Sound Replayer** — a special icon: press and hold to record from the microphone, release
+  to loop the recording, click to stop.
+- **Edit names table** — rename all shortcuts in one sortable grid (given vs. original name);
+  these names are the future voice-command phrases.
 - **Tray icon** — show or hide the bar, reset its position when it is lost on a disconnected
   monitor, and reach the common commands; the close button hides the bar to the tray.
 - **Running badge and run logs** — a green dot shows while a shortcut's program runs; console
@@ -54,6 +58,9 @@ Google Drive Bucket, and [docs/THEMES.md](docs/THEMES.md) for the themes.
 | Put a shortcut in a group | Drag it onto the group icon |
 | Edit an item | Right-click → *Properties*, or `F2` |
 | Use text instead of an icon image | *Properties → Text icon…*: text, font (default 宋體), size, bold, colour |
+| Use an image from the web as the icon | *Properties → Change icon… → From a web address…* |
+| Rename many shortcuts at once | Options menu (▸) → *Edit names…* (sort by name or modified date) |
+| Record and loop a sound | Right-click → *Add special icon ▸ Sound Replayer*; press and hold to record, release to loop, click to stop |
 | Open a file with a program on the bar | Drag the file from Explorer onto the program's icon (`{file}`/`{files}` in Parameters control where it goes) |
 | Add a shortcut by dragging | Drop a file on empty space, or right-drag it anywhere on the bar |
 | Show or hide the bar from anywhere | Set a hotkey in Settings (e.g. `Ctrl+Alt+Space`) |
@@ -137,3 +144,6 @@ tests/DesktopIconGrid.Core.Tests/  xunit tests for the core library
 | `sync.json` | Device name, Google API client credentials, the linked copy and when it was last synced. |
 | `google-token.bin` | The Google sign-in token, encrypted with DPAPI for the current Windows user. |
 | `logs\` | Captured output of shortcuts that have logging turned on (ten newest runs per shortcut). |
+| `icons\` | Icons downloaded from web addresses (256 px PNG). |
+| `sounds\` | Recordings of Sound Replayer icons (WAV). |
+| `drive-cache\` | Files downloaded for the Google Drive Bucket Viewer (purged after a day). |

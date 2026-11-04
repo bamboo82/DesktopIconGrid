@@ -48,7 +48,7 @@ A launchable entry. Fields come straight from the *Shortcut Properties* dialog:
 | Name | Caption (shown as tooltip, and as label when labels are enabled). Pre-filled from the file name. |
 | Location | A file, a folder or a URL. `%ENV%` variables are expanded at launch. The `…` button opens a file picker. |
 | Parameters | Command-line arguments passed to the program. |
-| Icon | Default = extracted from the Location. *Change icon…* picks a `.png/.jpg/.ico/.bmp` image or an `.exe/.dll/.ico` resource (`path,index` is accepted). *Text icon…* draws text instead (see below). *Use default* clears the override. |
+| Icon | Default = extracted from the Location. *Change icon…* picks a `.png/.jpg/.ico/.bmp` image or an `.exe/.dll/.ico` resource (`path,index` is accepted). *Text icon…* draws text instead (see below). *From a web address…* downloads an image once, scales it to 256 px, centres it on a transparent square and keeps it as a local PNG. *Use default* clears the override. |
 
 **Running badge and output log.** A green dot in the corner of a shortcut shows that a program
 started from it is still running (processes started from the bar are followed until they exit;
@@ -139,6 +139,10 @@ Both draw the value in a design you pick (ring, bar or number) with green/amber/
   desktop or Explorer (they are downloaded first), and drop files in to upload. Needs full Drive
   access, which the app asks for the first time (see the sync section for the credentials setup).
 
+- **Sound Replayer** — press and hold the icon to record from the microphone (only while
+  stopped); release to play the recording back in an endless loop; a single click stops it.
+  A click while stopped replays the last recording. Shows REC / LOOP on the icon.
+
 The item model, handler interface, registry and the bucket are specified in
 [docs/SPECIAL_ICONS.md](docs/SPECIAL_ICONS.md).
 
@@ -208,6 +212,16 @@ Both dialogs follow the reference layout: a labelled form, an icon preview with
   exist, so paths on removable drives can still be saved.
 - Changing the Location refreshes the icon preview and fills in the Name if it was
   still the automatic one.
+
+### 6.1 Edit names table
+
+Options menu (▸) or tray → *Edit names…* lists every item on the bar in one grid: *Given
+name* (editable), *Original name* (what the item would be called automatically: the file name
+of a shortcut, the kind of a special icon), *Kind*, *In group*, *Modified* (when the item was
+added or last edited) and *Location*. Click a column header to sort; *Use original name*
+resets the selected rows, *Use original names for all* resets everything; *Save* applies all
+changes at once. The given names are the captions on the bar and will be the phrases for
+voice commands in a later design, so this is where that vocabulary is maintained.
 
 ## 7. Settings
 

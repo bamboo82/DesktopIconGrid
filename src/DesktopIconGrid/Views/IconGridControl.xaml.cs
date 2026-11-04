@@ -5,7 +5,9 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Threading;
 using DesktopIconGrid.Core.Launching;
+using DesktopIconGrid.Core.Models;
 using DesktopIconGrid.Core.SpecialItems;
 using DesktopIconGrid.SpecialIcons;
 using DesktopIconGrid.ViewModels;
@@ -24,6 +26,7 @@ namespace DesktopIconGrid.Views;
 public partial class IconGridControl : UserControl
 {
     private const int ClickFromMouseWindowMs = 150;
+    private static readonly TimeSpan HoldDelay = TimeSpan.FromMilliseconds(300);
 
     private Point _dragStart;
     private ItemViewModel? _dragCandidate;
@@ -31,10 +34,16 @@ public partial class IconGridControl : UserControl
     private long _lastMouseUpTicks;
     private ItemViewModel? _hoveredItem;
     private DragDropKeyStates _lastDragButtons;
+    private readonly DispatcherTimer _holdTimer;
+    private ItemViewModel? _holdCandidate;
+    private ItemViewModel? _holdActive;
+    private bool _suppressNextClick;
 
     public IconGridControl()
     {
         InitializeComponent();
+        _holdTimer = new DispatcherTimer(HoldDelay, DispatcherPriority.Input, OnHoldTimerTick, Dispatcher);
+        _holdTimer.Stop();
     }
 
     private ItemListViewModel? List => DataContext as ItemListViewModel;
@@ -58,6 +67,13 @@ public partial class IconGridControl : UserControl
 
     private void Item_Click(object sender, RoutedEventArgs e)
     {
+        if (_suppressNextClick)
+        {
+            _suppressNextClick = false;
+            e.Handled = true;
+            return;
+        }
+
         if (ItemOf(sender) is not { } item || List is null)
         {
             return;
@@ -133,9 +149,20 @@ public partial class IconGridControl : UserControl
 
     private void Item_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
+        _suppressNextClick = false;
         _dragStart = e.GetPosition(this);
         _dragCandidate = ItemOf(sender);
         _dragButton = sender as Button;
+
+        // Press-and-hold icons (e.g. the Sound Replayer) start their hold after a short delay.
+        _holdCandidate = _dragCandidate is { Model: SpecialIconItem special } candidate && candidate.SpecialHandler.SupportsPressAndHold(special)
+            ? candidate
+            : null;
+        _holdTimer.Stop();
+        if (_holdCandidate is not null)
+        {
+            _holdTimer.Start();
+        }
     }
 
     private void Item_PreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
@@ -143,10 +170,40 @@ public partial class IconGridControl : UserControl
         _lastMouseUpTicks = Environment.TickCount64;
         _dragCandidate = null;
         _dragButton = null;
+        _holdTimer.Stop();
+        _holdCandidate = null;
+
+        if (_holdActive is { Model: SpecialIconItem special } active)
+        {
+            _holdActive = null;
+            _suppressNextClick = true; // the release ends the hold; it is not a click
+            active.SpecialHandler.HoldEnded(special);
+        }
+    }
+
+    private void OnHoldTimerTick(object? sender, EventArgs e)
+    {
+        _holdTimer.Stop();
+        var candidate = _holdCandidate;
+        _holdCandidate = null;
+        if (candidate is not { Model: SpecialIconItem special } || Mouse.LeftButton != MouseButtonState.Pressed || !ReferenceEquals(_dragCandidate, candidate))
+        {
+            return;
+        }
+
+        _dragCandidate = null; // holding, not dragging
+        _dragButton = null;
+        _holdActive = candidate;
+        candidate.SpecialHandler.HoldStarted(special);
     }
 
     private void Item_PreviewMouseMove(object sender, MouseEventArgs e)
     {
+        if (_holdActive is not null)
+        {
+            return; // a hold is in progress; moving does not start a drag
+        }
+
         if (_dragCandidate is null || _dragButton is null || e.LeftButton != MouseButtonState.Pressed)
         {
             return;
@@ -163,6 +220,8 @@ public partial class IconGridControl : UserControl
         var button = _dragButton;
         _dragCandidate = null;
         _dragButton = null;
+        _holdTimer.Stop();
+        _holdCandidate = null;
 
         var data = new DataObject(DragState.ItemFormat, item.Id.ToString());
         DragState.Current = item;
@@ -515,7 +574,7 @@ public partial class IconGridControl : UserControl
         }
 
         var anchor = menu.Items.OfType<MenuItem>().FirstOrDefault(m => Equals(m.Tag, "special-actions-anchor"));
-        if (anchor is null || item.Model is not Core.Models.SpecialIconItem special)
+        if (anchor is null || item.Model is not SpecialIconItem special)
         {
             return;
         }

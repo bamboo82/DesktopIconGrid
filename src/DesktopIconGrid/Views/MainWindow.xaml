@@ -69,6 +69,7 @@
             <ContextMenu>
               <MenuItem Header="Settings…" Command="{Binding OpenSettingsCommand}" InputGestureText="Ctrl+," />
               <MenuItem Header="Sync with Google Drive…" Command="{Binding OpenSyncCommand}" />
+              <MenuItem Header="Edit names…" Command="{Binding OpenNameTableCommand}" />
               <MenuItem Header="Launch Multi Launch group" Command="{Binding LaunchMultiLaunchCommand}" />
               <Separator />
               <MenuItem Header="New shortcut…" Command="{Binding NewShortcutCommand}" InputGestureText="Ctrl+N" />

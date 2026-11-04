@@ -8,6 +8,7 @@ public static class SpecialIconKinds
     public const string CpuUsage = "cpu-usage";
     public const string DiskUsage = "disk-usage";
     public const string GoogleDriveBucket = "google-drive-bucket";
+    public const string SoundReplayer = "sound-replayer";
 }
 
 /// <summary>How a gauge icon draws its percentage.</summary>

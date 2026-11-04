@@ -36,6 +36,16 @@ public sealed class DialogService(IIconProvider icons) : IDialogService
         return window.ShowDialog() == true ? viewModel.ToSettings() : null;
     }
 
+    public void ShowNameTable(LauncherViewModel launcher)
+    {
+        var viewModel = new NameTableViewModel(launcher);
+        var window = new NameTableWindow { DataContext = viewModel, Owner = Owner };
+        if (window.ShowDialog() == true)
+        {
+            viewModel.Apply();
+        }
+    }
+
     public void ShowLog(LogViewerViewModel viewModel)
     {
         var window = new LogViewerWindow { DataContext = viewModel, Owner = Application.Current?.MainWindow };

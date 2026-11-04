@@ -83,6 +83,7 @@ public partial class MainWindow : Window
         yield return TrayMenuEntry.Separator;
         yield return new TrayMenuEntry("New shortcut…", () => RunOnBar(() => _viewModel.NewShortcutCommand.Execute(null)));
         yield return new TrayMenuEntry("New group…", () => RunOnBar(() => _viewModel.NewGroupCommand.Execute(null)));
+        yield return new TrayMenuEntry("Edit names…", () => RunOnBar(() => _viewModel.OpenNameTableCommand.Execute(null)));
         yield return new TrayMenuEntry("Launch Multi Launch group", () => _viewModel.LaunchMultiLaunchCommand.Execute(null), IsEnabled: _viewModel.HasMultiLaunchMembers);
         yield return new TrayMenuEntry("Always on top", () => _viewModel.AlwaysOnTop = !_viewModel.AlwaysOnTop, IsChecked: _viewModel.AlwaysOnTop);
         yield return TrayMenuEntry.Separator;

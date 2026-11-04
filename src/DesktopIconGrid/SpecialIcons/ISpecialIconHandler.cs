@@ -50,6 +50,19 @@ public interface ISpecialIconHandler
         Task.FromResult(LaunchResult.Failure("This icon does not accept files."));
 
     IReadOnlyList<SpecialIconAction> GetActions(SpecialIconItem item) => [];
+
+    /// <summary>True when pressing and holding the icon (rather than clicking) means something.</summary>
+    bool SupportsPressAndHold(SpecialIconItem item) => false;
+
+    /// <summary>The button has been held down long enough to count as a hold.</summary>
+    void HoldStarted(SpecialIconItem item)
+    {
+    }
+
+    /// <summary>The button was released after <see cref="HoldStarted"/>.</summary>
+    void HoldEnded(SpecialIconItem item)
+    {
+    }
 }
 
 /// <summary>Looks up handlers by kind; unknown kinds get a placeholder handler.</summary>

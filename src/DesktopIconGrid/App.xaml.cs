@@ -16,6 +16,9 @@ namespace DesktopIconGrid;
 public partial class App : Application
 {
     private static readonly HttpClient Http = CreateHttpClient();
+
+    /// <summary>The app-wide HTTP client (Google APIs, icon downloads).</summary>
+    public static HttpClient SharedHttp => Http;
     private ProcessTracker? _tracker;
     private SystemMonitor? _monitor;
 
@@ -39,6 +42,7 @@ public partial class App : Application
             new CpuUsageHandler(_monitor, owner),
             new DiskUsageHandler(_monitor, owner),
             new DriveBucketHandler(syncService, dialogs, owner, icons, cacheDirectory, Dispatcher),
+            new SoundReplayerHandler(owner, AppPaths.SoundsDirectory, Dispatcher),
         ]);
         var launcher = new LaunchService(_tracker);
         var viewModel = new LauncherViewModel(
