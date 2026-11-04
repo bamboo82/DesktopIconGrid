@@ -2,6 +2,8 @@ using DesktopIconGrid.Services;
 
 namespace DesktopIconGrid.App.Tests;
 
+/// <summary>Shares a collection with every test that goes through <see cref="IconWorker.Shared"/>, since one test retires it.</summary>
+[Collection("Shared icon worker")]
 public class IconWorkerTests
 {
     [Fact]
@@ -87,7 +89,10 @@ public class IconWorkerTests
         Assert.NotSame(before, IconWorker.Shared);
         Assert.Equal(2, await waiting); // ran on the successor
         Assert.Equal(3, await IconWorker.Shared.RunAsync(() => 3));
+        Assert.Equal(5, await before.RunAsync(() => 5)); // a caller that still holds the old worker is forwarded
         release.Set();
+        await Task.Delay(50); // the old dispatcher shuts down once the hung lookup returns
+        Assert.Equal(6, await before.RunAsync(() => 6)); // and is still forwarded afterwards
     }
 
     [Fact]

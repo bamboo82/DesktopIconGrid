@@ -22,7 +22,13 @@ jobs:
         run: dotnet build --no-restore -c Release
 
       - name: Test
-        run: dotnet test --no-build -c Release
+        run: dotnet test --no-build -c Release --logger "trx" --results-directory TestResults
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results
+          path: TestResults
 
       - name: Publish
         run: dotnet publish src/DesktopIconGrid -c Release -r win-x64 --self-contained false -p:PublishSingleFile=true -p:DebugType=embedded -o publish

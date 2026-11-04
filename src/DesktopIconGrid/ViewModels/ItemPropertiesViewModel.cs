@@ -12,7 +12,8 @@ namespace DesktopIconGrid.ViewModels;
 public sealed class ItemPropertiesViewModel : ObservableObject
 {
     private const int PreviewSize = 32;
-    private static readonly TimeSpan PreviewDebounce = TimeSpan.FromMilliseconds(300);
+    /// <summary>How long after the last edit the preview and the not-found check run; shortened by tests.</summary>
+    internal static TimeSpan PreviewDebounce { get; set; } = TimeSpan.FromMilliseconds(300);
 
     private readonly LauncherItem _target;
     private readonly IIconProvider _icons;

@@ -12,7 +12,8 @@ namespace DesktopIconGrid.Services;
 /// <c>IShellItemImageFactory.GetImage</c> complete instead of deadlocking. Lookups on local fixed drives go
 /// before lookups on network or removable storage, so a sleeping NAS never delays the local icons queued after
 /// it. A lookup that overruns its deadline retires the shared worker: a fresh one takes over the waiting lookups
-/// and the stuck thread is left alone until the process exits.
+/// (including any that arrive on the old worker afterwards) and the stuck thread is left alone until the
+/// process exits.
 /// </summary>
 public sealed class IconWorker : IDisposable
 {
@@ -28,6 +29,7 @@ public sealed class IconWorker : IDisposable
     private readonly Thread _thread;
     private int _running;
     private volatile bool _retired;
+    private volatile bool _disposed;
 
     public IconWorker()
     {
@@ -60,7 +62,7 @@ public sealed class IconWorker : IDisposable
     /// <summary>Number of lookups waiting or running (for diagnostics).</summary>
     public int Pending => _local.Count + _slow.Count + Volatile.Read(ref _running);
 
-    /// <summary>True once a lookup on this worker hung and a successor took over; nothing new runs here.</summary>
+    /// <summary>True once a lookup on this worker hung and a successor took over; anything queued here is forwarded.</summary>
     public bool IsRetired => _retired;
 
     /// <summary>
@@ -101,7 +103,16 @@ public sealed class IconWorker : IDisposable
         ArgumentNullException.ThrowIfNull(work);
         var item = new WorkItem(() => work(), new TaskCompletionSource<object?>(TaskCreationOptions.RunContinuationsAsynchronously));
         (slow ? _slow : _local).Enqueue(item);
-        _ = PostAsync();
+        if (_retired || _disposed)
+        {
+            // Shared was read before this worker was retired: the item belongs to the successor now.
+            ForwardQueued();
+        }
+        else
+        {
+            _ = PostAsync();
+        }
+
         return UnwrapAsync<T>(item.Completion.Task);
     }
 
@@ -127,16 +138,19 @@ public sealed class IconWorker : IDisposable
 
     private static async Task<T> UnwrapAsync<T>(Task<object?> task) => (T)(await task.ConfigureAwait(false))!;
 
+    /// <summary>Asks the dispatcher to run one waiting lookup. A dispatcher that has shut down forwards the queue instead of faulting.</summary>
     private async Task PostAsync()
     {
-        var dispatcher = await _dispatcher.Task.ConfigureAwait(false);
-        if (dispatcher.HasShutdownStarted)
+        try
         {
-            FailQueued();
-            return;
+            var dispatcher = await _dispatcher.Task.ConfigureAwait(false);
+            await dispatcher.InvokeAsync(ProcessNext);
         }
-
-        await dispatcher.InvokeAsync(ProcessNext);
+        catch (OperationCanceledException)
+        {
+            // The dispatcher shut down (worker retired and idle, or disposed); nothing was lost, the queue moves on.
+            ForwardQueued();
+        }
     }
 
     /// <summary>Runs one waiting lookup, local ones first. Posted once per queued item.</summary>
@@ -144,6 +158,7 @@ public sealed class IconWorker : IDisposable
     {
         if (_retired)
         {
+            ForwardQueued();
             ShutdownWhenIdle();
             return;
         }
@@ -169,6 +184,7 @@ public sealed class IconWorker : IDisposable
 
         if (_retired)
         {
+            ForwardQueued();
             ShutdownWhenIdle(); // the hung lookup came back after a successor took over
         }
     }
@@ -185,26 +201,63 @@ public sealed class IconWorker : IDisposable
 
             _retired = true;
             var successor = new IconWorker();
-            var moved = 0;
-            while (_local.TryDequeue(out var item))
-            {
-                successor._local.Enqueue(item);
-                moved++;
-            }
-
-            while (_slow.TryDequeue(out var item))
-            {
-                successor._slow.Enqueue(item);
-                moved++;
-            }
-
             _shared = successor;
+            var moved = MoveQueuedTo(successor);
             AppLog.Default.Warning("Icons", $"Icon worker retired because the lookup{(label is null ? string.Empty : $" for \"{label}\"")} is stuck; a new worker took over {moved} waiting lookup(s)");
-            for (var i = 0; i < moved; i++)
-            {
-                _ = successor.PostAsync();
-            }
         }
+    }
+
+    /// <summary>
+    /// Moves whatever is still queued here to the shared worker and posts it there. Called whenever this worker
+    /// can no longer run anything: after retirement (lookups can still arrive from callers that read
+    /// <see cref="Shared"/> just before) and after its dispatcher shut down. A disposed private worker cancels
+    /// its queue instead.
+    /// </summary>
+    private void ForwardQueued()
+    {
+        if (_disposed)
+        {
+            FailQueued();
+            return;
+        }
+
+        IconWorker successor;
+        lock (SharedLock)
+        {
+            // Retire swaps the shared worker and drains under this lock, so once we hold it either the successor is
+            // in place or no retirement happened (then the queue belongs here and the dispatcher will get to it).
+            if (_shared is not { } current || ReferenceEquals(current, this))
+            {
+                return;
+            }
+
+            successor = current;
+        }
+
+        MoveQueuedTo(successor);
+    }
+
+    private int MoveQueuedTo(IconWorker successor)
+    {
+        var moved = 0;
+        while (_local.TryDequeue(out var item))
+        {
+            successor._local.Enqueue(item);
+            moved++;
+        }
+
+        while (_slow.TryDequeue(out var item))
+        {
+            successor._slow.Enqueue(item);
+            moved++;
+        }
+
+        for (var i = 0; i < moved; i++)
+        {
+            _ = successor.PostAsync();
+        }
+
+        return moved;
     }
 
     private void FailQueued()
@@ -231,6 +284,7 @@ public sealed class IconWorker : IDisposable
 
     public void Dispose()
     {
+        _disposed = true;
         if (_dispatcher.Task.IsCompletedSuccessfully)
         {
             _dispatcher.Task.Result.BeginInvokeShutdown(DispatcherPriority.Normal);
