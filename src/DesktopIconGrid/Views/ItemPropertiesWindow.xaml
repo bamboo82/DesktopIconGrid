@@ -1,0 +1,95 @@
+<Window x:Class="DesktopIconGrid.Views.ItemPropertiesWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="{Binding Title}"
+        Width="500"
+        SizeToContent="Height"
+        ResizeMode="NoResize"
+        WindowStartupLocation="CenterOwner"
+        ShowInTaskbar="False"
+        Icon="{StaticResource AppIconImage}"
+        FocusManager.FocusedElement="{Binding ElementName=NameBox}">
+  <Grid Margin="14">
+    <Grid.ColumnDefinitions>
+      <ColumnDefinition Width="Auto" MinWidth="80" />
+      <ColumnDefinition Width="*" />
+      <ColumnDefinition Width="Auto" />
+    </Grid.ColumnDefinitions>
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="Auto" />
+    </Grid.RowDefinitions>
+
+    <!-- Name -->
+    <TextBlock Grid.Row="0" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="Name:" Margin="0,0,12,8" />
+    <TextBox x:Name="NameBox" Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="2"
+             Style="{StaticResource DialogTextBox}"
+             Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" />
+
+    <!-- Location -->
+    <TextBlock Grid.Row="1" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="Location:" Margin="0,0,12,8"
+               IsEnabled="{Binding IsShortcut}" />
+    <TextBox Grid.Row="1" Grid.Column="1"
+             Style="{StaticResource DialogTextBox}"
+             Text="{Binding Location, UpdateSourceTrigger=PropertyChanged}"
+             IsEnabled="{Binding IsShortcut}" />
+    <Button x:Name="BrowseButton" Grid.Row="1" Grid.Column="2"
+            Content="…" Width="32" Margin="6,0,0,8" Padding="0,3"
+            IsEnabled="{Binding IsShortcut}"
+            Click="Browse_Click">
+      <Button.ContextMenu>
+        <ContextMenu>
+          <MenuItem Header="Browse for a file…" Click="BrowseFile_Click" />
+          <MenuItem Header="Browse for a folder…" Click="BrowseFolder_Click" />
+        </ContextMenu>
+      </Button.ContextMenu>
+    </Button>
+
+    <TextBlock Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2"
+               Style="{StaticResource DialogHint}"
+               Text="{Binding LocationHint}"
+               IsEnabled="{Binding IsShortcut}" />
+
+    <!-- Parameters -->
+    <TextBlock Grid.Row="3" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="Parameters:" Margin="0,0,12,8"
+               IsEnabled="{Binding IsShortcut}" />
+    <TextBox Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="2"
+             Style="{StaticResource DialogTextBox}"
+             Text="{Binding Parameters, UpdateSourceTrigger=PropertyChanged}"
+             IsEnabled="{Binding IsShortcut}" />
+
+    <!-- Icon -->
+    <TextBlock Grid.Row="4" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="Icon:" VerticalAlignment="Top" Margin="0,6,12,0" />
+    <StackPanel Grid.Row="4" Grid.Column="1" Grid.ColumnSpan="2" Orientation="Horizontal" Margin="0,0,0,8">
+      <Border Width="36" Height="36" Margin="0,0,10,0" VerticalAlignment="Center">
+        <Image Source="{Binding Preview, TargetNullValue={StaticResource PlaceholderIconImage}}"
+               Width="32" Height="32"
+               Stretch="Uniform"
+               RenderOptions.BitmapScalingMode="HighQuality" />
+      </Border>
+      <Button Content="Change icon…" Padding="10,3" VerticalAlignment="Center" Click="ChangeIcon_Click" />
+      <Button Content="Use default" Padding="10,3" Margin="8,0,0,0" VerticalAlignment="Center"
+              IsEnabled="{Binding HasCustomIcon}" Click="UseDefaultIcon_Click" />
+    </StackPanel>
+
+    <!-- Warning -->
+    <TextBlock Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="3"
+               Text="{Binding Warning}"
+               Foreground="{StaticResource WarningBrush}"
+               TextWrapping="Wrap"
+               Margin="0,0,0,8"
+               Visibility="{Binding HasWarning, Converter={StaticResource BoolToVisibility}}" />
+
+    <!-- Buttons -->
+    <StackPanel Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,6,0,0">
+      <Button Content="Save" Style="{StaticResource DialogButton}" IsDefault="True"
+              IsEnabled="{Binding CanSave}" Click="Save_Click" />
+      <Button Content="Cancel" Style="{StaticResource DialogButton}" IsCancel="True" />
+    </StackPanel>
+  </Grid>
+</Window>

@@ -1,0 +1,207 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:conv="clr-namespace:DesktopIconGrid.Converters">
+
+  <!-- Converters -->
+  <conv:NullToCollapsedConverter x:Key="NullToCollapsed" />
+  <conv:InverseBooleanToVisibilityConverter x:Key="InverseBoolToVisibility" />
+  <conv:InverseBooleanConverter x:Key="InverseBool" />
+  <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+
+  <!-- Brushes -->
+  <SolidColorBrush x:Key="BarBorderBrush" Color="#FF333333" />
+  <SolidColorBrush x:Key="GripBrush" Color="#70FFFFFF" />
+  <SolidColorBrush x:Key="HoverBrush" Color="#2EFFFFFF" />
+  <SolidColorBrush x:Key="HoverBorderBrush" Color="#50FFFFFF" />
+  <SolidColorBrush x:Key="PressedBrush" Color="#50FFFFFF" />
+  <SolidColorBrush x:Key="AccentBrush" Color="#FF4C8BF5" />
+  <SolidColorBrush x:Key="DropTargetBrush" Color="#4A4C8BF5" />
+  <SolidColorBrush x:Key="BadgeBrush" Color="#FFF5A623" />
+  <SolidColorBrush x:Key="DialogHintBrush" Color="#FF6E6E6E" />
+  <SolidColorBrush x:Key="WarningBrush" Color="#FFB55A00" />
+  <SolidColorBrush x:Key="SwatchBorderBrush" Color="#FF9A9A9A" />
+
+  <!-- Application icon: four tiles on a dark rounded square -->
+  <DrawingImage x:Key="AppIconImage">
+    <DrawingImage.Drawing>
+      <DrawingGroup>
+        <GeometryDrawing Brush="#FF2F3A2F">
+          <GeometryDrawing.Geometry>
+            <RectangleGeometry Rect="0,0,32,32" RadiusX="6" RadiusY="6" />
+          </GeometryDrawing.Geometry>
+        </GeometryDrawing>
+        <GeometryDrawing Brush="#FF4C8BF5">
+          <GeometryDrawing.Geometry>
+            <RectangleGeometry Rect="5,5,10,10" RadiusX="2" RadiusY="2" />
+          </GeometryDrawing.Geometry>
+        </GeometryDrawing>
+        <GeometryDrawing Brush="#FFF5A623">
+          <GeometryDrawing.Geometry>
+            <RectangleGeometry Rect="17,5,10,10" RadiusX="2" RadiusY="2" />
+          </GeometryDrawing.Geometry>
+        </GeometryDrawing>
+        <GeometryDrawing Brush="#FF7ED321">
+          <GeometryDrawing.Geometry>
+            <RectangleGeometry Rect="5,17,10,10" RadiusX="2" RadiusY="2" />
+          </GeometryDrawing.Geometry>
+        </GeometryDrawing>
+        <GeometryDrawing Brush="#FFE8E8E8">
+          <GeometryDrawing.Geometry>
+            <RectangleGeometry Rect="17,17,10,10" RadiusX="2" RadiusY="2" />
+          </GeometryDrawing.Geometry>
+        </GeometryDrawing>
+      </DrawingGroup>
+    </DrawingImage.Drawing>
+  </DrawingImage>
+
+  <!-- Placeholder shown while an icon loads or when none can be resolved -->
+  <DrawingImage x:Key="PlaceholderIconImage">
+    <DrawingImage.Drawing>
+      <DrawingGroup>
+        <GeometryDrawing Brush="#FFE9E9E9">
+          <GeometryDrawing.Pen>
+            <Pen Brush="#FF8C8C8C" Thickness="1.5" />
+          </GeometryDrawing.Pen>
+          <GeometryDrawing.Geometry>
+            <RectangleGeometry Rect="4,2,24,28" RadiusX="3" RadiusY="3" />
+          </GeometryDrawing.Geometry>
+        </GeometryDrawing>
+        <GeometryDrawing Brush="#FF8C8C8C">
+          <GeometryDrawing.Geometry>
+            <GeometryGroup>
+              <RectangleGeometry Rect="9,9,14,2" />
+              <RectangleGeometry Rect="9,14,14,2" />
+              <RectangleGeometry Rect="9,19,9,2" />
+            </GeometryGroup>
+          </GeometryDrawing.Geometry>
+        </GeometryDrawing>
+      </DrawingGroup>
+    </DrawingImage.Drawing>
+  </DrawingImage>
+
+  <!-- Dotted pattern for the move grip -->
+  <DrawingBrush x:Key="GripDotsBrush" TileMode="Tile" Viewport="0,0,4,4" ViewportUnits="Absolute" Viewbox="0,0,4,4" ViewboxUnits="Absolute">
+    <DrawingBrush.Drawing>
+      <GeometryDrawing Brush="{StaticResource GripBrush}">
+        <GeometryDrawing.Geometry>
+          <EllipseGeometry Center="2,2" RadiusX="1" RadiusY="1" />
+        </GeometryDrawing.Geometry>
+      </GeometryDrawing>
+    </DrawingBrush.Drawing>
+  </DrawingBrush>
+
+  <Style x:Key="GripStyle" TargetType="Border">
+    <Setter Property="Background" Value="{StaticResource GripDotsBrush}" />
+    <Setter Property="Margin" Value="4,6,3,6" />
+    <Setter Property="Cursor" Value="SizeAll" />
+  </Style>
+
+  <!-- Small glyph buttons on the right edge of the bar -->
+  <Style x:Key="BarButtonStyle" TargetType="Button">
+    <Setter Property="Width" Value="16" />
+    <Setter Property="Height" Value="18" />
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="Padding" Value="0" />
+    <Setter Property="Cursor" Value="Hand" />
+    <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+    <Setter Property="Focusable" Value="False" />
+    <Setter Property="FontSize" Value="10" />
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="Button">
+          <Border x:Name="Root" Background="{TemplateBinding Background}" CornerRadius="3" SnapsToDevicePixels="True">
+            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+          </Border>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+              <Setter TargetName="Root" Property="Background" Value="{StaticResource HoverBrush}" />
+            </Trigger>
+            <Trigger Property="IsPressed" Value="True">
+              <Setter TargetName="Root" Property="Background" Value="{StaticResource PressedBrush}" />
+            </Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+
+  <!-- Icon cells -->
+  <Style x:Key="IconButtonStyle" TargetType="Button">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderBrush" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="Padding" Value="0" />
+    <Setter Property="Margin" Value="1" />
+    <Setter Property="Cursor" Value="Hand" />
+    <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+    <Setter Property="HorizontalContentAlignment" Value="Center" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="Button">
+          <Border x:Name="Root"
+                  Background="{TemplateBinding Background}"
+                  BorderBrush="{TemplateBinding BorderBrush}"
+                  BorderThickness="{TemplateBinding BorderThickness}"
+                  CornerRadius="5"
+                  SnapsToDevicePixels="True">
+            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                              VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
+          </Border>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+              <Setter TargetName="Root" Property="Background" Value="{StaticResource HoverBrush}" />
+              <Setter TargetName="Root" Property="BorderBrush" Value="{StaticResource HoverBorderBrush}" />
+            </Trigger>
+            <Trigger Property="IsPressed" Value="True">
+              <Setter TargetName="Root" Property="Background" Value="{StaticResource PressedBrush}" />
+            </Trigger>
+            <Trigger Property="IsKeyboardFocused" Value="True">
+              <Setter TargetName="Root" Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+            </Trigger>
+            <DataTrigger Binding="{Binding IsDropTarget}" Value="True">
+              <Setter TargetName="Root" Property="Background" Value="{StaticResource DropTargetBrush}" />
+              <Setter TargetName="Root" Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+            </DataTrigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+
+  <!-- Dialog pieces -->
+  <Style x:Key="DialogLabel" TargetType="TextBlock">
+    <Setter Property="VerticalAlignment" Value="Center" />
+    <Setter Property="Margin" Value="0,0,12,0" />
+    <Style.Triggers>
+      <Trigger Property="IsEnabled" Value="False">
+        <Setter Property="Opacity" Value="0.45" />
+      </Trigger>
+    </Style.Triggers>
+  </Style>
+
+  <Style x:Key="DialogTextBox" TargetType="TextBox">
+    <Setter Property="Padding" Value="4,3" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
+    <Setter Property="Margin" Value="0,0,0,8" />
+  </Style>
+
+  <Style x:Key="DialogButton" TargetType="Button">
+    <Setter Property="MinWidth" Value="84" />
+    <Setter Property="Padding" Value="12,4" />
+    <Setter Property="Margin" Value="8,0,0,0" />
+  </Style>
+
+  <Style x:Key="DialogHint" TargetType="TextBlock">
+    <Setter Property="Foreground" Value="{StaticResource DialogHintBrush}" />
+    <Setter Property="TextWrapping" Value="Wrap" />
+    <Setter Property="Margin" Value="0,-4,0,8" />
+    <Style.Triggers>
+      <Trigger Property="IsEnabled" Value="False">
+        <Setter Property="Opacity" Value="0.45" />
+      </Trigger>
+    </Style.Triggers>
+  </Style>
+
+</ResourceDictionary>

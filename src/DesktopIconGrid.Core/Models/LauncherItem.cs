@@ -1,0 +1,38 @@
+using System.Text.Json.Serialization;
+
+namespace DesktopIconGrid.Core.Models;
+
+/// <summary>
+/// Base type for everything that can sit in a cell of the bar: a <see cref="ShortcutItem"/>
+/// or a <see cref="GroupItem"/> (a folder of shortcuts).
+/// </summary>
+[JsonPolymorphic(TypeDiscriminatorPropertyName = "$type")]
+[JsonDerivedType(typeof(ShortcutItem), "shortcut")]
+[JsonDerivedType(typeof(GroupItem), "group")]
+public abstract class LauncherItem
+{
+    public Guid Id { get; set; } = Guid.NewGuid();
+
+    /// <summary>Caption shown as a tooltip, and under the icon when labels are enabled.</summary>
+    public string Name { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Optional icon override: an image file, or an <c>.exe</c>/<c>.dll</c>/<c>.ico</c>
+    /// resource written as <c>path</c> or <c>path,index</c>. <see langword="null"/> uses the default icon.
+    /// </summary>
+    public string? IconPath { get; set; }
+
+    [JsonIgnore]
+    public bool HasCustomIcon => !string.IsNullOrWhiteSpace(IconPath);
+
+    /// <summary>Deep copy, keeping the same <see cref="Id"/>.</summary>
+    public abstract LauncherItem Clone();
+
+    /// <summary>Copies the editable fields (everything except <see cref="Id"/>) from another item of the same kind.</summary>
+    public virtual void CopyContentFrom(LauncherItem source)
+    {
+        ArgumentNullException.ThrowIfNull(source);
+        Name = source.Name;
+        IconPath = string.IsNullOrWhiteSpace(source.IconPath) ? null : source.IconPath.Trim();
+    }
+}

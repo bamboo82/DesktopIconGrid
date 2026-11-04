@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/DesktopIconGrid.Core/DesktopIconGrid.Core.csproj" />
+    <Project Path="src/DesktopIconGrid/DesktopIconGrid.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/DesktopIconGrid.Core.Tests/DesktopIconGrid.Core.Tests.csproj" />
+  </Folder>
+</Solution>

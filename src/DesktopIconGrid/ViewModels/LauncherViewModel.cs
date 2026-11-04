@@ -1,0 +1,592 @@
+using System.IO;
+using System.Reflection;
+using System.Windows.Input;
+using System.Windows.Media;
+using DesktopIconGrid.Core;
+using DesktopIconGrid.Core.Launching;
+using DesktopIconGrid.Core.Models;
+using DesktopIconGrid.Core.SpecialItems;
+using DesktopIconGrid.Core.Storage;
+using DesktopIconGrid.Infrastructure;
+using DesktopIconGrid.Services;
+
+namespace DesktopIconGrid.ViewModels;
+
+/// <summary>Root view model: owns the model, persists every change and exposes bar-wide commands.</summary>
+public sealed class LauncherViewModel : ObservableObject
+{
+    public const int LabelHeight = 16;
+    private const int PopupMaxColumns = 8;
+    private const int PopupMaxRows = 6;
+    private static readonly TimeSpan LaunchDebounce = TimeSpan.FromMilliseconds(400);
+
+    private readonly Dictionary<Guid, ItemViewModel> _viewModels = [];
+    private readonly LayoutStorage _storage;
+    private readonly IDialogService _dialogs;
+    private readonly ILaunchService _launcher;
+    private readonly Action<Action> _defer;
+
+    private ItemViewModel? _openGroup;
+    private bool _isGroupPopupOpen;
+    private Guid _lastLaunchedId;
+    private DateTime _lastLaunchedAt;
+    private Brush? _backgroundBrush;
+    private Brush? _foregroundBrush;
+
+    public LauncherViewModel(
+        LauncherModel model,
+        LayoutStorage storage,
+        IIconProvider icons,
+        IDialogService dialogs,
+        ILaunchService launcher,
+        Action<Action>? defer = null)
+    {
+        Model = model;
+        _storage = storage;
+        Icons = icons;
+        _dialogs = dialogs;
+        _launcher = launcher;
+        _defer = defer ?? (action => action());
+
+        SpecialItemSections = SpecialItemCatalog.GetAvailableSections();
+        RootItems = new ItemListViewModel(this, null);
+
+        NewShortcutCommand = new RelayCommand(() => NewShortcut(RootItems, int.MaxValue));
+        NewGroupCommand = new RelayCommand(() => NewGroup(RootItems, int.MaxValue));
+        OpenSettingsCommand = new RelayCommand(OpenSettings);
+        LaunchMultiLaunchCommand = new RelayCommand(() => _ = LaunchMultiLaunchGroupAsync());
+        OpenLayoutFolderCommand = new RelayCommand(OpenLayoutFolder);
+        AboutCommand = new RelayCommand(ShowAbout);
+        ExitCommand = new RelayCommand(() => ExitRequested?.Invoke(this, EventArgs.Empty));
+        CloseGroupPopupCommand = new RelayCommand(() => IsGroupPopupOpen = false);
+    }
+
+    public LauncherModel Model { get; }
+
+    public IIconProvider Icons { get; }
+
+    public ItemListViewModel RootItems { get; }
+
+    public IReadOnlyList<SpecialItemSection> SpecialItemSections { get; }
+
+    public string LayoutFilePath => _storage.FilePath;
+
+    // ----- settings-derived appearance ----------------------------------------------------------
+
+    public int IconSize => Model.Settings.IconSize;
+
+    public int CellPadding => Model.Settings.CellPadding;
+
+    public bool ShowLabels => Model.Settings.ShowLabels;
+
+    public bool DoubleClickToLaunch => Model.Settings.DoubleClickToLaunch;
+
+    public double CellWidth => IconSize + 2 * CellPadding + (ShowLabels ? 24 : 0);
+
+    public double CellHeight => IconSize + 2 * CellPadding + (ShowLabels ? LabelHeight + 2 : 0);
+
+    public bool AlwaysOnTop
+    {
+        get => Model.Settings.AlwaysOnTop;
+        set
+        {
+            if (Model.Settings.AlwaysOnTop == value)
+            {
+                return;
+            }
+
+            Model.Settings.AlwaysOnTop = value;
+            OnPropertyChanged();
+            Save();
+        }
+    }
+
+    public Brush BackgroundBrush => _backgroundBrush ??= CreateBrush(Model.Settings.BackgroundColor);
+
+    /// <summary>Black or white, whichever reads better on the background.</summary>
+    public Brush ForegroundBrush => _foregroundBrush ??= CreateForegroundBrush(Model.Settings.BackgroundColor);
+
+    public bool HasMultiLaunchMembers => Model.MultiLaunchMembers().Any();
+
+    public WindowPlacement? WindowPlacement => Model.Window;
+
+    // ----- group popup --------------------------------------------------------------------------
+
+    public ItemViewModel? OpenGroup
+    {
+        get => _openGroup;
+        private set
+        {
+            if (SetProperty(ref _openGroup, value))
+            {
+                OnPropertyChanged(nameof(PopupWidth));
+                OnPropertyChanged(nameof(PopupMaxHeight));
+            }
+        }
+    }
+
+    public bool IsGroupPopupOpen
+    {
+        get => _isGroupPopupOpen;
+        set
+        {
+            if (SetProperty(ref _isGroupPopupOpen, value) && !value)
+            {
+                OpenGroup = null;
+            }
+        }
+    }
+
+    public double PopupWidth => Math.Clamp(OpenGroup?.ChildCount ?? 1, 1, PopupMaxColumns) * CellWidth + 8;
+
+    public double PopupMaxHeight => PopupMaxRows * CellHeight + 8;
+
+    // ----- commands -----------------------------------------------------------------------------
+
+    public ICommand NewShortcutCommand { get; }
+
+    public ICommand NewGroupCommand { get; }
+
+    public ICommand OpenSettingsCommand { get; }
+
+    public ICommand LaunchMultiLaunchCommand { get; }
+
+    public ICommand OpenLayoutFolderCommand { get; }
+
+    public ICommand AboutCommand { get; }
+
+    public ICommand ExitCommand { get; }
+
+    public ICommand CloseGroupPopupCommand { get; }
+
+    /// <summary>Raised when a group icon is clicked; the view positions the popup at the anchor element.</summary>
+    public event EventHandler<GroupActivatedEventArgs>? GroupActivated;
+
+    public event EventHandler? ExitRequested;
+
+    public event EventHandler? SettingsChanged;
+
+    // ----- view-model plumbing ------------------------------------------------------------------
+
+    public ItemViewModel GetOrCreateViewModel(LauncherItem item)
+    {
+        if (!_viewModels.TryGetValue(item.Id, out var viewModel))
+        {
+            viewModel = new ItemViewModel(this, item);
+            _viewModels[item.Id] = viewModel;
+            _defer(viewModel.LoadImage);
+        }
+
+        return viewModel;
+    }
+
+    internal void NotifyListChanged(ItemListViewModel list)
+    {
+        if (list.Group is not null && _viewModels.TryGetValue(list.Group.Id, out var groupViewModel))
+        {
+            groupViewModel.RefreshFromModel();
+            if (OpenGroup == groupViewModel)
+            {
+                OnPropertyChanged(nameof(PopupWidth));
+            }
+        }
+    }
+
+    // ----- actions ------------------------------------------------------------------------------
+
+    public void Activate(ItemViewModel item, object? anchor)
+    {
+        if (item.IsGroup)
+        {
+            ToggleGroupPopup(item, anchor);
+            return;
+        }
+
+        var now = DateTime.UtcNow;
+        if (item.Id == _lastLaunchedId && now - _lastLaunchedAt < LaunchDebounce)
+        {
+            return;
+        }
+
+        _lastLaunchedId = item.Id;
+        _lastLaunchedAt = now;
+
+        var result = _launcher.Launch((ShortcutItem)item.Model);
+        if (result.Outcome == LaunchOutcome.Failed)
+        {
+            _dialogs.ShowError($"Can't open \"{item.Name}\"", $"{result.ErrorMessage}\n\n{item.Location}");
+            return;
+        }
+
+        IsGroupPopupOpen = false;
+    }
+
+    public void ToggleGroupPopup(ItemViewModel group, object? anchor)
+    {
+        if (IsGroupPopupOpen && OpenGroup == group)
+        {
+            IsGroupPopupOpen = false;
+            return;
+        }
+
+        OpenGroup = group;
+        GroupActivated?.Invoke(this, new GroupActivatedEventArgs(group, anchor));
+        IsGroupPopupOpen = true;
+    }
+
+    public void NewShortcut(ItemListViewModel list, int index)
+    {
+        var draft = new ShortcutItem();
+        if (!_dialogs.ShowItemProperties(draft, isNew: true))
+        {
+            return;
+        }
+
+        Model.Insert(draft, list.Group, index);
+        list.Sync();
+        Save();
+    }
+
+    public void NewShortcutAfter(ItemViewModel item)
+    {
+        var list = ListContaining(item, out var index);
+        NewShortcut(list, index + 1);
+    }
+
+    public void NewGroup(ItemListViewModel list, int index)
+    {
+        if (!list.IsRoot)
+        {
+            list = RootItems;
+            index = int.MaxValue;
+        }
+
+        var draft = new GroupItem { Name = "Group" };
+        if (!_dialogs.ShowItemProperties(draft, isNew: true))
+        {
+            return;
+        }
+
+        Model.Insert(draft, null, index);
+        list.Sync();
+        Save();
+    }
+
+    public void NewGroupAfter(ItemViewModel item)
+    {
+        var list = ListContaining(item, out var index);
+        NewGroup(list, index + 1);
+    }
+
+    public void AddSpecialItem(SpecialItemDefinition definition, ItemListViewModel list, int index)
+    {
+        Model.Insert(definition.CreateShortcut(), list.Group, index);
+        list.Sync();
+        Save();
+    }
+
+    public void AddSpecialItemAfter(SpecialItemDefinition definition, ItemViewModel item)
+    {
+        var list = ListContaining(item, out var index);
+        AddSpecialItem(definition, list, index + 1);
+    }
+
+    /// <summary>Creates one shortcut per dropped path, inserting them in order at <paramref name="index"/>.</summary>
+    public void AddPaths(IEnumerable<string> paths, ItemListViewModel list, int index)
+    {
+        var added = false;
+        foreach (var path in paths.Where(p => !string.IsNullOrWhiteSpace(p)))
+        {
+            Model.Insert(ShortcutItem.FromPath(path), list.Group, index);
+            index = index == int.MaxValue ? index : index + 1;
+            added = true;
+        }
+
+        if (added)
+        {
+            list.Sync();
+            Save();
+        }
+    }
+
+    public void AddLink(string url, ItemListViewModel list, int index) => AddPaths([url], list, index);
+
+    /// <summary>Reorders within a list or moves between the root and a group. Returns false when the move is not allowed.</summary>
+    public bool MoveItem(Guid id, ItemListViewModel targetList, int insertBeforeIndex)
+    {
+        var item = Model.Find(id, out var sourceParent);
+        if (item is null || (item is GroupItem && !targetList.IsRoot))
+        {
+            return false;
+        }
+
+        Model.Move(id, targetList.Group, insertBeforeIndex);
+        ListFor(sourceParent).Sync();
+        if (!ReferenceEquals(sourceParent, targetList.Group))
+        {
+            targetList.Sync();
+        }
+
+        Save();
+        return true;
+    }
+
+    public bool MoveIntoGroup(Guid id, ItemViewModel group)
+    {
+        var item = Model.Find(id, out var sourceParent);
+        if (item is null || item is GroupItem || group.Model is not GroupItem groupModel || id == group.Id)
+        {
+            return false;
+        }
+
+        Model.MoveIntoGroup(id, groupModel);
+        ListFor(sourceParent).Sync();
+        group.Children?.Sync();
+        Save();
+        return true;
+    }
+
+    public void EditItem(ItemViewModel item)
+    {
+        var draft = item.Model.Clone();
+        if (!_dialogs.ShowItemProperties(draft, isNew: false))
+        {
+            return;
+        }
+
+        Model.Update(draft);
+        item.RefreshFromModel();
+        item.LoadImage();
+        OnPropertyChanged(nameof(HasMultiLaunchMembers));
+        Save();
+    }
+
+    public void RemoveItem(ItemViewModel item)
+    {
+        var message = item.IsGroup
+            ? item.ChildCount == 0
+                ? $"Remove the group \"{item.Name}\"?"
+                : $"Remove the group \"{item.Name}\" and the {item.ChildCount} shortcut(s) in it?"
+            : $"Remove \"{item.Name}\" from the bar?\n\nThe program or file itself is not affected.";
+
+        if (!_dialogs.Confirm("Remove", message))
+        {
+            return;
+        }
+
+        Model.Find(item.Id, out var parent);
+        if (!Model.Remove(item.Id))
+        {
+            return;
+        }
+
+        if (item.Model is GroupItem group)
+        {
+            foreach (var child in group.Items)
+            {
+                _viewModels.Remove(child.Id);
+            }
+
+            if (OpenGroup == item)
+            {
+                IsGroupPopupOpen = false;
+            }
+        }
+
+        _viewModels.Remove(item.Id);
+        ListFor(parent).Sync();
+        OnPropertyChanged(nameof(HasMultiLaunchMembers));
+        Save();
+    }
+
+    public void ToggleMultiLaunch(ItemViewModel item)
+    {
+        if (item.Model is not ShortcutItem shortcut)
+        {
+            return;
+        }
+
+        shortcut.MultiLaunch = !shortcut.MultiLaunch;
+        item.RefreshFromModel();
+        OnPropertyChanged(nameof(HasMultiLaunchMembers));
+        Save();
+    }
+
+    public void RevealItem(ItemViewModel item)
+    {
+        if (item.Location is null)
+        {
+            return;
+        }
+
+        var result = ShellHelper.RevealInExplorer(item.Location);
+        if (result.Outcome == LaunchOutcome.Failed)
+        {
+            _dialogs.ShowError("Can't open the location", $"{result.ErrorMessage}\n\n{item.Location}");
+        }
+    }
+
+    public async Task LaunchMultiLaunchGroupAsync()
+    {
+        var members = Model.MultiLaunchMembers().ToList();
+        if (members.Count == 0)
+        {
+            _dialogs.ShowInfo(
+                "Multi Launch group is empty",
+                "Right-click a shortcut and choose \"Add to Multi Launch group\". Every member starts together when you launch the group.");
+            return;
+        }
+
+        IsGroupPopupOpen = false;
+        var failures = new List<string>();
+        foreach (var member in members)
+        {
+            var result = _launcher.Launch(member);
+            if (result.Outcome == LaunchOutcome.Failed)
+            {
+                failures.Add($"{member.Name}: {result.ErrorMessage}");
+            }
+
+            await Task.Delay(300).ConfigureAwait(true);
+        }
+
+        if (failures.Count > 0)
+        {
+            _dialogs.ShowError("Some shortcuts did not start", string.Join("\n", failures));
+        }
+    }
+
+    public void OpenSettings()
+    {
+        var edited = _dialogs.ShowSettings(Model.Settings.Clone());
+        if (edited is not null)
+        {
+            ApplySettings(edited);
+        }
+    }
+
+    public void ApplySettings(LauncherSettings settings)
+    {
+        var previousIconSize = IconSize;
+        Model.ApplySettings(settings);
+        _backgroundBrush = null;
+        _foregroundBrush = null;
+
+        OnPropertyChanged(nameof(IconSize));
+        OnPropertyChanged(nameof(CellPadding));
+        OnPropertyChanged(nameof(ShowLabels));
+        OnPropertyChanged(nameof(DoubleClickToLaunch));
+        OnPropertyChanged(nameof(CellWidth));
+        OnPropertyChanged(nameof(CellHeight));
+        OnPropertyChanged(nameof(AlwaysOnTop));
+        OnPropertyChanged(nameof(BackgroundBrush));
+        OnPropertyChanged(nameof(ForegroundBrush));
+        OnPropertyChanged(nameof(PopupWidth));
+        OnPropertyChanged(nameof(PopupMaxHeight));
+
+        if (IconSize != previousIconSize)
+        {
+            foreach (var viewModel in _viewModels.Values)
+            {
+                _defer(viewModel.LoadImage);
+            }
+        }
+
+        Save();
+        SettingsChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    public void UpdateWindowPlacement(WindowPlacement placement)
+    {
+        Model.Window = placement;
+        Save();
+    }
+
+    public void SaveNow() => Save();
+
+    private void OpenLayoutFolder()
+    {
+        var result = Directory.Exists(_storage.Directory)
+            ? ShellHelper.RevealInExplorer(_storage.FilePath)
+            : LaunchResult.Failure("The layout file has not been created yet.");
+        if (result.Outcome == LaunchOutcome.Failed)
+        {
+            _dialogs.ShowInfo("Layout file", $"{result.ErrorMessage}\n\n{_storage.FilePath}");
+        }
+    }
+
+    private void ShowAbout()
+    {
+        var version = Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "dev";
+        _dialogs.ShowInfo(
+            "About Desktop Icon Grid",
+            $"Desktop Icon Grid {version}\n\n" +
+            "A compact launcher bar: click an icon to open it, drag icons to rearrange them, " +
+            "right-click for shortcuts, groups and special items.\n\n" +
+            $"Layout file:\n{_storage.FilePath}");
+    }
+
+    private ItemListViewModel ListContaining(ItemViewModel item, out int index)
+    {
+        Model.Find(item.Id, out var parent);
+        var list = ListFor(parent);
+        index = list.Items.IndexOf(item);
+        if (index < 0)
+        {
+            index = list.Items.Count - 1;
+        }
+
+        return list;
+    }
+
+    private ItemListViewModel ListFor(GroupItem? parent) =>
+        parent is null ? RootItems : GetOrCreateViewModel(parent).Children!;
+
+    private void Save()
+    {
+        try
+        {
+            _storage.Save(Model.ToLayout());
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            _dialogs.ShowError("Couldn't save the layout", $"{ex.Message}\n\n{_storage.FilePath}");
+        }
+    }
+
+    private static SolidColorBrush CreateBrush(string hex)
+    {
+        var color = TryParseColor(hex) ?? Colors.Gray;
+        var brush = new SolidColorBrush(color);
+        brush.Freeze();
+        return brush;
+    }
+
+    private static SolidColorBrush CreateForegroundBrush(string hex)
+    {
+        var color = TryParseColor(hex) ?? Colors.Gray;
+        var luminance = (0.299 * color.R + 0.587 * color.G + 0.114 * color.B) / 255.0;
+        var brush = new SolidColorBrush(luminance > 0.6 ? Color.FromRgb(0x1F, 0x1F, 0x1F) : Colors.White);
+        brush.Freeze();
+        return brush;
+    }
+
+    public static Color? TryParseColor(string? hex)
+    {
+        if (!LauncherSettings.IsValidColor(hex))
+        {
+            return null;
+        }
+
+        var value = Convert.ToInt32(hex![1..], 16);
+        return Color.FromRgb((byte)(value >> 16), (byte)(value >> 8), (byte)value);
+    }
+}
+
+public sealed class GroupActivatedEventArgs(ItemViewModel group, object? anchor) : EventArgs
+{
+    public ItemViewModel Group { get; } = group;
+
+    /// <summary>The element that was clicked, used to place the popup.</summary>
+    public object? Anchor { get; } = anchor;
+}

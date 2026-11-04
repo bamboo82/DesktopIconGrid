@@ -1,0 +1,18 @@
+using DesktopIconGrid.Core.Models;
+
+namespace DesktopIconGrid.Services;
+
+public interface IDialogService
+{
+    /// <summary>Shows the Shortcut/Group Properties dialog. On Save the edits are written into <paramref name="item"/>.</summary>
+    bool ShowItemProperties(LauncherItem item, bool isNew);
+
+    /// <summary>Shows the Settings dialog; returns the edited settings or <see langword="null"/> on cancel.</summary>
+    LauncherSettings? ShowSettings(LauncherSettings current);
+
+    bool Confirm(string title, string message);
+
+    void ShowError(string title, string message);
+
+    void ShowInfo(string title, string message);
+}

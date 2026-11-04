@@ -1,0 +1,105 @@
+<Window x:Class="DesktopIconGrid.Views.SettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Settings"
+        Width="460"
+        SizeToContent="Height"
+        ResizeMode="NoResize"
+        WindowStartupLocation="CenterOwner"
+        ShowInTaskbar="False"
+        Icon="{StaticResource AppIconImage}">
+  <Grid Margin="14">
+    <Grid.ColumnDefinitions>
+      <ColumnDefinition Width="Auto" MinWidth="100" />
+      <ColumnDefinition Width="*" />
+    </Grid.ColumnDefinitions>
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="Auto" />
+    </Grid.RowDefinitions>
+
+    <!-- Icon size -->
+    <TextBlock Grid.Row="0" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="Icon size:" Margin="0,0,12,10" />
+    <ComboBox Grid.Row="0" Grid.Column="1" Width="110" HorizontalAlignment="Left" Margin="0,0,0,10"
+              ItemsSource="{Binding IconSizes}"
+              SelectedItem="{Binding IconSize}"
+              ItemStringFormat="{}{0} px" />
+
+    <!-- Spacing -->
+    <TextBlock Grid.Row="1" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="Spacing:" Margin="0,0,12,10" />
+    <DockPanel Grid.Row="1" Grid.Column="1" Margin="0,0,0,10">
+      <TextBlock DockPanel.Dock="Right" Text="{Binding CellPaddingText}" MinWidth="44" TextAlignment="Right" VerticalAlignment="Center" />
+      <Slider Minimum="{Binding MinCellPadding}" Maximum="{Binding MaxCellPadding}"
+              Value="{Binding CellPadding}"
+              IsSnapToTickEnabled="True" TickFrequency="1"
+              VerticalAlignment="Center" Margin="0,0,10,0" />
+    </DockPanel>
+
+    <!-- Labels -->
+    <TextBlock Grid.Row="2" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="Labels:" Margin="0,0,12,10" />
+    <CheckBox Grid.Row="2" Grid.Column="1" Content="Show names under the icons" IsChecked="{Binding ShowLabels}" Margin="0,0,0,10" VerticalAlignment="Center" />
+
+    <!-- Launch -->
+    <TextBlock Grid.Row="3" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="Open with:" Margin="0,0,12,10" VerticalAlignment="Top" />
+    <StackPanel Grid.Row="3" Grid.Column="1" Margin="0,0,0,10">
+      <RadioButton Content="Single click" GroupName="Launch" IsChecked="{Binding SingleClickToLaunch}" />
+      <RadioButton Content="Double click" GroupName="Launch" IsChecked="{Binding DoubleClickToLaunch}" Margin="0,4,0,0" />
+    </StackPanel>
+
+    <!-- Window -->
+    <TextBlock Grid.Row="4" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="Window:" Margin="0,0,12,10" />
+    <CheckBox Grid.Row="4" Grid.Column="1" Content="Always on top" IsChecked="{Binding AlwaysOnTop}" Margin="0,0,0,10" VerticalAlignment="Center" />
+
+    <!-- Background -->
+    <TextBlock Grid.Row="5" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="Background:" Margin="0,0,12,10" VerticalAlignment="Top" />
+    <StackPanel Grid.Row="5" Grid.Column="1" Margin="0,0,0,10">
+      <StackPanel Orientation="Horizontal">
+        <TextBox Width="96" Padding="4,3" VerticalContentAlignment="Center"
+                 Text="{Binding BackgroundColor, UpdateSourceTrigger=PropertyChanged}" />
+        <Border Width="26" Height="26" Margin="8,0,0,0"
+                Background="{Binding PreviewBrush}"
+                BorderBrush="{StaticResource SwatchBorderBrush}" BorderThickness="1" CornerRadius="3" />
+        <TextBlock Text="Use #RRGGBB" Foreground="{StaticResource WarningBrush}" VerticalAlignment="Center" Margin="10,0,0,0"
+                   Visibility="{Binding IsColorValid, Converter={StaticResource InverseBoolToVisibility}}" />
+      </StackPanel>
+      <ItemsControl ItemsSource="{Binding Presets}" Margin="0,8,0,0">
+        <ItemsControl.ItemsPanel>
+          <ItemsPanelTemplate>
+            <WrapPanel Orientation="Horizontal" />
+          </ItemsPanelTemplate>
+        </ItemsControl.ItemsPanel>
+        <ItemsControl.ItemTemplate>
+          <DataTemplate>
+            <Button Width="24" Height="24" Margin="0,0,6,6" Padding="0"
+                    Background="{Binding}"
+                    BorderBrush="{StaticResource SwatchBorderBrush}"
+                    ToolTip="{Binding}"
+                    Command="{Binding DataContext.SelectPresetCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                    CommandParameter="{Binding}">
+              <Button.Template>
+                <ControlTemplate TargetType="Button">
+                  <Border Background="{TemplateBinding Background}"
+                          BorderBrush="{TemplateBinding BorderBrush}"
+                          BorderThickness="1"
+                          CornerRadius="3" />
+                </ControlTemplate>
+              </Button.Template>
+            </Button>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+    </StackPanel>
+
+    <!-- Buttons -->
+    <StackPanel Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,6,0,0">
+      <Button Content="Save" Style="{StaticResource DialogButton}" IsDefault="True"
+              IsEnabled="{Binding CanSave}" Click="Save_Click" />
+      <Button Content="Cancel" Style="{StaticResource DialogButton}" IsCancel="True" />
+    </StackPanel>
+  </Grid>
+</Window>
