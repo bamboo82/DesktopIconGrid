@@ -8,6 +8,7 @@ using DesktopIconGrid.Core.Models;
 using DesktopIconGrid.Core.SpecialItems;
 using DesktopIconGrid.Core.Storage;
 using DesktopIconGrid.Infrastructure;
+using DesktopIconGrid.Resources;
 using DesktopIconGrid.Services;
 using DesktopIconGrid.SpecialIcons;
 
@@ -108,7 +109,7 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
 
     public bool CloseToTray => Model.Settings.CloseToTray;
 
-    public string CloseButtonToolTip => CloseToTray ? "Hide to tray (Exit is in the tray and options menus)" : "Exit";
+    public string CloseButtonToolTip => CloseToTray ? Strings.Main_CloseToTrayToolTip : Strings.Common_Exit;
 
     /// <summary>Set by the host to flush pending background work (e.g. a debounced sync upload) before exiting.</summary>
     public Func<Task>? FlushBeforeExit { get; set; }
@@ -316,7 +317,7 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
 
         if (item.Model is UnknownItem)
         {
-            _dialogs.Notify(item.Name, "This item was made by a newer version of Desktop Icon Grid and cannot be opened here. It is kept so nothing is lost.");
+            _dialogs.Notify(item.Name, Strings.Launch_NewerVersionOpen);
             return;
         }
 
@@ -325,7 +326,7 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
             var specialResult = item.SpecialHandler.Activate(special, modifiers);
             if (specialResult.Outcome == LaunchOutcome.Failed)
             {
-                _dialogs.Notify(item.Name, specialResult.ErrorMessage ?? "Unknown error");
+                _dialogs.Notify(item.Name, specialResult.ErrorMessage ?? Strings.Common_UnknownError);
             }
 
             IsGroupPopupOpen = false;
@@ -340,7 +341,7 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
         var result = _launcher.Launch(shortcutToLaunch);
         if (result.Outcome == LaunchOutcome.Failed)
         {
-            _dialogs.Notify($"Can't open \"{item.Name}\"", $"{result.ErrorMessage}\n{item.Location}");
+            _dialogs.Notify(string.Format(Strings.Launch_CantOpen, item.Name), $"{result.ErrorMessage}\n{item.Location}");
             return;
         }
 
@@ -364,7 +365,7 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
         var result = _launcher.LaunchWith(shortcut, paths);
         if (result.Outcome == LaunchOutcome.Failed)
         {
-            _dialogs.Notify($"Can't open with \"{target.Name}\"", $"{result.ErrorMessage}\n{shortcut.Location}");
+            _dialogs.Notify(string.Format(Strings.Launch_CantOpenWith, target.Name), $"{result.ErrorMessage}\n{shortcut.Location}");
             return;
         }
 
@@ -376,7 +377,7 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
         var result = await target.SpecialHandler.DropFilesAsync(special, paths);
         if (result.Outcome == LaunchOutcome.Failed)
         {
-            _dialogs.Notify(target.Name, result.ErrorMessage ?? "Unknown error");
+            _dialogs.Notify(target.Name, result.ErrorMessage ?? Strings.Common_UnknownError);
         }
     }
 
@@ -420,7 +421,7 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
             index = int.MaxValue;
         }
 
-        var draft = new GroupItem { Name = "Group" };
+        var draft = new GroupItem { Name = Strings.Common_Group };
         if (!_dialogs.ShowItemProperties(draft, isNew: true))
         {
             return;
@@ -530,7 +531,7 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
     {
         if (item.Model is UnknownItem)
         {
-            _dialogs.Notify(item.Name, "This item was made by a newer version of Desktop Icon Grid and cannot be edited here.");
+            _dialogs.Notify(item.Name, Strings.Launch_NewerVersionEdit);
             return;
         }
 
@@ -581,7 +582,7 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
     /// <summary>True while the last removal can still be undone (the banner under the icons is showing).</summary>
     public bool CanUndoRemove => _pendingRemoval is not null;
 
-    public string UndoText => _pendingRemoval is null ? string.Empty : $"Removed \"{_pendingRemoval.Item.Name}\"";
+    public string UndoText => _pendingRemoval is null ? string.Empty : string.Format(Strings.Launch_Removed, _pendingRemoval.Item.Name);
 
     public ICommand UndoRemoveCommand { get; }
 
@@ -597,9 +598,9 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
         if (item.IsGroup)
         {
             var message = item.ChildCount == 0
-                ? $"Remove the group \"{item.Name}\"?"
-                : $"Remove the group \"{item.Name}\" and the {item.ChildCount} shortcut(s) in it?";
-            if (!_dialogs.Confirm("Remove group", message))
+                ? string.Format(Strings.Launch_RemoveGroupQuestion, item.Name)
+                : string.Format(Strings.Launch_RemoveGroupWithItems, item.Name, item.ChildCount);
+            if (!_dialogs.Confirm(Strings.Launch_RemoveGroupTitle, message))
             {
                 return;
             }
@@ -732,7 +733,7 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
         var result = ShellHelper.RevealInExplorer(item.Location);
         if (result.Outcome == LaunchOutcome.Failed)
         {
-            _dialogs.Notify("Can't open the location", $"{result.ErrorMessage}\n{item.Location}");
+            _dialogs.Notify(Strings.Launch_CantOpenLocation, $"{result.ErrorMessage}\n{item.Location}");
         }
     }
 
@@ -741,9 +742,7 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
         var members = Model.MultiLaunchMembers().ToList();
         if (members.Count == 0)
         {
-            _dialogs.Notify(
-                "Multi Launch group is empty",
-                "Right-click a shortcut and choose \"Add to Multi Launch group\". Every member starts together when you launch the group.");
+            _dialogs.Notify(Strings.Launch_MultiEmptyTitle, Strings.Launch_MultiEmpty);
             return;
         }
 
@@ -762,7 +761,7 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
 
         if (failures.Count > 0)
         {
-            _dialogs.Notify("Some shortcuts did not start", string.Join("\n", failures));
+            _dialogs.Notify(Strings.Launch_SomeFailed, string.Join("\n", failures));
         }
     }
 
@@ -857,22 +856,17 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
     {
         var result = Directory.Exists(_storage.Directory)
             ? ShellHelper.RevealInExplorer(_storage.FilePath)
-            : LaunchResult.Failure("The layout file has not been created yet.");
+            : LaunchResult.Failure(Strings.Launch_LayoutNotCreated);
         if (result.Outcome == LaunchOutcome.Failed)
         {
-            _dialogs.Notify("Layout file", $"{result.ErrorMessage}\n{_storage.FilePath}");
+            _dialogs.Notify(Strings.Launch_LayoutFileTitle, $"{result.ErrorMessage}\n{_storage.FilePath}");
         }
     }
 
     private void ShowAbout()
     {
         var version = Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "dev";
-        _dialogs.ShowInfo(
-            "About Desktop Icon Grid",
-            $"Desktop Icon Grid {version}\n\n" +
-            "A compact launcher bar: click an icon to open it, drag icons to rearrange them, " +
-            "right-click for shortcuts, groups and special items.\n\n" +
-            $"Layout file:\n{_storage.FilePath}");
+        _dialogs.ShowInfo(Strings.About_Title, string.Format(Strings.About_Text, version, _storage.FilePath));
     }
 
     private ItemListViewModel ListContaining(ItemViewModel item, out int index)
@@ -915,7 +909,7 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            _dialogs.Notify("Couldn't save the layout", $"{ex.Message}\n{_storage.FilePath}");
+            _dialogs.Notify(Strings.Launch_SaveFailed, $"{ex.Message}\n{_storage.FilePath}");
         }
 
         if (contentChanged)

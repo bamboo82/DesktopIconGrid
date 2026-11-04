@@ -4,6 +4,7 @@ using System.Windows;
 using DesktopIconGrid.Core.Launching;
 using DesktopIconGrid.Core.Models;
 using DesktopIconGrid.Core.SpecialIcons;
+using DesktopIconGrid.Resources;
 using DesktopIconGrid.ViewModels;
 using DesktopIconGrid.Views;
 
@@ -54,9 +55,9 @@ public sealed class CpuUsageHandler(SystemMonitor monitor, Func<Window?> ownerPr
 {
     public override string Kind => SpecialIconKinds.CpuUsage;
 
-    public override string DisplayName => "CPU usage";
+    public override string DisplayName => Strings.Monitor_CpuName;
 
-    public override string Description => "Shows how busy the processor is. Click to open Task Manager.";
+    public override string Description => Strings.Monitor_CpuDesc;
 
     protected override bool ShowsDrive => false;
 
@@ -70,7 +71,7 @@ public sealed class CpuUsageHandler(SystemMonitor monitor, Func<Window?> ownerPr
     public override GaugeState CreateState(SpecialIconItem item)
     {
         var settings = MonitorIconSettings.From(item);
-        var state = new GaugeState("CPU", settings.Style, warningAt: 70, criticalAt: 90, "Measuring CPU usage…");
+        var state = new GaugeState("CPU", settings.Style, warningAt: 70, criticalAt: 90, Strings.Monitor_CpuMeasuring);
         Monitor.Register(state, Monitor.Cpu.Sample, everyTicks: 1);
         return state;
     }
@@ -83,16 +84,16 @@ public sealed class DiskUsageHandler(SystemMonitor monitor, Func<Window?> ownerP
 {
     public override string Kind => SpecialIconKinds.DiskUsage;
 
-    public override string DisplayName => "Disk usage";
+    public override string DisplayName => Strings.Monitor_DiskUsageName;
 
-    public override string Description => "Shows how much of a drive is in use. Click to open the drive.";
+    public override string Description => Strings.Monitor_DiskDesc;
 
     protected override bool ShowsDrive => true;
 
     public override SpecialIconItem CreateItem()
     {
         var drive = MonitorIconSettings.NormalizeDrive(Path.GetPathRoot(Environment.SystemDirectory)) ?? "C:\\";
-        var item = new SpecialIconItem { Name = $"Disk {drive.TrimEnd('\\')}", Kind = Kind };
+        var item = new SpecialIconItem { Name = string.Format(Strings.Monitor_DiskName, drive.TrimEnd('\\')), Kind = Kind };
         new MonitorIconSettings(GaugeStyle.Ring, drive).ApplyTo(item);
         return item;
     }
@@ -100,8 +101,8 @@ public sealed class DiskUsageHandler(SystemMonitor monitor, Func<Window?> ownerP
     public override GaugeState CreateState(SpecialIconItem item)
     {
         var settings = MonitorIconSettings.From(item);
-        var caption = settings.Drive?.TrimEnd('\\') ?? "Disk";
-        var state = new GaugeState(caption, settings.Style, warningAt: 80, criticalAt: 90, "Reading drive…");
+        var caption = settings.Drive?.TrimEnd('\\') ?? Strings.Monitor_Disk;
+        var state = new GaugeState(caption, settings.Style, warningAt: 80, criticalAt: 90, Strings.Monitor_ReadingDrive);
         Monitor.Register(state, () => SystemMonitor.SampleDrive(settings.Drive), everyTicks: 5);
         return state;
     }
@@ -109,6 +110,6 @@ public sealed class DiskUsageHandler(SystemMonitor monitor, Func<Window?> ownerP
     public override LaunchResult Activate(SpecialIconItem item, ActivationModifiers modifiers)
     {
         var drive = MonitorIconSettings.From(item).Drive;
-        return drive is null ? LaunchResult.Failure("No drive is selected for this icon. Open Properties to pick one.") : Open(drive);
+        return drive is null ? LaunchResult.Failure(Strings.Monitor_NoDriveSelected) : Open(drive);
     }
 }

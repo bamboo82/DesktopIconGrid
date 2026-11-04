@@ -7,6 +7,7 @@ using DesktopIconGrid.Core.Diagnostics;
 using DesktopIconGrid.Core.Models;
 using DesktopIconGrid.Core.Sync;
 using DesktopIconGrid.Infrastructure;
+using DesktopIconGrid.Resources;
 
 namespace DesktopIconGrid.Services;
 
@@ -47,25 +48,30 @@ public sealed class SyncCoordinator : ObservableObject
     public string Status
     {
         get => _status;
-        private set
+        private set => Report(value, LogLevel.Info);
+    }
+
+    /// <summary>Sets <see cref="Status"/>, logs it at <paramref name="level"/> and, for warnings and errors, raises <see cref="Notify"/>.</summary>
+    private void Report(string status, LogLevel level)
+    {
+        if (!SetProperty(ref _status, status, nameof(Status)) || status.Length == 0)
         {
-            if (SetProperty(ref _status, value) && value.Length > 0)
-            {
-                if (value.StartsWith("Upload failed", StringComparison.Ordinal))
-                {
-                    AppLog.Default.Error("Sync", value);
-                    Notify?.Invoke("Google Drive sync", value);
-                }
-                else if (value.StartsWith("Not uploaded", StringComparison.Ordinal) || value.StartsWith("A newer", StringComparison.Ordinal) || value.StartsWith("Startup check failed", StringComparison.Ordinal))
-                {
-                    AppLog.Default.Warning("Sync", value);
-                    Notify?.Invoke("Google Drive sync", value);
-                }
-                else
-                {
-                    AppLog.Default.Info("Sync", value);
-                }
-            }
+            return;
+        }
+
+        switch (level)
+        {
+            case LogLevel.Error:
+                AppLog.Default.Error("Sync", status);
+                Notify?.Invoke(Strings.Sync_Notification, status);
+                break;
+            case LogLevel.Warning:
+                AppLog.Default.Warning("Sync", status);
+                Notify?.Invoke(Strings.Sync_Notification, status);
+                break;
+            default:
+                AppLog.Default.Info("Sync", status);
+                break;
         }
     }
 
@@ -147,18 +153,21 @@ public sealed class SyncCoordinator : ObservableObject
         try
         {
             var result = await Service.AutoUploadAsync(_host.ExportLayout(), CancellationToken.None);
-            Status = result.Outcome switch
+            switch (result.Outcome)
             {
-                AutoUploadOutcome.Uploaded => $"Uploaded to \"{result.Remote?.Name}\" at {DateTime.Now.ToString("t", CultureInfo.CurrentCulture)}.",
-                AutoUploadOutcome.Conflict =>
-                    $"Not uploaded: \"{result.Remote?.Name}\" was saved by {result.Remote?.SavedBy ?? "another device"} on {Describe(result.Remote?.SavedAt)}. " +
-                    "Open Sync with Google Drive to load it or overwrite it.",
-                _ => Status,
-            };
+                case AutoUploadOutcome.Uploaded:
+                    Status = string.Format(Strings.Sync_UploadedAt, result.Remote?.Name, DateTime.Now.ToString("t", CultureInfo.CurrentCulture));
+                    break;
+                case AutoUploadOutcome.Conflict:
+                    Report(
+                        string.Format(Strings.Sync_NotUploaded, result.Remote?.Name, result.Remote?.SavedBy ?? Strings.Common_AnotherDevice, Describe(result.Remote?.SavedAt)),
+                        LogLevel.Warning);
+                    break;
+            }
         }
         catch (Exception ex) when (IsSyncError(ex))
         {
-            Status = $"Upload failed: {ex.Message}";
+            Report(string.Format(Strings.Sync_UploadFailed, ex.Message), LogLevel.Error);
         }
         finally
         {
@@ -183,26 +192,25 @@ public sealed class SyncCoordinator : ObservableObject
             var newer = await Service.CheckForNewerCopyAsync(CancellationToken.None);
             if (newer is null)
             {
-                Status = $"\"{Service.Settings.LinkedProfile}\" is up to date.";
+                Status = string.Format(Strings.Sync_UpToDate, Service.Settings.LinkedProfile);
                 return;
             }
 
             var load = _confirm(
-                "Newer settings copy on Google Drive",
-                $"\"{newer.Name}\" was saved by {newer.SavedBy ?? "another device"} on {Describe(newer.SavedAt)}.\n\n" +
-                "Load it now? The settings and icons on this device will be replaced.");
+                Strings.Sync_NewerTitle,
+                string.Format(Strings.Sync_NewerQuestion, newer.Name, newer.SavedBy ?? Strings.Common_AnotherDevice, Describe(newer.SavedAt)));
             if (load)
             {
                 await LoadAndApplyAsync(newer, CancellationToken.None);
             }
             else
             {
-                Status = $"A newer \"{newer.Name}\" is on Google Drive; it was not loaded.";
+                Report(string.Format(Strings.Sync_NewerNotLoaded, newer.Name), LogLevel.Warning);
             }
         }
         catch (Exception ex) when (IsSyncError(ex))
         {
-            Status = $"Startup check failed: {ex.Message}";
+            Report(string.Format(Strings.Sync_StartupCheckFailed, ex.Message), LogLevel.Warning);
         }
     }
 
@@ -210,11 +218,11 @@ public sealed class SyncCoordinator : ObservableObject
     {
         var profile = await Service.LoadProfileAsync(remote, cancellationToken);
         _host.ReplaceLayout(profile.Layout);
-        Status = $"Loaded \"{remote.Name}\" (saved by {profile.SavedBy} on {Describe(profile.SavedAt)}).";
+        Status = string.Format(Strings.Sync_LoadedFrom, remote.Name, profile.SavedBy, Describe(profile.SavedAt));
     }
 
     public static string Describe(DateTimeOffset? time) =>
-        time is { } t ? t.LocalDateTime.ToString("g", CultureInfo.CurrentCulture) : "an unknown date";
+        time is { } t ? t.LocalDateTime.ToString("g", CultureInfo.CurrentCulture) : Strings.Common_UnknownDate;
 
     /// <summary>
     /// Exceptions the sync feature reports to the user instead of crashing: network, Drive, sign-in, file and

@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!--
+    Names of the ready-made Windows items (neutral culture: English). Translations: CoreStrings.zh-Hant.resx, CoreStrings.zh-Hans.resx.
+    Values with {0}, {1} … are format strings; keep the placeholders. Newlines inside a value are kept.
+  -->
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Section_System" xml:space="preserve">
+    <value>System</value>
+  </data>
+  <data name="Section_Desktop" xml:space="preserve">
+    <value>Desktop</value>
+  </data>
+  <data name="Section_Tools" xml:space="preserve">
+    <value>Tools</value>
+  </data>
+  <data name="Section_Folders" xml:space="preserve">
+    <value>Folders</value>
+  </data>
+  <data name="Item_ThisPC" xml:space="preserve">
+    <value>This PC</value>
+  </data>
+  <data name="Item_Network" xml:space="preserve">
+    <value>Network</value>
+  </data>
+  <data name="Item_NetworkConnections" xml:space="preserve">
+    <value>Network Connections</value>
+  </data>
+  <data name="Item_ControlPanel" xml:space="preserve">
+    <value>Control Panel</value>
+  </data>
+  <data name="Item_Printers" xml:space="preserve">
+    <value>Printers</value>
+  </data>
+  <data name="Item_Settings" xml:space="preserve">
+    <value>Settings</value>
+  </data>
+  <data name="Item_RecycleBin" xml:space="preserve">
+    <value>Recycle Bin</value>
+  </data>
+  <data name="Item_ShowDesktop" xml:space="preserve">
+    <value>Show Desktop</value>
+  </data>
+  <data name="Item_Search" xml:space="preserve">
+    <value>Search</value>
+  </data>
+  <data name="Item_Run" xml:space="preserve">
+    <value>Run…</value>
+  </data>
+  <data name="Item_FileExplorer" xml:space="preserve">
+    <value>File Explorer</value>
+  </data>
+  <data name="Item_Calculator" xml:space="preserve">
+    <value>Calculator</value>
+  </data>
+  <data name="Item_Notepad" xml:space="preserve">
+    <value>Notepad</value>
+  </data>
+  <data name="Item_Paint" xml:space="preserve">
+    <value>Paint</value>
+  </data>
+  <data name="Item_WordPad" xml:space="preserve">
+    <value>WordPad</value>
+  </data>
+  <data name="Item_CommandPrompt" xml:space="preserve">
+    <value>Command Prompt</value>
+  </data>
+  <data name="Item_WindowsTerminal" xml:space="preserve">
+    <value>Windows Terminal</value>
+  </data>
+  <data name="Item_TaskManager" xml:space="preserve">
+    <value>Task Manager</value>
+  </data>
+  <data name="Item_Desktop" xml:space="preserve">
+    <value>Desktop</value>
+  </data>
+  <data name="Item_Documents" xml:space="preserve">
+    <value>Documents</value>
+  </data>
+  <data name="Item_Downloads" xml:space="preserve">
+    <value>Downloads</value>
+  </data>
+  <data name="Item_Pictures" xml:space="preserve">
+    <value>Pictures</value>
+  </data>
+  <data name="Item_SpecialIconPlaceholder" xml:space="preserve">
+    <value>Special icon</value>
+  </data>
+  <data name="Layout_Empty" xml:space="preserve">
+    <value>The layout file is empty.</value>
+  </data>
+  <data name="Layout_Missing" xml:space="preserve">
+    <value>The file does not exist.</value>
+  </data>
+</root>

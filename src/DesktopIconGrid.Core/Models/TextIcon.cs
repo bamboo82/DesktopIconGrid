@@ -1,3 +1,5 @@
+using System.Globalization;
+
 namespace DesktopIconGrid.Core.Models;
 
 /// <summary>
@@ -23,6 +25,13 @@ public sealed record TextIcon(
 
     /// <summary>宋體 (SimSun) first, then the Traditional Chinese 新細明體, then the Windows UI font.</summary>
     public const string DefaultFontFamily = "SimSun, PMingLiU, Segoe UI";
+
+    /// <summary>新細明體 (PMingLiU) first: the chain for a Traditional Chinese UI.</summary>
+    public const string TraditionalChineseFontFamily = "PMingLiU, SimSun, Segoe UI";
+
+    /// <summary>The chain drawn for text icons without a font of their own, for the given UI language.</summary>
+    public static string DefaultFontFamilyFor(CultureInfo? uiCulture) =>
+        AppLanguage.IsTraditionalChinese(uiCulture) ? TraditionalChineseFontFamily : DefaultFontFamily;
 
     public static readonly IReadOnlyList<double> SuggestedFontSizes =
         [8, 9, 10, 11, 12, 14, 16, 18, 20, 22, 24, 28, 32, 36, 40, 48];

@@ -1,6 +1,7 @@
 <UserControl x:Class="DesktopIconGrid.Views.IconGridControl"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:r="clr-namespace:DesktopIconGrid.Resources"
              xmlns:vm="clr-namespace:DesktopIconGrid.ViewModels"
              Focusable="False">
   <Grid>
@@ -16,14 +17,14 @@
                   Drop="Surface_Drop">
       <ScrollViewer.ContextMenu>
         <ContextMenu Opened="SurfaceMenu_Opened">
-          <MenuItem Header="New shortcut…" Command="{Binding NewShortcutCommand}" />
-          <MenuItem Header="New group…" Command="{Binding NewGroupCommand}"
+          <MenuItem Header="{x:Static r:Strings.Menu_NewShortcut}" Command="{Binding NewShortcutCommand}" />
+          <MenuItem Header="{x:Static r:Strings.Menu_NewGroup}" Command="{Binding NewGroupCommand}"
                     Visibility="{Binding IsRoot, Converter={StaticResource BoolToVisibility}}" />
-          <MenuItem Header="Add Windows item" Tag="windows-items" />
-          <MenuItem Header="Add special icon" Tag="special-icons" />
+          <MenuItem Header="{x:Static r:Strings.Menu_AddWindowsItem}" Tag="windows-items" />
+          <MenuItem Header="{x:Static r:Strings.Menu_AddSpecialIcon}" Tag="special-icons" />
           <Separator />
-          <MenuItem Header="Launch Multi Launch group" Command="{Binding Root.LaunchMultiLaunchCommand}" />
-          <MenuItem Header="Settings…" Command="{Binding Root.OpenSettingsCommand}" />
+          <MenuItem Header="{x:Static r:Strings.Menu_LaunchMultiLaunch}" Command="{Binding Root.LaunchMultiLaunchCommand}" />
+          <MenuItem Header="{x:Static r:Strings.Menu_Settings}" Command="{Binding Root.OpenSettingsCommand}" />
         </ContextMenu>
       </ScrollViewer.ContextMenu>
 
@@ -56,22 +57,22 @@
                     KeyDown="Item_KeyDown">
               <Button.ContextMenu>
                 <ContextMenu Opened="ItemMenu_Opened">
-                  <MenuItem Header="New shortcut…" Command="{Binding NewShortcutAfterCommand}" />
-                  <MenuItem Header="New group…" Command="{Binding NewGroupAfterCommand}"
+                  <MenuItem Header="{x:Static r:Strings.Menu_NewShortcut}" Command="{Binding NewShortcutAfterCommand}" />
+                  <MenuItem Header="{x:Static r:Strings.Menu_NewGroup}" Command="{Binding NewGroupAfterCommand}"
                             Visibility="{Binding IsAtRoot, Converter={StaticResource BoolToVisibility}}" />
-                  <MenuItem Header="Add Windows item" Tag="windows-items" />
-                  <MenuItem Header="Add special icon" Tag="special-icons" />
+                  <MenuItem Header="{x:Static r:Strings.Menu_AddWindowsItem}" Tag="windows-items" />
+                  <MenuItem Header="{x:Static r:Strings.Menu_AddSpecialIcon}" Tag="special-icons" />
                   <Separator />
                   <MenuItem Tag="special-actions-anchor" Visibility="Collapsed" />
-                  <MenuItem Header="Remove" Command="{Binding RemoveCommand}" InputGestureText="Del" />
+                  <MenuItem Header="{x:Static r:Strings.Common_Remove}" Command="{Binding RemoveCommand}" InputGestureText="Del" />
                   <MenuItem Header="{Binding MultiLaunchMenuHeader}" Command="{Binding ToggleMultiLaunchCommand}"
                             Visibility="{Binding IsShortcut, Converter={StaticResource BoolToVisibility}}" />
-                  <MenuItem Header="Open file location" Command="{Binding OpenLocationCommand}"
+                  <MenuItem Header="{x:Static r:Strings.Menu_OpenFileLocation}" Command="{Binding OpenLocationCommand}"
                             Visibility="{Binding IsShortcut, Converter={StaticResource BoolToVisibility}}" />
-                  <MenuItem Header="Show log…" Command="{Binding ShowLogCommand}"
+                  <MenuItem Header="{x:Static r:Strings.Menu_ShowLog}" Command="{Binding ShowLogCommand}"
                             Visibility="{Binding CapturesLog, Converter={StaticResource BoolToVisibility}}" />
                   <Separator />
-                  <MenuItem Header="Properties" Command="{Binding PropertiesCommand}" />
+                  <MenuItem Header="{x:Static r:Strings.Common_Properties}" Command="{Binding PropertiesCommand}" />
                 </ContextMenu>
               </Button.ContextMenu>
 
@@ -163,7 +164,7 @@
                            Stroke="#80000000" StrokeThickness="1"
                            HorizontalAlignment="Left" VerticalAlignment="Bottom"
                            Margin="-2,0,0,-2"
-                           ToolTip="Running"
+                           ToolTip="{x:Static r:Strings.Grid_Running}"
                            Visibility="{Binding IsRunning, Converter={StaticResource BoolToVisibility}}" />
                 </Grid>
 

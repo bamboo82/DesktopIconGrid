@@ -4,6 +4,7 @@ using System.IO;
 using System.Windows.Input;
 using DesktopIconGrid.Core.Launching;
 using DesktopIconGrid.Infrastructure;
+using DesktopIconGrid.Resources;
 using DesktopIconGrid.Services;
 
 namespace DesktopIconGrid.ViewModels;
@@ -33,7 +34,7 @@ public sealed class LogViewerViewModel : ObservableObject
 
     public string LogDirectory { get; }
 
-    public string Title => $"Log — {ItemName}";
+    public string Title => string.Format(Strings.Run_Title, ItemName);
 
     public bool HasSession => Session is not null;
 
@@ -43,8 +44,7 @@ public sealed class LogViewerViewModel : ObservableObject
         private set => SetProperty(ref _header, value);
     }
 
-    public string EmptyText =>
-        "No run has been captured yet. Click the icon to start the program; its output appears here and is written to the log folder.";
+    public string EmptyText => Strings.Run_NoRun;
 
     public ICommand OpenFolderCommand { get; }
 
@@ -60,8 +60,8 @@ public sealed class LogViewerViewModel : ObservableObject
 
         var started = Session.StartedAt.ToString("g", CultureInfo.CurrentCulture);
         Header = Session.IsFinished
-            ? $"Started {started} — exited with code {(Session.ExitCode.HasValue ? Session.ExitCode.Value.ToString(CultureInfo.InvariantCulture) : "?")}"
-            : $"Started {started} — running";
+            ? string.Format(Strings.Run_StartedExited, started, Session.ExitCode.HasValue ? Session.ExitCode.Value.ToString(CultureInfo.InvariantCulture) : "?")
+            : string.Format(Strings.Run_StartedRunning, started);
     }
 
     private static void Open(string path)

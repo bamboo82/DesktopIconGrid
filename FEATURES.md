@@ -265,6 +265,7 @@ warnings and errors. The last 2000 entries stay in memory and all of them are ap
 | Show/hide hotkey | none (set in Settings; needs Ctrl, Alt or Win) |
 | Transparency | 0 % (opaque) |
 | Close button hides to tray | on |
+| Language | same as Windows (English, 繁體中文 or 简体中文; applies at the next start) |
 
 Settings live in the same JSON file as the layout and apply immediately on *Save*.
 
@@ -336,8 +337,15 @@ Order of attempts, with an in-memory cache keyed by path and size:
 DesktopIconGrid.slnx
 src/DesktopIconGrid.Core/      models, ordering/grouping logic, JSON storage, launch info, Google OAuth + Drive client, sync — no WPF, testable on any OS
 src/DesktopIconGrid/           WPF app: window, grid control, dialogs, shell interop, view models
+src/DesktopIconGrid/Resources/ Styles.xaml and the UI text: Strings.resx (English) with Strings.zh-Hant.resx and Strings.zh-Hans.resx
+src/DesktopIconGrid.Core/Resources/  CoreStrings.resx: names of the ready-made Windows items, in the same three languages
 tests/DesktopIconGrid.Core.Tests/   xunit tests for the core library
 ```
+
+Adding a string: add the key to `Strings.resx` and to both translations, add the matching property to
+`Strings.Designer.cs` (Visual Studio does this on save; without it, copy a neighbouring property), then
+use `{x:Static r:Strings.Key}` in XAML or `Strings.Key` in code. `StringsTests` fails the build's tests
+when a translation or a `{0}` placeholder is missing.
 
 ## 12. Delivery phases
 
@@ -393,7 +401,9 @@ Still open, in the order they should be taken:
    returns to its monitor after re-enumeration and the visibility check no longer has to try every
    plausible scale (today it compares the real monitor layout at the primary scale and at each Windows
    display scale, and only resets when none of them shows the bar).
-3. **Localisation** — strings in `.resx` with zh-TW/zh-CN, default text-icon font by UI culture.
+3. **Localisation** — done in 0.5.0 (`.resx` tables with zh-Hant/zh-Hans, a Language setting, the
+   text-icon default font by UI language). By design the log and the error texts from Google and
+   Windows stay in English.
 4. **Non-modal errors** — done in 0.4.0 (tray notifications with the log viewer one click away;
    Undo for Remove). Still open: a toast with actions instead of the classic balloon.
 5. **Table stakes** — installer (MSIX/winget), signed releases; versioning from the tag is done by the

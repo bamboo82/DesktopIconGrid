@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Windows.Input;
 using DesktopIconGrid.Core.Sync;
 using DesktopIconGrid.Infrastructure;
+using DesktopIconGrid.Resources;
 using DesktopIconGrid.Services;
 
 namespace DesktopIconGrid.ViewModels;
@@ -119,11 +120,7 @@ public sealed class SyncViewModel : ObservableObject
     /// <summary>Expand the credentials section until credentials are entered.</summary>
     public bool ShowCredentials => !HasCredentials;
 
-    public string CredentialsHelp =>
-        "Desktop Icon Grid needs its own OAuth client in your Google Cloud project. In the console: create a project, " +
-        "enable the Google Drive API, configure the OAuth consent screen (External) and publish it so sign-ins do not expire " +
-        "after seven days, then add a credential of type \"Desktop app\". Paste its client ID and secret here, or import the " +
-        "client_secret JSON file the console lets you download.";
+    public string CredentialsHelp => Strings.Sync_ConsoleHelp;
 
     // ----- connection -----------------------------------------------------------------------------
 
@@ -132,8 +129,8 @@ public sealed class SyncViewModel : ObservableObject
     public bool IsNotConnected => !IsConnected;
 
     public string ConnectionText => IsConnected
-        ? $"Connected as {Settings.AccountEmail ?? "a Google account"}"
-        : "Not connected";
+        ? string.Format(Strings.Sync_ConnectedAs, Settings.AccountEmail ?? Strings.Common_AGoogleAccount)
+        : Strings.Sync_NotConnected;
 
     public string LinkedText
     {
@@ -141,11 +138,11 @@ public sealed class SyncViewModel : ObservableObject
         {
             if (Settings.LinkedProfile is null)
             {
-                return "This device is not linked to a copy yet. Saving or loading a copy links it.";
+                return Strings.Sync_NotLinked;
             }
 
-            var synced = Settings.LastSyncedAt is { } t ? $" Last synced {SyncCoordinator.Describe(t)}." : string.Empty;
-            return $"This device is linked to \"{Settings.LinkedProfile}\".{synced}";
+            var synced = Settings.LastSyncedAt is { } t ? string.Format(Strings.Sync_LastSynced, SyncCoordinator.Describe(t)) : string.Empty;
+            return string.Format(Strings.Sync_LinkedTo, Settings.LinkedProfile, synced);
         }
     }
 
@@ -241,46 +238,49 @@ public sealed class SyncViewModel : ObservableObject
             OnPropertyChanged(nameof(ClientSecret));
             OnPropertyChanged(nameof(HasCredentials));
             OnPropertyChanged(nameof(ShowCredentials));
-            StatusText = "Credentials imported. Click Connect to sign in.";
+            StatusText = Strings.Sync_Imported;
             CommandManager.InvalidateRequerySuggested();
         }
         else
         {
-            _dialogs.ShowError("Import credentials", "That file does not contain an OAuth client ID and secret. Download the JSON for a \"Desktop app\" OAuth client from Google Cloud Console.");
+            _dialogs.ShowError(Strings.Sync_ImportTitle, Strings.Sync_ImportInvalid);
         }
     }
 
     public void CancelPendingOperation() => _operation?.Cancel();
 
-    private Task ConnectAsync() => RunAsync("Finish signing in to Google in your browser…", async ct =>
+    private Task ConnectAsync() => RunAsync(Strings.Common_FinishSignIn, async ct =>
     {
         var user = await Service.ConnectAsync(ct);
-        StatusText = $"Connected as {user.EmailAddress ?? "a Google account"}.";
+        StatusText = string.Format(Strings.Sync_ConnectedAsDot, user.EmailAddress ?? Strings.Common_AGoogleAccount);
         await RefreshProfilesAsync(ct);
     });
 
     private Task DisconnectAsync()
     {
-        if (!_dialogs.Confirm("Disconnect", "Disconnect this device from Google Drive? The copies on Drive are kept."))
+        if (!_dialogs.Confirm(Strings.Sync_Disconnect, Strings.Sync_DisconnectQuestion))
         {
             return Task.CompletedTask;
         }
 
-        return RunAsync("Disconnecting…", async ct =>
+        return RunAsync(Strings.Sync_Disconnecting, async ct =>
         {
             await Service.DisconnectAsync(ct);
             Profiles.Clear();
             SelectedProfile = null;
-            StatusText = "Disconnected.";
+            StatusText = Strings.Sync_Disconnected;
         });
     }
 
-    private Task RefreshAsync() => RunAsync("Loading copies from Google Drive…", async ct =>
+    private Task RefreshAsync() => RunAsync(Strings.Sync_LoadingCopies, async ct =>
     {
         await RefreshProfilesAsync(ct);
-        StatusText = Profiles.Count == 0
-            ? "No settings copies on Google Drive yet. Give one a name and click Save."
-            : $"{Profiles.Count} cop{(Profiles.Count == 1 ? "y" : "ies")} on Google Drive.";
+        StatusText = Profiles.Count switch
+        {
+            0 => Strings.Sync_NoCopies,
+            1 => Strings.Sync_OneCopy,
+            _ => string.Format(Strings.Sync_CopyCount, Profiles.Count),
+        };
     });
 
     private Task SaveAsAsync()
@@ -298,7 +298,7 @@ public sealed class SyncViewModel : ObservableObject
 
         var existing = Profiles.FirstOrDefault(p => string.Equals(p.Name, name, StringComparison.OrdinalIgnoreCase));
         if (existing is not null
-            && !_dialogs.Confirm("Replace copy", $"A copy called \"{existing.Name}\" already exists (saved by {existing.SavedBy ?? "another device"} on {SyncCoordinator.Describe(existing.SavedAt)}).\n\nReplace it with this device's settings?"))
+            && !_dialogs.Confirm(Strings.Sync_ReplaceCopyTitle, string.Format(Strings.Sync_ReplaceExisting, existing.Name, existing.SavedBy ?? Strings.Common_AnotherDevice, SyncCoordinator.Describe(existing.SavedAt))))
         {
             return Task.CompletedTask;
         }
@@ -313,7 +313,7 @@ public sealed class SyncViewModel : ObservableObject
             return Task.CompletedTask;
         }
 
-        if (!_dialogs.Confirm("Replace copy", $"Replace \"{selected.Name}\" on Google Drive with this device's settings and icons?"))
+        if (!_dialogs.Confirm(Strings.Sync_ReplaceCopyTitle, string.Format(Strings.Sync_ReplaceSelected, selected.Name)))
         {
             return Task.CompletedTask;
         }
@@ -321,12 +321,12 @@ public sealed class SyncViewModel : ObservableObject
         return SaveToAsync(selected.Name, selected.FileId);
     }
 
-    private Task SaveToAsync(string name, string? fileId) => RunAsync($"Saving \"{name}\"…", async ct =>
+    private Task SaveToAsync(string name, string? fileId) => RunAsync(string.Format(Strings.Sync_Saving, name), async ct =>
     {
         var saved = await Service.SaveProfileAsync(name, _sync.ExportLayout(), fileId, ct);
         await RefreshProfilesAsync(ct);
         SelectedProfile = Profiles.FirstOrDefault(p => p.FileId == saved.FileId);
-        StatusText = $"Saved \"{saved.Name}\". This device is now linked to it.";
+        StatusText = string.Format(Strings.Sync_SavedLinked, saved.Name);
     });
 
     private Task LoadAsync()
@@ -337,16 +337,16 @@ public sealed class SyncViewModel : ObservableObject
         }
 
         if (!_dialogs.Confirm(
-                "Load copy",
-                $"Replace the settings and icons on this device with \"{selected.Name}\" (saved by {selected.SavedBy ?? "another device"} on {SyncCoordinator.Describe(selected.SavedAt)})?"))
+                Strings.Sync_LoadCopyTitle,
+                string.Format(Strings.Sync_LoadQuestion, selected.Name, selected.SavedBy ?? Strings.Common_AnotherDevice, SyncCoordinator.Describe(selected.SavedAt))))
         {
             return Task.CompletedTask;
         }
 
-        return RunAsync($"Loading \"{selected.Name}\"…", async ct =>
+        return RunAsync(string.Format(Strings.Viewer_Loading, selected.Name), async ct =>
         {
             await _sync.LoadAndApplyAsync(selected, ct);
-            StatusText = $"Loaded \"{selected.Name}\". This device is now linked to it.";
+            StatusText = string.Format(Strings.Sync_LoadedLinked, selected.Name);
         });
     }
 
@@ -357,23 +357,23 @@ public sealed class SyncViewModel : ObservableObject
             return Task.CompletedTask;
         }
 
-        if (!_dialogs.Confirm("Delete copy", $"Delete \"{selected.Name}\" from Google Drive? Other devices linked to it will no longer find it."))
+        if (!_dialogs.Confirm(Strings.Sync_DeleteCopyTitle, string.Format(Strings.Sync_DeleteQuestion, selected.Name)))
         {
             return Task.CompletedTask;
         }
 
-        return RunAsync($"Deleting \"{selected.Name}\"…", async ct =>
+        return RunAsync(string.Format(Strings.Sync_Deleting, selected.Name), async ct =>
         {
             await Service.DeleteProfileAsync(selected, ct);
             await RefreshProfilesAsync(ct);
-            StatusText = $"Deleted \"{selected.Name}\".";
+            StatusText = string.Format(Strings.Sync_Deleted, selected.Name);
         });
     }
 
     private void Unlink()
     {
         Service.Unlink();
-        StatusText = "This device is no longer linked to a copy.";
+        StatusText = Strings.Sync_Unlinked;
         NotifyStateChanged();
     }
 
@@ -419,7 +419,7 @@ public sealed class SyncViewModel : ObservableObject
         }
         catch (OperationCanceledException)
         {
-            StatusText = "Cancelled.";
+            StatusText = Strings.Common_Cancelled;
         }
         catch (Exception ex) when (SyncCoordinator.IsSyncError(ex))
         {
@@ -453,7 +453,7 @@ public sealed class SyncViewModel : ObservableObject
         }
         catch (Exception ex) when (SyncCoordinator.IsSyncError(ex))
         {
-            StatusText = $"Couldn't save sync settings: {ex.Message}";
+            StatusText = string.Format(Strings.Sync_SaveFailed, ex.Message);
         }
     }
 }

@@ -2,7 +2,8 @@
         x:Name="LogWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Log viewer — Desktop Icon Grid"
+        xmlns:r="clr-namespace:DesktopIconGrid.Resources"
+        Title="{x:Static r:Strings.Log_Title}"
         Width="960"
         Height="600"
         MinWidth="560"
@@ -19,19 +20,19 @@
   <DockPanel Margin="10">
     <!-- Filters -->
     <WrapPanel DockPanel.Dock="Top" Margin="0,0,0,8">
-      <ComboBox Width="170" Margin="0,0,6,4" ItemsSource="{Binding Levels}" SelectedItem="{Binding Level}" DisplayMemberPath="Label" VerticalContentAlignment="Center" ToolTip="Minimum level" />
-      <ComboBox Width="140" Margin="0,0,6,4" ItemsSource="{Binding Categories}" SelectedItem="{Binding Category}" VerticalContentAlignment="Center" ToolTip="Category" />
-      <ComboBox Width="130" Margin="0,0,6,4" ItemsSource="{Binding Ranges}" SelectedItem="{Binding TimeRange}" DisplayMemberPath="Label" VerticalContentAlignment="Center" ToolTip="Time range" />
+      <ComboBox Width="170" Margin="0,0,6,4" ItemsSource="{Binding Levels}" SelectedItem="{Binding Level}" DisplayMemberPath="Label" VerticalContentAlignment="Center" ToolTip="{x:Static r:Strings.Log_MinLevelToolTip}" />
+      <ComboBox Width="140" Margin="0,0,6,4" ItemsSource="{Binding Categories}" SelectedItem="{Binding Category}" VerticalContentAlignment="Center" ToolTip="{x:Static r:Strings.Log_Category}" />
+      <ComboBox Width="130" Margin="0,0,6,4" ItemsSource="{Binding Ranges}" SelectedItem="{Binding TimeRange}" DisplayMemberPath="Label" VerticalContentAlignment="Center" ToolTip="{x:Static r:Strings.Log_TimeRangeToolTip}" />
       <TextBox x:Name="FilterBox" Width="220" Margin="0,0,6,4" Padding="4,3" VerticalContentAlignment="Center"
                Text="{Binding FilterText, UpdateSourceTrigger=PropertyChanged}"
-               ToolTip="Show only entries containing this text (Ctrl+F, Esc clears)"
+               ToolTip="{x:Static r:Strings.Log_SearchToolTip}"
                KeyDown="FilterBox_KeyDown" />
-      <Button Content="Reset" Padding="10,3" Margin="0,0,12,4" Command="{Binding ResetFiltersCommand}" ToolTip="Clear all filters" />
-      <CheckBox Content="Follow" IsChecked="{Binding FollowTail}" VerticalAlignment="Center" Margin="0,0,12,4" ToolTip="Keep the newest entry in view" />
-      <Button Content="Copy" Padding="10,3" Margin="0,0,6,4" Command="{Binding CopyCommand}" ToolTip="Copy the visible entries to the clipboard" />
-      <Button Content="Save as…" Padding="10,3" Margin="0,0,6,4" Click="Save_Click" ToolTip="Save the visible entries to a text file (Ctrl+S)" />
-      <Button Content="Open log file" Padding="10,3" Margin="0,0,6,4" Click="OpenFile_Click" ToolTip="Open app.log in the default text editor" />
-      <Button Content="Clear" Padding="10,3" Margin="0,0,0,4" Command="{Binding ClearCommand}" ToolTip="Empty the in-memory log (the file is kept)" />
+      <Button Content="{x:Static r:Strings.Log_Reset}" Padding="10,3" Margin="0,0,12,4" Command="{Binding ResetFiltersCommand}" ToolTip="{x:Static r:Strings.Log_ResetToolTip}" />
+      <CheckBox Content="{x:Static r:Strings.Log_Follow}" IsChecked="{Binding FollowTail}" VerticalAlignment="Center" Margin="0,0,12,4" ToolTip="{x:Static r:Strings.Log_FollowToolTip}" />
+      <Button Content="{x:Static r:Strings.Log_Copy}" Padding="10,3" Margin="0,0,6,4" Command="{Binding CopyCommand}" ToolTip="{x:Static r:Strings.Log_CopyToolTip}" />
+      <Button Content="{x:Static r:Strings.Log_SaveAs}" Padding="10,3" Margin="0,0,6,4" Click="Save_Click" ToolTip="{x:Static r:Strings.Log_SaveAsToolTip}" />
+      <Button Content="{x:Static r:Strings.Log_OpenFile}" Padding="10,3" Margin="0,0,6,4" Click="OpenFile_Click" ToolTip="{x:Static r:Strings.Log_OpenFileToolTip}" />
+      <Button Content="{x:Static r:Strings.Common_Clear}" Padding="10,3" Margin="0,0,0,4" Command="{Binding ClearCommand}" ToolTip="{x:Static r:Strings.Log_ClearToolTip}" />
     </WrapPanel>
 
     <!-- Status and details -->
@@ -45,11 +46,11 @@
               MouseDoubleClick="Entries_MouseDoubleClick" KeyDown="Entries_KeyDown">
       <ListView.ContextMenu>
         <ContextMenu>
-          <MenuItem Header="Copy line" Command="{Binding CopyLineCommand}" CommandParameter="{Binding Selected}" />
-          <MenuItem Header="Copy message" Command="{Binding CopyMessageCommand}" CommandParameter="{Binding Selected}" />
+          <MenuItem Header="{x:Static r:Strings.Log_CopyLine}" Command="{Binding CopyLineCommand}" CommandParameter="{Binding Selected}" />
+          <MenuItem Header="{x:Static r:Strings.Log_CopyMessage}" Command="{Binding CopyMessageCommand}" CommandParameter="{Binding Selected}" />
           <Separator />
-          <MenuItem Header="Show only this category" Command="{Binding OnlyThisCategoryCommand}" CommandParameter="{Binding Selected}" />
-          <MenuItem Header="Reset filters" Command="{Binding ResetFiltersCommand}" />
+          <MenuItem Header="{x:Static r:Strings.Log_OnlyCategory}" Command="{Binding OnlyThisCategoryCommand}" CommandParameter="{Binding Selected}" />
+          <MenuItem Header="{x:Static r:Strings.Log_ResetFilters}" Command="{Binding ResetFiltersCommand}" />
         </ContextMenu>
       </ListView.ContextMenu>
       <ListView.ItemContainerStyle>
@@ -71,11 +72,11 @@
       </ListView.ItemContainerStyle>
       <ListView.View>
         <GridView>
-          <GridViewColumn Header="Date" Width="90" DisplayMemberBinding="{Binding DateText}" />
-          <GridViewColumn Header="Time" Width="96" DisplayMemberBinding="{Binding TimeText}" />
-          <GridViewColumn Header="Level" Width="70" DisplayMemberBinding="{Binding LevelText}" />
-          <GridViewColumn Header="Category" Width="90" DisplayMemberBinding="{Binding Category}" />
-          <GridViewColumn Header="Message" Width="640" DisplayMemberBinding="{Binding Message}" />
+          <GridViewColumn Header="{x:Static r:Strings.Log_Date}" Width="90" DisplayMemberBinding="{Binding DateText}" />
+          <GridViewColumn Header="{x:Static r:Strings.Log_Time}" Width="96" DisplayMemberBinding="{Binding TimeText}" />
+          <GridViewColumn Header="{x:Static r:Strings.Log_Level}" Width="70" DisplayMemberBinding="{Binding LevelText}" />
+          <GridViewColumn Header="{x:Static r:Strings.Log_Category}" Width="90" DisplayMemberBinding="{Binding Category}" />
+          <GridViewColumn Header="{x:Static r:Strings.Log_Message}" Width="640" DisplayMemberBinding="{Binding Message}" />
         </GridView>
       </ListView.View>
     </ListView>

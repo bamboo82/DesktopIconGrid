@@ -2,6 +2,7 @@ using System.Windows.Input;
 using DesktopIconGrid.Core.Models;
 using DesktopIconGrid.Core.Sync;
 using DesktopIconGrid.Infrastructure;
+using DesktopIconGrid.Resources;
 using DesktopIconGrid.Services;
 using DesktopIconGrid.SpecialIcons;
 
@@ -14,9 +15,9 @@ public sealed class DriveBucketViewModel : ObservableObject
 {
     public static readonly IReadOnlyList<ConflictPolicyChoice> Policies =
     [
-        new(DriveBucketHandler.KeepBoth, "Keep both (Drive allows duplicate names)"),
-        new(DriveBucketHandler.Replace, "Replace the existing file"),
-        new(DriveBucketHandler.Skip, "Skip the file"),
+        new(DriveBucketHandler.KeepBoth, Strings.Bucket_KeepBoth),
+        new(DriveBucketHandler.Replace, Strings.Bucket_Replace),
+        new(DriveBucketHandler.Skip, Strings.Bucket_Skip),
     ];
 
     private readonly SyncService _sync;
@@ -38,7 +39,7 @@ public sealed class DriveBucketViewModel : ObservableObject
         _folderName = item.GetSetting(DriveBucketHandler.FolderNameKey);
         _folderInput = _folderId ?? string.Empty;
         _policy = Policies.FirstOrDefault(p => string.Equals(p.Id, item.GetSetting(DriveBucketHandler.ConflictKey), StringComparison.OrdinalIgnoreCase)) ?? Policies[0];
-        _nameIsAutomatic = _name is "Drive Bucket" or "";
+        _nameIsAutomatic = _name.Length == 0 || _name == Strings.Bucket_ItemName || _name == "Drive Bucket"; // the English default, from layouts saved before 0.5.0
 
         CheckFolderCommand = new RelayCommand(() => _ = CheckFolderAsync(), () => !IsBusy && HasParsableFolder);
         GrantAccessCommand = new RelayCommand(() => _ = GrantAccessAsync(), () => !IsBusy && NeedsAccess && _sync.HasCredentials);
@@ -80,8 +81,8 @@ public sealed class DriveBucketViewModel : ObservableObject
     public bool HasParsableFolder => _folderId is not null;
 
     public string FolderStatus => _folderId is null
-        ? (_folderInput.Trim().Length == 0 ? "Paste the folder's link from Google Drive, or its id." : "That does not look like a Google Drive folder link or id.")
-        : _folderName is null ? $"Folder id {_folderId} (click Check to confirm it)" : $"Folder \"{_folderName}\"";
+        ? (_folderInput.Trim().Length == 0 ? Strings.Bucket_PasteLink : Strings.Bucket_NotALink)
+        : _folderName is null ? string.Format(Strings.Bucket_FolderIdUnchecked, _folderId) : string.Format(Strings.Bucket_FolderNamed, _folderName);
 
     public ConflictPolicyChoice Policy
     {
@@ -98,14 +99,14 @@ public sealed class DriveBucketViewModel : ObservableObject
     public bool NeedsAccess => !_sync.HasFullDriveAccess;
 
     public string AccessText => _sync.Files is null
-        ? "Google Drive access is not available in this build."
+        ? Strings.Bucket_NotAvailable
         : !_sync.HasCredentials
-            ? "Set up the Google API credentials in \"Sync with Google Drive…\" first."
+            ? Strings.Bucket_SetUpFirst
             : !_sync.IsConnected
-                ? "Not connected to Google Drive yet."
+                ? Strings.Bucket_NotConnected
                 : _sync.HasFullDriveAccess
-                    ? $"Connected as {_sync.Settings.AccountEmail ?? "a Google account"} with access to your Drive."
-                    : $"Connected as {_sync.Settings.AccountEmail ?? "a Google account"}, but without access to your whole Drive.";
+                    ? string.Format(Strings.Bucket_ConnectedFull, _sync.Settings.AccountEmail ?? Strings.Common_AGoogleAccount)
+                    : string.Format(Strings.Bucket_ConnectedLimited, _sync.Settings.AccountEmail ?? Strings.Common_AGoogleAccount);
 
     public string StatusText
     {
@@ -150,22 +151,22 @@ public sealed class DriveBucketViewModel : ObservableObject
 
         if (NeedsAccess)
         {
-            StatusText = "Grant access to Google Drive first, then check the folder.";
+            StatusText = Strings.Bucket_GrantFirst;
             return;
         }
 
         IsBusy = true;
-        StatusText = "Looking up the folder…";
+        StatusText = Strings.Bucket_LookingUp;
         try
         {
             var entry = await _sync.Files.GetEntryAsync(_folderId, CancellationToken.None);
             if (entry is null)
             {
-                StatusText = "No folder with that id is visible to this account.";
+                StatusText = Strings.Bucket_NoFolderVisible;
             }
             else if (!entry.IsFolder)
             {
-                StatusText = $"\"{entry.Name}\" is a file, not a folder.";
+                StatusText = string.Format(Strings.Bucket_IsAFile, entry.Name);
             }
             else
             {
@@ -176,7 +177,7 @@ public sealed class DriveBucketViewModel : ObservableObject
                     OnPropertyChanged(nameof(Name));
                 }
 
-                StatusText = $"Found folder \"{entry.Name}\".";
+                StatusText = string.Format(Strings.Bucket_FoundFolder, entry.Name);
                 OnPropertyChanged(nameof(FolderStatus));
             }
         }
@@ -193,11 +194,11 @@ public sealed class DriveBucketViewModel : ObservableObject
     private async Task GrantAccessAsync()
     {
         IsBusy = true;
-        StatusText = "Finish signing in to Google in your browser…";
+        StatusText = Strings.Common_FinishSignIn;
         try
         {
             await _sync.EnsureFullDriveAccessAsync(CancellationToken.None);
-            StatusText = "Access granted.";
+            StatusText = Strings.Bucket_AccessGranted;
         }
         catch (Exception ex) when (SyncCoordinator.IsSyncError(ex))
         {

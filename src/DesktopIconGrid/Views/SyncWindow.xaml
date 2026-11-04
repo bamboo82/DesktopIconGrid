@@ -1,7 +1,8 @@
 <Window x:Class="DesktopIconGrid.Views.SyncWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Sync with Google Drive"
+        xmlns:r="clr-namespace:DesktopIconGrid.Resources"
+        Title="{x:Static r:Strings.Sync_Title}"
         Width="600"
         SizeToContent="Height"
         ResizeMode="NoResize"
@@ -13,21 +14,21 @@
   <StackPanel Margin="14">
 
     <!-- Account -->
-    <GroupBox Header="Google account" Padding="8">
+    <GroupBox Header="{x:Static r:Strings.Sync_Account}" Padding="8">
       <StackPanel>
         <DockPanel>
           <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
-            <Button Content="Connect…" Style="{StaticResource DialogButton}" Command="{Binding ConnectCommand}"
+            <Button Content="{x:Static r:Strings.Sync_Connect}" Style="{StaticResource DialogButton}" Command="{Binding ConnectCommand}"
                     Visibility="{Binding IsNotConnected, Converter={StaticResource BoolToVisibility}}" />
-            <Button Content="Cancel" Style="{StaticResource DialogButton}" Command="{Binding CancelCommand}"
+            <Button Content="{x:Static r:Strings.Common_Cancel}" Style="{StaticResource DialogButton}" Command="{Binding CancelCommand}"
                     Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}}" />
-            <Button Content="Disconnect" Style="{StaticResource DialogButton}" Command="{Binding DisconnectCommand}"
+            <Button Content="{x:Static r:Strings.Sync_Disconnect}" Style="{StaticResource DialogButton}" Command="{Binding DisconnectCommand}"
                     Visibility="{Binding IsConnected, Converter={StaticResource BoolToVisibility}}" />
           </StackPanel>
           <TextBlock Text="{Binding ConnectionText}" VerticalAlignment="Center" FontWeight="SemiBold" />
         </DockPanel>
 
-        <Expander Header="Google API credentials" Margin="0,10,0,0" IsExpanded="{Binding ShowCredentials, Mode=OneWay}">
+        <Expander Header="{x:Static r:Strings.Sync_Credentials}" Margin="0,10,0,0" IsExpanded="{Binding ShowCredentials, Mode=OneWay}">
           <StackPanel Margin="0,8,0,0">
             <TextBlock Style="{StaticResource DialogHint}" Margin="0,0,0,8" Text="{Binding CredentialsHelp}" />
             <Grid>
@@ -39,17 +40,17 @@
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
               </Grid.RowDefinitions>
-              <TextBlock Grid.Row="0" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="Client ID:" Margin="0,0,12,8" />
+              <TextBlock Grid.Row="0" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Sync_ClientId}" Margin="0,0,12,8" />
               <TextBox Grid.Row="0" Grid.Column="1" Style="{StaticResource DialogTextBox}"
                        Text="{Binding ClientId, UpdateSourceTrigger=LostFocus}" IsEnabled="{Binding IsNotConnected}" />
-              <TextBlock Grid.Row="1" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="Client secret:" Margin="0,0,12,8" />
+              <TextBlock Grid.Row="1" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Sync_ClientSecret}" Margin="0,0,12,8" />
               <PasswordBox x:Name="SecretBox" Grid.Row="1" Grid.Column="1" Padding="4,3" VerticalContentAlignment="Center"
                            IsEnabled="{Binding IsNotConnected}" LostFocus="SecretBox_LostFocus"
-                           AutomationProperties.Name="Client secret" />
+                           AutomationProperties.Name="{x:Static r:Strings.Sync_ClientSecretName}" />
             </Grid>
             <StackPanel Orientation="Horizontal">
-              <Button Content="Import client_secret.json…" Padding="10,3" Click="ImportCredentials_Click" IsEnabled="{Binding IsNotConnected}" />
-              <Button Content="Open Google Cloud Console" Padding="10,3" Margin="8,0,0,0" Command="{Binding OpenConsoleCommand}" />
+              <Button Content="{x:Static r:Strings.Sync_Import}" Padding="10,3" Click="ImportCredentials_Click" IsEnabled="{Binding IsNotConnected}" />
+              <Button Content="{x:Static r:Strings.Sync_OpenConsole}" Padding="10,3" Margin="8,0,0,0" Command="{Binding OpenConsoleCommand}" />
             </StackPanel>
           </StackPanel>
         </Expander>
@@ -57,51 +58,51 @@
     </GroupBox>
 
     <!-- Device -->
-    <GroupBox Header="This device" Margin="0,10,0,0" Padding="8">
+    <GroupBox Header="{x:Static r:Strings.Sync_ThisDevice}" Margin="0,10,0,0" Padding="8">
       <DockPanel>
-        <TextBlock DockPanel.Dock="Left" Style="{StaticResource DialogLabel}" Text="Device name:" />
+        <TextBlock DockPanel.Dock="Left" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Sync_DeviceName}" />
         <TextBlock DockPanel.Dock="Bottom" Style="{StaticResource DialogHint}" Margin="0,6,0,0"
-                   Text="Shown to your other devices as the one that saved a copy." />
+                   Text="{x:Static r:Strings.Sync_DeviceNameHint}" />
         <TextBox Padding="4,3" VerticalContentAlignment="Center" MaxLength="64"
                  Text="{Binding DeviceName, UpdateSourceTrigger=LostFocus}" />
       </DockPanel>
     </GroupBox>
 
     <!-- Copies -->
-    <GroupBox Header="Settings copies on Google Drive" Margin="0,10,0,0" Padding="8" IsEnabled="{Binding IsConnected}">
+    <GroupBox Header="{x:Static r:Strings.Sync_Copies}" Margin="0,10,0,0" Padding="8" IsEnabled="{Binding IsConnected}">
       <StackPanel>
         <ListView Height="150" ItemsSource="{Binding Profiles}" SelectedItem="{Binding SelectedProfile}">
           <ListView.View>
             <GridView>
-              <GridViewColumn Header="Name" Width="230" DisplayMemberBinding="{Binding Name}" />
-              <GridViewColumn Header="Saved" Width="160" DisplayMemberBinding="{Binding SavedAtLocal, StringFormat=g}" />
-              <GridViewColumn Header="Saved by" Width="140" DisplayMemberBinding="{Binding SavedBy}" />
+              <GridViewColumn Header="{x:Static r:Strings.Common_Name}" Width="230" DisplayMemberBinding="{Binding Name}" />
+              <GridViewColumn Header="{x:Static r:Strings.Sync_Saved}" Width="160" DisplayMemberBinding="{Binding SavedAtLocal, StringFormat=g}" />
+              <GridViewColumn Header="{x:Static r:Strings.Sync_SavedBy}" Width="140" DisplayMemberBinding="{Binding SavedBy}" />
             </GridView>
           </ListView.View>
         </ListView>
 
         <DockPanel Margin="0,8,0,0">
-          <Button DockPanel.Dock="Right" Content="Refresh" Style="{StaticResource DialogButton}" Command="{Binding RefreshCommand}" />
+          <Button DockPanel.Dock="Right" Content="{x:Static r:Strings.Common_Refresh}" Style="{StaticResource DialogButton}" Command="{Binding RefreshCommand}" />
           <StackPanel Orientation="Horizontal">
-            <Button Content="Load" Style="{StaticResource DialogButton}" Margin="0" Command="{Binding LoadCommand}"
-                    ToolTip="Replace this device's settings and icons with the selected copy" />
-            <Button Content="Overwrite" Style="{StaticResource DialogButton}" Command="{Binding OverwriteCommand}"
-                    ToolTip="Replace the selected copy with this device's settings and icons" />
-            <Button Content="Delete…" Style="{StaticResource DialogButton}" Command="{Binding DeleteCommand}" />
+            <Button Content="{x:Static r:Strings.Common_Load}" Style="{StaticResource DialogButton}" Margin="0" Command="{Binding LoadCommand}"
+                    ToolTip="{x:Static r:Strings.Sync_LoadToolTip}" />
+            <Button Content="{x:Static r:Strings.Sync_Overwrite}" Style="{StaticResource DialogButton}" Command="{Binding OverwriteCommand}"
+                    ToolTip="{x:Static r:Strings.Sync_OverwriteToolTip}" />
+            <Button Content="{x:Static r:Strings.Sync_Delete}" Style="{StaticResource DialogButton}" Command="{Binding DeleteCommand}" />
           </StackPanel>
         </DockPanel>
 
         <DockPanel Margin="0,10,0,0">
-          <TextBlock DockPanel.Dock="Left" Text="Save current settings as:" VerticalAlignment="Center" Margin="0,0,8,0" />
-          <Button DockPanel.Dock="Right" Content="Save" Style="{StaticResource DialogButton}" IsDefault="True" Command="{Binding SaveAsCommand}" />
+          <TextBlock DockPanel.Dock="Left" Text="{x:Static r:Strings.Sync_SaveAs}" VerticalAlignment="Center" Margin="0,0,8,0" />
+          <Button DockPanel.Dock="Right" Content="{x:Static r:Strings.Common_Save}" Style="{StaticResource DialogButton}" IsDefault="True" Command="{Binding SaveAsCommand}" />
           <TextBox Padding="4,3" VerticalContentAlignment="Center" MaxLength="80"
                    Text="{Binding NewProfileName, UpdateSourceTrigger=PropertyChanged}" />
         </DockPanel>
 
         <TextBlock Text="{Binding LinkedText}" Margin="0,12,0,0" TextWrapping="Wrap" />
-        <CheckBox Content="Upload my changes to the linked copy automatically" IsChecked="{Binding AutoUpload}" Margin="0,8,0,0" />
-        <CheckBox Content="At startup, offer to load the linked copy when another device saved a newer version" IsChecked="{Binding CheckAtStartup}" Margin="0,4,0,0" />
-        <Button Content="Unlink this device" Padding="10,3" HorizontalAlignment="Left" Margin="0,8,0,0" Command="{Binding UnlinkCommand}" />
+        <CheckBox Content="{x:Static r:Strings.Sync_AutoUpload}" IsChecked="{Binding AutoUpload}" Margin="0,8,0,0" />
+        <CheckBox Content="{x:Static r:Strings.Sync_OfferNewer}" IsChecked="{Binding CheckAtStartup}" Margin="0,4,0,0" />
+        <Button Content="{x:Static r:Strings.Sync_UnlinkDevice}" Padding="10,3" HorizontalAlignment="Left" Margin="0,8,0,0" Command="{Binding UnlinkCommand}" />
       </StackPanel>
     </GroupBox>
 
@@ -112,7 +113,7 @@
     <TextBlock Text="{Binding BackgroundStatus}" Style="{StaticResource DialogHint}" Margin="0,4,0,0" />
 
     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
-      <Button Content="Close" Style="{StaticResource DialogButton}" IsCancel="True" />
+      <Button Content="{x:Static r:Strings.Common_Close}" Style="{StaticResource DialogButton}" IsCancel="True" />
     </StackPanel>
   </StackPanel>
 </Window>

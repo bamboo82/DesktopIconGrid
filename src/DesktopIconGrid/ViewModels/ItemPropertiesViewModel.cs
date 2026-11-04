@@ -1,10 +1,11 @@
 using System.IO;
+using System.Windows;
 using System.Windows.Media;
 using DesktopIconGrid.Core.Launching;
 using DesktopIconGrid.Core.Models;
 using DesktopIconGrid.Infrastructure;
+using DesktopIconGrid.Resources;
 using DesktopIconGrid.Services;
-using System.Windows;
 
 namespace DesktopIconGrid.ViewModels;
 
@@ -53,13 +54,11 @@ public sealed class ItemPropertiesViewModel : ObservableObject
 
     public bool IsNew { get; }
 
-    public string Title => IsGroup ? "Group Properties" : "Shortcut Properties";
+    public string Title => IsGroup ? Strings.Props_GroupTitle : Strings.Props_ShortcutTitle;
 
-    public string LocationHint => "The location may be a file, a folder or a URL.";
+    public string LocationHint => Strings.Props_LocationHint;
 
-    public string ParametersHint =>
-        "Files dropped onto the icon replace {file} (one launch per file) or {files} (all at once); " +
-        "without a placeholder they are appended.";
+    public string ParametersHint => Strings.Props_ParametersHint;
 
     public string Name
     {
@@ -113,9 +112,7 @@ public sealed class ItemPropertiesViewModel : ObservableObject
         set => SetProperty(ref _captureLog, value);
     }
 
-    public string CaptureLogHint =>
-        "Console programs and batch files only: the program runs without its own window, its output goes to a log file " +
-        "and the icon's Show log command displays it live.";
+    public string CaptureLogHint => Strings.Props_LogHint;
 
     public string? IconPath
     {
@@ -304,11 +301,11 @@ public sealed class ItemPropertiesViewModel : ObservableObject
             && !File.Exists(expanded)
             && !Directory.Exists(expanded))
         {
-            warning = "The location was not found. You can still save it (for example for a drive that is not connected right now).";
+            warning = Strings.Props_LocationNotFound;
         }
         else if (iconPath is not null && !icons.CanResolve(iconPath))
         {
-            warning = "The icon file was not found; the default icon will be used until it is.";
+            warning = Strings.Props_IconNotFound;
         }
 
         return new PreviewResult(image, warning);

@@ -4,6 +4,7 @@ using System.Windows.Media;
 using DesktopIconGrid.Core.Launching;
 using DesktopIconGrid.Core.Models;
 using DesktopIconGrid.Infrastructure;
+using DesktopIconGrid.Resources;
 using DesktopIconGrid.Services;
 using DesktopIconGrid.SpecialIcons;
 
@@ -66,7 +67,7 @@ public sealed class ItemViewModel : ObservableObject
 
     public bool IsMultiLaunch => Model is ShortcutItem { MultiLaunch: true };
 
-    public string MultiLaunchMenuHeader => IsMultiLaunch ? "Remove from Multi Launch group" : "Add to Multi Launch group";
+    public string MultiLaunchMenuHeader => IsMultiLaunch ? Strings.Menu_RemoveFromMultiLaunch : Strings.Menu_AddToMultiLaunch;
 
     /// <summary>True while a program started from this shortcut (or its executable) is running.</summary>
     public bool IsRunning => IsShortcut && Root.Tracker.IsRunning(Id);
@@ -118,7 +119,7 @@ public sealed class ItemViewModel : ObservableObject
         {
             if (IsGroup)
             {
-                return ChildCount == 1 ? $"{Name}\n1 item" : $"{Name}\n{ChildCount} items";
+                return ChildCount == 1 ? string.Format(Strings.Item_OneItemToolTip, Name) : string.Format(Strings.Item_ItemsToolTip, Name, ChildCount);
             }
 
             if (Model is SpecialIconItem special)
@@ -131,12 +132,12 @@ public sealed class ItemViewModel : ObservableObject
 
             if (IsUnknown)
             {
-                return $"{Name}\nMade by a newer version of Desktop Icon Grid; kept as a placeholder.";
+                return string.Format(Strings.Item_NewerVersionToolTip, Name);
             }
 
             var location = string.IsNullOrEmpty(Parameters) ? Location : $"{Location} {Parameters}";
-            var multi = IsMultiLaunch ? "\nMulti Launch group member" : string.Empty;
-            var running = IsRunning ? "\nRunning" : string.Empty;
+            var multi = IsMultiLaunch ? "\n" + Strings.Item_MultiLaunchMember : string.Empty;
+            var running = IsRunning ? "\n" + Strings.Grid_Running : string.Empty;
             return $"{Name}\n{location}{multi}{running}";
         }
     }

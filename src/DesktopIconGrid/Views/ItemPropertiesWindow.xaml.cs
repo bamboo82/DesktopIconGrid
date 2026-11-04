@@ -2,6 +2,7 @@ using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
+using DesktopIconGrid.Resources;
 using DesktopIconGrid.Services;
 using DesktopIconGrid.ViewModels;
 using Microsoft.Win32;
@@ -11,11 +12,9 @@ namespace DesktopIconGrid.Views;
 /// <summary>Shortcut Properties / Group Properties dialog.</summary>
 public partial class ItemPropertiesWindow : Window
 {
-    private const string LocationFilter =
-        "Programs and shortcuts|*.exe;*.lnk;*.bat;*.cmd;*.msc;*.url;*.appref-ms|All files|*.*";
+    private static string LocationFilter => Strings.Props_ProgramFilter;
 
-    private const string IconFilter =
-        "Icons and images|*.ico;*.png;*.jpg;*.jpeg;*.bmp;*.gif;*.exe;*.dll|All files|*.*";
+    private static string IconFilter => Strings.Props_ImageFilter;
 
     public ItemPropertiesWindow()
     {
@@ -44,7 +43,7 @@ public partial class ItemPropertiesWindow : Window
 
         var dialog = new OpenFileDialog
         {
-            Title = "Choose a program, file or shortcut",
+            Title = Strings.Props_ChooseProgram,
             Filter = LocationFilter,
             CheckFileExists = true,
             DereferenceLinks = false,
@@ -66,7 +65,7 @@ public partial class ItemPropertiesWindow : Window
 
         var dialog = new OpenFolderDialog
         {
-            Title = "Choose a folder",
+            Title = Strings.Props_ChooseFolder,
             InitialDirectory = InitialDirectoryFor(viewModel.Location),
         };
 
@@ -106,12 +105,7 @@ public partial class ItemPropertiesWindow : Window
             // Clipboard busy; no prefill.
         }
 
-        var url = InputWindow.Show(
-            this,
-            "Icon from the web",
-            "Address of the image (right-click a picture in your browser → Copy image address):",
-            initial,
-            "The image is downloaded once, scaled to 256 px, centred on a transparent square and saved as PNG in the app's icons folder.");
+        var url = InputWindow.Show(this, Strings.Props_WebIconTitle, Strings.Props_WebIconPrompt, initial, Strings.Props_WebIconHint);
         if (string.IsNullOrWhiteSpace(url))
         {
             return;
@@ -119,7 +113,7 @@ public partial class ItemPropertiesWindow : Window
 
         string? error = null;
         using var cancellation = new CancellationTokenSource();
-        var busy = BusyWindow.Open(this, "Icon from the web", $"Downloading {url.Trim()}…", cancellation);
+        var busy = BusyWindow.Open(this, Strings.Props_WebIconTitle, string.Format(Strings.Props_Downloading, url.Trim()), cancellation);
         try
         {
             var path = await IconDownloader.DownloadAsync(App.SharedHttp, url, AppPaths.IconsDirectory, cancellation.Token);
@@ -140,7 +134,7 @@ public partial class ItemPropertiesWindow : Window
 
         if (error is not null)
         {
-            MessageBox.Show(this, error, "Icon from the web", MessageBoxButton.OK, MessageBoxImage.Warning);
+            MessageBox.Show(this, error, Strings.Props_WebIconTitle, MessageBoxButton.OK, MessageBoxImage.Warning);
         }
     }
 
@@ -153,7 +147,7 @@ public partial class ItemPropertiesWindow : Window
 
         var dialog = new OpenFileDialog
         {
-            Title = "Choose an icon",
+            Title = Strings.Props_ChooseIcon,
             Filter = IconFilter,
             CheckFileExists = true,
             InitialDirectory = InitialDirectoryFor(viewModel.IconPath ?? viewModel.Location),

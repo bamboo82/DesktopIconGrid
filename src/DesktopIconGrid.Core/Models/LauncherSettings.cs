@@ -34,6 +34,14 @@ public sealed partial class LauncherSettings
 
     public static readonly IReadOnlyList<string> DockEdges = [DockNone, DockTop, DockBottom, DockLeft, DockRight];
 
+    /// <summary>The UI follows the Windows display language.</summary>
+    public const string LanguageSystem = "system";
+    public const string LanguageEnglish = "en";
+    public const string LanguageTraditionalChinese = "zh-TW";
+    public const string LanguageSimplifiedChinese = "zh-CN";
+
+    public static readonly IReadOnlyList<string> Languages = [LanguageSystem, LanguageEnglish, LanguageTraditionalChinese, LanguageSimplifiedChinese];
+
     /// <summary>Icon edge length in device-independent pixels; one of <see cref="IconSizes"/>.</summary>
     public int IconSize { get; set; } = DefaultIconSize;
 
@@ -82,6 +90,9 @@ public sealed partial class LauncherSettings
     /// <summary>System-wide key combination that shows or hides the bar, e.g. <c>Ctrl+Alt+Space</c>; <see langword="null"/> for none.</summary>
     public string? ToggleHotkey { get; set; }
 
+    /// <summary>UI language: <see cref="LanguageSystem"/> or a culture name from <see cref="Languages"/>. Read once at startup.</summary>
+    public string Language { get; set; } = LanguageSystem;
+
     public LauncherSettings Clone() => (LauncherSettings)MemberwiseClone();
 
     public void CopyFrom(LauncherSettings source)
@@ -103,6 +114,7 @@ public sealed partial class LauncherSettings
         StartHidden = source.StartHidden;
         DockEdge = source.DockEdge;
         AutoHide = source.AutoHide;
+        Language = source.Language;
         Normalize();
     }
 
@@ -158,6 +170,17 @@ public sealed partial class LauncherSettings
         }
 
         ToggleHotkey = string.IsNullOrWhiteSpace(ToggleHotkey) ? null : ToggleHotkey.Trim();
+
+        var language = Languages.FirstOrDefault(l => string.Equals(l, Language?.Trim(), StringComparison.OrdinalIgnoreCase));
+        if (language is null)
+        {
+            Language = LanguageSystem;
+            changed = true;
+        }
+        else
+        {
+            Language = language;
+        }
 
         var opacity = Math.Clamp(Opacity, MinOpacity, MaxOpacity);
         if (opacity != Opacity)

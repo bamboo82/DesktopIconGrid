@@ -2,6 +2,7 @@ using System.IO;
 using DesktopIconGrid.Core.Models;
 using DesktopIconGrid.Core.SpecialIcons;
 using DesktopIconGrid.Infrastructure;
+using DesktopIconGrid.Resources;
 using DesktopIconGrid.SpecialIcons;
 
 namespace DesktopIconGrid.ViewModels;
@@ -15,9 +16,9 @@ public sealed class MonitorIconViewModel : ObservableObject
 {
     public static readonly IReadOnlyList<GaugeStyleChoice> StyleChoices =
     [
-        new(GaugeStyle.Ring, "Ring", "A ring that fills up, with the number in the middle"),
-        new(GaugeStyle.Bar, "Bar", "A horizontal bar under the caption"),
-        new(GaugeStyle.Number, "Number", "A large number with the caption beneath"),
+        new(GaugeStyle.Ring, Strings.Monitor_Ring, Strings.Monitor_RingDesc),
+        new(GaugeStyle.Bar, Strings.Monitor_Bar, Strings.Monitor_BarDesc),
+        new(GaugeStyle.Number, Strings.Monitor_Number, Strings.Monitor_NumberDesc),
     ];
 
     private string _name;
@@ -28,7 +29,7 @@ public sealed class MonitorIconViewModel : ObservableObject
     {
         ArgumentNullException.ThrowIfNull(item);
         ShowsDrive = showsDrive;
-        Title = $"{kindName} icon";
+        Title = string.Format(Strings.Monitor_Title, kindName);
         _name = item.Name;
 
         var settings = MonitorIconSettings.From(item);
@@ -79,15 +80,21 @@ public sealed class MonitorIconViewModel : ObservableObject
             if (SetProperty(ref _selectedDrive, value))
             {
                 OnPropertyChanged(nameof(CanSave));
-                if (value is not null && (_name.Length == 0 || _name.StartsWith("Disk ", StringComparison.Ordinal)))
+                if (value is not null && IsAutomaticName(_name))
                 {
-                    Name = $"Disk {value.Root.TrimEnd('\\')}";
+                    Name = string.Format(Strings.Monitor_DiskName, value.Root.TrimEnd('\\'));
                 }
             }
         }
     }
 
     public bool CanSave => _name.Trim().Length > 0 && (!ShowsDrive || _selectedDrive is not null);
+
+    /// <summary>True for an empty name or one the app generated for a drive (in this or the English wording of layouts saved before 0.5.0).</summary>
+    private bool IsAutomaticName(string name) =>
+        name.Length == 0
+        || name.StartsWith("Disk ", StringComparison.Ordinal)
+        || Drives.Any(d => name == string.Format(Strings.Monitor_DiskName, d.Root.TrimEnd('\\')));
 
     public void Apply(SpecialIconItem item)
     {
@@ -118,12 +125,17 @@ public sealed class MonitorIconViewModel : ObservableObject
                 try
                 {
                     label = drive.IsReady
-                        ? $"{root}  {(string.IsNullOrWhiteSpace(drive.VolumeLabel) ? drive.DriveType.ToString() : drive.VolumeLabel)} — {SystemMonitor.FormatBytes(drive.AvailableFreeSpace)} free of {SystemMonitor.FormatBytes(drive.TotalSize)}"
-                        : $"{root}  (not ready)";
+                        ? string.Format(
+                            Strings.Monitor_DriveFree,
+                            root,
+                            string.IsNullOrWhiteSpace(drive.VolumeLabel) ? drive.DriveType.ToString() : drive.VolumeLabel,
+                            SystemMonitor.FormatBytes(drive.AvailableFreeSpace),
+                            SystemMonitor.FormatBytes(drive.TotalSize))
+                        : string.Format(Strings.Monitor_DriveNotReady, root);
                 }
                 catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
                 {
-                    label = $"{root}  (not available)";
+                    label = string.Format(Strings.Monitor_DriveNotAvailable, root);
                 }
 
                 drives.Add(new DriveChoice(root, label));

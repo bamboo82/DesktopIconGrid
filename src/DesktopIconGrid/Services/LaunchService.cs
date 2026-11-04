@@ -6,6 +6,7 @@ using System.Runtime.InteropServices;
 using DesktopIconGrid.Core.Diagnostics;
 using DesktopIconGrid.Core.Launching;
 using DesktopIconGrid.Core.Models;
+using DesktopIconGrid.Resources;
 
 namespace DesktopIconGrid.Services;
 
@@ -45,7 +46,7 @@ public sealed class LaunchService(ProcessTracker tracker) : ILaunchService
         ArgumentNullException.ThrowIfNull(shortcut);
         if (!DropArguments.SupportsOpenWith(shortcut))
         {
-            return LaunchResult.Failure("This shortcut cannot open files.");
+            return LaunchResult.Failure(Strings.Launch_CannotOpenFiles);
         }
 
         // Expand the template first so dropped paths containing '%' are never re-expanded.
@@ -53,7 +54,7 @@ public sealed class LaunchService(ProcessTracker tracker) : ILaunchService
         var argumentSets = DropArguments.BuildArgumentSets(template, paths);
         if (argumentSets.Count == 0)
         {
-            return LaunchResult.Failure("Nothing to open.");
+            return LaunchResult.Failure(Strings.Launch_NothingToOpen);
         }
 
         var failures = new List<string>();
@@ -68,7 +69,7 @@ public sealed class LaunchService(ProcessTracker tracker) : ILaunchService
                 case LaunchOutcome.Cancelled:
                     return result;
                 case LaunchOutcome.Failed:
-                    failures.Add(result.ErrorMessage ?? "Unknown error");
+                    failures.Add(result.ErrorMessage ?? Strings.Common_UnknownError);
                     break;
             }
         }
@@ -125,7 +126,7 @@ public sealed class LaunchService(ProcessTracker tracker) : ILaunchService
 
         if (process is null)
         {
-            return LaunchResult.Failure("The program could not be started.");
+            return LaunchResult.Failure(Strings.Launch_NotStarted);
         }
 
         tracker.StartLog(shortcut, process, startInfo);
@@ -141,13 +142,13 @@ public sealed class LaunchService(ProcessTracker tracker) : ILaunchService
             var shellType = Type.GetTypeFromProgID("Shell.Application");
             if (shellType is null)
             {
-                return LaunchResult.Failure("Windows Shell automation is not available.");
+                return LaunchResult.Failure(Strings.Launch_ShellUnavailable);
             }
 
             shell = Activator.CreateInstance(shellType);
             if (shell is null)
             {
-                return LaunchResult.Failure("Windows Shell automation is not available.");
+                return LaunchResult.Failure(Strings.Launch_ShellUnavailable);
             }
 
             shellType.InvokeMember(method, BindingFlags.InvokeMethod, null, shell, null);

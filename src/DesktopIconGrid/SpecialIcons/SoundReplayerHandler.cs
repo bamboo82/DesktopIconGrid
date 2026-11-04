@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Media;
 using System.Windows;
@@ -7,6 +8,7 @@ using System.Windows.Threading;
 using DesktopIconGrid.Core.Launching;
 using DesktopIconGrid.Core.Models;
 using DesktopIconGrid.Core.SpecialIcons;
+using DesktopIconGrid.Resources;
 using DesktopIconGrid.Services;
 using DesktopIconGrid.Views;
 
@@ -49,11 +51,11 @@ public sealed class SoundReplayerHandler : ISpecialIconHandler
 
     public string Kind => SpecialIconKinds.SoundReplayer;
 
-    public string DisplayName => "Sound Replayer";
+    public string DisplayName => Strings.Sound_Name;
 
-    public string Description => "Press and hold to record from the microphone; release to play it back in a loop; click to stop.";
+    public string Description => Strings.Sound_Desc;
 
-    public SpecialIconItem CreateItem() => new() { Name = "Sound", Kind = Kind };
+    public SpecialIconItem CreateItem() => new() { Name = Strings.Sound_ItemName, Kind = Kind };
 
     public GaugeState CreateState(SpecialIconItem item)
     {
@@ -70,8 +72,8 @@ public sealed class SoundReplayerHandler : ISpecialIconHandler
     public string? GetToolTip(SpecialIconItem item)
     {
         var path = PathFor(item);
-        var recording = File.Exists(path) ? $"Recording of {DescribeLength(path)}." : "No recording yet.";
-        return $"{recording}\nPress and hold to record • release to loop • click to stop";
+        var recording = File.Exists(path) ? string.Format(Strings.Sound_RecordingOf, DescribeLength(path)) : Strings.Sound_NoRecording;
+        return $"{recording}\n{Strings.Sound_ToolTipHint}";
     }
 
     public bool SupportsPressAndHold(SpecialIconItem item) => true;
@@ -151,7 +153,7 @@ public sealed class SoundReplayerHandler : ISpecialIconHandler
                 var path = PathFor(item);
                 if (!File.Exists(path))
                 {
-                    return LaunchResult.Failure("Nothing recorded yet. Press and hold the icon to record.");
+                    return LaunchResult.Failure(Strings.Sound_NothingRecorded);
                 }
 
                 Play(state, path);
@@ -161,8 +163,7 @@ public sealed class SoundReplayerHandler : ISpecialIconHandler
 
     public bool ShowProperties(SpecialIconItem item, bool isNew)
     {
-        var name = InputWindow.Show(_owner(), "Sound Replayer", "Name of the icon:", item.Name,
-            "Press and hold the icon to record from the microphone, release to play the recording in a loop, click to stop.");
+        var name = InputWindow.Show(_owner(), Strings.Sound_Name, Strings.Sound_NamePrompt, item.Name, Strings.Sound_NameHint);
         if (string.IsNullOrWhiteSpace(name))
         {
             return false;
@@ -179,10 +180,10 @@ public sealed class SoundReplayerHandler : ISpecialIconHandler
         var exists = File.Exists(path);
         return
         [
-            new SpecialIconAction("Stop", () => Stop(state), state.Mode == Mode.Playing),
-            new SpecialIconAction("Play recording", () => Play(state, path), state.Mode == Mode.Stopped && exists),
-            new SpecialIconAction("Delete recording", () => DeleteRecording(state, path), state.Mode == Mode.Stopped && exists),
-            new SpecialIconAction("Open sounds folder", () => OpenFolder(), Directory.Exists(_soundsDirectory)),
+            new SpecialIconAction(Strings.Common_Stop, () => Stop(state), state.Mode == Mode.Playing),
+            new SpecialIconAction(Strings.Sound_Play, () => Play(state, path), state.Mode == Mode.Stopped && exists),
+            new SpecialIconAction(Strings.Sound_Delete, () => DeleteRecording(state, path), state.Mode == Mode.Stopped && exists),
+            new SpecialIconAction(Strings.Sound_OpenFolder, () => OpenFolder(), Directory.Exists(_soundsDirectory)),
         ];
     }
 
@@ -268,12 +269,12 @@ public sealed class SoundReplayerHandler : ISpecialIconHandler
             case Mode.Recording:
                 state.Gauge.LabelText = "REC";
                 state.Gauge.IsVisible = true;
-                state.Gauge.Update(95, "Recording… release to play it back");
+                state.Gauge.Update(95, Strings.Sound_RecordingRelease);
                 break;
             case Mode.Playing:
                 state.Gauge.LabelText = "LOOP";
                 state.Gauge.IsVisible = true;
-                state.Gauge.Update(10, $"Looping{(length is null ? string.Empty : " " + length)} — click to stop");
+                state.Gauge.Update(10, length is null ? Strings.Sound_Looping : string.Format(Strings.Sound_LoopingFor, length));
                 break;
             default:
                 state.Gauge.LabelText = null;
@@ -294,9 +295,10 @@ public sealed class SoundReplayerHandler : ISpecialIconHandler
             }
 
             var elapsed = DateTime.Now - state.StartedAt;
+            var seconds = elapsed.TotalSeconds.ToString("0", CultureInfo.CurrentCulture);
             var text = state.Mode == Mode.Recording
-                ? $"Recording… {elapsed.TotalSeconds:0} s — release to play it back"
-                : $"Looping for {elapsed.TotalSeconds:0} s — click to stop";
+                ? string.Format(Strings.Sound_RecordingElapsed, seconds)
+                : string.Format(Strings.Sound_LoopingElapsed, seconds);
             state.Gauge.Update(state.Mode == Mode.Recording ? 95 : 10, text);
         }, _dispatcher);
     }
@@ -319,7 +321,7 @@ public sealed class SoundReplayerHandler : ISpecialIconHandler
         try
         {
             var bytes = new FileInfo(path).Length - 44;
-            return bytes <= 0 ? "0 s" : $"{bytes / 44100.0:0.0} s";
+            return string.Format(Strings.Sound_Seconds, bytes <= 0 ? "0" : (bytes / 44100.0).ToString("0.0", CultureInfo.CurrentCulture));
         }
         catch (IOException)
         {

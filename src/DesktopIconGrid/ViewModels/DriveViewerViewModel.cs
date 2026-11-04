@@ -7,6 +7,7 @@ using DesktopIconGrid.Core.Diagnostics;
 using DesktopIconGrid.Core.Launching;
 using DesktopIconGrid.Core.Sync;
 using DesktopIconGrid.Infrastructure;
+using DesktopIconGrid.Resources;
 using DesktopIconGrid.Services;
 using DesktopIconGrid.SpecialIcons;
 
@@ -54,7 +55,7 @@ public sealed class DriveViewerViewModel : ObservableObject
         _uploader = uploader;
         _conflictPolicy = conflictPolicy;
         _cacheDirectory = cacheDirectory;
-        _downloader = new DriveDownloader(sync.Files ?? throw new DriveException("Google Drive access is not available."));
+        _downloader = new DriveDownloader(sync.Files ?? throw new DriveException(Strings.Upload_NotAvailable));
         Root = root;
         Crumbs.Add(root);
 
@@ -78,7 +79,7 @@ public sealed class DriveViewerViewModel : ObservableObject
 
     public DriveCrumb Root { get; }
 
-    public string Title => $"{Root.Name} — Google Drive";
+    public string Title => string.Format(Strings.Viewer_Title, Root.Name);
 
     public ObservableCollection<DriveCrumb> Crumbs { get; } = [];
 
@@ -174,7 +175,7 @@ public sealed class DriveViewerViewModel : ObservableObject
             if (DriveDownloader.IsExecutable(paths[0]))
             {
                 // Never run programs pulled from a shared folder on a double-click; show them in Explorer instead.
-                StatusText = $"\"{row.Name}\" is a program; it was downloaded and shown in Explorer, not started.";
+                StatusText = string.Format(Strings.Viewer_IsProgram, row.Name);
                 var reveal = ShellHelper.RevealInExplorer(paths[0]);
                 if (reveal.Outcome == LaunchOutcome.Failed)
                 {
@@ -188,7 +189,7 @@ public sealed class DriveViewerViewModel : ObservableObject
             result.Process?.Dispose();
             if (result.Outcome == LaunchOutcome.Failed)
             {
-                StatusText = result.ErrorMessage ?? "The file could not be opened.";
+                StatusText = result.ErrorMessage ?? Strings.Viewer_CannotOpen;
             }
         }
     }
@@ -197,7 +198,7 @@ public sealed class DriveViewerViewModel : ObservableObject
     public async Task<IReadOnlyList<string>> PrepareLocalCopiesAsync(IReadOnlyList<DriveEntryViewModel> rows)
     {
         var paths = new List<string>();
-        await RunTransferAsync("Preparing files…", async (progress, token) =>
+        await RunTransferAsync(Strings.Viewer_Preparing, async (progress, token) =>
         {
             foreach (var row in rows)
             {
@@ -216,14 +217,14 @@ public sealed class DriveViewerViewModel : ObservableObject
                     StatusText = $"{row.Name}: {ex.Message}";
                 }
             }
-        }, paths.Count == 0 ? "Nothing to copy." : $"{paths.Count} item(s) ready.");
+        }, paths.Count == 0 ? Strings.Viewer_NothingToCopy : string.Format(Strings.Viewer_ItemsReady, paths.Count));
         return paths;
     }
 
     public async Task DownloadToAsync(string destination, IReadOnlyList<DriveEntryViewModel> rows)
     {
         var done = 0;
-        await RunTransferAsync("Downloading…", async (progress, token) =>
+        await RunTransferAsync(Strings.Viewer_Downloading, async (progress, token) =>
         {
             foreach (var row in rows)
             {
@@ -242,7 +243,7 @@ public sealed class DriveViewerViewModel : ObservableObject
                     AppLog.Default.Error("Bucket", $"Download of \"{row.Name}\" failed", ex);
                 }
             }
-        }, $"Downloaded {done} item(s) to {destination}.");
+        }, string.Format(Strings.Viewer_Downloaded, done, destination));
     }
 
     /// <summary>Uploads dropped files into the folder currently shown (through the bucket's uploader).</summary>
@@ -250,12 +251,12 @@ public sealed class DriveViewerViewModel : ObservableObject
     {
         if (_uploader is null)
         {
-            StatusText = "Uploads are not available here.";
+            StatusText = Strings.Viewer_UploadsUnavailable;
             return;
         }
 
         _uploader.Enqueue(Current.Id, _conflictPolicy, paths);
-        StatusText = $"Uploading {paths.Count} item(s) to \"{Current.Name}\"… progress shows on the bucket icon.";
+        StatusText = string.Format(Strings.Viewer_Uploading, paths.Count, Current.Name);
     }
 
     private async Task GoBackAsync()
@@ -293,12 +294,12 @@ public sealed class DriveViewerViewModel : ObservableObject
 
         if (_sync.Files is null)
         {
-            StatusText = "Google Drive access is not available.";
+            StatusText = Strings.Upload_NotAvailable;
             return;
         }
 
         IsBusy = true;
-        StatusText = $"Loading \"{crumb.Name}\"…";
+        StatusText = string.Format(Strings.Viewer_Loading, crumb.Name);
         try
         {
             var children = await _sync.Files.ListChildrenAsync(crumb.Id, CancellationToken.None);
@@ -309,7 +310,7 @@ public sealed class DriveViewerViewModel : ObservableObject
             }
 
             var folders = children.Count(c => c.IsFolder);
-            StatusText = $"{folders} folder(s), {children.Count - folders} file(s)";
+            StatusText = string.Format(Strings.Viewer_Counts, folders, children.Count - folders);
         }
         catch (Exception ex) when (SyncCoordinator.IsSyncError(ex))
         {
@@ -327,7 +328,7 @@ public sealed class DriveViewerViewModel : ObservableObject
     {
         if (IsBusy)
         {
-            StatusText = "Another transfer is still running.";
+            StatusText = Strings.Viewer_TransferRunning;
             return;
         }
 
@@ -338,8 +339,8 @@ public sealed class DriveViewerViewModel : ObservableObject
         {
             TransferPercent = p.Total is > 0 ? Math.Min(100, p.Bytes * 100.0 / p.Total.Value) : null;
             StatusText = p.Total is > 0
-                ? $"{p.FileName} — {SystemMonitor.FormatBytes(p.Bytes)} of {SystemMonitor.FormatBytes(p.Total.Value)}"
-                : $"{p.FileName} — {SystemMonitor.FormatBytes(p.Bytes)}";
+                ? string.Format(Strings.Viewer_ProgressOf, p.FileName, SystemMonitor.FormatBytes(p.Bytes), SystemMonitor.FormatBytes(p.Total.Value))
+                : string.Format(Strings.Viewer_Progress, p.FileName, SystemMonitor.FormatBytes(p.Bytes));
         });
 
         try
@@ -349,7 +350,7 @@ public sealed class DriveViewerViewModel : ObservableObject
         }
         catch (OperationCanceledException)
         {
-            StatusText = "Cancelled.";
+            StatusText = Strings.Common_Cancelled;
         }
         catch (Exception ex) when (SyncCoordinator.IsSyncError(ex))
         {

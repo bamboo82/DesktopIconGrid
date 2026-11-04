@@ -1,5 +1,6 @@
 using DesktopIconGrid.Core.Launching;
 using DesktopIconGrid.Core.Models;
+using DesktopIconGrid.Core.Resources;
 
 namespace DesktopIconGrid.Core.SpecialItems;
 
@@ -33,37 +34,38 @@ public static class SpecialItemCatalog
 {
     private const string Shell32 = "%SystemRoot%\\System32\\shell32.dll";
 
-    public static IReadOnlyList<SpecialItemSection> Sections { get; } =
+    /// <summary>The sections in menu order, named in the current UI language (built on each access; the lists are small).</summary>
+    public static IReadOnlyList<SpecialItemSection> Sections =>
     [
-        new("System", [
-            new("This PC", "shell:MyComputerFolder"),
-            new("Network", "shell:NetworkPlacesFolder"),
-            new("Network Connections", "shell:ConnectionsFolder"),
-            new("Control Panel", "shell:ControlPanelFolder"),
-            new("Printers", "shell:PrintersFolder"),
-            new("Settings", "ms-settings:", IconPath: "%SystemRoot%\\ImmersiveControlPanel\\SystemSettings.exe"),
+        new(CoreStrings.Section_System, [
+            new(CoreStrings.Item_ThisPC, "shell:MyComputerFolder"),
+            new(CoreStrings.Item_Network, "shell:NetworkPlacesFolder"),
+            new(CoreStrings.Item_NetworkConnections, "shell:ConnectionsFolder"),
+            new(CoreStrings.Item_ControlPanel, "shell:ControlPanelFolder"),
+            new(CoreStrings.Item_Printers, "shell:PrintersFolder"),
+            new(CoreStrings.Item_Settings, "ms-settings:", IconPath: "%SystemRoot%\\ImmersiveControlPanel\\SystemSettings.exe"),
         ]),
-        new("Desktop", [
-            new("Recycle Bin", "shell:RecycleBinFolder"),
-            new("Show Desktop", LaunchPlanner.ShowDesktopLocation, IconPath: Shell32 + ",34"),
-            new("Search", "search-ms:", IconPath: Shell32 + ",22"),
-            new("Run…", LaunchPlanner.RunDialogLocation, IconPath: Shell32 + ",24"),
+        new(CoreStrings.Section_Desktop, [
+            new(CoreStrings.Item_RecycleBin, "shell:RecycleBinFolder"),
+            new(CoreStrings.Item_ShowDesktop, LaunchPlanner.ShowDesktopLocation, IconPath: Shell32 + ",34"),
+            new(CoreStrings.Item_Search, "search-ms:", IconPath: Shell32 + ",22"),
+            new(CoreStrings.Item_Run, LaunchPlanner.RunDialogLocation, IconPath: Shell32 + ",24"),
         ]),
-        new("Tools", [
-            new("File Explorer", "explorer.exe"),
-            new("Calculator", "calc.exe"),
-            new("Notepad", "notepad.exe"),
-            new("Paint", "mspaint.exe"),
-            new("WordPad", "write.exe", RequiredExecutable: "write.exe"),
-            new("Command Prompt", "cmd.exe"),
-            new("Windows Terminal", "wt.exe", RequiredExecutable: "wt.exe"),
-            new("Task Manager", "taskmgr.exe"),
+        new(CoreStrings.Section_Tools, [
+            new(CoreStrings.Item_FileExplorer, "explorer.exe"),
+            new(CoreStrings.Item_Calculator, "calc.exe"),
+            new(CoreStrings.Item_Notepad, "notepad.exe"),
+            new(CoreStrings.Item_Paint, "mspaint.exe"),
+            new(CoreStrings.Item_WordPad, "write.exe", RequiredExecutable: "write.exe"),
+            new(CoreStrings.Item_CommandPrompt, "cmd.exe"),
+            new(CoreStrings.Item_WindowsTerminal, "wt.exe", RequiredExecutable: "wt.exe"),
+            new(CoreStrings.Item_TaskManager, "taskmgr.exe"),
         ]),
-        new("Folders", [
-            new("Desktop", "shell:Desktop"),
-            new("Documents", "shell:Personal"),
-            new("Downloads", "shell:Downloads"),
-            new("Pictures", "shell:My Pictures"),
+        new(CoreStrings.Section_Folders, [
+            new(CoreStrings.Item_Desktop, "shell:Desktop"),
+            new(CoreStrings.Item_Documents, "shell:Personal"),
+            new(CoreStrings.Item_Downloads, "shell:Downloads"),
+            new(CoreStrings.Item_Pictures, "shell:My Pictures"),
         ]),
     ];
 

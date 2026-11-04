@@ -12,6 +12,7 @@ using System.Windows.Shell;
 using System.Windows.Threading;
 using DesktopIconGrid.Core.Diagnostics;
 using DesktopIconGrid.Core.Models;
+using DesktopIconGrid.Resources;
 using DesktopIconGrid.Services;
 using DesktopIconGrid.ViewModels;
 using Microsoft.Win32;
@@ -78,7 +79,7 @@ public partial class MainWindow : Window
 
         try
         {
-            _tray = new TrayIcon(image, "Desktop Icon Grid");
+            _tray = new TrayIcon(image, Strings.App_Name);
         }
         catch (Exception ex) when (ex is InvalidOperationException or System.ComponentModel.Win32Exception)
         {
@@ -114,22 +115,22 @@ public partial class MainWindow : Window
     private IEnumerable<TrayMenuEntry> BuildTrayMenu()
     {
         var shown = IsVisible && WindowState != WindowState.Minimized;
-        yield return new TrayMenuEntry(shown ? "Hide bar" : "Show bar", ToggleVisibility);
-        yield return new TrayMenuEntry("Reset bar position", ResetPosition);
+        yield return new TrayMenuEntry(shown ? Strings.Menu_HideBar : Strings.Menu_ShowBar, ToggleVisibility);
+        yield return new TrayMenuEntry(Strings.Menu_ResetBarPosition, ResetPosition);
         yield return TrayMenuEntry.Separator;
-        yield return new TrayMenuEntry("New shortcut…", () => RunOnBar(() => _viewModel.NewShortcutCommand.Execute(null)));
-        yield return new TrayMenuEntry("New group…", () => RunOnBar(() => _viewModel.NewGroupCommand.Execute(null)));
-        yield return new TrayMenuEntry("Edit names…", () => RunOnBar(() => _viewModel.OpenNameTableCommand.Execute(null)));
-        yield return new TrayMenuEntry("Launch Multi Launch group", () => _viewModel.LaunchMultiLaunchCommand.Execute(null), IsEnabled: _viewModel.HasMultiLaunchMembers);
-        yield return new TrayMenuEntry("Always on top", () => _viewModel.AlwaysOnTop = !_viewModel.AlwaysOnTop, IsChecked: _viewModel.AlwaysOnTop);
+        yield return new TrayMenuEntry(Strings.Menu_NewShortcut, () => RunOnBar(() => _viewModel.NewShortcutCommand.Execute(null)));
+        yield return new TrayMenuEntry(Strings.Menu_NewGroup, () => RunOnBar(() => _viewModel.NewGroupCommand.Execute(null)));
+        yield return new TrayMenuEntry(Strings.Menu_EditNames, () => RunOnBar(() => _viewModel.OpenNameTableCommand.Execute(null)));
+        yield return new TrayMenuEntry(Strings.Menu_LaunchMultiLaunch, () => _viewModel.LaunchMultiLaunchCommand.Execute(null), IsEnabled: _viewModel.HasMultiLaunchMembers);
+        yield return new TrayMenuEntry(Strings.Menu_AlwaysOnTop, () => _viewModel.AlwaysOnTop = !_viewModel.AlwaysOnTop, IsChecked: _viewModel.AlwaysOnTop);
         yield return TrayMenuEntry.Separator;
-        yield return new TrayMenuEntry("Settings…", () => RunOnBar(() => _viewModel.OpenSettingsCommand.Execute(null)));
-        yield return new TrayMenuEntry("Sync with Google Drive…", () => RunOnBar(() => _viewModel.OpenSyncCommand.Execute(null)));
-        yield return new TrayMenuEntry("Log viewer…", () => _viewModel.OpenLogViewerCommand.Execute(null));
-        yield return new TrayMenuEntry("Open layout file location", () => _viewModel.OpenLayoutFolderCommand.Execute(null));
-        yield return new TrayMenuEntry("About…", () => _viewModel.AboutCommand.Execute(null));
+        yield return new TrayMenuEntry(Strings.Menu_Settings, () => RunOnBar(() => _viewModel.OpenSettingsCommand.Execute(null)));
+        yield return new TrayMenuEntry(Strings.Menu_Sync, () => RunOnBar(() => _viewModel.OpenSyncCommand.Execute(null)));
+        yield return new TrayMenuEntry(Strings.Menu_LogViewer, () => _viewModel.OpenLogViewerCommand.Execute(null));
+        yield return new TrayMenuEntry(Strings.Menu_OpenLayoutLocation, () => _viewModel.OpenLayoutFolderCommand.Execute(null));
+        yield return new TrayMenuEntry(Strings.Menu_About, () => _viewModel.AboutCommand.Execute(null));
         yield return TrayMenuEntry.Separator;
-        yield return new TrayMenuEntry("Exit", ExitApplication);
+        yield return new TrayMenuEntry(Strings.Common_Exit, ExitApplication);
     }
 
     /// <summary>Brings the bar to the front before running an action that opens a dialog owned by it.</summary>
@@ -370,7 +371,7 @@ public partial class MainWindow : Window
             AppLog.Default.Warning("Hotkey", error ?? "Hotkey could not be registered");
             if (reportErrors && error is not null)
             {
-                MessageBox.Show(this, error, "Show/hide hotkey", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show(this, error, Strings.Main_HotkeyTitle, MessageBoxButton.OK, MessageBoxImage.Warning);
             }
 
             return;

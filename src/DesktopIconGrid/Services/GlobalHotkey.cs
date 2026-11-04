@@ -2,6 +2,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Windows.Input;
 using System.Windows.Interop;
+using DesktopIconGrid.Resources;
 
 namespace DesktopIconGrid.Services;
 
@@ -184,8 +185,8 @@ public sealed class GlobalHotkey : IDisposable
         {
             var code = Marshal.GetLastWin32Error();
             error = code == ErrorHotkeyAlreadyRegistered
-                ? $"The hotkey {gesture} is already used by another program. The previous hotkey stays active."
-                : $"The hotkey {gesture} could not be registered (Windows error {code}). The previous hotkey stays active.";
+                ? string.Format(Strings.Hotkey_InUse, gesture)
+                : string.Format(Strings.Hotkey_Failed, gesture, code);
             return false;
         }
 

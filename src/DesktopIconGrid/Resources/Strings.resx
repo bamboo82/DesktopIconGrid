@@ -1,0 +1,1331 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!--
+    User-visible text of the app (neutral culture: English). Translations: Strings.zh-Hant.resx, Strings.zh-Hans.resx.
+    Values with {0}, {1} … are format strings; keep the placeholders. Newlines inside a value are kept.
+  -->
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="App_Name" xml:space="preserve">
+    <value>Desktop Icon Grid</value>
+  </data>
+  <data name="Common_OK" xml:space="preserve">
+    <value>OK</value>
+  </data>
+  <data name="Common_Cancel" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="Common_Save" xml:space="preserve">
+    <value>Save</value>
+  </data>
+  <data name="Common_Close" xml:space="preserve">
+    <value>Close</value>
+  </data>
+  <data name="Common_Refresh" xml:space="preserve">
+    <value>Refresh</value>
+  </data>
+  <data name="Common_Clear" xml:space="preserve">
+    <value>Clear</value>
+  </data>
+  <data name="Common_Load" xml:space="preserve">
+    <value>Load</value>
+  </data>
+  <data name="Common_Name" xml:space="preserve">
+    <value>Name</value>
+  </data>
+  <data name="Common_NameLabel" xml:space="preserve">
+    <value>Name:</value>
+  </data>
+  <data name="Common_Modified" xml:space="preserve">
+    <value>Modified</value>
+  </data>
+  <data name="Common_Size" xml:space="preserve">
+    <value>Size</value>
+  </data>
+  <data name="Common_Type" xml:space="preserve">
+    <value>Type</value>
+  </data>
+  <data name="Common_Location" xml:space="preserve">
+    <value>Location</value>
+  </data>
+  <data name="Common_UnknownError" xml:space="preserve">
+    <value>Unknown error</value>
+  </data>
+  <data name="Common_Bold" xml:space="preserve">
+    <value>Bold</value>
+  </data>
+  <data name="Common_Stop" xml:space="preserve">
+    <value>Stop</value>
+  </data>
+  <data name="Common_Remove" xml:space="preserve">
+    <value>Remove</value>
+  </data>
+  <data name="Common_Properties" xml:space="preserve">
+    <value>Properties</value>
+  </data>
+  <data name="Common_Exit" xml:space="preserve">
+    <value>Exit</value>
+  </data>
+  <data name="Common_Undo" xml:space="preserve">
+    <value>Undo</value>
+  </data>
+  <data name="Common_Cancelled" xml:space="preserve">
+    <value>Cancelled.</value>
+  </data>
+  <data name="Common_Cancelling" xml:space="preserve">
+    <value>Cancelling…</value>
+  </data>
+  <data name="Common_AnotherDevice" xml:space="preserve">
+    <value>another device</value>
+  </data>
+  <data name="Common_AGoogleAccount" xml:space="preserve">
+    <value>a Google account</value>
+  </data>
+  <data name="Common_UnknownDate" xml:space="preserve">
+    <value>an unknown date</value>
+  </data>
+  <data name="Common_FinishSignIn" xml:space="preserve">
+    <value>Finish signing in to Google in your browser…</value>
+  </data>
+  <data name="Common_Group" xml:space="preserve">
+    <value>Group</value>
+  </data>
+  <data name="Common_AllFilesFilter" xml:space="preserve">
+    <value>All files|*.*</value>
+  </data>
+  <data name="Menu_NewShortcut" xml:space="preserve">
+    <value>New shortcut…</value>
+  </data>
+  <data name="Menu_NewGroup" xml:space="preserve">
+    <value>New group…</value>
+  </data>
+  <data name="Menu_AddWindowsItem" xml:space="preserve">
+    <value>Add Windows item</value>
+  </data>
+  <data name="Menu_AddSpecialIcon" xml:space="preserve">
+    <value>Add special icon</value>
+  </data>
+  <data name="Menu_LaunchMultiLaunch" xml:space="preserve">
+    <value>Launch Multi Launch group</value>
+  </data>
+  <data name="Menu_Settings" xml:space="preserve">
+    <value>Settings…</value>
+  </data>
+  <data name="Menu_ShowLog" xml:space="preserve">
+    <value>Show log…</value>
+  </data>
+  <data name="Menu_OpenFileLocation" xml:space="preserve">
+    <value>Open file location</value>
+  </data>
+  <data name="Menu_Sync" xml:space="preserve">
+    <value>Sync with Google Drive…</value>
+  </data>
+  <data name="Menu_EditNames" xml:space="preserve">
+    <value>Edit names…</value>
+  </data>
+  <data name="Menu_LogViewer" xml:space="preserve">
+    <value>Log viewer…</value>
+  </data>
+  <data name="Menu_AlwaysOnTop" xml:space="preserve">
+    <value>Always on top</value>
+  </data>
+  <data name="Menu_OpenLayoutLocation" xml:space="preserve">
+    <value>Open layout file location</value>
+  </data>
+  <data name="Menu_About" xml:space="preserve">
+    <value>About…</value>
+  </data>
+  <data name="Menu_ShowBar" xml:space="preserve">
+    <value>Show bar</value>
+  </data>
+  <data name="Menu_HideBar" xml:space="preserve">
+    <value>Hide bar</value>
+  </data>
+  <data name="Menu_ResetBarPosition" xml:space="preserve">
+    <value>Reset bar position</value>
+  </data>
+  <data name="Menu_AddToMultiLaunch" xml:space="preserve">
+    <value>Add to Multi Launch group</value>
+  </data>
+  <data name="Menu_RemoveFromMultiLaunch" xml:space="preserve">
+    <value>Remove from Multi Launch group</value>
+  </data>
+  <data name="Main_GripToolTip" xml:space="preserve">
+    <value>Drag to move the bar. Double-click to toggle always on top.</value>
+  </data>
+  <data name="Main_GripName" xml:space="preserve">
+    <value>Move grip</value>
+  </data>
+  <data name="Main_UndoToolTip" xml:space="preserve">
+    <value>Put the removed icon back (Ctrl+Z)</value>
+  </data>
+  <data name="Main_UndoName" xml:space="preserve">
+    <value>Undo remove</value>
+  </data>
+  <data name="Main_Options" xml:space="preserve">
+    <value>Options</value>
+  </data>
+  <data name="Main_OptionsMenuName" xml:space="preserve">
+    <value>Options menu</value>
+  </data>
+  <data name="Main_CloseToTrayToolTip" xml:space="preserve">
+    <value>Hide to tray (Exit is in the tray and options menus)</value>
+  </data>
+  <data name="Main_HotkeyTitle" xml:space="preserve">
+    <value>Show/hide hotkey</value>
+  </data>
+  <data name="Grid_Running" xml:space="preserve">
+    <value>Running</value>
+  </data>
+  <data name="Grid_EmptyRoot" xml:space="preserve">
+    <value>Right-click or drop files here to add shortcuts</value>
+  </data>
+  <data name="Grid_EmptyGroup" xml:space="preserve">
+    <value>Drag shortcuts here</value>
+  </data>
+  <data name="Item_OneItemToolTip" xml:space="preserve">
+    <value>{0}
+1 item</value>
+  </data>
+  <data name="Item_ItemsToolTip" xml:space="preserve">
+    <value>{0}
+{1} items</value>
+  </data>
+  <data name="Item_NewerVersionToolTip" xml:space="preserve">
+    <value>{0}
+Made by a newer version of Desktop Icon Grid; kept as a placeholder.</value>
+  </data>
+  <data name="Item_MultiLaunchMember" xml:space="preserve">
+    <value>Multi Launch group member</value>
+  </data>
+  <data name="Settings_Title" xml:space="preserve">
+    <value>Settings</value>
+  </data>
+  <data name="Settings_Theme" xml:space="preserve">
+    <value>Theme:</value>
+  </data>
+  <data name="Settings_ThemeName" xml:space="preserve">
+    <value>Theme</value>
+  </data>
+  <data name="Settings_BarBackgroundToolTip" xml:space="preserve">
+    <value>Bar background</value>
+  </data>
+  <data name="Settings_Background" xml:space="preserve">
+    <value>Background:</value>
+  </data>
+  <data name="Settings_BackgroundColourName" xml:space="preserve">
+    <value>Background colour</value>
+  </data>
+  <data name="Settings_UseHex" xml:space="preserve">
+    <value>Use #RRGGBB</value>
+  </data>
+  <data name="Settings_ColourHint" xml:space="preserve">
+    <value>Text and highlight colours adapt to the colour.</value>
+  </data>
+  <data name="Settings_BarBackground" xml:space="preserve">
+    <value>Bar background:</value>
+  </data>
+  <data name="Settings_IconSize" xml:space="preserve">
+    <value>Icon size:</value>
+  </data>
+  <data name="Settings_IconSizeName" xml:space="preserve">
+    <value>Icon size</value>
+  </data>
+  <data name="Settings_Spacing" xml:space="preserve">
+    <value>Spacing:</value>
+  </data>
+  <data name="Settings_SpacingName" xml:space="preserve">
+    <value>Spacing</value>
+  </data>
+  <data name="Settings_Labels" xml:space="preserve">
+    <value>Labels:</value>
+  </data>
+  <data name="Settings_ShowLabels" xml:space="preserve">
+    <value>Show names under the icons</value>
+  </data>
+  <data name="Settings_OpenWith" xml:space="preserve">
+    <value>Open with:</value>
+  </data>
+  <data name="Settings_SingleClick" xml:space="preserve">
+    <value>Single click</value>
+  </data>
+  <data name="Settings_DoubleClick" xml:space="preserve">
+    <value>Double click</value>
+  </data>
+  <data name="Settings_Window" xml:space="preserve">
+    <value>Window:</value>
+  </data>
+  <data name="Settings_CloseToTray" xml:space="preserve">
+    <value>The close button hides the bar to the tray (Exit is in the tray and options menus)</value>
+  </data>
+  <data name="Settings_FluentDialogs" xml:space="preserve">
+    <value>Windows 11 style dialogs that follow light or dark mode (applies to dialogs opened from now on)</value>
+  </data>
+  <data name="Settings_StartWithWindows" xml:space="preserve">
+    <value>Start with Windows</value>
+  </data>
+  <data name="Settings_StartHidden" xml:space="preserve">
+    <value>Start hidden: only the tray icon, until the bar is shown from the tray or with the hotkey</value>
+  </data>
+  <data name="Settings_DockToEdge" xml:space="preserve">
+    <value>Dock to edge:</value>
+  </data>
+  <data name="Settings_DockToEdgeName" xml:space="preserve">
+    <value>Dock to edge</value>
+  </data>
+  <data name="Settings_AutoHide" xml:space="preserve">
+    <value>Auto-hide: slide away a second after the pointer leaves; touch the edge or press the hotkey to bring the bar back</value>
+  </data>
+  <data name="Settings_DockHint" xml:space="preserve">
+    <value>A docked bar spans the edge of its screen like the taskbar: maximised windows stop at it, it stays on top, and its thickness is the current height or width (drag the inner edge to change it). Full-screen programs hide it.</value>
+  </data>
+  <data name="Settings_Transparency" xml:space="preserve">
+    <value>Transparency:</value>
+  </data>
+  <data name="Settings_TransparencyName" xml:space="preserve">
+    <value>Transparency</value>
+  </data>
+  <data name="Settings_TransparencyToolTip" xml:space="preserve">
+    <value>How much shows through the bar: the desktop with a solid colour, the blurred backdrop with Mica or Acrylic (icons stay sharp)</value>
+  </data>
+  <data name="Settings_Hotkey" xml:space="preserve">
+    <value>Show/hide hotkey:</value>
+  </data>
+  <data name="Settings_HotkeyName" xml:space="preserve">
+    <value>Show or hide hotkey</value>
+  </data>
+  <data name="Settings_HotkeyToolTip" xml:space="preserve">
+    <value>Click here, then press the key combination</value>
+  </data>
+  <data name="Settings_HotkeyHint" xml:space="preserve">
+    <value>Click the box and press a combination with Ctrl, Alt or Win, e.g. Ctrl+Alt+Space. It shows or hides the bar from any program.</value>
+  </data>
+  <data name="Settings_Language" xml:space="preserve">
+    <value>Language:</value>
+  </data>
+  <data name="Settings_LanguageName" xml:space="preserve">
+    <value>Language</value>
+  </data>
+  <data name="Settings_LanguageSystem" xml:space="preserve">
+    <value>Same as Windows</value>
+  </data>
+  <data name="Settings_LanguageHint" xml:space="preserve">
+    <value>Takes effect the next time Desktop Icon Grid starts.</value>
+  </data>
+  <data name="Settings_BackdropSolid" xml:space="preserve">
+    <value>Solid colour</value>
+  </data>
+  <data name="Settings_BackdropMica" xml:space="preserve">
+    <value>Mica (Windows 11)</value>
+  </data>
+  <data name="Settings_BackdropAcrylic" xml:space="preserve">
+    <value>Acrylic (Windows 11)</value>
+  </data>
+  <data name="Settings_DockNone" xml:space="preserve">
+    <value>Not docked (free window)</value>
+  </data>
+  <data name="Settings_DockTop" xml:space="preserve">
+    <value>Top edge</value>
+  </data>
+  <data name="Settings_DockBottom" xml:space="preserve">
+    <value>Bottom edge</value>
+  </data>
+  <data name="Settings_DockLeft" xml:space="preserve">
+    <value>Left edge</value>
+  </data>
+  <data name="Settings_DockRight" xml:space="preserve">
+    <value>Right edge</value>
+  </data>
+  <data name="Settings_BackdropHintSupported" xml:space="preserve">
+    <value>Mica and Acrylic let the desktop show through with a blur; the theme colour tints it and the transparency slider sets how much of the blur shows. Icons stay sharp.</value>
+  </data>
+  <data name="Settings_BackdropHintUnsupported" xml:space="preserve">
+    <value>Mica and Acrylic need Windows 11 (version 22H2 or later).</value>
+  </data>
+  <data name="Settings_Opaque" xml:space="preserve">
+    <value>opaque</value>
+  </data>
+  <data name="Props_GroupTitle" xml:space="preserve">
+    <value>Group Properties</value>
+  </data>
+  <data name="Props_ShortcutTitle" xml:space="preserve">
+    <value>Shortcut Properties</value>
+  </data>
+  <data name="Props_LocationHint" xml:space="preserve">
+    <value>The location may be a file, a folder or a URL.</value>
+  </data>
+  <data name="Props_ParametersHint" xml:space="preserve">
+    <value>Files dropped onto the icon replace {file} (one launch per file) or {files} (all at once); without a placeholder they are appended.</value>
+  </data>
+  <data name="Props_LogHint" xml:space="preserve">
+    <value>Console programs and batch files only: the program runs without its own window, its output goes to a log file and the icon's Show log command displays it live.</value>
+  </data>
+  <data name="Props_LocationNotFound" xml:space="preserve">
+    <value>The location was not found. You can still save it (for example for a drive that is not connected right now).</value>
+  </data>
+  <data name="Props_IconNotFound" xml:space="preserve">
+    <value>The icon file was not found; the default icon will be used until it is.</value>
+  </data>
+  <data name="Props_Location" xml:space="preserve">
+    <value>Location:</value>
+  </data>
+  <data name="Props_Parameters" xml:space="preserve">
+    <value>Parameters:</value>
+  </data>
+  <data name="Props_Icon" xml:space="preserve">
+    <value>Icon:</value>
+  </data>
+  <data name="Props_Log" xml:space="preserve">
+    <value>Log:</value>
+  </data>
+  <data name="Props_ChangeIcon" xml:space="preserve">
+    <value>Change icon…</value>
+  </data>
+  <data name="Props_TextIcon" xml:space="preserve">
+    <value>Text icon…</value>
+  </data>
+  <data name="Props_UseDefault" xml:space="preserve">
+    <value>Use default</value>
+  </data>
+  <data name="Props_KeepLog" xml:space="preserve">
+    <value>Keep a log of the program's output</value>
+  </data>
+  <data name="Props_BrowseFile" xml:space="preserve">
+    <value>Browse for a file…</value>
+  </data>
+  <data name="Props_BrowseFolder" xml:space="preserve">
+    <value>Browse for a folder…</value>
+  </data>
+  <data name="Props_BrowseImage" xml:space="preserve">
+    <value>Browse for an image or icon file…</value>
+  </data>
+  <data name="Props_FromWeb" xml:space="preserve">
+    <value>From a web address…</value>
+  </data>
+  <data name="Props_TextIconToolTip" xml:space="preserve">
+    <value>Draw text (for example 宋體 characters) instead of an image</value>
+  </data>
+  <data name="Props_ProgramFilter" xml:space="preserve">
+    <value>Programs and shortcuts|*.exe;*.lnk;*.bat;*.cmd;*.msc;*.url;*.appref-ms|All files|*.*</value>
+  </data>
+  <data name="Props_ImageFilter" xml:space="preserve">
+    <value>Icons and images|*.ico;*.png;*.jpg;*.jpeg;*.bmp;*.gif;*.exe;*.dll|All files|*.*</value>
+  </data>
+  <data name="Props_ChooseProgram" xml:space="preserve">
+    <value>Choose a program, file or shortcut</value>
+  </data>
+  <data name="Props_ChooseFolder" xml:space="preserve">
+    <value>Choose a folder</value>
+  </data>
+  <data name="Props_ChooseIcon" xml:space="preserve">
+    <value>Choose an icon</value>
+  </data>
+  <data name="Props_WebIconTitle" xml:space="preserve">
+    <value>Icon from the web</value>
+  </data>
+  <data name="Props_WebIconPrompt" xml:space="preserve">
+    <value>Address of the image (right-click a picture in your browser → Copy image address):</value>
+  </data>
+  <data name="Props_WebIconHint" xml:space="preserve">
+    <value>The image is downloaded once, scaled to 256 px, centred on a transparent square and saved as PNG in the app's icons folder.</value>
+  </data>
+  <data name="Props_Downloading" xml:space="preserve">
+    <value>Downloading {0}…</value>
+  </data>
+  <data name="TextIcon_Title" xml:space="preserve">
+    <value>Text icon</value>
+  </data>
+  <data name="TextIcon_Text" xml:space="preserve">
+    <value>Text:</value>
+  </data>
+  <data name="TextIcon_Font" xml:space="preserve">
+    <value>Font:</value>
+  </data>
+  <data name="TextIcon_Size" xml:space="preserve">
+    <value>Size:</value>
+  </data>
+  <data name="TextIcon_Colour" xml:space="preserve">
+    <value>Colour:</value>
+  </data>
+  <data name="TextIcon_ColourHint" xml:space="preserve">
+    <value>#RRGGBB, or empty for the theme's text colour</value>
+  </data>
+  <data name="TextIcon_Hint" xml:space="preserve">
+    <value>The text is drawn on a tile in place of the icon image. Short labels or one to four characters work best.</value>
+  </data>
+  <data name="Monitor_Design" xml:space="preserve">
+    <value>Design:</value>
+  </data>
+  <data name="Monitor_Drive" xml:space="preserve">
+    <value>Drive:</value>
+  </data>
+  <data name="Monitor_Title" xml:space="preserve">
+    <value>{0} icon</value>
+  </data>
+  <data name="Monitor_Ring" xml:space="preserve">
+    <value>Ring</value>
+  </data>
+  <data name="Monitor_RingDesc" xml:space="preserve">
+    <value>A ring that fills up, with the number in the middle</value>
+  </data>
+  <data name="Monitor_Bar" xml:space="preserve">
+    <value>Bar</value>
+  </data>
+  <data name="Monitor_BarDesc" xml:space="preserve">
+    <value>A horizontal bar under the caption</value>
+  </data>
+  <data name="Monitor_Number" xml:space="preserve">
+    <value>Number</value>
+  </data>
+  <data name="Monitor_NumberDesc" xml:space="preserve">
+    <value>A large number with the caption beneath</value>
+  </data>
+  <data name="Monitor_DiskName" xml:space="preserve">
+    <value>Disk {0}</value>
+  </data>
+  <data name="Monitor_DriveFree" xml:space="preserve">
+    <value>{0}  {1} — {2} free of {3}</value>
+  </data>
+  <data name="Monitor_DriveNotReady" xml:space="preserve">
+    <value>{0}  (not ready)</value>
+  </data>
+  <data name="Monitor_DriveNotAvailable" xml:space="preserve">
+    <value>{0}  (not available)</value>
+  </data>
+  <data name="Monitor_CpuName" xml:space="preserve">
+    <value>CPU usage</value>
+  </data>
+  <data name="Monitor_CpuDesc" xml:space="preserve">
+    <value>Shows how busy the processor is. Click to open Task Manager.</value>
+  </data>
+  <data name="Monitor_CpuMeasuring" xml:space="preserve">
+    <value>Measuring CPU usage…</value>
+  </data>
+  <data name="Monitor_DiskUsageName" xml:space="preserve">
+    <value>Disk usage</value>
+  </data>
+  <data name="Monitor_DiskDesc" xml:space="preserve">
+    <value>Shows how much of a drive is in use. Click to open the drive.</value>
+  </data>
+  <data name="Monitor_Disk" xml:space="preserve">
+    <value>Disk</value>
+  </data>
+  <data name="Monitor_ReadingDrive" xml:space="preserve">
+    <value>Reading drive…</value>
+  </data>
+  <data name="Monitor_NoDriveSelected" xml:space="preserve">
+    <value>No drive is selected for this icon. Open Properties to pick one.</value>
+  </data>
+  <data name="Monitor_NoDrive" xml:space="preserve">
+    <value>No drive selected</value>
+  </data>
+  <data name="Monitor_DriveNotReadyShort" xml:space="preserve">
+    <value>{0} is not ready</value>
+  </data>
+  <data name="Monitor_NoCapacity" xml:space="preserve">
+    <value>{0} reports no capacity</value>
+  </data>
+  <data name="Monitor_DriveSummary" xml:space="preserve">
+    <value>{0} — {1} free of {2} ({3}% used)</value>
+  </data>
+  <data name="Monitor_CpuUnavailable" xml:space="preserve">
+    <value>CPU usage is not available</value>
+  </data>
+  <data name="Monitor_CpuBusy" xml:space="preserve">
+    <value>CPU {0}% busy across {1} logical processors</value>
+  </data>
+  <data name="Sound_Name" xml:space="preserve">
+    <value>Sound Replayer</value>
+  </data>
+  <data name="Sound_Desc" xml:space="preserve">
+    <value>Press and hold to record from the microphone; release to play it back in a loop; click to stop.</value>
+  </data>
+  <data name="Sound_ItemName" xml:space="preserve">
+    <value>Sound</value>
+  </data>
+  <data name="Sound_RecordingOf" xml:space="preserve">
+    <value>Recording of {0}.</value>
+  </data>
+  <data name="Sound_NoRecording" xml:space="preserve">
+    <value>No recording yet.</value>
+  </data>
+  <data name="Sound_ToolTipHint" xml:space="preserve">
+    <value>Press and hold to record • release to loop • click to stop</value>
+  </data>
+  <data name="Sound_NothingRecorded" xml:space="preserve">
+    <value>Nothing recorded yet. Press and hold the icon to record.</value>
+  </data>
+  <data name="Sound_NamePrompt" xml:space="preserve">
+    <value>Name of the icon:</value>
+  </data>
+  <data name="Sound_NameHint" xml:space="preserve">
+    <value>Press and hold the icon to record from the microphone, release to play the recording in a loop, click to stop.</value>
+  </data>
+  <data name="Sound_Play" xml:space="preserve">
+    <value>Play recording</value>
+  </data>
+  <data name="Sound_Delete" xml:space="preserve">
+    <value>Delete recording</value>
+  </data>
+  <data name="Sound_OpenFolder" xml:space="preserve">
+    <value>Open sounds folder</value>
+  </data>
+  <data name="Sound_RecordingRelease" xml:space="preserve">
+    <value>Recording… release to play it back</value>
+  </data>
+  <data name="Sound_Looping" xml:space="preserve">
+    <value>Looping — click to stop</value>
+  </data>
+  <data name="Sound_LoopingFor" xml:space="preserve">
+    <value>Looping {0} — click to stop</value>
+  </data>
+  <data name="Sound_RecordingElapsed" xml:space="preserve">
+    <value>Recording… {0} s — release to play it back</value>
+  </data>
+  <data name="Sound_LoopingElapsed" xml:space="preserve">
+    <value>Looping for {0} s — click to stop</value>
+  </data>
+  <data name="Sound_Seconds" xml:space="preserve">
+    <value>{0} s</value>
+  </data>
+  <data name="Bucket_Name" xml:space="preserve">
+    <value>Google Drive Bucket</value>
+  </data>
+  <data name="Bucket_Desc" xml:space="preserve">
+    <value>A folder on Google Drive. Drop files on it to upload them; click to open the folder in your browser; Ctrl+click to browse it and copy files to this PC.</value>
+  </data>
+  <data name="Bucket_ItemName" xml:space="preserve">
+    <value>Drive Bucket</value>
+  </data>
+  <data name="Bucket_NoFolderToolTip" xml:space="preserve">
+    <value>No folder chosen yet — open Properties.</value>
+  </data>
+  <data name="Bucket_FolderToolTip" xml:space="preserve">
+    <value>Google Drive folder: {0}
+Drop files to upload • Click to open in browser • Ctrl+click to browse</value>
+  </data>
+  <data name="Bucket_NoFolderYet" xml:space="preserve">
+    <value>This bucket has no Google Drive folder yet. Open Properties to choose one.</value>
+  </data>
+  <data name="Bucket_OpenInBrowser" xml:space="preserve">
+    <value>Open in browser</value>
+  </data>
+  <data name="Bucket_Browse" xml:space="preserve">
+    <value>Browse…</value>
+  </data>
+  <data name="Bucket_CancelUploads" xml:space="preserve">
+    <value>Cancel uploads</value>
+  </data>
+  <data name="Bucket_GoogleDrive" xml:space="preserve">
+    <value>Google Drive</value>
+  </data>
+  <data name="Bucket_NotAvailable" xml:space="preserve">
+    <value>Google Drive access is not available in this build.</value>
+  </data>
+  <data name="Bucket_SetUpCredentials" xml:space="preserve">
+    <value>Set up the Google API credentials first: open the options menu (▸), choose "Sync with Google Drive…" and enter or import the client ID and secret.</value>
+  </data>
+  <data name="Bucket_NeedWholeDrive" xml:space="preserve">
+    <value>Google Drive Buckets need access to your whole Google Drive, which the current sign-in does not include.
+
+Sign in again in your browser and grant it now?</value>
+  </data>
+  <data name="Bucket_NeedDrive" xml:space="preserve">
+    <value>Google Drive Buckets need access to your Google Drive.
+
+Sign in in your browser now?</value>
+  </data>
+  <data name="Bucket_AccessTitle" xml:space="preserve">
+    <value>Google Drive access</value>
+  </data>
+  <data name="Bucket_KeepBoth" xml:space="preserve">
+    <value>Keep both (Drive allows duplicate names)</value>
+  </data>
+  <data name="Bucket_Replace" xml:space="preserve">
+    <value>Replace the existing file</value>
+  </data>
+  <data name="Bucket_Skip" xml:space="preserve">
+    <value>Skip the file</value>
+  </data>
+  <data name="Bucket_PasteLink" xml:space="preserve">
+    <value>Paste the folder's link from Google Drive, or its id.</value>
+  </data>
+  <data name="Bucket_NotALink" xml:space="preserve">
+    <value>That does not look like a Google Drive folder link or id.</value>
+  </data>
+  <data name="Bucket_FolderIdUnchecked" xml:space="preserve">
+    <value>Folder id {0} (click Check to confirm it)</value>
+  </data>
+  <data name="Bucket_FolderNamed" xml:space="preserve">
+    <value>Folder "{0}"</value>
+  </data>
+  <data name="Bucket_SetUpFirst" xml:space="preserve">
+    <value>Set up the Google API credentials in "Sync with Google Drive…" first.</value>
+  </data>
+  <data name="Bucket_NotConnected" xml:space="preserve">
+    <value>Not connected to Google Drive yet.</value>
+  </data>
+  <data name="Bucket_ConnectedFull" xml:space="preserve">
+    <value>Connected as {0} with access to your Drive.</value>
+  </data>
+  <data name="Bucket_ConnectedLimited" xml:space="preserve">
+    <value>Connected as {0}, but without access to your whole Drive.</value>
+  </data>
+  <data name="Bucket_GrantFirst" xml:space="preserve">
+    <value>Grant access to Google Drive first, then check the folder.</value>
+  </data>
+  <data name="Bucket_LookingUp" xml:space="preserve">
+    <value>Looking up the folder…</value>
+  </data>
+  <data name="Bucket_NoFolderVisible" xml:space="preserve">
+    <value>No folder with that id is visible to this account.</value>
+  </data>
+  <data name="Bucket_IsAFile" xml:space="preserve">
+    <value>"{0}" is a file, not a folder.</value>
+  </data>
+  <data name="Bucket_FoundFolder" xml:space="preserve">
+    <value>Found folder "{0}".</value>
+  </data>
+  <data name="Bucket_AccessGranted" xml:space="preserve">
+    <value>Access granted.</value>
+  </data>
+  <data name="Bucket_Title" xml:space="preserve">
+    <value>Google Drive Bucket Properties</value>
+  </data>
+  <data name="Bucket_Folder" xml:space="preserve">
+    <value>Folder:</value>
+  </data>
+  <data name="Bucket_Access" xml:space="preserve">
+    <value>Access:</value>
+  </data>
+  <data name="Bucket_SameName" xml:space="preserve">
+    <value>Same name:</value>
+  </data>
+  <data name="Bucket_SameNameHint" xml:space="preserve">
+    <value>What happens when a dropped file has the same name as one already in the folder.</value>
+  </data>
+  <data name="Bucket_Check" xml:space="preserve">
+    <value>Check</value>
+  </data>
+  <data name="Bucket_GrantAccess" xml:space="preserve">
+    <value>Grant access…</value>
+  </data>
+  <data name="Bucket_LinkToolTip" xml:space="preserve">
+    <value>A link such as https://drive.google.com/drive/folders/… or the folder id</value>
+  </data>
+  <data name="Upload_Preparing" xml:space="preserve">
+    <value>Preparing upload…</value>
+  </data>
+  <data name="Upload_TimedOut" xml:space="preserve">
+    <value>The upload timed out.</value>
+  </data>
+  <data name="Upload_SomeFailed" xml:space="preserve">
+    <value>Some files were not uploaded</value>
+  </data>
+  <data name="Upload_NotAvailable" xml:space="preserve">
+    <value>Google Drive access is not available.</value>
+  </data>
+  <data name="Upload_FileGone" xml:space="preserve">
+    <value>The file no longer exists.</value>
+  </data>
+  <data name="Upload_Skipped" xml:space="preserve">
+    <value>Skipped {0} (already on Drive)</value>
+  </data>
+  <data name="Upload_Progress" xml:space="preserve">
+    <value>Uploading {0} ({1} of {2})</value>
+  </data>
+  <data name="Viewer_Title" xml:space="preserve">
+    <value>{0} — Google Drive</value>
+  </data>
+  <data name="Viewer_Download" xml:space="preserve">
+    <value>Download to…</value>
+  </data>
+  <data name="Viewer_Up" xml:space="preserve">
+    <value>▲ Up</value>
+  </data>
+  <data name="Viewer_Back" xml:space="preserve">
+    <value>◀ Back</value>
+  </data>
+  <data name="Viewer_Hint" xml:space="preserve">
+    <value>Double-click to open • Drag items to the desktop or a folder to copy them to this PC • Drop files here to upload</value>
+  </data>
+  <data name="Viewer_DownloadToolTip" xml:space="preserve">
+    <value>Copy the selected items to a folder on this PC</value>
+  </data>
+  <data name="Viewer_IsProgram" xml:space="preserve">
+    <value>"{0}" is a program; it was downloaded and shown in Explorer, not started.</value>
+  </data>
+  <data name="Viewer_CannotOpen" xml:space="preserve">
+    <value>The file could not be opened.</value>
+  </data>
+  <data name="Viewer_Preparing" xml:space="preserve">
+    <value>Preparing files…</value>
+  </data>
+  <data name="Viewer_NothingToCopy" xml:space="preserve">
+    <value>Nothing to copy.</value>
+  </data>
+  <data name="Viewer_ItemsReady" xml:space="preserve">
+    <value>{0} item(s) ready.</value>
+  </data>
+  <data name="Viewer_Downloading" xml:space="preserve">
+    <value>Downloading…</value>
+  </data>
+  <data name="Viewer_Downloaded" xml:space="preserve">
+    <value>Downloaded {0} item(s) to {1}.</value>
+  </data>
+  <data name="Viewer_UploadsUnavailable" xml:space="preserve">
+    <value>Uploads are not available here.</value>
+  </data>
+  <data name="Viewer_Uploading" xml:space="preserve">
+    <value>Uploading {0} item(s) to "{1}"… progress shows on the bucket icon.</value>
+  </data>
+  <data name="Viewer_Loading" xml:space="preserve">
+    <value>Loading "{0}"…</value>
+  </data>
+  <data name="Viewer_Counts" xml:space="preserve">
+    <value>{0} folder(s), {1} file(s)</value>
+  </data>
+  <data name="Viewer_TransferRunning" xml:space="preserve">
+    <value>Another transfer is still running.</value>
+  </data>
+  <data name="Viewer_ProgressOf" xml:space="preserve">
+    <value>{0} — {1} of {2}</value>
+  </data>
+  <data name="Viewer_Progress" xml:space="preserve">
+    <value>{0} — {1}</value>
+  </data>
+  <data name="Viewer_SelectFirst" xml:space="preserve">
+    <value>Select the files or folders to download first.</value>
+  </data>
+  <data name="Viewer_ChooseDestination" xml:space="preserve">
+    <value>Choose where to save the selected items</value>
+  </data>
+  <data name="Sync_Title" xml:space="preserve">
+    <value>Sync with Google Drive</value>
+  </data>
+  <data name="Sync_Credentials" xml:space="preserve">
+    <value>Google API credentials</value>
+  </data>
+  <data name="Sync_ClientId" xml:space="preserve">
+    <value>Client ID:</value>
+  </data>
+  <data name="Sync_ClientSecret" xml:space="preserve">
+    <value>Client secret:</value>
+  </data>
+  <data name="Sync_ClientSecretName" xml:space="preserve">
+    <value>Client secret</value>
+  </data>
+  <data name="Sync_Import" xml:space="preserve">
+    <value>Import client_secret.json…</value>
+  </data>
+  <data name="Sync_OpenConsole" xml:space="preserve">
+    <value>Open Google Cloud Console</value>
+  </data>
+  <data name="Sync_Account" xml:space="preserve">
+    <value>Google account</value>
+  </data>
+  <data name="Sync_Connect" xml:space="preserve">
+    <value>Connect…</value>
+  </data>
+  <data name="Sync_Disconnect" xml:space="preserve">
+    <value>Disconnect</value>
+  </data>
+  <data name="Sync_ThisDevice" xml:space="preserve">
+    <value>This device</value>
+  </data>
+  <data name="Sync_DeviceName" xml:space="preserve">
+    <value>Device name:</value>
+  </data>
+  <data name="Sync_DeviceNameHint" xml:space="preserve">
+    <value>Shown to your other devices as the one that saved a copy.</value>
+  </data>
+  <data name="Sync_AutoUpload" xml:space="preserve">
+    <value>Upload my changes to the linked copy automatically</value>
+  </data>
+  <data name="Sync_OfferNewer" xml:space="preserve">
+    <value>At startup, offer to load the linked copy when another device saved a newer version</value>
+  </data>
+  <data name="Sync_UnlinkDevice" xml:space="preserve">
+    <value>Unlink this device</value>
+  </data>
+  <data name="Sync_Copies" xml:space="preserve">
+    <value>Settings copies on Google Drive</value>
+  </data>
+  <data name="Sync_SavedBy" xml:space="preserve">
+    <value>Saved by</value>
+  </data>
+  <data name="Sync_Saved" xml:space="preserve">
+    <value>Saved</value>
+  </data>
+  <data name="Sync_SaveAs" xml:space="preserve">
+    <value>Save current settings as:</value>
+  </data>
+  <data name="Sync_Overwrite" xml:space="preserve">
+    <value>Overwrite</value>
+  </data>
+  <data name="Sync_Delete" xml:space="preserve">
+    <value>Delete…</value>
+  </data>
+  <data name="Sync_OverwriteToolTip" xml:space="preserve">
+    <value>Replace the selected copy with this device's settings and icons</value>
+  </data>
+  <data name="Sync_LoadToolTip" xml:space="preserve">
+    <value>Replace this device's settings and icons with the selected copy</value>
+  </data>
+  <data name="Sync_ConsoleHelp" xml:space="preserve">
+    <value>Desktop Icon Grid needs its own OAuth client in your Google Cloud project. In the console: create a project, enable the Google Drive API, configure the OAuth consent screen (External) and publish it so sign-ins do not expire after seven days, then add a credential of type "Desktop app". Paste its client ID and secret here, or import the client_secret JSON file the console lets you download.</value>
+  </data>
+  <data name="Sync_ConnectedAs" xml:space="preserve">
+    <value>Connected as {0}</value>
+  </data>
+  <data name="Sync_ConnectedAsDot" xml:space="preserve">
+    <value>Connected as {0}.</value>
+  </data>
+  <data name="Sync_NotConnected" xml:space="preserve">
+    <value>Not connected</value>
+  </data>
+  <data name="Sync_NotLinked" xml:space="preserve">
+    <value>This device is not linked to a copy yet. Saving or loading a copy links it.</value>
+  </data>
+  <data name="Sync_LastSynced" xml:space="preserve">
+    <value> Last synced {0}.</value>
+  </data>
+  <data name="Sync_LinkedTo" xml:space="preserve">
+    <value>This device is linked to "{0}".{1}</value>
+  </data>
+  <data name="Sync_Imported" xml:space="preserve">
+    <value>Credentials imported. Click Connect to sign in.</value>
+  </data>
+  <data name="Sync_ImportTitle" xml:space="preserve">
+    <value>Import credentials</value>
+  </data>
+  <data name="Sync_ImportInvalid" xml:space="preserve">
+    <value>That file does not contain an OAuth client ID and secret. Download the JSON for a "Desktop app" OAuth client from Google Cloud Console.</value>
+  </data>
+  <data name="Sync_DisconnectQuestion" xml:space="preserve">
+    <value>Disconnect this device from Google Drive? The copies on Drive are kept.</value>
+  </data>
+  <data name="Sync_Disconnecting" xml:space="preserve">
+    <value>Disconnecting…</value>
+  </data>
+  <data name="Sync_Disconnected" xml:space="preserve">
+    <value>Disconnected.</value>
+  </data>
+  <data name="Sync_LoadingCopies" xml:space="preserve">
+    <value>Loading copies from Google Drive…</value>
+  </data>
+  <data name="Sync_NoCopies" xml:space="preserve">
+    <value>No settings copies on Google Drive yet. Give one a name and click Save.</value>
+  </data>
+  <data name="Sync_OneCopy" xml:space="preserve">
+    <value>1 copy on Google Drive.</value>
+  </data>
+  <data name="Sync_CopyCount" xml:space="preserve">
+    <value>{0} copies on Google Drive.</value>
+  </data>
+  <data name="Sync_ReplaceCopyTitle" xml:space="preserve">
+    <value>Replace copy</value>
+  </data>
+  <data name="Sync_ReplaceExisting" xml:space="preserve">
+    <value>A copy called "{0}" already exists (saved by {1} on {2}).
+
+Replace it with this device's settings?</value>
+  </data>
+  <data name="Sync_ReplaceSelected" xml:space="preserve">
+    <value>Replace "{0}" on Google Drive with this device's settings and icons?</value>
+  </data>
+  <data name="Sync_Saving" xml:space="preserve">
+    <value>Saving "{0}"…</value>
+  </data>
+  <data name="Sync_SavedLinked" xml:space="preserve">
+    <value>Saved "{0}". This device is now linked to it.</value>
+  </data>
+  <data name="Sync_LoadCopyTitle" xml:space="preserve">
+    <value>Load copy</value>
+  </data>
+  <data name="Sync_LoadQuestion" xml:space="preserve">
+    <value>Replace the settings and icons on this device with "{0}" (saved by {1} on {2})?</value>
+  </data>
+  <data name="Sync_LoadedLinked" xml:space="preserve">
+    <value>Loaded "{0}". This device is now linked to it.</value>
+  </data>
+  <data name="Sync_DeleteCopyTitle" xml:space="preserve">
+    <value>Delete copy</value>
+  </data>
+  <data name="Sync_DeleteQuestion" xml:space="preserve">
+    <value>Delete "{0}" from Google Drive? Other devices linked to it will no longer find it.</value>
+  </data>
+  <data name="Sync_Deleting" xml:space="preserve">
+    <value>Deleting "{0}"…</value>
+  </data>
+  <data name="Sync_Deleted" xml:space="preserve">
+    <value>Deleted "{0}".</value>
+  </data>
+  <data name="Sync_Unlinked" xml:space="preserve">
+    <value>This device is no longer linked to a copy.</value>
+  </data>
+  <data name="Sync_SaveFailed" xml:space="preserve">
+    <value>Couldn't save sync settings: {0}</value>
+  </data>
+  <data name="Sync_ChooseSecretFile" xml:space="preserve">
+    <value>Choose the client_secret JSON file from Google Cloud Console</value>
+  </data>
+  <data name="Sync_JsonFilter" xml:space="preserve">
+    <value>JSON files|*.json|All files|*.*</value>
+  </data>
+  <data name="Sync_Notification" xml:space="preserve">
+    <value>Google Drive sync</value>
+  </data>
+  <data name="Sync_NotUploaded" xml:space="preserve">
+    <value>Not uploaded: "{0}" was saved by {1} on {2}. Open Sync with Google Drive to load it or overwrite it.</value>
+  </data>
+  <data name="Sync_UploadFailed" xml:space="preserve">
+    <value>Upload failed: {0}</value>
+  </data>
+  <data name="Sync_UploadedAt" xml:space="preserve">
+    <value>Uploaded to "{0}" at {1}.</value>
+  </data>
+  <data name="Sync_UpToDate" xml:space="preserve">
+    <value>"{0}" is up to date.</value>
+  </data>
+  <data name="Sync_NewerTitle" xml:space="preserve">
+    <value>Newer settings copy on Google Drive</value>
+  </data>
+  <data name="Sync_NewerQuestion" xml:space="preserve">
+    <value>"{0}" was saved by {1} on {2}.
+
+Load it now? The settings and icons on this device will be replaced.</value>
+  </data>
+  <data name="Sync_NewerNotLoaded" xml:space="preserve">
+    <value>A newer "{0}" is on Google Drive; it was not loaded.</value>
+  </data>
+  <data name="Sync_StartupCheckFailed" xml:space="preserve">
+    <value>Startup check failed: {0}</value>
+  </data>
+  <data name="Sync_LoadedFrom" xml:space="preserve">
+    <value>Loaded "{0}" (saved by {1} on {2}).</value>
+  </data>
+  <data name="Sync_NotAvailable" xml:space="preserve">
+    <value>Sync is not available in this build.</value>
+  </data>
+  <data name="Log_Title" xml:space="preserve">
+    <value>Log viewer — Desktop Icon Grid</value>
+  </data>
+  <data name="Log_Follow" xml:space="preserve">
+    <value>Follow</value>
+  </data>
+  <data name="Log_FollowToolTip" xml:space="preserve">
+    <value>Keep the newest entry in view</value>
+  </data>
+  <data name="Log_Copy" xml:space="preserve">
+    <value>Copy</value>
+  </data>
+  <data name="Log_CopyToolTip" xml:space="preserve">
+    <value>Copy the visible entries to the clipboard</value>
+  </data>
+  <data name="Log_ClearToolTip" xml:space="preserve">
+    <value>Empty the in-memory log (the file is kept)</value>
+  </data>
+  <data name="Log_Reset" xml:space="preserve">
+    <value>Reset</value>
+  </data>
+  <data name="Log_ResetToolTip" xml:space="preserve">
+    <value>Clear all filters</value>
+  </data>
+  <data name="Log_SaveAs" xml:space="preserve">
+    <value>Save as…</value>
+  </data>
+  <data name="Log_SaveAsToolTip" xml:space="preserve">
+    <value>Save the visible entries to a text file (Ctrl+S)</value>
+  </data>
+  <data name="Log_OpenFile" xml:space="preserve">
+    <value>Open log file</value>
+  </data>
+  <data name="Log_OpenFileToolTip" xml:space="preserve">
+    <value>Open app.log in the default text editor</value>
+  </data>
+  <data name="Log_OpenFolder" xml:space="preserve">
+    <value>Open log folder</value>
+  </data>
+  <data name="Log_Category" xml:space="preserve">
+    <value>Category</value>
+  </data>
+  <data name="Log_Level" xml:space="preserve">
+    <value>Level</value>
+  </data>
+  <data name="Log_Message" xml:space="preserve">
+    <value>Message</value>
+  </data>
+  <data name="Log_Date" xml:space="preserve">
+    <value>Date</value>
+  </data>
+  <data name="Log_Time" xml:space="preserve">
+    <value>Time</value>
+  </data>
+  <data name="Log_CopyLine" xml:space="preserve">
+    <value>Copy line</value>
+  </data>
+  <data name="Log_CopyMessage" xml:space="preserve">
+    <value>Copy message</value>
+  </data>
+  <data name="Log_ResetFilters" xml:space="preserve">
+    <value>Reset filters</value>
+  </data>
+  <data name="Log_OnlyCategory" xml:space="preserve">
+    <value>Show only this category</value>
+  </data>
+  <data name="Log_MinLevelToolTip" xml:space="preserve">
+    <value>Minimum level</value>
+  </data>
+  <data name="Log_TimeRangeToolTip" xml:space="preserve">
+    <value>Time range</value>
+  </data>
+  <data name="Log_SearchToolTip" xml:space="preserve">
+    <value>Show only entries containing this text (Ctrl+F, Esc clears)</value>
+  </data>
+  <data name="Log_Everything" xml:space="preserve">
+    <value>Everything</value>
+  </data>
+  <data name="Log_InfoAndAbove" xml:space="preserve">
+    <value>Information and above</value>
+  </data>
+  <data name="Log_WarningsAndErrors" xml:space="preserve">
+    <value>Warnings and errors</value>
+  </data>
+  <data name="Log_ErrorsOnly" xml:space="preserve">
+    <value>Errors only</value>
+  </data>
+  <data name="Log_AnyTime" xml:space="preserve">
+    <value>Any time</value>
+  </data>
+  <data name="Log_Last15" xml:space="preserve">
+    <value>Last 15 minutes</value>
+  </data>
+  <data name="Log_LastHour" xml:space="preserve">
+    <value>Last hour</value>
+  </data>
+  <data name="Log_Today" xml:space="preserve">
+    <value>Today</value>
+  </data>
+  <data name="Log_AllCategories" xml:space="preserve">
+    <value>All categories</value>
+  </data>
+  <data name="Log_SelectEntry" xml:space="preserve">
+    <value>Select an entry to see it in full.</value>
+  </data>
+  <data name="Log_Summary" xml:space="preserve">
+    <value>{0} of {1} entries shown · {2} warning(s) · {3} error(s)</value>
+  </data>
+  <data name="Log_ClipboardBusy" xml:space="preserve">
+    <value>The clipboard is in use by another program; try again.</value>
+  </data>
+  <data name="Log_SaveTitle" xml:space="preserve">
+    <value>Save the visible log entries</value>
+  </data>
+  <data name="Log_TextFilter" xml:space="preserve">
+    <value>Text files|*.txt|Log files|*.log|All files|*.*</value>
+  </data>
+  <data name="Log_SaveLogTitle" xml:space="preserve">
+    <value>Save log</value>
+  </data>
+  <data name="Log_NotWritten" xml:space="preserve">
+    <value>The log file has not been written yet.</value>
+  </data>
+  <data name="Log_FileTitle" xml:space="preserve">
+    <value>Log file</value>
+  </data>
+  <data name="Run_Title" xml:space="preserve">
+    <value>Log — {0}</value>
+  </data>
+  <data name="Run_NoRun" xml:space="preserve">
+    <value>No run has been captured yet. Click the icon to start the program; its output appears here and is written to the log folder.</value>
+  </data>
+  <data name="Run_StartedRunning" xml:space="preserve">
+    <value>Started {0} — running</value>
+  </data>
+  <data name="Run_StartedExited" xml:space="preserve">
+    <value>Started {0} — exited with code {1}</value>
+  </data>
+  <data name="Names_Title" xml:space="preserve">
+    <value>Edit names</value>
+  </data>
+  <data name="Names_Given" xml:space="preserve">
+    <value>Given name</value>
+  </data>
+  <data name="Names_Original" xml:space="preserve">
+    <value>Original name</value>
+  </data>
+  <data name="Names_Kind" xml:space="preserve">
+    <value>Kind</value>
+  </data>
+  <data name="Names_InGroup" xml:space="preserve">
+    <value>In group</value>
+  </data>
+  <data name="Names_UseOriginal" xml:space="preserve">
+    <value>Use original name</value>
+  </data>
+  <data name="Names_UseOriginalAll" xml:space="preserve">
+    <value>Use original names for all</value>
+  </data>
+  <data name="Names_ResetToolTip" xml:space="preserve">
+    <value>Reset the selected rows to their original names</value>
+  </data>
+  <data name="Names_Hint" xml:space="preserve">
+    <value>Names identify your shortcuts on the bar and will be the phrases for voice commands. Click a header to sort; edit the Given name column; Save applies every change.</value>
+  </data>
+  <data name="Names_KindShortcut" xml:space="preserve">
+    <value>Shortcut</value>
+  </data>
+  <data name="Names_KindItem" xml:space="preserve">
+    <value>Item</value>
+  </data>
+  <data name="Names_GroupItems" xml:space="preserve">
+    <value>{0} item(s)</value>
+  </data>
+  <data name="Launch_NewerVersionOpen" xml:space="preserve">
+    <value>This item was made by a newer version of Desktop Icon Grid and cannot be opened here. It is kept so nothing is lost.</value>
+  </data>
+  <data name="Launch_NewerVersionEdit" xml:space="preserve">
+    <value>This item was made by a newer version of Desktop Icon Grid and cannot be edited here.</value>
+  </data>
+  <data name="Launch_CantOpen" xml:space="preserve">
+    <value>Can't open "{0}"</value>
+  </data>
+  <data name="Launch_CantOpenWith" xml:space="preserve">
+    <value>Can't open with "{0}"</value>
+  </data>
+  <data name="Launch_Removed" xml:space="preserve">
+    <value>Removed "{0}"</value>
+  </data>
+  <data name="Launch_RemoveGroupTitle" xml:space="preserve">
+    <value>Remove group</value>
+  </data>
+  <data name="Launch_RemoveGroupQuestion" xml:space="preserve">
+    <value>Remove the group "{0}"?</value>
+  </data>
+  <data name="Launch_RemoveGroupWithItems" xml:space="preserve">
+    <value>Remove the group "{0}" and the {1} shortcut(s) in it?</value>
+  </data>
+  <data name="Launch_CantOpenLocation" xml:space="preserve">
+    <value>Can't open the location</value>
+  </data>
+  <data name="Launch_MultiEmptyTitle" xml:space="preserve">
+    <value>Multi Launch group is empty</value>
+  </data>
+  <data name="Launch_MultiEmpty" xml:space="preserve">
+    <value>Right-click a shortcut and choose "Add to Multi Launch group". Every member starts together when you launch the group.</value>
+  </data>
+  <data name="Launch_SomeFailed" xml:space="preserve">
+    <value>Some shortcuts did not start</value>
+  </data>
+  <data name="Launch_LayoutNotCreated" xml:space="preserve">
+    <value>The layout file has not been created yet.</value>
+  </data>
+  <data name="Launch_LayoutFileTitle" xml:space="preserve">
+    <value>Layout file</value>
+  </data>
+  <data name="Launch_SaveFailed" xml:space="preserve">
+    <value>Couldn't save the layout</value>
+  </data>
+  <data name="About_Title" xml:space="preserve">
+    <value>About Desktop Icon Grid</value>
+  </data>
+  <data name="About_Text" xml:space="preserve">
+    <value>Desktop Icon Grid {0}
+
+A compact launcher bar: click an icon to open it, drag icons to rearrange them, right-click for shortcuts, groups and special items.
+
+Layout file:
+{1}</value>
+  </data>
+  <data name="Launch_CannotOpenFiles" xml:space="preserve">
+    <value>This shortcut cannot open files.</value>
+  </data>
+  <data name="Launch_NothingToOpen" xml:space="preserve">
+    <value>Nothing to open.</value>
+  </data>
+  <data name="Launch_NotStarted" xml:space="preserve">
+    <value>The program could not be started.</value>
+  </data>
+  <data name="Launch_ShellUnavailable" xml:space="preserve">
+    <value>Windows Shell automation is not available.</value>
+  </data>
+  <data name="Shell_NotLocal" xml:space="preserve">
+    <value>This location is not a file or folder on this computer.</value>
+  </data>
+  <data name="Special_NoFiles" xml:space="preserve">
+    <value>This icon does not accept files.</value>
+  </data>
+  <data name="Special_UnknownName" xml:space="preserve">
+    <value>Unknown special icon</value>
+  </data>
+  <data name="Special_UnknownDesc" xml:space="preserve">
+    <value>This icon needs a newer version of Desktop Icon Grid.</value>
+  </data>
+  <data name="App_StartFailed" xml:space="preserve">
+    <value>Desktop Icon Grid could not start.
+
+{0}
+
+Details are in {1}.</value>
+  </data>
+  <data name="App_LayoutUnreadableTitle" xml:space="preserve">
+    <value>Layout file could not be read</value>
+  </data>
+  <data name="App_LayoutUnreadable" xml:space="preserve">
+    <value>The saved layout was unreadable and the bar starts empty.
+
+{0}
+
+The old file was kept at:
+{1}</value>
+  </data>
+  <data name="App_LayoutRestoredTitle" xml:space="preserve">
+    <value>Layout restored from backup</value>
+  </data>
+  <data name="App_LayoutRestored" xml:space="preserve">
+    <value>The layout file was missing or unreadable, so the previous save (layout.json.bak) was loaded instead.{0}</value>
+  </data>
+  <data name="App_UnreadableKeptAt" xml:space="preserve">
+    <value>
+
+The unreadable file was kept at:
+{0}</value>
+  </data>
+  <data name="App_LayoutNewerTitle" xml:space="preserve">
+    <value>Layout from a newer version</value>
+  </data>
+  <data name="App_LayoutNewer" xml:space="preserve">
+    <value>This layout was saved by a newer version of Desktop Icon Grid. Items this version does not understand are shown as placeholders and kept when you save; a copy of the original file is stored next to it.</value>
+  </data>
+  <data name="App_UnexpectedErrorTitle" xml:space="preserve">
+    <value>Desktop Icon Grid – unexpected error</value>
+  </data>
+  <data name="App_UnexpectedError" xml:space="preserve">
+    <value>{0}
+
+Details are in {1}.</value>
+  </data>
+  <data name="Settings_HotkeyNeedsModifier" xml:space="preserve">
+    <value>Combine the key with Ctrl, Alt or Win.</value>
+  </data>
+  <data name="Hotkey_InUse" xml:space="preserve">
+    <value>The hotkey {0} is already used by another program. The previous hotkey stays active.</value>
+  </data>
+  <data name="Hotkey_Failed" xml:space="preserve">
+    <value>The hotkey {0} could not be registered (Windows error {1}). The previous hotkey stays active.</value>
+  </data>
+  <data name="Sound_RecordingFailed" xml:space="preserve">
+    <value>Recording failed (MCI error {0}). Check that a microphone is connected and that Windows allows desktop apps to use it.</value>
+  </data>
+</root>

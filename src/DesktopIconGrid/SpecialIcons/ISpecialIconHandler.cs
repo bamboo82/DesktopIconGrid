@@ -1,6 +1,7 @@
 using System.Windows.Media;
 using DesktopIconGrid.Core.Launching;
 using DesktopIconGrid.Core.Models;
+using DesktopIconGrid.Resources;
 
 namespace DesktopIconGrid.SpecialIcons;
 
@@ -47,7 +48,7 @@ public interface ISpecialIconHandler
     bool AcceptsFileDrops(SpecialIconItem item) => false;
 
     Task<LaunchResult> DropFilesAsync(SpecialIconItem item, IReadOnlyList<string> paths) =>
-        Task.FromResult(LaunchResult.Failure("This icon does not accept files."));
+        Task.FromResult(LaunchResult.Failure(Strings.Special_NoFiles));
 
     IReadOnlyList<SpecialIconAction> GetActions(SpecialIconItem item) => [];
 
@@ -90,9 +91,9 @@ public sealed class UnknownSpecialIconHandler : ISpecialIconHandler
 
     public string Kind => string.Empty;
 
-    public string DisplayName => "Unknown special icon";
+    public string DisplayName => Strings.Special_UnknownName;
 
-    public string Description => "This icon needs a newer version of Desktop Icon Grid.";
+    public string Description => Strings.Special_UnknownDesc;
 
     public SpecialIconItem CreateItem() => new() { Name = DisplayName };
 

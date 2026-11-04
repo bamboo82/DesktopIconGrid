@@ -1,0 +1,1331 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!--
+    繁體中文 (zh-Hant: Taiwan, Hong Kong, Macao). English originals: Strings.resx.
+    Values with {0}, {1} … are format strings; keep the placeholders. Newlines inside a value are kept.
+  -->
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="App_Name" xml:space="preserve">
+    <value>Desktop Icon Grid</value>
+  </data>
+  <data name="Common_OK" xml:space="preserve">
+    <value>確定</value>
+  </data>
+  <data name="Common_Cancel" xml:space="preserve">
+    <value>取消</value>
+  </data>
+  <data name="Common_Save" xml:space="preserve">
+    <value>儲存</value>
+  </data>
+  <data name="Common_Close" xml:space="preserve">
+    <value>關閉</value>
+  </data>
+  <data name="Common_Refresh" xml:space="preserve">
+    <value>重新整理</value>
+  </data>
+  <data name="Common_Clear" xml:space="preserve">
+    <value>清除</value>
+  </data>
+  <data name="Common_Load" xml:space="preserve">
+    <value>載入</value>
+  </data>
+  <data name="Common_Name" xml:space="preserve">
+    <value>名稱</value>
+  </data>
+  <data name="Common_NameLabel" xml:space="preserve">
+    <value>名稱：</value>
+  </data>
+  <data name="Common_Modified" xml:space="preserve">
+    <value>修改時間</value>
+  </data>
+  <data name="Common_Size" xml:space="preserve">
+    <value>大小</value>
+  </data>
+  <data name="Common_Type" xml:space="preserve">
+    <value>類型</value>
+  </data>
+  <data name="Common_Location" xml:space="preserve">
+    <value>位置</value>
+  </data>
+  <data name="Common_UnknownError" xml:space="preserve">
+    <value>未知的錯誤</value>
+  </data>
+  <data name="Common_Bold" xml:space="preserve">
+    <value>粗體</value>
+  </data>
+  <data name="Common_Stop" xml:space="preserve">
+    <value>停止</value>
+  </data>
+  <data name="Common_Remove" xml:space="preserve">
+    <value>移除</value>
+  </data>
+  <data name="Common_Properties" xml:space="preserve">
+    <value>屬性</value>
+  </data>
+  <data name="Common_Exit" xml:space="preserve">
+    <value>結束</value>
+  </data>
+  <data name="Common_Undo" xml:space="preserve">
+    <value>復原</value>
+  </data>
+  <data name="Common_Cancelled" xml:space="preserve">
+    <value>已取消。</value>
+  </data>
+  <data name="Common_Cancelling" xml:space="preserve">
+    <value>正在取消…</value>
+  </data>
+  <data name="Common_AnotherDevice" xml:space="preserve">
+    <value>另一部裝置</value>
+  </data>
+  <data name="Common_AGoogleAccount" xml:space="preserve">
+    <value>Google 帳戶</value>
+  </data>
+  <data name="Common_UnknownDate" xml:space="preserve">
+    <value>未知的日期</value>
+  </data>
+  <data name="Common_FinishSignIn" xml:space="preserve">
+    <value>請在瀏覽器中完成 Google 登入…</value>
+  </data>
+  <data name="Common_Group" xml:space="preserve">
+    <value>群組</value>
+  </data>
+  <data name="Common_AllFilesFilter" xml:space="preserve">
+    <value>所有檔案|*.*</value>
+  </data>
+  <data name="Menu_NewShortcut" xml:space="preserve">
+    <value>新增捷徑…</value>
+  </data>
+  <data name="Menu_NewGroup" xml:space="preserve">
+    <value>新增群組…</value>
+  </data>
+  <data name="Menu_AddWindowsItem" xml:space="preserve">
+    <value>加入 Windows 項目</value>
+  </data>
+  <data name="Menu_AddSpecialIcon" xml:space="preserve">
+    <value>加入特殊圖示</value>
+  </data>
+  <data name="Menu_LaunchMultiLaunch" xml:space="preserve">
+    <value>啟動多重啟動群組</value>
+  </data>
+  <data name="Menu_Settings" xml:space="preserve">
+    <value>設定…</value>
+  </data>
+  <data name="Menu_ShowLog" xml:space="preserve">
+    <value>顯示記錄…</value>
+  </data>
+  <data name="Menu_OpenFileLocation" xml:space="preserve">
+    <value>開啟檔案位置</value>
+  </data>
+  <data name="Menu_Sync" xml:space="preserve">
+    <value>與 Google 雲端硬碟同步…</value>
+  </data>
+  <data name="Menu_EditNames" xml:space="preserve">
+    <value>編輯名稱…</value>
+  </data>
+  <data name="Menu_LogViewer" xml:space="preserve">
+    <value>記錄檢視器…</value>
+  </data>
+  <data name="Menu_AlwaysOnTop" xml:space="preserve">
+    <value>永遠在最上層</value>
+  </data>
+  <data name="Menu_OpenLayoutLocation" xml:space="preserve">
+    <value>開啟版面配置檔位置</value>
+  </data>
+  <data name="Menu_About" xml:space="preserve">
+    <value>關於…</value>
+  </data>
+  <data name="Menu_ShowBar" xml:space="preserve">
+    <value>顯示工具列</value>
+  </data>
+  <data name="Menu_HideBar" xml:space="preserve">
+    <value>隱藏工具列</value>
+  </data>
+  <data name="Menu_ResetBarPosition" xml:space="preserve">
+    <value>重設工具列位置</value>
+  </data>
+  <data name="Menu_AddToMultiLaunch" xml:space="preserve">
+    <value>加入多重啟動群組</value>
+  </data>
+  <data name="Menu_RemoveFromMultiLaunch" xml:space="preserve">
+    <value>從多重啟動群組移除</value>
+  </data>
+  <data name="Main_GripToolTip" xml:space="preserve">
+    <value>拖曳以移動工具列。按兩下可切換「永遠在最上層」。</value>
+  </data>
+  <data name="Main_GripName" xml:space="preserve">
+    <value>移動把手</value>
+  </data>
+  <data name="Main_UndoToolTip" xml:space="preserve">
+    <value>將移除的圖示放回原處 (Ctrl+Z)</value>
+  </data>
+  <data name="Main_UndoName" xml:space="preserve">
+    <value>復原移除</value>
+  </data>
+  <data name="Main_Options" xml:space="preserve">
+    <value>選項</value>
+  </data>
+  <data name="Main_OptionsMenuName" xml:space="preserve">
+    <value>選項功能表</value>
+  </data>
+  <data name="Main_CloseToTrayToolTip" xml:space="preserve">
+    <value>隱藏到系統匣（「結束」在系統匣和選項功能表中）</value>
+  </data>
+  <data name="Main_HotkeyTitle" xml:space="preserve">
+    <value>顯示/隱藏快速鍵</value>
+  </data>
+  <data name="Grid_Running" xml:space="preserve">
+    <value>執行中</value>
+  </data>
+  <data name="Grid_EmptyRoot" xml:space="preserve">
+    <value>在此按右鍵或拖放檔案以新增捷徑</value>
+  </data>
+  <data name="Grid_EmptyGroup" xml:space="preserve">
+    <value>將捷徑拖曳到此處</value>
+  </data>
+  <data name="Item_OneItemToolTip" xml:space="preserve">
+    <value>{0}
+1 個項目</value>
+  </data>
+  <data name="Item_ItemsToolTip" xml:space="preserve">
+    <value>{0}
+{1} 個項目</value>
+  </data>
+  <data name="Item_NewerVersionToolTip" xml:space="preserve">
+    <value>{0}
+由較新版本的 Desktop Icon Grid 建立；以預留位置保留。</value>
+  </data>
+  <data name="Item_MultiLaunchMember" xml:space="preserve">
+    <value>多重啟動群組成員</value>
+  </data>
+  <data name="Settings_Title" xml:space="preserve">
+    <value>設定</value>
+  </data>
+  <data name="Settings_Theme" xml:space="preserve">
+    <value>主題：</value>
+  </data>
+  <data name="Settings_ThemeName" xml:space="preserve">
+    <value>主題</value>
+  </data>
+  <data name="Settings_BarBackgroundToolTip" xml:space="preserve">
+    <value>工具列背景</value>
+  </data>
+  <data name="Settings_Background" xml:space="preserve">
+    <value>背景：</value>
+  </data>
+  <data name="Settings_BackgroundColourName" xml:space="preserve">
+    <value>背景顏色</value>
+  </data>
+  <data name="Settings_UseHex" xml:space="preserve">
+    <value>請使用 #RRGGBB</value>
+  </data>
+  <data name="Settings_ColourHint" xml:space="preserve">
+    <value>文字與強調色會隨背景色調整。</value>
+  </data>
+  <data name="Settings_BarBackground" xml:space="preserve">
+    <value>工具列背景：</value>
+  </data>
+  <data name="Settings_IconSize" xml:space="preserve">
+    <value>圖示大小：</value>
+  </data>
+  <data name="Settings_IconSizeName" xml:space="preserve">
+    <value>圖示大小</value>
+  </data>
+  <data name="Settings_Spacing" xml:space="preserve">
+    <value>間距：</value>
+  </data>
+  <data name="Settings_SpacingName" xml:space="preserve">
+    <value>間距</value>
+  </data>
+  <data name="Settings_Labels" xml:space="preserve">
+    <value>標籤：</value>
+  </data>
+  <data name="Settings_ShowLabels" xml:space="preserve">
+    <value>在圖示下方顯示名稱</value>
+  </data>
+  <data name="Settings_OpenWith" xml:space="preserve">
+    <value>開啟方式：</value>
+  </data>
+  <data name="Settings_SingleClick" xml:space="preserve">
+    <value>按一下</value>
+  </data>
+  <data name="Settings_DoubleClick" xml:space="preserve">
+    <value>按兩下</value>
+  </data>
+  <data name="Settings_Window" xml:space="preserve">
+    <value>視窗：</value>
+  </data>
+  <data name="Settings_CloseToTray" xml:space="preserve">
+    <value>關閉按鈕將工具列隱藏到系統匣（「結束」在系統匣和選項功能表中）</value>
+  </data>
+  <data name="Settings_FluentDialogs" xml:space="preserve">
+    <value>Windows 11 樣式的對話方塊，跟隨淺色或深色模式（適用於之後開啟的對話方塊）</value>
+  </data>
+  <data name="Settings_StartWithWindows" xml:space="preserve">
+    <value>隨 Windows 啟動</value>
+  </data>
+  <data name="Settings_StartHidden" xml:space="preserve">
+    <value>隱藏啟動：只顯示系統匣圖示，直到從系統匣或以快速鍵顯示工具列</value>
+  </data>
+  <data name="Settings_DockToEdge" xml:space="preserve">
+    <value>停靠於螢幕邊緣：</value>
+  </data>
+  <data name="Settings_DockToEdgeName" xml:space="preserve">
+    <value>停靠於螢幕邊緣</value>
+  </data>
+  <data name="Settings_AutoHide" xml:space="preserve">
+    <value>自動隱藏：指標離開一秒後滑出畫面；將指標移到邊緣或按快速鍵即可叫回工具列</value>
+  </data>
+  <data name="Settings_DockHint" xml:space="preserve">
+    <value>停靠的工具列會像工作列一樣橫跨螢幕邊緣：最大化的視窗會停在它前面，它永遠在最上層，厚度為目前的高度或寬度（拖曳內側邊緣可調整）。全螢幕程式會將它隱藏。</value>
+  </data>
+  <data name="Settings_Transparency" xml:space="preserve">
+    <value>透明度：</value>
+  </data>
+  <data name="Settings_TransparencyName" xml:space="preserve">
+    <value>透明度</value>
+  </data>
+  <data name="Settings_TransparencyToolTip" xml:space="preserve">
+    <value>工具列的透視程度：純色時透出桌面，Mica 或 Acrylic 時透出模糊的背景（圖示保持清晰）</value>
+  </data>
+  <data name="Settings_Hotkey" xml:space="preserve">
+    <value>顯示/隱藏快速鍵：</value>
+  </data>
+  <data name="Settings_HotkeyName" xml:space="preserve">
+    <value>顯示或隱藏快速鍵</value>
+  </data>
+  <data name="Settings_HotkeyToolTip" xml:space="preserve">
+    <value>按一下這裡，然後按下按鍵組合</value>
+  </data>
+  <data name="Settings_HotkeyHint" xml:space="preserve">
+    <value>按一下方塊並按下含 Ctrl、Alt 或 Win 的組合鍵，例如 Ctrl+Alt+Space。它可在任何程式中顯示或隱藏工具列。</value>
+  </data>
+  <data name="Settings_Language" xml:space="preserve">
+    <value>語言：</value>
+  </data>
+  <data name="Settings_LanguageName" xml:space="preserve">
+    <value>語言</value>
+  </data>
+  <data name="Settings_LanguageSystem" xml:space="preserve">
+    <value>與 Windows 相同</value>
+  </data>
+  <data name="Settings_LanguageHint" xml:space="preserve">
+    <value>下次啟動 Desktop Icon Grid 時生效。</value>
+  </data>
+  <data name="Settings_BackdropSolid" xml:space="preserve">
+    <value>純色</value>
+  </data>
+  <data name="Settings_BackdropMica" xml:space="preserve">
+    <value>Mica (Windows 11)</value>
+  </data>
+  <data name="Settings_BackdropAcrylic" xml:space="preserve">
+    <value>Acrylic (Windows 11)</value>
+  </data>
+  <data name="Settings_DockNone" xml:space="preserve">
+    <value>不停靠（自由視窗）</value>
+  </data>
+  <data name="Settings_DockTop" xml:space="preserve">
+    <value>上邊緣</value>
+  </data>
+  <data name="Settings_DockBottom" xml:space="preserve">
+    <value>下邊緣</value>
+  </data>
+  <data name="Settings_DockLeft" xml:space="preserve">
+    <value>左邊緣</value>
+  </data>
+  <data name="Settings_DockRight" xml:space="preserve">
+    <value>右邊緣</value>
+  </data>
+  <data name="Settings_BackdropHintSupported" xml:space="preserve">
+    <value>Mica 與 Acrylic 讓桌面以模糊方式透出；主題色為其上色，透明度滑桿決定模糊透出的程度。圖示保持清晰。</value>
+  </data>
+  <data name="Settings_BackdropHintUnsupported" xml:space="preserve">
+    <value>Mica 與 Acrylic 需要 Windows 11（22H2 或更新版本）。</value>
+  </data>
+  <data name="Settings_Opaque" xml:space="preserve">
+    <value>不透明</value>
+  </data>
+  <data name="Props_GroupTitle" xml:space="preserve">
+    <value>群組屬性</value>
+  </data>
+  <data name="Props_ShortcutTitle" xml:space="preserve">
+    <value>捷徑屬性</value>
+  </data>
+  <data name="Props_LocationHint" xml:space="preserve">
+    <value>位置可以是檔案、資料夾或網址。</value>
+  </data>
+  <data name="Props_ParametersHint" xml:space="preserve">
+    <value>拖放到圖示上的檔案會取代 {file}（每個檔案啟動一次）或 {files}（一次全部）；沒有預留位置時則附加在參數後面。</value>
+  </data>
+  <data name="Props_LogHint" xml:space="preserve">
+    <value>僅適用於主控台程式與批次檔：程式在沒有自己視窗的情況下執行，輸出寫入記錄檔，圖示的「顯示記錄」指令可即時顯示。</value>
+  </data>
+  <data name="Props_LocationNotFound" xml:space="preserve">
+    <value>找不到此位置。您仍可儲存（例如目前未連接的磁碟機）。</value>
+  </data>
+  <data name="Props_IconNotFound" xml:space="preserve">
+    <value>找不到圖示檔；在找到之前將使用預設圖示。</value>
+  </data>
+  <data name="Props_Location" xml:space="preserve">
+    <value>位置：</value>
+  </data>
+  <data name="Props_Parameters" xml:space="preserve">
+    <value>參數：</value>
+  </data>
+  <data name="Props_Icon" xml:space="preserve">
+    <value>圖示：</value>
+  </data>
+  <data name="Props_Log" xml:space="preserve">
+    <value>記錄：</value>
+  </data>
+  <data name="Props_ChangeIcon" xml:space="preserve">
+    <value>變更圖示…</value>
+  </data>
+  <data name="Props_TextIcon" xml:space="preserve">
+    <value>文字圖示…</value>
+  </data>
+  <data name="Props_UseDefault" xml:space="preserve">
+    <value>使用預設</value>
+  </data>
+  <data name="Props_KeepLog" xml:space="preserve">
+    <value>保留程式輸出的記錄</value>
+  </data>
+  <data name="Props_BrowseFile" xml:space="preserve">
+    <value>瀏覽檔案…</value>
+  </data>
+  <data name="Props_BrowseFolder" xml:space="preserve">
+    <value>瀏覽資料夾…</value>
+  </data>
+  <data name="Props_BrowseImage" xml:space="preserve">
+    <value>瀏覽圖片或圖示檔…</value>
+  </data>
+  <data name="Props_FromWeb" xml:space="preserve">
+    <value>從網址…</value>
+  </data>
+  <data name="Props_TextIconToolTip" xml:space="preserve">
+    <value>以文字（例如宋體字）取代圖片</value>
+  </data>
+  <data name="Props_ProgramFilter" xml:space="preserve">
+    <value>程式與捷徑|*.exe;*.lnk;*.bat;*.cmd;*.msc;*.url;*.appref-ms|所有檔案|*.*</value>
+  </data>
+  <data name="Props_ImageFilter" xml:space="preserve">
+    <value>圖示與圖片|*.ico;*.png;*.jpg;*.jpeg;*.bmp;*.gif;*.exe;*.dll|所有檔案|*.*</value>
+  </data>
+  <data name="Props_ChooseProgram" xml:space="preserve">
+    <value>選擇程式、檔案或捷徑</value>
+  </data>
+  <data name="Props_ChooseFolder" xml:space="preserve">
+    <value>選擇資料夾</value>
+  </data>
+  <data name="Props_ChooseIcon" xml:space="preserve">
+    <value>選擇圖示</value>
+  </data>
+  <data name="Props_WebIconTitle" xml:space="preserve">
+    <value>來自網路的圖示</value>
+  </data>
+  <data name="Props_WebIconPrompt" xml:space="preserve">
+    <value>圖片的網址（在瀏覽器中對圖片按右鍵 → 複製圖片網址）：</value>
+  </data>
+  <data name="Props_WebIconHint" xml:space="preserve">
+    <value>圖片只下載一次，縮放為 256 px，置中於透明正方形，並以 PNG 儲存在應用程式的圖示資料夾。</value>
+  </data>
+  <data name="Props_Downloading" xml:space="preserve">
+    <value>正在下載 {0}…</value>
+  </data>
+  <data name="TextIcon_Title" xml:space="preserve">
+    <value>文字圖示</value>
+  </data>
+  <data name="TextIcon_Text" xml:space="preserve">
+    <value>文字：</value>
+  </data>
+  <data name="TextIcon_Font" xml:space="preserve">
+    <value>字型：</value>
+  </data>
+  <data name="TextIcon_Size" xml:space="preserve">
+    <value>大小：</value>
+  </data>
+  <data name="TextIcon_Colour" xml:space="preserve">
+    <value>顏色：</value>
+  </data>
+  <data name="TextIcon_ColourHint" xml:space="preserve">
+    <value>#RRGGBB，留空則使用主題的文字顏色</value>
+  </data>
+  <data name="TextIcon_Hint" xml:space="preserve">
+    <value>文字會畫在方塊上取代圖示圖片。簡短的標籤或一到四個字效果最好。</value>
+  </data>
+  <data name="Monitor_Design" xml:space="preserve">
+    <value>樣式：</value>
+  </data>
+  <data name="Monitor_Drive" xml:space="preserve">
+    <value>磁碟機：</value>
+  </data>
+  <data name="Monitor_Title" xml:space="preserve">
+    <value>「{0}」圖示</value>
+  </data>
+  <data name="Monitor_Ring" xml:space="preserve">
+    <value>環形</value>
+  </data>
+  <data name="Monitor_RingDesc" xml:space="preserve">
+    <value>填滿的環形，中央顯示數字</value>
+  </data>
+  <data name="Monitor_Bar" xml:space="preserve">
+    <value>長條</value>
+  </data>
+  <data name="Monitor_BarDesc" xml:space="preserve">
+    <value>標題下方的水平長條</value>
+  </data>
+  <data name="Monitor_Number" xml:space="preserve">
+    <value>數字</value>
+  </data>
+  <data name="Monitor_NumberDesc" xml:space="preserve">
+    <value>大數字，標題在下方</value>
+  </data>
+  <data name="Monitor_DiskName" xml:space="preserve">
+    <value>磁碟 {0}</value>
+  </data>
+  <data name="Monitor_DriveFree" xml:space="preserve">
+    <value>{0}  {1} — {3} 中可用 {2}</value>
+  </data>
+  <data name="Monitor_DriveNotReady" xml:space="preserve">
+    <value>{0}  （未就緒）</value>
+  </data>
+  <data name="Monitor_DriveNotAvailable" xml:space="preserve">
+    <value>{0}  （無法使用）</value>
+  </data>
+  <data name="Monitor_CpuName" xml:space="preserve">
+    <value>CPU 使用率</value>
+  </data>
+  <data name="Monitor_CpuDesc" xml:space="preserve">
+    <value>顯示處理器的忙碌程度。按一下開啟工作管理員。</value>
+  </data>
+  <data name="Monitor_CpuMeasuring" xml:space="preserve">
+    <value>正在測量 CPU 使用率…</value>
+  </data>
+  <data name="Monitor_DiskUsageName" xml:space="preserve">
+    <value>磁碟使用量</value>
+  </data>
+  <data name="Monitor_DiskDesc" xml:space="preserve">
+    <value>顯示磁碟機已使用的空間。按一下開啟磁碟機。</value>
+  </data>
+  <data name="Monitor_Disk" xml:space="preserve">
+    <value>磁碟</value>
+  </data>
+  <data name="Monitor_ReadingDrive" xml:space="preserve">
+    <value>正在讀取磁碟機…</value>
+  </data>
+  <data name="Monitor_NoDriveSelected" xml:space="preserve">
+    <value>此圖示尚未選擇磁碟機。請開啟「屬性」選擇。</value>
+  </data>
+  <data name="Monitor_NoDrive" xml:space="preserve">
+    <value>未選擇磁碟機</value>
+  </data>
+  <data name="Monitor_DriveNotReadyShort" xml:space="preserve">
+    <value>{0} 未就緒</value>
+  </data>
+  <data name="Monitor_NoCapacity" xml:space="preserve">
+    <value>{0} 回報沒有容量</value>
+  </data>
+  <data name="Monitor_DriveSummary" xml:space="preserve">
+    <value>{0} — {2} 中可用 {1}（已使用 {3}%）</value>
+  </data>
+  <data name="Monitor_CpuUnavailable" xml:space="preserve">
+    <value>無法取得 CPU 使用率</value>
+  </data>
+  <data name="Monitor_CpuBusy" xml:space="preserve">
+    <value>CPU 忙碌 {0}%（{1} 個邏輯處理器）</value>
+  </data>
+  <data name="Sound_Name" xml:space="preserve">
+    <value>錄音重播器</value>
+  </data>
+  <data name="Sound_Desc" xml:space="preserve">
+    <value>按住以從麥克風錄音；放開後循環播放；按一下停止。</value>
+  </data>
+  <data name="Sound_ItemName" xml:space="preserve">
+    <value>聲音</value>
+  </data>
+  <data name="Sound_RecordingOf" xml:space="preserve">
+    <value>錄音長度 {0}。</value>
+  </data>
+  <data name="Sound_NoRecording" xml:space="preserve">
+    <value>尚無錄音。</value>
+  </data>
+  <data name="Sound_ToolTipHint" xml:space="preserve">
+    <value>按住錄音 • 放開循環播放 • 按一下停止</value>
+  </data>
+  <data name="Sound_NothingRecorded" xml:space="preserve">
+    <value>尚未錄音。按住圖示以錄音。</value>
+  </data>
+  <data name="Sound_NamePrompt" xml:space="preserve">
+    <value>圖示名稱：</value>
+  </data>
+  <data name="Sound_NameHint" xml:space="preserve">
+    <value>按住圖示以從麥克風錄音，放開後循環播放，按一下停止。</value>
+  </data>
+  <data name="Sound_Play" xml:space="preserve">
+    <value>播放錄音</value>
+  </data>
+  <data name="Sound_Delete" xml:space="preserve">
+    <value>刪除錄音</value>
+  </data>
+  <data name="Sound_OpenFolder" xml:space="preserve">
+    <value>開啟聲音資料夾</value>
+  </data>
+  <data name="Sound_RecordingRelease" xml:space="preserve">
+    <value>錄音中… 放開即播放</value>
+  </data>
+  <data name="Sound_Looping" xml:space="preserve">
+    <value>循環播放中 — 按一下停止</value>
+  </data>
+  <data name="Sound_LoopingFor" xml:space="preserve">
+    <value>循環播放 {0} — 按一下停止</value>
+  </data>
+  <data name="Sound_RecordingElapsed" xml:space="preserve">
+    <value>錄音中… {0} 秒 — 放開即播放</value>
+  </data>
+  <data name="Sound_LoopingElapsed" xml:space="preserve">
+    <value>已循環播放 {0} 秒 — 按一下停止</value>
+  </data>
+  <data name="Sound_Seconds" xml:space="preserve">
+    <value>{0} 秒</value>
+  </data>
+  <data name="Bucket_Name" xml:space="preserve">
+    <value>Google 雲端硬碟投遞箱</value>
+  </data>
+  <data name="Bucket_Desc" xml:space="preserve">
+    <value>Google 雲端硬碟上的資料夾。把檔案拖放到它上面即可上傳；按一下在瀏覽器中開啟資料夾；Ctrl+按一下可瀏覽並複製檔案到這台電腦。</value>
+  </data>
+  <data name="Bucket_ItemName" xml:space="preserve">
+    <value>雲端投遞箱</value>
+  </data>
+  <data name="Bucket_NoFolderToolTip" xml:space="preserve">
+    <value>尚未選擇資料夾 — 請開啟「屬性」。</value>
+  </data>
+  <data name="Bucket_FolderToolTip" xml:space="preserve">
+    <value>Google 雲端硬碟資料夾：{0}
+拖放檔案以上傳 • 按一下在瀏覽器開啟 • Ctrl+按一下瀏覽</value>
+  </data>
+  <data name="Bucket_NoFolderYet" xml:space="preserve">
+    <value>此投遞箱尚未設定 Google 雲端硬碟資料夾。請開啟「屬性」選擇。</value>
+  </data>
+  <data name="Bucket_OpenInBrowser" xml:space="preserve">
+    <value>在瀏覽器中開啟</value>
+  </data>
+  <data name="Bucket_Browse" xml:space="preserve">
+    <value>瀏覽…</value>
+  </data>
+  <data name="Bucket_CancelUploads" xml:space="preserve">
+    <value>取消上傳</value>
+  </data>
+  <data name="Bucket_GoogleDrive" xml:space="preserve">
+    <value>Google 雲端硬碟</value>
+  </data>
+  <data name="Bucket_NotAvailable" xml:space="preserve">
+    <value>此版本無法存取 Google 雲端硬碟。</value>
+  </data>
+  <data name="Bucket_SetUpCredentials" xml:space="preserve">
+    <value>請先設定 Google API 憑證：開啟選項功能表 (▸)，選擇「與 Google 雲端硬碟同步…」，輸入或匯入用戶端 ID 與密鑰。</value>
+  </data>
+  <data name="Bucket_NeedWholeDrive" xml:space="preserve">
+    <value>投遞箱需要存取您整個 Google 雲端硬碟，目前的登入未包含此權限。
+
+現在在瀏覽器中重新登入並授權嗎？</value>
+  </data>
+  <data name="Bucket_NeedDrive" xml:space="preserve">
+    <value>投遞箱需要存取您的 Google 雲端硬碟。
+
+現在在瀏覽器中登入嗎？</value>
+  </data>
+  <data name="Bucket_AccessTitle" xml:space="preserve">
+    <value>Google 雲端硬碟存取權</value>
+  </data>
+  <data name="Bucket_KeepBoth" xml:space="preserve">
+    <value>兩者都保留（雲端硬碟允許重複名稱）</value>
+  </data>
+  <data name="Bucket_Replace" xml:space="preserve">
+    <value>取代現有檔案</value>
+  </data>
+  <data name="Bucket_Skip" xml:space="preserve">
+    <value>略過該檔案</value>
+  </data>
+  <data name="Bucket_PasteLink" xml:space="preserve">
+    <value>貼上 Google 雲端硬碟資料夾的連結或其 ID。</value>
+  </data>
+  <data name="Bucket_NotALink" xml:space="preserve">
+    <value>這看起來不像 Google 雲端硬碟資料夾的連結或 ID。</value>
+  </data>
+  <data name="Bucket_FolderIdUnchecked" xml:space="preserve">
+    <value>資料夾 ID {0}（按「檢查」確認）</value>
+  </data>
+  <data name="Bucket_FolderNamed" xml:space="preserve">
+    <value>資料夾「{0}」</value>
+  </data>
+  <data name="Bucket_SetUpFirst" xml:space="preserve">
+    <value>請先在「與 Google 雲端硬碟同步…」中設定 Google API 憑證。</value>
+  </data>
+  <data name="Bucket_NotConnected" xml:space="preserve">
+    <value>尚未連線到 Google 雲端硬碟。</value>
+  </data>
+  <data name="Bucket_ConnectedFull" xml:space="preserve">
+    <value>已以 {0} 連線，並可存取您的雲端硬碟。</value>
+  </data>
+  <data name="Bucket_ConnectedLimited" xml:space="preserve">
+    <value>已以 {0} 連線，但沒有整個雲端硬碟的存取權。</value>
+  </data>
+  <data name="Bucket_GrantFirst" xml:space="preserve">
+    <value>請先授予 Google 雲端硬碟存取權，再檢查資料夾。</value>
+  </data>
+  <data name="Bucket_LookingUp" xml:space="preserve">
+    <value>正在查詢資料夾…</value>
+  </data>
+  <data name="Bucket_NoFolderVisible" xml:space="preserve">
+    <value>此帳戶看不到該 ID 的資料夾。</value>
+  </data>
+  <data name="Bucket_IsAFile" xml:space="preserve">
+    <value>「{0}」是檔案，不是資料夾。</value>
+  </data>
+  <data name="Bucket_FoundFolder" xml:space="preserve">
+    <value>找到資料夾「{0}」。</value>
+  </data>
+  <data name="Bucket_AccessGranted" xml:space="preserve">
+    <value>已授予存取權。</value>
+  </data>
+  <data name="Bucket_Title" xml:space="preserve">
+    <value>Google 雲端硬碟投遞箱屬性</value>
+  </data>
+  <data name="Bucket_Folder" xml:space="preserve">
+    <value>資料夾：</value>
+  </data>
+  <data name="Bucket_Access" xml:space="preserve">
+    <value>存取權：</value>
+  </data>
+  <data name="Bucket_SameName" xml:space="preserve">
+    <value>同名檔案：</value>
+  </data>
+  <data name="Bucket_SameNameHint" xml:space="preserve">
+    <value>拖放的檔案與資料夾中既有檔案同名時的處理方式。</value>
+  </data>
+  <data name="Bucket_Check" xml:space="preserve">
+    <value>檢查</value>
+  </data>
+  <data name="Bucket_GrantAccess" xml:space="preserve">
+    <value>授予存取權…</value>
+  </data>
+  <data name="Bucket_LinkToolTip" xml:space="preserve">
+    <value>例如 https://drive.google.com/drive/folders/… 的連結，或資料夾 ID</value>
+  </data>
+  <data name="Upload_Preparing" xml:space="preserve">
+    <value>正在準備上傳…</value>
+  </data>
+  <data name="Upload_TimedOut" xml:space="preserve">
+    <value>上傳逾時。</value>
+  </data>
+  <data name="Upload_SomeFailed" xml:space="preserve">
+    <value>部分檔案未上傳</value>
+  </data>
+  <data name="Upload_NotAvailable" xml:space="preserve">
+    <value>無法存取 Google 雲端硬碟。</value>
+  </data>
+  <data name="Upload_FileGone" xml:space="preserve">
+    <value>檔案已不存在。</value>
+  </data>
+  <data name="Upload_Skipped" xml:space="preserve">
+    <value>已略過 {0}（雲端硬碟上已有）</value>
+  </data>
+  <data name="Upload_Progress" xml:space="preserve">
+    <value>正在上傳 {0}（第 {1} 個，共 {2} 個）</value>
+  </data>
+  <data name="Viewer_Title" xml:space="preserve">
+    <value>{0} — Google 雲端硬碟</value>
+  </data>
+  <data name="Viewer_Download" xml:space="preserve">
+    <value>下載到…</value>
+  </data>
+  <data name="Viewer_Up" xml:space="preserve">
+    <value>▲ 上一層</value>
+  </data>
+  <data name="Viewer_Back" xml:space="preserve">
+    <value>◀ 返回</value>
+  </data>
+  <data name="Viewer_Hint" xml:space="preserve">
+    <value>按兩下開啟 • 將項目拖曳到桌面或資料夾即可複製到這台電腦 • 將檔案拖放到此處即可上傳</value>
+  </data>
+  <data name="Viewer_DownloadToolTip" xml:space="preserve">
+    <value>將選取的項目複製到這台電腦的資料夾</value>
+  </data>
+  <data name="Viewer_IsProgram" xml:space="preserve">
+    <value>「{0}」是程式；已下載並在檔案總管中顯示，未啟動。</value>
+  </data>
+  <data name="Viewer_CannotOpen" xml:space="preserve">
+    <value>無法開啟檔案。</value>
+  </data>
+  <data name="Viewer_Preparing" xml:space="preserve">
+    <value>正在準備檔案…</value>
+  </data>
+  <data name="Viewer_NothingToCopy" xml:space="preserve">
+    <value>沒有可複製的項目。</value>
+  </data>
+  <data name="Viewer_ItemsReady" xml:space="preserve">
+    <value>{0} 個項目已就緒。</value>
+  </data>
+  <data name="Viewer_Downloading" xml:space="preserve">
+    <value>正在下載…</value>
+  </data>
+  <data name="Viewer_Downloaded" xml:space="preserve">
+    <value>已下載 {0} 個項目到 {1}。</value>
+  </data>
+  <data name="Viewer_UploadsUnavailable" xml:space="preserve">
+    <value>此處無法上傳。</value>
+  </data>
+  <data name="Viewer_Uploading" xml:space="preserve">
+    <value>正在上傳 {0} 個項目到「{1}」… 進度顯示在投遞箱圖示上。</value>
+  </data>
+  <data name="Viewer_Loading" xml:space="preserve">
+    <value>正在載入「{0}」…</value>
+  </data>
+  <data name="Viewer_Counts" xml:space="preserve">
+    <value>{0} 個資料夾，{1} 個檔案</value>
+  </data>
+  <data name="Viewer_TransferRunning" xml:space="preserve">
+    <value>另一項傳輸仍在進行中。</value>
+  </data>
+  <data name="Viewer_ProgressOf" xml:space="preserve">
+    <value>{0} — {1} / {2}</value>
+  </data>
+  <data name="Viewer_Progress" xml:space="preserve">
+    <value>{0} — {1}</value>
+  </data>
+  <data name="Viewer_SelectFirst" xml:space="preserve">
+    <value>請先選取要下載的檔案或資料夾。</value>
+  </data>
+  <data name="Viewer_ChooseDestination" xml:space="preserve">
+    <value>選擇儲存選取項目的位置</value>
+  </data>
+  <data name="Sync_Title" xml:space="preserve">
+    <value>與 Google 雲端硬碟同步</value>
+  </data>
+  <data name="Sync_Credentials" xml:space="preserve">
+    <value>Google API 憑證</value>
+  </data>
+  <data name="Sync_ClientId" xml:space="preserve">
+    <value>用戶端 ID：</value>
+  </data>
+  <data name="Sync_ClientSecret" xml:space="preserve">
+    <value>用戶端密鑰：</value>
+  </data>
+  <data name="Sync_ClientSecretName" xml:space="preserve">
+    <value>用戶端密鑰</value>
+  </data>
+  <data name="Sync_Import" xml:space="preserve">
+    <value>匯入 client_secret.json…</value>
+  </data>
+  <data name="Sync_OpenConsole" xml:space="preserve">
+    <value>開啟 Google Cloud Console</value>
+  </data>
+  <data name="Sync_Account" xml:space="preserve">
+    <value>Google 帳戶</value>
+  </data>
+  <data name="Sync_Connect" xml:space="preserve">
+    <value>連線…</value>
+  </data>
+  <data name="Sync_Disconnect" xml:space="preserve">
+    <value>中斷連線</value>
+  </data>
+  <data name="Sync_ThisDevice" xml:space="preserve">
+    <value>這部裝置</value>
+  </data>
+  <data name="Sync_DeviceName" xml:space="preserve">
+    <value>裝置名稱：</value>
+  </data>
+  <data name="Sync_DeviceNameHint" xml:space="preserve">
+    <value>在您的其他裝置上顯示為儲存副本的裝置。</value>
+  </data>
+  <data name="Sync_AutoUpload" xml:space="preserve">
+    <value>自動將我的變更上傳到已連結的副本</value>
+  </data>
+  <data name="Sync_OfferNewer" xml:space="preserve">
+    <value>啟動時，若其他裝置儲存了較新版本，提示載入已連結的副本</value>
+  </data>
+  <data name="Sync_UnlinkDevice" xml:space="preserve">
+    <value>取消連結這部裝置</value>
+  </data>
+  <data name="Sync_Copies" xml:space="preserve">
+    <value>Google 雲端硬碟上的設定副本</value>
+  </data>
+  <data name="Sync_SavedBy" xml:space="preserve">
+    <value>儲存者</value>
+  </data>
+  <data name="Sync_Saved" xml:space="preserve">
+    <value>儲存時間</value>
+  </data>
+  <data name="Sync_SaveAs" xml:space="preserve">
+    <value>將目前設定儲存為：</value>
+  </data>
+  <data name="Sync_Overwrite" xml:space="preserve">
+    <value>覆寫</value>
+  </data>
+  <data name="Sync_Delete" xml:space="preserve">
+    <value>刪除…</value>
+  </data>
+  <data name="Sync_OverwriteToolTip" xml:space="preserve">
+    <value>以這部裝置的設定與圖示取代選取的副本</value>
+  </data>
+  <data name="Sync_LoadToolTip" xml:space="preserve">
+    <value>以選取的副本取代這部裝置的設定與圖示</value>
+  </data>
+  <data name="Sync_ConsoleHelp" xml:space="preserve">
+    <value>Desktop Icon Grid 需要在您的 Google Cloud 專案中有自己的 OAuth 用戶端。在主控台中：建立專案，啟用 Google Drive API，設定 OAuth 同意畫面（外部）並發布，這樣登入才不會在七天後過期，然後新增類型為「電腦版應用程式」的憑證。將其用戶端 ID 與密鑰貼到這裡，或匯入主控台提供下載的 client_secret JSON 檔。</value>
+  </data>
+  <data name="Sync_ConnectedAs" xml:space="preserve">
+    <value>已以 {0} 連線</value>
+  </data>
+  <data name="Sync_ConnectedAsDot" xml:space="preserve">
+    <value>已以 {0} 連線。</value>
+  </data>
+  <data name="Sync_NotConnected" xml:space="preserve">
+    <value>未連線</value>
+  </data>
+  <data name="Sync_NotLinked" xml:space="preserve">
+    <value>這部裝置尚未連結到任何副本。儲存或載入副本即可連結。</value>
+  </data>
+  <data name="Sync_LastSynced" xml:space="preserve">
+    <value> 上次同步：{0}。</value>
+  </data>
+  <data name="Sync_LinkedTo" xml:space="preserve">
+    <value>這部裝置已連結到「{0}」。{1}</value>
+  </data>
+  <data name="Sync_Imported" xml:space="preserve">
+    <value>憑證已匯入。按「連線」登入。</value>
+  </data>
+  <data name="Sync_ImportTitle" xml:space="preserve">
+    <value>匯入憑證</value>
+  </data>
+  <data name="Sync_ImportInvalid" xml:space="preserve">
+    <value>該檔案不含 OAuth 用戶端 ID 與密鑰。請從 Google Cloud Console 下載「電腦版應用程式」OAuth 用戶端的 JSON。</value>
+  </data>
+  <data name="Sync_DisconnectQuestion" xml:space="preserve">
+    <value>要將這部裝置與 Google 雲端硬碟中斷連線嗎？雲端硬碟上的副本會保留。</value>
+  </data>
+  <data name="Sync_Disconnecting" xml:space="preserve">
+    <value>正在中斷連線…</value>
+  </data>
+  <data name="Sync_Disconnected" xml:space="preserve">
+    <value>已中斷連線。</value>
+  </data>
+  <data name="Sync_LoadingCopies" xml:space="preserve">
+    <value>正在從 Google 雲端硬碟載入副本…</value>
+  </data>
+  <data name="Sync_NoCopies" xml:space="preserve">
+    <value>Google 雲端硬碟上尚無設定副本。輸入名稱並按「儲存」。</value>
+  </data>
+  <data name="Sync_OneCopy" xml:space="preserve">
+    <value>Google 雲端硬碟上有 1 個副本。</value>
+  </data>
+  <data name="Sync_CopyCount" xml:space="preserve">
+    <value>Google 雲端硬碟上有 {0} 個副本。</value>
+  </data>
+  <data name="Sync_ReplaceCopyTitle" xml:space="preserve">
+    <value>取代副本</value>
+  </data>
+  <data name="Sync_ReplaceExisting" xml:space="preserve">
+    <value>已有名為「{0}」的副本（由 {1} 於 {2} 儲存）。
+
+要以這部裝置的設定取代嗎？</value>
+  </data>
+  <data name="Sync_ReplaceSelected" xml:space="preserve">
+    <value>要以這部裝置的設定與圖示取代 Google 雲端硬碟上的「{0}」嗎？</value>
+  </data>
+  <data name="Sync_Saving" xml:space="preserve">
+    <value>正在儲存「{0}」…</value>
+  </data>
+  <data name="Sync_SavedLinked" xml:space="preserve">
+    <value>已儲存「{0}」。這部裝置現已連結到它。</value>
+  </data>
+  <data name="Sync_LoadCopyTitle" xml:space="preserve">
+    <value>載入副本</value>
+  </data>
+  <data name="Sync_LoadQuestion" xml:space="preserve">
+    <value>要以「{0}」（由 {1} 於 {2} 儲存）取代這部裝置的設定與圖示嗎？</value>
+  </data>
+  <data name="Sync_LoadedLinked" xml:space="preserve">
+    <value>已載入「{0}」。這部裝置現已連結到它。</value>
+  </data>
+  <data name="Sync_DeleteCopyTitle" xml:space="preserve">
+    <value>刪除副本</value>
+  </data>
+  <data name="Sync_DeleteQuestion" xml:space="preserve">
+    <value>要從 Google 雲端硬碟刪除「{0}」嗎？連結到它的其他裝置將找不到它。</value>
+  </data>
+  <data name="Sync_Deleting" xml:space="preserve">
+    <value>正在刪除「{0}」…</value>
+  </data>
+  <data name="Sync_Deleted" xml:space="preserve">
+    <value>已刪除「{0}」。</value>
+  </data>
+  <data name="Sync_Unlinked" xml:space="preserve">
+    <value>這部裝置不再連結到任何副本。</value>
+  </data>
+  <data name="Sync_SaveFailed" xml:space="preserve">
+    <value>無法儲存同步設定：{0}</value>
+  </data>
+  <data name="Sync_ChooseSecretFile" xml:space="preserve">
+    <value>選擇從 Google Cloud Console 下載的 client_secret JSON 檔</value>
+  </data>
+  <data name="Sync_JsonFilter" xml:space="preserve">
+    <value>JSON 檔案|*.json|所有檔案|*.*</value>
+  </data>
+  <data name="Sync_Notification" xml:space="preserve">
+    <value>Google 雲端硬碟同步</value>
+  </data>
+  <data name="Sync_NotUploaded" xml:space="preserve">
+    <value>未上傳：「{0}」已由 {1} 於 {2} 儲存。請開啟「與 Google 雲端硬碟同步」載入或覆寫它。</value>
+  </data>
+  <data name="Sync_UploadFailed" xml:space="preserve">
+    <value>上傳失敗：{0}</value>
+  </data>
+  <data name="Sync_UploadedAt" xml:space="preserve">
+    <value>已於 {1} 上傳到「{0}」。</value>
+  </data>
+  <data name="Sync_UpToDate" xml:space="preserve">
+    <value>「{0}」已是最新。</value>
+  </data>
+  <data name="Sync_NewerTitle" xml:space="preserve">
+    <value>Google 雲端硬碟上有較新的設定副本</value>
+  </data>
+  <data name="Sync_NewerQuestion" xml:space="preserve">
+    <value>「{0}」已由 {1} 於 {2} 儲存。
+
+現在載入嗎？這部裝置上的設定與圖示將被取代。</value>
+  </data>
+  <data name="Sync_NewerNotLoaded" xml:space="preserve">
+    <value>Google 雲端硬碟上有較新的「{0}」；尚未載入。</value>
+  </data>
+  <data name="Sync_StartupCheckFailed" xml:space="preserve">
+    <value>啟動檢查失敗：{0}</value>
+  </data>
+  <data name="Sync_LoadedFrom" xml:space="preserve">
+    <value>已載入「{0}」（由 {1} 於 {2} 儲存）。</value>
+  </data>
+  <data name="Sync_NotAvailable" xml:space="preserve">
+    <value>此版本不提供同步功能。</value>
+  </data>
+  <data name="Log_Title" xml:space="preserve">
+    <value>記錄檢視器 — Desktop Icon Grid</value>
+  </data>
+  <data name="Log_Follow" xml:space="preserve">
+    <value>跟隨</value>
+  </data>
+  <data name="Log_FollowToolTip" xml:space="preserve">
+    <value>保持顯示最新的項目</value>
+  </data>
+  <data name="Log_Copy" xml:space="preserve">
+    <value>複製</value>
+  </data>
+  <data name="Log_CopyToolTip" xml:space="preserve">
+    <value>將可見項目複製到剪貼簿</value>
+  </data>
+  <data name="Log_ClearToolTip" xml:space="preserve">
+    <value>清空記憶體中的記錄（檔案會保留）</value>
+  </data>
+  <data name="Log_Reset" xml:space="preserve">
+    <value>重設</value>
+  </data>
+  <data name="Log_ResetToolTip" xml:space="preserve">
+    <value>清除所有篩選</value>
+  </data>
+  <data name="Log_SaveAs" xml:space="preserve">
+    <value>另存新檔…</value>
+  </data>
+  <data name="Log_SaveAsToolTip" xml:space="preserve">
+    <value>將可見項目儲存為文字檔 (Ctrl+S)</value>
+  </data>
+  <data name="Log_OpenFile" xml:space="preserve">
+    <value>開啟記錄檔</value>
+  </data>
+  <data name="Log_OpenFileToolTip" xml:space="preserve">
+    <value>以預設文字編輯器開啟 app.log</value>
+  </data>
+  <data name="Log_OpenFolder" xml:space="preserve">
+    <value>開啟記錄資料夾</value>
+  </data>
+  <data name="Log_Category" xml:space="preserve">
+    <value>類別</value>
+  </data>
+  <data name="Log_Level" xml:space="preserve">
+    <value>層級</value>
+  </data>
+  <data name="Log_Message" xml:space="preserve">
+    <value>訊息</value>
+  </data>
+  <data name="Log_Date" xml:space="preserve">
+    <value>日期</value>
+  </data>
+  <data name="Log_Time" xml:space="preserve">
+    <value>時間</value>
+  </data>
+  <data name="Log_CopyLine" xml:space="preserve">
+    <value>複製整行</value>
+  </data>
+  <data name="Log_CopyMessage" xml:space="preserve">
+    <value>複製訊息</value>
+  </data>
+  <data name="Log_ResetFilters" xml:space="preserve">
+    <value>重設篩選</value>
+  </data>
+  <data name="Log_OnlyCategory" xml:space="preserve">
+    <value>只顯示此類別</value>
+  </data>
+  <data name="Log_MinLevelToolTip" xml:space="preserve">
+    <value>最低層級</value>
+  </data>
+  <data name="Log_TimeRangeToolTip" xml:space="preserve">
+    <value>時間範圔</value>
+  </data>
+  <data name="Log_SearchToolTip" xml:space="preserve">
+    <value>只顯示含有此文字的項目（Ctrl+F，Esc 清除）</value>
+  </data>
+  <data name="Log_Everything" xml:space="preserve">
+    <value>全部</value>
+  </data>
+  <data name="Log_InfoAndAbove" xml:space="preserve">
+    <value>資訊及以上</value>
+  </data>
+  <data name="Log_WarningsAndErrors" xml:space="preserve">
+    <value>警告與錯誤</value>
+  </data>
+  <data name="Log_ErrorsOnly" xml:space="preserve">
+    <value>僅錯誤</value>
+  </data>
+  <data name="Log_AnyTime" xml:space="preserve">
+    <value>任何時間</value>
+  </data>
+  <data name="Log_Last15" xml:space="preserve">
+    <value>最近 15 分鐘</value>
+  </data>
+  <data name="Log_LastHour" xml:space="preserve">
+    <value>最近 1 小時</value>
+  </data>
+  <data name="Log_Today" xml:space="preserve">
+    <value>今天</value>
+  </data>
+  <data name="Log_AllCategories" xml:space="preserve">
+    <value>所有類別</value>
+  </data>
+  <data name="Log_SelectEntry" xml:space="preserve">
+    <value>選取一個項目以檢視完整內容。</value>
+  </data>
+  <data name="Log_Summary" xml:space="preserve">
+    <value>顯示 {0}/{1} 個項目 · {2} 個警告 · {3} 個錯誤</value>
+  </data>
+  <data name="Log_ClipboardBusy" xml:space="preserve">
+    <value>剪貼簿正被其他程式使用；請再試一次。</value>
+  </data>
+  <data name="Log_SaveTitle" xml:space="preserve">
+    <value>儲存可見的記錄項目</value>
+  </data>
+  <data name="Log_TextFilter" xml:space="preserve">
+    <value>文字檔|*.txt|記錄檔|*.log|所有檔案|*.*</value>
+  </data>
+  <data name="Log_SaveLogTitle" xml:space="preserve">
+    <value>儲存記錄</value>
+  </data>
+  <data name="Log_NotWritten" xml:space="preserve">
+    <value>記錄檔尚未寫入。</value>
+  </data>
+  <data name="Log_FileTitle" xml:space="preserve">
+    <value>記錄檔</value>
+  </data>
+  <data name="Run_Title" xml:space="preserve">
+    <value>記錄 — {0}</value>
+  </data>
+  <data name="Run_NoRun" xml:space="preserve">
+    <value>尚未擷取任何執行。按一下圖示啟動程式；其輸出會顯示在此並寫入記錄資料夾。</value>
+  </data>
+  <data name="Run_StartedRunning" xml:space="preserve">
+    <value>開始於 {0} — 執行中</value>
+  </data>
+  <data name="Run_StartedExited" xml:space="preserve">
+    <value>開始於 {0} — 已結束，結束碼 {1}</value>
+  </data>
+  <data name="Names_Title" xml:space="preserve">
+    <value>編輯名稱</value>
+  </data>
+  <data name="Names_Given" xml:space="preserve">
+    <value>自訂名稱</value>
+  </data>
+  <data name="Names_Original" xml:space="preserve">
+    <value>原始名稱</value>
+  </data>
+  <data name="Names_Kind" xml:space="preserve">
+    <value>種類</value>
+  </data>
+  <data name="Names_InGroup" xml:space="preserve">
+    <value>所屬群組</value>
+  </data>
+  <data name="Names_UseOriginal" xml:space="preserve">
+    <value>使用原始名稱</value>
+  </data>
+  <data name="Names_UseOriginalAll" xml:space="preserve">
+    <value>全部使用原始名稱</value>
+  </data>
+  <data name="Names_ResetToolTip" xml:space="preserve">
+    <value>將選取的列重設為原始名稱</value>
+  </data>
+  <data name="Names_Hint" xml:space="preserve">
+    <value>名稱用來在工具列上識別捷徑，也將成為語音指令的詞語。按一下標題可排序；編輯「自訂名稱」欄；按「儲存」套用所有變更。</value>
+  </data>
+  <data name="Names_KindShortcut" xml:space="preserve">
+    <value>捷徑</value>
+  </data>
+  <data name="Names_KindItem" xml:space="preserve">
+    <value>項目</value>
+  </data>
+  <data name="Names_GroupItems" xml:space="preserve">
+    <value>{0} 個項目</value>
+  </data>
+  <data name="Launch_NewerVersionOpen" xml:space="preserve">
+    <value>此項目由較新版本的 Desktop Icon Grid 建立，無法在此開啟。它會被保留以免遺失。</value>
+  </data>
+  <data name="Launch_NewerVersionEdit" xml:space="preserve">
+    <value>此項目由較新版本的 Desktop Icon Grid 建立，無法在此編輯。</value>
+  </data>
+  <data name="Launch_CantOpen" xml:space="preserve">
+    <value>無法開啟「{0}」</value>
+  </data>
+  <data name="Launch_CantOpenWith" xml:space="preserve">
+    <value>無法以「{0}」開啟</value>
+  </data>
+  <data name="Launch_Removed" xml:space="preserve">
+    <value>已移除「{0}」</value>
+  </data>
+  <data name="Launch_RemoveGroupTitle" xml:space="preserve">
+    <value>移除群組</value>
+  </data>
+  <data name="Launch_RemoveGroupQuestion" xml:space="preserve">
+    <value>要移除群組「{0}」嗎？</value>
+  </data>
+  <data name="Launch_RemoveGroupWithItems" xml:space="preserve">
+    <value>要移除群組「{0}」及其中的 {1} 個捷徑嗎？</value>
+  </data>
+  <data name="Launch_CantOpenLocation" xml:space="preserve">
+    <value>無法開啟位置</value>
+  </data>
+  <data name="Launch_MultiEmptyTitle" xml:space="preserve">
+    <value>多重啟動群組是空的</value>
+  </data>
+  <data name="Launch_MultiEmpty" xml:space="preserve">
+    <value>對捷徑按右鍵並選擇「加入多重啟動群組」。啟動群組時所有成員會一起啟動。</value>
+  </data>
+  <data name="Launch_SomeFailed" xml:space="preserve">
+    <value>部分捷徑未啟動</value>
+  </data>
+  <data name="Launch_LayoutNotCreated" xml:space="preserve">
+    <value>版面配置檔尚未建立。</value>
+  </data>
+  <data name="Launch_LayoutFileTitle" xml:space="preserve">
+    <value>版面配置檔</value>
+  </data>
+  <data name="Launch_SaveFailed" xml:space="preserve">
+    <value>無法儲存版面配置</value>
+  </data>
+  <data name="About_Title" xml:space="preserve">
+    <value>關於 Desktop Icon Grid</value>
+  </data>
+  <data name="About_Text" xml:space="preserve">
+    <value>Desktop Icon Grid {0}
+
+精巧的啟動工具列：按一下圖示即可開啟，拖曳圖示可重新排列，按右鍵可新增捷徑、群組與特殊項目。
+
+版面配置檔：
+{1}</value>
+  </data>
+  <data name="Launch_CannotOpenFiles" xml:space="preserve">
+    <value>此捷徑無法開啟檔案。</value>
+  </data>
+  <data name="Launch_NothingToOpen" xml:space="preserve">
+    <value>沒有可開啟的項目。</value>
+  </data>
+  <data name="Launch_NotStarted" xml:space="preserve">
+    <value>無法啟動程式。</value>
+  </data>
+  <data name="Launch_ShellUnavailable" xml:space="preserve">
+    <value>無法使用 Windows Shell 自動化。</value>
+  </data>
+  <data name="Shell_NotLocal" xml:space="preserve">
+    <value>此位置不是這台電腦上的檔案或資料夾。</value>
+  </data>
+  <data name="Special_NoFiles" xml:space="preserve">
+    <value>此圖示不接受檔案。</value>
+  </data>
+  <data name="Special_UnknownName" xml:space="preserve">
+    <value>未知的特殊圖示</value>
+  </data>
+  <data name="Special_UnknownDesc" xml:space="preserve">
+    <value>此圖示需要較新版本的 Desktop Icon Grid。</value>
+  </data>
+  <data name="App_StartFailed" xml:space="preserve">
+    <value>Desktop Icon Grid 無法啟動。
+
+{0}
+
+詳細資訊請見 {1}。</value>
+  </data>
+  <data name="App_LayoutUnreadableTitle" xml:space="preserve">
+    <value>無法讀取版面配置檔</value>
+  </data>
+  <data name="App_LayoutUnreadable" xml:space="preserve">
+    <value>儲存的版面配置無法讀取，工具列以空白啟動。
+
+{0}
+
+舊檔案保留於：
+{1}</value>
+  </data>
+  <data name="App_LayoutRestoredTitle" xml:space="preserve">
+    <value>已從備份還原版面配置</value>
+  </data>
+  <data name="App_LayoutRestored" xml:space="preserve">
+    <value>版面配置檔遺失或無法讀取，因此改載入上一次的儲存 (layout.json.bak)。{0}</value>
+  </data>
+  <data name="App_UnreadableKeptAt" xml:space="preserve">
+    <value>
+
+無法讀取的檔案保留於：
+{0}</value>
+  </data>
+  <data name="App_LayoutNewerTitle" xml:space="preserve">
+    <value>來自較新版本的版面配置</value>
+  </data>
+  <data name="App_LayoutNewer" xml:space="preserve">
+    <value>此版面配置由較新版本的 Desktop Icon Grid 儲存。此版本無法辨識的項目會以預留位置顯示，儲存時會保留；原始檔案的副本存放在它旁邊。</value>
+  </data>
+  <data name="App_UnexpectedErrorTitle" xml:space="preserve">
+    <value>Desktop Icon Grid – 未預期的錯誤</value>
+  </data>
+  <data name="App_UnexpectedError" xml:space="preserve">
+    <value>{0}
+
+詳細資訊請見 {1}。</value>
+  </data>
+  <data name="Settings_HotkeyNeedsModifier" xml:space="preserve">
+    <value>請搭配 Ctrl、Alt 或 Win 鍵。</value>
+  </data>
+  <data name="Hotkey_InUse" xml:space="preserve">
+    <value>快速鍵 {0} 已被其他程式使用。先前的快速鍵仍然有效。</value>
+  </data>
+  <data name="Hotkey_Failed" xml:space="preserve">
+    <value>無法註冊快速鍵 {0}（Windows 錯誤 {1}）。先前的快速鍵仍然有效。</value>
+  </data>
+  <data name="Sound_RecordingFailed" xml:space="preserve">
+    <value>錄音失敗（MCI 錯誤 {0}）。請確認已連接麥克風，且 Windows 允許桌面應用程式使用它。</value>
+  </data>
+</root>

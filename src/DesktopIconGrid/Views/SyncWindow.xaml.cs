@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using System.IO;
 using System.Windows;
+using DesktopIconGrid.Resources;
 using DesktopIconGrid.ViewModels;
 using Microsoft.Win32;
 
@@ -73,8 +74,8 @@ public partial class SyncWindow : Window
 
         var dialog = new OpenFileDialog
         {
-            Title = "Choose the client_secret JSON file from Google Cloud Console",
-            Filter = "JSON files|*.json|All files|*.*",
+            Title = Strings.Sync_ChooseSecretFile,
+            Filter = Strings.Sync_JsonFilter,
             CheckFileExists = true,
         };
 
@@ -89,7 +90,7 @@ public partial class SyncWindow : Window
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            MessageBox.Show(this, ex.Message, "Import credentials", MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show(this, ex.Message, Strings.Sync_ImportTitle, MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 }

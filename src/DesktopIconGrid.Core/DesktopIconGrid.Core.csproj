@@ -10,4 +10,17 @@
     <InternalsVisibleTo Include="DesktopIconGrid.Core.Tests" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- Translations live in CoreStrings.zh-Hant.resx / .zh-Hans.resx; Visual Studio regenerates the designer class when the .resx is saved. -->
+    <EmbeddedResource Update="Resources/CoreStrings.resx">
+      <Generator>PublicResXFileCodeGenerator</Generator>
+      <LastGenOutput>CoreStrings.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <Compile Update="Resources/CoreStrings.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>CoreStrings.resx</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
 </Project>

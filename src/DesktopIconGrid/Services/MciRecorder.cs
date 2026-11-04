@@ -1,5 +1,6 @@
 using System.Runtime.InteropServices;
 using System.Text;
+using DesktopIconGrid.Resources;
 
 namespace DesktopIconGrid.Services;
 
@@ -82,7 +83,7 @@ public sealed class MciRecorder : IDisposable
         var buffer = new StringBuilder(256);
         return NativeMethods.mciGetErrorString(error, buffer, buffer.Capacity) && buffer.Length > 0
             ? buffer.ToString()
-            : $"Recording failed (MCI error {error}). Check that a microphone is connected and that Windows allows desktop apps to use it.";
+            : string.Format(Strings.Sound_RecordingFailed, error);
     }
 
     private static class NativeMethods

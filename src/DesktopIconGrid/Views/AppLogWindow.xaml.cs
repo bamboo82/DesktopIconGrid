@@ -4,6 +4,7 @@ using System.Windows;
 using System.Windows.Input;
 using DesktopIconGrid.Core.Launching;
 using DesktopIconGrid.Infrastructure;
+using DesktopIconGrid.Resources;
 using DesktopIconGrid.ViewModels;
 using Microsoft.Win32;
 
@@ -69,7 +70,7 @@ public partial class AppLogWindow : Window
         }
         catch (System.Runtime.InteropServices.COMException)
         {
-            MessageBox.Show(this, "The clipboard is in use by another program; try again.", "Copy", MessageBoxButton.OK, MessageBoxImage.Information);
+            MessageBox.Show(this, Strings.Log_ClipboardBusy, Strings.Log_Copy, MessageBoxButton.OK, MessageBoxImage.Information);
         }
     }
 
@@ -112,9 +113,9 @@ public partial class AppLogWindow : Window
 
         var dialog = new SaveFileDialog
         {
-            Title = "Save the visible log entries",
+            Title = Strings.Log_SaveTitle,
             FileName = _viewModel.SuggestedFileName(),
-            Filter = "Text files|*.txt|Log files|*.log|All files|*.*",
+            Filter = Strings.Log_TextFilter,
             AddExtension = true,
         };
         if (dialog.ShowDialog(this) != true)
@@ -128,7 +129,7 @@ public partial class AppLogWindow : Window
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            MessageBox.Show(this, ex.Message, "Save log", MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show(this, ex.Message, Strings.Log_SaveLogTitle, MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 
@@ -137,7 +138,7 @@ public partial class AppLogWindow : Window
         var path = _viewModel?.FilePath;
         if (path is null || !File.Exists(path))
         {
-            MessageBox.Show(this, "The log file has not been written yet.", "Log file", MessageBoxButton.OK, MessageBoxImage.Information);
+            MessageBox.Show(this, Strings.Log_NotWritten, Strings.Log_FileTitle, MessageBoxButton.OK, MessageBoxImage.Information);
             return;
         }
 

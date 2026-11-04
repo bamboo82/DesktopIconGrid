@@ -1,6 +1,7 @@
 <Window x:Class="DesktopIconGrid.Views.LogViewerWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:r="clr-namespace:DesktopIconGrid.Resources"
         Title="{Binding Title}"
         Width="720"
         Height="460"
@@ -14,8 +15,8 @@
   <DockPanel Margin="10">
     <DockPanel DockPanel.Dock="Top" Margin="0,0,0,8">
       <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
-        <Button Content="Open log file" Padding="10,3" Command="{Binding OpenFileCommand}" />
-        <Button Content="Open log folder" Padding="10,3" Margin="8,0,0,0" Command="{Binding OpenFolderCommand}" />
+        <Button Content="{x:Static r:Strings.Log_OpenFile}" Padding="10,3" Command="{Binding OpenFileCommand}" />
+        <Button Content="{x:Static r:Strings.Log_OpenFolder}" Padding="10,3" Margin="8,0,0,0" Command="{Binding OpenFolderCommand}" />
       </StackPanel>
       <TextBlock Text="{Binding Header}" VerticalAlignment="Center" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
     </DockPanel>

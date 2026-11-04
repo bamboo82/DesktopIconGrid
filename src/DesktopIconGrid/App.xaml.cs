@@ -11,6 +11,7 @@ using DesktopIconGrid.Core.Diagnostics;
 using DesktopIconGrid.Core.Models;
 using DesktopIconGrid.Core.Storage;
 using DesktopIconGrid.Core.Sync;
+using DesktopIconGrid.Resources;
 using DesktopIconGrid.Services;
 using DesktopIconGrid.SpecialIcons;
 using DesktopIconGrid.ViewModels;
@@ -57,8 +58,8 @@ public partial class App : Application
         {
             AppLog.Default.Error("App", "Startup failed", ex);
             MessageBox.Show(
-                $"Desktop Icon Grid could not start.\n\n{ex.Message}\n\nDetails are in {AppPaths.LogsDirectory}\\app.log.",
-                "Desktop Icon Grid",
+                string.Format(Strings.App_StartFailed, ex.Message, Path.Combine(AppPaths.LogsDirectory, "app.log")),
+                Strings.App_Name,
                 MessageBoxButton.OK,
                 MessageBoxImage.Error);
             Shutdown(1);
@@ -82,6 +83,7 @@ public partial class App : Application
         var storage = new LayoutStorage(LayoutStorage.GetDefaultFilePath());
         var load = storage.Load();
         var model = LauncherModel.FromLayout(load.Layout);
+        UiLanguage.Apply(model.Settings.Language);
         AppLog.Default.Info("App", load.IsFirstRun
             ? "No layout file yet; starting with an empty bar"
             : $"Layout loaded: {model.Items.Count} top-level items, {model.TotalShortcutCount} shortcuts{(model.RepairCount > 0 ? $", {model.RepairCount} repaired" : string.Empty)}{(load.RecoveredFromBackup ? " (recovered from layout.json.bak)" : string.Empty)}");
@@ -154,18 +156,18 @@ public partial class App : Application
         if (load.CorruptFileBackupPath is not null && !load.RecoveredFromBackup)
         {
             dialogs.ShowError(
-                "Layout file could not be read",
-                $"The saved layout was unreadable and the bar starts empty.\n\n{load.Error}\n\nThe old file was kept at:\n{load.CorruptFileBackupPath}");
+                Strings.App_LayoutUnreadableTitle,
+                string.Format(Strings.App_LayoutUnreadable, load.Error, load.CorruptFileBackupPath));
         }
         else if (load.RecoveredFromBackup)
         {
             dialogs.ShowInfo(
-                "Layout restored from backup",
-                $"The layout file was missing or unreadable, so the previous save (layout.json.bak) was loaded instead.{(load.CorruptFileBackupPath is null ? string.Empty : $"\n\nThe unreadable file was kept at:\n{load.CorruptFileBackupPath}")}");
+                Strings.App_LayoutRestoredTitle,
+                string.Format(Strings.App_LayoutRestored, load.CorruptFileBackupPath is null ? string.Empty : string.Format(Strings.App_UnreadableKeptAt, load.CorruptFileBackupPath)));
         }
         else if (load.Error is not null)
         {
-            dialogs.ShowError("Layout file could not be read", $"{load.Error}\n\n{storage.FilePath}");
+            dialogs.ShowError(Strings.App_LayoutUnreadableTitle, $"{load.Error}\n\n{storage.FilePath}");
         }
         else if (model.RepairCount > 0)
         {
@@ -175,9 +177,7 @@ public partial class App : Application
 
         if (load.NewerVersion is not null)
         {
-            dialogs.ShowInfo(
-                "Layout from a newer version",
-                "This layout was saved by a newer version of Desktop Icon Grid. Items this version does not understand are shown as placeholders and kept when you save; a copy of the original file is stored next to it.");
+            dialogs.ShowInfo(Strings.App_LayoutNewerTitle, Strings.App_LayoutNewer);
         }
 
         _ = _sync.RunStartupCheckAsync();
@@ -310,8 +310,8 @@ public partial class App : Application
     {
         AppLog.Default.Error("App", "Unhandled exception", e.Exception);
         MessageBox.Show(
-            $"{e.Exception.Message}\n\nDetails are in {AppPaths.LogsDirectory}\\app.log.",
-            "Desktop Icon Grid – unexpected error",
+            string.Format(Strings.App_UnexpectedError, e.Exception.Message, Path.Combine(AppPaths.LogsDirectory, "app.log")),
+            Strings.App_UnexpectedErrorTitle,
             MessageBoxButton.OK,
             MessageBoxImage.Error);
 

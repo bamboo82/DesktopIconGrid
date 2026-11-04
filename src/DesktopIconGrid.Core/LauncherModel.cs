@@ -1,4 +1,5 @@
 using DesktopIconGrid.Core.Models;
+using DesktopIconGrid.Core.Resources;
 
 namespace DesktopIconGrid.Core;
 
@@ -114,7 +115,7 @@ public sealed class LauncherModel
             special.Settings ??= new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
             if (item.Name.Length == 0)
             {
-                item.Name = special.Kind.Length == 0 ? "Special icon" : special.Kind;
+                item.Name = special.Kind.Length == 0 ? CoreStrings.Item_SpecialIconPlaceholder : special.Kind;
             }
         }
         else if (item.Name.Length == 0)

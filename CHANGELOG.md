@@ -3,6 +3,35 @@
 All notable changes to Desktop Icon Grid. The format follows [Keep a Changelog](https://keepachangelog.com/);
 version numbers follow [Semantic Versioning](https://semver.org/).
 
+## [0.5.0] – Unreleased
+
+The user interface speaks Traditional and Simplified Chinese as well as English. The language
+follows the Windows display language unless *Settings → Language* picks one; a change applies at the
+next start. Note for whoever tests this build: the translations were written without a screen, so
+long Chinese labels in the fixed-width dialogs (Settings, Sync) are the first thing to check.
+
+### Added
+
+- *Settings → Language*: *Same as Windows*, English, 繁體中文 or 简体中文. The text lives in
+  `Resources/Strings.resx` (English) with `zh-Hant` and `zh-Hans` translations, so Hong Kong and
+  Macao get Traditional Chinese and Singapore gets Simplified; every other Windows language gets
+  English.
+- The ready-made Windows items (*This PC*, *Control Panel*, …), the special icons, the tray and
+  context menus, every dialog, tooltip, status line and notification are translated. New items are
+  named in the language in use when they are created; existing names are kept as they are.
+- Text icons without a font of their own use 新細明體 (PMingLiU) first under a Traditional Chinese
+  UI and 宋體 (SimSun) otherwise, as before. Pick a font in the *Text icon* dialog to pin one.
+
+### Changed
+
+- Sync status lines carry their own severity instead of being classified by their English wording,
+  so warnings and failures reach the tray in every language.
+
+### Not translated
+
+- The application log (`logs\app.log` and the log viewer's entries) stays in English, as do the
+  error texts Google and Windows return, so a log reads the same whatever the UI language.
+
 ## [0.4.0] – 2026-11-04
 
 The bar can start with Windows and live at a screen edge, and removing an icon no longer asks.

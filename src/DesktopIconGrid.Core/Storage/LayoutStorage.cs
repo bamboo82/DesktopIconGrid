@@ -2,6 +2,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using DesktopIconGrid.Core.Models;
+using DesktopIconGrid.Core.Resources;
 
 namespace DesktopIconGrid.Core.Storage;
 
@@ -72,7 +73,7 @@ public sealed class LayoutStorage
             return Finish(backup, isFirstRun: false, corruptBackup: quarantined, error: error, recoveredFromBackup: true);
         }
 
-        return new LoadResult(new LauncherLayout(), IsFirstRun: false, CorruptFileBackupPath: quarantined, Error: error ?? "The layout file is empty.");
+        return new LoadResult(new LauncherLayout(), IsFirstRun: false, CorruptFileBackupPath: quarantined, Error: error ?? CoreStrings.Layout_Empty);
     }
 
     public void Save(LauncherLayout layout)
@@ -135,7 +136,7 @@ public sealed class LayoutStorage
         error = null;
         if (!File.Exists(path))
         {
-            error = "The file does not exist.";
+            error = CoreStrings.Layout_Missing;
             return false;
         }
 
@@ -145,7 +146,7 @@ public sealed class LayoutStorage
             var parsed = JsonSerializer.Deserialize<LauncherLayout>(json, JsonOptions);
             if (parsed is null)
             {
-                error = "The layout file is empty.";
+                error = CoreStrings.Layout_Empty;
                 return false;
             }
 

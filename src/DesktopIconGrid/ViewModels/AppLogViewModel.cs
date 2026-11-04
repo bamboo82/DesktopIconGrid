@@ -6,6 +6,7 @@ using System.Windows.Input;
 using System.Windows.Threading;
 using DesktopIconGrid.Core.Diagnostics;
 using DesktopIconGrid.Infrastructure;
+using DesktopIconGrid.Resources;
 
 namespace DesktopIconGrid.ViewModels;
 
@@ -42,21 +43,21 @@ public sealed class AppLogViewModel : ObservableObject, IDisposable
 {
     public static readonly IReadOnlyList<LogLevelChoice> LevelChoices =
     [
-        new("Everything", LogLevel.Debug),
-        new("Information and above", LogLevel.Info),
-        new("Warnings and errors", LogLevel.Warning),
-        new("Errors only", LogLevel.Error),
+        new(Strings.Log_Everything, LogLevel.Debug),
+        new(Strings.Log_InfoAndAbove, LogLevel.Info),
+        new(Strings.Log_WarningsAndErrors, LogLevel.Warning),
+        new(Strings.Log_ErrorsOnly, LogLevel.Error),
     ];
 
     public static readonly IReadOnlyList<LogTimeRange> TimeRanges =
     [
-        new("Any time", null),
-        new("Last 15 minutes", TimeSpan.FromMinutes(15)),
-        new("Last hour", TimeSpan.FromHours(1)),
-        new("Today", null, TodayOnly: true),
+        new(Strings.Log_AnyTime, null),
+        new(Strings.Log_Last15, TimeSpan.FromMinutes(15)),
+        new(Strings.Log_LastHour, TimeSpan.FromHours(1)),
+        new(Strings.Log_Today, null, TodayOnly: true),
     ];
 
-    public const string AllCategories = "All categories";
+    public static string AllCategories => Strings.Log_AllCategories;
 
     private readonly AppLog _log;
     private readonly Dispatcher _dispatcher;
@@ -180,7 +181,7 @@ public sealed class AppLogViewModel : ObservableObject, IDisposable
     }
 
     /// <summary>The selected entry in full (multi-line messages wrap here).</summary>
-    public string DetailText => _selected?.FullText ?? "Select an entry to see it in full.";
+    public string DetailText => _selected?.FullText ?? Strings.Log_SelectEntry;
 
     public string StatusText
     {
@@ -188,7 +189,7 @@ public sealed class AppLogViewModel : ObservableObject, IDisposable
         {
             var warnings = _all.Count(r => r.IsWarning);
             var errors = _all.Count(r => r.IsError);
-            return $"{Visible.Count} of {_all.Count} entries shown · {warnings} warning(s) · {errors} error(s)";
+            return string.Format(Strings.Log_Summary, Visible.Count, _all.Count, warnings, errors);
         }
     }
 

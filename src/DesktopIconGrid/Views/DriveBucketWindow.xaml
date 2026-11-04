@@ -1,7 +1,8 @@
 <Window x:Class="DesktopIconGrid.Views.DriveBucketWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Google Drive Bucket Properties"
+        xmlns:r="clr-namespace:DesktopIconGrid.Resources"
+        Title="{x:Static r:Strings.Bucket_Title}"
         Width="540"
         SizeToContent="Height"
         ResizeMode="NoResize"
@@ -25,27 +26,27 @@
       <RowDefinition Height="Auto" />
     </Grid.RowDefinitions>
 
-    <TextBlock Grid.Row="0" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="Name:" Margin="0,0,12,8" />
+    <TextBlock Grid.Row="0" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Common_NameLabel}" Margin="0,0,12,8" />
     <TextBox x:Name="NameBox" Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="2" Style="{StaticResource DialogTextBox}"
              Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" />
 
-    <TextBlock Grid.Row="1" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="Folder:" Margin="0,0,12,8" />
+    <TextBlock Grid.Row="1" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Bucket_Folder}" Margin="0,0,12,8" />
     <TextBox Grid.Row="1" Grid.Column="1" Style="{StaticResource DialogTextBox}"
              Text="{Binding FolderInput, UpdateSourceTrigger=PropertyChanged}"
-             ToolTip="A link such as https://drive.google.com/drive/folders/… or the folder id" />
-    <Button Grid.Row="1" Grid.Column="2" Content="Check" Padding="10,3" Margin="6,0,0,8" Command="{Binding CheckFolderCommand}" />
+             ToolTip="{x:Static r:Strings.Bucket_LinkToolTip}" />
+    <Button Grid.Row="1" Grid.Column="2" Content="{x:Static r:Strings.Bucket_Check}" Padding="10,3" Margin="6,0,0,8" Command="{Binding CheckFolderCommand}" />
 
     <TextBlock Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2" Style="{StaticResource DialogHint}" Text="{Binding FolderStatus}" />
 
-    <TextBlock Grid.Row="3" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="Same name:" Margin="0,0,12,8" VerticalAlignment="Top" />
+    <TextBlock Grid.Row="3" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Bucket_SameName}" Margin="0,0,12,8" VerticalAlignment="Top" />
     <StackPanel Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="2" Margin="0,0,0,8">
       <ComboBox ItemsSource="{Binding PolicyChoices}" SelectedItem="{Binding Policy}" DisplayMemberPath="Label" VerticalContentAlignment="Center" />
-      <TextBlock Style="{StaticResource DialogHint}" Margin="0,4,0,0" Text="What happens when a dropped file has the same name as one already in the folder." />
+      <TextBlock Style="{StaticResource DialogHint}" Margin="0,4,0,0" Text="{x:Static r:Strings.Bucket_SameNameHint}" />
     </StackPanel>
 
-    <TextBlock Grid.Row="4" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="Access:" Margin="0,0,12,8" VerticalAlignment="Top" />
+    <TextBlock Grid.Row="4" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Bucket_Access}" Margin="0,0,12,8" VerticalAlignment="Top" />
     <DockPanel Grid.Row="4" Grid.Column="1" Grid.ColumnSpan="2" Margin="0,0,0,8">
-      <Button DockPanel.Dock="Right" Content="Grant access…" Padding="10,3" Margin="8,0,0,0" VerticalAlignment="Top"
+      <Button DockPanel.Dock="Right" Content="{x:Static r:Strings.Bucket_GrantAccess}" Padding="10,3" Margin="8,0,0,0" VerticalAlignment="Top"
               Command="{Binding GrantAccessCommand}"
               Visibility="{Binding NeedsAccess, Converter={StaticResource BoolToVisibility}}" />
       <TextBlock Text="{Binding AccessText}" TextWrapping="Wrap" VerticalAlignment="Center" />
@@ -54,8 +55,8 @@
     <TextBlock Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="3" Text="{Binding StatusText}" TextWrapping="Wrap" MinHeight="18" Margin="0,0,0,8" />
 
     <StackPanel Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,6,0,0">
-      <Button Content="Save" Style="{StaticResource DialogButton}" IsDefault="True" IsEnabled="{Binding CanSave}" Click="Save_Click" />
-      <Button Content="Cancel" Style="{StaticResource DialogButton}" IsCancel="True" />
+      <Button Content="{x:Static r:Strings.Common_Save}" Style="{StaticResource DialogButton}" IsDefault="True" IsEnabled="{Binding CanSave}" Click="Save_Click" />
+      <Button Content="{x:Static r:Strings.Common_Cancel}" Style="{StaticResource DialogButton}" IsCancel="True" />
     </StackPanel>
   </Grid>
 </Window>

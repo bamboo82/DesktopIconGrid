@@ -3,6 +3,7 @@ using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
+using DesktopIconGrid.Resources;
 using DesktopIconGrid.ViewModels;
 using Microsoft.Win32;
 
@@ -82,11 +83,11 @@ public partial class DriveViewerWindow : Window
         var rows = SelectedRows;
         if (rows.Count == 0)
         {
-            MessageBox.Show(this, "Select the files or folders to download first.", "Download to…", MessageBoxButton.OK, MessageBoxImage.Information);
+            MessageBox.Show(this, Strings.Viewer_SelectFirst, Strings.Viewer_Download, MessageBoxButton.OK, MessageBoxImage.Information);
             return;
         }
 
-        var dialog = new OpenFolderDialog { Title = "Choose where to save the selected items" };
+        var dialog = new OpenFolderDialog { Title = Strings.Viewer_ChooseDestination };
         if (dialog.ShowDialog(this) == true)
         {
             await viewModel.DownloadToAsync(dialog.FolderName, rows);

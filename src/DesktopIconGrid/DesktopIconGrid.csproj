@@ -31,4 +31,18 @@
     <InternalsVisibleTo Include="DesktopIconGrid.App.Tests" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- UI text. Translations live in Strings.zh-Hant.resx / .zh-Hans.resx; XAML reads the keys through x:Static r:Strings.*.
+         Visual Studio regenerates Strings.Designer.cs when the .resx is saved (the WPF markup compiler cannot use a class generated during the build). -->
+    <EmbeddedResource Update="Resources/Strings.resx">
+      <Generator>PublicResXFileCodeGenerator</Generator>
+      <LastGenOutput>Strings.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <Compile Update="Resources/Strings.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Strings.resx</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
 </Project>

@@ -1,6 +1,7 @@
 using System.Windows;
 using DesktopIconGrid.Core.Diagnostics;
 using DesktopIconGrid.Core.Models;
+using DesktopIconGrid.Resources;
 using DesktopIconGrid.ViewModels;
 using DesktopIconGrid.Views;
 
@@ -43,7 +44,7 @@ public sealed class DialogService(IIconProvider icons) : IDialogService
     {
         if (SyncViewModelFactory is null)
         {
-            ShowInfo("Google Drive sync", "Sync is not available in this build.");
+            ShowInfo(Strings.Sync_Notification, Strings.Sync_NotAvailable);
             return;
         }
 

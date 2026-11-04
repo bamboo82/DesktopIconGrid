@@ -1,6 +1,7 @@
 <Window x:Class="DesktopIconGrid.Views.ItemPropertiesWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:r="clr-namespace:DesktopIconGrid.Resources"
         Title="{Binding Title}"
         Width="500"
         SizeToContent="Height"
@@ -28,13 +29,13 @@
     </Grid.RowDefinitions>
 
     <!-- Name -->
-    <TextBlock Grid.Row="0" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="Name:" Margin="0,0,12,8" />
+    <TextBlock Grid.Row="0" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Common_NameLabel}" Margin="0,0,12,8" />
     <TextBox x:Name="NameBox" Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="2"
              Style="{StaticResource DialogTextBox}"
              Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" />
 
     <!-- Location -->
-    <TextBlock Grid.Row="1" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="Location:" Margin="0,0,12,8"
+    <TextBlock Grid.Row="1" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Props_Location}" Margin="0,0,12,8"
                IsEnabled="{Binding IsShortcut}" />
     <TextBox Grid.Row="1" Grid.Column="1"
              Style="{StaticResource DialogTextBox}"
@@ -46,8 +47,8 @@
             Click="Browse_Click">
       <Button.ContextMenu>
         <ContextMenu>
-          <MenuItem Header="Browse for a file…" Click="BrowseFile_Click" />
-          <MenuItem Header="Browse for a folder…" Click="BrowseFolder_Click" />
+          <MenuItem Header="{x:Static r:Strings.Props_BrowseFile}" Click="BrowseFile_Click" />
+          <MenuItem Header="{x:Static r:Strings.Props_BrowseFolder}" Click="BrowseFolder_Click" />
         </ContextMenu>
       </Button.ContextMenu>
     </Button>
@@ -58,7 +59,7 @@
                IsEnabled="{Binding IsShortcut}" />
 
     <!-- Parameters -->
-    <TextBlock Grid.Row="3" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="Parameters:" Margin="0,0,12,8"
+    <TextBlock Grid.Row="3" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Props_Parameters}" Margin="0,0,12,8"
                IsEnabled="{Binding IsShortcut}" />
     <TextBox Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="2"
              Style="{StaticResource DialogTextBox}"
@@ -72,16 +73,16 @@
                Visibility="{Binding IsShortcut, Converter={StaticResource BoolToVisibility}}" />
 
     <!-- Output log -->
-    <TextBlock Grid.Row="5" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="Log:" VerticalAlignment="Top" Margin="0,2,12,0"
+    <TextBlock Grid.Row="5" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Props_Log}" VerticalAlignment="Top" Margin="0,2,12,0"
                Visibility="{Binding IsShortcut, Converter={StaticResource BoolToVisibility}}" />
     <StackPanel Grid.Row="5" Grid.Column="1" Grid.ColumnSpan="2" Margin="0,0,0,10"
                 Visibility="{Binding IsShortcut, Converter={StaticResource BoolToVisibility}}">
-      <CheckBox Content="Keep a log of the program's output" IsChecked="{Binding CaptureLog}" />
+      <CheckBox Content="{x:Static r:Strings.Props_KeepLog}" IsChecked="{Binding CaptureLog}" />
       <TextBlock Style="{StaticResource DialogHint}" Margin="0,4,0,0" Text="{Binding CaptureLogHint}" />
     </StackPanel>
 
     <!-- Icon -->
-    <TextBlock Grid.Row="6" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="Icon:" VerticalAlignment="Top" Margin="0,6,12,0" />
+    <TextBlock Grid.Row="6" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Props_Icon}" VerticalAlignment="Top" Margin="0,6,12,0" />
     <StackPanel Grid.Row="6" Grid.Column="1" Grid.ColumnSpan="2" Orientation="Horizontal" Margin="0,0,0,8">
       <Border Width="36" Height="36" Margin="0,0,10,0" VerticalAlignment="Center">
         <Grid>
@@ -104,17 +105,17 @@
           </Border>
         </Grid>
       </Border>
-      <Button Content="Change icon…" Padding="10,3" VerticalAlignment="Center" Click="ChangeIcon_Click">
+      <Button Content="{x:Static r:Strings.Props_ChangeIcon}" Padding="10,3" VerticalAlignment="Center" Click="ChangeIcon_Click">
         <Button.ContextMenu>
           <ContextMenu>
-            <MenuItem Header="Browse for an image or icon file…" Click="ChangeIconFile_Click" />
-            <MenuItem Header="From a web address…" Click="ChangeIconUrl_Click" />
+            <MenuItem Header="{x:Static r:Strings.Props_BrowseImage}" Click="ChangeIconFile_Click" />
+            <MenuItem Header="{x:Static r:Strings.Props_FromWeb}" Click="ChangeIconUrl_Click" />
           </ContextMenu>
         </Button.ContextMenu>
       </Button>
-      <Button Content="Text icon…" Padding="10,3" Margin="8,0,0,0" VerticalAlignment="Center" Click="TextIcon_Click"
-              ToolTip="Draw text (for example 宋體 characters) instead of an image" />
-      <Button Content="Use default" Padding="10,3" Margin="8,0,0,0" VerticalAlignment="Center"
+      <Button Content="{x:Static r:Strings.Props_TextIcon}" Padding="10,3" Margin="8,0,0,0" VerticalAlignment="Center" Click="TextIcon_Click"
+              ToolTip="{x:Static r:Strings.Props_TextIconToolTip}" />
+      <Button Content="{x:Static r:Strings.Props_UseDefault}" Padding="10,3" Margin="8,0,0,0" VerticalAlignment="Center"
               IsEnabled="{Binding HasCustomIcon}" Click="UseDefaultIcon_Click" />
     </StackPanel>
 
@@ -128,9 +129,9 @@
 
     <!-- Buttons -->
     <StackPanel Grid.Row="8" Grid.Column="0" Grid.ColumnSpan="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,6,0,0">
-      <Button Content="Save" Style="{StaticResource DialogButton}" IsDefault="True"
+      <Button Content="{x:Static r:Strings.Common_Save}" Style="{StaticResource DialogButton}" IsDefault="True"
               IsEnabled="{Binding CanSave}" Click="Save_Click" />
-      <Button Content="Cancel" Style="{StaticResource DialogButton}" IsCancel="True" />
+      <Button Content="{x:Static r:Strings.Common_Cancel}" Style="{StaticResource DialogButton}" IsCancel="True" />
     </StackPanel>
   </Grid>
 </Window>

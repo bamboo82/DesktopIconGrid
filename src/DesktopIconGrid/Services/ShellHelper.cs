@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.IO;
 using DesktopIconGrid.Core.Launching;
+using DesktopIconGrid.Resources;
 
 namespace DesktopIconGrid.Services;
 
@@ -22,7 +23,7 @@ public static class ShellHelper
             return ProcessLauncher.Start(new ProcessStartInfo("explorer.exe", $"/select,\"{resolved}\"") { UseShellExecute = true });
         }
 
-        return LaunchResult.Failure("This location is not a file or folder on this computer.");
+        return LaunchResult.Failure(Strings.Shell_NotLocal);
     }
 
     public static LaunchResult OpenFolder(string directory) =>

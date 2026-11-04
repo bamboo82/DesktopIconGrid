@@ -8,20 +8,25 @@ namespace DesktopIconGrid.Services;
 /// <summary>An installed font family with the name to show in menus.</summary>
 public sealed record FontChoice(string Source, string DisplayName, FontFamily Family);
 
-/// <summary>Font lookup for text icons: installed families, the preferred default (宋體) and fallback chains.</summary>
+/// <summary>Font lookup for text icons: installed families, the preferred default (宋體, or 新細明體 for a Traditional Chinese UI) and fallback chains.</summary>
 public static class TextIconFonts
 {
-    private static readonly string[] PreferredDefaults = ["SimSun", "宋体", "宋體", "PMingLiU", "新細明體", "Microsoft JhengHei", "Microsoft YaHei"];
+    private static readonly string[] SimplifiedFirst = ["SimSun", "宋体", "宋體", "PMingLiU", "新細明體", "Microsoft JhengHei", "Microsoft YaHei"];
+    private static readonly string[] TraditionalFirst = ["PMingLiU", "新細明體", "SimSun", "宋体", "宋體", "Microsoft JhengHei", "Microsoft YaHei"];
 
     private static IReadOnlyList<FontChoice>? _installed;
 
     /// <summary>Installed families sorted by display name. Enumerated once.</summary>
     public static IReadOnlyList<FontChoice> Installed => _installed ??= LoadInstalled();
 
-    /// <summary>The family a new text icon starts with: 宋體 when present, otherwise the Windows UI font.</summary>
+    /// <summary>The chain for text icons without a font of their own, for the current UI language.</summary>
+    public static string DefaultChain => TextIcon.DefaultFontFamilyFor(CultureInfo.CurrentUICulture);
+
+    /// <summary>The family a new text icon starts with: 宋體 (新細明體 for a Traditional Chinese UI) when present, otherwise the Windows UI font.</summary>
     public static FontChoice DefaultChoice()
     {
-        foreach (var preferred in PreferredDefaults)
+        var preferredDefaults = AppLanguage.IsTraditionalChinese(CultureInfo.CurrentUICulture) ? TraditionalFirst : SimplifiedFirst;
+        foreach (var preferred in preferredDefaults)
         {
             var match = Installed.FirstOrDefault(f =>
                 string.Equals(f.Source, preferred, StringComparison.OrdinalIgnoreCase)
@@ -40,16 +45,15 @@ public static class TextIconFonts
     /// <summary>A family for rendering: the chosen name first, then the default chain so missing fonts degrade gracefully.</summary>
     public static FontFamily Resolve(string? familyName)
     {
-        var chain = string.IsNullOrWhiteSpace(familyName)
-            ? TextIcon.DefaultFontFamily
-            : $"{familyName.Trim()}, {TextIcon.DefaultFontFamily}";
+        var defaults = DefaultChain;
+        var chain = string.IsNullOrWhiteSpace(familyName) ? defaults : $"{familyName.Trim()}, {defaults}";
         try
         {
             return new FontFamily(chain);
         }
         catch (ArgumentException)
         {
-            return new FontFamily(TextIcon.DefaultFontFamily);
+            return new FontFamily(defaults);
         }
     }
 

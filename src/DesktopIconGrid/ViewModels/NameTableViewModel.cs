@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.Windows.Input;
 using DesktopIconGrid.Core.Models;
 using DesktopIconGrid.Infrastructure;
+using DesktopIconGrid.Resources;
 
 namespace DesktopIconGrid.ViewModels;
 
@@ -88,9 +89,7 @@ public sealed class NameTableViewModel : ObservableObject
 
     public ObservableCollection<NameRowViewModel> Rows { get; } = [];
 
-    public string Hint =>
-        "Names identify your shortcuts on the bar and will be the phrases for voice commands. " +
-        "Click a header to sort; edit the Given name column; Save applies every change.";
+    public string Hint => Strings.Names_Hint;
 
     public int ChangedCount => Rows.Count(r => r.IsChanged && r.GivenName.Trim().Length > 0);
 
@@ -122,10 +121,10 @@ public sealed class NameTableViewModel : ObservableObject
     {
         return item switch
         {
-            ShortcutItem shortcut => new NameRowViewModel(item, ShortcutItem.SuggestName(shortcut.Location), "Shortcut", groupName, shortcut.Location),
-            GroupItem group => new NameRowViewModel(item, "Group", "Group", groupName, $"{group.Items.Count} item(s)"),
+            ShortcutItem shortcut => new NameRowViewModel(item, ShortcutItem.SuggestName(shortcut.Location), Strings.Names_KindShortcut, groupName, shortcut.Location),
+            GroupItem group => new NameRowViewModel(item, Strings.Common_Group, Strings.Common_Group, groupName, string.Format(Strings.Names_GroupItems, group.Items.Count)),
             SpecialIconItem special => new NameRowViewModel(item, _root.SpecialIcons.Resolve(special.Kind).DisplayName, _root.SpecialIcons.Resolve(special.Kind).DisplayName, groupName, special.GetSetting("folderName") ?? special.GetSetting("drive") ?? string.Empty),
-            _ => new NameRowViewModel(item, item.Name, "Item", groupName, string.Empty),
+            _ => new NameRowViewModel(item, item.Name, Strings.Names_KindItem, groupName, string.Empty),
         };
     }
 }

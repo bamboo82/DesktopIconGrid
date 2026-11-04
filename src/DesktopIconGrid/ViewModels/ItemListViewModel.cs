@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.Windows.Input;
 using DesktopIconGrid.Core.Models;
 using DesktopIconGrid.Infrastructure;
+using DesktopIconGrid.Resources;
 
 namespace DesktopIconGrid.ViewModels;
 
@@ -28,9 +29,7 @@ public sealed class ItemListViewModel : ObservableObject
 
     public bool IsEmpty => Items.Count == 0;
 
-    public string EmptyHint => IsRoot
-        ? "Right-click or drop files here to add shortcuts"
-        : "Drag shortcuts here";
+    public string EmptyHint => IsRoot ? Strings.Grid_EmptyRoot : Strings.Grid_EmptyGroup;
 
     public ICommand NewShortcutCommand { get; }
 

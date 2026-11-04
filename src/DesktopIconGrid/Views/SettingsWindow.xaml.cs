@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Input;
+using DesktopIconGrid.Resources;
 using DesktopIconGrid.Services;
 using DesktopIconGrid.ViewModels;
 
@@ -56,7 +57,7 @@ public partial class SettingsWindow : Window
         var gesture = new HotkeyGesture(Keyboard.Modifiers, key);
         if (!gesture.HasUsableModifier)
         {
-            HotkeyHint.Text = "Combine the key with Ctrl, Alt or Win.";
+            HotkeyHint.Text = Strings.Settings_HotkeyNeedsModifier;
             HotkeyHint.Visibility = Visibility.Visible;
             return;
         }

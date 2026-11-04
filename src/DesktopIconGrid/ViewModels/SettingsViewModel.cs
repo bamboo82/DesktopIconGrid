@@ -1,6 +1,7 @@
 using System.Windows.Media;
 using DesktopIconGrid.Core.Models;
 using DesktopIconGrid.Infrastructure;
+using DesktopIconGrid.Resources;
 using DesktopIconGrid.Services;
 
 namespace DesktopIconGrid.ViewModels;
@@ -10,6 +11,9 @@ public sealed record BackdropOption(string Id, string Name);
 
 /// <summary>One choice in the dock-edge list.</summary>
 public sealed record DockEdgeOption(string Id, string Name);
+
+/// <summary>One choice in the language list; the name is written in its own language.</summary>
+public sealed record LanguageOption(string Id, string Name);
 
 public sealed class SettingsViewModel : ObservableObject
 {
@@ -21,18 +25,18 @@ public sealed class SettingsViewModel : ObservableObject
 
     public static readonly IReadOnlyList<BackdropOption> BackdropOptions =
     [
-        new(LauncherSettings.BackdropSolid, "Solid colour"),
-        new(LauncherSettings.BackdropMica, "Mica (Windows 11)"),
-        new(LauncherSettings.BackdropAcrylic, "Acrylic (Windows 11)"),
+        new(LauncherSettings.BackdropSolid, Strings.Settings_BackdropSolid),
+        new(LauncherSettings.BackdropMica, Strings.Settings_BackdropMica),
+        new(LauncherSettings.BackdropAcrylic, Strings.Settings_BackdropAcrylic),
     ];
 
     public static readonly IReadOnlyList<DockEdgeOption> DockEdgeOptions =
     [
-        new(LauncherSettings.DockNone, "Not docked (free window)"),
-        new(LauncherSettings.DockTop, "Top edge"),
-        new(LauncherSettings.DockBottom, "Bottom edge"),
-        new(LauncherSettings.DockLeft, "Left edge"),
-        new(LauncherSettings.DockRight, "Right edge"),
+        new(LauncherSettings.DockNone, Strings.Settings_DockNone),
+        new(LauncherSettings.DockTop, Strings.Settings_DockTop),
+        new(LauncherSettings.DockBottom, Strings.Settings_DockBottom),
+        new(LauncherSettings.DockLeft, Strings.Settings_DockLeft),
+        new(LauncherSettings.DockRight, Strings.Settings_DockRight),
     ];
 
     private int _iconSize;
@@ -51,6 +55,7 @@ public sealed class SettingsViewModel : ObservableObject
     private bool _startHidden;
     private DockEdgeOption _selectedDockEdge;
     private bool _autoHide;
+    private LanguageOption _selectedLanguage;
 
     public SettingsViewModel(LauncherSettings current)
     {
@@ -73,8 +78,27 @@ public sealed class SettingsViewModel : ObservableObject
         _selectedBackdrop = BackdropOptions.FirstOrDefault(b => string.Equals(b.Id, current.BarBackdrop, StringComparison.OrdinalIgnoreCase)) ?? BackdropOptions[0];
         _selectedDockEdge = DockEdgeOptions.FirstOrDefault(d => string.Equals(d.Id, current.DockEdge, StringComparison.OrdinalIgnoreCase)) ?? DockEdgeOptions[0];
         _autoHide = current.AutoHide;
+        Languages = LanguageOptions();
+        _selectedLanguage = Languages.FirstOrDefault(l => string.Equals(l.Id, current.Language, StringComparison.OrdinalIgnoreCase)) ?? Languages[0];
 
         SelectPresetCommand = new RelayCommand<string>(preset => BackgroundColor = preset);
+    }
+
+    /// <summary>"Same as Windows" (in the current UI language) followed by every shipped language, each in its own language.</summary>
+    public static IReadOnlyList<LanguageOption> LanguageOptions() =>
+    [
+        new(LauncherSettings.LanguageSystem, Strings.Settings_LanguageSystem),
+        new(LauncherSettings.LanguageEnglish, "English"),
+        new(LauncherSettings.LanguageTraditionalChinese, "繁體中文"),
+        new(LauncherSettings.LanguageSimplifiedChinese, "简体中文"),
+    ];
+
+    public IReadOnlyList<LanguageOption> Languages { get; }
+
+    public LanguageOption SelectedLanguage
+    {
+        get => _selectedLanguage;
+        set => SetProperty(ref _selectedLanguage, value ?? Languages[0]);
     }
 
     public IReadOnlyList<int> IconSizes => LauncherSettings.IconSizes;
@@ -201,8 +225,8 @@ public sealed class SettingsViewModel : ObservableObject
     public bool IsBackdropSupported => WindowBackdrop.IsSupported;
 
     public string BackdropHint => IsBackdropSupported
-        ? "Mica and Acrylic let the desktop show through with a blur; the theme colour tints it and the transparency slider sets how much of the blur shows. Icons stay sharp."
-        : "Mica and Acrylic need Windows 11 (version 22H2 or later).";
+        ? Strings.Settings_BackdropHintSupported
+        : Strings.Settings_BackdropHintUnsupported;
 
     /// <summary>Dialogs use the Windows 11 look and follow the system light/dark mode.</summary>
     public bool FluentDialogs
@@ -268,7 +292,7 @@ public sealed class SettingsViewModel : ObservableObject
 
     public int MaxTransparency => LauncherSettings.MaxOpacity - LauncherSettings.MinOpacity;
 
-    public string TransparencyText => _transparency == 0 ? "opaque" : $"{_transparency} %";
+    public string TransparencyText => _transparency == 0 ? Strings.Settings_Opaque : $"{_transparency} %";
 
     /// <summary>Text form of the show/hide hotkey, e.g. "Ctrl+Alt+Space"; empty for none.</summary>
     public string ToggleHotkey
@@ -313,6 +337,7 @@ public sealed class SettingsViewModel : ObservableObject
             StartHidden = _startHidden,
             DockEdge = _selectedDockEdge.Id,
             AutoHide = _autoHide,
+            Language = _selectedLanguage.Id,
         };
         settings.Normalize();
         return settings;

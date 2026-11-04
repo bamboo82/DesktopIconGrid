@@ -35,6 +35,8 @@ with Windows DPAPI.
   from a browser.
 - **Themes and settings** — Classic, Graphite, Paper, Midnight, Sand or a custom colour;
   icon size, spacing, labels, single or double click, always on top.
+- **Three languages** — English, 繁體中文 and 简体中文, following the Windows display language or
+  *Settings → Language*.
 - **Google Drive sync** — keep named copies of your settings on Google Drive ("Work",
   "Home", …), load them on another PC, and let linked devices upload changes automatically.
 - Everything is saved automatically to `%LocalAppData%\DesktopIconGrid\layout.json`.
@@ -77,6 +79,7 @@ Google Drive Bucket, and [docs/THEMES.md](docs/THEMES.md) for the themes.
 | Move the bar | Drag the dotted grip on the left or any empty background. Double-click the grip to toggle *always on top* |
 | Resize the bar | Drag any edge or corner |
 | Settings | Options menu (▸) → *Settings…*, or `Ctrl+,` |
+| Use the bar in Chinese or English | Settings → *Language*; *Same as Windows* follows the display language. Applies at the next start |
 | Sync with Google Drive | Options menu (▸) → *Sync with Google Drive…* (see below) |
 
 ## Sync with Google Drive
@@ -158,6 +161,7 @@ how CI builds it, but the app itself only runs on Windows.
 ```
 src/DesktopIconGrid.Core/        models, ordering/grouping logic, JSON storage, launch planning, Google OAuth/Drive, sync (no WPF)
 src/DesktopIconGrid/             WPF app: bar window, icon grid control, dialogs, shell interop, view models
+src/DesktopIconGrid/Resources/   UI text: Strings.resx (English) with zh-Hant and zh-Hans translations
 tests/DesktopIconGrid.Core.Tests/  xunit tests for the core library (any OS)
 tests/DesktopIconGrid.App.Tests/   xunit tests for the WPF-side logic without UI (Windows only)
 ```

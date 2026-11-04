@@ -5,6 +5,7 @@ using DesktopIconGrid.Core;
 using DesktopIconGrid.Core.Launching;
 using DesktopIconGrid.Core.Models;
 using DesktopIconGrid.Core.Storage;
+using DesktopIconGrid.Resources;
 using DesktopIconGrid.Services;
 using DesktopIconGrid.SpecialIcons;
 using DesktopIconGrid.ViewModels;
@@ -169,7 +170,7 @@ public sealed class LauncherViewModelTests : IDisposable
 
         viewModel.RemoveItem(viewModel.RootItems.Items[3]);
 
-        Assert.Equal(["Remove group"], dialogs.Confirmations);
+        Assert.Equal([Strings.Launch_RemoveGroupTitle], dialogs.Confirmations);
         Assert.Equal(["A", "B", "C", "G"], Names(model.Items));
         Assert.False(viewModel.CanUndoRemove);
     }

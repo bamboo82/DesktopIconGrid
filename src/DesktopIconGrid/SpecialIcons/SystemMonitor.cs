@@ -3,6 +3,7 @@ using System.Globalization;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Windows.Threading;
+using DesktopIconGrid.Resources;
 
 namespace DesktopIconGrid.SpecialIcons;
 
@@ -77,25 +78,25 @@ public sealed class SystemMonitor : IDisposable
     {
         if (string.IsNullOrEmpty(root))
         {
-            return (null, "No drive selected");
+            return (null, Strings.Monitor_NoDrive);
         }
 
         var drive = new DriveInfo(root);
         if (!drive.IsReady)
         {
-            return (null, $"{root} is not ready");
+            return (null, string.Format(Strings.Monitor_DriveNotReadyShort, root));
         }
 
         var total = drive.TotalSize;
         if (total <= 0)
         {
-            return (null, $"{root} reports no capacity");
+            return (null, string.Format(Strings.Monitor_NoCapacity, root));
         }
 
         var used = total - drive.TotalFreeSpace;
         var percent = used * 100.0 / total;
         var label = string.IsNullOrWhiteSpace(drive.VolumeLabel) ? root : $"{root} ({drive.VolumeLabel})";
-        return (percent, $"{label} — {FormatBytes(drive.AvailableFreeSpace)} free of {FormatBytes(total)} ({Math.Round(percent)}% used)");
+        return (percent, string.Format(Strings.Monitor_DriveSummary, label, FormatBytes(drive.AvailableFreeSpace), FormatBytes(total), Math.Round(percent)));
     }
 
     public static string FormatBytes(long bytes)
@@ -123,7 +124,7 @@ public sealed class CpuSampler
     {
         if (!NativeMethods.GetSystemTimes(out var idle, out var kernel, out var user))
         {
-            return (null, "CPU usage is not available");
+            return (null, Strings.Monitor_CpuUnavailable);
         }
 
         var idleTicks = ToTicks(idle);
@@ -139,8 +140,8 @@ public sealed class CpuSampler
         _primed = true;
 
         return (_last, _last is { } p
-            ? $"CPU {Math.Round(p)}% busy across {Environment.ProcessorCount} logical processors"
-            : "Measuring CPU usage…");
+            ? string.Format(Strings.Monitor_CpuBusy, Math.Round(p), Environment.ProcessorCount)
+            : Strings.Monitor_CpuMeasuring);
     }
 
     private static ulong ToTicks(NativeMethods.FILETIME time) => ((ulong)time.High << 32) | time.Low;

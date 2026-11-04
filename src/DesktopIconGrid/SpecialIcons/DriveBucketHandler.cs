@@ -6,6 +6,7 @@ using DesktopIconGrid.Core.Launching;
 using DesktopIconGrid.Core.Models;
 using DesktopIconGrid.Core.SpecialIcons;
 using DesktopIconGrid.Core.Sync;
+using DesktopIconGrid.Resources;
 using DesktopIconGrid.Services;
 using DesktopIconGrid.ViewModels;
 using DesktopIconGrid.Views;
@@ -46,15 +47,13 @@ public sealed class DriveBucketHandler : ISpecialIconHandler
 
     public string Kind => SpecialIconKinds.GoogleDriveBucket;
 
-    public string DisplayName => "Google Drive Bucket";
+    public string DisplayName => Strings.Bucket_Name;
 
-    public string Description =>
-        "A folder on Google Drive. Drop files on it to upload them; click to open the folder in your browser; " +
-        "Ctrl+click to browse it and copy files to this PC.";
+    public string Description => Strings.Bucket_Desc;
 
     public SpecialIconItem CreateItem()
     {
-        var item = new SpecialIconItem { Name = "Drive Bucket", Kind = Kind };
+        var item = new SpecialIconItem { Name = Strings.Bucket_ItemName, Kind = Kind };
         item.SetSetting(ConflictKey, KeepBoth);
         return item;
     }
@@ -76,9 +75,7 @@ public sealed class DriveBucketHandler : ISpecialIconHandler
     public string? GetToolTip(SpecialIconItem item)
     {
         var folder = item.GetSetting(FolderNameKey) ?? item.GetSetting(FolderIdKey);
-        return folder is null
-            ? "No folder chosen yet — open Properties."
-            : $"Google Drive folder: {folder}\nDrop files to upload • Click to open in browser • Ctrl+click to browse";
+        return folder is null ? Strings.Bucket_NoFolderToolTip : string.Format(Strings.Bucket_FolderToolTip, folder);
     }
 
     public LaunchResult Activate(SpecialIconItem item, ActivationModifiers modifiers)
@@ -86,7 +83,7 @@ public sealed class DriveBucketHandler : ISpecialIconHandler
         var folderId = item.GetSetting(FolderIdKey);
         if (folderId is null)
         {
-            return LaunchResult.Failure("This bucket has no Google Drive folder yet. Open Properties to choose one.");
+            return LaunchResult.Failure(Strings.Bucket_NoFolderYet);
         }
 
         if (modifiers.HasFlag(ActivationModifiers.Control))
@@ -118,7 +115,7 @@ public sealed class DriveBucketHandler : ISpecialIconHandler
         var folderId = item.GetSetting(FolderIdKey);
         if (folderId is null)
         {
-            return LaunchResult.Failure("This bucket has no Google Drive folder yet. Open Properties to choose one.");
+            return LaunchResult.Failure(Strings.Bucket_NoFolderYet);
         }
 
         if (!await EnsureAccessAsync())
@@ -136,9 +133,9 @@ public sealed class DriveBucketHandler : ISpecialIconHandler
         var uploader = _uploaders.GetValueOrDefault(item.Id);
         return
         [
-            new SpecialIconAction("Open in browser", () => Activate(item, ActivationModifiers.None), hasFolder),
-            new SpecialIconAction("Browse…", () => _ = OpenViewerAsync(item), hasFolder),
-            new SpecialIconAction("Cancel uploads", () => uploader?.Cancel(), uploader?.IsBusy == true),
+            new SpecialIconAction(Strings.Bucket_OpenInBrowser, () => Activate(item, ActivationModifiers.None), hasFolder),
+            new SpecialIconAction(Strings.Bucket_Browse, () => _ = OpenViewerAsync(item), hasFolder),
+            new SpecialIconAction(Strings.Bucket_CancelUploads, () => uploader?.Cancel(), uploader?.IsBusy == true),
         ];
     }
 
@@ -177,7 +174,7 @@ public sealed class DriveBucketHandler : ISpecialIconHandler
     {
         if (_sync.Files is null)
         {
-            _dialogs.Notify("Google Drive", "Google Drive access is not available in this build.");
+            _dialogs.Notify(Strings.Bucket_GoogleDrive, Strings.Bucket_NotAvailable);
             return false;
         }
 
@@ -188,16 +185,12 @@ public sealed class DriveBucketHandler : ISpecialIconHandler
 
         if (!_sync.HasCredentials)
         {
-            _dialogs.ShowInfo(
-                "Google Drive Bucket",
-                "Set up the Google API credentials first: open the options menu (▸), choose \"Sync with Google Drive…\" and enter or import the client ID and secret.");
+            _dialogs.ShowInfo(Strings.Bucket_Name, Strings.Bucket_SetUpCredentials);
             return false;
         }
 
-        var message = _sync.IsConnected
-            ? "Google Drive Buckets need access to your whole Google Drive, which the current sign-in does not include.\n\nSign in again in your browser and grant it now?"
-            : "Google Drive Buckets need access to your Google Drive.\n\nSign in in your browser now?";
-        if (!_dialogs.Confirm("Google Drive access", message))
+        var message = _sync.IsConnected ? Strings.Bucket_NeedWholeDrive : Strings.Bucket_NeedDrive;
+        if (!_dialogs.Confirm(Strings.Bucket_AccessTitle, message))
         {
             return false;
         }
@@ -209,7 +202,7 @@ public sealed class DriveBucketHandler : ISpecialIconHandler
         }
         catch (Exception ex) when (SyncCoordinator.IsSyncError(ex))
         {
-            _dialogs.Notify("Google Drive access", ex.Message);
+            _dialogs.Notify(Strings.Bucket_AccessTitle, ex.Message);
             return false;
         }
     }

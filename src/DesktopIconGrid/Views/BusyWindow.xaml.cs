@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using System.Threading;
 using System.Windows;
+using DesktopIconGrid.Resources;
 
 namespace DesktopIconGrid.Views;
 
@@ -51,7 +52,7 @@ public partial class BusyWindow : Window
     private void Cancel_Click(object sender, RoutedEventArgs e)
     {
         CancelButton.IsEnabled = false;
-        MessageText.Text = "Cancelling…";
+        MessageText.Text = Strings.Common_Cancelling;
         _cancellation.Cancel();
     }
 

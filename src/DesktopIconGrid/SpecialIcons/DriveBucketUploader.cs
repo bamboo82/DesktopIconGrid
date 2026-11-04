@@ -1,6 +1,7 @@
 using System.IO;
 using DesktopIconGrid.Core.Diagnostics;
 using DesktopIconGrid.Core.Sync;
+using DesktopIconGrid.Resources;
 using DesktopIconGrid.Services;
 
 namespace DesktopIconGrid.SpecialIcons;
@@ -61,7 +62,7 @@ public sealed class DriveBucketUploader(SyncService sync, Action<string, string>
         _failures.Clear();
         _listings.Clear();
         var lastFolder = string.Empty;
-        ShowGauge(0, "Preparing upload…");
+        ShowGauge(0, Strings.Upload_Preparing);
 
         try
         {
@@ -95,7 +96,7 @@ public sealed class DriveBucketUploader(SyncService sync, Action<string, string>
             }
             else
             {
-                _failures.Add("The upload timed out.");
+                _failures.Add(Strings.Upload_TimedOut);
                 AppLog.Default.Error("Bucket", "Uploads stopped: a request timed out");
             }
         }
@@ -111,7 +112,7 @@ public sealed class DriveBucketUploader(SyncService sync, Action<string, string>
             AppLog.Default.Info("Bucket", $"Upload run finished: {_done} item(s) processed, {failures.Count} failed");
             if (failures.Count > 0)
             {
-                showError("Some files were not uploaded", string.Join("\n", failures));
+                showError(Strings.Upload_SomeFailed, string.Join("\n", failures));
             }
 
             Completed?.Invoke(this, lastFolder);
@@ -120,7 +121,7 @@ public sealed class DriveBucketUploader(SyncService sync, Action<string, string>
 
     private async Task UploadPathAsync(UploadJob job, CancellationToken cancellationToken)
     {
-        var files = sync.Files ?? throw new DriveException("Google Drive access is not available.");
+        var files = sync.Files ?? throw new DriveException(Strings.Upload_NotAvailable);
         if (Directory.Exists(job.Path))
         {
             await UploadDirectoryAsync(files, job.FolderId, job.Path, job.Policy, cancellationToken);
@@ -129,7 +130,7 @@ public sealed class DriveBucketUploader(SyncService sync, Action<string, string>
 
         if (!File.Exists(job.Path))
         {
-            throw new FileNotFoundException("The file no longer exists.", job.Path);
+            throw new FileNotFoundException(Strings.Upload_FileGone, job.Path);
         }
 
         await UploadFileAsync(files, job.FolderId, job.Path, job.Policy, cancellationToken);
@@ -185,7 +186,7 @@ public sealed class DriveBucketUploader(SyncService sync, Action<string, string>
             {
                 if (string.Equals(policy, DriveBucketHandler.Skip, StringComparison.OrdinalIgnoreCase))
                 {
-                    ShowGauge(100, $"Skipped {name} (already on Drive)");
+                    ShowGauge(100, string.Format(Strings.Upload_Skipped, name));
                     AppLog.Default.Info("Bucket", $"Skipped {name}: a file with that name is already in the folder");
                     return;
                 }
@@ -195,7 +196,7 @@ public sealed class DriveBucketUploader(SyncService sync, Action<string, string>
         }
 
         var length = new FileInfo(path).Length;
-        var label = $"Uploading {name} ({_done + 1} of {Math.Max(_total, _done + 1)})";
+        var label = string.Format(Strings.Upload_Progress, name, _done + 1, Math.Max(_total, _done + 1));
         ShowGauge(0, label);
         var progress = new Progress<long>(sent => ShowGauge(length == 0 ? 100 : sent * 100.0 / length, label));
 

@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!--
+    简体中文 names of the ready-made Windows items. English originals: CoreStrings.resx.
+    Values with {0}, {1} … are format strings; keep the placeholders. Newlines inside a value are kept.
+  -->
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Section_System" xml:space="preserve">
+    <value>系统</value>
+  </data>
+  <data name="Section_Desktop" xml:space="preserve">
+    <value>桌面</value>
+  </data>
+  <data name="Section_Tools" xml:space="preserve">
+    <value>工具</value>
+  </data>
+  <data name="Section_Folders" xml:space="preserve">
+    <value>文件夹</value>
+  </data>
+  <data name="Item_ThisPC" xml:space="preserve">
+    <value>此电脑</value>
+  </data>
+  <data name="Item_Network" xml:space="preserve">
+    <value>网络</value>
+  </data>
+  <data name="Item_NetworkConnections" xml:space="preserve">
+    <value>网络连接</value>
+  </data>
+  <data name="Item_ControlPanel" xml:space="preserve">
+    <value>控制面板</value>
+  </data>
+  <data name="Item_Printers" xml:space="preserve">
+    <value>打印机</value>
+  </data>
+  <data name="Item_Settings" xml:space="preserve">
+    <value>设置</value>
+  </data>
+  <data name="Item_RecycleBin" xml:space="preserve">
+    <value>回收站</value>
+  </data>
+  <data name="Item_ShowDesktop" xml:space="preserve">
+    <value>显示桌面</value>
+  </data>
+  <data name="Item_Search" xml:space="preserve">
+    <value>搜索</value>
+  </data>
+  <data name="Item_Run" xml:space="preserve">
+    <value>运行…</value>
+  </data>
+  <data name="Item_FileExplorer" xml:space="preserve">
+    <value>文件资源管理器</value>
+  </data>
+  <data name="Item_Calculator" xml:space="preserve">
+    <value>计算器</value>
+  </data>
+  <data name="Item_Notepad" xml:space="preserve">
+    <value>记事本</value>
+  </data>
+  <data name="Item_Paint" xml:space="preserve">
+    <value>画图</value>
+  </data>
+  <data name="Item_WordPad" xml:space="preserve">
+    <value>写字板</value>
+  </data>
+  <data name="Item_CommandPrompt" xml:space="preserve">
+    <value>命令提示符</value>
+  </data>
+  <data name="Item_WindowsTerminal" xml:space="preserve">
+    <value>Windows 终端</value>
+  </data>
+  <data name="Item_TaskManager" xml:space="preserve">
+    <value>任务管理器</value>
+  </data>
+  <data name="Item_Desktop" xml:space="preserve">
+    <value>桌面</value>
+  </data>
+  <data name="Item_Documents" xml:space="preserve">
+    <value>文档</value>
+  </data>
+  <data name="Item_Downloads" xml:space="preserve">
+    <value>下载</value>
+  </data>
+  <data name="Item_Pictures" xml:space="preserve">
+    <value>图片</value>
+  </data>
+  <data name="Item_SpecialIconPlaceholder" xml:space="preserve">
+    <value>特殊图标</value>
+  </data>
+  <data name="Layout_Empty" xml:space="preserve">
+    <value>布局文件是空的。</value>
+  </data>
+  <data name="Layout_Missing" xml:space="preserve">
+    <value>文件不存在。</value>
+  </data>
+</root>
