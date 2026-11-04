@@ -15,6 +15,11 @@ namespace DesktopIconGrid.Views;
 /// A flowing grid of icons bound to an <see cref="ItemListViewModel"/>. Used for the bar itself and for
 /// group popups. Handles clicks, keyboard shortcuts, drag-to-reorder, drops from Explorer and context menus.
 /// </summary>
+/// <remarks>
+/// Drop rules for files from Explorer: a <b>right</b>-button drag always places shortcuts at the drop position
+/// (into a group when dropped on one). A <b>left</b>-button drag dropped on a shortcut opens the files with that
+/// shortcut's program; dropped on a group it moves them in; dropped on empty space it places shortcuts.
+/// </remarks>
 public partial class IconGridControl : UserControl
 {
     private const int ClickFromMouseWindowMs = 150;
@@ -23,7 +28,8 @@ public partial class IconGridControl : UserControl
     private ItemViewModel? _dragCandidate;
     private Button? _dragButton;
     private long _lastMouseUpTicks;
-    private ItemViewModel? _hoveredGroup;
+    private ItemViewModel? _hoveredItem;
+    private DragDropKeyStates _lastDragButtons;
 
     public IconGridControl()
     {
@@ -32,9 +38,17 @@ public partial class IconGridControl : UserControl
 
     private ItemListViewModel? List => DataContext as ItemListViewModel;
 
-    private readonly record struct DropTarget(DragDropEffects Effects, int Index, ItemViewModel? Group)
+    private enum DropAction
     {
-        public static readonly DropTarget None = new(DragDropEffects.None, 0, null);
+        None,
+        Insert,
+        IntoGroup,
+        OpenWith,
+    }
+
+    private readonly record struct DropTarget(DragDropEffects Effects, DropAction Action, int Index, ItemViewModel? Item)
+    {
+        public static readonly DropTarget None = new(DragDropEffects.None, DropAction.None, 0, null);
     }
 
     // ----- activation -----------------------------------------------------------------------------
@@ -160,20 +174,22 @@ public partial class IconGridControl : UserControl
     {
         var target = ResolveDropTarget(e);
         ClearDropFeedback();
+        _lastDragButtons = DragDropKeyStates.None;
         e.Handled = true;
 
-        if (target.Effects == DragDropEffects.None || List is null)
+        if (target.Action == DropAction.None || List is null)
         {
             return;
         }
 
         var root = List.Root;
+
         if (e.Data.GetDataPresent(DragState.ItemFormat)
             && Guid.TryParse(e.Data.GetData(DragState.ItemFormat) as string, out var id))
         {
-            if (target.Group is not null)
+            if (target.Action == DropAction.IntoGroup && target.Item is not null)
             {
-                root.MoveIntoGroup(id, target.Group);
+                root.MoveIntoGroup(id, target.Item);
             }
             else
             {
@@ -183,18 +199,23 @@ public partial class IconGridControl : UserControl
             return;
         }
 
-        var list = target.Group?.Children ?? List;
-        var index = target.Group is null ? target.Index : int.MaxValue;
-
-        if (e.Data.GetDataPresent(DataFormats.FileDrop) && e.Data.GetData(DataFormats.FileDrop) is string[] paths)
+        var paths = GetDroppedPaths(e.Data);
+        if (paths.Count == 0)
         {
-            root.AddPaths(paths, list, index);
             return;
         }
 
-        if (TryGetLink(e.Data, out var link))
+        switch (target.Action)
         {
-            root.AddLink(link, list, index);
+            case DropAction.OpenWith when target.Item is not null:
+                root.OpenWith(target.Item, paths);
+                break;
+            case DropAction.IntoGroup when target.Item?.Children is { } groupList:
+                root.AddPaths(paths, groupList, int.MaxValue);
+                break;
+            default:
+                root.AddPaths(paths, List, target.Index);
+                break;
         }
     }
 
@@ -218,29 +239,55 @@ public partial class IconGridControl : UserControl
             return DropTarget.None;
         }
 
-        var effects = isInternal ? DragDropEffects.Move : DragDropEffects.Copy;
-        var (index, group) = HitTest(e.GetPosition(ItemsHost), dragged);
-        if (group is not null)
+        // Which button drives the drag. At drop time the buttons may already read as released, so remember them.
+        var buttons = e.KeyStates & (DragDropKeyStates.LeftMouseButton | DragDropKeyStates.RightMouseButton);
+        if (buttons != DragDropKeyStates.None)
         {
-            return new DropTarget(effects, index, group);
+            _lastDragButtons = buttons;
+        }
+        else
+        {
+            buttons = _lastDragButtons;
         }
 
-        if (dragged is { IsGroup: true } && !List.IsRoot)
+        var rightButton = buttons.HasFlag(DragDropKeyStates.RightMouseButton);
+        var (index, over) = HitTest(e.GetPosition(ItemsHost), dragged);
+
+        if (isInternal)
         {
-            return DropTarget.None; // groups cannot be nested
+            if (over is { IsGroup: true } && dragged is { IsGroup: false })
+            {
+                return new DropTarget(DragDropEffects.Move, DropAction.IntoGroup, index, over);
+            }
+
+            if (dragged is { IsGroup: true } && !List.IsRoot)
+            {
+                return DropTarget.None; // groups cannot be nested
+            }
+
+            return new DropTarget(DragDropEffects.Move, DropAction.Insert, index, null);
         }
 
-        return new DropTarget(effects, index, null);
+        if (over is { IsGroup: true })
+        {
+            return new DropTarget(DragDropEffects.Copy, DropAction.IntoGroup, index, over);
+        }
+
+        if (!rightButton && over is { AcceptsDroppedFiles: true })
+        {
+            return new DropTarget(DragDropEffects.Copy, DropAction.OpenWith, index, over);
+        }
+
+        return new DropTarget(DragDropEffects.Copy, DropAction.Insert, index, null);
     }
 
     /// <summary>
-    /// Finds where a point maps in reading order: the index to insert before, or a group to drop into when
-    /// the point is over the middle of a group icon.
+    /// Maps a point to the index to insert before (reading order) and, when the point is over the middle of an
+    /// icon, that icon.
     /// </summary>
-    private (int Index, ItemViewModel? Group) HitTest(Point position, ItemViewModel? dragged)
+    private (int Index, ItemViewModel? Over) HitTest(Point position, ItemViewModel? dragged)
     {
         var count = ItemsHost.Items.Count;
-        var allowGroupTarget = dragged is null || !dragged.IsGroup;
         var insertIndex = count;
 
         for (var i = 0; i < count; i++)
@@ -275,18 +322,18 @@ public partial class IconGridControl : UserControl
                 continue;
             }
 
-            var item = ItemsHost.Items[i] as ItemViewModel;
-            if (allowGroupTarget && item is { IsGroup: true } && !ReferenceEquals(item, dragged))
+            ItemViewModel? over = null;
+            if (ItemsHost.Items[i] is ItemViewModel item && !ReferenceEquals(item, dragged))
             {
                 var zone = bounds.Width * 0.25;
                 if (position.X >= bounds.Left + zone && position.X <= bounds.Right - zone)
                 {
-                    return (i, item);
+                    over = item;
                 }
             }
 
             insertIndex = position.X < bounds.Left + bounds.Width / 2 ? i : i + 1;
-            break;
+            return (insertIndex, over);
         }
 
         return (insertIndex, null);
@@ -297,18 +344,20 @@ public partial class IconGridControl : UserControl
 
     private void ShowDropFeedback(DropTarget target)
     {
-        if (target.Effects == DragDropEffects.None)
+        if (target.Action == DropAction.None)
         {
             ClearDropFeedback();
             return;
         }
 
-        SetHoveredGroup(target.Group);
-        if (target.Group is not null)
+        if (target.Action is DropAction.IntoGroup or DropAction.OpenWith)
         {
+            SetHoveredItem(target.Item);
             DropIndicator.Visibility = Visibility.Collapsed;
             return;
         }
+
+        SetHoveredItem(null);
 
         var count = ItemsHost.Items.Count;
         Rect anchor;
@@ -338,26 +387,36 @@ public partial class IconGridControl : UserControl
     private void ClearDropFeedback()
     {
         DropIndicator.Visibility = Visibility.Collapsed;
-        SetHoveredGroup(null);
+        SetHoveredItem(null);
     }
 
-    private void SetHoveredGroup(ItemViewModel? group)
+    private void SetHoveredItem(ItemViewModel? item)
     {
-        if (ReferenceEquals(_hoveredGroup, group))
+        if (ReferenceEquals(_hoveredItem, item))
         {
             return;
         }
 
-        if (_hoveredGroup is not null)
+        if (_hoveredItem is not null)
         {
-            _hoveredGroup.IsDropTarget = false;
+            _hoveredItem.IsDropTarget = false;
         }
 
-        _hoveredGroup = group;
-        if (_hoveredGroup is not null)
+        _hoveredItem = item;
+        if (_hoveredItem is not null)
         {
-            _hoveredGroup.IsDropTarget = true;
+            _hoveredItem.IsDropTarget = true;
         }
+    }
+
+    private static IReadOnlyList<string> GetDroppedPaths(IDataObject data)
+    {
+        if (data.GetDataPresent(DataFormats.FileDrop) && data.GetData(DataFormats.FileDrop) is string[] files)
+        {
+            return files.Where(f => !string.IsNullOrWhiteSpace(f)).ToList();
+        }
+
+        return TryGetLink(data, out var link) ? [link] : [];
     }
 
     private static bool TryGetLink(IDataObject data, out string link)
@@ -409,7 +468,7 @@ public partial class IconGridControl : UserControl
     {
         if (sender is ContextMenu menu && List is { } list)
         {
-            PopulateSpecialItems(menu, definition => list.Root.AddSpecialItem(definition, list, int.MaxValue));
+            PopulateWindowsItems(menu, definition => list.Root.AddSpecialItem(definition, list, int.MaxValue));
         }
     }
 
@@ -417,13 +476,13 @@ public partial class IconGridControl : UserControl
     {
         if (sender is ContextMenu menu && menu.DataContext is ItemViewModel item)
         {
-            PopulateSpecialItems(menu, definition => item.Root.AddSpecialItemAfter(definition, item));
+            PopulateWindowsItems(menu, definition => item.Root.AddSpecialItemAfter(definition, item));
         }
     }
 
-    private void PopulateSpecialItems(ContextMenu menu, Action<SpecialItemDefinition> onPick)
+    private void PopulateWindowsItems(ContextMenu menu, Action<SpecialItemDefinition> onPick)
     {
-        var host = menu.Items.OfType<MenuItem>().FirstOrDefault(m => Equals(m.Tag, "special"));
+        var host = menu.Items.OfType<MenuItem>().FirstOrDefault(m => Equals(m.Tag, "windows-items"));
         if (host is null || List is null)
         {
             return;

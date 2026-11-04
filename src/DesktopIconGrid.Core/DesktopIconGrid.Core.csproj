@@ -6,4 +6,8 @@
     <Description>Platform-neutral models, layout logic and storage for Desktop Icon Grid.</Description>
   </PropertyGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="DesktopIconGrid.Core.Tests" />
+  </ItemGroup>
+
 </Project>

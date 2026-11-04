@@ -16,4 +16,9 @@
     <ProjectReference Include="../DesktopIconGrid.Core/DesktopIconGrid.Core.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- DPAPI, used to encrypt the stored Google sign-in token for the current Windows user. -->
+    <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="10.0.14" />
+  </ItemGroup>
+
 </Project>

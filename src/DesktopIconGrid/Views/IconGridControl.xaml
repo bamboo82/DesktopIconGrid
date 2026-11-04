@@ -19,7 +19,7 @@
           <MenuItem Header="New shortcut…" Command="{Binding NewShortcutCommand}" />
           <MenuItem Header="New group…" Command="{Binding NewGroupCommand}"
                     Visibility="{Binding IsRoot, Converter={StaticResource BoolToVisibility}}" />
-          <MenuItem Header="Add special item" Tag="special" />
+          <MenuItem Header="Add Windows item" Tag="windows-items" />
           <Separator />
           <MenuItem Header="Launch Multi Launch group" Command="{Binding Root.LaunchMultiLaunchCommand}" />
           <MenuItem Header="Settings…" Command="{Binding Root.OpenSettingsCommand}" />
@@ -55,7 +55,7 @@
                   <MenuItem Header="New shortcut…" Command="{Binding NewShortcutAfterCommand}" />
                   <MenuItem Header="New group…" Command="{Binding NewGroupAfterCommand}"
                             Visibility="{Binding IsAtRoot, Converter={StaticResource BoolToVisibility}}" />
-                  <MenuItem Header="Add special item" Tag="special" />
+                  <MenuItem Header="Add Windows item" Tag="windows-items" />
                   <Separator />
                   <MenuItem Header="Remove…" Command="{Binding RemoveCommand}" />
                   <MenuItem Header="{Binding MultiLaunchMenuHeader}" Command="{Binding ToggleMultiLaunchCommand}"

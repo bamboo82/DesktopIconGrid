@@ -50,6 +50,10 @@ public sealed class ItemPropertiesViewModel : ObservableObject
 
     public string LocationHint => "The location may be a file, a folder or a URL.";
 
+    public string ParametersHint =>
+        "Files dropped onto the icon replace {file} (one launch per file) or {files} (all at once); " +
+        "without a placeholder they are appended.";
+
     public string Name
     {
         get => _name;

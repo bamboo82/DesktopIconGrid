@@ -29,6 +29,39 @@ public sealed class LaunchService : ILaunchService
         };
     }
 
+    public LaunchResult LaunchWith(ShortcutItem shortcut, IReadOnlyList<string> paths)
+    {
+        ArgumentNullException.ThrowIfNull(shortcut);
+        if (!DropArguments.SupportsOpenWith(shortcut))
+        {
+            return LaunchResult.Failure("This shortcut cannot open files.");
+        }
+
+        var argumentSets = DropArguments.BuildArgumentSets(shortcut.Parameters, paths);
+        if (argumentSets.Count == 0)
+        {
+            return LaunchResult.Failure("Nothing to open.");
+        }
+
+        var failures = new List<string>();
+        foreach (var arguments in argumentSets)
+        {
+            var launch = (ShortcutItem)shortcut.Clone();
+            launch.Parameters = arguments;
+            var result = Launch(launch);
+            switch (result.Outcome)
+            {
+                case LaunchOutcome.Cancelled:
+                    return result;
+                case LaunchOutcome.Failed:
+                    failures.Add(result.ErrorMessage ?? "Unknown error");
+                    break;
+            }
+        }
+
+        return failures.Count == 0 ? LaunchResult.Started : LaunchResult.Failure(string.Join("\n", failures.Distinct()));
+    }
+
     private static LaunchResult InvokeShell(string method)
     {
         object? shell = null;

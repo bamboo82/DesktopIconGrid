@@ -25,6 +25,7 @@ public partial class MainWindow : Window
         viewModel.ExitRequested += (_, _) => Close();
         viewModel.SettingsChanged += (_, _) => EnsureMinimumSize();
         Deactivated += OnDeactivated;
+        MainGrid.MouseLeftButtonDown += GridBackground_MouseLeftButtonDown;
     }
 
     protected override void OnSourceInitialized(EventArgs e)
@@ -157,6 +158,27 @@ public partial class MainWindow : Window
         catch (InvalidOperationException)
         {
             // The button was released before the move could start; nothing to do.
+        }
+    }
+
+    /// <summary>Pressing on empty grid background moves the bar, like the grip does.</summary>
+    private void GridBackground_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        if (e.OriginalSource is not DependencyObject source
+            || FindAncestor<ButtonBase>(source) is not null
+            || FindAncestor<ScrollBar>(source) is not null)
+        {
+            return;
+        }
+
+        _viewModel.IsGroupPopupOpen = false;
+        try
+        {
+            DragMove();
+        }
+        catch (InvalidOperationException)
+        {
+            // Button released before the move started.
         }
     }
 

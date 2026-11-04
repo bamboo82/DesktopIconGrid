@@ -59,9 +59,10 @@ public sealed class LauncherViewModel : ObservableObject
         AboutCommand = new RelayCommand(ShowAbout);
         ExitCommand = new RelayCommand(() => ExitRequested?.Invoke(this, EventArgs.Empty));
         CloseGroupPopupCommand = new RelayCommand(() => IsGroupPopupOpen = false);
+        OpenSyncCommand = new RelayCommand(() => _dialogs.ShowSync());
     }
 
-    public LauncherModel Model { get; }
+    public LauncherModel Model { get; private set; }
 
     public IIconProvider Icons { get; }
 
@@ -159,12 +160,17 @@ public sealed class LauncherViewModel : ObservableObject
 
     public ICommand CloseGroupPopupCommand { get; }
 
+    public ICommand OpenSyncCommand { get; }
+
     /// <summary>Raised when a group icon is clicked; the view positions the popup at the anchor element.</summary>
     public event EventHandler<GroupActivatedEventArgs>? GroupActivated;
 
     public event EventHandler? ExitRequested;
 
     public event EventHandler? SettingsChanged;
+
+    /// <summary>Raised after settings or items changed and were written to disk (window moves do not count).</summary>
+    public event EventHandler? LayoutChanged;
 
     // ----- view-model plumbing ------------------------------------------------------------------
 
@@ -215,6 +221,24 @@ public sealed class LauncherViewModel : ObservableObject
         if (result.Outcome == LaunchOutcome.Failed)
         {
             _dialogs.ShowError($"Can't open \"{item.Name}\"", $"{result.ErrorMessage}\n\n{item.Location}");
+            return;
+        }
+
+        IsGroupPopupOpen = false;
+    }
+
+    /// <summary>Opens files dropped onto a shortcut with that shortcut's program.</summary>
+    public void OpenWith(ItemViewModel target, IReadOnlyList<string> paths)
+    {
+        if (target.Model is not ShortcutItem shortcut || !DropArguments.SupportsOpenWith(shortcut))
+        {
+            return;
+        }
+
+        var result = _launcher.LaunchWith(shortcut, paths);
+        if (result.Outcome == LaunchOutcome.Failed)
+        {
+            _dialogs.ShowError($"Can't open with \"{target.Name}\"", $"{result.ErrorMessage}\n\n{shortcut.Location}");
             return;
         }
 
@@ -471,18 +495,7 @@ public sealed class LauncherViewModel : ObservableObject
         Model.ApplySettings(settings);
         _backgroundBrush = null;
         _foregroundBrush = null;
-
-        OnPropertyChanged(nameof(IconSize));
-        OnPropertyChanged(nameof(CellPadding));
-        OnPropertyChanged(nameof(ShowLabels));
-        OnPropertyChanged(nameof(DoubleClickToLaunch));
-        OnPropertyChanged(nameof(CellWidth));
-        OnPropertyChanged(nameof(CellHeight));
-        OnPropertyChanged(nameof(AlwaysOnTop));
-        OnPropertyChanged(nameof(BackgroundBrush));
-        OnPropertyChanged(nameof(ForegroundBrush));
-        OnPropertyChanged(nameof(PopupWidth));
-        OnPropertyChanged(nameof(PopupMaxHeight));
+        NotifyAppearanceChanged();
 
         if (IconSize != previousIconSize)
         {
@@ -499,10 +512,35 @@ public sealed class LauncherViewModel : ObservableObject
     public void UpdateWindowPlacement(WindowPlacement placement)
     {
         Model.Window = placement;
-        Save();
+        Save(contentChanged: false);
     }
 
-    public void SaveNow() => Save();
+    public void SaveNow() => Save(contentChanged: false);
+
+    /// <summary>A copy of the current settings, items and window placement.</summary>
+    public LauncherLayout ExportLayout() => Model.ToLayout();
+
+    /// <summary>
+    /// Replaces the settings and items with those of <paramref name="layout"/> (for example a copy downloaded
+    /// from Google Drive), keeping this device's window placement.
+    /// </summary>
+    public void ReplaceLayout(LauncherLayout layout)
+    {
+        ArgumentNullException.ThrowIfNull(layout);
+        var model = LauncherModel.FromLayout(layout);
+        model.Window = Model.Window;
+
+        IsGroupPopupOpen = false;
+        Model = model;
+        _viewModels.Clear();
+        _backgroundBrush = null;
+        _foregroundBrush = null;
+
+        RootItems.Sync();
+        NotifyAppearanceChanged();
+        Save(contentChanged: false);
+        SettingsChanged?.Invoke(this, EventArgs.Empty);
+    }
 
     private void OpenLayoutFolder()
     {
@@ -542,7 +580,23 @@ public sealed class LauncherViewModel : ObservableObject
     private ItemListViewModel ListFor(GroupItem? parent) =>
         parent is null ? RootItems : GetOrCreateViewModel(parent).Children!;
 
-    private void Save()
+    private void NotifyAppearanceChanged()
+    {
+        OnPropertyChanged(nameof(IconSize));
+        OnPropertyChanged(nameof(CellPadding));
+        OnPropertyChanged(nameof(ShowLabels));
+        OnPropertyChanged(nameof(DoubleClickToLaunch));
+        OnPropertyChanged(nameof(CellWidth));
+        OnPropertyChanged(nameof(CellHeight));
+        OnPropertyChanged(nameof(AlwaysOnTop));
+        OnPropertyChanged(nameof(BackgroundBrush));
+        OnPropertyChanged(nameof(ForegroundBrush));
+        OnPropertyChanged(nameof(PopupWidth));
+        OnPropertyChanged(nameof(PopupMaxHeight));
+        OnPropertyChanged(nameof(HasMultiLaunchMembers));
+    }
+
+    private void Save(bool contentChanged = true)
     {
         try
         {
@@ -551,6 +605,11 @@ public sealed class LauncherViewModel : ObservableObject
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
             _dialogs.ShowError("Couldn't save the layout", $"{ex.Message}\n\n{_storage.FilePath}");
+        }
+
+        if (contentChanged)
+        {
+            LayoutChanged?.Invoke(this, EventArgs.Empty);
         }
     }
 

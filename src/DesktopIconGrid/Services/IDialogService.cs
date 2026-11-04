@@ -15,4 +15,7 @@ public interface IDialogService
     void ShowError(string title, string message);
 
     void ShowInfo(string title, string message);
+
+    /// <summary>Shows the Google Drive sync dialog.</summary>
+    void ShowSync();
 }

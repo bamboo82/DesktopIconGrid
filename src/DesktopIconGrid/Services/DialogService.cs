@@ -7,6 +7,21 @@ namespace DesktopIconGrid.Services;
 
 public sealed class DialogService(IIconProvider icons) : IDialogService
 {
+    /// <summary>Creates the view model for the sync dialog; set once sync is wired up.</summary>
+    public Func<SyncViewModel>? SyncViewModelFactory { get; set; }
+
+    public void ShowSync()
+    {
+        if (SyncViewModelFactory is null)
+        {
+            ShowInfo("Google Drive sync", "Sync is not available in this build.");
+            return;
+        }
+
+        var window = new SyncWindow { DataContext = SyncViewModelFactory(), Owner = Owner };
+        window.ShowDialog();
+    }
+
     public bool ShowItemProperties(LauncherItem item, bool isNew)
     {
         var viewModel = new ItemPropertiesViewModel(item, isNew, icons);

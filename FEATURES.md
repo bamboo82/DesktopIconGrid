@@ -71,11 +71,11 @@ dialog is the same form with Location and Parameters disabled:
 - Groups cannot contain other groups (one level deep). Removing a group asks for
   confirmation and removes its contents too.
 
-### 2.3 Special items
+### 2.3 Windows items (ready-made shortcuts)
 
-*Add special item ▸* inserts a ready-made shortcut for a Windows location or tool.
-They are ordinary shortcuts afterwards (editable, removable). Catalog, updated for
-Windows 10/11 while keeping the reference set:
+*Add Windows item ▸* (the reference app's "Add special item") inserts a ready-made
+shortcut for a Windows location or tool. They are ordinary shortcuts afterwards
+(editable, removable). Catalog, updated for Windows 10/11 while keeping the reference set:
 
 | Menu entry | Location |
 | --- | --- |
@@ -105,6 +105,14 @@ Windows 10/11 while keeping the reference set:
 `shell:` locations are launched through `explorer.exe`; `special:` locations are
 handled in-app. Icons for `shell:` folders are taken from their CLSID parsing names.
 
+### 2.4 Special icons (active icons)
+
+A special icon has behaviour of its own: a click action, drops of files onto it, progress
+and a kind-specific properties dialog. The first one is the **Google Drive Bucket**: drop
+files to upload them into a Drive folder, click to open that folder in the browser.
+The item model, handler interface and the bucket are specified in
+[docs/SPECIAL_ICONS.md](docs/SPECIAL_ICONS.md).
+
 ## 3. Grid interactions
 
 | Action | Result |
@@ -115,6 +123,8 @@ handled in-app. Icons for `shell:` folders are taken from their CLSID parsing na
 | Drag an icon | Reorder: a drop indicator shows the insertion point; dropping inserts there. |
 | Drag an icon onto a group | Moves it into the group (the group highlights while hovering). |
 | Drop files/folders/URLs from Explorer or a browser | Creates one shortcut per dropped path at the drop position. |
+| Drop files onto a special icon that accepts them (e.g. a Google Drive Bucket) | Handled by the icon: the bucket uploads them. |
+| Press on empty background | Moves the bar, like the grip. |
 | Mouse wheel | Scrolls when the bar is shorter than its content. |
 
 ## 4. Context menus
@@ -124,10 +134,12 @@ Icon menu (as in the screenshot):
 ```
 New shortcut…
 New group…
-Add special item        ▸
+Add Windows item        ▸
+Add special icon        ▸
 ────────────────────────
 Remove…
 Add to Multi Launch group    (becomes "Remove from Multi Launch group" when it is a member; hidden for groups)
+Open file location
 ────────────────────────
 Properties
 ```
@@ -137,7 +149,8 @@ Empty-space menu:
 ```
 New shortcut…
 New group…
-Add special item        ▸
+Add Windows item        ▸
+Add special icon        ▸
 ────────────────────────
 Launch Multi Launch group
 Settings…
@@ -206,7 +219,33 @@ Settings live in the same JSON file as the layout and apply immediately on *Save
 }
 ```
 
-## 9. Icon extraction
+## 9. Google Drive sync
+
+Keeps named copies of the settings and icons on Google Drive so several PCs can share them.
+
+- **Copies**: a `DesktopIconGrid` folder in My Drive holds one JSON file per copy
+  (`Work.json`, `Home.json`, …) containing the settings and items, plus who saved it and when.
+  The window position stays on the device. Any number of copies, each with its own name.
+- **Device name**: each PC has a name (defaults to the computer name) shown to other devices
+  as the one that saved a copy.
+- **Dialog** (options menu ▸ *Sync with Google Drive…*): connect/disconnect the Google account,
+  enter the device name, list the copies with their save time and device, *Save as* a new
+  copy, *Overwrite* or *Load* the selected copy, *Delete* a copy.
+- **Linked copy**: saving or loading links the device to that copy. Changes are then uploaded
+  automatically a few seconds after they happen, and at startup the app offers to load the
+  copy when another device saved a newer version. Auto-upload never overwrites a newer copy
+  from another device; it reports the conflict instead so the user chooses in the dialog.
+- **Account access**: Google's OAuth flow for installed apps (browser sign-in, loopback
+  redirect, PKCE) with the `drive.file` scope. Tokens are stored encrypted (DPAPI) and renewed
+  automatically; the user signs in again only if Google revokes the refresh token.
+- **Credentials**: Google requires an OAuth client per app, which the user creates in Google
+  Cloud Console (project → enable Drive API → consent screen → Desktop app credential). The
+  dialog accepts the client ID/secret or the downloaded `client_secret.json`. Publishing the
+  consent screen avoids the 7-day token expiry of "Testing" status.
+- Local state in `%LocalAppData%\DesktopIconGrid\sync.json` (device name, credentials, linked
+  copy, last sync time) and `google-token.bin` (encrypted token).
+
+## 10. Icon extraction
 
 Order of attempts, with an in-memory cache keyed by path and size:
 
@@ -218,31 +257,39 @@ Order of attempts, with an in-memory cache keyed by path and size:
    do not exist yet, and a browser icon for `http(s):` links.
 5. A built-in placeholder glyph.
 
-## 10. Project layout
+## 11. Project layout
 
 ```
 DesktopIconGrid.slnx
-src/DesktopIconGrid.Core/      models, ordering/grouping logic, JSON storage, launch info — no WPF, testable on any OS
+src/DesktopIconGrid.Core/      models, ordering/grouping logic, JSON storage, launch info, Google OAuth + Drive client, sync — no WPF, testable on any OS
 src/DesktopIconGrid/           WPF app: window, grid control, dialogs, shell interop, view models
 tests/DesktopIconGrid.Core.Tests/   xunit tests for the core library
 ```
 
-## 11. Delivery phases
+## 12. Delivery phases
 
-**Phase 1 — usable launcher**
+**Phase 1 — usable launcher** *(done)*
 Borderless bar (grip, close, resize, options arrow), flowing icon grid, shortcuts with
 the full properties dialog, icon extraction, click to launch, drag to reorder, drop
 from Explorer, context menus, settings dialog, JSON persistence, window placement.
 
-**Phase 2 — groups, special items, multi launch**
-Group items with popup grid and drag in/out, *Add special item* catalog,
+**Phase 2 — groups, Windows items, multi launch** *(done)*
+Group items with popup grid and drag in/out, *Add Windows item* catalog,
 Multi Launch membership and launch-all.
 
-**Phase 3 — desktop integration**
+**Phase 3 — Google Drive sync** *(done)*
+Named settings copies on Drive, device name, save/load/delete, linked copy with
+automatic upload and startup check, OAuth with automatic token renewal.
+
+**Phase 4 — special icons**
+Special icon item kind and handler registry; Google Drive Bucket (click to open the
+folder, drop files to upload) as specified in [docs/SPECIAL_ICONS.md](docs/SPECIAL_ICONS.md).
+
+**Phase 5 — desktop integration**
 Tray icon (close hides to tray), start with Windows, global show/hide hotkey,
 optional auto-hide at a screen edge.
 
-## 12. Out of scope (for now)
+## 13. Out of scope (for now)
 
 Nested groups, per-item hotkeys, drag-and-drop *out* of the app to Explorer,
 themes/skins beyond a background colour, multiple bars.

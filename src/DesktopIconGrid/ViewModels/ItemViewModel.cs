@@ -1,5 +1,6 @@
 using System.Windows.Input;
 using System.Windows.Media;
+using DesktopIconGrid.Core.Launching;
 using DesktopIconGrid.Core.Models;
 using DesktopIconGrid.Infrastructure;
 
@@ -48,6 +49,9 @@ public sealed class ItemViewModel : ObservableObject
     public string MultiLaunchMenuHeader => IsMultiLaunch ? "Remove from Multi Launch group" : "Add to Multi Launch group";
 
     public int ChildCount => (Model as GroupItem)?.Items.Count ?? 0;
+
+    /// <summary>True when files dropped on this icon should be opened with its program.</summary>
+    public bool AcceptsDroppedFiles => Model is ShortcutItem shortcut && DropArguments.SupportsOpenWith(shortcut);
 
     /// <summary>True when the item sits in the root list (so a group may be created next to it).</summary>
     public bool IsAtRoot
