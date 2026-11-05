@@ -367,9 +367,33 @@ Special icon item kind and handler registry; CPU and disk usage gauges; Google D
 (click to open the folder, drop files to upload, Ctrl+click to browse and download) as
 specified in [docs/SPECIAL_ICONS.md](docs/SPECIAL_ICONS.md).
 
-**Phase 5 — desktop integration** *(hotkey and tray done)*
+**Phase 5 — desktop integration** *(done)*
 Global show/hide hotkey; tray icon with show/hide, reset position and the common commands
-(close hides to tray); still open: start with Windows, optional auto-hide at a screen edge.
+(close hides to tray); start with Windows and docking to a screen edge with auto-hide (0.4.0).
+
+The releases after 0.6.0 follow the plan in [docs/ROADMAP.md](docs/ROADMAP.md), which has the full
+description and the "done when" of every item:
+
+**0.7.0 "Get there faster"** — unknown JSON properties kept through load and save (the prerequisite for
+everything after it); click a running item to switch to it; the launch options every `.lnk` has; type to
+find, and open the grid at the pointer; launch feedback; separators; colour tags. The voice spike runs
+here too, with only its result written down (§6.1).
+
+**0.8.0 "One bar, every PC"** — sync through any folder (OneDrive, Dropbox, NAS); shortcuts that survive
+other PCs (missing targets, repair, per-device locations, portable mode); *Add app…* and imports; layout
+history; command line and Send To.
+
+**0.9.0 "The bar tells you things"** — command tile, with commands from a synced copy paused until
+approved on each PC; health light on a shortcut; folder stacks; more gauges; microphone tile; clock and
+timer; paste to a bucket.
+
+**0.10.0 "Bigger moves"** — workspaces (Multi Launch that puts windows back); send a file to another PC;
+voice launch, if the spike says yes.
+
+**1.0.0 "Ship it"** — the existing backlog: installer (MSIX/winget), code signing, toast notifications.
+
+Not yet placed in a release: glyph icons, usage columns, the accent theme, spring-loaded groups and the
+Windows menu (Shift+right-click).
 
 ## 13. Reliability and polish backlog
 
@@ -404,9 +428,9 @@ Still open, in the order they should be taken:
    text-icon default font by UI language). By design the log and the error texts from Google and
    Windows stay in English.
 4. **Non-modal errors** — done in 0.4.0 (tray notifications with the log viewer one click away;
-   Undo for Remove). Still open: a toast with actions instead of the classic balloon.
-5. **Table stakes** — installer (MSIX/winget), signed releases; versioning from the tag is done by the
-   release workflow, start with Windows and dock/auto-hide are done (0.4.0).
+   Undo for Remove). Still open: a toast with actions instead of the classic balloon (planned for 1.0.0).
+5. **Table stakes** — installer (MSIX/winget), signed releases (planned for 1.0.0); versioning from the
+   tag is done by the release workflow, start with Windows and dock/auto-hide are done (0.4.0).
 6. **Engineering** — done in 0.6.0: the tray icon is a `Shell_NotifyIcon` on a hidden window of its own
    (WinForms is no longer referenced), and app-execution aliases are resolved through their reparse data
    (any process from the package folder lights the badge). Still open: CI builds `main` and `claude/**`
@@ -415,5 +439,21 @@ Still open, in the order they should be taken:
 
 ## 14. Out of scope (for now)
 
-Nested groups, per-item hotkeys, drag-and-drop *out* of the app to Explorer,
-themes/skins beyond a background colour, multiple bars.
+Left out of the 0.7.0–1.0 plan on purpose:
+
+- **Nested groups.** Two levels of popups on a small bar get fiddly; folder stacks cover deep trees.
+- **Web search, calculator or file search in the find box.** PowerToys Run and Command Palette do that
+  better; the bar's search finds only the bar's items.
+- **Gmail or Calendar tiles.** Restricted and sensitive Google scopes and their verification, on top of
+  the hardest setup in the app.
+- **A DLL plugin system.** Code loaded into the bar is a security and support burden; the command tile
+  covers the need out of process.
+- **A URL protocol that can launch items.** Any web page could fire it. If a protocol is ever added, it
+  may only show or hide the bar.
+- **Several bars at once.** Every placement, dock, auto-hide and full-screen path stabilised in 0.4–0.6
+  would double. If users ask, start with profiles (switch the whole item set from the tray).
+- **Low-level keyboard or mouse hooks** (hold-to-talk, hot corners). They slow all input when the app
+  hangs and antivirus products flag them; `RegisterHotKey` and the AppBar edge are enough.
+
+Still out of scope from the first plan: per-item hotkeys, themes or skins beyond the theme palette (an
+accent theme is on the roadmap), and dragging the bar's own icons out to Explorer.

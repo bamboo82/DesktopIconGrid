@@ -3,6 +3,10 @@
 All notable changes to Desktop Icon Grid. The format follows [Keep a Changelog](https://keepachangelog.com/);
 version numbers follow [Semantic Versioning](https://semver.org/).
 
+## [0.7.0] – Unreleased
+
+"Get there faster": the first release of the plan in [docs/ROADMAP.md](docs/ROADMAP.md).
+
 ## [0.6.0] – 2026-11-05
 
 Drive copies that stay current, the bar back on its own monitor, the running badge for Store apps, and
