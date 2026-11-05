@@ -407,10 +407,10 @@ Still open, in the order they should be taken:
    Undo for Remove). Still open: a toast with actions instead of the classic balloon.
 5. **Table stakes** — installer (MSIX/winget), signed releases; versioning from the tag is done by the
    release workflow, start with Windows and dock/auto-hide are done (0.4.0).
-6. **Engineering** — the tray icon itself still uses WinForms `NotifyIcon` (its menu is WPF); a
-   `Shell_NotifyIcon` message window would let WinForms go. App-execution aliases are resolved through
-   their reparse data since 0.6.0 (any process from the package folder lights the badge). CI builds
-   `main` and `claude/**` branches;
+6. **Engineering** — done in 0.6.0: the tray icon is a `Shell_NotifyIcon` on a hidden window of its own
+   (WinForms is no longer referenced), and app-execution aliases are resolved through their reparse data
+   (any process from the package folder lights the badge). Still open: CI builds `main` and `claude/**`
+   branches;
    restrict it to `main` plus pull requests once development moves there.
 
 ## 14. Out of scope (for now)

@@ -22,6 +22,11 @@ version numbers follow [Semantic Versioning](https://semver.org/).
   Python from the Store) show the running badge: the alias's reparse data names the executable in the
   package, and any process from that package folder counts, so Windows Terminal (`wt.exe` starts
   `WindowsTerminal.exe`) is covered. Before, only a program started from the bar itself was tracked.
+- The tray icon talks to the shell directly (`Shell_NotifyIcon` with version-4 callbacks on a hidden
+  window of its own) instead of through Windows Forms' `NotifyIcon`, so the app no longer loads Windows
+  Forms or System.Drawing: a smaller self-contained build and one DPI story (the WPF manifest). Behaviour
+  is unchanged: left click shows or hides the bar, right click or Shift+F10 opens the menu, a balloon
+  click opens the log viewer, and the icon comes back when Explorer restarts. Checked in code only.
 
 ## [0.5.0] – 2026-11-05
 
