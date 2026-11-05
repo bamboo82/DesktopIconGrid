@@ -365,7 +365,7 @@
     <value>位置可以是文件、文件夹或网址。</value>
   </data>
   <data name="Props_ParametersHint" xml:space="preserve">
-    <value>拖放到图标上的文件会替换 {file}（每个文件启动一次）或 {files}（一次全部）；没有占位符时则附加在参数后面。</value>
+    <value>拖放到图标上的文件会替换 {file}（每个文件启动一次）或 {files}（一次全部）；没有占位符时则附加在参数后面。{clipboard} 插入剪贴板文字，{ask:问题} 会询问一个值。</value>
   </data>
   <data name="Props_LogHint" xml:space="preserve">
     <value>仅适用于控制台程序和批处理文件：程序在没有自己窗口的情况下运行，输出写入日志文件，图标的“显示日志”命令可实时显示。</value>
@@ -1345,5 +1345,59 @@
   </data>
   <data name="Props_WhenRunningHint" xml:space="preserve">
     <value>Shift+单击或按鼠标中键总是再启动一个；Ctrl+Shift+单击以管理员身份启动。</value>
+  </data>
+  <data name="Launch_ClipboardEmpty" xml:space="preserve">
+    <value>剪贴板中没有可传递的文字。</value>
+  </data>
+  <data name="Launch_AskValue" xml:space="preserve">
+    <value>值：</value>
+  </data>
+  <data name="Props_StartIn" xml:space="preserve">
+    <value>起始位置：</value>
+  </data>
+  <data name="Props_StartInName" xml:space="preserve">
+    <value>起始位置</value>
+  </data>
+  <data name="Props_StartInHint" xml:space="preserve">
+    <value>留空：程序所在的文件夹。</value>
+  </data>
+  <data name="Props_Run" xml:space="preserve">
+    <value>运行：</value>
+  </data>
+  <data name="Props_RunName" xml:space="preserve">
+    <value>运行</value>
+  </data>
+  <data name="Props_RunNormal" xml:space="preserve">
+    <value>常规窗口</value>
+  </data>
+  <data name="Props_RunMinimized" xml:space="preserve">
+    <value>最小化</value>
+  </data>
+  <data name="Props_RunMaximized" xml:space="preserve">
+    <value>最大化</value>
+  </data>
+  <data name="Props_RunAsAdmin" xml:space="preserve">
+    <value>以管理员身份运行</value>
+  </data>
+  <data name="Props_Browser" xml:space="preserve">
+    <value>打开网页链接于：</value>
+  </data>
+  <data name="Props_BrowserName" xml:space="preserve">
+    <value>打开网页链接于</value>
+  </data>
+  <data name="Props_BrowserDefault" xml:space="preserve">
+    <value>默认浏览器</value>
+  </data>
+  <data name="Props_BrowserProfile" xml:space="preserve">
+    <value>{0} – {1}</value>
+  </data>
+  <data name="Props_BrowserEdge" xml:space="preserve">
+    <value>Microsoft Edge</value>
+  </data>
+  <data name="Props_BrowserChrome" xml:space="preserve">
+    <value>Google Chrome</value>
+  </data>
+  <data name="Props_AppWindow" xml:space="preserve">
+    <value>以应用窗口打开（无标签页和地址栏）</value>
   </data>
 </root>

@@ -111,7 +111,7 @@ public partial class App : Application
             new DriveBucketHandler(syncService, dialogs, owner, icons, cacheDirectory, Dispatcher),
             new SoundReplayerHandler(owner, AppPaths.SoundsDirectory, Dispatcher),
         ]);
-        var launcher = new LaunchService(_tracker);
+        var launcher = new LaunchService(_tracker, dialogs);
         _windows = new WindowSwitcher();
         var viewModel = new LauncherViewModel(
             model,

@@ -7,7 +7,7 @@ using DesktopIconGrid.Views;
 
 namespace DesktopIconGrid.Services;
 
-public sealed class DialogService(IIconProvider icons) : IDialogService
+public sealed class DialogService(IIconProvider icons) : IDialogService, ILaunchPrompts
 {
     private AppLogWindow? _logWindow;
 
@@ -54,7 +54,7 @@ public sealed class DialogService(IIconProvider icons) : IDialogService
 
     public bool ShowItemProperties(LauncherItem item, bool isNew)
     {
-        var viewModel = new ItemPropertiesViewModel(item, isNew, icons);
+        var viewModel = new ItemPropertiesViewModel(item, isNew, icons, item is ShortcutItem ? BrowserCatalog.Choices() : null);
         var window = new ItemPropertiesWindow { DataContext = viewModel, Owner = Owner };
         return window.ShowDialog() == true;
     }
@@ -91,6 +91,20 @@ public sealed class DialogService(IIconProvider icons) : IDialogService
 
     public void ShowInfo(string title, string message) =>
         Show(message, title, MessageBoxButton.OK, MessageBoxImage.Information);
+
+    public string? ClipboardText()
+    {
+        try
+        {
+            return Clipboard.ContainsText() ? Clipboard.GetText() : null;
+        }
+        catch (System.Runtime.InteropServices.COMException)
+        {
+            return null; // another program holds the clipboard open
+        }
+    }
+
+    public string? Ask(string title, string prompt) => InputWindow.Show(Owner, title, prompt);
 
     private static Window? Owner
     {

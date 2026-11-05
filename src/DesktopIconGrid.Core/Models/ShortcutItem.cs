@@ -9,6 +9,12 @@ public sealed class ShortcutItem : LauncherItem
     /// <summary><see cref="WhenRunning"/>: a click always starts another instance.</summary>
     public const string WhenRunningStart = "start";
 
+    /// <summary><see cref="WindowState"/>: start the program's window minimised.</summary>
+    public const string WindowMinimized = "minimized";
+
+    /// <summary><see cref="WindowState"/>: start the program's window maximised.</summary>
+    public const string WindowMaximized = "maximized";
+
     /// <summary>
     /// What to open. A file, a folder or a URL; <c>shell:</c> locations open in File Explorer and
     /// <c>special:</c> locations are handled by the app. Environment variables are expanded at launch.
@@ -33,6 +39,24 @@ public sealed class ShortcutItem : LauncherItem
     /// </summary>
     public string? WhenRunning { get; set; }
 
+    /// <summary>The working folder; <see langword="null"/> uses the folder of the program (environment variables allowed).</summary>
+    public string? StartIn { get; set; }
+
+    /// <summary>Start it elevated (an ordinary UAC prompt).</summary>
+    public bool RunAsAdministrator { get; set; }
+
+    /// <summary><see cref="WindowMinimized"/>, <see cref="WindowMaximized"/>, or <see langword="null"/> for a normal window.</summary>
+    public string? WindowState { get; set; }
+
+    /// <summary>For web links: the browser to open them in (<see cref="Launching.BrowserProfiles"/>); <see langword="null"/> uses the default browser.</summary>
+    public string? Browser { get; set; }
+
+    /// <summary>With <see cref="Browser"/>: the profile folder (<c>Default</c>, <c>Profile 1</c>…); <see langword="null"/> uses the browser's last one.</summary>
+    public string? BrowserProfile { get; set; }
+
+    /// <summary>With <see cref="Browser"/>: open the link as an app window, without tabs and address bar.</summary>
+    public bool AppWindow { get; set; }
+
     protected override LauncherItem CloneCore() => (ShortcutItem)MemberwiseClone();
 
     public override void CopyContentFrom(LauncherItem source)
@@ -45,6 +69,12 @@ public sealed class ShortcutItem : LauncherItem
             MultiLaunch = shortcut.MultiLaunch;
             CaptureLog = shortcut.CaptureLog;
             WhenRunning = shortcut.WhenRunning;
+            StartIn = string.IsNullOrWhiteSpace(shortcut.StartIn) ? null : shortcut.StartIn.Trim();
+            RunAsAdministrator = shortcut.RunAsAdministrator;
+            WindowState = shortcut.WindowState;
+            Browser = string.IsNullOrWhiteSpace(shortcut.Browser) ? null : shortcut.Browser.Trim();
+            BrowserProfile = string.IsNullOrWhiteSpace(shortcut.BrowserProfile) ? null : shortcut.BrowserProfile.Trim();
+            AppWindow = shortcut.AppWindow;
         }
     }
 

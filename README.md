@@ -59,6 +59,8 @@ Google Drive Bucket, and [docs/THEMES.md](docs/THEMES.md) for the themes.
 | See what the app is doing | Tray icon → *Log viewer…* (filter by level, category, time or text; save or copy). Failures appear as tray notifications; clicking one opens the log viewer |
 | Exit | Tray icon → *Exit*, or options menu (▸) → *Exit* (the close button only hides the bar) |
 | Open an item | Click it (or double-click, see Settings). `Enter` when focused |
+| Start a program elevated, minimised or in another folder; open a link in a browser profile | *Properties → Advanced*: run as administrator, window state, start folder, Edge or Chrome profile (or an app window) |
+| Pass the clipboard or a typed value to a program | Put `{clipboard}` or `{ask:Question}` in its *Parameters* |
 | Go to a program that is already running | Click its icon: its window comes forward, a second click minimises it. Shift+click or middle-click starts another; Ctrl+Shift+click starts one as administrator |
 | Rearrange | Drag an icon to a new position; the blue line shows where it lands |
 | Put a shortcut in a group | Drag it onto the group icon |

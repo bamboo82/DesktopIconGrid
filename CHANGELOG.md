@@ -17,6 +17,12 @@ version numbers follow [Semantic Versioning](https://semver.org/).
   another instance; Ctrl+Shift+click starts one as administrator. *Properties → Advanced → When it is
   running* changes this per shortcut; documents, folders and links start again by default. Checked in
   code and with tests against simulated window lists; not yet seen on a screen.
+- The options every Windows `.lnk` has, under *Properties → Advanced*: *Start in* (the working folder),
+  *Run* normal, minimised or maximised, *Run as administrator* (an ordinary UAC prompt), and for web links
+  a browser profile of Edge or Chrome, optionally as an app window without tabs or address bar.
+- Two placeholders next to `{file}`/`{files}` in *Parameters*: `{clipboard}` passes the clipboard text and
+  `{ask:Question}` asks for a value when the shortcut starts; both are quoted as one argument, and Cancel
+  cancels the launch. Checked in code and with tests; not yet seen on a screen.
 
 ### Fixed
 

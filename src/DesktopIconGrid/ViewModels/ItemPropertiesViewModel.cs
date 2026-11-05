@@ -12,6 +12,9 @@ namespace DesktopIconGrid.ViewModels;
 /// <summary>One choice of "When it is running".</summary>
 public sealed record WhenRunningOption(bool Switches, string Name);
 
+/// <summary>One choice of "Run": a normal, minimised or maximised window.</summary>
+public sealed record WindowStateOption(string? Value, string Name);
+
 /// <summary>Backs the Shortcut Properties / Group Properties dialog. Writes to the item only on <see cref="Apply"/>.</summary>
 public sealed class ItemPropertiesViewModel : ObservableObject
 {
@@ -19,6 +22,13 @@ public sealed class ItemPropertiesViewModel : ObservableObject
     [
         new(true, Strings.Props_WhenRunningSwitch),
         new(false, Strings.Props_WhenRunningStart),
+    ];
+
+    public static readonly IReadOnlyList<WindowStateOption> WindowStateChoices =
+    [
+        new(null, Strings.Props_RunNormal),
+        new(ShortcutItem.WindowMinimized, Strings.Props_RunMinimized),
+        new(ShortcutItem.WindowMaximized, Strings.Props_RunMaximized),
     ];
 
     private const int PreviewSize = 32;
@@ -34,6 +44,11 @@ public sealed class ItemPropertiesViewModel : ObservableObject
     private readonly string? _originalWhenRunning;
     private bool _switchesWhenRunning;
     private bool _whenRunningChosen;
+    private string _startIn;
+    private WindowStateOption _windowState;
+    private bool _runAsAdministrator;
+    private BrowserChoice _browser;
+    private bool _appWindow;
     private string? _iconPath;
     private TextIcon? _textIcon;
     private bool _nameIsAutomatic;
@@ -42,7 +57,7 @@ public sealed class ItemPropertiesViewModel : ObservableObject
     private string? _warning;
     private int _previewRequest;
 
-    public ItemPropertiesViewModel(LauncherItem target, bool isNew, IIconProvider icons)
+    public ItemPropertiesViewModel(LauncherItem target, bool isNew, IIconProvider icons, IReadOnlyList<BrowserChoice>? browsers = null)
     {
         _target = target;
         _icons = icons;
@@ -55,6 +70,24 @@ public sealed class ItemPropertiesViewModel : ObservableObject
         _captureLog = (target as ShortcutItem)?.CaptureLog ?? false;
         _originalWhenRunning = (target as ShortcutItem)?.WhenRunning;
         _switchesWhenRunning = target is ShortcutItem shortcut && LaunchPlanner.SwitchesWhenRunning(shortcut);
+        var options = target as ShortcutItem;
+        _startIn = options?.StartIn ?? string.Empty;
+        _windowState = WindowStateChoices.FirstOrDefault(c => string.Equals(c.Value, options?.WindowState, StringComparison.OrdinalIgnoreCase)) ?? WindowStateChoices[0];
+        _runAsAdministrator = options?.RunAsAdministrator ?? false;
+        _appWindow = options?.AppWindow ?? false;
+        var choices = (browsers ?? [BrowserCatalog.DefaultBrowser]).ToList();
+        if (choices.Count == 0 || !choices[0].IsDefault)
+        {
+            choices.Insert(0, BrowserCatalog.DefaultBrowser);
+        }
+
+        _browser = BrowserChoiceFor(options, choices);
+        if (!choices.Contains(_browser))
+        {
+            choices.Add(_browser); // a profile from another PC, or one since deleted: kept as it is
+        }
+
+        BrowserOptions = choices;
         _iconPath = target.IconPath;
         _textIcon = target.TextIcon;
         _nameIsAutomatic = !IsGroup && isNew && (_name.Length == 0 || _name == ShortcutItem.SuggestName(_location));
@@ -106,6 +139,9 @@ public sealed class ItemPropertiesViewModel : ObservableObject
                 _switchesWhenRunning = !_switchesWhenRunning;
                 OnPropertyChanged(nameof(SelectedWhenRunning));
             }
+
+            OnPropertyChanged(nameof(IsWebLink));
+            OnPropertyChanged(nameof(CanChooseAppWindow));
 
             if (_nameIsAutomatic)
             {
@@ -160,6 +196,76 @@ public sealed class ItemPropertiesViewModel : ObservableObject
     }
 
     public string WhenRunningHint => Strings.Props_WhenRunningHint;
+
+    /// <summary>The working folder; empty uses the program's own folder.</summary>
+    public string StartIn
+    {
+        get => _startIn;
+        set => SetProperty(ref _startIn, value ?? string.Empty);
+    }
+
+    public string StartInHint => Strings.Props_StartInHint;
+
+    public IReadOnlyList<WindowStateOption> WindowStateOptions => WindowStateChoices;
+
+    public WindowStateOption SelectedWindowState
+    {
+        get => _windowState;
+        set
+        {
+            if (value is not null)
+            {
+                SetProperty(ref _windowState, value);
+            }
+        }
+    }
+
+    public bool RunAsAdministrator
+    {
+        get => _runAsAdministrator;
+        set => SetProperty(ref _runAsAdministrator, value);
+    }
+
+    /// <summary>The default browser, then every installed browser profile (and the stored one if it is not installed here).</summary>
+    public IReadOnlyList<BrowserChoice> BrowserOptions { get; }
+
+    public BrowserChoice SelectedBrowser
+    {
+        get => _browser;
+        set
+        {
+            if (value is not null && SetProperty(ref _browser, value))
+            {
+                OnPropertyChanged(nameof(CanChooseAppWindow));
+            }
+        }
+    }
+
+    public bool AppWindow
+    {
+        get => _appWindow;
+        set => SetProperty(ref _appWindow, value);
+    }
+
+    /// <summary>The browser options apply to web links only.</summary>
+    public bool IsWebLink => LaunchPlanner.IsWebLink(_location);
+
+    public bool CanChooseAppWindow => IsWebLink && !_browser.IsDefault;
+
+    private static BrowserChoice BrowserChoiceFor(ShortcutItem? shortcut, IReadOnlyList<BrowserChoice> choices)
+    {
+        if (string.IsNullOrWhiteSpace(shortcut?.Browser))
+        {
+            return choices[0];
+        }
+
+        return choices.FirstOrDefault(c => string.Equals(c.Browser, shortcut.Browser, StringComparison.OrdinalIgnoreCase)
+                                           && string.Equals(c.Profile ?? string.Empty, shortcut.BrowserProfile ?? string.Empty, StringComparison.OrdinalIgnoreCase))
+               ?? new BrowserChoice(
+                   shortcut.Browser,
+                   shortcut.BrowserProfile,
+                   string.Format(Strings.Props_BrowserProfile, BrowserCatalog.DisplayName(shortcut.Browser), shortcut.BrowserProfile ?? string.Empty));
+    }
 
     public string? IconPath
     {
@@ -284,6 +390,12 @@ public sealed class ItemPropertiesViewModel : ObservableObject
                 : _switchesWhenRunning == LaunchPlanner.IsProgramLocation(shortcut.Location)
                     ? null // the location's own default: stored as nothing, so it keeps following the location
                     : _switchesWhenRunning ? ShortcutItem.WhenRunningSwitch : ShortcutItem.WhenRunningStart;
+            shortcut.StartIn = string.IsNullOrWhiteSpace(_startIn) ? null : _startIn.Trim();
+            shortcut.WindowState = _windowState.Value;
+            shortcut.RunAsAdministrator = _runAsAdministrator;
+            shortcut.Browser = _browser.Browser;
+            shortcut.BrowserProfile = _browser.IsDefault ? null : _browser.Profile;
+            shortcut.AppWindow = !_browser.IsDefault && _appWindow;
         }
 
         return true;

@@ -94,6 +94,12 @@
         <Grid.RowDefinitions>
           <RowDefinition Height="Auto" />
           <RowDefinition Height="Auto" />
+          <RowDefinition Height="Auto" />
+          <RowDefinition Height="Auto" />
+          <RowDefinition Height="Auto" />
+          <RowDefinition Height="Auto" />
+          <RowDefinition Height="Auto" />
+          <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
         <TextBlock Grid.Row="0" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Props_WhenRunning}" Margin="0,0,12,4" />
@@ -101,6 +107,28 @@
                   ItemsSource="{Binding WhenRunningOptions}" SelectedItem="{Binding SelectedWhenRunning}" DisplayMemberPath="Name"
                   AutomationProperties.Name="{x:Static r:Strings.Props_WhenRunningName}" />
         <TextBlock Grid.Row="1" Grid.Column="1" Style="{StaticResource DialogHint}" Margin="0,0,0,8" Text="{Binding WhenRunningHint}" />
+
+        <TextBlock Grid.Row="2" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Props_StartIn}" Margin="0,0,12,4" />
+        <TextBox Grid.Row="2" Grid.Column="1" Style="{StaticResource DialogTextBox}" Margin="0,0,0,4"
+                 Text="{Binding StartIn, UpdateSourceTrigger=PropertyChanged}"
+                 AutomationProperties.Name="{x:Static r:Strings.Props_StartInName}" />
+        <TextBlock Grid.Row="3" Grid.Column="1" Style="{StaticResource DialogHint}" Margin="0,0,0,8" Text="{Binding StartInHint}" />
+
+        <TextBlock Grid.Row="4" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Props_Run}" Margin="0,0,12,8" />
+        <ComboBox Grid.Row="4" Grid.Column="1" HorizontalAlignment="Left" MinWidth="200" Margin="0,0,0,8"
+                  ItemsSource="{Binding WindowStateOptions}" SelectedItem="{Binding SelectedWindowState}" DisplayMemberPath="Name"
+                  AutomationProperties.Name="{x:Static r:Strings.Props_RunName}" />
+
+        <CheckBox Grid.Row="5" Grid.Column="1" Margin="0,0,0,10" Content="{x:Static r:Strings.Props_RunAsAdmin}" IsChecked="{Binding RunAsAdministrator}" />
+
+        <TextBlock Grid.Row="6" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Props_Browser}" Margin="0,0,12,4"
+                   IsEnabled="{Binding IsWebLink}" />
+        <ComboBox Grid.Row="6" Grid.Column="1" HorizontalAlignment="Left" MinWidth="240" Margin="0,0,0,4"
+                  ItemsSource="{Binding BrowserOptions}" SelectedItem="{Binding SelectedBrowser}" DisplayMemberPath="Name"
+                  IsEnabled="{Binding IsWebLink}"
+                  AutomationProperties.Name="{x:Static r:Strings.Props_BrowserName}" />
+        <CheckBox Grid.Row="7" Grid.Column="1" Margin="0,0,0,4" Content="{x:Static r:Strings.Props_AppWindow}"
+                  IsChecked="{Binding AppWindow}" IsEnabled="{Binding CanChooseAppWindow}" />
       </Grid>
     </Expander>
 

@@ -365,7 +365,7 @@ Made by a newer version of Desktop Icon Grid; kept as a placeholder.</value>
     <value>The location may be a file, a folder or a URL.</value>
   </data>
   <data name="Props_ParametersHint" xml:space="preserve">
-    <value>Files dropped onto the icon replace {file} (one launch per file) or {files} (all at once); without a placeholder they are appended.</value>
+    <value>Files dropped onto the icon replace {file} (one launch per file) or {files} (all at once); without a placeholder they are appended. {clipboard} inserts the clipboard text, {ask:Question} asks for a value.</value>
   </data>
   <data name="Props_LogHint" xml:space="preserve">
     <value>Console programs and batch files only: the program runs without its own window, its output goes to a log file and the icon's Show log command displays it live.</value>
@@ -1345,5 +1345,59 @@ Details are in {1}.</value>
   </data>
   <data name="Props_WhenRunningHint" xml:space="preserve">
     <value>Shift+click or a middle click always starts another; Ctrl+Shift+click starts one as administrator.</value>
+  </data>
+  <data name="Launch_ClipboardEmpty" xml:space="preserve">
+    <value>The clipboard holds no text to pass on.</value>
+  </data>
+  <data name="Launch_AskValue" xml:space="preserve">
+    <value>Value:</value>
+  </data>
+  <data name="Props_StartIn" xml:space="preserve">
+    <value>Start in:</value>
+  </data>
+  <data name="Props_StartInName" xml:space="preserve">
+    <value>Start in</value>
+  </data>
+  <data name="Props_StartInHint" xml:space="preserve">
+    <value>Empty: the program's own folder.</value>
+  </data>
+  <data name="Props_Run" xml:space="preserve">
+    <value>Run:</value>
+  </data>
+  <data name="Props_RunName" xml:space="preserve">
+    <value>Run</value>
+  </data>
+  <data name="Props_RunNormal" xml:space="preserve">
+    <value>Normal window</value>
+  </data>
+  <data name="Props_RunMinimized" xml:space="preserve">
+    <value>Minimized</value>
+  </data>
+  <data name="Props_RunMaximized" xml:space="preserve">
+    <value>Maximized</value>
+  </data>
+  <data name="Props_RunAsAdmin" xml:space="preserve">
+    <value>Run as administrator</value>
+  </data>
+  <data name="Props_Browser" xml:space="preserve">
+    <value>Open web links in:</value>
+  </data>
+  <data name="Props_BrowserName" xml:space="preserve">
+    <value>Open web links in</value>
+  </data>
+  <data name="Props_BrowserDefault" xml:space="preserve">
+    <value>The default browser</value>
+  </data>
+  <data name="Props_BrowserProfile" xml:space="preserve">
+    <value>{0} – {1}</value>
+  </data>
+  <data name="Props_BrowserEdge" xml:space="preserve">
+    <value>Microsoft Edge</value>
+  </data>
+  <data name="Props_BrowserChrome" xml:space="preserve">
+    <value>Google Chrome</value>
+  </data>
+  <data name="Props_AppWindow" xml:space="preserve">
+    <value>Open as an app window (no tabs or address bar)</value>
   </data>
 </root>

@@ -47,7 +47,7 @@ A launchable entry. Fields come straight from the *Shortcut Properties* dialog:
 | --- | --- |
 | Name | Caption (shown as tooltip, and as label when labels are enabled). Pre-filled from the file name. |
 | Location | A file, a folder or a URL. `%ENV%` variables are expanded at launch. The `…` button opens a file picker. |
-| Parameters | Command-line arguments passed to the program. |
+| Parameters | Command-line arguments passed to the program. `{file}`/`{files}` take dropped files; `{clipboard}` inserts the clipboard text and `{ask:Question}` asks for a value when the shortcut is started (each quoted as one argument; Cancel cancels the launch). |
 | Icon | Default = extracted from the Location. *Change icon…* picks a `.png/.jpg/.ico/.bmp` image or an `.exe/.dll/.ico` resource (`path,index` is accepted). *Text icon…* draws text instead (see below). *From a web address…* downloads an image once, scales it to 256 px, centres it on a transparent square and keeps it as a local PNG. *Use default* clears the override. |
 
 **Running badge and output log.** A green dot in the corner of a shortcut shows that a program
@@ -64,6 +64,16 @@ the command line, start time, output, errors and exit code.
 weight and colour. The default family is 宋體 (SimSun), falling back to 新細明體 (PMingLiU) and
 Segoe UI when it is not installed; the colour defaults to the theme's text colour. Hovering an
 icon shows its name and location in a tooltip regardless of how the icon is drawn.
+
+**Advanced** (0.7.0), the options a Windows `.lnk` has:
+
+| Field | Notes |
+| --- | --- |
+| When it is running | Switch to its window, or start another (§3). Follows the Location until picked. |
+| Start in | The working folder; empty uses the program's own folder. `%ENV%` variables are expanded. |
+| Run | Normal window, minimised or maximised. |
+| Run as administrator | An ordinary UAC prompt every time it starts. |
+| Open web links in | The default browser, or a profile of Edge or Chrome (read from their `Local State`), started with `--profile-directory`; *Open as an app window* adds `--app=<url>`. |
 
 Extra flags kept out of the dialog's main layout but supported:
 
@@ -217,8 +227,9 @@ Both dialogs follow the reference layout: a labelled form, an icon preview with
   exist, so paths on removable drives can still be saved.
 - Changing the Location refreshes the icon preview and fills in the Name if it was
   still the automatic one.
-- *Advanced* (shortcuts): *When it is running* — switch to its window or start another (§3). Until it is
-  picked, the choice follows the Location and nothing is stored.
+- *Advanced* (shortcuts): *When it is running* — switch to its window or start another (§3; until it is
+  picked, the choice follows the Location and nothing is stored); start folder, window state, run as
+  administrator and the browser profile for web links (§2.1).
 
 ### 6.1 Edit names table
 

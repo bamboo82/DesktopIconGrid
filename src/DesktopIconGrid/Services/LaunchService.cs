@@ -14,7 +14,7 @@ namespace DesktopIconGrid.Services;
 /// Executes a <see cref="LaunchPlan"/>: starts processes (with output logging when the shortcut asks for it),
 /// hands them to the <see cref="ProcessTracker"/>, or drives the Shell COM object for special actions.
 /// </summary>
-public sealed class LaunchService(ProcessTracker tracker) : ILaunchService
+public sealed class LaunchService(ProcessTracker tracker, ILaunchPrompts? prompts = null) : ILaunchService
 {
     public LaunchResult Launch(ShortcutItem shortcut, bool asAdministrator = false)
     {
@@ -51,6 +51,17 @@ public sealed class LaunchService(ProcessTracker tracker) : ILaunchService
 
         // Expand the template first so dropped paths containing '%' are never re-expanded.
         var template = string.IsNullOrWhiteSpace(shortcut.Parameters) ? null : Environment.ExpandEnvironmentVariables(shortcut.Parameters);
+        if (template is not null && LaunchPlaceholders.HasAny(template))
+        {
+            var filled = FillPlaceholders(shortcut, template);
+            if (filled.Result is { } stopped)
+            {
+                return stopped;
+            }
+
+            template = filled.Parameters;
+        }
+
         var argumentSets = DropArguments.BuildArgumentSets(template, paths);
         if (argumentSets.Count == 0)
         {
@@ -79,6 +90,20 @@ public sealed class LaunchService(ProcessTracker tracker) : ILaunchService
 
     private LaunchResult LaunchCore(ShortcutItem shortcut, bool expandParameters = true, bool asAdministrator = false)
     {
+        if (expandParameters && !string.IsNullOrWhiteSpace(shortcut.Parameters) && LaunchPlaceholders.HasAny(shortcut.Parameters))
+        {
+            // Expand the template first, then fill in the values: a '%' in the clipboard text or an answer stays as typed.
+            var filled = FillPlaceholders(shortcut, Environment.ExpandEnvironmentVariables(shortcut.Parameters));
+            if (filled.Result is { } stopped)
+            {
+                return stopped;
+            }
+
+            shortcut = (ShortcutItem)shortcut.Clone();
+            shortcut.Parameters = filled.Parameters;
+            expandParameters = false;
+        }
+
         LaunchPlan plan;
         try
         {
@@ -111,6 +136,37 @@ public sealed class LaunchService(ProcessTracker tracker) : ILaunchService
         }
 
         return result;
+    }
+
+    /// <summary>
+    /// Fills in <c>{clipboard}</c> and <c>{ask:…}</c> (see <see cref="LaunchPlaceholders"/>). Returns a result instead
+    /// when the launch stops: the clipboard holds no text, or the user cancelled a question.
+    /// </summary>
+    private (string Parameters, LaunchResult? Result) FillPlaceholders(ShortcutItem shortcut, string template)
+    {
+        string? clipboard = null;
+        if (LaunchPlaceholders.UsesClipboard(template))
+        {
+            clipboard = prompts?.ClipboardText();
+            if (string.IsNullOrEmpty(clipboard))
+            {
+                return (template, LaunchResult.Failure(Strings.Launch_ClipboardEmpty));
+            }
+        }
+
+        var answers = new List<string>();
+        foreach (var prompt in LaunchPlaceholders.Prompts(template))
+        {
+            var answer = prompts?.Ask(shortcut.Name, prompt.Length == 0 ? Strings.Launch_AskValue : prompt);
+            if (answer is null)
+            {
+                return (template, LaunchResult.Cancelled);
+            }
+
+            answers.Add(answer);
+        }
+
+        return (LaunchPlaceholders.Fill(template, clipboard, answers), null);
     }
 
     private LaunchResult StartWithLog(ShortcutItem shortcut, ProcessStartInfo startInfo)

@@ -870,6 +870,15 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Value:.
+        /// </summary>
+        public static string Launch_AskValue {
+            get {
+                return ResourceManager.GetString("Launch_AskValue", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to This shortcut cannot open files..
         /// </summary>
         public static string Launch_CannotOpenFiles {
@@ -902,6 +911,15 @@ namespace DesktopIconGrid.Resources {
         public static string Launch_CantOpenWith {
             get {
                 return ResourceManager.GetString("Launch_CantOpenWith", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The clipboard holds no text to pass on..
+        /// </summary>
+        public static string Launch_ClipboardEmpty {
+            get {
+                return ResourceManager.GetString("Launch_ClipboardEmpty", resourceCulture);
             }
         }
 
@@ -2022,6 +2040,15 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Open as an app window (no tabs or address bar).
+        /// </summary>
+        public static string Props_AppWindow {
+            get {
+                return ResourceManager.GetString("Props_AppWindow", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Browse for a file….
         /// </summary>
         public static string Props_BrowseFile {
@@ -2045,6 +2072,60 @@ namespace DesktopIconGrid.Resources {
         public static string Props_BrowseImage {
             get {
                 return ResourceManager.GetString("Props_BrowseImage", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Open web links in:.
+        /// </summary>
+        public static string Props_Browser {
+            get {
+                return ResourceManager.GetString("Props_Browser", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Google Chrome.
+        /// </summary>
+        public static string Props_BrowserChrome {
+            get {
+                return ResourceManager.GetString("Props_BrowserChrome", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The default browser.
+        /// </summary>
+        public static string Props_BrowserDefault {
+            get {
+                return ResourceManager.GetString("Props_BrowserDefault", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Microsoft Edge.
+        /// </summary>
+        public static string Props_BrowserEdge {
+            get {
+                return ResourceManager.GetString("Props_BrowserEdge", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Open web links in.
+        /// </summary>
+        public static string Props_BrowserName {
+            get {
+                return ResourceManager.GetString("Props_BrowserName", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to {0} – {1}.
+        /// </summary>
+        public static string Props_BrowserProfile {
+            get {
+                return ResourceManager.GetString("Props_BrowserProfile", resourceCulture);
             }
         }
 
@@ -2220,11 +2301,92 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Run:.
+        /// </summary>
+        public static string Props_Run {
+            get {
+                return ResourceManager.GetString("Props_Run", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Run as administrator.
+        /// </summary>
+        public static string Props_RunAsAdmin {
+            get {
+                return ResourceManager.GetString("Props_RunAsAdmin", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Maximized.
+        /// </summary>
+        public static string Props_RunMaximized {
+            get {
+                return ResourceManager.GetString("Props_RunMaximized", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Minimized.
+        /// </summary>
+        public static string Props_RunMinimized {
+            get {
+                return ResourceManager.GetString("Props_RunMinimized", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Run.
+        /// </summary>
+        public static string Props_RunName {
+            get {
+                return ResourceManager.GetString("Props_RunName", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Normal window.
+        /// </summary>
+        public static string Props_RunNormal {
+            get {
+                return ResourceManager.GetString("Props_RunNormal", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Shortcut Properties.
         /// </summary>
         public static string Props_ShortcutTitle {
             get {
                 return ResourceManager.GetString("Props_ShortcutTitle", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Start in:.
+        /// </summary>
+        public static string Props_StartIn {
+            get {
+                return ResourceManager.GetString("Props_StartIn", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Empty: the program's own folder..
+        /// </summary>
+        public static string Props_StartInHint {
+            get {
+                return ResourceManager.GetString("Props_StartInHint", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Start in.
+        /// </summary>
+        public static string Props_StartInName {
+            get {
+                return ResourceManager.GetString("Props_StartInName", resourceCulture);
             }
         }
 

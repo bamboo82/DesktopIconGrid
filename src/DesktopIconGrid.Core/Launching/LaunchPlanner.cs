@@ -34,8 +34,9 @@ public static class LaunchPlanner
     public static LaunchPlan Plan(ShortcutItem shortcut, bool expandParameters) => Plan(shortcut, expandParameters, asAdministrator: false);
 
     /// <summary>
-    /// Plans the launch. <paramref name="asAdministrator"/> asks for elevation (the <c>runas</c> verb, an ordinary UAC
-    /// prompt) for files and programs; links and shell locations ignore it.
+    /// Plans the launch with the shortcut's options: its start folder, window state, elevation (also asked for by
+    /// <paramref name="asAdministrator"/>: the <c>runas</c> verb, an ordinary UAC prompt; links and shell locations
+    /// ignore it) and, for web links, the browser and profile.
     /// </summary>
     public static LaunchPlan Plan(ShortcutItem shortcut, bool expandParameters, bool asAdministrator)
     {
@@ -70,6 +71,14 @@ public static class LaunchPlanner
                 Arguments = parameters is null ? Quote(location) : $"{Quote(location)} {parameters}",
             };
         }
+        else if (IsWebLink(location) && BrowserProfiles.Find(shortcut.Browser) is { } browser)
+        {
+            // The shell finds the browser under App Paths; the profile and the app window are its own switches.
+            startInfo = new ProcessStartInfo(browser.Executable)
+            {
+                Arguments = BrowserProfiles.Arguments(location, shortcut.BrowserProfile, shortcut.AppWindow, parameters),
+            };
+        }
         else
         {
             startInfo = new ProcessStartInfo(location);
@@ -78,18 +87,26 @@ public static class LaunchPlanner
                 startInfo.Arguments = parameters;
             }
 
-            var workingDirectory = DefaultWorkingDirectory(location);
+            var workingDirectory = string.IsNullOrWhiteSpace(shortcut.StartIn)
+                ? DefaultWorkingDirectory(location)
+                : Environment.ExpandEnvironmentVariables(shortcut.StartIn.Trim());
             if (workingDirectory is not null)
             {
                 startInfo.WorkingDirectory = workingDirectory;
             }
 
-            if (asAdministrator && !IsUri(location))
+            if ((asAdministrator || shortcut.RunAsAdministrator) && !IsUri(location))
             {
                 startInfo.Verb = RunAsVerb;
             }
         }
 
+        startInfo.WindowStyle = shortcut.WindowState?.Trim().ToLowerInvariant() switch
+        {
+            ShortcutItem.WindowMinimized => ProcessWindowStyle.Minimized,
+            ShortcutItem.WindowMaximized => ProcessWindowStyle.Maximized,
+            _ => ProcessWindowStyle.Normal,
+        };
         startInfo.UseShellExecute = true;
         return new LaunchPlan(LaunchAction.StartProcess, startInfo);
     }
@@ -116,6 +133,11 @@ public static class LaunchPlanner
         Uri.TryCreate(value, UriKind.Absolute, out var uri)
         && uri.Scheme.Length > 1
         && !string.Equals(uri.Scheme, Uri.UriSchemeFile, StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>An <c>http://</c> or <c>https://</c> link: what a browser and profile apply to.</summary>
+    public static bool IsWebLink(string? value) =>
+        Uri.TryCreate(value?.Trim(), UriKind.Absolute, out var uri)
+        && (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps);
 
     public static bool IsSpecial(string? location) =>
         location is not null && location.TrimStart().StartsWith(SpecialScheme, StringComparison.OrdinalIgnoreCase);

@@ -94,4 +94,30 @@ public class ItemPropertiesViewModelTests
         Assert.True(back.Apply());
         Assert.Null(program.WhenRunning);
     }
+
+    [Fact]
+    public void The_advanced_launch_options_are_applied_and_a_browser_profile_from_another_PC_is_kept()
+    {
+        var shortcut = new ShortcutItem { Name = "Mail", Location = "https://mail.example.com", Browser = "edge", BrowserProfile = "Profile 9", AppWindow = true };
+        var browsers = new[] { BrowserCatalog.DefaultBrowser, new BrowserChoice("edge", "Default", "Microsoft Edge – Personal") };
+        var viewModel = new ItemPropertiesViewModel(shortcut, isNew: false, new CountingIcons(), browsers);
+
+        Assert.True(viewModel.IsWebLink);
+        Assert.Equal("Profile 9", viewModel.SelectedBrowser.Profile); // not installed here, kept as it is
+        Assert.Contains(viewModel.SelectedBrowser, viewModel.BrowserOptions);
+        viewModel.StartIn = @" C:\Work ";
+        viewModel.SelectedWindowState = ItemPropertiesViewModel.WindowStateChoices.Single(c => c.Value == ShortcutItem.WindowMaximized);
+        viewModel.RunAsAdministrator = true;
+        Assert.True(viewModel.Apply());
+
+        Assert.Equal(@"C:\Work", shortcut.StartIn);
+        Assert.Equal(ShortcutItem.WindowMaximized, shortcut.WindowState);
+        Assert.True(shortcut.RunAsAdministrator);
+        Assert.Equal(("edge", "Profile 9", true), (shortcut.Browser, shortcut.BrowserProfile, shortcut.AppWindow));
+
+        viewModel.SelectedBrowser = BrowserCatalog.DefaultBrowser;
+        Assert.False(viewModel.CanChooseAppWindow);
+        Assert.True(viewModel.Apply());
+        Assert.Equal((null, null, false), (shortcut.Browser, shortcut.BrowserProfile, shortcut.AppWindow));
+    }
 }
