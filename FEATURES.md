@@ -277,6 +277,38 @@ resets the selected rows, *Use original names for all* resets everything; *Save*
 changes at once. The given names are the captions on the bar and will be the phrases for
 voice commands in a later design, so this is where that vocabulary is maintained.
 
+**Voice spike (0.7.0).** The question: does `Windows.Media.SpeechRecognition.SpeechRecognizer` with a list
+constraint recognise these names in zh-TW from an unpackaged app on Windows 11 — yes or no?
+
+**Result: not answered yet.** The spike needs a Windows 11 PC with a microphone and the Chinese (Traditional,
+Taiwan) speech pack; the machine this release was built on is Linux, and CI has no audio. What is known
+without running it:
+
+- The recogniser is a WinRT API. An unpackaged .NET process reaches it through the Windows SDK projection of
+  a `net10.0-windows10.0.19041.0` target framework, with no package added: `tools/VoiceProbe` compiles that
+  way. It is not part of the app, its solution or its release.
+- A list constraint is recognised on the device, so it should not need the online-speech consent that
+  dictation needs (error `0x80045509`). To be confirmed by the probe.
+- An unpackaged app declares no capabilities; its microphone access is *Settings → Privacy & security →
+  Microphone → Let desktop apps access your microphone*. With that off, expect `0x80070005`.
+- zh-TW must be listed in `SpeechRecognizer.SupportedGrammarLanguages`, which shows the installed speech
+  packs (*Settings → Time & language → Language & region → 中文(台灣) → Speech recognition*).
+- Microsoft has deprecated Windows Speech Recognition, the desktop dictation app, in favour of Voice access.
+  Whether that will affect `Windows.Media.SpeechRecognition` is not stated anywhere; the probe shows the state
+  of a current build.
+
+To settle it, on the owner's PC (a few minutes):
+
+```
+dotnet run --project tools/VoiceProbe -- zh-TW 記事本 小算盤 檔案總管
+```
+
+It prints the installed speech languages, compiles the list, listens three times and ends with
+`ANSWER: yes` or `ANSWER: no (reason)`; the output goes here. Then: **yes** → #11 is built in 0.10.0 as
+planned; **no** for want of a speech pack → that pack becomes a documented requirement and the probe is run
+again; **no** for any other reason → the SAPI fallback (`System.Speech`, a package) is the owner's call.
+Nothing is built for voice until the answer is in this section.
+
 ### 6.2 Log viewer
 
 Tray → *Log viewer…* (also in the options menu) opens the application log: everything the

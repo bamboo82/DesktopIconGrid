@@ -5,7 +5,9 @@ version numbers follow [Semantic Versioning](https://semver.org/).
 
 ## [0.7.0] – Unreleased
 
-"Get there faster": the first release of the plan in [docs/ROADMAP.md](docs/ROADMAP.md).
+"Get there faster": the first release of the plan in [docs/ROADMAP.md](docs/ROADMAP.md). The voice spike
+could not be run here (no Windows, no microphone): its probe is in `tools/VoiceProbe`, and FEATURES §6.1
+says how to run it and what is known so far. Nothing is built for voice until it answers.
 
 ### Added
 
