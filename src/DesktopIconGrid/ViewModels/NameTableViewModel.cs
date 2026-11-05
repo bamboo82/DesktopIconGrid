@@ -1,8 +1,12 @@
 using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Windows.Data;
 using System.Windows.Input;
+using System.Windows.Media;
 using DesktopIconGrid.Core.Models;
 using DesktopIconGrid.Infrastructure;
 using DesktopIconGrid.Resources;
+using DesktopIconGrid.Services;
 
 namespace DesktopIconGrid.ViewModels;
 
@@ -21,7 +25,17 @@ public sealed class NameRowViewModel : ObservableObject
         ModifiedAt = item.ModifiedAt?.LocalDateTime;
         InitialName = item.Name;
         _givenName = item.Name;
+        ColorTag = ColorTags.Find(item.ColorTag)?.Name;
+        ColorTagName = ColorTagNames.Of(item.ColorTag);
+        ColorTagBrush = ColorTags.Find(item.ColorTag) is { } tag ? ThemeManager.ToBrush(tag.Color) : null;
     }
+
+    /// <summary>The item's known colour tag (<see cref="ColorTags"/>), or <see langword="null"/>.</summary>
+    public string? ColorTag { get; }
+
+    public string ColorTagName { get; }
+
+    public Brush? ColorTagBrush { get; }
 
     public Guid Id { get; }
 
@@ -57,25 +71,53 @@ public sealed class NameRowViewModel : ObservableObject
     public bool IsOriginal => string.Equals(_givenName.Trim(), OriginalName, StringComparison.Ordinal);
 }
 
-/// <summary>Backs the "Edit names" table: every item on the bar in one sortable grid with editable names.</summary>
+/// <summary>One choice of the table's colour-tag filter.</summary>
+/// <param name="Tag">A tag name, <see cref="NameTableViewModel.AllTags"/> or <see cref="NameTableViewModel.NoTag"/>.</param>
+public sealed record TagFilterOption(string Tag, string Name, Brush? Brush);
+
+/// <summary>
+/// Backs the "Edit names" table: every item on the bar (separators aside) in one sortable grid with editable names,
+/// which can be narrowed to the items with one colour tag.
+/// </summary>
 public sealed class NameTableViewModel : ObservableObject
 {
+    /// <summary>The filter that shows every row.</summary>
+    public const string AllTags = "*";
+
+    /// <summary>The filter that shows the rows without a colour tag.</summary>
+    public const string NoTag = "";
+
     private readonly LauncherViewModel _root;
+    private TagFilterOption _selectedTagFilter;
 
     public NameTableViewModel(LauncherViewModel root)
     {
         _root = root;
         foreach (var item in root.Model.Items)
         {
-            Rows.Add(CreateRow(item, groupName: null));
+            if (item is not SeparatorItem)
+            {
+                Rows.Add(CreateRow(item, groupName: null));
+            }
+
             if (item is GroupItem group)
             {
-                foreach (var child in group.Items)
+                foreach (var child in group.Items.Where(c => c is not SeparatorItem))
                 {
                     Rows.Add(CreateRow(child, group.Name));
                 }
             }
         }
+
+        TagFilters =
+        [
+            new TagFilterOption(AllTags, Strings.Names_AllItems, null),
+            .. ColorTags.All.Select(t => new TagFilterOption(t.Name, ColorTagNames.Of(t.Name), ThemeManager.ToBrush(t.Color))),
+            new TagFilterOption(NoTag, Strings.Names_Untagged, null),
+        ];
+        _selectedTagFilter = TagFilters[0];
+        RowsView = CollectionViewSource.GetDefaultView(Rows);
+        RowsView.Filter = row => row is NameRowViewModel r && Matches(r, _selectedTagFilter.Tag);
 
         UseOriginalCommand = new RelayCommand<NameRowViewModel>(row => row.GivenName = row.OriginalName, row => row is not null && !row.IsOriginal);
         UseOriginalForAllCommand = new RelayCommand(() =>
@@ -88,6 +130,35 @@ public sealed class NameTableViewModel : ObservableObject
     }
 
     public ObservableCollection<NameRowViewModel> Rows { get; } = [];
+
+    /// <summary>The rows the table shows: <see cref="Rows"/> through the colour-tag filter.</summary>
+    public ICollectionView RowsView { get; }
+
+    public IReadOnlyList<TagFilterOption> TagFilters { get; }
+
+    public TagFilterOption SelectedTagFilter
+    {
+        get => _selectedTagFilter;
+        set
+        {
+            if (value is not null && SetProperty(ref _selectedTagFilter, value))
+            {
+                RowsView.Refresh();
+            }
+        }
+    }
+
+    /// <summary>True when the row passes the filter <paramref name="tag"/> (<see cref="AllTags"/>, <see cref="NoTag"/> or a tag name).</summary>
+    public static bool Matches(NameRowViewModel row, string tag)
+    {
+        ArgumentNullException.ThrowIfNull(row);
+        return tag switch
+        {
+            AllTags => true,
+            NoTag => row.ColorTag is null,
+            _ => string.Equals(row.ColorTag, tag, StringComparison.Ordinal),
+        };
+    }
 
     public string Hint => Strings.Names_Hint;
 
@@ -122,7 +193,7 @@ public sealed class NameTableViewModel : ObservableObject
         return item switch
         {
             ShortcutItem shortcut => new NameRowViewModel(item, ShortcutItem.SuggestName(shortcut.Location), Strings.Names_KindShortcut, groupName, shortcut.Location),
-            GroupItem group => new NameRowViewModel(item, Strings.Common_Group, Strings.Common_Group, groupName, string.Format(Strings.Names_GroupItems, group.Items.Count)),
+            GroupItem group => new NameRowViewModel(item, Strings.Common_Group, Strings.Common_Group, groupName, string.Format(Strings.Names_GroupItems, group.Items.Count(i => i is not SeparatorItem))),
             SpecialIconItem special => new NameRowViewModel(item, _root.SpecialIcons.Resolve(special.Kind).DisplayName, _root.SpecialIcons.Resolve(special.Kind).DisplayName, groupName, special.GetSetting("folderName") ?? special.GetSetting("drive") ?? string.Empty),
             _ => new NameRowViewModel(item, item.Name, Strings.Names_KindItem, groupName, string.Empty),
         };

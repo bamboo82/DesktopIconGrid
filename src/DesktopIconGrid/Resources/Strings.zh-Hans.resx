@@ -1430,4 +1430,73 @@
   <data name="Pointer_BackToolTip" xml:space="preserve">
     <value>返回所有图标 (Backspace)</value>
   </data>
+  <data name="Menu_AddSeparator" xml:space="preserve">
+    <value>添加分隔</value>
+  </data>
+  <data name="Menu_SeparatorKind" xml:space="preserve">
+    <value>分隔</value>
+  </data>
+  <data name="Separator_Line" xml:space="preserve">
+    <value>线条</value>
+  </data>
+  <data name="Separator_Gap" xml:space="preserve">
+    <value>空格</value>
+  </data>
+  <data name="Separator_Label" xml:space="preserve">
+    <value>标题…</value>
+  </data>
+  <data name="Separator_LabelTitle" xml:space="preserve">
+    <value>标题</value>
+  </data>
+  <data name="Separator_LabelPrompt" xml:space="preserve">
+    <value>标题文字：</value>
+  </data>
+  <data name="Separator_LineName" xml:space="preserve">
+    <value>分隔线</value>
+  </data>
+  <data name="Separator_GapName" xml:space="preserve">
+    <value>空格</value>
+  </data>
+  <data name="Menu_ColorTag" xml:space="preserve">
+    <value>颜色标签</value>
+  </data>
+  <data name="Tag_None" xml:space="preserve">
+    <value>无</value>
+  </data>
+  <data name="Tag_Red" xml:space="preserve">
+    <value>红色</value>
+  </data>
+  <data name="Tag_Orange" xml:space="preserve">
+    <value>橙色</value>
+  </data>
+  <data name="Tag_Yellow" xml:space="preserve">
+    <value>黄色</value>
+  </data>
+  <data name="Tag_Green" xml:space="preserve">
+    <value>绿色</value>
+  </data>
+  <data name="Tag_Blue" xml:space="preserve">
+    <value>蓝色</value>
+  </data>
+  <data name="Tag_Purple" xml:space="preserve">
+    <value>紫色</value>
+  </data>
+  <data name="Tag_Gray" xml:space="preserve">
+    <value>灰色</value>
+  </data>
+  <data name="Names_ColorTag" xml:space="preserve">
+    <value>颜色标签</value>
+  </data>
+  <data name="Names_Show" xml:space="preserve">
+    <value>显示：</value>
+  </data>
+  <data name="Names_AllItems" xml:space="preserve">
+    <value>全部项目</value>
+  </data>
+  <data name="Names_Untagged" xml:space="preserve">
+    <value>没有颜色标签</value>
+  </data>
+  <data name="Names_ShowName" xml:space="preserve">
+    <value>显示有此颜色标签的项目</value>
+  </data>
 </root>

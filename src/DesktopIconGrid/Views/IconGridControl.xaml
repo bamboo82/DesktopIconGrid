@@ -3,7 +3,203 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:r="clr-namespace:DesktopIconGrid.Resources"
              xmlns:vm="clr-namespace:DesktopIconGrid.ViewModels"
+             xmlns:views="clr-namespace:DesktopIconGrid.Views"
              Focusable="False">
+  <UserControl.Resources>
+    <!-- An icon: a shortcut, a group or a special icon -->
+    <DataTemplate x:Key="IconTemplate" DataType="{x:Type vm:ItemViewModel}">
+      <Button Style="{StaticResource IconButtonStyle}"
+              ToolTip="{Binding ToolTipText}"
+              ToolTipService.InitialShowDelay="350"
+              AutomationProperties.Name="{Binding Name}"
+              AutomationProperties.HelpText="{Binding ToolTipText}"
+              PreviewMouseLeftButtonDown="Item_PreviewMouseLeftButtonDown"
+              PreviewMouseMove="Item_PreviewMouseMove"
+              PreviewMouseLeftButtonUp="Item_PreviewMouseLeftButtonUp"
+              LostMouseCapture="Item_LostMouseCapture"
+              Click="Item_Click"
+              MouseDoubleClick="Item_MouseDoubleClick"
+              MouseUp="Item_MouseUp"
+              KeyDown="Item_KeyDown">
+        <Button.ContextMenu>
+          <ContextMenu Opened="ItemMenu_Opened">
+            <MenuItem Header="{x:Static r:Strings.Menu_NewShortcut}" Command="{Binding NewShortcutAfterCommand}" />
+            <MenuItem Header="{x:Static r:Strings.Menu_NewGroup}" Command="{Binding NewGroupAfterCommand}"
+                      Visibility="{Binding IsAtRoot, Converter={StaticResource BoolToVisibility}}" />
+            <MenuItem Header="{x:Static r:Strings.Menu_AddWindowsItem}" Tag="windows-items" />
+            <MenuItem Header="{x:Static r:Strings.Menu_AddSpecialIcon}" Tag="special-icons" />
+            <MenuItem Header="{x:Static r:Strings.Menu_AddSeparator}">
+              <MenuItem Header="{x:Static r:Strings.Separator_Line}" Tag="line" Click="AddSeparatorAfter_Click" />
+              <MenuItem Header="{x:Static r:Strings.Separator_Gap}" Tag="gap" Click="AddSeparatorAfter_Click" />
+              <MenuItem Header="{x:Static r:Strings.Separator_Label}" Tag="label" Click="AddSeparatorAfter_Click" />
+            </MenuItem>
+            <Separator />
+            <MenuItem Tag="special-actions-anchor" Visibility="Collapsed" />
+            <MenuItem Header="{x:Static r:Strings.Common_Remove}" Command="{Binding RemoveCommand}" InputGestureText="Del" />
+            <MenuItem Header="{Binding MultiLaunchMenuHeader}" Command="{Binding ToggleMultiLaunchCommand}"
+                      Visibility="{Binding IsShortcut, Converter={StaticResource BoolToVisibility}}" />
+            <MenuItem Header="{x:Static r:Strings.Menu_OpenFileLocation}" Command="{Binding OpenLocationCommand}"
+                      Visibility="{Binding IsShortcut, Converter={StaticResource BoolToVisibility}}" />
+            <MenuItem Header="{x:Static r:Strings.Menu_ShowLog}" Command="{Binding ShowLogCommand}"
+                      Visibility="{Binding CapturesLog, Converter={StaticResource BoolToVisibility}}" />
+            <MenuItem Header="{x:Static r:Strings.Menu_ColorTag}" Tag="color-tags" />
+            <Separator />
+            <MenuItem Header="{x:Static r:Strings.Common_Properties}" Command="{Binding PropertiesCommand}" />
+          </ContextMenu>
+        </Button.ContextMenu>
+
+        <Grid>
+          <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+          </Grid.RowDefinitions>
+
+          <Grid Width="{Binding Root.IconSize}" Height="{Binding Root.IconSize}"
+                HorizontalAlignment="Center" VerticalAlignment="Center">
+            <Image Source="{Binding Image, TargetNullValue={StaticResource PlaceholderIconImage}}"
+                   Stretch="Uniform"
+                   RenderOptions.BitmapScalingMode="HighQuality"
+                   SnapsToDevicePixels="True"
+                   Visibility="{Binding ShowsImage, Converter={StaticResource BoolToVisibility}}" />
+            <Border CornerRadius="6" ClipToBounds="True"
+                    Background="{DynamicResource Theme.Hover}"
+                    BorderBrush="{DynamicResource Theme.HoverBorder}" BorderThickness="1"
+                    Visibility="{Binding HasTextIcon, Converter={StaticResource BoolToVisibility}}">
+              <TextBlock Text="{Binding TextIconText}"
+                         FontFamily="{Binding TextIconFontFamily}"
+                         FontSize="{Binding TextIconFontSize}"
+                         FontWeight="{Binding TextIconFontWeight}"
+                         TextAlignment="Center" TextWrapping="Wrap"
+                         HorizontalAlignment="Center" VerticalAlignment="Center"
+                         Margin="1">
+                <TextBlock.Style>
+                  <Style TargetType="TextBlock">
+                    <Setter Property="Foreground" Value="{DynamicResource Theme.Foreground}" />
+                    <Style.Triggers>
+                      <DataTrigger Binding="{Binding HasTextIconColor}" Value="True">
+                        <Setter Property="Foreground" Value="{Binding TextIconBrush}" />
+                      </DataTrigger>
+                    </Style.Triggers>
+                  </Style>
+                </TextBlock.Style>
+              </TextBlock>
+            </Border>
+            <Viewbox Stretch="Uniform" Visibility="{Binding ShowsGauge, Converter={StaticResource BoolToVisibility}}">
+              <Grid Width="100" Height="100" DataContext="{Binding Gauge}">
+                <!-- Ring -->
+                <Grid Visibility="{Binding IsRing, Converter={StaticResource BoolToVisibility}}">
+                  <Ellipse Width="88" Height="88" Stroke="{DynamicResource Theme.HoverBorder}" StrokeThickness="12" />
+                  <Path Data="{Binding ArcGeometry}" Stroke="{Binding LevelBrush}" StrokeThickness="12"
+                        StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
+                  <TextBlock Text="{Binding Label}" FontSize="26" FontWeight="SemiBold"
+                             Foreground="{DynamicResource Theme.Foreground}"
+                             HorizontalAlignment="Center" VerticalAlignment="Center" />
+                </Grid>
+                <!-- Bar -->
+                <Grid Visibility="{Binding IsBar, Converter={StaticResource BoolToVisibility}}">
+                  <TextBlock Text="{Binding Caption}" FontSize="24" FontWeight="SemiBold"
+                             Foreground="{DynamicResource Theme.Foreground}"
+                             HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,6,0,0" />
+                  <Border Height="22" Margin="8,0,8,30" VerticalAlignment="Bottom" CornerRadius="6" ClipToBounds="True"
+                          Background="{DynamicResource Theme.HoverBorder}">
+                    <Grid>
+                      <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="{Binding FillStar}" />
+                        <ColumnDefinition Width="{Binding RemainderStar}" />
+                      </Grid.ColumnDefinitions>
+                      <Border Grid.Column="0" Background="{Binding LevelBrush}" CornerRadius="6" />
+                    </Grid>
+                  </Border>
+                  <TextBlock Text="{Binding Label}" FontSize="22"
+                             Foreground="{DynamicResource Theme.Foreground}"
+                             HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,2" />
+                </Grid>
+                <!-- Number -->
+                <Grid Visibility="{Binding IsNumber, Converter={StaticResource BoolToVisibility}}">
+                  <TextBlock Text="{Binding Label}" FontSize="42" FontWeight="Bold"
+                             Foreground="{Binding LevelBrush}"
+                             HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,-14,0,0" />
+                  <TextBlock Text="{Binding Caption}" FontSize="22"
+                             Foreground="{DynamicResource Theme.Foreground}"
+                             HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,2" />
+                </Grid>
+              </Grid>
+            </Viewbox>
+            <Ellipse Width="8" Height="8"
+                     Fill="{StaticResource BadgeBrush}"
+                     Stroke="#80000000" StrokeThickness="1"
+                     HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                     Margin="0,0,-2,-2"
+                     Visibility="{Binding IsMultiLaunch, Converter={StaticResource BoolToVisibility}}" />
+            <Ellipse Width="8" Height="8"
+                     Fill="{StaticResource RunningBadgeBrush}"
+                     Stroke="#80000000" StrokeThickness="1"
+                     HorizontalAlignment="Left" VerticalAlignment="Bottom"
+                     Margin="-2,0,0,-2"
+                     ToolTip="{x:Static r:Strings.Grid_Running}"
+                     Visibility="{Binding IsRunning, Converter={StaticResource BoolToVisibility}}" />
+          </Grid>
+
+          <TextBlock Grid.Row="1"
+                     Text="{Binding Name}"
+                     Foreground="{DynamicResource Theme.Foreground}"
+                     FontSize="11"
+                     TextAlignment="Center"
+                     TextTrimming="CharacterEllipsis"
+                     Margin="2,1,2,0"
+                     Visibility="{Binding Root.ShowLabels, Converter={StaticResource BoolToVisibility}}" />
+
+          <!-- Colour tag -->
+          <Path Grid.RowSpan="2"
+                Data="M0,0 L9,0 L0,9 Z"
+                Fill="{Binding ColorTagBrush}"
+                HorizontalAlignment="Left" VerticalAlignment="Top"
+                Margin="2,2,0,0"
+                IsHitTestVisible="False"
+                Visibility="{Binding HasColorTag, Converter={StaticResource BoolToVisibility}}" />
+        </Grid>
+      </Button>
+    </DataTemplate>
+
+    <!-- A separator: a thin line, an empty cell or a caption -->
+    <DataTemplate x:Key="SeparatorTemplate" DataType="{x:Type vm:ItemViewModel}">
+      <Button Style="{StaticResource SeparatorButtonStyle}"
+              AutomationProperties.Name="{Binding SeparatorName}"
+              PreviewMouseLeftButtonDown="Item_PreviewMouseLeftButtonDown"
+              PreviewMouseMove="Item_PreviewMouseMove"
+              PreviewMouseLeftButtonUp="Item_PreviewMouseLeftButtonUp"
+              LostMouseCapture="Item_LostMouseCapture"
+              KeyDown="Item_KeyDown">
+        <Button.ContextMenu>
+          <ContextMenu>
+            <MenuItem Header="{x:Static r:Strings.Separator_Line}" Tag="line" IsChecked="{Binding IsLineSeparator, Mode=OneWay}" Click="SeparatorKind_Click" />
+            <MenuItem Header="{x:Static r:Strings.Separator_Gap}" Tag="gap" IsChecked="{Binding IsGapSeparator, Mode=OneWay}" Click="SeparatorKind_Click" />
+            <MenuItem Header="{x:Static r:Strings.Separator_Label}" Tag="label" IsChecked="{Binding IsLabelSeparator, Mode=OneWay}" Click="SeparatorKind_Click" />
+            <Separator />
+            <MenuItem Header="{x:Static r:Strings.Menu_NewShortcut}" Command="{Binding NewShortcutAfterCommand}" />
+            <MenuItem Header="{x:Static r:Strings.Common_Remove}" Command="{Binding RemoveCommand}" InputGestureText="Del" />
+          </ContextMenu>
+        </Button.ContextMenu>
+        <Grid>
+          <views:DividerLine Stroke="{DynamicResource Theme.HoverBorder}"
+                             Visibility="{Binding IsLineSeparator, Converter={StaticResource BoolToVisibility}}" />
+          <TextBlock Text="{Binding Name}"
+                     Foreground="{DynamicResource Theme.Hint}"
+                     FontSize="11"
+                     FontWeight="SemiBold"
+                     VerticalAlignment="Center"
+                     Margin="5,0"
+                     TextTrimming="CharacterEllipsis"
+                     Visibility="{Binding IsLabelSeparator, Converter={StaticResource BoolToVisibility}}" />
+        </Grid>
+      </Button>
+    </DataTemplate>
+
+    <views:ItemTemplateSelector x:Key="ItemTemplates"
+                                Icon="{StaticResource IconTemplate}"
+                                Separator="{StaticResource SeparatorTemplate}" />
+  </UserControl.Resources>
+
   <Grid>
     <ScrollViewer x:Name="Scroller"
                   Background="Transparent"
@@ -22,6 +218,11 @@
                     Visibility="{Binding IsRoot, Converter={StaticResource BoolToVisibility}}" />
           <MenuItem Header="{x:Static r:Strings.Menu_AddWindowsItem}" Tag="windows-items" />
           <MenuItem Header="{x:Static r:Strings.Menu_AddSpecialIcon}" Tag="special-icons" />
+          <MenuItem Header="{x:Static r:Strings.Menu_AddSeparator}">
+            <MenuItem Header="{x:Static r:Strings.Separator_Line}" Tag="line" Click="AddSeparator_Click" />
+            <MenuItem Header="{x:Static r:Strings.Separator_Gap}" Tag="gap" Click="AddSeparator_Click" />
+            <MenuItem Header="{x:Static r:Strings.Separator_Label}" Tag="label" Click="AddSeparator_Click" />
+          </MenuItem>
           <Separator />
           <MenuItem Header="{x:Static r:Strings.Menu_LaunchMultiLaunch}" Command="{Binding Root.LaunchMultiLaunchCommand}" />
           <MenuItem Header="{x:Static r:Strings.Menu_Settings}" Command="{Binding Root.OpenSettingsCommand}" />
@@ -30,157 +231,22 @@
 
       <ItemsControl x:Name="ItemsHost"
                     ItemsSource="{Binding Items}"
+                    ItemTemplateSelector="{StaticResource ItemTemplates}"
                     Focusable="False"
                     Margin="1"
                     KeyboardNavigation.DirectionalNavigation="Contained"
                     KeyboardNavigation.TabNavigation="Continue">
         <ItemsControl.ItemsPanel>
           <ItemsPanelTemplate>
-            <WrapPanel Orientation="Horizontal"
-                       ItemWidth="{Binding Root.CellWidth}"
-                       ItemHeight="{Binding Root.CellHeight}" />
+            <views:FlowPanel ItemWidth="{Binding Root.CellWidth}"
+                             ItemHeight="{Binding Root.CellHeight}" />
           </ItemsPanelTemplate>
         </ItemsControl.ItemsPanel>
-        <ItemsControl.ItemTemplate>
-          <DataTemplate DataType="{x:Type vm:ItemViewModel}">
-            <Button Style="{StaticResource IconButtonStyle}"
-                    ToolTip="{Binding ToolTipText}"
-                    ToolTipService.InitialShowDelay="350"
-                    AutomationProperties.Name="{Binding Name}"
-                    AutomationProperties.HelpText="{Binding ToolTipText}"
-                    PreviewMouseLeftButtonDown="Item_PreviewMouseLeftButtonDown"
-                    PreviewMouseMove="Item_PreviewMouseMove"
-                    PreviewMouseLeftButtonUp="Item_PreviewMouseLeftButtonUp"
-                    LostMouseCapture="Item_LostMouseCapture"
-                    Click="Item_Click"
-                    MouseDoubleClick="Item_MouseDoubleClick"
-                    MouseUp="Item_MouseUp"
-                    KeyDown="Item_KeyDown">
-              <Button.ContextMenu>
-                <ContextMenu Opened="ItemMenu_Opened">
-                  <MenuItem Header="{x:Static r:Strings.Menu_NewShortcut}" Command="{Binding NewShortcutAfterCommand}" />
-                  <MenuItem Header="{x:Static r:Strings.Menu_NewGroup}" Command="{Binding NewGroupAfterCommand}"
-                            Visibility="{Binding IsAtRoot, Converter={StaticResource BoolToVisibility}}" />
-                  <MenuItem Header="{x:Static r:Strings.Menu_AddWindowsItem}" Tag="windows-items" />
-                  <MenuItem Header="{x:Static r:Strings.Menu_AddSpecialIcon}" Tag="special-icons" />
-                  <Separator />
-                  <MenuItem Tag="special-actions-anchor" Visibility="Collapsed" />
-                  <MenuItem Header="{x:Static r:Strings.Common_Remove}" Command="{Binding RemoveCommand}" InputGestureText="Del" />
-                  <MenuItem Header="{Binding MultiLaunchMenuHeader}" Command="{Binding ToggleMultiLaunchCommand}"
-                            Visibility="{Binding IsShortcut, Converter={StaticResource BoolToVisibility}}" />
-                  <MenuItem Header="{x:Static r:Strings.Menu_OpenFileLocation}" Command="{Binding OpenLocationCommand}"
-                            Visibility="{Binding IsShortcut, Converter={StaticResource BoolToVisibility}}" />
-                  <MenuItem Header="{x:Static r:Strings.Menu_ShowLog}" Command="{Binding ShowLogCommand}"
-                            Visibility="{Binding CapturesLog, Converter={StaticResource BoolToVisibility}}" />
-                  <Separator />
-                  <MenuItem Header="{x:Static r:Strings.Common_Properties}" Command="{Binding PropertiesCommand}" />
-                </ContextMenu>
-              </Button.ContextMenu>
-
-              <Grid>
-                <Grid.RowDefinitions>
-                  <RowDefinition Height="*" />
-                  <RowDefinition Height="Auto" />
-                </Grid.RowDefinitions>
-
-                <Grid Width="{Binding Root.IconSize}" Height="{Binding Root.IconSize}"
-                      HorizontalAlignment="Center" VerticalAlignment="Center">
-                  <Image Source="{Binding Image, TargetNullValue={StaticResource PlaceholderIconImage}}"
-                         Stretch="Uniform"
-                         RenderOptions.BitmapScalingMode="HighQuality"
-                         SnapsToDevicePixels="True"
-                         Visibility="{Binding ShowsImage, Converter={StaticResource BoolToVisibility}}" />
-                  <Border CornerRadius="6" ClipToBounds="True"
-                          Background="{DynamicResource Theme.Hover}"
-                          BorderBrush="{DynamicResource Theme.HoverBorder}" BorderThickness="1"
-                          Visibility="{Binding HasTextIcon, Converter={StaticResource BoolToVisibility}}">
-                    <TextBlock Text="{Binding TextIconText}"
-                               FontFamily="{Binding TextIconFontFamily}"
-                               FontSize="{Binding TextIconFontSize}"
-                               FontWeight="{Binding TextIconFontWeight}"
-                               TextAlignment="Center" TextWrapping="Wrap"
-                               HorizontalAlignment="Center" VerticalAlignment="Center"
-                               Margin="1">
-                      <TextBlock.Style>
-                        <Style TargetType="TextBlock">
-                          <Setter Property="Foreground" Value="{DynamicResource Theme.Foreground}" />
-                          <Style.Triggers>
-                            <DataTrigger Binding="{Binding HasTextIconColor}" Value="True">
-                              <Setter Property="Foreground" Value="{Binding TextIconBrush}" />
-                            </DataTrigger>
-                          </Style.Triggers>
-                        </Style>
-                      </TextBlock.Style>
-                    </TextBlock>
-                  </Border>
-                  <Viewbox Stretch="Uniform" Visibility="{Binding ShowsGauge, Converter={StaticResource BoolToVisibility}}">
-                    <Grid Width="100" Height="100" DataContext="{Binding Gauge}">
-                      <!-- Ring -->
-                      <Grid Visibility="{Binding IsRing, Converter={StaticResource BoolToVisibility}}">
-                        <Ellipse Width="88" Height="88" Stroke="{DynamicResource Theme.HoverBorder}" StrokeThickness="12" />
-                        <Path Data="{Binding ArcGeometry}" Stroke="{Binding LevelBrush}" StrokeThickness="12"
-                              StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
-                        <TextBlock Text="{Binding Label}" FontSize="26" FontWeight="SemiBold"
-                                   Foreground="{DynamicResource Theme.Foreground}"
-                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
-                      </Grid>
-                      <!-- Bar -->
-                      <Grid Visibility="{Binding IsBar, Converter={StaticResource BoolToVisibility}}">
-                        <TextBlock Text="{Binding Caption}" FontSize="24" FontWeight="SemiBold"
-                                   Foreground="{DynamicResource Theme.Foreground}"
-                                   HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,6,0,0" />
-                        <Border Height="22" Margin="8,0,8,30" VerticalAlignment="Bottom" CornerRadius="6" ClipToBounds="True"
-                                Background="{DynamicResource Theme.HoverBorder}">
-                          <Grid>
-                            <Grid.ColumnDefinitions>
-                              <ColumnDefinition Width="{Binding FillStar}" />
-                              <ColumnDefinition Width="{Binding RemainderStar}" />
-                            </Grid.ColumnDefinitions>
-                            <Border Grid.Column="0" Background="{Binding LevelBrush}" CornerRadius="6" />
-                          </Grid>
-                        </Border>
-                        <TextBlock Text="{Binding Label}" FontSize="22"
-                                   Foreground="{DynamicResource Theme.Foreground}"
-                                   HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,2" />
-                      </Grid>
-                      <!-- Number -->
-                      <Grid Visibility="{Binding IsNumber, Converter={StaticResource BoolToVisibility}}">
-                        <TextBlock Text="{Binding Label}" FontSize="42" FontWeight="Bold"
-                                   Foreground="{Binding LevelBrush}"
-                                   HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,-14,0,0" />
-                        <TextBlock Text="{Binding Caption}" FontSize="22"
-                                   Foreground="{DynamicResource Theme.Foreground}"
-                                   HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,2" />
-                      </Grid>
-                    </Grid>
-                  </Viewbox>
-                  <Ellipse Width="8" Height="8"
-                           Fill="{StaticResource BadgeBrush}"
-                           Stroke="#80000000" StrokeThickness="1"
-                           HorizontalAlignment="Right" VerticalAlignment="Bottom"
-                           Margin="0,0,-2,-2"
-                           Visibility="{Binding IsMultiLaunch, Converter={StaticResource BoolToVisibility}}" />
-                  <Ellipse Width="8" Height="8"
-                           Fill="{StaticResource RunningBadgeBrush}"
-                           Stroke="#80000000" StrokeThickness="1"
-                           HorizontalAlignment="Left" VerticalAlignment="Bottom"
-                           Margin="-2,0,0,-2"
-                           ToolTip="{x:Static r:Strings.Grid_Running}"
-                           Visibility="{Binding IsRunning, Converter={StaticResource BoolToVisibility}}" />
-                </Grid>
-
-                <TextBlock Grid.Row="1"
-                           Text="{Binding Name}"
-                           Foreground="{DynamicResource Theme.Foreground}"
-                           FontSize="11"
-                           TextAlignment="Center"
-                           TextTrimming="CharacterEllipsis"
-                           Margin="2,1,2,0"
-                           Visibility="{Binding Root.ShowLabels, Converter={StaticResource BoolToVisibility}}" />
-              </Grid>
-            </Button>
-          </DataTemplate>
-        </ItemsControl.ItemTemplate>
+        <ItemsControl.ItemContainerStyle>
+          <Style TargetType="ContentPresenter">
+            <Setter Property="views:FlowPanel.Slot" Value="{Binding Slot}" />
+          </Style>
+        </ItemsControl.ItemContainerStyle>
       </ItemsControl>
     </ScrollViewer>
 

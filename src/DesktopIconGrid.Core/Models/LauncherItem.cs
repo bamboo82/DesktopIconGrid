@@ -6,8 +6,8 @@ namespace DesktopIconGrid.Core.Models;
 
 /// <summary>
 /// Base type for everything that can sit in a cell of the bar: a <see cref="ShortcutItem"/>,
-/// a <see cref="GroupItem"/> (a folder of shortcuts), a <see cref="SpecialIconItem"/>, or an
-/// <see cref="UnknownItem"/> kept from a newer version. Serialized with a <c>$type</c> discriminator
+/// a <see cref="GroupItem"/> (a folder of shortcuts), a <see cref="SpecialIconItem"/>, a
+/// <see cref="SeparatorItem"/>, or an <see cref="UnknownItem"/> kept from a newer version. Serialized with a <c>$type</c> discriminator
 /// by <see cref="Storage.LauncherItemConverter"/>.
 /// </summary>
 public abstract class LauncherItem
@@ -28,6 +28,9 @@ public abstract class LauncherItem
 
     /// <summary>When the item was added or last edited through the app.</summary>
     public DateTimeOffset? ModifiedAt { get; set; }
+
+    /// <summary>A colour tag from <see cref="ColorTags"/> (drawn as a corner on the icon); <see langword="null"/> for none.</summary>
+    public string? ColorTag { get; set; }
 
     [JsonIgnore]
     public bool HasCustomIcon => !string.IsNullOrWhiteSpace(IconPath);
@@ -60,5 +63,6 @@ public abstract class LauncherItem
         Name = source.Name;
         IconPath = string.IsNullOrWhiteSpace(source.IconPath) ? null : source.IconPath.Trim();
         TextIcon = source.TextIcon?.Normalized();
+        ColorTag = ColorTags.Normalize(source.ColorTag);
     }
 }

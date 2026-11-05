@@ -35,6 +35,8 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
     private DateTime _lastLaunchedAt;
     private readonly IWindowSwitcher? _windows;
     private string _searchText = string.Empty;
+    private ItemViewModel? _launching;
+    private int _launchFeedbackVersion;
     private List<ItemViewModel> _searchResults = [];
     private int _searchIndex;
     private PendingRemoval? _pendingRemoval;
@@ -174,7 +176,8 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
         }
     }
 
-    public double PopupWidth => Math.Clamp(OpenGroup?.ChildCount ?? 1, 1, PopupMaxColumns) * CellWidth + 8;
+    /// <summary>Room for the group's entries side by side, up to <c>PopupMaxColumns</c>; a separator counts as a cell (a line or caption leaves some to spare).</summary>
+    public double PopupWidth => Math.Clamp((OpenGroup?.Model as GroupItem)?.Items.Count ?? 1, 1, PopupMaxColumns) * CellWidth + 8;
 
     public double PopupMaxHeight => PopupMaxRows * CellHeight + 8;
 
@@ -278,7 +281,11 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
         {
             viewModel = new ItemViewModel(this, item) { IsSearchDimmed = IsSearching }; // a group opened while searching
             _viewModels[item.Id] = viewModel;
-            _defer(viewModel.LoadImage);
+            if (item is not SeparatorItem)
+            {
+                _defer(viewModel.LoadImage);
+            }
+
             if (item is ShortcutItem shortcut)
             {
                 Tracker.Watch(shortcut);
@@ -437,6 +444,11 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
 
     public void Activate(ItemViewModel item, object? anchor, ActivationModifiers modifiers)
     {
+        if (item.IsSeparator)
+        {
+            return; // a divider or caption does nothing when clicked
+        }
+
         if (item.IsGroup)
         {
             ToggleGroupPopup(item, anchor);
@@ -496,8 +508,133 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
             return;
         }
 
+        if (result.Outcome == LaunchOutcome.Started)
+        {
+            StartLaunchFeedback(item);
+        }
+
         IsGroupPopupOpen = false;
         ItemActivated?.Invoke(this, item);
+    }
+
+    // ----- launch feedback ----------------------------------------------------------------------
+
+    /// <summary>How long an icon pulses after a launch at most; shortened by tests.</summary>
+    internal static TimeSpan LaunchFeedbackDuration { get; set; } = TimeSpan.FromSeconds(5);
+
+    /// <summary>Completes when the current pulse has run out (at once when there is none); tests await it.</summary>
+    internal Task LaunchFeedbackExpiry { get; private set; } = Task.CompletedTask;
+
+    /// <summary>The icon that is pulsing: the one started, or the group it sits in (the popup closes on a launch).</summary>
+    internal ItemViewModel? LaunchingItem => _launching;
+
+    /// <summary>
+    /// Makes the started item's icon pulse while the program comes up. It stops when the bar loses the foreground
+    /// (<see cref="EndLaunchFeedback"/>, called by the window) or after <see cref="LaunchFeedbackDuration"/>.
+    /// </summary>
+    private void StartLaunchFeedback(ItemViewModel item)
+    {
+        EndLaunchFeedback();
+        Model.Find(item.Id, out var parent);
+        var shown = parent is null ? item : GetOrCreateViewModel(parent);
+        _launching = shown;
+        shown.IsLaunching = true;
+        var version = _launchFeedbackVersion;
+        LaunchFeedbackExpiry = EndLaunchFeedbackLaterAsync(version);
+    }
+
+    /// <summary>Stops the pulse of the last launch, if any.</summary>
+    public void EndLaunchFeedback()
+    {
+        _launchFeedbackVersion++;
+        if (_launching is { } item)
+        {
+            _launching = null;
+            item.IsLaunching = false;
+        }
+    }
+
+    private async Task EndLaunchFeedbackLaterAsync(int version)
+    {
+        await Task.Delay(LaunchFeedbackDuration);
+        if (version == _launchFeedbackVersion)
+        {
+            EndLaunchFeedback();
+        }
+    }
+
+    // ----- separators and colour tags ---------------------------------------------------------
+
+    /// <summary>Adds a separator of <paramref name="kind"/> at <paramref name="index"/>; a label asks for its text first.</summary>
+    public void AddSeparator(ItemListViewModel list, int index, string kind)
+    {
+        var separator = new SeparatorItem { Kind = kind };
+        if (separator.EffectiveKind == SeparatorItem.Label)
+        {
+            var text = _dialogs.AskText(Strings.Separator_LabelTitle, Strings.Separator_LabelPrompt, null)?.Trim();
+            if (string.IsNullOrEmpty(text))
+            {
+                return;
+            }
+
+            separator.Name = text;
+        }
+
+        Model.Insert(separator, list.Group, index);
+        list.Sync();
+        Save();
+    }
+
+    public void AddSeparatorAfter(ItemViewModel item, string kind)
+    {
+        var list = ListContaining(item, out var index);
+        AddSeparator(list, index + 1, kind);
+    }
+
+    /// <summary>Turns a separator into another kind. Choosing a label (again) asks for its text, offering the current one.</summary>
+    public void SetSeparatorKind(ItemViewModel item, string kind)
+    {
+        if (item.Model is not SeparatorItem separator)
+        {
+            return;
+        }
+
+        var draft = (SeparatorItem)separator.Clone();
+        draft.Kind = kind;
+        if (draft.EffectiveKind == SeparatorItem.Label)
+        {
+            var text = _dialogs.AskText(Strings.Separator_LabelTitle, Strings.Separator_LabelPrompt, separator.Name)?.Trim();
+            if (string.IsNullOrEmpty(text))
+            {
+                return;
+            }
+
+            draft.Name = text;
+        }
+        else if (draft.EffectiveKind == separator.EffectiveKind)
+        {
+            return;
+        }
+
+        Model.Update(draft);
+        item.RefreshFromModel();
+        Save();
+    }
+
+    /// <summary>Gives the item a colour tag (<see cref="ColorTags"/>), or takes it away with <see langword="null"/>.</summary>
+    public void SetColorTag(ItemViewModel item, string? tag)
+    {
+        var normalized = ColorTags.Normalize(tag);
+        if (item.IsUnknown || string.Equals(item.Model.ColorTag, normalized, StringComparison.Ordinal))
+        {
+            return; // an item from a newer version is written back as it was read, so a tag would not be kept
+        }
+
+        var draft = item.Model.Clone();
+        draft.ColorTag = normalized;
+        Model.Update(draft);
+        item.RefreshFromModel();
+        Save();
     }
 
     /// <summary>Opens files dropped onto a shortcut with that shortcut's program, or hands them to a special icon.</summary>
@@ -687,6 +824,16 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
             return;
         }
 
+        if (item.Model is SeparatorItem)
+        {
+            if (item.IsLabelSeparator)
+            {
+                SetSeparatorKind(item, SeparatorItem.Label); // edits the caption
+            }
+
+            return;
+        }
+
         var draft = item.Model.Clone();
         var saved = draft is SpecialIconItem specialDraft
             ? item.SpecialHandler.ShowProperties(specialDraft, isNew: false)
@@ -734,7 +881,15 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
     /// <summary>True while the last removal can still be undone (the banner under the icons is showing).</summary>
     public bool CanUndoRemove => _pendingRemoval is not null;
 
-    public string UndoText => _pendingRemoval is null ? string.Empty : string.Format(Strings.Launch_Removed, _pendingRemoval.Item.Name);
+    public string UndoText => _pendingRemoval is null ? string.Empty : string.Format(Strings.Launch_Removed, DisplayNameOf(_pendingRemoval.Item));
+
+    /// <summary>What an item is called in messages: its name, or for a line or gap what it is.</summary>
+    private static string DisplayNameOf(LauncherItem item) => item switch
+    {
+        SeparatorItem { EffectiveKind: SeparatorItem.Line } => Strings.Separator_LineName,
+        SeparatorItem { EffectiveKind: SeparatorItem.Gap } => Strings.Separator_GapName,
+        _ => item.Name,
+    };
 
     public ICommand UndoRemoveCommand { get; }
 

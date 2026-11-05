@@ -106,7 +106,12 @@ public sealed class LauncherModel
 
         item.Name = item.Name?.Trim() ?? string.Empty;
         item.TextIcon = item.TextIcon?.Normalized();
-        if (item is ShortcutItem shortcut)
+        item.ColorTag = ColorTags.Normalize(item.ColorTag);
+        if (item is SeparatorItem separator)
+        {
+            separator.Kind = separator.Kind?.Trim() is { Length: > 0 } kind ? kind : SeparatorItem.Line; // a caption may be empty
+        }
+        else if (item is ShortcutItem shortcut)
         {
             shortcut.Location = shortcut.Location?.Trim() ?? string.Empty;
             if (shortcut.Name.Length == 0)
@@ -135,7 +140,7 @@ public sealed class LauncherModel
         {
             switch (child)
             {
-                case ShortcutItem or SpecialIconItem or UnknownItem:
+                case ShortcutItem or SpecialIconItem or SeparatorItem or UnknownItem:
                     Adopt(child, seen);
                     target.Add(child);
                     break;

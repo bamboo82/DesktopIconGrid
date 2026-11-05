@@ -40,7 +40,8 @@ button at the top-right and a small options arrow at the bottom-right.
 
 ## 2. Items
 
-Everything on the bar is an *item*. There are two kinds.
+Everything on the bar is an *item*: shortcuts, groups, Windows items and special icons, and from 0.7.0
+separators (§2.5). Any item can carry a colour tag (§2.6).
 
 ### 2.1 Shortcut
 
@@ -160,6 +161,29 @@ Both draw the value in a design you pick (ring, bar or number) with green/amber/
 The item model, handler interface, registry and the bucket are specified in
 [docs/SPECIAL_ICONS.md](docs/SPECIAL_ICONS.md).
 
+### 2.5 Separators (0.7.0)
+
+*Add separator ▸* on an icon (inserts after it) or on empty space (appends) offers three kinds, stored as
+`"$type": "separator"` with `"kind": "line" | "gap" | "label"`:
+
+| Kind | Looks like |
+| --- | --- |
+| Line | A thin divider between two icons in a row, nine units wide; across the column in a bar one icon wide (docked left or right). |
+| Gap | An empty cell. |
+| Label | A small caption, as wide as its text; across the column in a one-icon-wide bar. *Label…* asks for the text; `F2` edits it. |
+
+Separators have no click action and are left out of searches and of the names table; they are outlined
+under the pointer so they can be found, dragged like icons, changed into another kind or removed from
+their own menu, and may sit inside groups. Versions before 0.7.0 show them as items from a newer version
+and keep them; a kind this version does not know is kept and drawn as a line.
+
+### 2.6 Colour tags (0.7.0)
+
+Right-click → *Colour tag ▸* gives any item one of seven colours (red, orange, yellow, green, blue, purple,
+grey) or none. It is drawn as a small corner at the top left of the icon, stored as `"colorTag": "red"`,
+and the names table can show only the items with one colour, or those without (§6.1). A tag name this
+version does not know is kept but not drawn.
+
 ## 3. Grid interactions
 
 | Action | Result |
@@ -175,6 +199,7 @@ The item model, handler interface, registry and the bucket are specified in
 | Drop files/folders/URLs from Explorer or a browser | Creates one shortcut per dropped path at the drop position. |
 | Drop files onto a special icon that accepts them (e.g. a Google Drive Bucket) | Handled by the icon: the bucket uploads them. |
 | Press on empty background | Moves the bar, like the grip. |
+| After a launch (0.7.0) | The icon (or the group it was in) is framed and pulses until the bar loses the foreground — usually when the program's window appears — or for five seconds at most. Without Windows animations it is only framed. |
 | Type a name (0.7.0) | Opens the search box under the icons. Shortcuts and special icons that match, also inside groups, stay lit with the groups that hold them; everything else fades. Ranking: the name on the bar whole, at its start, at the start of a word, by word initials (`vsc` → Visual Studio Code), anywhere in it; then the original name (from the location) and the file name. Case and width are ignored, and Chinese is typed through the IME (no pinyin table). The best match is framed, and the group holding it with it; its name shows beside the box. `↓`/`↑` move the frame round the matches, `Enter` opens it (Shift and Ctrl+Shift as for a click), `Esc` clears and then closes. Only the bar's own items are searched: no web, calculator or file index. |
 | Mouse wheel | Scrolls when the bar is shorter than its content. |
 
@@ -187,13 +212,17 @@ New shortcut…
 New group…
 Add Windows item        ▸
 Add special icon        ▸
+Add separator           ▸   Line / Gap / Label…   (0.7.0)
 ────────────────────────
 Remove                (Undo for ten seconds in a banner under the icons)
 Add to Multi Launch group    (becomes "Remove from Multi Launch group" when it is a member; hidden for groups)
 Open file location
+Colour tag              ▸   seven colours / None  (0.7.0)
 ────────────────────────
 Properties
 ```
+
+Separator menu (0.7.0): *Line*, *Gap*, *Label…* (the current kind checked), *New shortcut…*, *Remove*.
 
 Empty-space menu:
 
@@ -202,6 +231,7 @@ New shortcut…
 New group…
 Add Windows item        ▸
 Add special icon        ▸
+Add separator           ▸   (0.7.0)
 ────────────────────────
 Launch Multi Launch group
 Settings…
@@ -239,8 +269,10 @@ Both dialogs follow the reference layout: a labelled form, an icon preview with
 
 Options menu (▸) or tray → *Edit names…* lists every item on the bar in one grid: *Given
 name* (editable), *Original name* (what the item would be called automatically: the file name
-of a shortcut, the kind of a special icon), *Kind*, *In group*, *Modified* (when the item was
-added or last edited) and *Location*. Click a column header to sort; *Use original name*
+of a shortcut, the kind of a special icon), *Kind*, *In group*, *Colour tag* (0.7.0), *Modified*
+(when the item was added or last edited) and *Location*. *Show:* above the grid narrows it to the
+items with one colour tag, or those without (0.7.0); separators are not listed. Click a column header
+to sort; *Use original name*
 resets the selected rows, *Use original names for all* resets everything; *Save* applies all
 changes at once. The given names are the captions on the bar and will be the phrases for
 voice commands in a later design, so this is where that vocabulary is maintained.

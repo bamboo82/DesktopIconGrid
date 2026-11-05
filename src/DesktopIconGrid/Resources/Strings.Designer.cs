@@ -1545,6 +1545,15 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Add separator.
+        /// </summary>
+        public static string Menu_AddSeparator {
+            get {
+                return ResourceManager.GetString("Menu_AddSeparator", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Add special icon.
         /// </summary>
         public static string Menu_AddSpecialIcon {
@@ -1577,6 +1586,15 @@ namespace DesktopIconGrid.Resources {
         public static string Menu_AlwaysOnTop {
             get {
                 return ResourceManager.GetString("Menu_AlwaysOnTop", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Colour tag.
+        /// </summary>
+        public static string Menu_ColorTag {
+            get {
+                return ResourceManager.GetString("Menu_ColorTag", resourceCulture);
             }
         }
 
@@ -1667,6 +1685,15 @@ namespace DesktopIconGrid.Resources {
         public static string Menu_ResetBarPosition {
             get {
                 return ResourceManager.GetString("Menu_ResetBarPosition", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Separator.
+        /// </summary>
+        public static string Menu_SeparatorKind {
+            get {
+                return ResourceManager.GetString("Menu_SeparatorKind", resourceCulture);
             }
         }
 
@@ -1950,6 +1977,24 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to All items.
+        /// </summary>
+        public static string Names_AllItems {
+            get {
+                return ResourceManager.GetString("Names_AllItems", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Colour tag.
+        /// </summary>
+        public static string Names_ColorTag {
+            get {
+                return ResourceManager.GetString("Names_ColorTag", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Given name.
         /// </summary>
         public static string Names_Given {
@@ -2031,11 +2076,38 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Show:.
+        /// </summary>
+        public static string Names_Show {
+            get {
+                return ResourceManager.GetString("Names_Show", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Show items with this colour tag.
+        /// </summary>
+        public static string Names_ShowName {
+            get {
+                return ResourceManager.GetString("Names_ShowName", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Edit names.
         /// </summary>
         public static string Names_Title {
             get {
                 return ResourceManager.GetString("Names_Title", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Without a colour tag.
+        /// </summary>
+        public static string Names_Untagged {
+            get {
+                return ResourceManager.GetString("Names_Untagged", resourceCulture);
             }
         }
 
@@ -2576,6 +2648,69 @@ namespace DesktopIconGrid.Resources {
         public static string Run_Title {
             get {
                 return ResourceManager.GetString("Run_Title", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Gap.
+        /// </summary>
+        public static string Separator_Gap {
+            get {
+                return ResourceManager.GetString("Separator_Gap", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Gap.
+        /// </summary>
+        public static string Separator_GapName {
+            get {
+                return ResourceManager.GetString("Separator_GapName", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Label….
+        /// </summary>
+        public static string Separator_Label {
+            get {
+                return ResourceManager.GetString("Separator_Label", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Text of the label:.
+        /// </summary>
+        public static string Separator_LabelPrompt {
+            get {
+                return ResourceManager.GetString("Separator_LabelPrompt", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Label.
+        /// </summary>
+        public static string Separator_LabelTitle {
+            get {
+                return ResourceManager.GetString("Separator_LabelTitle", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Line.
+        /// </summary>
+        public static string Separator_Line {
+            get {
+                return ResourceManager.GetString("Separator_Line", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Divider.
+        /// </summary>
+        public static string Separator_LineName {
+            get {
+                return ResourceManager.GetString("Separator_LineName", resourceCulture);
             }
         }
 
@@ -3881,6 +4016,78 @@ namespace DesktopIconGrid.Resources {
         public static string Sync_UploadedAt {
             get {
                 return ResourceManager.GetString("Sync_UploadedAt", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Blue.
+        /// </summary>
+        public static string Tag_Blue {
+            get {
+                return ResourceManager.GetString("Tag_Blue", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Grey.
+        /// </summary>
+        public static string Tag_Gray {
+            get {
+                return ResourceManager.GetString("Tag_Gray", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Green.
+        /// </summary>
+        public static string Tag_Green {
+            get {
+                return ResourceManager.GetString("Tag_Green", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to None.
+        /// </summary>
+        public static string Tag_None {
+            get {
+                return ResourceManager.GetString("Tag_None", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Orange.
+        /// </summary>
+        public static string Tag_Orange {
+            get {
+                return ResourceManager.GetString("Tag_Orange", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Purple.
+        /// </summary>
+        public static string Tag_Purple {
+            get {
+                return ResourceManager.GetString("Tag_Purple", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Red.
+        /// </summary>
+        public static string Tag_Red {
+            get {
+                return ResourceManager.GetString("Tag_Red", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Yellow.
+        /// </summary>
+        public static string Tag_Yellow {
+            get {
+                return ResourceManager.GetString("Tag_Yellow", resourceCulture);
             }
         }
 

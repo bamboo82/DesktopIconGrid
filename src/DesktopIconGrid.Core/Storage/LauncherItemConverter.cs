@@ -19,6 +19,7 @@ public sealed class LauncherItemConverter : JsonConverter<LauncherItem>
         ["shortcut"] = typeof(ShortcutItem),
         ["group"] = typeof(GroupItem),
         ["special"] = typeof(SpecialIconItem),
+        ["separator"] = typeof(SeparatorItem),
     };
 
     private static readonly Dictionary<Type, string> KindNames = KnownKinds.ToDictionary(p => p.Value, p => p.Key);

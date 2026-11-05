@@ -125,6 +125,7 @@ public partial class PointerWindow : Window
         {
             Hide();
             _viewModel.ClearSearch();
+            _viewModel.EndLaunchFeedback(); // launched from here: the bar has nothing to show for it
             ShowRoot();
         }
         finally

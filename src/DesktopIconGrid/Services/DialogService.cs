@@ -106,6 +106,8 @@ public sealed class DialogService(IIconProvider icons) : IDialogService, ILaunch
 
     public string? Ask(string title, string prompt) => InputWindow.Show(Owner, title, prompt);
 
+    public string? AskText(string title, string prompt, string? initialValue) => InputWindow.Show(Owner, title, prompt, initialValue);
+
     private static Window? Owner
     {
         get

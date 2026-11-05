@@ -63,6 +63,8 @@ Google Drive Bucket, and [docs/THEMES.md](docs/THEMES.md) for the themes.
 | Pass the clipboard or a typed value to a program | Put `{clipboard}` or `{ask:Question}` in its *Parameters* |
 | Go to a program that is already running | Click its icon: its window comes forward, a second click minimises it. Shift+click or middle-click starts another; Ctrl+Shift+click starts one as administrator |
 | Rearrange | Drag an icon to a new position; the blue line shows where it lands |
+| Divide the bar into sections | Right-click → *Add separator ▸ Line*, *Gap* or *Label…*; right-click the separator to change or remove it |
+| Mark items with a colour | Right-click → *Colour tag ▸*; *Edit names…* can then show one colour at a time |
 | Put a shortcut in a group | Drag it onto the group icon |
 | Edit an item | Right-click → *Properties*, or `F2` |
 | Use text instead of an icon image | *Properties → Text icon…*: text, font (default 宋體), size, bold, colour |

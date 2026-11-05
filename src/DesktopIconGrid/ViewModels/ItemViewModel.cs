@@ -20,6 +20,7 @@ public sealed class ItemViewModel : ObservableObject
     private GaugeState? _gauge;
     private bool _isSearchDimmed;
     private bool _isSearchSelected;
+    private bool _isLaunching;
 
     public ItemViewModel(LauncherViewModel root, LauncherItem model)
     {
@@ -49,6 +50,50 @@ public sealed class ItemViewModel : ObservableObject
     public bool IsShortcut => Model is ShortcutItem;
 
     public bool IsSpecial => Model is SpecialIconItem;
+
+    // ----- separators and colour tags ---------------------------------------------------------
+
+    public bool IsSeparator => Model is SeparatorItem;
+
+    /// <summary>The kind of separator this version draws (<see cref="SeparatorItem.EffectiveKind"/>); empty for other items.</summary>
+    public string SeparatorKind => (Model as SeparatorItem)?.EffectiveKind ?? string.Empty;
+
+    public bool IsLineSeparator => SeparatorKind == SeparatorItem.Line;
+
+    public bool IsGapSeparator => SeparatorKind == SeparatorItem.Gap;
+
+    public bool IsLabelSeparator => SeparatorKind == SeparatorItem.Label;
+
+    /// <summary>How much room the item takes in the grid: a divider is thin and a caption as wide as its text.</summary>
+    public FlowSlot Slot => SeparatorKind switch
+    {
+        SeparatorItem.Line => FlowSlot.Narrow,
+        SeparatorItem.Label => FlowSlot.Auto,
+        _ => FlowSlot.Cell,
+    };
+
+    /// <summary>What a screen reader says for a separator: its caption, or what kind it is.</summary>
+    public string SeparatorName => SeparatorKind switch
+    {
+        SeparatorItem.Line => Strings.Separator_LineName,
+        SeparatorItem.Gap => Strings.Separator_GapName,
+        _ => Name,
+    };
+
+    /// <summary>A known colour tag is drawn as a corner on the icon.</summary>
+    public bool HasColorTag => ColorTags.Find(Model.ColorTag) is not null;
+
+    public Brush? ColorTagBrush => ColorTags.Find(Model.ColorTag) is { } tag ? ThemeManager.ToBrush(tag.Color) : null;
+
+    /// <summary>The tag's name in the UI language; empty without a (known) tag.</summary>
+    public string ColorTagName => ColorTagNames.Of(Model.ColorTag);
+
+    /// <summary>Set for a few seconds after the item was started from the bar, while the program comes up: the icon pulses.</summary>
+    public bool IsLaunching
+    {
+        get => _isLaunching;
+        internal set => SetProperty(ref _isLaunching, value);
+    }
 
     /// <summary>An item from a newer version: kept, shown as a placeholder, not openable or editable.</summary>
     public bool IsUnknown => Model is UnknownItem;
@@ -90,7 +135,8 @@ public sealed class ItemViewModel : ObservableObject
 
     public bool CapturesLog => Model is ShortcutItem { CaptureLog: true };
 
-    public int ChildCount => (Model as GroupItem)?.Items.Count ?? 0;
+    /// <summary>The group's shortcuts and special icons (its separators are not counted).</summary>
+    public int ChildCount => (Model as GroupItem)?.Items.Count(i => i is not SeparatorItem) ?? 0;
 
     // ----- text icons -----------------------------------------------------------------------------
 

@@ -31,4 +31,7 @@ public interface IDialogService
 
     /// <summary>Opens (or brings to the front) the application log viewer.</summary>
     void ShowAppLog();
+
+    /// <summary>Asks for a line of text, starting from <paramref name="initialValue"/>; <see langword="null"/> on Cancel.</summary>
+    string? AskText(string title, string prompt, string? initialValue);
 }

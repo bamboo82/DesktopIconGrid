@@ -61,6 +61,10 @@ public sealed class LauncherViewModelTests : IDisposable
         public void ShowAppLog()
         {
         }
+
+        public string? TextAnswer { get; set; }
+
+        public string? AskText(string title, string prompt, string? initialValue) => TextAnswer;
     }
 
     /// <summary>Records every launch and answers with <see cref="Result"/> (a failure unless a test says otherwise).</summary>
@@ -357,4 +361,114 @@ public sealed class LauncherViewModelTests : IDisposable
         Assert.Equal(string.Empty, viewModel.SearchText);
         Assert.False(viewModel.LaunchSearchSelection()); // nothing typed, nothing to open
     }
+
+    [Fact]
+    public async Task A_started_program_s_icon_pulses_until_the_bar_loses_the_foreground_or_the_time_runs_out()
+    {
+        var previous = LauncherViewModel.LaunchFeedbackDuration;
+        LauncherViewModel.LaunchFeedbackDuration = TimeSpan.FromMilliseconds(50);
+        try
+        {
+            _launcher.Result = LaunchResult.Started;
+            var (viewModel, model, _) = Create();
+            model.Add(new GroupItem { Name = "Tools", Items = [new ShortcutItem { Name = "Inner", Location = @"C:\inner.exe" }] });
+            viewModel.RootItems.Sync();
+            var first = viewModel.RootItems.Items[0];
+
+            viewModel.Activate(first, null, ActivationModifiers.None);
+            Assert.True(first.IsLaunching);
+            viewModel.EndLaunchFeedback(); // the bar lost the foreground to the program
+            Assert.False(first.IsLaunching);
+
+            var group = viewModel.RootItems.Items[3];
+            var inner = group.Children!.Items[0];
+            viewModel.Activate(inner, null, ActivationModifiers.None);
+            Assert.True(group.IsLaunching); // the popup closes on a launch, so the group's icon shows it
+            Assert.False(inner.IsLaunching);
+            await viewModel.LaunchFeedbackExpiry;
+            Assert.False(group.IsLaunching);
+
+            _launcher.Result = LaunchResult.Failure("nope");
+            viewModel.Activate(viewModel.RootItems.Items[1], null, ActivationModifiers.None);
+            Assert.Null(viewModel.LaunchingItem); // nothing started, nothing pulses
+        }
+        finally
+        {
+            LauncherViewModel.LaunchFeedbackDuration = previous;
+        }
+    }
+
+    [Fact]
+    public void Separators_go_after_an_icon_or_at_the_end_and_a_label_asks_for_its_text()
+    {
+        var (viewModel, model, dialogs) = Create();
+
+        viewModel.AddSeparatorAfter(viewModel.RootItems.Items[0], SeparatorItem.Line);
+        Assert.Equal(["A", "", "B", "C"], Names(model.Items));
+        Assert.Equal(FlowSlot.Narrow, viewModel.RootItems.Items[1].Slot);
+
+        dialogs.TextAnswer = null; // Cancel
+        viewModel.AddSeparator(viewModel.RootItems, int.MaxValue, SeparatorItem.Label);
+        Assert.Equal(4, model.Items.Count);
+
+        dialogs.TextAnswer = "  Games ";
+        viewModel.AddSeparator(viewModel.RootItems, int.MaxValue, SeparatorItem.Label);
+        var label = viewModel.RootItems.Items[4];
+        Assert.Equal("Games", label.Name);
+        Assert.True(label.IsLabelSeparator);
+        Assert.Equal(FlowSlot.Auto, label.Slot);
+
+        viewModel.SetSeparatorKind(viewModel.RootItems.Items[1], SeparatorItem.Gap);
+        Assert.True(viewModel.RootItems.Items[1].IsGapSeparator);
+        Assert.Equal(FlowSlot.Cell, viewModel.RootItems.Items[1].Slot);
+
+        dialogs.TextAnswer = "Fun";
+        viewModel.EditItem(label); // F2 or Properties on a label edits its text
+        Assert.Equal("Fun", label.Name);
+
+        viewModel.Activate(label, null, ActivationModifiers.None); // a click on a separator does nothing
+        Assert.Empty(_launcher.Launches);
+
+        viewModel.RemoveItem(viewModel.RootItems.Items[1]);
+        Assert.Contains(Strings.Separator_GapName, viewModel.UndoText); // not an empty name
+    }
+
+    [Fact]
+    public void A_colour_tag_is_set_and_cleared()
+    {
+        var (viewModel, model, _) = Create();
+        var item = viewModel.RootItems.Items[0];
+
+        viewModel.SetColorTag(item, "Red");
+
+        Assert.Equal(ColorTags.Red, model.Items[0].ColorTag);
+        Assert.True(item.HasColorTag);
+        Assert.NotNull(item.ColorTagBrush);
+        Assert.Equal(Strings.Tag_Red, item.ColorTagName);
+
+        viewModel.SetColorTag(item, null);
+
+        Assert.Null(model.Items[0].ColorTag);
+        Assert.False(item.HasColorTag);
+    }
+
+    [Fact]
+    public void The_names_table_leaves_separators_out_and_filters_by_colour_tag()
+    {
+        var (viewModel, model, _) = Create();
+        model.Add(new SeparatorItem { Kind = SeparatorItem.Label, Name = "Section" });
+        model.Items[0].ColorTag = ColorTags.Red;
+        model.Items[2].ColorTag = ColorTags.Blue;
+
+        var table = new NameTableViewModel(viewModel);
+
+        Assert.Equal(["A", "B", "C"], table.Rows.Select(r => r.GivenName));
+        table.SelectedTagFilter = table.TagFilters.Single(f => f.Tag == ColorTags.Red);
+        Assert.Equal(["A"], table.RowsView.Cast<NameRowViewModel>().Select(r => r.GivenName));
+        table.SelectedTagFilter = table.TagFilters.Single(f => f.Tag == NameTableViewModel.NoTag);
+        Assert.Equal(["B"], table.RowsView.Cast<NameRowViewModel>().Select(r => r.GivenName));
+        table.SelectedTagFilter = table.TagFilters[0];
+        Assert.Equal(3, table.RowsView.Cast<object>().Count());
+    }
 }
+

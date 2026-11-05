@@ -1430,4 +1430,73 @@ Details are in {1}.</value>
   <data name="Pointer_BackToolTip" xml:space="preserve">
     <value>Back to all icons (Backspace)</value>
   </data>
+  <data name="Menu_AddSeparator" xml:space="preserve">
+    <value>Add separator</value>
+  </data>
+  <data name="Menu_SeparatorKind" xml:space="preserve">
+    <value>Separator</value>
+  </data>
+  <data name="Separator_Line" xml:space="preserve">
+    <value>Line</value>
+  </data>
+  <data name="Separator_Gap" xml:space="preserve">
+    <value>Gap</value>
+  </data>
+  <data name="Separator_Label" xml:space="preserve">
+    <value>Label…</value>
+  </data>
+  <data name="Separator_LabelTitle" xml:space="preserve">
+    <value>Label</value>
+  </data>
+  <data name="Separator_LabelPrompt" xml:space="preserve">
+    <value>Text of the label:</value>
+  </data>
+  <data name="Separator_LineName" xml:space="preserve">
+    <value>Divider</value>
+  </data>
+  <data name="Separator_GapName" xml:space="preserve">
+    <value>Gap</value>
+  </data>
+  <data name="Menu_ColorTag" xml:space="preserve">
+    <value>Colour tag</value>
+  </data>
+  <data name="Tag_None" xml:space="preserve">
+    <value>None</value>
+  </data>
+  <data name="Tag_Red" xml:space="preserve">
+    <value>Red</value>
+  </data>
+  <data name="Tag_Orange" xml:space="preserve">
+    <value>Orange</value>
+  </data>
+  <data name="Tag_Yellow" xml:space="preserve">
+    <value>Yellow</value>
+  </data>
+  <data name="Tag_Green" xml:space="preserve">
+    <value>Green</value>
+  </data>
+  <data name="Tag_Blue" xml:space="preserve">
+    <value>Blue</value>
+  </data>
+  <data name="Tag_Purple" xml:space="preserve">
+    <value>Purple</value>
+  </data>
+  <data name="Tag_Gray" xml:space="preserve">
+    <value>Grey</value>
+  </data>
+  <data name="Names_ColorTag" xml:space="preserve">
+    <value>Colour tag</value>
+  </data>
+  <data name="Names_Show" xml:space="preserve">
+    <value>Show:</value>
+  </data>
+  <data name="Names_AllItems" xml:space="preserve">
+    <value>All items</value>
+  </data>
+  <data name="Names_Untagged" xml:space="preserve">
+    <value>Without a colour tag</value>
+  </data>
+  <data name="Names_ShowName" xml:space="preserve">
+    <value>Show items with this colour tag</value>
+  </data>
 </root>

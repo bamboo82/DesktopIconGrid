@@ -36,6 +36,17 @@ version numbers follow [Semantic Versioning](https://semver.org/).
   Search and the window's size and placement are covered by tests; the window, the keys and typing
   through a Chinese IME have not been seen on a screen. With an IME in Chinese mode, the first key that
   opens the bar's box may not reach the IME; the Show-at-pointer box is focused from the start.
+- Launch feedback: the icon just started (or the group it sits in) is framed and pulses until the bar
+  loses the foreground, normally when the program's window appears, or for five seconds at most. With
+  Windows animations turned off it is only framed.
+- Separators: *Add separator ▸ Line / Gap / Label…* on an icon or on empty space. A line is a thin divider
+  between icons, a gap an empty cell, a label a small caption as wide as its text; in a bar one icon wide
+  they lie across it. They can be dragged, switched to another kind and removed from their own menu, and
+  sit in groups too. Versions before 0.7.0 keep them as items from a newer version.
+- Colour tags: right-click → *Colour tag ▸* (seven colours or none), drawn as a corner on the icon. The
+  names table has a *Colour tag* column and *Show:* narrows it to one colour or to the untagged items.
+  Launch feedback, separators and tags are covered by tests of the layout and the view models; none of
+  them has been seen on a screen yet.
 
 ### Fixed
 

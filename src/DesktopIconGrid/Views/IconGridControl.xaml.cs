@@ -9,6 +9,7 @@ using System.Windows.Threading;
 using DesktopIconGrid.Core.Launching;
 using DesktopIconGrid.Core.Models;
 using DesktopIconGrid.Core.SpecialItems;
+using DesktopIconGrid.Resources;
 using DesktopIconGrid.Services;
 using DesktopIconGrid.SpecialIcons;
 using DesktopIconGrid.ViewModels;
@@ -629,7 +630,73 @@ public partial class IconGridControl : UserControl
             PopulateWindowsItems(menu, definition => item.Root.AddSpecialItemAfter(definition, item));
             PopulateSpecialIcons(menu, handler => item.Root.AddSpecialIconAfter(handler, item));
             PopulateSpecialActions(menu, item);
+            PopulateColorTags(menu, item);
         }
+    }
+
+    // ----- separators and colour tags ------------------------------------------------------------
+
+    /// <summary>"Add separator ▸" on an icon: the separator goes right after it.</summary>
+    private void AddSeparatorAfter_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is MenuItem { Tag: string kind, DataContext: ItemViewModel item })
+        {
+            item.Root.AddSeparatorAfter(item, kind);
+        }
+    }
+
+    /// <summary>"Add separator ▸" on empty space: the separator goes at the end.</summary>
+    private void AddSeparator_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is MenuItem { Tag: string kind } && List is { } list)
+        {
+            list.Root.AddSeparator(list, int.MaxValue, kind);
+        }
+    }
+
+    private void SeparatorKind_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is MenuItem { Tag: string kind, DataContext: ItemViewModel item })
+        {
+            item.Root.SetSeparatorKind(item, kind);
+        }
+    }
+
+    /// <summary>"Colour tag ▸": one entry per colour with its swatch, the current one checked, and None.</summary>
+    private static void PopulateColorTags(ContextMenu menu, ItemViewModel item)
+    {
+        var host = menu.Items.OfType<MenuItem>().FirstOrDefault(m => Equals(m.Tag, "color-tags"));
+        if (host is null)
+        {
+            return;
+        }
+
+        host.Items.Clear();
+        host.IsEnabled = !item.IsUnknown;
+        foreach (var tag in ColorTags.All)
+        {
+            var header = new StackPanel { Orientation = Orientation.Horizontal };
+            header.Children.Add(new System.Windows.Shapes.Rectangle
+            {
+                Width = 12,
+                Height = 12,
+                RadiusX = 2,
+                RadiusY = 2,
+                Margin = new Thickness(0, 0, 6, 0),
+                Fill = ThemeManager.ToBrush(tag.Color),
+                VerticalAlignment = VerticalAlignment.Center,
+            });
+            header.Children.Add(new TextBlock { Text = ColorTagNames.Of(tag.Name), VerticalAlignment = VerticalAlignment.Center });
+            var entry = new MenuItem { Header = header, IsChecked = string.Equals(item.Model.ColorTag, tag.Name, StringComparison.Ordinal) };
+            var name = tag.Name;
+            entry.Click += (_, _) => item.Root.SetColorTag(item, name);
+            host.Items.Add(entry);
+        }
+
+        host.Items.Add(new Separator());
+        var none = new MenuItem { Header = Strings.Tag_None, IsChecked = ColorTags.Find(item.Model.ColorTag) is null };
+        none.Click += (_, _) => item.Root.SetColorTag(item, null);
+        host.Items.Add(none);
     }
 
     /// <summary>Inserts the special icon's own entries (e.g. "Browse…") above "Remove…".</summary>

@@ -277,6 +277,64 @@
               <Setter TargetName="Root" Property="Background" Value="{DynamicResource Theme.Hover}" />
               <Setter TargetName="Root" Property="BorderBrush" Value="{DynamicResource Theme.Accent}" />
             </DataTrigger>
+            <!-- Launch feedback: framed while the program comes up, and pulsing unless Windows animations are off -->
+            <DataTrigger Binding="{Binding IsLaunching}" Value="True">
+              <Setter TargetName="Root" Property="BorderBrush" Value="{DynamicResource Theme.Accent}" />
+            </DataTrigger>
+            <MultiDataTrigger>
+              <MultiDataTrigger.Conditions>
+                <Condition Binding="{Binding IsLaunching}" Value="True" />
+                <Condition Binding="{Binding Source={x:Static SystemParameters.ClientAreaAnimation}}" Value="True" />
+              </MultiDataTrigger.Conditions>
+              <MultiDataTrigger.EnterActions>
+                <BeginStoryboard x:Name="LaunchPulse">
+                  <Storyboard>
+                    <DoubleAnimation Storyboard.TargetName="Root" Storyboard.TargetProperty="Opacity"
+                                     From="1" To="0.4" Duration="0:0:0.45" AutoReverse="True" RepeatBehavior="Forever" />
+                  </Storyboard>
+                </BeginStoryboard>
+              </MultiDataTrigger.EnterActions>
+              <MultiDataTrigger.ExitActions>
+                <RemoveStoryboard BeginStoryboardName="LaunchPulse" />
+              </MultiDataTrigger.ExitActions>
+            </MultiDataTrigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+
+  <!-- Separators among the icons: a divider, an empty cell or a caption; outlined under the pointer so they can be found -->
+  <Style x:Key="SeparatorButtonStyle" TargetType="Button">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderBrush" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="Padding" Value="0" />
+    <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+    <Setter Property="VerticalContentAlignment" Value="Stretch" />
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="Button">
+          <Border x:Name="Root"
+                  Background="{TemplateBinding Background}"
+                  BorderBrush="{TemplateBinding BorderBrush}"
+                  BorderThickness="{TemplateBinding BorderThickness}"
+                  CornerRadius="3"
+                  SnapsToDevicePixels="True">
+            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                              VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
+          </Border>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+              <Setter TargetName="Root" Property="BorderBrush" Value="{DynamicResource Theme.HoverBorder}" />
+            </Trigger>
+            <Trigger Property="IsKeyboardFocused" Value="True">
+              <Setter TargetName="Root" Property="BorderBrush" Value="{DynamicResource Theme.Accent}" />
+            </Trigger>
+            <DataTrigger Binding="{Binding IsSearchDimmed}" Value="True">
+              <Setter TargetName="Root" Property="Opacity" Value="0.3" />
+            </DataTrigger>
           </ControlTemplate.Triggers>
         </ControlTemplate>
       </Setter.Value>

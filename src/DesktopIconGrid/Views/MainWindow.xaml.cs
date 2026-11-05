@@ -747,6 +747,7 @@ public partial class MainWindow : Window
 
     private void OnDeactivated(object? sender, EventArgs e)
     {
+        _viewModel.EndLaunchFeedback(); // the program that was started has come up (or something else took over)
         if (!DragState.IsDragging)
         {
             _viewModel.IsGroupPopupOpen = false;
