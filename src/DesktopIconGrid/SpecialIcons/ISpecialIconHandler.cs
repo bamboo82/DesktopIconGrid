@@ -12,6 +12,9 @@ public enum ActivationModifiers
     Control = 1,
     Shift = 2,
     Alt = 4,
+
+    /// <summary>A middle click: start another instance, like the taskbar's middle click.</summary>
+    NewInstance = 8,
 }
 
 /// <summary>An extra context-menu entry a special icon offers.</summary>

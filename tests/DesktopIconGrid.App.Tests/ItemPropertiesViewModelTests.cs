@@ -65,4 +65,33 @@ public class ItemPropertiesViewModelTests
             await Task.Delay(20);
         }
     }
+
+    [Fact]
+    public void When_running_follows_the_location_until_the_user_picks_it()
+    {
+        var shortcut = new ShortcutItem { Name = "Report", Location = @"C:\Docs\report.docx" };
+        var viewModel = new ItemPropertiesViewModel(shortcut, isNew: false, new CountingIcons());
+
+        Assert.False(viewModel.SelectedWhenRunning.Switches); // a document starts again
+        viewModel.Location = @"C:\Tools\app.exe";
+        Assert.True(viewModel.SelectedWhenRunning.Switches); // a program switches
+        Assert.True(viewModel.Apply());
+        Assert.Null(shortcut.WhenRunning); // nothing stored: the location keeps deciding
+    }
+
+    [Fact]
+    public void A_picked_choice_is_stored_only_when_it_differs_from_the_location_s_default()
+    {
+        var program = new ShortcutItem { Name = "App", Location = @"C:\Tools\app.exe" };
+        var viewModel = new ItemPropertiesViewModel(program, isNew: false, new CountingIcons());
+        viewModel.SelectedWhenRunning = ItemPropertiesViewModel.WhenRunningChoices.Single(o => !o.Switches);
+        Assert.True(viewModel.Apply());
+        Assert.Equal(ShortcutItem.WhenRunningStart, program.WhenRunning);
+
+        var back = new ItemPropertiesViewModel(program, isNew: false, new CountingIcons());
+        Assert.False(back.SelectedWhenRunning.Switches);
+        back.SelectedWhenRunning = ItemPropertiesViewModel.WhenRunningChoices.Single(o => o.Switches);
+        Assert.True(back.Apply());
+        Assert.Null(program.WhenRunning);
+    }
 }

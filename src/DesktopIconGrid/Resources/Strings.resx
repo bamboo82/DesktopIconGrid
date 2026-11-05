@@ -1328,4 +1328,22 @@ Details are in {1}.</value>
   <data name="Sound_RecordingFailed" xml:space="preserve">
     <value>Recording failed (MCI error {0}). Check that a microphone is connected and that Windows allows desktop apps to use it.</value>
   </data>
+  <data name="Props_Advanced" xml:space="preserve">
+    <value>Advanced</value>
+  </data>
+  <data name="Props_WhenRunning" xml:space="preserve">
+    <value>When it is running:</value>
+  </data>
+  <data name="Props_WhenRunningName" xml:space="preserve">
+    <value>When it is running</value>
+  </data>
+  <data name="Props_WhenRunningSwitch" xml:space="preserve">
+    <value>Switch to its window</value>
+  </data>
+  <data name="Props_WhenRunningStart" xml:space="preserve">
+    <value>Start another</value>
+  </data>
+  <data name="Props_WhenRunningHint" xml:space="preserve">
+    <value>Shift+click or a middle click always starts another; Ctrl+Shift+click starts one as administrator.</value>
+  </data>
 </root>

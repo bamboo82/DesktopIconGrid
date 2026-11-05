@@ -65,7 +65,13 @@ public sealed class LauncherViewModelTests : IDisposable
 
     private sealed class FailingLauncher : ILaunchService
     {
-        public LaunchResult Launch(ShortcutItem shortcut) => LaunchResult.Failure("nope");
+        public List<(string Location, bool AsAdministrator)> Launches { get; } = [];
+
+        public LaunchResult Launch(ShortcutItem shortcut, bool asAdministrator = false)
+        {
+            Launches.Add((shortcut.Location, asAdministrator));
+            return LaunchResult.Failure("nope");
+        }
 
         public LaunchResult LaunchWith(ShortcutItem shortcut, IReadOnlyList<string> paths) => LaunchResult.Failure("nope");
     }
@@ -85,7 +91,23 @@ public sealed class LauncherViewModelTests : IDisposable
         }
     }
 
-    private (LauncherViewModel ViewModel, LauncherModel Model, RecordingDialogs Dialogs) Create()
+    /// <summary>Stands in for the window switcher: records what it was asked and answers as told.</summary>
+    private sealed class FakeSwitcher : IWindowSwitcher
+    {
+        public bool Answer { get; set; } = true;
+
+        public int Calls { get; private set; }
+
+        public bool TrySwitch(IReadOnlySet<int> processIds)
+        {
+            Calls++;
+            return Answer;
+        }
+    }
+
+    private readonly FailingLauncher _launcher = new();
+
+    private (LauncherViewModel ViewModel, LauncherModel Model, RecordingDialogs Dialogs) Create(IWindowSwitcher? windows = null)
     {
         var model = new LauncherModel();
         model.Add(new ShortcutItem { Name = "A", Location = "C:\\a.exe" });
@@ -98,10 +120,11 @@ public sealed class LauncherViewModelTests : IDisposable
             new LayoutStorage(Path.Combine(_directory, "layout.json")),
             new NoIcons(),
             dialogs,
-            new FailingLauncher(),
+            _launcher,
             tracker,
             new SpecialIconRegistry([]),
-            action => action());
+            action => action(),
+            windows);
         return (viewModel, model, dialogs);
     }
 
@@ -216,5 +239,56 @@ public sealed class LauncherViewModelTests : IDisposable
 
         Assert.Single(dialogs.Notices);
         Assert.Empty(dialogs.Modals);
+    }
+
+    [Fact]
+    public void A_click_on_a_running_program_switches_to_it_instead_of_starting_another()
+    {
+        var switcher = new FakeSwitcher();
+        var (viewModel, _, dialogs) = Create(switcher);
+
+        viewModel.Activate(viewModel.RootItems.Items[0], null, ActivationModifiers.None);
+
+        Assert.Equal(1, switcher.Calls);
+        Assert.Empty(_launcher.Launches);
+        Assert.Empty(dialogs.Notices);
+    }
+
+    [Fact]
+    public void Without_a_window_to_switch_to_the_program_starts()
+    {
+        var (viewModel, _, _) = Create(new FakeSwitcher { Answer = false });
+
+        viewModel.Activate(viewModel.RootItems.Items[0], null, ActivationModifiers.None);
+
+        Assert.Equal([(@"C:\a.exe", false)], _launcher.Launches);
+    }
+
+    [Theory]
+    [InlineData(ActivationModifiers.Shift, false)]
+    [InlineData(ActivationModifiers.NewInstance, false)]
+    [InlineData(ActivationModifiers.Control | ActivationModifiers.Shift, true)]
+    public void Shift_or_a_middle_click_start_another_and_Ctrl_Shift_starts_one_elevated(ActivationModifiers modifiers, bool asAdministrator)
+    {
+        var switcher = new FakeSwitcher();
+        var (viewModel, _, _) = Create(switcher);
+
+        viewModel.Activate(viewModel.RootItems.Items[1], null, modifiers);
+
+        Assert.Equal(0, switcher.Calls);
+        Assert.Equal([(@"C:\b.exe", asAdministrator)], _launcher.Launches);
+    }
+
+    [Fact]
+    public void A_shortcut_set_to_start_another_never_switches()
+    {
+        var switcher = new FakeSwitcher();
+        var (viewModel, model, _) = Create(switcher);
+        ((ShortcutItem)model.Items[2]).WhenRunning = ShortcutItem.WhenRunningStart;
+
+        viewModel.Activate(viewModel.RootItems.Items[2], null, ActivationModifiers.None);
+
+        Assert.Equal(0, switcher.Calls);
+        Assert.Equal([(@"C:\c.exe", false)], _launcher.Launches);
     }
 }

@@ -93,6 +93,62 @@ internal static partial class NativeMethods
     [DllImport("user32.dll", EntryPoint = "SetWindowLongW")]
     private static extern int SetWindowLong(IntPtr hWnd, int nIndex, int dwNewLong);
 
+    // ----- top-level windows of other programs (switching to a running program) -----------------------------
+
+    public const long WS_EX_APPWINDOW = 0x00040000;
+    public const uint GW_OWNER = 4;
+    public const int DWMWA_CLOAKED = 14;
+    public const int SW_MINIMIZE = 6;
+    public const int SW_RESTORE = 9;
+    public const uint EVENT_SYSTEM_FOREGROUND = 0x0003;
+    public const uint WINEVENT_OUTOFCONTEXT = 0x0000;
+    public const uint WINEVENT_SKIPOWNPROCESS = 0x0002;
+    public const int OBJID_WINDOW = 0;
+
+    public delegate bool EnumWindowsProc(IntPtr hwnd, IntPtr lParam);
+
+    public delegate void WinEventProc(IntPtr hook, uint eventType, IntPtr hwnd, int idObject, int idChild, uint eventThread, uint eventTime);
+
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static extern bool EnumWindows(EnumWindowsProc callback, IntPtr lParam);
+
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static extern bool EnumChildWindows(IntPtr parent, EnumWindowsProc callback, IntPtr lParam);
+
+    [DllImport("user32.dll")]
+    public static extern uint GetWindowThreadProcessId(IntPtr hwnd, out uint processId);
+
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static extern bool IsWindowVisible(IntPtr hwnd);
+
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static extern bool IsIconic(IntPtr hwnd);
+
+    [DllImport("user32.dll")]
+    public static extern IntPtr GetWindow(IntPtr hwnd, uint command);
+
+    [DllImport("user32.dll", EntryPoint = "GetClassNameW", CharSet = CharSet.Unicode)]
+    public static extern int GetClassName(IntPtr hwnd, [Out] char[] className, int maxCount);
+
+    [DllImport("dwmapi.dll")]
+    public static extern int DwmGetWindowAttribute(IntPtr hwnd, int attribute, out int value, int size);
+
+    /// <summary>Posts the change instead of waiting for the window: a hung program cannot block the bar.</summary>
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static extern bool ShowWindowAsync(IntPtr hwnd, int command);
+
+    [DllImport("user32.dll")]
+    public static extern IntPtr SetWinEventHook(uint eventMin, uint eventMax, IntPtr module, WinEventProc callback, uint processId, uint threadId, uint flags);
+
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static extern bool UnhookWinEvent(IntPtr hook);
+
     // ----- monitors ------------------------------------------------------------------------------------------
 
     public delegate bool MonitorEnumProc(IntPtr monitor, IntPtr deviceContext, ref RECT bounds, IntPtr data);

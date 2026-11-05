@@ -6,15 +6,15 @@ public static class RunningProcesses
     private const uint ProcessQueryLimitedInformation = 0x1000;
 
     /// <summary>
-    /// Full image paths (case-insensitive) of every process this user is allowed to query. Protected and
-    /// other-session system processes are skipped, which is fine: no shortcut points at them.
+    /// The process ids of every process this user is allowed to query, by full image path (case-insensitive).
+    /// Protected and other-session system processes are skipped, which is fine: no shortcut points at them.
     /// </summary>
-    public static HashSet<string> ImagePaths()
+    public static IReadOnlyDictionary<string, IReadOnlyList<int>> Snapshot()
     {
-        var paths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var paths = new Dictionary<string, List<int>>(StringComparer.OrdinalIgnoreCase);
         if (!OperatingSystem.IsWindows())
         {
-            return paths;
+            return Freeze(paths);
         }
 
         var ids = new uint[1024];
@@ -23,7 +23,7 @@ public static class RunningProcesses
         {
             if (!NativeMethods.K32EnumProcesses(ids, (uint)(ids.Length * sizeof(uint)), out needed))
             {
-                return paths;
+                return Freeze(paths);
             }
 
             if (needed < ids.Length * sizeof(uint))
@@ -49,7 +49,13 @@ public static class RunningProcesses
                 var size = (uint)buffer.Length;
                 if (NativeMethods.QueryFullProcessImageName(handle, 0, buffer, ref size) && size > 0)
                 {
-                    paths.Add(new string(buffer, 0, (int)size));
+                    var path = new string(buffer, 0, (int)size);
+                    if (!paths.TryGetValue(path, out var processIds))
+                    {
+                        paths[path] = processIds = [];
+                    }
+
+                    processIds.Add((int)ids[i]);
                 }
             }
             finally
@@ -58,6 +64,9 @@ public static class RunningProcesses
             }
         }
 
-        return paths;
+        return Freeze(paths);
     }
+
+    private static IReadOnlyDictionary<string, IReadOnlyList<int>> Freeze(Dictionary<string, List<int>> paths) =>
+        paths.ToDictionary(p => p.Key, p => (IReadOnlyList<int>)p.Value, StringComparer.OrdinalIgnoreCase);
 }

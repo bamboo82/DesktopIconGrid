@@ -26,7 +26,7 @@ public sealed class ProcessTracker : IDisposable
     private readonly Dictionary<Guid, WatchTarget> _watchedPaths = [];
     private readonly Dictionary<Guid, ProcessLogSession> _logs = [];
     private readonly DispatcherTimer _scanTimer;
-    private HashSet<string> _runningPaths = new(StringComparer.OrdinalIgnoreCase);
+    private IReadOnlyDictionary<string, IReadOnlyList<int>> _runningPaths = NothingRunning;
     private bool _scanning;
 
     public ProcessTracker(Dispatcher dispatcher, string logDirectory)
@@ -42,14 +42,43 @@ public sealed class ProcessTracker : IDisposable
     /// <summary>Raised on the UI thread with the id of a shortcut whose running state may have changed.</summary>
     public event EventHandler<Guid>? RunningChanged;
 
+    private static readonly IReadOnlyDictionary<string, IReadOnlyList<int>> NothingRunning =
+        new Dictionary<string, IReadOnlyList<int>>(StringComparer.OrdinalIgnoreCase);
+
     public bool IsRunning(Guid id) =>
         (_launched.TryGetValue(id, out var pids) && pids.Count > 0)
-        || (_watchedPaths.TryGetValue(id, out var target) && target.Matches(_runningPaths));
+        || (_watchedPaths.TryGetValue(id, out var target) && target.MatchesAny(_runningPaths.Keys));
 
     /// <summary>
-    /// Starts matching the shortcut's program against the running processes: its executable by full path, or, for a
-    /// Store app reached through an app-execution alias, every executable in its package folder. No effect for
-    /// documents, links and shell folders.
+    /// The processes behind a shortcut, for switching to its windows: the ones started from the bar that still run,
+    /// plus those the last scan found at its program's path (or in its Store package).
+    /// </summary>
+    public IReadOnlySet<int> ProcessIdsOf(Guid id)
+    {
+        var result = new HashSet<int>();
+        if (_launched.TryGetValue(id, out var launched))
+        {
+            result.UnionWith(launched);
+        }
+
+        if (_watchedPaths.TryGetValue(id, out var target))
+        {
+            foreach (var (path, processIds) in _runningPaths)
+            {
+                if (target.Matches(path))
+                {
+                    result.UnionWith(processIds);
+                }
+            }
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Starts matching the shortcut's program against the running processes: its executable by full path; for a
+    /// Store app (an app-execution alias, a <c>shell:AppsFolder</c> entry, or an inbox program that Windows 11
+    /// replaced) its package. No effect for documents, links and other shell locations.
     /// </summary>
     public void Watch(ShortcutItem shortcut)
     {
@@ -178,7 +207,7 @@ public sealed class ProcessTracker : IDisposable
         if (_watchedPaths.Count == 0)
         {
             _scanTimer.Stop();
-            _runningPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            _runningPaths = NothingRunning;
         }
         else if (!_scanTimer.IsEnabled)
         {
@@ -198,16 +227,7 @@ public sealed class ProcessTracker : IDisposable
         _scanning = true;
         try
         {
-            var paths = await Task.Run(static () => RunningProcesses.ImagePaths());
-            var previous = _runningPaths;
-            _runningPaths = paths;
-            foreach (var (id, target) in _watchedPaths)
-            {
-                if (target.Matches(previous) != target.Matches(paths))
-                {
-                    RunningChanged?.Invoke(this, id);
-                }
-            }
+            ApplySnapshot(await Task.Run(static () => RunningProcesses.Snapshot()));
         }
         finally
         {
@@ -215,15 +235,33 @@ public sealed class ProcessTracker : IDisposable
         }
     }
 
-    /// <summary>
-    /// What the running-process scan looks for on behalf of a shortcut: one executable by full path, or every
-    /// executable in a folder (a Store app's package folder, since an alias target such as <c>wt.exe</c> may only
-    /// start the real process, <c>WindowsTerminal.exe</c>, from the same folder).
-    /// </summary>
-    internal sealed record WatchTarget(string Path, bool IsFolder)
+    /// <summary>Takes a new snapshot of the running processes (path → process ids) and reports badges that changed.</summary>
+    internal void ApplySnapshot(IReadOnlyDictionary<string, IReadOnlyList<int>> snapshot)
     {
-        public bool Matches(IReadOnlySet<string> runningPaths) =>
-            IsFolder ? runningPaths.Any(p => IsUnder(p, Path)) : runningPaths.Contains(Path);
+        var previous = _runningPaths;
+        _runningPaths = snapshot;
+        foreach (var (id, target) in _watchedPaths)
+        {
+            if (target.MatchesAny(previous.Keys) != target.MatchesAny(snapshot.Keys))
+            {
+                RunningChanged?.Invoke(this, id);
+            }
+        }
+    }
+
+    /// <summary>
+    /// What the running-process scan looks for on behalf of a shortcut: its executable by full path; every
+    /// executable in a folder (a Store app's package folder behind an alias, since <c>wt.exe</c> may only start the
+    /// real process, <c>WindowsTerminal.exe</c>, from the same folder); or any process of a package family.
+    /// </summary>
+    internal sealed record WatchTarget(string? File = null, string? Folder = null, string? PackageFamily = null)
+    {
+        public bool Matches(string path) =>
+            (File is not null && string.Equals(path, File, StringComparison.OrdinalIgnoreCase))
+            || (Folder is not null && IsUnder(path, Folder))
+            || (PackageFamily is not null && PackagedApps.IsInFamily(path, PackageFamily));
+
+        public bool MatchesAny(IEnumerable<string> runningPaths) => runningPaths.Any(Matches);
 
         private static bool IsUnder(string path, string folder) =>
             path.Length > folder.Length
@@ -246,6 +284,11 @@ public sealed class ProcessTracker : IDisposable
     /// </summary>
     internal static WatchTarget? WatchTargetOf(string? location)
     {
+        if (PackagedApps.FamilyOfAppsFolderItem(Environment.ExpandEnvironmentVariables(location?.Trim() ?? string.Empty)) is { } family)
+        {
+            return new WatchTarget(PackageFamily: family);
+        }
+
         var full = FullExecutablePath(location);
         if (full is null)
         {
@@ -254,13 +297,21 @@ public sealed class ProcessTracker : IDisposable
 
         if (!IsAppAlias(full))
         {
-            return new WatchTarget(full, IsFolder: false);
+            return new WatchTarget(File: full, PackageFamily: PackagedApps.ReplacementFamily(full, WindowsFolders));
         }
 
         var target = AppExecutionAlias.ResolveTarget(full);
         var folder = target is null ? null : Path.GetDirectoryName(target);
-        return string.IsNullOrEmpty(folder) ? null : new WatchTarget(folder.TrimEnd(Path.DirectorySeparatorChar), IsFolder: true);
+        return string.IsNullOrEmpty(folder) ? null : new WatchTarget(Folder: folder.TrimEnd(Path.DirectorySeparatorChar));
     }
+
+    /// <summary>Where the inbox programs live: the Windows folder, System32 and SysWOW64.</summary>
+    private static readonly string[] WindowsFolders =
+    [
+        Environment.GetFolderPath(Environment.SpecialFolder.Windows),
+        Environment.GetFolderPath(Environment.SpecialFolder.System),
+        Environment.GetFolderPath(Environment.SpecialFolder.SystemX86),
+    ];
 
     /// <summary>
     /// The full path of the executable a shortcut starts, for executables and bare commands; <see langword="null"/>

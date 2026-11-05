@@ -25,10 +25,19 @@ public static class LaunchPlanner
     public const string ShowDesktopLocation = SpecialScheme + "show-desktop";
     public const string RunDialogLocation = SpecialScheme + "run";
 
+    /// <summary>The shell verb that starts a program elevated.</summary>
+    public const string RunAsVerb = "runas";
+
     public static LaunchPlan Plan(ShortcutItem shortcut) => Plan(shortcut, expandParameters: true);
 
     /// <summary>Plans the launch; pass <paramref name="expandParameters"/> = false when the parameters were already expanded (dropped paths may contain <c>%</c>).</summary>
-    public static LaunchPlan Plan(ShortcutItem shortcut, bool expandParameters)
+    public static LaunchPlan Plan(ShortcutItem shortcut, bool expandParameters) => Plan(shortcut, expandParameters, asAdministrator: false);
+
+    /// <summary>
+    /// Plans the launch. <paramref name="asAdministrator"/> asks for elevation (the <c>runas</c> verb, an ordinary UAC
+    /// prompt) for files and programs; links and shell locations ignore it.
+    /// </summary>
+    public static LaunchPlan Plan(ShortcutItem shortcut, bool expandParameters, bool asAdministrator)
     {
         ArgumentNullException.ThrowIfNull(shortcut);
 
@@ -74,6 +83,11 @@ public static class LaunchPlanner
             {
                 startInfo.WorkingDirectory = workingDirectory;
             }
+
+            if (asAdministrator && !IsUri(location))
+            {
+                startInfo.Verb = RunAsVerb;
+            }
         }
 
         startInfo.UseShellExecute = true;
@@ -108,6 +122,49 @@ public static class LaunchPlanner
 
     public static bool IsShellNamespace(string? location) =>
         location is not null && location.TrimStart().StartsWith(ShellScheme, StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// Whether a click on the shortcut brings its running program forward instead of starting another instance:
+    /// its <see cref="ShortcutItem.WhenRunning"/> choice, else yes for programs and no for documents, folders and links.
+    /// </summary>
+    public static bool SwitchesWhenRunning(ShortcutItem shortcut)
+    {
+        ArgumentNullException.ThrowIfNull(shortcut);
+        return shortcut.WhenRunning?.Trim().ToLowerInvariant() switch
+        {
+            ShortcutItem.WhenRunningSwitch => true,
+            ShortcutItem.WhenRunningStart => false,
+            _ => IsProgramLocation(shortcut.Location),
+        };
+    }
+
+    /// <summary>A program: an <c>.exe</c> or <c>.com</c> file, a bare command (<c>notepad</c>), or a Store app from the Apps folder.</summary>
+    public static bool IsProgramLocation(string? location)
+    {
+        var value = Environment.ExpandEnvironmentVariables(location?.Trim() ?? string.Empty);
+        if (value.Length == 0 || IsSpecial(value))
+        {
+            return false;
+        }
+
+        if (IsShellNamespace(value)) // before IsUri: "shell:" parses as a URI scheme too
+        {
+            return PackagedApps.FamilyOfAppsFolderItem(value) is not null;
+        }
+
+        if (IsUri(value))
+        {
+            return false;
+        }
+
+        var path = value.TrimEnd('\\', '/');
+        var cut = path.LastIndexOfAny(['\\', '/']);
+        var fileName = cut >= 0 ? path[(cut + 1)..] : path;
+        var extension = Path.GetExtension(fileName);
+        return extension.Equals(".exe", StringComparison.OrdinalIgnoreCase)
+               || extension.Equals(".com", StringComparison.OrdinalIgnoreCase)
+               || (extension.Length == 0 && !Directory.Exists(value));
+    }
 
     private static string Quote(string value) => value.Contains(' ') ? $"\"{value}\"" : value;
 }

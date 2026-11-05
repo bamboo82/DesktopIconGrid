@@ -59,6 +59,7 @@ Google Drive Bucket, and [docs/THEMES.md](docs/THEMES.md) for the themes.
 | See what the app is doing | Tray icon → *Log viewer…* (filter by level, category, time or text; save or copy). Failures appear as tray notifications; clicking one opens the log viewer |
 | Exit | Tray icon → *Exit*, or options menu (▸) → *Exit* (the close button only hides the bar) |
 | Open an item | Click it (or double-click, see Settings). `Enter` when focused |
+| Go to a program that is already running | Click its icon: its window comes forward, a second click minimises it. Shift+click or middle-click starts another; Ctrl+Shift+click starts one as administrator |
 | Rearrange | Drag an icon to a new position; the blue line shows where it lands |
 | Put a shortcut in a group | Drag it onto the group icon |
 | Edit an item | Right-click → *Properties*, or `F2` |

@@ -2013,6 +2013,15 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Advanced.
+        /// </summary>
+        public static string Props_Advanced {
+            get {
+                return ResourceManager.GetString("Props_Advanced", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Browse for a file….
         /// </summary>
         public static string Props_BrowseFile {
@@ -2270,6 +2279,51 @@ namespace DesktopIconGrid.Resources {
         public static string Props_WebIconTitle {
             get {
                 return ResourceManager.GetString("Props_WebIconTitle", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to When it is running:.
+        /// </summary>
+        public static string Props_WhenRunning {
+            get {
+                return ResourceManager.GetString("Props_WhenRunning", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Shift+click or a middle click always starts another; Ctrl+Shift+click starts one [rest of string was truncated]";.
+        /// </summary>
+        public static string Props_WhenRunningHint {
+            get {
+                return ResourceManager.GetString("Props_WhenRunningHint", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to When it is running.
+        /// </summary>
+        public static string Props_WhenRunningName {
+            get {
+                return ResourceManager.GetString("Props_WhenRunningName", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Start another.
+        /// </summary>
+        public static string Props_WhenRunningStart {
+            get {
+                return ResourceManager.GetString("Props_WhenRunningStart", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Switch to its window.
+        /// </summary>
+        public static string Props_WhenRunningSwitch {
+            get {
+                return ResourceManager.GetString("Props_WhenRunningSwitch", resourceCulture);
             }
         }
 

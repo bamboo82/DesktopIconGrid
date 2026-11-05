@@ -1328,4 +1328,22 @@
   <data name="Sound_RecordingFailed" xml:space="preserve">
     <value>录音失败（MCI 错误 {0}）。请确认已连接麦克风，且 Windows 允许桌面应用使用它。</value>
   </data>
+  <data name="Props_Advanced" xml:space="preserve">
+    <value>高级</value>
+  </data>
+  <data name="Props_WhenRunning" xml:space="preserve">
+    <value>运行中时：</value>
+  </data>
+  <data name="Props_WhenRunningName" xml:space="preserve">
+    <value>运行中时</value>
+  </data>
+  <data name="Props_WhenRunningSwitch" xml:space="preserve">
+    <value>切换到它的窗口</value>
+  </data>
+  <data name="Props_WhenRunningStart" xml:space="preserve">
+    <value>再启动一个</value>
+  </data>
+  <data name="Props_WhenRunningHint" xml:space="preserve">
+    <value>Shift+单击或按鼠标中键总是再启动一个；Ctrl+Shift+单击以管理员身份启动。</value>
+  </data>
 </root>

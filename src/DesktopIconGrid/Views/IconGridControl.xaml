@@ -54,6 +54,7 @@
                     LostMouseCapture="Item_LostMouseCapture"
                     Click="Item_Click"
                     MouseDoubleClick="Item_MouseDoubleClick"
+                    MouseUp="Item_MouseUp"
                     KeyDown="Item_KeyDown">
               <Button.ContextMenu>
                 <ContextMenu Opened="ItemMenu_Opened">

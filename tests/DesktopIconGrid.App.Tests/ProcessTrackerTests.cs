@@ -71,20 +71,53 @@ public sealed class ProcessTrackerTests : IDisposable
     }
 
     [Fact]
-    public void Executables_are_watched_by_path_and_package_folders_by_prefix()
+    public void Executables_are_watched_by_path_package_folders_by_prefix_and_packages_by_family()
     {
         var exe = Path.Combine(_directory, "tool.exe");
         File.WriteAllBytes(exe, []);
 
         var target = ProcessTracker.WatchTargetOf(exe);
         Assert.NotNull(target);
-        Assert.False(target.IsFolder);
-        Assert.True(target.Matches(new HashSet<string>(StringComparer.OrdinalIgnoreCase) { exe.ToUpperInvariant() }));
-        Assert.False(target.Matches(new HashSet<string>(StringComparer.OrdinalIgnoreCase) { Path.Combine(_directory, "other.exe") }));
+        Assert.Equal(exe, target.File, ignoreCase: true);
+        Assert.True(target.Matches(exe.ToUpperInvariant()));
+        Assert.False(target.Matches(Path.Combine(_directory, "other.exe")));
 
-        var package = new ProcessTracker.WatchTarget(@"C:\Program Files\WindowsApps\Pkg_1.0_x64__abc", IsFolder: true);
-        Assert.True(package.Matches(new HashSet<string>(StringComparer.OrdinalIgnoreCase) { @"c:\program files\windowsapps\pkg_1.0_x64__abc\WindowsTerminal.exe" }));
-        Assert.False(package.Matches(new HashSet<string>(StringComparer.OrdinalIgnoreCase) { @"C:\Program Files\WindowsApps\Pkg_1.0_x64__abcdef\x.exe" }));
-        Assert.False(package.Matches(new HashSet<string>(StringComparer.OrdinalIgnoreCase)));
+        var folder = new ProcessTracker.WatchTarget(Folder: @"C:\Program Files\WindowsApps\Pkg_1.0_x64__abc");
+        Assert.True(folder.Matches(@"c:\program files\windowsapps\pkg_1.0_x64__abc\WindowsTerminal.exe"));
+        Assert.False(folder.Matches(@"C:\Program Files\WindowsApps\Pkg_1.0_x64__abcdef\x.exe"));
+
+        var store = ProcessTracker.WatchTargetOf(@"shell:AppsFolder\Microsoft.WindowsCalculator_8wekyb3d8bbwe!App");
+        Assert.NotNull(store);
+        Assert.Equal("Microsoft.WindowsCalculator_8wekyb3d8bbwe", store.PackageFamily);
+        Assert.True(store.Matches(@"C:\Program Files\WindowsApps\Microsoft.WindowsCalculator_11.2405.2.0_x64__8wekyb3d8bbwe\CalculatorApp.exe"));
+        Assert.Null(ProcessTracker.WatchTargetOf(@"shell:AppsFolder\{6D809377-6AF0-444B-8957-A3773F02200E}\Tool\tool.exe"));
+    }
+
+    [Fact]
+    public void A_shortcut_s_processes_come_from_the_scan_of_its_program()
+    {
+        using var tracker = new ProcessTracker(System.Windows.Threading.Dispatcher.CurrentDispatcher, Path.Combine(_directory, "logs"));
+        var exe = Path.Combine(_directory, "tool.exe");
+        File.WriteAllBytes(exe, []);
+        var shortcut = new DesktopIconGrid.Core.Models.ShortcutItem { Location = exe };
+        var changed = new List<Guid>();
+        tracker.RunningChanged += (_, id) => changed.Add(id);
+        tracker.Watch(shortcut);
+
+        tracker.ApplySnapshot(new Dictionary<string, IReadOnlyList<int>>(StringComparer.OrdinalIgnoreCase)
+        {
+            [exe.ToUpperInvariant()] = [101, 102],
+            [Path.Combine(_directory, "other.exe")] = [103],
+        });
+
+        Assert.True(tracker.IsRunning(shortcut.Id));
+        Assert.Equal([101, 102], tracker.ProcessIdsOf(shortcut.Id).Order());
+        Assert.Equal([shortcut.Id], changed);
+
+        tracker.ApplySnapshot(new Dictionary<string, IReadOnlyList<int>>(StringComparer.OrdinalIgnoreCase));
+        Assert.False(tracker.IsRunning(shortcut.Id));
+        Assert.Empty(tracker.ProcessIdsOf(shortcut.Id));
+        Assert.Equal([shortcut.Id, shortcut.Id], changed);
+        Assert.Empty(tracker.ProcessIdsOf(Guid.NewGuid()));
     }
 }

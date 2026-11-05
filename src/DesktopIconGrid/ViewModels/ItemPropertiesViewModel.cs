@@ -9,9 +9,18 @@ using DesktopIconGrid.Services;
 
 namespace DesktopIconGrid.ViewModels;
 
+/// <summary>One choice of "When it is running".</summary>
+public sealed record WhenRunningOption(bool Switches, string Name);
+
 /// <summary>Backs the Shortcut Properties / Group Properties dialog. Writes to the item only on <see cref="Apply"/>.</summary>
 public sealed class ItemPropertiesViewModel : ObservableObject
 {
+    public static readonly IReadOnlyList<WhenRunningOption> WhenRunningChoices =
+    [
+        new(true, Strings.Props_WhenRunningSwitch),
+        new(false, Strings.Props_WhenRunningStart),
+    ];
+
     private const int PreviewSize = 32;
     /// <summary>How long after the last edit the preview and the not-found check run; shortened by tests.</summary>
     internal static TimeSpan PreviewDebounce { get; set; } = TimeSpan.FromMilliseconds(300);
@@ -22,6 +31,9 @@ public sealed class ItemPropertiesViewModel : ObservableObject
     private string _location;
     private string _parameters;
     private bool _captureLog;
+    private readonly string? _originalWhenRunning;
+    private bool _switchesWhenRunning;
+    private bool _whenRunningChosen;
     private string? _iconPath;
     private TextIcon? _textIcon;
     private bool _nameIsAutomatic;
@@ -41,6 +53,8 @@ public sealed class ItemPropertiesViewModel : ObservableObject
         _location = (target as ShortcutItem)?.Location ?? string.Empty;
         _parameters = (target as ShortcutItem)?.Parameters ?? string.Empty;
         _captureLog = (target as ShortcutItem)?.CaptureLog ?? false;
+        _originalWhenRunning = (target as ShortcutItem)?.WhenRunning;
+        _switchesWhenRunning = target is ShortcutItem shortcut && LaunchPlanner.SwitchesWhenRunning(shortcut);
         _iconPath = target.IconPath;
         _textIcon = target.TextIcon;
         _nameIsAutomatic = !IsGroup && isNew && (_name.Length == 0 || _name == ShortcutItem.SuggestName(_location));
@@ -87,6 +101,12 @@ public sealed class ItemPropertiesViewModel : ObservableObject
                 return;
             }
 
+            if (!_whenRunningChosen && _originalWhenRunning is null && _switchesWhenRunning != LaunchPlanner.IsProgramLocation(_location))
+            {
+                _switchesWhenRunning = !_switchesWhenRunning;
+                OnPropertyChanged(nameof(SelectedWhenRunning));
+            }
+
             if (_nameIsAutomatic)
             {
                 _updatingAutomaticName = true;
@@ -113,6 +133,33 @@ public sealed class ItemPropertiesViewModel : ObservableObject
     }
 
     public string CaptureLogHint => Strings.Props_LogHint;
+
+    public IReadOnlyList<WhenRunningOption> WhenRunningOptions => WhenRunningChoices;
+
+    /// <summary>
+    /// What a click does while the program runs. Until the user picks one it follows the location (programs switch,
+    /// documents, folders and links start again), and nothing is stored, so a later change of location still decides.
+    /// </summary>
+    public WhenRunningOption SelectedWhenRunning
+    {
+        get => WhenRunningChoices.First(o => o.Switches == _switchesWhenRunning);
+        set
+        {
+            if (value is null)
+            {
+                return;
+            }
+
+            _whenRunningChosen = true;
+            if (_switchesWhenRunning != value.Switches)
+            {
+                _switchesWhenRunning = value.Switches;
+                OnPropertyChanged();
+            }
+        }
+    }
+
+    public string WhenRunningHint => Strings.Props_WhenRunningHint;
 
     public string? IconPath
     {
@@ -232,6 +279,11 @@ public sealed class ItemPropertiesViewModel : ObservableObject
             shortcut.Location = _location.Trim();
             shortcut.Parameters = string.IsNullOrWhiteSpace(_parameters) ? null : _parameters.Trim();
             shortcut.CaptureLog = _captureLog;
+            shortcut.WhenRunning = !_whenRunningChosen
+                ? _originalWhenRunning
+                : _switchesWhenRunning == LaunchPlanner.IsProgramLocation(shortcut.Location)
+                    ? null // the location's own default: stored as nothing, so it keeps following the location
+                    : _switchesWhenRunning ? ShortcutItem.WhenRunningSwitch : ShortcutItem.WhenRunningStart;
         }
 
         return true;

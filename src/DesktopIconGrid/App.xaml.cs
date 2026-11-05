@@ -33,6 +33,7 @@ public partial class App : Application
     private ProcessTracker? _tracker;
     private SystemMonitor? _monitor;
     private SyncCoordinator? _sync;
+    private WindowSwitcher? _windows;
     private Func<bool>? _fluentDialogsSetting;
 
     /// <summary>The app-wide HTTP client (Google APIs, icon downloads). Per-request timeouts are applied by the callers.</summary>
@@ -111,6 +112,7 @@ public partial class App : Application
             new SoundReplayerHandler(owner, AppPaths.SoundsDirectory, Dispatcher),
         ]);
         var launcher = new LaunchService(_tracker);
+        _windows = new WindowSwitcher();
         var viewModel = new LauncherViewModel(
             model,
             storage,
@@ -119,7 +121,8 @@ public partial class App : Application
             launcher,
             _tracker,
             specialIcons,
-            action => Dispatcher.BeginInvoke(DispatcherPriority.Background, action));
+            action => Dispatcher.BeginInvoke(DispatcherPriority.Background, action),
+            _windows);
 
         // First paint; the bar window refines this once it has a handle (backdrop, High Contrast, settings changes).
         ThemeManager.Apply(ThemeManager.EffectivePalette(viewModel.Palette));
@@ -191,6 +194,7 @@ public partial class App : Application
         _showWait?.Unregister(null);
         _showEvent?.Dispose();
         _monitor?.Dispose();
+        _windows?.Dispose();
         _tracker?.Dispose();
         _instanceMutex?.Dispose();
         base.OnExit(e);

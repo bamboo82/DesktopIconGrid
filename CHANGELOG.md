@@ -7,6 +7,17 @@ version numbers follow [Semantic Versioning](https://semver.org/).
 
 "Get there faster": the first release of the plan in [docs/ROADMAP.md](docs/ROADMAP.md).
 
+### Added
+
+- Clicking a program that is already running switches to it, as the taskbar does, instead of starting a
+  second copy: its window comes forward (restored if minimised), a second click while it is in front
+  minimises it, and with several windows each click goes to the next one. Store apps are found through
+  the frame Windows draws them in, and the inbox programs that Windows 11 replaced with Store apps
+  (Calculator, Notepad, Paint) are recognised by their package. Shift+click or a middle click starts
+  another instance; Ctrl+Shift+click starts one as administrator. *Properties → Advanced → When it is
+  running* changes this per shortcut; documents, folders and links start again by default. Checked in
+  code and with tests against simulated window lists; not yet seen on a screen.
+
 ### Fixed
 
 - Settings and icon properties written by a newer version are kept when this version saves, at every

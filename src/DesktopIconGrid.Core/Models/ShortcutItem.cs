@@ -3,6 +3,12 @@ namespace DesktopIconGrid.Core.Models;
 /// <summary>A launchable entry: a program, document, folder or URL.</summary>
 public sealed class ShortcutItem : LauncherItem
 {
+    /// <summary><see cref="WhenRunning"/>: a click brings the running program's window forward.</summary>
+    public const string WhenRunningSwitch = "switch";
+
+    /// <summary><see cref="WhenRunning"/>: a click always starts another instance.</summary>
+    public const string WhenRunningStart = "start";
+
     /// <summary>
     /// What to open. A file, a folder or a URL; <c>shell:</c> locations open in File Explorer and
     /// <c>special:</c> locations are handled by the app. Environment variables are expanded at launch.
@@ -21,6 +27,12 @@ public sealed class ShortcutItem : LauncherItem
     /// </summary>
     public bool CaptureLog { get; set; }
 
+    /// <summary>
+    /// What a click does while the program runs: <see cref="WhenRunningSwitch"/> or <see cref="WhenRunningStart"/>;
+    /// <see langword="null"/> follows the location (programs switch; documents, folders and links start again).
+    /// </summary>
+    public string? WhenRunning { get; set; }
+
     protected override LauncherItem CloneCore() => (ShortcutItem)MemberwiseClone();
 
     public override void CopyContentFrom(LauncherItem source)
@@ -32,6 +44,7 @@ public sealed class ShortcutItem : LauncherItem
             Parameters = string.IsNullOrWhiteSpace(shortcut.Parameters) ? null : shortcut.Parameters.Trim();
             MultiLaunch = shortcut.MultiLaunch;
             CaptureLog = shortcut.CaptureLog;
+            WhenRunning = shortcut.WhenRunning;
         }
     }
 

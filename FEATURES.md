@@ -152,6 +152,9 @@ The item model, handler interface, registry and the bucket are specified in
 | Action | Result |
 | --- | --- |
 | Left click an icon | Launch (shortcut) or open popup (group). Option: double-click instead (groups and special icons still act on one click). Repeated clicks within 400 ms launch once. |
+| Left click a running program (0.7.0) | Like the taskbar: brings its window forward (restored if minimised); a second click while it is in front minimises it; with several windows each click goes to the next one. Store apps are found through the frame they are drawn in. Per shortcut, *Properties → Advanced → When it is running* can make clicks start another instead; documents, folders and links do that by default. |
+| Shift+click or middle-click an icon | Starts another instance. |
+| Ctrl+Shift+click an icon | Starts it as administrator (an ordinary UAC prompt). |
 | Right click an icon | Item context menu (§4). |
 | Right click empty space | Bar context menu (§4). |
 | Drag an icon | Reorder: a drop indicator shows the insertion point; dropping inserts there. |
@@ -214,6 +217,8 @@ Both dialogs follow the reference layout: a labelled form, an icon preview with
   exist, so paths on removable drives can still be saved.
 - Changing the Location refreshes the icon preview and fills in the Name if it was
   still the automatic one.
+- *Advanced* (shortcuts): *When it is running* — switch to its window or start another (§3). Until it is
+  picked, the choice follows the Location and nothing is stored.
 
 ### 6.1 Edit names table
 

@@ -16,21 +16,21 @@ namespace DesktopIconGrid.Services;
 /// </summary>
 public sealed class LaunchService(ProcessTracker tracker) : ILaunchService
 {
-    public LaunchResult Launch(ShortcutItem shortcut)
+    public LaunchResult Launch(ShortcutItem shortcut, bool asAdministrator = false)
     {
         ArgumentNullException.ThrowIfNull(shortcut);
-        var result = LaunchCore(shortcut);
-        Log(shortcut, result);
+        var result = LaunchCore(shortcut, asAdministrator: asAdministrator);
+        Log(shortcut, result, asAdministrator);
         return result;
     }
 
-    private static void Log(ShortcutItem shortcut, LaunchResult result)
+    private static void Log(ShortcutItem shortcut, LaunchResult result, bool asAdministrator = false)
     {
         var what = string.IsNullOrEmpty(shortcut.Parameters) ? shortcut.Location : $"{shortcut.Location} {shortcut.Parameters}";
         switch (result.Outcome)
         {
             case LaunchOutcome.Started:
-                AppLog.Default.Info("Launch", $"Started \"{shortcut.Name}\": {what}{(shortcut.CaptureLog ? " (output captured)" : string.Empty)}");
+                AppLog.Default.Info("Launch", $"Started \"{shortcut.Name}\"{(asAdministrator ? " as administrator" : string.Empty)}: {what}{(shortcut.CaptureLog && !asAdministrator ? " (output captured)" : string.Empty)}");
                 break;
             case LaunchOutcome.Cancelled:
                 AppLog.Default.Info("Launch", $"Cancelled \"{shortcut.Name}\" ({what})");
@@ -77,12 +77,12 @@ public sealed class LaunchService(ProcessTracker tracker) : ILaunchService
         return failures.Count == 0 ? LaunchResult.Started : LaunchResult.Failure(string.Join("\n", failures.Distinct()));
     }
 
-    private LaunchResult LaunchCore(ShortcutItem shortcut, bool expandParameters = true)
+    private LaunchResult LaunchCore(ShortcutItem shortcut, bool expandParameters = true, bool asAdministrator = false)
     {
         LaunchPlan plan;
         try
         {
-            plan = LaunchPlanner.Plan(shortcut, expandParameters);
+            plan = LaunchPlanner.Plan(shortcut, expandParameters, asAdministrator);
         }
         catch (ArgumentException ex)
         {
@@ -98,7 +98,8 @@ public sealed class LaunchService(ProcessTracker tracker) : ILaunchService
         }
 
         var startInfo = plan.StartInfo!;
-        if (shortcut.CaptureLog && !LaunchPlanner.IsShellNamespace(shortcut.Location) && OutputCapture.CanCapture(startInfo))
+        // Capturing needs the process started directly, which cannot ask for elevation: an elevated start runs uncaptured.
+        if (shortcut.CaptureLog && !asAdministrator && !LaunchPlanner.IsShellNamespace(shortcut.Location) && OutputCapture.CanCapture(startInfo))
         {
             return StartWithLog(shortcut, OutputCapture.WithCapture(startInfo));
         }

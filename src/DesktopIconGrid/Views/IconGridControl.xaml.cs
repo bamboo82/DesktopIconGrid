@@ -102,6 +102,18 @@ public partial class IconGridControl : UserControl
         }
     }
 
+    /// <summary>A middle click on a shortcut starts another instance, whatever the click mode (as on the taskbar).</summary>
+    private void Item_MouseUp(object sender, MouseButtonEventArgs e)
+    {
+        if (e.ChangedButton != MouseButton.Middle || ItemOf(sender) is not { IsShortcut: true } item || List is null)
+        {
+            return;
+        }
+
+        List.Root.Activate(item, sender, CurrentModifiers() | ActivationModifiers.NewInstance);
+        e.Handled = true;
+    }
+
     /// <summary>
     /// Enter or Space on a focused icon must launch in both click modes, while a mouse click in double-click mode
     /// waits for the second click; the device that produced the Click event tells them apart.

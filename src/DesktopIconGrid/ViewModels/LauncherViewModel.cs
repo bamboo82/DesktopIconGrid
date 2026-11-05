@@ -33,6 +33,7 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
     private bool _isGroupPopupOpen;
     private Guid _lastLaunchedId;
     private DateTime _lastLaunchedAt;
+    private readonly IWindowSwitcher? _windows;
     private PendingRemoval? _pendingRemoval;
     private int _removalVersion;
 
@@ -44,7 +45,8 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
         ILaunchService launcher,
         ProcessTracker tracker,
         SpecialIconRegistry specialIcons,
-        Action<Action>? defer = null)
+        Action<Action>? defer = null,
+        IWindowSwitcher? windows = null)
     {
         Model = model;
         _storage = storage;
@@ -54,6 +56,7 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
         Tracker = tracker;
         SpecialIcons = specialIcons;
         _defer = defer ?? (action => action());
+        _windows = windows;
         _uiScheduler = SynchronizationContext.Current is null ? TaskScheduler.Default : TaskScheduler.FromCurrentSynchronizationContext();
         tracker.RunningChanged += (_, id) =>
         {
@@ -338,7 +341,19 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
             return;
         }
 
-        var result = _launcher.Launch(shortcutToLaunch);
+        // The taskbar's keys: Shift or a middle click starts another instance, Ctrl+Shift starts one as administrator.
+        var asAdministrator = modifiers.HasFlag(ActivationModifiers.Control) && modifiers.HasFlag(ActivationModifiers.Shift);
+        var newInstance = asAdministrator || modifiers.HasFlag(ActivationModifiers.Shift) || modifiers.HasFlag(ActivationModifiers.NewInstance);
+        if (!newInstance
+            && _windows is not null
+            && LaunchPlanner.SwitchesWhenRunning(shortcutToLaunch)
+            && _windows.TrySwitch(Tracker.ProcessIdsOf(shortcutToLaunch.Id)))
+        {
+            IsGroupPopupOpen = false;
+            return;
+        }
+
+        var result = _launcher.Launch(shortcutToLaunch, asAdministrator);
         if (result.Outcome == LaunchOutcome.Failed)
         {
             _dialogs.Notify(string.Format(Strings.Launch_CantOpen, item.Name), $"{result.ErrorMessage}\n{item.Location}");
