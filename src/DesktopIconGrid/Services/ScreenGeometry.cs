@@ -1,5 +1,6 @@
 using System.Runtime.InteropServices;
 using System.Windows;
+using DesktopIconGrid.Core.Models;
 
 namespace DesktopIconGrid.Services;
 
@@ -24,6 +25,7 @@ public static class ScreenGeometry
     public static readonly IReadOnlyList<double> PlausibleScales = [1.0, 1.25, 1.5, 1.75, 2.0, 2.25, 2.5];
 
     private const int SmCxScreen = 0;
+    private const uint MonitorDefaultToNearest = 2;
 
     /// <summary>True when at least <see cref="MinVisibleWidth"/> × <see cref="MinVisibleHeight"/> of <paramref name="window"/> lies on one of <paramref name="monitors"/> (same units).</summary>
     public static bool IsVisibleOn(Rect window, IEnumerable<Rect> monitors)
@@ -76,6 +78,61 @@ public static class ScreenGeometry
 
         var pixelWidth = NativeMethods.GetSystemMetrics(SmCxScreen);
         return pixelWidth > 0 && SystemParameters.PrimaryScreenWidth > 0 ? pixelWidth / SystemParameters.PrimaryScreenWidth : 1.0;
+    }
+
+    /// <summary>Every monitor with its device name (<c>\\.\DISPLAY1</c>) and bounds in device pixels; empty without a desktop.</summary>
+    public static IReadOnlyList<MonitorBounds> Monitors()
+    {
+        var result = new List<MonitorBounds>();
+        if (!OperatingSystem.IsWindows())
+        {
+            return result;
+        }
+
+        NativeMethods.MonitorEnumProc callback = (IntPtr monitor, IntPtr _, ref NativeMethods.RECT _, IntPtr _) =>
+        {
+            if (Describe(monitor) is { } bounds)
+            {
+                result.Add(bounds);
+            }
+
+            return true;
+        };
+        try
+        {
+            NativeMethods.EnumDisplayMonitors(IntPtr.Zero, IntPtr.Zero, callback, IntPtr.Zero);
+        }
+        catch (EntryPointNotFoundException)
+        {
+            result.Clear();
+        }
+
+        GC.KeepAlive(callback);
+        return result;
+    }
+
+    /// <summary>The monitor a window is on (the nearest one when it is off screen), or <see langword="null"/> without a desktop.</summary>
+    public static MonitorBounds? MonitorOfWindow(IntPtr handle)
+    {
+        if (!OperatingSystem.IsWindows() || handle == IntPtr.Zero)
+        {
+            return null;
+        }
+
+        var monitor = NativeMethods.MonitorFromWindow(handle, MonitorDefaultToNearest);
+        return monitor == IntPtr.Zero ? null : Describe(monitor);
+    }
+
+    private static MonitorBounds? Describe(IntPtr monitor)
+    {
+        var info = new NativeMethods.MONITORINFOEX { cbSize = Marshal.SizeOf<NativeMethods.MONITORINFOEX>() };
+        if (!NativeMethods.GetMonitorInfo(monitor, ref info))
+        {
+            return null;
+        }
+
+        var bounds = info.rcMonitor;
+        return new MonitorBounds(info.szDevice ?? string.Empty, bounds.Left, bounds.Top, bounds.Right - bounds.Left, bounds.Bottom - bounds.Top);
     }
 
     /// <summary>Bounds of every monitor in device pixels; the virtual screen (as pixels at the primary scale) when enumeration is unavailable.</summary>
@@ -133,5 +190,23 @@ public static class ScreenGeometry
 
         [DllImport("user32.dll")]
         public static extern int GetSystemMetrics(int index);
+
+        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+        public struct MONITORINFOEX
+        {
+            public int cbSize;
+            public RECT rcMonitor;
+            public RECT rcWork;
+            public uint dwFlags;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)]
+            public string szDevice;
+        }
+
+        [DllImport("user32.dll")]
+        public static extern IntPtr MonitorFromWindow(IntPtr hwnd, uint dwFlags);
+
+        [DllImport("user32.dll", EntryPoint = "GetMonitorInfoW", CharSet = CharSet.Unicode)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        public static extern bool GetMonitorInfo(IntPtr hMonitor, ref MONITORINFOEX lpmi);
     }
 }

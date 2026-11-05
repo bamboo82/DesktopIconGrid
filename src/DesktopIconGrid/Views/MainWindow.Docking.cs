@@ -77,7 +77,7 @@ public partial class MainWindow
 
         if (!IsDocked)
         {
-            _undockedPlacement = FreePlacement();
+            _undockedPlacement = CurrentPlacement();
             _dockThickness = ThicknessFromWindow(edge);
             Grip.Visibility = Visibility.Collapsed;
             Topmost = true; // a desktop toolbar sits above other windows; the setting is restored on undock
@@ -295,14 +295,6 @@ public partial class MainWindow
             Show();
         }
     }
-
-    private WindowPlacement FreePlacement() => new()
-    {
-        Left = Left,
-        Top = Top,
-        Width = ActualWidth > 0 ? ActualWidth : Width,
-        Height = ActualHeight > 0 ? ActualHeight : Height,
-    };
 
     /// <summary>While docked, the position to remember is the free one, so undocking (now or after a restart) returns there.</summary>
     private WindowPlacement? DockedPlacementToSave() => IsDocked ? _undockedPlacement : null;

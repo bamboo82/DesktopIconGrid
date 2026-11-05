@@ -397,10 +397,9 @@ Still open, in the order they should be taken:
 
 1. **Drive cache freshness** — done in 0.6.0 (a `.stamp` next to each cached copy with size, modified
    time and MD5; reserved device names get a suffix in `FileNames.Safe`).
-2. **Multi-monitor** — save the placement in device pixels with the monitor's device name, so a bar
-   returns to its monitor after re-enumeration and the visibility check no longer has to try every
-   plausible scale (today it compares the real monitor layout at the primary scale and at each Windows
-   display scale, and only resets when none of them shows the bar).
+2. **Multi-monitor** — done in 0.6.0: the placement is saved in device pixels with the monitor's device
+   name and restored there with `SetWindowPos`; the any-scale check against the real monitors remains the
+   fallback for older files and for a monitor that is gone.
 3. **Localisation** — done in 0.5.0 (`.resx` tables with zh-Hant/zh-Hans, a Language setting, the
    text-icon default font by UI language). By design the log and the error texts from Google and
    Windows stay in English.

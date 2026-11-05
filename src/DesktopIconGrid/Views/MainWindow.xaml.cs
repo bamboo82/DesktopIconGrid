@@ -503,19 +503,38 @@ public partial class MainWindow : Window
             return;
         }
 
-        var bounds = WindowState == WindowState.Normal
-            ? new Rect(Left, Top, ActualWidth, ActualHeight)
-            : RestoreBounds;
-        if (bounds.Width > 0 && bounds.Height > 0)
+        var placement = CurrentPlacement();
+        if (placement.IsUsable)
         {
-            _viewModel.UpdateWindowPlacement(new WindowPlacement
-            {
-                Left = bounds.Left,
-                Top = bounds.Top,
-                Width = bounds.Width,
-                Height = bounds.Height,
-            });
+            _viewModel.UpdateWindowPlacement(placement);
         }
+    }
+
+    /// <summary>
+    /// The bar's place now, in WPF units and (for a normal window with a handle) in device pixels relative to the
+    /// monitor it is on, named by that monitor's device name.
+    /// </summary>
+    private WindowPlacement CurrentPlacement()
+    {
+        var bounds = WindowState == WindowState.Normal
+            ? new Rect(Left, Top, ActualWidth > 0 ? ActualWidth : Width, ActualHeight > 0 ? ActualHeight : Height)
+            : RestoreBounds;
+        var placement = new WindowPlacement { Left = bounds.Left, Top = bounds.Top, Width = bounds.Width, Height = bounds.Height };
+
+        var handle = new WindowInteropHelper(this).Handle;
+        if (WindowState == WindowState.Normal
+            && handle != IntPtr.Zero
+            && ScreenGeometry.MonitorOfWindow(handle) is { } monitor
+            && NativeMethods.GetWindowRect(handle, out var rect))
+        {
+            placement.Monitor = monitor.DeviceName;
+            placement.PixelLeft = rect.Left - monitor.Left;
+            placement.PixelTop = rect.Top - monitor.Top;
+            placement.PixelWidth = rect.Right - rect.Left;
+            placement.PixelHeight = rect.Bottom - rect.Top;
+        }
+
+        return placement;
     }
 
     protected override void OnPreviewMouseDown(MouseButtonEventArgs e)
@@ -544,13 +563,26 @@ public partial class MainWindow : Window
     private void ApplyPlacement()
     {
         var placement = _viewModel.WindowPlacement;
-        if (placement is { IsUsable: true } && IntersectsAScreen(placement))
+        if (placement is { IsUsable: true })
         {
-            Left = placement.Left;
-            Top = placement.Top;
-            Width = placement.Width;
-            Height = placement.Height;
-            return;
+            // Saved with its monitor: go straight back there in device pixels, whatever the scales involved.
+            var handle = new WindowInteropHelper(this).Handle;
+            if (handle != IntPtr.Zero && placement.ResolvePixels(ScreenGeometry.Monitors()) is { } pixels)
+            {
+                MoveToPixels(handle, pixels);
+                AppLog.Default.Debug("App", $"Bar restored to {placement.Monitor} at {pixels.Left},{pixels.Top} ({pixels.Width}×{pixels.Height} px)");
+                return;
+            }
+
+            // Older file, or the monitor is gone: the WPF-unit values, if they land on a screen.
+            if (IntersectsAScreen(placement))
+            {
+                Left = placement.Left;
+                Top = placement.Top;
+                Width = placement.Width;
+                Height = placement.Height;
+                return;
+            }
         }
 
         // First run: room for six icons in two rows, centred in the work area.
@@ -560,6 +592,34 @@ public partial class MainWindow : Window
         Left = area.Left + Math.Max(0, (area.Width - Width) / 2);
         Top = area.Top + Math.Max(0, (area.Height - Height) / 2);
     }
+
+    /// <summary>
+    /// Moves the window in device pixels. Landing on a monitor with another scale rescales the window once on the
+    /// way (WM_DPICHANGED), so the rectangle is set a second time when it did not stick; the WPF-unit properties are
+    /// then read back at the window's new scale so WPF and Windows agree on where the bar is.
+    /// </summary>
+    private void MoveToPixels(IntPtr handle, PixelRect pixels)
+    {
+        const uint flags = SwpNoZOrder | SwpNoActivate;
+        NativeMethods.SetWindowPos(handle, IntPtr.Zero, pixels.Left, pixels.Top, pixels.Width, pixels.Height, flags);
+        if (NativeMethods.GetWindowRect(handle, out var now)
+            && (now.Left != pixels.Left || now.Top != pixels.Top || now.Right - now.Left != pixels.Width || now.Bottom - now.Top != pixels.Height))
+        {
+            NativeMethods.SetWindowPos(handle, IntPtr.Zero, pixels.Left, pixels.Top, pixels.Width, pixels.Height, flags);
+        }
+
+        if (NativeMethods.GetWindowRect(handle, out var final))
+        {
+            var scale = VisualTreeHelper.GetDpi(this);
+            Left = final.Left / scale.DpiScaleX;
+            Top = final.Top / scale.DpiScaleY;
+            Width = (final.Right - final.Left) / scale.DpiScaleX;
+            Height = (final.Bottom - final.Top) / scale.DpiScaleY;
+        }
+    }
+
+    private const uint SwpNoZOrder = 0x0004;
+    private const uint SwpNoActivate = 0x0010;
 
     /// <summary>
     /// Checked against the real monitors, not the virtual screen's bounding box (an L-shaped layout has a dead
@@ -718,5 +778,22 @@ public partial class MainWindow : Window
 
         [DllImport("user32.dll")]
         public static extern IntPtr GetAncestor(IntPtr hwnd, uint gaFlags);
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct RECT
+        {
+            public int Left;
+            public int Top;
+            public int Right;
+            public int Bottom;
+        }
+
+        [DllImport("user32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        public static extern bool GetWindowRect(IntPtr hWnd, out RECT lpRect);
+
+        [DllImport("user32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        public static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int x, int y, int cx, int cy, uint uFlags);
     }
 }

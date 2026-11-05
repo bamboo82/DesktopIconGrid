@@ -13,6 +13,11 @@ version numbers follow [Semantic Versioning](https://semver.org/).
 - Names from Drive that Windows reserves for devices (`CON`, `NUL`, `COM1`, also with an extension) get
   a trailing underscore when they are downloaded, and the characters Windows forbids are replaced the
   same way wherever the code runs.
+- The bar's position is saved in device pixels together with the device name of the monitor it is on,
+  and restored there in pixels when that monitor is present, so display scales no longer come into it
+  (a bar on a 150 % monitor next to a 100 % one came back in the wrong place or size). The WPF-unit
+  values are still written for older versions and used when the monitor is gone, with the check against
+  the real monitors as before. A bar that would stick out after a change of resolution is pulled inside.
 
 ## [0.5.0] – 2026-11-05
 
