@@ -162,7 +162,8 @@ public sealed class TrayIcon : IDisposable
         data.uCallbackMessage = CallbackMessage;
         data.hIcon = _icon != IntPtr.Zero ? _icon : NativeMethods.LoadIcon(IntPtr.Zero, (IntPtr)IdiApplication);
         data.szTip = Clip(_text, 127);
-        if (!NativeMethods.Shell_NotifyIcon(NimAdd, ref data))
+        // Some shells broadcast TaskbarCreated while the icon still exists (a theme or DPI change): then NIM_ADD fails and NIM_MODIFY applies.
+        if (!NativeMethods.Shell_NotifyIcon(NimAdd, ref data) && !NativeMethods.Shell_NotifyIcon(NimModify, ref data))
         {
             AppLog.Default.Warning("App", "The tray icon could not be added to the notification area");
             return;

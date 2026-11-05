@@ -139,7 +139,7 @@ public sealed class DriveDownloader(IDriveFiles files)
         {
             return File.Exists(path) ? DriveCacheStamp.TryParse(File.ReadAllText(path)) : null;
         }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or NotSupportedException or System.Security.SecurityException)
         {
             return null;
         }
