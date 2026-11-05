@@ -90,22 +90,4 @@ public static class WindowBackdrop
 
         return true;
     }
-
-    private static class NativeMethods
-    {
-        [StructLayout(LayoutKind.Sequential)]
-        public struct MARGINS
-        {
-            public int Left;
-            public int Right;
-            public int Top;
-            public int Bottom;
-        }
-
-        [DllImport("dwmapi.dll")]
-        public static extern int DwmSetWindowAttribute(IntPtr hwnd, int attribute, ref int value, int size);
-
-        [DllImport("dwmapi.dll")]
-        public static extern int DwmExtendFrameIntoClientArea(IntPtr hwnd, ref MARGINS margins);
-    }
 }

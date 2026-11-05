@@ -25,7 +25,7 @@ public sealed class TrayIcon : IDisposable
 {
     private const int SmCxSmIcon = 49;
     private const uint IconId = 1;
-    private const int CallbackMessage = 0x0400 + 1; // WM_USER + 1
+    internal const int CallbackMessage = 0x0400 + 1; // WM_USER + 1
     private const int WmLButtonUp = 0x0202;
     private const int WmRButtonUp = 0x0205;
     private const int WmContextMenu = 0x007B;
@@ -71,6 +71,12 @@ public sealed class TrayIcon : IDisposable
         _icon = CreateIcon(image, SmallIconSize());
         Add();
     }
+
+    /// <summary>The hidden window the shell sends the icon's callbacks to (for tests).</summary>
+    internal IntPtr WindowHandle => _source.Handle;
+
+    /// <summary>True when the shell accepted NOTIFYICON_VERSION_4 (callbacks carry the event in the low word of lParam).</summary>
+    internal bool UsesVersion4 => _version4;
 
     /// <summary>Left click on the icon (or Enter/Space while it has the keyboard focus).</summary>
     public event EventHandler? Clicked;
@@ -223,7 +229,7 @@ public sealed class TrayIcon : IDisposable
     /// Renders a WPF image (the app's vector icon) into a GDI icon of exactly <paramref name="size"/> pixels, so it
     /// is crisp at any DPI: a top-down 32-bit DIB with straight alpha plus an empty mask, through CreateIconIndirect.
     /// </summary>
-    private static IntPtr CreateIcon(ImageSource image, int size)
+    internal static IntPtr CreateIcon(ImageSource image, int size)
     {
         try
         {
@@ -276,91 +282,5 @@ public sealed class TrayIcon : IDisposable
         {
             return IntPtr.Zero;
         }
-    }
-
-    private static class NativeMethods
-    {
-        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
-        public struct NOTIFYICONDATA
-        {
-            public uint cbSize;
-            public IntPtr hWnd;
-            public uint uID;
-            public uint uFlags;
-            public uint uCallbackMessage;
-            public IntPtr hIcon;
-            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 128)]
-            public string szTip;
-            public uint dwState;
-            public uint dwStateMask;
-            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 256)]
-            public string szInfo;
-            public uint uTimeoutOrVersion;
-            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 64)]
-            public string szInfoTitle;
-            public uint dwInfoFlags;
-            public Guid guidItem;
-            public IntPtr hBalloonIcon;
-        }
-
-        [StructLayout(LayoutKind.Sequential)]
-        public struct BITMAPINFOHEADER
-        {
-            public uint biSize;
-            public int biWidth;
-            public int biHeight;
-            public ushort biPlanes;
-            public ushort biBitCount;
-            public uint biCompression;
-            public uint biSizeImage;
-            public int biXPelsPerMeter;
-            public int biYPelsPerMeter;
-            public uint biClrUsed;
-            public uint biClrImportant;
-        }
-
-        [StructLayout(LayoutKind.Sequential)]
-        public struct ICONINFO
-        {
-            [MarshalAs(UnmanagedType.Bool)]
-            public bool fIcon;
-            public uint xHotspot;
-            public uint yHotspot;
-            public IntPtr hbmMask;
-            public IntPtr hbmColor;
-        }
-
-        [DllImport("shell32.dll", EntryPoint = "Shell_NotifyIconW", CharSet = CharSet.Unicode)]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        public static extern bool Shell_NotifyIcon(uint message, ref NOTIFYICONDATA data);
-
-        [DllImport("user32.dll", CharSet = CharSet.Unicode)]
-        public static extern uint RegisterWindowMessage(string message);
-
-        [DllImport("user32.dll")]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        public static extern bool DestroyIcon(IntPtr hIcon);
-
-        [DllImport("user32.dll", CharSet = CharSet.Unicode)]
-        public static extern IntPtr LoadIcon(IntPtr instance, IntPtr iconName);
-
-        [DllImport("user32.dll")]
-        public static extern IntPtr CreateIconIndirect(ref ICONINFO iconInfo);
-
-        [DllImport("user32.dll")]
-        public static extern uint GetDpiForSystem();
-
-        [DllImport("user32.dll")]
-        public static extern int GetSystemMetricsForDpi(int nIndex, uint dpi);
-
-        [DllImport("gdi32.dll")]
-        public static extern IntPtr CreateDIBSection(IntPtr hdc, ref BITMAPINFOHEADER bitmapInfo, uint usage, out IntPtr bits, IntPtr section, uint offset);
-
-        [DllImport("gdi32.dll")]
-        public static extern IntPtr CreateBitmap(int width, int height, uint planes, uint bitCount, byte[] bits);
-
-        [DllImport("gdi32.dll")]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        public static extern bool DeleteObject(IntPtr obj);
     }
 }

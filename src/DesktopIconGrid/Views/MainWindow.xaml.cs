@@ -285,16 +285,13 @@ public partial class MainWindow : Window
     /// <summary>A utility bar with a tray icon should not also sit in Alt+Tab.</summary>
     private void HideFromAltTab()
     {
-        const int GwlExStyle = -20;
-        const long WsExToolWindow = 0x00000080;
         var handle = new WindowInteropHelper(this).Handle;
         if (handle == IntPtr.Zero)
         {
             return;
         }
 
-        var style = NativeMethods.GetWindowLongPtr(handle, GwlExStyle).ToInt64();
-        NativeMethods.SetWindowLongPtr(handle, GwlExStyle, new IntPtr(style | WsExToolWindow));
+        NativeMethods.SetExStyle(handle, NativeMethods.GetExStyle(handle) | NativeMethods.WS_EX_TOOLWINDOW);
     }
 
     /// <summary>Called when a second copy of the app was started: make the bar visible and bring it forward.</summary>
@@ -368,8 +365,6 @@ public partial class MainWindow : Window
         BringToFront();
     }
 
-    private const uint GaRootOwner = 3;
-
     /// <summary>True when the bar, or a popup or dialog it owns, is the foreground window.</summary>
     private bool IsInFront()
     {
@@ -380,7 +375,7 @@ public partial class MainWindow : Window
         }
 
         var foreground = NativeMethods.GetForegroundWindow();
-        return foreground == handle || NativeMethods.GetAncestor(foreground, GaRootOwner) == handle;
+        return foreground == handle || NativeMethods.GetAncestor(foreground, NativeMethods.GA_ROOTOWNER) == handle;
     }
 
     /// <summary>
@@ -600,7 +595,7 @@ public partial class MainWindow : Window
     /// </summary>
     private void MoveToPixels(IntPtr handle, PixelRect pixels)
     {
-        const uint flags = SwpNoZOrder | SwpNoActivate;
+        const uint flags = NativeMethods.SWP_NOZORDER | NativeMethods.SWP_NOACTIVATE;
         NativeMethods.SetWindowPos(handle, IntPtr.Zero, pixels.Left, pixels.Top, pixels.Width, pixels.Height, flags);
         if (NativeMethods.GetWindowRect(handle, out var now)
             && (now.Left != pixels.Left || now.Top != pixels.Top || now.Right - now.Left != pixels.Width || now.Bottom - now.Top != pixels.Height))
@@ -617,9 +612,6 @@ public partial class MainWindow : Window
             Height = (final.Bottom - final.Top) / scale.DpiScaleY;
         }
     }
-
-    private const uint SwpNoZOrder = 0x0004;
-    private const uint SwpNoActivate = 0x0010;
 
     /// <summary>
     /// Checked against the real monitors, not the virtual screen's bounding box (an L-shaped layout has a dead
@@ -759,41 +751,5 @@ public partial class MainWindow : Window
         }
 
         return null;
-    }
-
-    private static class NativeMethods
-    {
-        [DllImport("user32.dll", EntryPoint = "GetWindowLongPtrW")]
-        public static extern IntPtr GetWindowLongPtr(IntPtr hWnd, int nIndex);
-
-        [DllImport("user32.dll", EntryPoint = "SetWindowLongPtrW")]
-        public static extern IntPtr SetWindowLongPtr(IntPtr hWnd, int nIndex, IntPtr dwNewLong);
-
-        [DllImport("user32.dll")]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        public static extern bool SetForegroundWindow(IntPtr hWnd);
-
-        [DllImport("user32.dll")]
-        public static extern IntPtr GetForegroundWindow();
-
-        [DllImport("user32.dll")]
-        public static extern IntPtr GetAncestor(IntPtr hwnd, uint gaFlags);
-
-        [StructLayout(LayoutKind.Sequential)]
-        public struct RECT
-        {
-            public int Left;
-            public int Top;
-            public int Right;
-            public int Bottom;
-        }
-
-        [DllImport("user32.dll")]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        public static extern bool GetWindowRect(IntPtr hWnd, out RECT lpRect);
-
-        [DllImport("user32.dll")]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        public static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int x, int y, int cx, int cy, uint uFlags);
     }
 }

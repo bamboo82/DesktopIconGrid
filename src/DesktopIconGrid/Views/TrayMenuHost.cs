@@ -22,13 +22,6 @@ namespace DesktopIconGrid.Views;
 /// </remarks>
 public sealed class TrayMenuHost : Window
 {
-    private const int GwlExStyle = -20;
-    private const long WsExToolWindow = 0x00000080;
-    private const long WsExNoActivate = 0x08000000;
-    private const uint SwpNoSize = 0x0001;
-    private const uint SwpNoZOrder = 0x0004;
-    private const uint SwpNoActivate = 0x0010;
-
     private readonly Border _anchor = new();
     private readonly ContextMenu _menu = new()
     {
@@ -53,8 +46,7 @@ public sealed class TrayMenuHost : Window
         _menu.PlacementTarget = _anchor;
 
         var handle = new WindowInteropHelper(this).EnsureHandle();
-        var style = (long)NativeMethods.GetWindowLongPtr(handle, GwlExStyle);
-        NativeMethods.SetWindowLongPtr(handle, GwlExStyle, (IntPtr)(style | WsExToolWindow | WsExNoActivate));
+        NativeMethods.SetExStyle(handle, NativeMethods.GetExStyle(handle) | NativeMethods.WS_EX_TOOLWINDOW | NativeMethods.WS_EX_NOACTIVATE);
         DialogTheme.Apply(this);
     }
 
@@ -64,6 +56,10 @@ public sealed class TrayMenuHost : Window
         ArgumentNullException.ThrowIfNull(entries);
         DialogTheme.Apply(this); // follow the setting as it is now
         _menu.IsOpen = false;
+        _menu.PlacementTarget = _anchor; // the fallback below detaches it; every opening tries the anchored way first
+        _menu.Placement = PlacementMode.MousePoint;
+        _menu.HorizontalOffset = 0;
+        _menu.VerticalOffset = 0;
         _menu.Items.Clear();
         foreach (var entry in entries)
         {
@@ -99,7 +95,7 @@ public sealed class TrayMenuHost : Window
             cursor = default;
         }
 
-        NativeMethods.SetWindowPos(handle, IntPtr.Zero, cursor.X, cursor.Y, 0, 0, SwpNoSize | SwpNoZOrder | SwpNoActivate);
+        NativeMethods.SetWindowPos(handle, IntPtr.Zero, cursor.X, cursor.Y, 0, 0, NativeMethods.SWP_NOSIZE | NativeMethods.SWP_NOZORDER | NativeMethods.SWP_NOACTIVATE);
 
         HwndSource? popup;
         try
@@ -135,33 +131,5 @@ public sealed class TrayMenuHost : Window
         {
             NativeMethods.SetForegroundWindow(popup.Handle);
         }
-    }
-
-    private static class NativeMethods
-    {
-        [StructLayout(LayoutKind.Sequential)]
-        public struct POINT
-        {
-            public int X;
-            public int Y;
-        }
-
-        [DllImport("user32.dll")]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        public static extern bool SetForegroundWindow(IntPtr hWnd);
-
-        [DllImport("user32.dll")]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        public static extern bool GetCursorPos(out POINT point);
-
-        [DllImport("user32.dll")]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        public static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int x, int y, int cx, int cy, uint uFlags);
-
-        [DllImport("user32.dll", EntryPoint = "GetWindowLongPtrW")]
-        public static extern IntPtr GetWindowLongPtr(IntPtr hWnd, int nIndex);
-
-        [DllImport("user32.dll", EntryPoint = "SetWindowLongPtrW")]
-        public static extern IntPtr SetWindowLongPtr(IntPtr hWnd, int nIndex, IntPtr dwNewLong);
     }
 }

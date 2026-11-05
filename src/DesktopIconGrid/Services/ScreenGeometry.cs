@@ -25,7 +25,6 @@ public static class ScreenGeometry
     public static readonly IReadOnlyList<double> PlausibleScales = [1.0, 1.25, 1.5, 1.75, 2.0, 2.25, 2.5];
 
     private const int SmCxScreen = 0;
-    private const uint MonitorDefaultToNearest = 2;
 
     /// <summary>True when at least <see cref="MinVisibleWidth"/> × <see cref="MinVisibleHeight"/> of <paramref name="window"/> lies on one of <paramref name="monitors"/> (same units).</summary>
     public static bool IsVisibleOn(Rect window, IEnumerable<Rect> monitors)
@@ -119,7 +118,7 @@ public static class ScreenGeometry
             return null;
         }
 
-        var monitor = NativeMethods.MonitorFromWindow(handle, MonitorDefaultToNearest);
+        var monitor = NativeMethods.MonitorFromWindow(handle, NativeMethods.MONITOR_DEFAULTTONEAREST);
         return monitor == IntPtr.Zero ? null : Describe(monitor);
     }
 
@@ -169,44 +168,5 @@ public static class ScreenGeometry
         }
 
         return result;
-    }
-
-    private static class NativeMethods
-    {
-        public delegate bool MonitorEnumProc(IntPtr monitor, IntPtr deviceContext, ref RECT bounds, IntPtr data);
-
-        [StructLayout(LayoutKind.Sequential)]
-        public struct RECT
-        {
-            public int Left;
-            public int Top;
-            public int Right;
-            public int Bottom;
-        }
-
-        [DllImport("user32.dll")]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        public static extern bool EnumDisplayMonitors(IntPtr deviceContext, IntPtr clip, MonitorEnumProc callback, IntPtr data);
-
-        [DllImport("user32.dll")]
-        public static extern int GetSystemMetrics(int index);
-
-        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
-        public struct MONITORINFOEX
-        {
-            public int cbSize;
-            public RECT rcMonitor;
-            public RECT rcWork;
-            public uint dwFlags;
-            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)]
-            public string szDevice;
-        }
-
-        [DllImport("user32.dll")]
-        public static extern IntPtr MonitorFromWindow(IntPtr hwnd, uint dwFlags);
-
-        [DllImport("user32.dll", EntryPoint = "GetMonitorInfoW", CharSet = CharSet.Unicode)]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        public static extern bool GetMonitorInfo(IntPtr hMonitor, ref MONITORINFOEX lpmi);
     }
 }

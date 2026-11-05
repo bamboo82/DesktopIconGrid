@@ -62,4 +62,20 @@ public class ScreenGeometryTests
         Assert.All(monitors, m => Assert.True(m.Width > 0 && m.Height > 0));
         Assert.InRange(ScreenGeometry.PrimaryScale(), 0.5, 5.0);
     }
+
+    [Fact]
+    public void Monitors_carry_device_names_and_agree_with_the_plain_enumeration()
+    {
+        var monitors = ScreenGeometry.Monitors();
+
+        Assert.All(monitors, monitor =>
+        {
+            Assert.StartsWith(@"\\.\", monitor.DeviceName);
+            Assert.True(monitor.Width > 0 && monitor.Height > 0, monitor.ToString());
+        });
+        if (monitors.Count > 0) // a build machine without a display enumerates none
+        {
+            Assert.Equal(monitors.Count, ScreenGeometry.MonitorsInPixels().Count);
+        }
+    }
 }

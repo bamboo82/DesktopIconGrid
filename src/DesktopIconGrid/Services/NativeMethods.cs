@@ -2,8 +2,8 @@ using System.Runtime.InteropServices;
 
 namespace DesktopIconGrid.Services;
 
-/// <summary>Win32/COM declarations used for icon extraction.</summary>
-internal static class NativeMethods
+/// <summary>Win32/COM declarations for icon extraction, the process scan and foreground hand-over (windowing ones: NativeMethods.Windowing.cs).</summary>
+internal static partial class NativeMethods
 {
     public const uint SHGFI_SYSICONINDEX = 0x4000;
     public const uint SHGFI_USEFILEATTRIBUTES = 0x10;

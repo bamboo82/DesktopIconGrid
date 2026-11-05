@@ -27,9 +27,6 @@ public sealed class AppBar : IDisposable
     private const int AbnFullScreenApp = 2;
     private const int WmActivate = 0x0006;
     private const int WmWindowPosChanged = 0x0047;
-    private const uint MonitorDefaultToNearest = 2;
-    private const uint SwpNoZOrder = 0x0004;
-    private const uint SwpNoActivate = 0x0010;
 
     private readonly HwndSource _source;
     private readonly uint _callbackMessage;
@@ -52,17 +49,10 @@ public sealed class AppBar : IDisposable
     public bool IsRegistered => _registered;
 
     /// <summary>Bounds of the monitor the window is on, in device pixels.</summary>
-    public Rect MonitorBounds()
-    {
-        var monitor = NativeMethods.MonitorFromWindow(_source.Handle, MonitorDefaultToNearest);
-        var info = new NativeMethods.MONITORINFO { cbSize = Marshal.SizeOf<NativeMethods.MONITORINFO>() };
-        if (monitor != IntPtr.Zero && NativeMethods.GetMonitorInfo(monitor, ref info))
-        {
-            return FromRect(info.rcMonitor);
-        }
-
-        return ScreenGeometry.MonitorsInPixels()[0];
-    }
+    public Rect MonitorBounds() =>
+        ScreenGeometry.MonitorOfWindow(_source.Handle) is { } monitor
+            ? new Rect(monitor.Left, monitor.Top, monitor.Width, monitor.Height)
+            : ScreenGeometry.MonitorsInPixels()[0];
 
     /// <summary>The window's current bounds in device pixels.</summary>
     public Rect WindowBounds() =>
@@ -70,7 +60,7 @@ public sealed class AppBar : IDisposable
 
     /// <summary>Moves and sizes the window (device pixels) without activating it.</summary>
     public void MoveWindow(Rect bounds) =>
-        NativeMethods.SetWindowPos(_source.Handle, IntPtr.Zero, (int)bounds.X, (int)bounds.Y, (int)bounds.Width, (int)bounds.Height, SwpNoZOrder | SwpNoActivate);
+        NativeMethods.SetWindowPos(_source.Handle, IntPtr.Zero, (int)bounds.X, (int)bounds.Y, (int)bounds.Width, (int)bounds.Height, NativeMethods.SWP_NOZORDER | NativeMethods.SWP_NOACTIVATE);
 
     /// <summary>Reserves a strip of <paramref name="thickness"/> pixels along <paramref name="edge"/> of <paramref name="monitor"/> and returns the rectangle the shell granted.</summary>
     public Rect Dock(string edge, int thickness, Rect monitor)
@@ -220,57 +210,4 @@ public sealed class AppBar : IDisposable
         Right = (int)rect.Right,
         Bottom = (int)rect.Bottom,
     };
-
-    private static class NativeMethods
-    {
-        [StructLayout(LayoutKind.Sequential)]
-        public struct RECT
-        {
-            public int Left;
-            public int Top;
-            public int Right;
-            public int Bottom;
-        }
-
-        [StructLayout(LayoutKind.Sequential)]
-        public struct APPBARDATA
-        {
-            public uint cbSize;
-            public IntPtr hWnd;
-            public uint uCallbackMessage;
-            public uint uEdge;
-            public RECT rc;
-            public IntPtr lParam;
-        }
-
-        [StructLayout(LayoutKind.Sequential)]
-        public struct MONITORINFO
-        {
-            public int cbSize;
-            public RECT rcMonitor;
-            public RECT rcWork;
-            public uint dwFlags;
-        }
-
-        [DllImport("shell32.dll")]
-        public static extern UIntPtr SHAppBarMessage(uint dwMessage, ref APPBARDATA pData);
-
-        [DllImport("user32.dll", CharSet = CharSet.Unicode)]
-        public static extern uint RegisterWindowMessage(string lpString);
-
-        [DllImport("user32.dll")]
-        public static extern IntPtr MonitorFromWindow(IntPtr hwnd, uint dwFlags);
-
-        [DllImport("user32.dll", CharSet = CharSet.Unicode)]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        public static extern bool GetMonitorInfo(IntPtr hMonitor, ref MONITORINFO lpmi);
-
-        [DllImport("user32.dll")]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        public static extern bool GetWindowRect(IntPtr hWnd, out RECT lpRect);
-
-        [DllImport("user32.dll")]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        public static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int x, int y, int cx, int cy, uint uFlags);
-    }
 }
