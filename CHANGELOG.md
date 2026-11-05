@@ -3,11 +3,18 @@
 All notable changes to Desktop Icon Grid. The format follows [Keep a Changelog](https://keepachangelog.com/);
 version numbers follow [Semantic Versioning](https://semver.org/).
 
-## [0.7.0] – Unreleased
+## [0.7.0] – 2026-11-05
 
-"Get there faster": the first release of the plan in [docs/ROADMAP.md](docs/ROADMAP.md). The voice spike
-could not be run here (no Windows, no microphone): its probe is in `tools/VoiceProbe`, and FEATURES §6.1
-says how to run it and what is known so far. Nothing is built for voice until it answers.
+"Get there faster", the first release of the plan in [docs/ROADMAP.md](docs/ROADMAP.md): a click on a
+running program goes to its window, the options of a Windows shortcut, type to find and a hotkey that
+opens the icons at the mouse, launch feedback, separators and colour tags.
+
+Note for whoever tests this build: all of it is new code covered by tests (the Windows-only parts on
+Windows CI), and none of it has been seen on a screen yet. To make room for separators the grid's layout
+panel was replaced; a bar without separators should look and wrap exactly as before, so that is the first
+thing to look at. The voice spike could not be run here (no Windows, no microphone): its probe is in
+`tools/VoiceProbe`, and FEATURES §6.1 says how to run it and what is known so far. Nothing is built for
+voice until it answers.
 
 ### Added
 

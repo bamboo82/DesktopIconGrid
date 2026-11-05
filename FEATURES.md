@@ -459,10 +459,10 @@ Global show/hide hotkey; tray icon with show/hide, reset position and the common
 The releases after 0.6.0 follow the plan in [docs/ROADMAP.md](docs/ROADMAP.md), which has the full
 description and the "done when" of every item:
 
-**0.7.0 "Get there faster"** — unknown JSON properties kept through load and save (the prerequisite for
-everything after it); click a running item to switch to it; the launch options every `.lnk` has; type to
-find, and open the grid at the pointer; launch feedback; separators; colour tags. The voice spike runs
-here too, with only its result written down (§6.1).
+**0.7.0 "Get there faster"** *(done)* — unknown JSON properties kept through load and save (the
+prerequisite for everything after it); click a running item to switch to it; the launch options every
+`.lnk` has; type to find, and open the grid at the pointer; launch feedback; separators; colour tags. The
+voice spike's probe is in `tools/VoiceProbe`; its answer is still to be written down (§6.1).
 
 **0.8.0 "One bar, every PC"** — sync through any folder (OneDrive, Dropbox, NAS); shortcuts that survive
 other PCs (missing targets, repair, per-device locations, portable mode); *Add app…* and imports; layout
