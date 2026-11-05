@@ -28,6 +28,13 @@ version numbers follow [Semantic Versioning](https://semver.org/).
   is unchanged: left click shows or hides the bar, right click or Shift+F10 opens the menu, a balloon
   click opens the log viewer, and the icon comes back when Explorer restarts. Checked in code only.
 
+### Fixed
+
+- A docked bar that is hidden to the tray (with the hotkey, the tray menu or the close button) or started
+  hidden gives its screen strip back, so maximised windows use the whole screen again; it is claimed again
+  when the bar is shown. Before, windows stopped at an empty strip. A full-screen program still hides the
+  bar without releasing the edge.
+
 ## [0.5.0] – 2026-11-05
 
 The user interface speaks Traditional and Simplified Chinese as well as English. The language

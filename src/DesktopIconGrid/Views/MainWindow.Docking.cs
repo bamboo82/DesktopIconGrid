@@ -15,6 +15,9 @@ namespace DesktopIconGrid.Views;
 /// optional auto-hide: the bar collapses to a two-pixel strip a second after the pointer leaves and comes back
 /// when the pointer touches the edge, the hotkey shows it or a group popup is open. All geometry is in device
 /// pixels through <see cref="AppBar"/>; WPF picks the new Left/Top/Width/Height up from the window messages.
+/// While the bar is in the tray (hidden, closed to the tray, or started hidden) the shell holds nothing for it:
+/// the strip and the auto-hide slot are given back and claimed again when the bar is shown. A full-screen program
+/// hides the bar without that, since nothing else can use the edge meanwhile.
 /// </summary>
 public partial class MainWindow
 {
@@ -26,6 +29,7 @@ public partial class MainWindow
     private bool _collapsed;
     private bool _movingForDock;
     private bool _hiddenForFullScreen;
+    private bool _dockSuspended;
     private int _dockThickness;
     private WindowPlacement? _undockedPlacement;
     private DispatcherTimer? _autoHideTimer;
@@ -42,6 +46,7 @@ public partial class MainWindow
         _baseMinWidth = MinWidth;
         _baseMinHeight = MinHeight;
         SizeChanged += (_, _) => OnDockedSizeChanged();
+        IsVisibleChanged += (_, _) => OnBarVisibilityChanged();
         MouseEnter += (_, _) =>
         {
             if (IsAutoHide && _collapsed)
@@ -68,6 +73,15 @@ public partial class MainWindow
             return;
         }
 
+        // Visibility is already Visible while Show() creates the window (SourceInitialized), so a bar that is being
+        // shown docks before it appears; one that stays in the tray reserves nothing until it is shown.
+        if (Visibility != Visibility.Visible && !_hiddenForFullScreen)
+        {
+            SuspendDocking();
+            return;
+        }
+
+        _dockSuspended = false;
         if (_appBar is null)
         {
             _appBar = new AppBar(source);
@@ -122,9 +136,9 @@ public partial class MainWindow
     /// <summary>Asks the shell for the strip again (after a settings change or when the shell rearranged the edges).</summary>
     private void ReDock()
     {
-        if (!IsDocked || _appBar is null)
+        if (!IsDocked || _appBar is null || _dockSuspended)
         {
-            return;
+            return; // suspended: a notification still queued from before the strip was given back must not claim it again
         }
 
         if (IsAutoHide)
@@ -146,6 +160,7 @@ public partial class MainWindow
 
     private void Undock()
     {
+        _dockSuspended = false;
         if (!IsDocked)
         {
             return;
@@ -186,6 +201,45 @@ public partial class MainWindow
         }
 
         AppLog.Default.Info("App", "Bar undocked");
+    }
+
+    /// <summary>
+    /// The bar went to the tray: give the reserved strip and the edge's auto-hide slot back, so maximised windows use
+    /// the whole screen while nothing is shown at the edge. The dock state itself (edge, thickness, free placement)
+    /// is kept, and <see cref="OnBarVisibilityChanged"/> docks again when the bar is shown.
+    /// </summary>
+    private void SuspendDocking()
+    {
+        _dockSuspended = true;
+        if (_appBar is null || !_appBar.IsRegistered)
+        {
+            return;
+        }
+
+        StopAutoHideTimer();
+        if (_autoHideEdge is not null)
+        {
+            _appBar.SetAutoHide(_autoHideEdge, false);
+            _autoHideEdge = null;
+        }
+
+        _appBar.Release();
+        AppLog.Default.Debug("App", "Docked bar hidden: its screen edge is free until the bar is shown");
+    }
+
+    private void OnBarVisibilityChanged()
+    {
+        if (IsVisible)
+        {
+            if (_dockSuspended)
+            {
+                ApplyDocking();
+            }
+        }
+        else if (IsDocked && !_hiddenForFullScreen)
+        {
+            SuspendDocking();
+        }
     }
 
     /// <summary>The bar's thickness along <paramref name="edge"/> from its current size, never below the window's minimum.</summary>
