@@ -5,7 +5,7 @@ public sealed class GroupItem : LauncherItem
 {
     public List<LauncherItem> Items { get; set; } = [];
 
-    public override LauncherItem Clone()
+    protected override LauncherItem CloneCore()
     {
         var copy = (GroupItem)MemberwiseClone();
         copy.Items = Items.Select(i => i.Clone()).ToList();

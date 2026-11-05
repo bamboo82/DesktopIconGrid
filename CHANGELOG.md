@@ -7,6 +7,15 @@ version numbers follow [Semantic Versioning](https://semver.org/).
 
 "Get there faster": the first release of the plan in [docs/ROADMAP.md](docs/ROADMAP.md).
 
+### Fixed
+
+- Settings and icon properties written by a newer version are kept when this version saves, at every
+  level of `layout.json` and of the sync copies (the document, the settings, every kind of item, items
+  inside groups, text icons). Before, an older PC that loaded a linked copy and saved it again dropped
+  them, and the copy carried the loss to every other PC: the newer PC's language, dock edge or log
+  setting was reset without a word. From this version on, every newer field passes through untouched.
+- The Settings dialog changes only what it shows; before, saving it reset settings it does not show.
+
 ## [0.6.0] – 2026-11-05
 
 Drive copies that stay current, the bar back on its own monitor, the running badge for Store apps, and

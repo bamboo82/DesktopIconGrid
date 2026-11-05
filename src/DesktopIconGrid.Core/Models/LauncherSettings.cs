@@ -1,4 +1,7 @@
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
+using DesktopIconGrid.Core.Storage;
 
 namespace DesktopIconGrid.Core.Models;
 
@@ -93,7 +96,16 @@ public sealed partial class LauncherSettings
     /// <summary>UI language: <see cref="LanguageSystem"/> or a culture name from <see cref="Languages"/>. Read once at startup.</summary>
     public string Language { get; set; } = LanguageSystem;
 
-    public LauncherSettings Clone() => (LauncherSettings)MemberwiseClone();
+    /// <summary>Properties written by a newer version that this one does not know; kept so saving never drops them.</summary>
+    [JsonExtensionData]
+    public Dictionary<string, JsonElement>? ExtensionData { get; set; }
+
+    public LauncherSettings Clone()
+    {
+        var copy = (LauncherSettings)MemberwiseClone();
+        copy.ExtensionData = UnknownProperties.Copy(ExtensionData);
+        return copy;
+    }
 
     public void CopyFrom(LauncherSettings source)
     {
@@ -115,6 +127,7 @@ public sealed partial class LauncherSettings
         DockEdge = source.DockEdge;
         AutoHide = source.AutoHide;
         Language = source.Language;
+        ExtensionData = UnknownProperties.Copy(source.ExtensionData);
         Normalize();
     }
 

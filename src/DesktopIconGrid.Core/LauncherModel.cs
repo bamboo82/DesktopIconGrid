@@ -1,5 +1,7 @@
+using System.Text.Json;
 using DesktopIconGrid.Core.Models;
 using DesktopIconGrid.Core.Resources;
+using DesktopIconGrid.Core.Storage;
 
 namespace DesktopIconGrid.Core;
 
@@ -11,6 +13,7 @@ namespace DesktopIconGrid.Core;
 public sealed class LauncherModel
 {
     private readonly List<LauncherItem> _items = [];
+    private Dictionary<string, JsonElement>? _unknownProperties;
 
     public LauncherModel()
         : this(new LauncherSettings(), null)
@@ -52,6 +55,7 @@ public sealed class LauncherModel
         var model = new LauncherModel(layout.Settings?.Clone() ?? new LauncherSettings(), layout.Window)
         {
             FormatVersion = Math.Max(layout.Version, LauncherLayout.CurrentVersion),
+            _unknownProperties = UnknownProperties.Copy(layout.ExtensionData),
         };
         if (layout.Window is { IsUsable: false })
         {
@@ -88,6 +92,7 @@ public sealed class LauncherModel
         Settings = Settings.Clone(),
         Window = Window,
         Items = _items.Select(i => i.Clone()).ToList(),
+        ExtensionData = UnknownProperties.Copy(_unknownProperties),
     };
 
     private void Adopt(LauncherItem item, HashSet<Guid> seen)

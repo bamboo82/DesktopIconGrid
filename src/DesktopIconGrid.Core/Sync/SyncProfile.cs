@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using DesktopIconGrid.Core.Models;
 using DesktopIconGrid.Core.Storage;
 
@@ -27,6 +28,10 @@ public sealed class SyncProfile
     /// <summary>Settings and items. The window placement is never included; it is device-specific.</summary>
     public LauncherLayout Layout { get; set; } = new();
 
+    /// <summary>Properties written by a newer version that this one does not know; kept so saving never drops them.</summary>
+    [JsonExtensionData]
+    public Dictionary<string, JsonElement>? ExtensionData { get; set; }
+
     public static SyncProfile FromLayout(string name, LauncherLayout layout, string savedBy, DateTimeOffset savedAt, string? appVersion, string? savedById = null)
     {
         ArgumentNullException.ThrowIfNull(layout);
@@ -43,6 +48,7 @@ public sealed class SyncProfile
                 Settings = layout.Settings.Clone(),
                 Items = layout.Items.Select(i => i.Clone()).ToList(),
                 Window = null,
+                ExtensionData = UnknownProperties.Copy(layout.ExtensionData),
             },
         };
     }

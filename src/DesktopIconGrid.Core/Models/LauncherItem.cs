@@ -1,4 +1,6 @@
+using System.Text.Json;
 using System.Text.Json.Serialization;
+using DesktopIconGrid.Core.Storage;
 
 namespace DesktopIconGrid.Core.Models;
 
@@ -33,10 +35,25 @@ public abstract class LauncherItem
     [JsonIgnore]
     public bool HasTextIcon => TextIcon is not null;
 
-    /// <summary>Deep copy, keeping the same <see cref="Id"/>.</summary>
-    public abstract LauncherItem Clone();
+    /// <summary>Properties written by a newer version that this one does not know; kept so saving never drops them.</summary>
+    [JsonExtensionData]
+    public Dictionary<string, JsonElement>? ExtensionData { get; set; }
 
-    /// <summary>Copies the editable fields (everything except <see cref="Id"/>) from another item of the same kind.</summary>
+    /// <summary>Deep copy, keeping the same <see cref="Id"/> and the properties this version does not know.</summary>
+    public LauncherItem Clone()
+    {
+        var copy = CloneCore();
+        copy.ExtensionData = UnknownProperties.Copy(ExtensionData);
+        return copy;
+    }
+
+    /// <summary>The kind-specific part of <see cref="Clone"/>.</summary>
+    protected abstract LauncherItem CloneCore();
+
+    /// <summary>
+    /// Copies the editable fields (everything except <see cref="Id"/>) from another item of the same kind. The
+    /// properties this version does not know stay those of this item: a dialog never edits them.
+    /// </summary>
     public virtual void CopyContentFrom(LauncherItem source)
     {
         ArgumentNullException.ThrowIfNull(source);

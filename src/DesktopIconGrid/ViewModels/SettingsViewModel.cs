@@ -57,9 +57,13 @@ public sealed class SettingsViewModel : ObservableObject
     private bool _autoHide;
     private LanguageOption _selectedLanguage;
 
+    /// <summary>The settings as they were; <see cref="ToSettings"/> starts from them, so whatever the dialog does not show is kept.</summary>
+    private readonly LauncherSettings _original;
+
     public SettingsViewModel(LauncherSettings current)
     {
         ArgumentNullException.ThrowIfNull(current);
+        _original = current.Clone();
         _iconSize = current.IconSize;
         _cellPadding = current.CellPadding;
         _showLabels = current.ShowLabels;
@@ -317,28 +321,30 @@ public sealed class SettingsViewModel : ObservableObject
 
     public RelayCommand<string> SelectPresetCommand { get; }
 
+    /// <summary>
+    /// The settings with the dialog's values applied to a copy of the original, so settings the dialog does not
+    /// show (and properties written by a newer version) are kept.
+    /// </summary>
     public LauncherSettings ToSettings()
     {
-        var settings = new LauncherSettings
-        {
-            IconSize = _iconSize,
-            CellPadding = _cellPadding,
-            ShowLabels = _showLabels,
-            DoubleClickToLaunch = _doubleClickToLaunch,
-            AlwaysOnTop = _alwaysOnTop,
-            Theme = _selectedTheme.Id,
-            BackgroundColor = IsColorValid ? _backgroundColor : LauncherSettings.DefaultBackgroundColor,
-            BarBackdrop = _selectedBackdrop.Id,
-            FluentDialogs = _fluentDialogs,
-            ToggleHotkey = IsHotkeyValid && HasHotkey ? _toggleHotkey : null,
-            Opacity = LauncherSettings.MaxOpacity - _transparency,
-            CloseToTray = _closeToTray,
-            StartWithWindows = _startWithWindows,
-            StartHidden = _startHidden,
-            DockEdge = _selectedDockEdge.Id,
-            AutoHide = _autoHide,
-            Language = _selectedLanguage.Id,
-        };
+        var settings = _original.Clone();
+        settings.IconSize = _iconSize;
+        settings.CellPadding = _cellPadding;
+        settings.ShowLabels = _showLabels;
+        settings.DoubleClickToLaunch = _doubleClickToLaunch;
+        settings.AlwaysOnTop = _alwaysOnTop;
+        settings.Theme = _selectedTheme.Id;
+        settings.BackgroundColor = IsColorValid ? _backgroundColor : LauncherSettings.DefaultBackgroundColor;
+        settings.BarBackdrop = _selectedBackdrop.Id;
+        settings.FluentDialogs = _fluentDialogs;
+        settings.ToggleHotkey = IsHotkeyValid && HasHotkey ? _toggleHotkey : null;
+        settings.Opacity = LauncherSettings.MaxOpacity - _transparency;
+        settings.CloseToTray = _closeToTray;
+        settings.StartWithWindows = _startWithWindows;
+        settings.StartHidden = _startHidden;
+        settings.DockEdge = _selectedDockEdge.Id;
+        settings.AutoHide = _autoHide;
+        settings.Language = _selectedLanguage.Id;
         settings.Normalize();
         return settings;
     }

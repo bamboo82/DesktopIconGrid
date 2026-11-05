@@ -15,7 +15,7 @@ public sealed class UnknownItem : LauncherItem
     /// <summary>The complete original JSON object.</summary>
     public JsonElement Raw { get; set; }
 
-    public override LauncherItem Clone()
+    protected override LauncherItem CloneCore()
     {
         var copy = (UnknownItem)MemberwiseClone();
         copy.Raw = Raw.ValueKind == JsonValueKind.Undefined ? Raw : Raw.Clone();

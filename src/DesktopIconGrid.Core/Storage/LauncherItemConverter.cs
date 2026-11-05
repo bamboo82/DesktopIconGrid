@@ -45,7 +45,15 @@ public sealed class LauncherItemConverter : JsonConverter<LauncherItem>
 
         if (discriminator is not null && KnownKinds.TryGetValue(discriminator, out var type))
         {
-            return (LauncherItem?)JsonSerializer.Deserialize(root.GetRawText(), type, options);
+            // Properties of the kind's class are read normally; everything else lands in ExtensionData and is written
+            // back by Write. The discriminator itself is written by Write, so it is not kept as an unknown property.
+            var item = (LauncherItem?)JsonSerializer.Deserialize(root.GetRawText(), type, options);
+            if (item?.ExtensionData is { } extra && extra.Remove(Discriminator) && extra.Count == 0)
+            {
+                item.ExtensionData = null;
+            }
+
+            return item;
         }
 
         var unknown = new UnknownItem { TypeDiscriminator = discriminator ?? string.Empty, Raw = root.Clone() };

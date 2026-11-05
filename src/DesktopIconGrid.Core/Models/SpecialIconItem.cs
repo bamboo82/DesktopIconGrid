@@ -27,7 +27,7 @@ public sealed class SpecialIconItem : LauncherItem
         }
     }
 
-    public override LauncherItem Clone()
+    protected override LauncherItem CloneCore()
     {
         var copy = (SpecialIconItem)MemberwiseClone();
         copy.Settings = new Dictionary<string, string>(Settings, StringComparer.OrdinalIgnoreCase);

@@ -21,7 +21,7 @@ public sealed class ShortcutItem : LauncherItem
     /// </summary>
     public bool CaptureLog { get; set; }
 
-    public override LauncherItem Clone() => (ShortcutItem)MemberwiseClone();
+    protected override LauncherItem CloneCore() => (ShortcutItem)MemberwiseClone();
 
     public override void CopyContentFrom(LauncherItem source)
     {

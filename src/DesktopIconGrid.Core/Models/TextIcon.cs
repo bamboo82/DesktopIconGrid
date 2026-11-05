@@ -1,4 +1,6 @@
 using System.Globalization;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace DesktopIconGrid.Core.Models;
 
@@ -32,6 +34,10 @@ public sealed record TextIcon(
     /// <summary>The chain drawn for text icons without a font of their own, for the given UI language.</summary>
     public static string DefaultFontFamilyFor(CultureInfo? uiCulture) =>
         AppLanguage.IsTraditionalChinese(uiCulture) ? TraditionalChineseFontFamily : DefaultFontFamily;
+
+    /// <summary>Properties written by a newer version that this one does not know; kept so saving never drops them.</summary>
+    [JsonExtensionData]
+    public Dictionary<string, JsonElement>? ExtensionData { get; init; }
 
     public static readonly IReadOnlyList<double> SuggestedFontSizes =
         [8, 9, 10, 11, 12, 14, 16, 18, 20, 22, 24, 28, 32, 36, 40, 48];
