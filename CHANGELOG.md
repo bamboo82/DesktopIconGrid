@@ -18,6 +18,10 @@ version numbers follow [Semantic Versioning](https://semver.org/).
   (a bar on a 150 % monitor next to a 100 % one came back in the wrong place or size). The WPF-unit
   values are still written for older versions and used when the monitor is gone, with the check against
   the real monitors as before. A bar that would stick out after a change of resolution is pulled inside.
+- Shortcuts to Store apps and other programs reached through an app-execution alias (`wt`, `winget`,
+  Python from the Store) show the running badge: the alias's reparse data names the executable in the
+  package, and any process from that package folder counts, so Windows Terminal (`wt.exe` starts
+  `WindowsTerminal.exe`) is covered. Before, only a program started from the bar itself was tracked.
 
 ## [0.5.0] – 2026-11-05
 

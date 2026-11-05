@@ -23,7 +23,7 @@ public sealed class ProcessTracker : IDisposable
 
     private readonly Dispatcher _dispatcher;
     private readonly Dictionary<Guid, HashSet<int>> _launched = [];
-    private readonly Dictionary<Guid, string> _watchedPaths = [];
+    private readonly Dictionary<Guid, WatchTarget> _watchedPaths = [];
     private readonly Dictionary<Guid, ProcessLogSession> _logs = [];
     private readonly DispatcherTimer _scanTimer;
     private HashSet<string> _runningPaths = new(StringComparer.OrdinalIgnoreCase);
@@ -44,20 +44,24 @@ public sealed class ProcessTracker : IDisposable
 
     public bool IsRunning(Guid id) =>
         (_launched.TryGetValue(id, out var pids) && pids.Count > 0)
-        || (_watchedPaths.TryGetValue(id, out var path) && _runningPaths.Contains(path));
+        || (_watchedPaths.TryGetValue(id, out var target) && target.Matches(_runningPaths));
 
-    /// <summary>Starts matching the shortcut's executable by full path (no effect for documents, links and shell folders).</summary>
+    /// <summary>
+    /// Starts matching the shortcut's program against the running processes: its executable by full path, or, for a
+    /// Store app reached through an app-execution alias, every executable in its package folder. No effect for
+    /// documents, links and shell folders.
+    /// </summary>
     public void Watch(ShortcutItem shortcut)
     {
         ArgumentNullException.ThrowIfNull(shortcut);
-        var path = ExecutablePathOf(shortcut.Location);
-        if (path is null)
+        var target = WatchTargetOf(shortcut.Location);
+        if (target is null)
         {
             _watchedPaths.Remove(shortcut.Id);
         }
         else
         {
-            _watchedPaths[shortcut.Id] = path;
+            _watchedPaths[shortcut.Id] = target;
         }
 
         UpdateTimer();
@@ -197,9 +201,9 @@ public sealed class ProcessTracker : IDisposable
             var paths = await Task.Run(static () => RunningProcesses.ImagePaths());
             var previous = _runningPaths;
             _runningPaths = paths;
-            foreach (var (id, path) in _watchedPaths)
+            foreach (var (id, target) in _watchedPaths)
             {
-                if (previous.Contains(path) != paths.Contains(path))
+                if (target.Matches(previous) != target.Matches(paths))
                 {
                     RunningChanged?.Invoke(this, id);
                 }
@@ -212,12 +216,51 @@ public sealed class ProcessTracker : IDisposable
     }
 
     /// <summary>
-    /// Where Windows keeps app-execution aliases (Store apps, winget, Windows Terminal): 0-byte stubs whose real
-    /// process has another image path, so shortcuts to them rely on launched-process tracking only. Settable for tests.
+    /// What the running-process scan looks for on behalf of a shortcut: one executable by full path, or every
+    /// executable in a folder (a Store app's package folder, since an alias target such as <c>wt.exe</c> may only
+    /// start the real process, <c>WindowsTerminal.exe</c>, from the same folder).
+    /// </summary>
+    internal sealed record WatchTarget(string Path, bool IsFolder)
+    {
+        public bool Matches(IReadOnlySet<string> runningPaths) =>
+            IsFolder ? runningPaths.Any(p => IsUnder(p, Path)) : runningPaths.Contains(Path);
+
+        private static bool IsUnder(string path, string folder) =>
+            path.Length > folder.Length
+            && path.StartsWith(folder, StringComparison.OrdinalIgnoreCase)
+            && (path[folder.Length] == System.IO.Path.DirectorySeparatorChar || path[folder.Length] == System.IO.Path.AltDirectorySeparatorChar);
+    }
+
+    /// <summary>
+    /// Where Windows keeps app-execution aliases (Store apps, winget, Windows Terminal): 0-byte reparse points
+    /// whose real process has another image path. Settable for tests.
     /// </summary>
     internal static string AppAliasDirectory { get; set; } = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData, Environment.SpecialFolderOption.DoNotVerify),
         "Microsoft", "WindowsApps");
+
+    /// <summary>
+    /// What to watch for a shortcut: its executable, or the package folder behind an app-execution alias;
+    /// <see langword="null"/> for documents, links, folders, shell locations, an alias whose reparse data cannot be
+    /// read (launched-process tracking still applies) and the Windows shell itself.
+    /// </summary>
+    internal static WatchTarget? WatchTargetOf(string? location)
+    {
+        var full = FullExecutablePath(location);
+        if (full is null)
+        {
+            return null;
+        }
+
+        if (!IsAppAlias(full))
+        {
+            return new WatchTarget(full, IsFolder: false);
+        }
+
+        var target = AppExecutionAlias.ResolveTarget(full);
+        var folder = target is null ? null : Path.GetDirectoryName(target);
+        return string.IsNullOrEmpty(folder) ? null : new WatchTarget(folder.TrimEnd(Path.DirectorySeparatorChar), IsFolder: true);
+    }
 
     /// <summary>
     /// The full path of the executable a shortcut starts, for executables and bare commands; <see langword="null"/>
@@ -225,6 +268,13 @@ public sealed class ProcessTracker : IDisposable
     /// always running).
     /// </summary>
     internal static string? ExecutablePathOf(string? location)
+    {
+        var full = FullExecutablePath(location);
+        return full is null || IsAppAlias(full) ? null : full;
+    }
+
+    /// <summary>Like <see cref="ExecutablePathOf"/>, but app-execution aliases are returned (their own path).</summary>
+    private static string? FullExecutablePath(string? location)
     {
         var expanded = Environment.ExpandEnvironmentVariables(location?.Trim() ?? string.Empty);
         if (expanded.Length == 0 || LaunchPlanner.IsUri(expanded) || LaunchPlanner.IsSpecial(expanded) || LaunchPlanner.IsShellNamespace(expanded))
@@ -252,9 +302,7 @@ public sealed class ProcessTracker : IDisposable
             return null;
         }
 
-        if (full is null
-            || string.Equals(Path.GetFileName(full), "explorer.exe", StringComparison.OrdinalIgnoreCase)
-            || IsAppAlias(full))
+        if (full is null || string.Equals(Path.GetFileName(full), "explorer.exe", StringComparison.OrdinalIgnoreCase))
         {
             return null;
         }

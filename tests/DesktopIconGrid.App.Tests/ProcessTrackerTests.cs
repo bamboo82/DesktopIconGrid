@@ -62,10 +62,29 @@ public sealed class ProcessTrackerTests : IDisposable
         {
             Assert.Null(ProcessTracker.ExecutablePathOf(alias));
             Assert.Null(ProcessTracker.ExecutablePathOf(Path.Combine(aliases, "wt")));
+            Assert.Null(ProcessTracker.WatchTargetOf(alias)); // a plain file, not a reparse point: nothing to resolve
         }
         finally
         {
             ProcessTracker.AppAliasDirectory = previous;
         }
+    }
+
+    [Fact]
+    public void Executables_are_watched_by_path_and_package_folders_by_prefix()
+    {
+        var exe = Path.Combine(_directory, "tool.exe");
+        File.WriteAllBytes(exe, []);
+
+        var target = ProcessTracker.WatchTargetOf(exe);
+        Assert.NotNull(target);
+        Assert.False(target.IsFolder);
+        Assert.True(target.Matches(new HashSet<string>(StringComparer.OrdinalIgnoreCase) { exe.ToUpperInvariant() }));
+        Assert.False(target.Matches(new HashSet<string>(StringComparer.OrdinalIgnoreCase) { Path.Combine(_directory, "other.exe") }));
+
+        var package = new ProcessTracker.WatchTarget(@"C:\Program Files\WindowsApps\Pkg_1.0_x64__abc", IsFolder: true);
+        Assert.True(package.Matches(new HashSet<string>(StringComparer.OrdinalIgnoreCase) { @"c:\program files\windowsapps\pkg_1.0_x64__abc\WindowsTerminal.exe" }));
+        Assert.False(package.Matches(new HashSet<string>(StringComparer.OrdinalIgnoreCase) { @"C:\Program Files\WindowsApps\Pkg_1.0_x64__abcdef\x.exe" }));
+        Assert.False(package.Matches(new HashSet<string>(StringComparer.OrdinalIgnoreCase)));
     }
 }
