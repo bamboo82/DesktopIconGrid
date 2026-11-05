@@ -216,7 +216,12 @@ public sealed class ProcessTracker : IDisposable
         }
     }
 
-    /// <summary>Snapshots the running executables on a worker thread (it can take tens of milliseconds) and compares on the UI thread.</summary>
+    /// <summary>
+    /// Snapshots the running executables on a worker thread (it can take tens of milliseconds) and compares on the
+    /// tracker's dispatcher, where the watch list and the badges live. The way back is explicit rather than through
+    /// whatever synchronization context the caller had: under a test runner that context is not the dispatcher, and
+    /// the snapshot was then applied, and RunningChanged raised, on a worker thread.
+    /// </summary>
     private async Task ScanAsync()
     {
         if (_scanning)
@@ -225,13 +230,21 @@ public sealed class ProcessTracker : IDisposable
         }
 
         _scanning = true;
+        IReadOnlyDictionary<string, IReadOnlyList<int>>? snapshot = null;
         try
         {
-            ApplySnapshot(await Task.Run(static () => RunningProcesses.Snapshot()));
+            snapshot = await Task.Run(static () => RunningProcesses.Snapshot()).ConfigureAwait(false);
         }
         finally
         {
-            _scanning = false;
+            _ = _dispatcher.BeginInvoke(() =>
+            {
+                _scanning = false;
+                if (snapshot is not null)
+                {
+                    ApplySnapshot(snapshot);
+                }
+            });
         }
     }
 
