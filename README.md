@@ -177,4 +177,4 @@ tests/DesktopIconGrid.App.Tests/   xunit tests for the WPF-side logic without UI
 | `logs\` | Captured output of shortcuts that have logging turned on (ten newest runs per shortcut). |
 | `icons\` | Icons downloaded from web addresses (256 px PNG). |
 | `sounds\` | Recordings of Sound Replayer icons (WAV). |
-| `drive-cache\` | Files downloaded for the Google Drive Bucket Viewer (purged after a day). |
+| `drive-cache\` | Files downloaded for the Google Drive Bucket Viewer, each with a `.stamp` naming the Drive version it is, so a changed file is fetched again (purged after a day). |

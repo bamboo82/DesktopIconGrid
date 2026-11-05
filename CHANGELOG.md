@@ -3,7 +3,13 @@
 All notable changes to Desktop Icon Grid. The format follows [Keep a Changelog](https://keepachangelog.com/);
 version numbers follow [Semantic Versioning](https://semver.org/).
 
-## [0.6.0] – Unreleased
+## [0.6.0] – 2026-11-05
+
+Drive copies that stay current, the bar back on its own monitor, the running badge for Store apps, and
+a tray icon without Windows Forms. Note for whoever tests this build: the tray icon is new code. How it
+is drawn and how the shell's callbacks are decoded are tested on Windows CI, but the icon in the
+notification area, its menu and its balloons have not been seen on a screen yet; neither has the bar
+returning to a second monitor at another display scale.
 
 ### Changed
 
@@ -26,7 +32,7 @@ version numbers follow [Semantic Versioning](https://semver.org/).
   window of its own) instead of through Windows Forms' `NotifyIcon`, so the app no longer loads Windows
   Forms or System.Drawing: a smaller self-contained build and one DPI story (the WPF manifest). Behaviour
   is unchanged: left click shows or hides the bar, right click or Shift+F10 opens the menu, a balloon
-  click opens the log viewer, and the icon comes back when Explorer restarts. Checked in code only.
+  click opens the log viewer, and the icon comes back when Explorer restarts.
 
 ### Fixed
 
