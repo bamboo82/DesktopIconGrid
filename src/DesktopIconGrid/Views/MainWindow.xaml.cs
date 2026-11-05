@@ -115,7 +115,7 @@ public partial class MainWindow : Window
     private IEnumerable<TrayMenuEntry> BuildTrayMenu()
     {
         var shown = IsVisible && WindowState != WindowState.Minimized;
-        yield return new TrayMenuEntry(shown ? Strings.Menu_HideBar : Strings.Menu_ShowBar, ToggleVisibility);
+        yield return new TrayMenuEntry(shown ? Strings.Menu_HideBar : Strings.Menu_ShowBar, shown ? HideBar : ShowBar);
         yield return new TrayMenuEntry(Strings.Menu_ResetBarPosition, ResetPosition);
         yield return TrayMenuEntry.Separator;
         yield return new TrayMenuEntry(Strings.Menu_NewShortcut, () => RunOnBar(() => _viewModel.NewShortcutCommand.Execute(null)));
@@ -306,31 +306,53 @@ public partial class MainWindow : Window
             WindowState = WindowState.Normal;
         }
 
-        // A request from another process carries no foreground rights of its own: the second copy called
-        // AllowSetForegroundWindow for us, and flipping Topmost is the fallback when Windows still refuses
-        // (there is no taskbar button to flash for a tool window).
-        var handle = new WindowInteropHelper(this).Handle;
-        if (handle == IntPtr.Zero || !NativeMethods.SetForegroundWindow(handle))
-        {
-            var wasTopmost = Topmost;
-            Topmost = true;
-            Topmost = wasTopmost;
-        }
-
-        Activate();
+        // A request from another process carries no foreground rights of its own; the second copy called
+        // AllowSetForegroundWindow for us, and BringToFront has the fallback for when Windows still refuses.
+        BringToFront();
     }
 
-    /// <summary>Hides the bar, or brings it back to the front. Bound to the global hotkey.</summary>
+    /// <summary>
+    /// The hotkey and a click on the tray icon: hides the bar when it is in front; otherwise shows it, expands an
+    /// auto-hidden strip and brings it to the front. A bar that is visible but covered by other windows comes
+    /// forward instead of disappearing, so the first press always does something visible.
+    /// </summary>
     public void ToggleVisibility()
     {
         if (IsVisible && WindowState != WindowState.Minimized)
         {
-            _viewModel.IsGroupPopupOpen = false;
-            Hide();
-            AppLog.Default.Debug("App", "Bar hidden");
+            if (IsAutoHide && _collapsed)
+            {
+                Expand();
+                BringToFront();
+                AppLog.Default.Debug("App", "Bar expanded");
+                return;
+            }
+
+            if (!Topmost && !IsInFront())
+            {
+                BringToFront();
+                AppLog.Default.Debug("App", "Bar brought to the front");
+                return;
+            }
+
+            HideBar();
             return;
         }
 
+        ShowBar();
+    }
+
+    /// <summary>Hides the bar and its popup; the tray icon and the hotkey bring it back.</summary>
+    public void HideBar()
+    {
+        _viewModel.IsGroupPopupOpen = false;
+        Hide();
+        AppLog.Default.Debug("App", "Bar hidden");
+    }
+
+    /// <summary>Shows the bar, expands an auto-hidden strip and brings it to the front.</summary>
+    public void ShowBar()
+    {
         Show();
         AppLog.Default.Debug("App", "Bar shown");
         if (WindowState == WindowState.Minimized)
@@ -341,6 +363,39 @@ public partial class MainWindow : Window
         if (IsAutoHide)
         {
             Expand();
+        }
+
+        BringToFront();
+    }
+
+    private const uint GaRootOwner = 3;
+
+    /// <summary>True when the bar, or a popup or dialog it owns, is the foreground window.</summary>
+    private bool IsInFront()
+    {
+        var handle = new WindowInteropHelper(this).Handle;
+        if (handle == IntPtr.Zero)
+        {
+            return false;
+        }
+
+        var foreground = NativeMethods.GetForegroundWindow();
+        return foreground == handle || NativeMethods.GetAncestor(foreground, GaRootOwner) == handle;
+    }
+
+    /// <summary>
+    /// Brings the bar to the front. A hotkey or a tray click gives this process the right to take the foreground;
+    /// when Windows refuses anyway (a request relayed from another process, for example) a flip of Topmost puts
+    /// the bar above the current window. SetCurrentValue keeps the Always-on-top binding intact.
+    /// </summary>
+    private void BringToFront()
+    {
+        var handle = new WindowInteropHelper(this).Handle;
+        if (handle == IntPtr.Zero || !NativeMethods.SetForegroundWindow(handle))
+        {
+            var wasTopmost = Topmost;
+            SetCurrentValue(TopmostProperty, true);
+            SetCurrentValue(TopmostProperty, wasTopmost);
         }
 
         Activate();
@@ -657,5 +712,11 @@ public partial class MainWindow : Window
         [DllImport("user32.dll")]
         [return: MarshalAs(UnmanagedType.Bool)]
         public static extern bool SetForegroundWindow(IntPtr hWnd);
+
+        [DllImport("user32.dll")]
+        public static extern IntPtr GetForegroundWindow();
+
+        [DllImport("user32.dll")]
+        public static extern IntPtr GetAncestor(IntPtr hwnd, uint gaFlags);
     }
 }

@@ -27,6 +27,18 @@ long Chinese labels in the fixed-width dialogs (Settings, Sync) are the first th
 - Sync status lines carry their own severity instead of being classified by their English wording,
   so warnings and failures reach the tray in every language.
 
+### Fixed
+
+- The tray icon's right-click menu did not open (since 0.3.0): its WPF menu was anchored in a window
+  that was never shown, and WPF waits for such an anchor forever. The anchor is now a zero-size window
+  moved under the pointer, which also gives the menu that monitor's DPI. If it still fails, `app.log`
+  says why.
+- The show/hide hotkey and a click on the tray icon bring a bar that is visible but covered by other
+  windows, or collapsed as an auto-hide strip, to the front instead of hiding it; only a bar that is in
+  front is hidden. Before, the first press seemed to do nothing and the second brought the bar back.
+  The tray menu's *Hide bar* / *Show bar* entry does exactly what it says.
+- Bringing the bar forward from a second instance no longer detaches *Always on top* from its setting.
+
 ### Not translated
 
 - The application log (`logs\app.log` and the log viewer's entries) stays in English, as do the
