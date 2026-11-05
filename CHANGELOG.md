@@ -3,7 +3,7 @@
 All notable changes to Desktop Icon Grid. The format follows [Keep a Changelog](https://keepachangelog.com/);
 version numbers follow [Semantic Versioning](https://semver.org/).
 
-## [0.5.0] – Unreleased
+## [0.5.0] – 2026-11-05
 
 The user interface speaks Traditional and Simplified Chinese as well as English. The language
 follows the Windows display language unless *Settings → Language* picks one; a change applies at the
