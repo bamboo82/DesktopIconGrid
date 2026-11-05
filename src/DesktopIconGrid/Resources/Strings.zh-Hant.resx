@@ -1400,4 +1400,34 @@
   <data name="Props_AppWindow" xml:space="preserve">
     <value>以應用程式視窗開啟（無索引標籤與網址列）</value>
   </data>
+  <data name="Main_SearchName" xml:space="preserve">
+    <value>尋找圖示</value>
+  </data>
+  <data name="Main_SearchToolTip" xml:space="preserve">
+    <value>輸入名稱尋找圖示。Enter 開啟加框的圖示，方向鍵移動外框，Esc 清除。</value>
+  </data>
+  <data name="Main_PointerHotkeyTitle" xml:space="preserve">
+    <value>在指標處顯示的快速鍵</value>
+  </data>
+  <data name="Settings_PointerHotkey" xml:space="preserve">
+    <value>在指標處顯示：</value>
+  </data>
+  <data name="Settings_PointerHotkeyName" xml:space="preserve">
+    <value>在指標處顯示的快速鍵</value>
+  </data>
+  <data name="Settings_PointerHotkeyHint" xml:space="preserve">
+    <value>即使工具列已隱藏或收在邊緣，也會在滑鼠指標下開啟您的圖示，並備妥搜尋方塊。</value>
+  </data>
+  <data name="Settings_PointerHotkeySame" xml:space="preserve">
+    <value>請使用與顯示/隱藏快速鍵不同的組合。</value>
+  </data>
+  <data name="Pointer_Placeholder" xml:space="preserve">
+    <value>輸入名稱…</value>
+  </data>
+  <data name="Pointer_BackName" xml:space="preserve">
+    <value>返回所有圖示</value>
+  </data>
+  <data name="Pointer_BackToolTip" xml:space="preserve">
+    <value>返回所有圖示 (Backspace)</value>
+  </data>
 </root>

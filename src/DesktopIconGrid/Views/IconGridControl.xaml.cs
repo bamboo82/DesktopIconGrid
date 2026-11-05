@@ -47,6 +47,22 @@ public partial class IconGridControl : UserControl
 
     private ItemListViewModel? List => DataContext as ItemListViewModel;
 
+    public static readonly DependencyProperty OpensGroupsInPlaceProperty = DependencyProperty.Register(
+        nameof(OpensGroupsInPlace), typeof(bool), typeof(IconGridControl), new PropertyMetadata(false));
+
+    /// <summary>
+    /// A click on a group raises <see cref="GroupOpening"/> instead of opening the bar's group popup, so a host with a
+    /// window of its own (the Show-at-pointer window) can show the group's icons in place.
+    /// </summary>
+    public bool OpensGroupsInPlace
+    {
+        get => (bool)GetValue(OpensGroupsInPlaceProperty);
+        set => SetValue(OpensGroupsInPlaceProperty, value);
+    }
+
+    /// <summary>A group was clicked while <see cref="OpensGroupsInPlace"/> is set.</summary>
+    public event EventHandler<ItemViewModel>? GroupOpening;
+
     private enum DropAction
     {
         None,
@@ -75,6 +91,13 @@ public partial class IconGridControl : UserControl
 
         if (ItemOf(sender) is not { } item || List is null)
         {
+            return;
+        }
+
+        if (item.IsGroup && OpensGroupsInPlace)
+        {
+            GroupOpening?.Invoke(this, item);
+            e.Handled = true;
             return;
         }
 
@@ -120,7 +143,8 @@ public partial class IconGridControl : UserControl
     /// </summary>
     internal static bool IsKeyboardActivation(InputDevice? mostRecent) => mostRecent is KeyboardDevice;
 
-    private static ActivationModifiers CurrentModifiers()
+    /// <summary>The modifier keys held now, as the launcher's activation flags.</summary>
+    internal static ActivationModifiers CurrentModifiers()
     {
         var modifiers = ActivationModifiers.None;
         var keys = Keyboard.Modifiers;

@@ -63,14 +63,17 @@ public sealed class LauncherViewModelTests : IDisposable
         }
     }
 
-    private sealed class FailingLauncher : ILaunchService
+    /// <summary>Records every launch and answers with <see cref="Result"/> (a failure unless a test says otherwise).</summary>
+    private sealed class RecordingLauncher : ILaunchService
     {
         public List<(string Location, bool AsAdministrator)> Launches { get; } = [];
+
+        public LaunchResult Result { get; set; } = LaunchResult.Failure("nope");
 
         public LaunchResult Launch(ShortcutItem shortcut, bool asAdministrator = false)
         {
             Launches.Add((shortcut.Location, asAdministrator));
-            return LaunchResult.Failure("nope");
+            return Result;
         }
 
         public LaunchResult LaunchWith(ShortcutItem shortcut, IReadOnlyList<string> paths) => LaunchResult.Failure("nope");
@@ -105,7 +108,7 @@ public sealed class LauncherViewModelTests : IDisposable
         }
     }
 
-    private readonly FailingLauncher _launcher = new();
+    private readonly RecordingLauncher _launcher = new();
 
     private (LauncherViewModel ViewModel, LauncherModel Model, RecordingDialogs Dialogs) Create(IWindowSwitcher? windows = null)
     {
@@ -290,5 +293,68 @@ public sealed class LauncherViewModelTests : IDisposable
 
         Assert.Equal(0, switcher.Calls);
         Assert.Equal([(@"C:\c.exe", false)], _launcher.Launches);
+    }
+
+    [Fact]
+    public void Typing_lights_the_matches_and_the_groups_that_hold_them_and_fades_the_rest()
+    {
+        var (viewModel, model, _) = Create();
+        model.Add(new GroupItem
+        {
+            Name = "Tools",
+            Items = [new ShortcutItem { Name = "WinSCP", Location = @"C:\Tools\WinSCP.exe" }, new ShortcutItem { Name = "Putty", Location = @"C:\Tools\putty.exe" }],
+        });
+        viewModel.RootItems.Sync();
+        var group = viewModel.RootItems.Items[3];
+
+        viewModel.SearchText = "ws"; // the initials of WinSCP
+
+        Assert.True(viewModel.IsSearching);
+        var match = Assert.Single(viewModel.SearchResults);
+        Assert.Equal("WinSCP", match.Name);
+        Assert.Same(match, viewModel.SelectedSearchResult);
+        Assert.False(match.IsSearchDimmed);
+        Assert.True(match.IsSearchSelected);
+        Assert.False(group.IsSearchDimmed);
+        Assert.True(group.IsSearchSelected); // framed with its match, which is out of sight while the group is closed
+        Assert.All(viewModel.RootItems.Items.Take(3), item => Assert.True(item.IsSearchDimmed));
+        Assert.True(group.Children!.Items.Single(i => i.Name == "Putty").IsSearchDimmed); // opened during the search
+
+        viewModel.ClearSearch();
+
+        Assert.False(viewModel.IsSearching);
+        Assert.Null(viewModel.SelectedSearchResult);
+        Assert.All(viewModel.RootItems.Items.Concat(group.Children!.Items), item => Assert.False(item.IsSearchDimmed || item.IsSearchSelected));
+    }
+
+    [Fact]
+    public void The_arrows_move_the_frame_round_the_matches_and_Enter_opens_the_framed_one()
+    {
+        _launcher.Result = LaunchResult.Started;
+        var (viewModel, model, _) = Create();
+        model.Add(new ShortcutItem { Name = "Mail", Location = @"C:\mail.exe" });
+        model.Add(new ShortcutItem { Name = "Mailbox cleaner", Location = @"C:\clean.exe" });
+        viewModel.RootItems.Sync();
+        ItemViewModel? activated = null;
+        viewModel.ItemActivated += (_, item) => activated = item;
+
+        viewModel.SearchText = "mail";
+        Assert.Equal(["Mail", "Mailbox cleaner"], viewModel.SearchResults.Select(r => r.Name));
+
+        viewModel.MoveSearchSelection(1);
+        Assert.Equal("Mailbox cleaner", viewModel.SelectedSearchResult!.Name);
+        viewModel.MoveSearchSelection(1);
+        Assert.Equal("Mail", viewModel.SelectedSearchResult!.Name); // round to the first
+        viewModel.MoveSearchSelection(-1);
+        Assert.Equal("Mailbox cleaner", viewModel.SelectedSearchResult!.Name); // and back to the last
+        Assert.True(viewModel.SelectedSearchResult.IsSearchSelected);
+        Assert.False(viewModel.SearchResults[0].IsSearchSelected);
+
+        Assert.True(viewModel.LaunchSearchSelection());
+
+        Assert.Equal([(@"C:\clean.exe", false)], _launcher.Launches);
+        Assert.Equal("Mailbox cleaner", activated?.Name);
+        Assert.Equal(string.Empty, viewModel.SearchText);
+        Assert.False(viewModel.LaunchSearchSelection()); // nothing typed, nothing to open
     }
 }

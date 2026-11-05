@@ -25,6 +25,9 @@ public partial class MainWindow : Window
     private readonly LauncherViewModel _viewModel;
     private GlobalHotkey? _hotkey;
     private string? _registeredHotkey;
+    private GlobalHotkey? _pointerHotkey;
+    private string? _registeredPointerHotkey;
+    private PointerWindow? _pointerWindow;
     private TrayIcon? _tray;
     private TrayMenuHost? _trayMenu;
     private bool _exiting;
@@ -38,11 +41,12 @@ public partial class MainWindow : Window
         InitializeComponent();
 
         viewModel.GroupActivated += OnGroupActivated;
+        viewModel.ItemActivated += (_, _) => CloseSearch();
         viewModel.ExitRequested += (_, _) => ExitApplication();
         viewModel.SettingsChanged += (_, _) =>
         {
             EnsureMinimumSize();
-            ApplyHotkey(reportErrors: true);
+            ApplyHotkeys(reportErrors: true);
             ApplyAppearance();
             ApplyDocking();
         };
@@ -62,7 +66,9 @@ public partial class MainWindow : Window
         {
             _hotkey = new GlobalHotkey(source);
             _hotkey.Pressed += (_, _) => ToggleVisibility();
-            ApplyHotkey(reportErrors: true);
+            _pointerHotkey = new GlobalHotkey(source, GlobalHotkey.PointerIds);
+            _pointerHotkey.Pressed += (_, _) => TogglePointerWindow();
+            ApplyHotkeys(reportErrors: true);
         }
 
         ApplyAppearance();
@@ -275,6 +281,10 @@ public partial class MainWindow : Window
         DisposeDocking();
         _hotkey?.Dispose();
         _hotkey = null;
+        _pointerHotkey?.Dispose();
+        _pointerHotkey = null;
+        _pointerWindow?.Close();
+        _pointerWindow = null;
         _tray?.Dispose();
         _tray = null;
         _trayMenu?.Close();
@@ -343,6 +353,7 @@ public partial class MainWindow : Window
     public void HideBar()
     {
         _viewModel.IsGroupPopupOpen = false;
+        CloseSearch();
         Hide();
         AppLog.Default.Debug("App", "Bar hidden");
     }
@@ -396,17 +407,45 @@ public partial class MainWindow : Window
         Activate();
     }
 
-    private void ApplyHotkey(bool reportErrors)
+    /// <summary>
+    /// Registers the show/hide and Show-at-pointer hotkeys from the settings. When the two were swapped in one save,
+    /// the show/hide one fails while the other still holds its combination, so it is tried once more afterwards.
+    /// </summary>
+    private void ApplyHotkeys(bool reportErrors)
     {
-        if (_hotkey is null)
+        var settings = _viewModel.Model.Settings;
+        var toggleError = RegisterHotkey(_hotkey, settings.ToggleHotkey, ref _registeredHotkey, "Show/hide hotkey");
+        var pointerError = RegisterHotkey(_pointerHotkey, settings.ShowAtPointerHotkey, ref _registeredPointerHotkey, "Show-at-pointer hotkey");
+        if (toggleError is not null && pointerError is null)
+        {
+            toggleError = RegisterHotkey(_hotkey, settings.ToggleHotkey, ref _registeredHotkey, "Show/hide hotkey");
+        }
+
+        if (!reportErrors)
         {
             return;
         }
 
-        var text = _viewModel.Model.Settings.ToggleHotkey;
-        if (string.Equals(text, _registeredHotkey, StringComparison.Ordinal))
+        if (!string.IsNullOrEmpty(toggleError))
         {
-            return;
+            MessageBox.Show(this, toggleError, Strings.Main_HotkeyTitle, MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
+
+        if (!string.IsNullOrEmpty(pointerError))
+        {
+            MessageBox.Show(this, pointerError, Strings.Main_PointerHotkeyTitle, MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
+    }
+
+    /// <summary>
+    /// Registers <paramref name="text"/> on <paramref name="hotkey"/> unless that is already done (an empty or
+    /// unreadable text clears it). Returns Windows' refusal as a message, or <see langword="null"/>.
+    /// </summary>
+    private static string? RegisterHotkey(GlobalHotkey? hotkey, string? text, ref string? registered, string name)
+    {
+        if (hotkey is null || string.Equals(text, registered, StringComparison.Ordinal))
+        {
+            return null;
         }
 
         HotkeyGesture? gesture = null;
@@ -415,20 +454,113 @@ public partial class MainWindow : Window
             gesture = null;
         }
 
-        if (!_hotkey.Register(gesture, out var error))
+        if (!hotkey.Register(gesture, out var error))
         {
-            _registeredHotkey = null;
-            AppLog.Default.Warning("Hotkey", error ?? "Hotkey could not be registered");
-            if (reportErrors && error is not null)
+            registered = null;
+            AppLog.Default.Warning("Hotkey", error ?? $"{name} could not be registered");
+            return error ?? string.Empty;
+        }
+
+        registered = text;
+        AppLog.Default.Info("Hotkey", gesture is null ? $"{name} cleared" : $"{name} registered: {gesture}");
+        return null;
+    }
+
+    // ----- type to find ------------------------------------------------------------------------------
+
+    /// <summary>
+    /// While the bar has the focus, the first key that types a character opens the search box at its bottom and
+    /// moves the focus there; the key itself is left alone, so its character (or the IME's composition) lands in
+    /// the box. Ctrl+F opens the box as well.
+    /// </summary>
+    protected override void OnPreviewKeyDown(KeyEventArgs e)
+    {
+        base.OnPreviewKeyDown(e);
+        if (e.Handled || SearchBox.IsKeyboardFocusWithin || Keyboard.FocusedElement is TextBoxBase)
+        {
+            return;
+        }
+
+        if (e.Key == Key.F && Keyboard.Modifiers == ModifierKeys.Control)
+        {
+            OpenSearch();
+            e.Handled = true;
+            return;
+        }
+
+        if (TypeToFind.IsTextKey(e.Key, Keyboard.Modifiers))
+        {
+            OpenSearch();
+        }
+    }
+
+    private void OpenSearch()
+    {
+        SearchPanel.Visibility = Visibility.Visible;
+        SearchPanel.UpdateLayout();
+        SearchBox.Focus();
+    }
+
+    /// <summary>Ends the bar's search: the box goes, the icons light up again, and the keys go back to the icons.</summary>
+    private void CloseSearch()
+    {
+        if (SearchPanel.Visibility != Visibility.Visible)
+        {
+            return;
+        }
+
+        var hadFocus = SearchBox.IsKeyboardFocusWithin;
+        _viewModel.ClearSearch();
+        SearchPanel.Visibility = Visibility.Collapsed;
+        if (hadFocus && IsActive)
+        {
+            Focus();
+        }
+    }
+
+    /// <summary>Arrows move the frame, Enter opens the framed match, Esc clears the text and then closes the box.</summary>
+    private void SearchBox_PreviewKeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Escape)
+        {
+            e.Handled = true;
+            if (_viewModel.IsSearching)
             {
-                MessageBox.Show(this, error, Strings.Main_HotkeyTitle, MessageBoxButton.OK, MessageBoxImage.Warning);
+                _viewModel.ClearSearch();
+            }
+            else
+            {
+                CloseSearch();
             }
 
             return;
         }
 
-        _registeredHotkey = text;
-        AppLog.Default.Info("Hotkey", gesture is null ? "Show/hide hotkey cleared" : $"Show/hide hotkey registered: {gesture}");
+        e.Handled = TypeToFind.HandleSearchBoxKey(_viewModel, e.Key);
+    }
+
+    /// <summary>An empty box closes when the focus leaves it; one with text stays, so a click on a lit icon still works.</summary>
+    private void SearchBox_LostKeyboardFocus(object sender, KeyboardFocusChangedEventArgs e)
+    {
+        if (!_viewModel.IsSearching && !SearchPanel.IsKeyboardFocusWithin)
+        {
+            CloseSearch();
+        }
+    }
+
+    /// <summary>The Show-at-pointer hotkey: the icons in a small window under the mouse, or away again on a second press.</summary>
+    private void TogglePointerWindow()
+    {
+        _pointerWindow ??= new PointerWindow(_viewModel);
+        if (_pointerWindow.IsVisible)
+        {
+            _pointerWindow.Dismiss();
+            return;
+        }
+
+        _viewModel.IsGroupPopupOpen = false;
+        CloseSearch();
+        _pointerWindow.ShowAtPointer();
     }
 
     protected override void OnClosing(CancelEventArgs e)
@@ -564,7 +696,7 @@ public partial class MainWindow : Window
             var handle = new WindowInteropHelper(this).Handle;
             if (handle != IntPtr.Zero && placement.ResolvePixels(ScreenGeometry.Monitors()) is { } pixels)
             {
-                MoveToPixels(handle, pixels);
+                ScreenGeometry.MoveToPixels(this, pixels);
                 AppLog.Default.Debug("App", $"Bar restored to {placement.Monitor} at {pixels.Left},{pixels.Top} ({pixels.Width}×{pixels.Height} px)");
                 return;
             }
@@ -586,31 +718,6 @@ public partial class MainWindow : Window
         var area = SystemParameters.WorkArea;
         Left = area.Left + Math.Max(0, (area.Width - Width) / 2);
         Top = area.Top + Math.Max(0, (area.Height - Height) / 2);
-    }
-
-    /// <summary>
-    /// Moves the window in device pixels. Landing on a monitor with another scale rescales the window once on the
-    /// way (WM_DPICHANGED), so the rectangle is set a second time when it did not stick; the WPF-unit properties are
-    /// then read back at the window's new scale so WPF and Windows agree on where the bar is.
-    /// </summary>
-    private void MoveToPixels(IntPtr handle, PixelRect pixels)
-    {
-        const uint flags = NativeMethods.SWP_NOZORDER | NativeMethods.SWP_NOACTIVATE;
-        NativeMethods.SetWindowPos(handle, IntPtr.Zero, pixels.Left, pixels.Top, pixels.Width, pixels.Height, flags);
-        if (NativeMethods.GetWindowRect(handle, out var now)
-            && (now.Left != pixels.Left || now.Top != pixels.Top || now.Right - now.Left != pixels.Width || now.Bottom - now.Top != pixels.Height))
-        {
-            NativeMethods.SetWindowPos(handle, IntPtr.Zero, pixels.Left, pixels.Top, pixels.Width, pixels.Height, flags);
-        }
-
-        if (NativeMethods.GetWindowRect(handle, out var final))
-        {
-            var scale = VisualTreeHelper.GetDpi(this);
-            Left = final.Left / scale.DpiScaleX;
-            Top = final.Top / scale.DpiScaleY;
-            Width = (final.Right - final.Left) / scale.DpiScaleX;
-            Height = (final.Bottom - final.Top) / scale.DpiScaleY;
-        }
     }
 
     /// <summary>
@@ -643,6 +750,7 @@ public partial class MainWindow : Window
         if (!DragState.IsDragging)
         {
             _viewModel.IsGroupPopupOpen = false;
+            CloseSearch();
         }
     }
 

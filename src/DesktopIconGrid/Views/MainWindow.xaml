@@ -49,8 +49,24 @@
               AutomationProperties.Name="{x:Static r:Strings.Main_GripName}"
               MouseLeftButtonDown="Grip_MouseLeftButtonDown" />
 
-      <!-- Icons, with the removal banner under them -->
+      <!-- Icons, with the removal banner and the type-to-find box under them -->
       <DockPanel Grid.Column="1">
+        <DockPanel x:Name="SearchPanel"
+                   DockPanel.Dock="Bottom"
+                   Visibility="Collapsed"
+                   Margin="2,0,2,2">
+          <TextBlock DockPanel.Dock="Right"
+                     MaxWidth="160"
+                     Style="{StaticResource SearchTargetStyle}"
+                     Text="{Binding SelectedSearchResult.Name, StringFormat={}↵ {0}}" />
+          <TextBox x:Name="SearchBox"
+                   Style="{StaticResource SearchBoxStyle}"
+                   Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                   ToolTip="{x:Static r:Strings.Main_SearchToolTip}"
+                   AutomationProperties.Name="{x:Static r:Strings.Main_SearchName}"
+                   PreviewKeyDown="SearchBox_PreviewKeyDown"
+                   LostKeyboardFocus="SearchBox_LostKeyboardFocus" />
+        </DockPanel>
         <Border DockPanel.Dock="Bottom"
                 Visibility="{Binding CanUndoRemove, Converter={StaticResource BoolToVisibility}}"
                 Background="{DynamicResource Theme.Hover}"

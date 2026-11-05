@@ -1491,6 +1491,33 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Show-at-pointer hotkey.
+        /// </summary>
+        public static string Main_PointerHotkeyTitle {
+            get {
+                return ResourceManager.GetString("Main_PointerHotkeyTitle", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Find an icon.
+        /// </summary>
+        public static string Main_SearchName {
+            get {
+                return ResourceManager.GetString("Main_SearchName", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Type to find an icon by name. Enter opens the framed one, the arrow keys move th [rest of string was truncated]";.
+        /// </summary>
+        public static string Main_SearchToolTip {
+            get {
+                return ResourceManager.GetString("Main_SearchToolTip", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Undo remove.
         /// </summary>
         public static string Main_UndoName {
@@ -2027,6 +2054,33 @@ namespace DesktopIconGrid.Resources {
         public static string Names_UseOriginalAll {
             get {
                 return ResourceManager.GetString("Names_UseOriginalAll", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Back to all icons.
+        /// </summary>
+        public static string Pointer_BackName {
+            get {
+                return ResourceManager.GetString("Pointer_BackName", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Back to all icons (Backspace).
+        /// </summary>
+        public static string Pointer_BackToolTip {
+            get {
+                return ResourceManager.GetString("Pointer_BackToolTip", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Type a name….
+        /// </summary>
+        public static string Pointer_Placeholder {
+            get {
+                return ResourceManager.GetString("Pointer_Placeholder", resourceCulture);
             }
         }
 
@@ -2846,6 +2900,42 @@ namespace DesktopIconGrid.Resources {
         public static string Settings_OpenWith {
             get {
                 return ResourceManager.GetString("Settings_OpenWith", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Show at pointer:.
+        /// </summary>
+        public static string Settings_PointerHotkey {
+            get {
+                return ResourceManager.GetString("Settings_PointerHotkey", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Opens your icons under the mouse pointer with the search box ready, even while t [rest of string was truncated]";.
+        /// </summary>
+        public static string Settings_PointerHotkeyHint {
+            get {
+                return ResourceManager.GetString("Settings_PointerHotkeyHint", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Show at pointer hotkey.
+        /// </summary>
+        public static string Settings_PointerHotkeyName {
+            get {
+                return ResourceManager.GetString("Settings_PointerHotkeyName", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Use a different combination from the show/hide hotkey..
+        /// </summary>
+        public static string Settings_PointerHotkeySame {
+            get {
+                return ResourceManager.GetString("Settings_PointerHotkeySame", resourceCulture);
             }
         }
 

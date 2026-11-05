@@ -28,4 +28,28 @@ public class SettingsViewModelTests
         Assert.NotSame(current.ExtensionData, result.ExtensionData);
         Assert.False(current.ShowLabels); // the original is untouched until the caller applies the result
     }
+
+    [Fact]
+    public void The_show_at_pointer_hotkey_is_off_by_default_and_must_differ_from_the_show_hide_hotkey()
+    {
+        var viewModel = new SettingsViewModel(new LauncherSettings { ToggleHotkey = "Ctrl+Alt+Space" });
+        Assert.True(viewModel.IsPointerHotkeyValid);
+        Assert.Null(viewModel.ToSettings().ShowAtPointerHotkey);
+
+        viewModel.ShowAtPointerHotkey = "Control+Alt+Space"; // the same keys, spelled differently
+        Assert.True(viewModel.IsPointerHotkeySame);
+        Assert.False(viewModel.CanSave);
+
+        viewModel.ShowAtPointerHotkey = "Ctrl+Alt+F";
+        Assert.False(viewModel.IsPointerHotkeySame);
+        Assert.True(viewModel.CanSave);
+        Assert.Equal("Ctrl+Alt+F", viewModel.ToSettings().ShowAtPointerHotkey);
+
+        viewModel.ToggleHotkey = "Ctrl+Alt+F"; // changing the other one is checked as well
+        Assert.False(viewModel.CanSave);
+
+        viewModel.ShowAtPointerHotkey = string.Empty;
+        Assert.True(viewModel.CanSave);
+        Assert.Null(viewModel.ToSettings().ShowAtPointerHotkey);
+    }
 }

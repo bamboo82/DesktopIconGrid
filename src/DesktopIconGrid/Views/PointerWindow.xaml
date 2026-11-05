@@ -1,0 +1,71 @@
+<Window x:Class="DesktopIconGrid.Views.PointerWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:r="clr-namespace:DesktopIconGrid.Resources"
+        xmlns:views="clr-namespace:DesktopIconGrid.Views"
+        Title="{x:Static r:Strings.App_Name}"
+        WindowStyle="None"
+        ResizeMode="NoResize"
+        ShowInTaskbar="False"
+        ShowActivated="True"
+        Topmost="True"
+        Background="{DynamicResource Theme.Background}"
+        UseLayoutRounding="True"
+        SnapsToDevicePixels="True"
+        TextOptions.TextFormattingMode="Display">
+  <Border BorderBrush="{DynamicResource Theme.Border}" BorderThickness="1" Padding="3">
+    <DockPanel>
+      <!-- Search box with its placeholder, and what Enter opens -->
+      <DockPanel DockPanel.Dock="Top">
+        <TextBlock DockPanel.Dock="Right"
+                   MaxWidth="140"
+                   Style="{StaticResource SearchTargetStyle}"
+                   Text="{Binding SelectedSearchResult.Name, StringFormat={}↵ {0}}" />
+        <Grid>
+          <TextBox x:Name="SearchBox"
+                   Style="{StaticResource SearchBoxStyle}"
+                   Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                   ToolTip="{x:Static r:Strings.Main_SearchToolTip}"
+                   AutomationProperties.Name="{x:Static r:Strings.Main_SearchName}" />
+          <TextBlock Text="{x:Static r:Strings.Pointer_Placeholder}"
+                     Foreground="{DynamicResource Theme.Hint}"
+                     FontSize="12"
+                     Margin="6,0,0,0"
+                     VerticalAlignment="Center"
+                     IsHitTestVisible="False">
+            <TextBlock.Style>
+              <Style TargetType="TextBlock">
+                <Setter Property="Visibility" Value="Collapsed" />
+                <Style.Triggers>
+                  <DataTrigger Binding="{Binding Text, ElementName=SearchBox}" Value="">
+                    <Setter Property="Visibility" Value="Visible" />
+                  </DataTrigger>
+                </Style.Triggers>
+              </Style>
+            </TextBlock.Style>
+          </TextBlock>
+        </Grid>
+      </DockPanel>
+
+      <!-- An open group: back and its name -->
+      <DockPanel x:Name="GroupHeader" DockPanel.Dock="Top" Visibility="Collapsed" Margin="0,3,0,0">
+        <Button Style="{StaticResource BarButtonStyle}"
+                Width="22"
+                Click="Back_Click"
+                ToolTip="{x:Static r:Strings.Pointer_BackToolTip}"
+                AutomationProperties.Name="{x:Static r:Strings.Pointer_BackName}">
+          <TextBlock Text="←" FontSize="12" />
+        </Button>
+        <TextBlock x:Name="GroupTitle"
+                   Foreground="{DynamicResource Theme.Foreground}"
+                   FontSize="11"
+                   FontWeight="SemiBold"
+                   Margin="6,0,4,0"
+                   VerticalAlignment="Center"
+                   TextTrimming="CharacterEllipsis" />
+      </DockPanel>
+
+      <views:IconGridControl x:Name="Icons" OpensGroupsInPlace="True" Margin="0,3,0,0" />
+    </DockPanel>
+  </Border>
+</Window>

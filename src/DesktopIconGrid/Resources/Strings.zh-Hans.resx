@@ -1400,4 +1400,34 @@
   <data name="Props_AppWindow" xml:space="preserve">
     <value>以应用窗口打开（无标签页和地址栏）</value>
   </data>
+  <data name="Main_SearchName" xml:space="preserve">
+    <value>查找图标</value>
+  </data>
+  <data name="Main_SearchToolTip" xml:space="preserve">
+    <value>输入名称查找图标。Enter 打开加框的图标，方向键移动外框，Esc 清除。</value>
+  </data>
+  <data name="Main_PointerHotkeyTitle" xml:space="preserve">
+    <value>在指针处显示的热键</value>
+  </data>
+  <data name="Settings_PointerHotkey" xml:space="preserve">
+    <value>在指针处显示：</value>
+  </data>
+  <data name="Settings_PointerHotkeyName" xml:space="preserve">
+    <value>在指针处显示的热键</value>
+  </data>
+  <data name="Settings_PointerHotkeyHint" xml:space="preserve">
+    <value>即使工具栏已隐藏或收在边缘，也会在鼠标指针下打开您的图标，并备好搜索框。</value>
+  </data>
+  <data name="Settings_PointerHotkeySame" xml:space="preserve">
+    <value>请使用与显示/隐藏热键不同的组合。</value>
+  </data>
+  <data name="Pointer_Placeholder" xml:space="preserve">
+    <value>输入名称…</value>
+  </data>
+  <data name="Pointer_BackName" xml:space="preserve">
+    <value>返回所有图标</value>
+  </data>
+  <data name="Pointer_BackToolTip" xml:space="preserve">
+    <value>返回所有图标 (Backspace)</value>
+  </data>
 </root>

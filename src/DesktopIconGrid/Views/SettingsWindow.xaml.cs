@@ -1,4 +1,5 @@
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
 using DesktopIconGrid.Resources;
 using DesktopIconGrid.Services;
@@ -18,19 +19,36 @@ public partial class SettingsWindow : Window
 
     private void Save_Click(object sender, RoutedEventArgs e) => DialogResult = true;
 
-    private void ClearHotkey_Click(object sender, RoutedEventArgs e)
-    {
-        if (ViewModel is { } viewModel)
-        {
-            viewModel.ToggleHotkey = string.Empty;
-            HotkeyHint.Visibility = Visibility.Collapsed;
-        }
-    }
+    private void ClearHotkey_Click(object sender, RoutedEventArgs e) => SetHotkey(HotkeyBox, string.Empty);
 
-    /// <summary>Captures the pressed combination instead of typing into the box.</summary>
-    private void HotkeyBox_PreviewKeyDown(object sender, KeyEventArgs e)
+    private void ClearPointerHotkey_Click(object sender, RoutedEventArgs e) => SetHotkey(PointerHotkeyBox, string.Empty);
+
+    /// <summary>Stores a captured combination in the hotkey that <paramref name="box"/> shows, and hides that box's warning.</summary>
+    private void SetHotkey(TextBox box, string text)
     {
         if (ViewModel is not { } viewModel)
+        {
+            return;
+        }
+
+        if (ReferenceEquals(box, PointerHotkeyBox))
+        {
+            viewModel.ShowAtPointerHotkey = text;
+        }
+        else
+        {
+            viewModel.ToggleHotkey = text;
+        }
+
+        WarningOf(box).Visibility = Visibility.Collapsed;
+    }
+
+    private TextBlock WarningOf(TextBox box) => ReferenceEquals(box, PointerHotkeyBox) ? PointerHotkeyHint : HotkeyHint;
+
+    /// <summary>Captures the pressed combination instead of typing into the box (either hotkey box).</summary>
+    private void HotkeyBox_PreviewKeyDown(object sender, KeyEventArgs e)
+    {
+        if (sender is not TextBox box)
         {
             return;
         }
@@ -49,20 +67,19 @@ public partial class SettingsWindow : Window
 
         if (key == Key.Escape || key == Key.Back || key == Key.Delete)
         {
-            viewModel.ToggleHotkey = string.Empty;
-            HotkeyHint.Visibility = Visibility.Collapsed;
+            SetHotkey(box, string.Empty);
             return;
         }
 
         var gesture = new HotkeyGesture(Keyboard.Modifiers, key);
         if (!gesture.HasUsableModifier)
         {
-            HotkeyHint.Text = Strings.Settings_HotkeyNeedsModifier;
-            HotkeyHint.Visibility = Visibility.Visible;
+            var warning = WarningOf(box);
+            warning.Text = Strings.Settings_HotkeyNeedsModifier;
+            warning.Visibility = Visibility.Visible;
             return;
         }
 
-        viewModel.ToggleHotkey = gesture.ToString();
-        HotkeyHint.Visibility = Visibility.Collapsed;
+        SetHotkey(box, gesture.ToString());
     }
 }

@@ -28,6 +28,7 @@
       <RowDefinition Height="Auto" />
       <RowDefinition Height="Auto" />
       <RowDefinition Height="Auto" />
+      <RowDefinition Height="Auto" />
     </Grid.RowDefinitions>
 
     <!-- Theme -->
@@ -186,9 +187,29 @@
       <TextBlock x:Name="HotkeyHint" Foreground="{DynamicResource WarningBrush}" TextWrapping="Wrap" Visibility="Collapsed" />
     </StackPanel>
 
-    <!-- Language -->
-    <TextBlock Grid.Row="11" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Settings_Language}" Margin="0,0,12,10" VerticalAlignment="Top" />
+    <!-- Show-at-pointer hotkey -->
+    <TextBlock Grid.Row="11" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Settings_PointerHotkey}" Margin="0,0,12,10" VerticalAlignment="Top" />
     <StackPanel Grid.Row="11" Grid.Column="1" Margin="0,0,0,10">
+      <DockPanel>
+        <Button DockPanel.Dock="Right" Content="{x:Static r:Strings.Common_Clear}" Padding="10,3" Margin="8,0,0,0" Click="ClearPointerHotkey_Click"
+                IsEnabled="{Binding HasPointerHotkey}" />
+        <TextBox x:Name="PointerHotkeyBox" Padding="4,3" VerticalContentAlignment="Center" IsReadOnly="True" Cursor="Arrow"
+                 Text="{Binding ShowAtPointerHotkey, Mode=OneWay}"
+                 PreviewKeyDown="HotkeyBox_PreviewKeyDown"
+                 ToolTip="{x:Static r:Strings.Settings_HotkeyToolTip}"
+                 AutomationProperties.Name="{x:Static r:Strings.Settings_PointerHotkeyName}" />
+      </DockPanel>
+      <TextBlock Style="{StaticResource DialogHint}" Margin="0,6,0,0"
+                 Text="{x:Static r:Strings.Settings_PointerHotkeyHint}" />
+      <TextBlock Foreground="{DynamicResource WarningBrush}" TextWrapping="Wrap"
+                 Text="{x:Static r:Strings.Settings_PointerHotkeySame}"
+                 Visibility="{Binding IsPointerHotkeySame, Converter={StaticResource BoolToVisibility}}" />
+      <TextBlock x:Name="PointerHotkeyHint" Foreground="{DynamicResource WarningBrush}" TextWrapping="Wrap" Visibility="Collapsed" />
+    </StackPanel>
+
+    <!-- Language -->
+    <TextBlock Grid.Row="12" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Settings_Language}" Margin="0,0,12,10" VerticalAlignment="Top" />
+    <StackPanel Grid.Row="12" Grid.Column="1" Margin="0,0,0,10">
       <ComboBox Width="200" HorizontalAlignment="Left" VerticalContentAlignment="Center"
                 ItemsSource="{Binding Languages}" SelectedItem="{Binding SelectedLanguage}" DisplayMemberPath="Name"
                 AutomationProperties.Name="{x:Static r:Strings.Settings_LanguageName}" />
@@ -196,7 +217,7 @@
     </StackPanel>
 
     <!-- Buttons -->
-    <StackPanel Grid.Row="12" Grid.Column="0" Grid.ColumnSpan="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,6,0,0">
+    <StackPanel Grid.Row="13" Grid.Column="0" Grid.ColumnSpan="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,6,0,0">
       <Button Content="{x:Static r:Strings.Common_Save}" Style="{StaticResource DialogButton}" IsDefault="True"
               IsEnabled="{Binding CanSave}" Click="Save_Click" />
       <Button Content="{x:Static r:Strings.Common_Cancel}" Style="{StaticResource DialogButton}" IsCancel="True" />

@@ -49,6 +49,7 @@ public sealed class SettingsViewModel : ObservableObject
     private BackdropOption _selectedBackdrop;
     private bool _fluentDialogs;
     private string _toggleHotkey;
+    private string _pointerHotkey;
     private int _transparency;
     private bool _closeToTray;
     private bool _startWithWindows;
@@ -71,6 +72,7 @@ public sealed class SettingsViewModel : ObservableObject
         _alwaysOnTop = current.AlwaysOnTop;
         _backgroundColor = current.BackgroundColor;
         _toggleHotkey = current.ToggleHotkey ?? string.Empty;
+        _pointerHotkey = current.ShowAtPointerHotkey ?? string.Empty;
         _transparency = LauncherSettings.MaxOpacity - current.Opacity;
         _closeToTray = current.CloseToTray;
         _fluentDialogs = current.FluentDialogs;
@@ -308,7 +310,7 @@ public sealed class SettingsViewModel : ObservableObject
             {
                 OnPropertyChanged(nameof(IsHotkeyValid));
                 OnPropertyChanged(nameof(HasHotkey));
-                OnPropertyChanged(nameof(CanSave));
+                OnHotkeysChanged();
             }
         }
     }
@@ -317,7 +319,36 @@ public sealed class SettingsViewModel : ObservableObject
 
     public bool IsHotkeyValid => _toggleHotkey.Length == 0 || HotkeyGesture.TryParse(_toggleHotkey, out _);
 
-    public bool CanSave => (!IsCustomTheme || IsColorValid) && IsHotkeyValid;
+    /// <summary>Text form of the Show-at-pointer hotkey; empty for none.</summary>
+    public string ShowAtPointerHotkey
+    {
+        get => _pointerHotkey;
+        set
+        {
+            if (SetProperty(ref _pointerHotkey, value?.Trim() ?? string.Empty))
+            {
+                OnPropertyChanged(nameof(HasPointerHotkey));
+                OnHotkeysChanged();
+            }
+        }
+    }
+
+    public bool HasPointerHotkey => _pointerHotkey.Length > 0;
+
+    /// <summary>Both hotkeys are set to the same combination (however it is spelled): Windows would refuse the second.</summary>
+    public bool IsPointerHotkeySame =>
+        HotkeyGesture.TryParse(_pointerHotkey, out var pointer) && HotkeyGesture.TryParse(_toggleHotkey, out var toggle) && pointer == toggle;
+
+    public bool IsPointerHotkeyValid => (_pointerHotkey.Length == 0 || HotkeyGesture.TryParse(_pointerHotkey, out _)) && !IsPointerHotkeySame;
+
+    public bool CanSave => (!IsCustomTheme || IsColorValid) && IsHotkeyValid && IsPointerHotkeyValid;
+
+    private void OnHotkeysChanged()
+    {
+        OnPropertyChanged(nameof(IsPointerHotkeySame));
+        OnPropertyChanged(nameof(IsPointerHotkeyValid));
+        OnPropertyChanged(nameof(CanSave));
+    }
 
     public RelayCommand<string> SelectPresetCommand { get; }
 
@@ -338,6 +369,7 @@ public sealed class SettingsViewModel : ObservableObject
         settings.BarBackdrop = _selectedBackdrop.Id;
         settings.FluentDialogs = _fluentDialogs;
         settings.ToggleHotkey = IsHotkeyValid && HasHotkey ? _toggleHotkey : null;
+        settings.ShowAtPointerHotkey = IsPointerHotkeyValid && HasPointerHotkey ? _pointerHotkey : null;
         settings.Opacity = LauncherSettings.MaxOpacity - _transparency;
         settings.CloseToTray = _closeToTray;
         settings.StartWithWindows = _startWithWindows;

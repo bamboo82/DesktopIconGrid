@@ -34,6 +34,9 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
     private Guid _lastLaunchedId;
     private DateTime _lastLaunchedAt;
     private readonly IWindowSwitcher? _windows;
+    private string _searchText = string.Empty;
+    private List<ItemViewModel> _searchResults = [];
+    private int _searchIndex;
     private PendingRemoval? _pendingRemoval;
     private int _removalVersion;
 
@@ -273,7 +276,7 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
     {
         if (!_viewModels.TryGetValue(item.Id, out var viewModel))
         {
-            viewModel = new ItemViewModel(this, item);
+            viewModel = new ItemViewModel(this, item) { IsSearchDimmed = IsSearching }; // a group opened while searching
             _viewModels[item.Id] = viewModel;
             _defer(viewModel.LoadImage);
             if (item is ShortcutItem shortcut)
@@ -295,6 +298,137 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
                 OnPropertyChanged(nameof(PopupWidth));
             }
         }
+    }
+
+    // ----- type to find -------------------------------------------------------------------------
+
+    /// <summary>
+    /// What the user typed into the bar's search box. Shortcuts and special icons anywhere (inside groups too) that
+    /// match stay lit, as do the groups that hold them; everything else fades (see <see cref="ItemSearch"/>).
+    /// </summary>
+    public string SearchText
+    {
+        get => _searchText;
+        set
+        {
+            if (SetProperty(ref _searchText, value ?? string.Empty))
+            {
+                UpdateSearch();
+            }
+        }
+    }
+
+    public bool IsSearching => _searchText.Trim().Length > 0;
+
+    /// <summary>The matches, best first.</summary>
+    public IReadOnlyList<ItemViewModel> SearchResults => _searchResults;
+
+    /// <summary>The match Enter opens (the first one until the arrows move it).</summary>
+    public ItemViewModel? SelectedSearchResult => _searchIndex < _searchResults.Count ? _searchResults[_searchIndex] : null;
+
+    /// <summary>Raised after a shortcut or special icon was opened (or its program brought forward), from a click, a key or a search.</summary>
+    public event EventHandler<ItemViewModel>? ItemActivated;
+
+    public void MoveSearchSelection(int delta)
+    {
+        if (_searchResults.Count == 0)
+        {
+            return;
+        }
+
+        _searchIndex = ((_searchIndex + delta) % _searchResults.Count + _searchResults.Count) % _searchResults.Count;
+        ApplySearchStates();
+    }
+
+    /// <summary>Opens the selected match and ends the search. False when nothing matches.</summary>
+    public bool LaunchSearchSelection(ActivationModifiers modifiers = ActivationModifiers.None)
+    {
+        if (SelectedSearchResult is not { } selected)
+        {
+            return false;
+        }
+
+        SearchText = string.Empty;
+        Activate(selected, anchor: null, modifiers);
+        return true;
+    }
+
+    public void ClearSearch() => SearchText = string.Empty;
+
+    private void UpdateSearch()
+    {
+        var candidates = new List<SearchCandidate>();
+        foreach (var item in Model.Items)
+        {
+            foreach (var entry in item is GroupItem group ? group.Items : [item])
+            {
+                if (entry is ShortcutItem or SpecialIconItem)
+                {
+                    candidates.Add(CandidateOf(entry));
+                }
+            }
+        }
+
+        _searchResults = ItemSearch.Rank(_searchText, candidates)
+            .Select(id => Model.Find(id))
+            .OfType<LauncherItem>()
+            .Select(GetOrCreateViewModel)
+            .ToList();
+        _searchIndex = 0;
+        ApplySearchStates();
+        OnPropertyChanged(nameof(IsSearching));
+        OnPropertyChanged(nameof(SearchResults));
+    }
+
+    private SearchCandidate CandidateOf(LauncherItem item)
+    {
+        if (item is SpecialIconItem special)
+        {
+            return new SearchCandidate(item.Id, item.Name, SpecialIcons.Resolve(special.Kind).DisplayName);
+        }
+
+        var location = (item as ShortcutItem)?.Location ?? string.Empty;
+        var trimmed = location.Trim().TrimEnd('\\', '/');
+        var cut = trimmed.LastIndexOfAny(['\\', '/']);
+        var fileName = Path.GetFileNameWithoutExtension(cut >= 0 ? trimmed[(cut + 1)..] : trimmed);
+        return new SearchCandidate(item.Id, item.Name, ShortcutItem.SuggestName(location), fileName);
+    }
+
+    /// <summary>
+    /// Lights the matches and the groups that hold them, fades the rest, and frames the selected match together with
+    /// its group, so the frame can be seen while the group is closed.
+    /// </summary>
+    private void ApplySearchStates()
+    {
+        var searching = IsSearching;
+        var selected = SelectedSearchResult;
+        var lit = new HashSet<Guid>(_searchResults.Select(r => r.Id));
+        var framed = new HashSet<Guid>();
+        if (selected is not null)
+        {
+            framed.Add(selected.Id);
+        }
+
+        foreach (var group in Model.Items.OfType<GroupItem>())
+        {
+            if (group.Items.Any(child => lit.Contains(child.Id)))
+            {
+                lit.Add(group.Id);
+            }
+
+            if (selected is not null && group.Items.Any(child => child.Id == selected.Id))
+            {
+                framed.Add(group.Id);
+            }
+        }
+
+        foreach (var viewModel in _viewModels.Values)
+        {
+            viewModel.IsSearchDimmed = searching && !lit.Contains(viewModel.Id);
+            viewModel.IsSearchSelected = searching && framed.Contains(viewModel.Id);
+        }
+
+        OnPropertyChanged(nameof(SelectedSearchResult));
     }
 
     // ----- actions ------------------------------------------------------------------------------
@@ -333,6 +467,7 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
             }
 
             IsGroupPopupOpen = false;
+            ItemActivated?.Invoke(this, item);
             return;
         }
 
@@ -350,6 +485,7 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
             && _windows.TrySwitch(Tracker.ProcessIdsOf(shortcutToLaunch.Id)))
         {
             IsGroupPopupOpen = false;
+            ItemActivated?.Invoke(this, item);
             return;
         }
 
@@ -361,6 +497,7 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
         }
 
         IsGroupPopupOpen = false;
+        ItemActivated?.Invoke(this, item);
     }
 
     /// <summary>Opens files dropped onto a shortcut with that shortcut's program, or hands them to a special icon.</summary>

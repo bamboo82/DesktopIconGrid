@@ -23,6 +23,19 @@ version numbers follow [Semantic Versioning](https://semver.org/).
 - Two placeholders next to `{file}`/`{files}` in *Parameters*: `{clipboard}` passes the clipboard text and
   `{ask:Question}` asks for a value when the shortcut starts; both are quoted as one argument, and Cancel
   cancels the launch. Checked in code and with tests; not yet seen on a screen.
+- Type to find: while the bar has the focus, typing opens a search box at its bottom (`Ctrl+F` does too).
+  The icons that match, inside groups as well, stay lit, together with the groups that hold them; the
+  rest fade. A match is found by its name on the bar, the name it was created with, its file name, or
+  its initials (`vsc` finds Visual Studio Code); case and full-width letters do not matter, and Chinese
+  is typed straight into the box through the IME. Enter opens the framed match (its name shows beside
+  the box), the arrow keys move the frame, Esc clears the text and then closes the box.
+- *Show at pointer*, a second hotkey in Settings (off until a combination is set): the bar's icons open in
+  a small window under the mouse with the search box ready, on whichever monitor the pointer is, also
+  while the bar is hidden in the tray or tucked away at a screen edge. Groups open in place (Backspace or
+  ← goes back), and the window goes away after a launch, on Esc and when another window is clicked.
+  Search and the window's size and placement are covered by tests; the window, the keys and typing
+  through a Chinese IME have not been seen on a screen. With an IME in Chinese mode, the first key that
+  opens the bar's box may not reach the IME; the Show-at-pointer box is focused from the start.
 
 ### Fixed
 

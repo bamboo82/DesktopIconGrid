@@ -1,5 +1,7 @@
 using System.Runtime.InteropServices;
 using System.Windows;
+using System.Windows.Interop;
+using System.Windows.Media;
 using DesktopIconGrid.Core.Models;
 
 namespace DesktopIconGrid.Services;
@@ -122,6 +124,73 @@ public static class ScreenGeometry
         return monitor == IntPtr.Zero ? null : Describe(monitor);
     }
 
+    /// <summary>
+    /// The work area (device pixels, without the taskbar) and the display scale of the monitor under a point, or the
+    /// nearest one; <see langword="null"/> without a desktop.
+    /// </summary>
+    public static ScreenArea? AreaAt(int x, int y)
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return null;
+        }
+
+        var monitor = NativeMethods.MonitorFromPoint(new NativeMethods.POINT { X = x, Y = y }, NativeMethods.MONITOR_DEFAULTTONEAREST);
+        var info = new NativeMethods.MONITORINFOEX { cbSize = Marshal.SizeOf<NativeMethods.MONITORINFOEX>() };
+        if (monitor == IntPtr.Zero || !NativeMethods.GetMonitorInfo(monitor, ref info))
+        {
+            return null;
+        }
+
+        var scale = PrimaryScale();
+        try
+        {
+            if (NativeMethods.GetDpiForMonitor(monitor, NativeMethods.MDT_EFFECTIVE_DPI, out var dpi, out _) == 0 && dpi > 0)
+            {
+                scale = dpi / 96.0;
+            }
+        }
+        catch (Exception ex) when (ex is DllNotFoundException or EntryPointNotFoundException)
+        {
+            // Older than Windows 8.1: the primary scale is the best guess.
+        }
+
+        var work = info.rcWork;
+        return new ScreenArea(new PixelRect(work.Left, work.Top, work.Right - work.Left, work.Bottom - work.Top), scale);
+    }
+
+    /// <summary>
+    /// Moves a window in device pixels. Landing on a monitor with another scale rescales the window once on the way
+    /// (WM_DPICHANGED), so the rectangle is set a second time when it did not stick; the WPF-unit properties are then
+    /// read back at the window's new scale so WPF and Windows agree on where the window is.
+    /// </summary>
+    public static void MoveToPixels(Window window, PixelRect pixels)
+    {
+        ArgumentNullException.ThrowIfNull(window);
+        var handle = new WindowInteropHelper(window).Handle;
+        if (handle == IntPtr.Zero)
+        {
+            return;
+        }
+
+        const uint flags = NativeMethods.SWP_NOZORDER | NativeMethods.SWP_NOACTIVATE;
+        NativeMethods.SetWindowPos(handle, IntPtr.Zero, pixels.Left, pixels.Top, pixels.Width, pixels.Height, flags);
+        if (NativeMethods.GetWindowRect(handle, out var now)
+            && (now.Left != pixels.Left || now.Top != pixels.Top || now.Right - now.Left != pixels.Width || now.Bottom - now.Top != pixels.Height))
+        {
+            NativeMethods.SetWindowPos(handle, IntPtr.Zero, pixels.Left, pixels.Top, pixels.Width, pixels.Height, flags);
+        }
+
+        if (NativeMethods.GetWindowRect(handle, out var final))
+        {
+            var scale = VisualTreeHelper.GetDpi(window);
+            window.Left = final.Left / scale.DpiScaleX;
+            window.Top = final.Top / scale.DpiScaleY;
+            window.Width = (final.Right - final.Left) / scale.DpiScaleX;
+            window.Height = (final.Bottom - final.Top) / scale.DpiScaleY;
+        }
+    }
+
     private static MonitorBounds? Describe(IntPtr monitor)
     {
         var info = new NativeMethods.MONITORINFOEX { cbSize = Marshal.SizeOf<NativeMethods.MONITORINFOEX>() };
@@ -170,3 +239,6 @@ public static class ScreenGeometry
         return result;
     }
 }
+
+/// <summary>A monitor's work area in device pixels and its display scale (1.0 at 100 %).</summary>
+public readonly record struct ScreenArea(PixelRect WorkArea, double Scale);

@@ -47,17 +47,21 @@ public class LauncherSettingsTests
     [Fact]
     public void Normalize_trims_hotkey_and_copies_it()
     {
-        var settings = new LauncherSettings { ToggleHotkey = "  Ctrl+Alt+Space " };
+        var settings = new LauncherSettings { ToggleHotkey = "  Ctrl+Alt+Space ", ShowAtPointerHotkey = " Win+Alt+Space  " };
         settings.Normalize();
         Assert.Equal("Ctrl+Alt+Space", settings.ToggleHotkey);
+        Assert.Equal("Win+Alt+Space", settings.ShowAtPointerHotkey);
 
-        var blank = new LauncherSettings { ToggleHotkey = "   " };
+        var blank = new LauncherSettings { ToggleHotkey = "   ", ShowAtPointerHotkey = "" };
         blank.Normalize();
         Assert.Null(blank.ToggleHotkey);
+        Assert.Null(blank.ShowAtPointerHotkey);
+        Assert.Null(new LauncherSettings().ShowAtPointerHotkey); // off until the user picks one
 
         var copy = new LauncherSettings();
         copy.CopyFrom(settings);
         Assert.Equal("Ctrl+Alt+Space", copy.ToggleHotkey);
+        Assert.Equal("Win+Alt+Space", copy.ShowAtPointerHotkey);
     }
 
     [Fact]

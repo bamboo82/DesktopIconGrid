@@ -24,6 +24,8 @@ button at the top-right and a small options arrow at the bottom-right.
 | Tray icon | While the app runs, an icon in the notification area offers: Show/Hide bar, Reset bar position (moves it to the middle of the primary screen when it is lost on a disconnected monitor), New shortcut, New group, Edit names, Launch Multi Launch group, Always on top, Settings, Sync with Google Drive, Log viewer, Open layout file location, About, Exit. Left-click toggles the bar. The close button hides the bar to the tray (setting). |
 | Transparency | Settings → Transparency (0–80 %) lets the desktop show through the bar and the group popup; with a Mica or Acrylic background it sets how much of the blurred backdrop shows while the icons stay sharp. |
 | Show/hide hotkey | A system-wide combination set in Settings (e.g. `Ctrl+Alt+Space`) hides the bar or brings it to the front from any program. |
+| Show-at-pointer hotkey (0.7.0) | A second combination opens the icons in a small window under the mouse pointer with the search box focused, on the pointer's monitor and inside its work area. It works while the bar is hidden or auto-hidden; groups open in place with a back button (or Backspace); it closes after a launch, on Esc and when it loses the focus. |
+| Search box (0.7.0) | Typing while the bar has the focus (or `Ctrl+F`) opens a box at the bottom of the bar; see §3. |
 | Background | A theme: Classic (the olive grey of the reference), Graphite, Paper, Midnight, Sand, or a Custom colour with automatically matched text and highlight colours. See [docs/THEMES.md](docs/THEMES.md). |
 
 - Icons are laid out in reading order and **wrap** to fill the width: the number of
@@ -33,7 +35,8 @@ button at the top-right and a small options arrow at the bottom-right.
 - Position, size and *always on top* are remembered between runs. If the saved
   position is off-screen (monitor removed) the bar is moved back on screen.
 - Keyboard: `Tab`/arrows move focus between icons, `Enter` launches, `Delete` removes,
-  `F2` opens Properties, `Ctrl+N` new shortcut, `Ctrl+G` new group, `Ctrl+,` settings.
+  `F2` opens Properties, `Ctrl+N` new shortcut, `Ctrl+G` new group, `Ctrl+,` settings,
+  `Ctrl+F` or any letter, digit or punctuation key the search box.
 
 ## 2. Items
 
@@ -172,6 +175,7 @@ The item model, handler interface, registry and the bucket are specified in
 | Drop files/folders/URLs from Explorer or a browser | Creates one shortcut per dropped path at the drop position. |
 | Drop files onto a special icon that accepts them (e.g. a Google Drive Bucket) | Handled by the icon: the bucket uploads them. |
 | Press on empty background | Moves the bar, like the grip. |
+| Type a name (0.7.0) | Opens the search box under the icons. Shortcuts and special icons that match, also inside groups, stay lit with the groups that hold them; everything else fades. Ranking: the name on the bar whole, at its start, at the start of a word, by word initials (`vsc` → Visual Studio Code), anywhere in it; then the original name (from the location) and the file name. Case and width are ignored, and Chinese is typed through the IME (no pinyin table). The best match is framed, and the group holding it with it; its name shows beside the box. `↓`/`↑` move the frame round the matches, `Enter` opens it (Shift and Ctrl+Shift as for a click), `Esc` clears and then closes. Only the bar's own items are searched: no web, calculator or file index. |
 | Mouse wheel | Scrolls when the bar is shorter than its content. |
 
 ## 4. Context menus
@@ -279,6 +283,7 @@ warnings and errors. The last 2000 entries stay in memory and all of them are ap
 | Start with Windows | off (current user's Run key; repaired when the program moves) |
 | Start hidden | off (with Start with Windows: only the tray icon until shown) |
 | Show/hide hotkey | none (set in Settings; needs Ctrl, Alt or Win) |
+| Show-at-pointer hotkey | none (needs Ctrl, Alt or Win, and a combination other than the show/hide one) |
 | Transparency | 0 % (opaque) |
 | Close button hides to tray | on |
 | Language | same as Windows (English, 繁體中文 or 简体中文; applies at the next start) |

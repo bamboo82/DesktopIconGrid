@@ -148,22 +148,34 @@ public sealed record HotkeyGesture(ModifierKeys Modifiers, Key Key)
     }
 }
 
-/// <summary>Registers one system-wide hotkey on a window and raises <see cref="Pressed"/> when it fires.</summary>
+/// <summary>
+/// Registers one system-wide hotkey on a window and raises <see cref="Pressed"/> when it fires. Each hotkey of a
+/// window takes two ids of its own (<see cref="ShowHideIds"/>, <see cref="PointerIds"/>): a new combination is
+/// registered under the spare id before the old one is let go.
+/// </summary>
 public sealed class GlobalHotkey : IDisposable
 {
+    /// <summary>The first of the two ids of the show/hide hotkey.</summary>
+    public const int ShowHideIds = 0x4A11;
+
+    /// <summary>The first of the two ids of the Show-at-pointer hotkey.</summary>
+    public const int PointerIds = 0x4A21;
+
     private const int WmHotkey = 0x0312;
-    private const int FirstId = 0x4A11;
-    private const int SecondId = 0x4A12;
     private const uint ModNoRepeat = 0x4000;
     private const int ErrorHotkeyAlreadyRegistered = 1409;
 
     private readonly HwndSource _source;
+    private readonly int _firstId;
+    private readonly int _secondId;
     private int? _registeredId;
     private bool _disposed;
 
-    public GlobalHotkey(HwndSource source)
+    public GlobalHotkey(HwndSource source, int firstId = ShowHideIds)
     {
         _source = source;
+        _firstId = firstId;
+        _secondId = firstId + 1;
         _source.AddHook(WndProc);
     }
 
@@ -180,7 +192,7 @@ public sealed class GlobalHotkey : IDisposable
         }
 
         // Register the new combination under the other id first, so a rejected gesture keeps the working one.
-        var newId = _registeredId == FirstId ? SecondId : FirstId;
+        var newId = _registeredId == _firstId ? _secondId : _firstId;
         if (!NativeMethods.RegisterHotKey(_source.Handle, newId, gesture.NativeModifiers | ModNoRepeat, gesture.VirtualKey))
         {
             var code = Marshal.GetLastWin32Error();

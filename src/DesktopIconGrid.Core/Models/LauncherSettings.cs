@@ -93,6 +93,12 @@ public sealed partial class LauncherSettings
     /// <summary>System-wide key combination that shows or hides the bar, e.g. <c>Ctrl+Alt+Space</c>; <see langword="null"/> for none.</summary>
     public string? ToggleHotkey { get; set; }
 
+    /// <summary>
+    /// System-wide key combination that opens the bar's icons in a small window under the mouse pointer, with the
+    /// search box ready; <see langword="null"/> for none (the default).
+    /// </summary>
+    public string? ShowAtPointerHotkey { get; set; }
+
     /// <summary>UI language: <see cref="LanguageSystem"/> or a culture name from <see cref="Languages"/>. Read once at startup.</summary>
     public string Language { get; set; } = LanguageSystem;
 
@@ -120,6 +126,7 @@ public sealed partial class LauncherSettings
         BarBackdrop = source.BarBackdrop;
         FluentDialogs = source.FluentDialogs;
         ToggleHotkey = source.ToggleHotkey;
+        ShowAtPointerHotkey = source.ShowAtPointerHotkey;
         Opacity = source.Opacity;
         CloseToTray = source.CloseToTray;
         StartWithWindows = source.StartWithWindows;
@@ -183,6 +190,7 @@ public sealed partial class LauncherSettings
         }
 
         ToggleHotkey = string.IsNullOrWhiteSpace(ToggleHotkey) ? null : ToggleHotkey.Trim();
+        ShowAtPointerHotkey = string.IsNullOrWhiteSpace(ShowAtPointerHotkey) ? null : ShowAtPointerHotkey.Trim();
 
         var language = Languages.FirstOrDefault(l => string.Equals(l, Language?.Trim(), StringComparison.OrdinalIgnoreCase));
         if (language is null)

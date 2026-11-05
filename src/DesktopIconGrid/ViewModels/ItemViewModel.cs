@@ -18,6 +18,8 @@ public sealed class ItemViewModel : ObservableObject
     private bool _isDropTarget;
     private ItemListViewModel? _children;
     private GaugeState? _gauge;
+    private bool _isSearchDimmed;
+    private bool _isSearchSelected;
 
     public ItemViewModel(LauncherViewModel root, LauncherItem model)
     {
@@ -60,6 +62,20 @@ public sealed class ItemViewModel : ObservableObject
     public bool ShowsGauge => _gauge is { IsVisible: true } && !Model.HasCustomIcon && Model.TextIcon is null;
 
     public string Name => Model.Name;
+
+    /// <summary>A search is under way and this item neither matches nor holds a match: drawn faded.</summary>
+    public bool IsSearchDimmed
+    {
+        get => _isSearchDimmed;
+        internal set => SetProperty(ref _isSearchDimmed, value);
+    }
+
+    /// <summary>The match Enter would open: drawn with a frame.</summary>
+    public bool IsSearchSelected
+    {
+        get => _isSearchSelected;
+        internal set => SetProperty(ref _isSearchSelected, value);
+    }
 
     public string? Location => (Model as ShortcutItem)?.Location;
 

@@ -1400,4 +1400,34 @@ Details are in {1}.</value>
   <data name="Props_AppWindow" xml:space="preserve">
     <value>Open as an app window (no tabs or address bar)</value>
   </data>
+  <data name="Main_SearchName" xml:space="preserve">
+    <value>Find an icon</value>
+  </data>
+  <data name="Main_SearchToolTip" xml:space="preserve">
+    <value>Type to find an icon by name. Enter opens the framed one, the arrow keys move the frame, Esc clears.</value>
+  </data>
+  <data name="Main_PointerHotkeyTitle" xml:space="preserve">
+    <value>Show-at-pointer hotkey</value>
+  </data>
+  <data name="Settings_PointerHotkey" xml:space="preserve">
+    <value>Show at pointer:</value>
+  </data>
+  <data name="Settings_PointerHotkeyName" xml:space="preserve">
+    <value>Show at pointer hotkey</value>
+  </data>
+  <data name="Settings_PointerHotkeyHint" xml:space="preserve">
+    <value>Opens your icons under the mouse pointer with the search box ready, even while the bar is hidden or tucked away at an edge.</value>
+  </data>
+  <data name="Settings_PointerHotkeySame" xml:space="preserve">
+    <value>Use a different combination from the show/hide hotkey.</value>
+  </data>
+  <data name="Pointer_Placeholder" xml:space="preserve">
+    <value>Type a name…</value>
+  </data>
+  <data name="Pointer_BackName" xml:space="preserve">
+    <value>Back to all icons</value>
+  </data>
+  <data name="Pointer_BackToolTip" xml:space="preserve">
+    <value>Back to all icons (Backspace)</value>
+  </data>
 </root>
