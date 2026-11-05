@@ -395,8 +395,8 @@ folder on Drive.
 
 Still open, in the order they should be taken:
 
-1. **Drive cache freshness** — compare `modifiedTime`/`md5Checksum`, not only size; reserved
-   names (`CON`, `NUL`, `COM1`) in `SafeName`.
+1. **Drive cache freshness** — done in 0.6.0 (a `.stamp` next to each cached copy with size, modified
+   time and MD5; reserved device names get a suffix in `FileNames.Safe`).
 2. **Multi-monitor** — save the placement in device pixels with the monitor's device name, so a bar
    returns to its monitor after re-enumeration and the visibility check no longer has to try every
    plausible scale (today it compares the real monitor layout at the primary scale and at each Windows

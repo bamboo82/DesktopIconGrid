@@ -3,7 +3,8 @@ using System.Text.RegularExpressions;
 namespace DesktopIconGrid.Core.Sync;
 
 /// <summary>A file or folder as listed by the Drive API when browsing.</summary>
-public sealed record DriveEntry(string Id, string Name, string MimeType, long? Size, DateTimeOffset? ModifiedTime)
+/// <param name="Md5Checksum">Drive's MD5 of the content; <see langword="null"/> for folders, Google formats and older callers.</param>
+public sealed record DriveEntry(string Id, string Name, string MimeType, long? Size, DateTimeOffset? ModifiedTime, string? Md5Checksum = null)
 {
     public const string FolderMimeType = "application/vnd.google-apps.folder";
     private const string GooglePrefix = "application/vnd.google-apps.";

@@ -1,4 +1,6 @@
 using System.IO;
+using DesktopIconGrid.Core.Diagnostics;
+using DesktopIconGrid.Core.Storage;
 using DesktopIconGrid.Core.Sync;
 
 namespace DesktopIconGrid.SpecialIcons;
@@ -96,21 +98,75 @@ public sealed class DriveDownloader(IDriveFiles files)
         }
     }
 
-    /// <summary>Downloads into the cache (reusing a previous copy of the same size) and returns the local path.</summary>
+    /// <summary>
+    /// Downloads into the cache and returns the local path. A previous copy is reused while it is still the file on
+    /// Drive (same checksum, or same size and modification time; see <see cref="DriveCacheStamp"/>); a copy without a
+    /// stamp, from before stamps existed, is downloaded again once.
+    /// </summary>
     public async Task<string?> DownloadToCacheAsync(DriveEntry entry, string cacheDirectory, IProgress<DriveTransferProgress>? progress, CancellationToken cancellationToken)
     {
+        ArgumentNullException.ThrowIfNull(entry);
         var directory = Path.Combine(cacheDirectory, SafeName(entry.Id));
-        if (!entry.IsFolder && !entry.IsGoogleFormat)
+        var stampable = !entry.IsFolder && !entry.IsGoogleFormat;
+        if (stampable)
         {
             var cached = Path.Combine(directory, SafeName(entry.DownloadFileName));
-            if (File.Exists(cached) && entry.Size is { } size && new FileInfo(cached).Length == size)
+            if (File.Exists(cached)
+                && ReadStamp(StampPath(cached)) is { } stamp
+                && stamp.IsFreshFor(entry)
+                && (entry.Size is not { } size || new FileInfo(cached).Length == size))
             {
-                File.SetLastWriteTimeUtc(cached, DateTime.UtcNow);
+                Touch(StampPath(cached)); // recency for DriveCache.Purge; the copy keeps its download time
                 return cached;
             }
         }
 
-        return await DownloadEntryAsync(entry, directory, overwrite: true, progress, cancellationToken);
+        var path = await DownloadEntryAsync(entry, directory, overwrite: true, progress, cancellationToken);
+        if (path is not null && stampable)
+        {
+            WriteStamp(StampPath(path), DriveCacheStamp.Of(entry));
+        }
+
+        return path;
+    }
+
+    /// <summary>The stamp kept next to a cached copy.</summary>
+    internal static string StampPath(string cachedFile) => cachedFile + ".stamp";
+
+    private static DriveCacheStamp? ReadStamp(string path)
+    {
+        try
+        {
+            return File.Exists(path) ? DriveCacheStamp.TryParse(File.ReadAllText(path)) : null;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            return null;
+        }
+    }
+
+    private static void WriteStamp(string path, DriveCacheStamp stamp)
+    {
+        try
+        {
+            File.WriteAllText(path, stamp.Serialize());
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            AppLog.Default.Warning("Bucket", $"Cache stamp not written for {Path.GetFileName(path)}: {ex.Message}");
+        }
+    }
+
+    private static void Touch(string path)
+    {
+        try
+        {
+            File.SetLastWriteTimeUtc(path, DateTime.UtcNow);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            // Recency is best effort; the copy is still reused.
+        }
     }
 
     public static string UniquePath(string directory, string fileName)
@@ -133,13 +189,8 @@ public sealed class DriveDownloader(IDriveFiles files)
         }
     }
 
-    public static string SafeName(string name)
-    {
-        var invalid = Path.GetInvalidFileNameChars();
-        var chars = name.Trim().Select(c => invalid.Contains(c) ? '_' : c).ToArray();
-        var result = new string(chars).TrimEnd('.', ' ');
-        return result.Length == 0 ? "file" : result;
-    }
+    /// <summary>A name Windows accepts for the file or folder (see <see cref="FileNames.Safe"/>).</summary>
+    public static string SafeName(string name) => FileNames.Safe(name);
 
     private static void TryDelete(string path)
     {

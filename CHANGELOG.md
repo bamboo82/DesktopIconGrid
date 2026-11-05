@@ -3,6 +3,17 @@
 All notable changes to Desktop Icon Grid. The format follows [Keep a Changelog](https://keepachangelog.com/);
 version numbers follow [Semantic Versioning](https://semver.org/).
 
+## [0.6.0] – Unreleased
+
+### Changed
+
+- The Bucket Viewer's local cache reuses a downloaded copy only while it is still the file on Drive:
+  the same MD5 checksum, or the same size and modification time, recorded in a `.stamp` file next to
+  the copy. Before, a copy of the same size was reused even after the file had changed.
+- Names from Drive that Windows reserves for devices (`CON`, `NUL`, `COM1`, also with an extension) get
+  a trailing underscore when they are downloaded, and the characters Windows forbids are replaced the
+  same way wherever the code runs.
+
 ## [0.5.0] – 2026-11-05
 
 The user interface speaks Traditional and Simplified Chinese as well as English. The language
