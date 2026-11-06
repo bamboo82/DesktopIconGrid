@@ -9,6 +9,80 @@ The owner relays replies.
 
 ---
 
+## 2026-11-06 (25) — 0.8.1: R3–R7, the smaller items and the UI items in; the list is done
+
+CI is green on run 83 (`09f2160`): 554 Core and 185 App tests, none skipped; the build has no warnings.
+
+| Commit | Item |
+| --- | --- |
+| `155ae9a` | R5: the Run entry is changed only when it names this copy; a portable copy asks before it adds one |
+| `890b566` | R3 `%APPDRIVE%` for Repair and icons, R4 not on Windows' drive, R6 Repair a folder, R7 a read-only portable folder |
+| `33ee685` | *Start in* moves with the program and gives way when missing; "every PC" wording; names table off the UI thread |
+| `222d096` | Portable mode and Google: each PC keeps its own secret (in `sync.json`) and sign-in (its own file) |
+| `bbb90d2` | Test fix: CI runs 79–81 were red on one App test after `002477a` (below) |
+| `09f2160` | UI: divider hit width, `{file}` on a click, *Properties* scrolls |
+
+- **The red runs.** After `002477a`, `wt.exe ssh {clipboard}` with `server2;notepad` is refused by ssh's
+  destination check, which names ssh, before the Windows Terminal check. The value is refused either way.
+  The test now shows the Terminal message with a plain program and the ssh message for ssh's host. Nothing
+  else failed; run 82 is green.
+- **R5.** `StartupRegistration.Apply` returns a `StartupChange`:
+  - It removes or rewrites the value only when it names this exe.
+  - It leaves another copy's value alone when that program is still there (`LeftToAnotherCopy`), and so a
+    value this app did not write. When the option is turned on, the user is told.
+  - It takes over a value whose program is gone: the old "moved program" repair. A program on a share or a
+    removable drive counts as there without a look.
+  - With `mayAdd: false` it adds nothing. A portable copy starts that way, so it only keeps its own entry in
+    step; turning the option on asks first.
+  - Your test is there: the fake Run key holds the installed bar's value, and a portable copy turns the
+    option off and then on, with no write at all.
+- **R3/R4/R6/R7.**
+  - R3: *Repair* results and the icons picked or downloaded in *Properties* go through `ForStorage`.
+  - R4: `DataLocation.StorageDrive` skips `%SystemDrive%`. `%APPDRIVE%` is still set, so stored paths still
+    expand.
+  - R6: `LocationRepair.LooksLikeFolder` (no extension, or only digits after the last dot). A folder is looked
+    for as a folder, its other versions included, and *Browse* opens a folder picker.
+  - R7: `Resolve` tries to make a file in the program's folder. If it cannot, the data goes to `%LocalAppData%`
+    and the tray says so once.
+- **The smaller items.**
+  - *Start in*: one that was only the program's folder is cleared on a repair. At launch, a *Start in* on a
+    local drive that is not there gives way to the program's folder.
+  - "Every PC": I fixed the sentence, not the code. A PC with its own location has it because its path
+    differs, and clearing it would break that PC. The choice now says so, and so does FEATURES.
+  - The names table takes the bar's answer, then the same injected check on the icon worker
+    (`IsMissingAsync`).
+  - Google: `SyncSettings.ClientSecretsByPc` holds each PC's protected secret by machine key. Load tries this
+    PC's, then the old field, then the rest; Save replaces only the value it read. A 0.8.0 secret of an
+    unknown PC is kept under `unknown-…`. In portable mode the token is `google-token-<key>.bin`, copied once
+    from the shared file.
+- **UI.**
+  - A divider at a full row's end gets at least 6 units (`FlowLayout.MinimumHitWidth`), reaching into the
+    margin; several stack there.
+  - A click strips `{file}`/`{files}` before the clipboard and answers go in (dropped files are already filled
+    in), and `SwitchesByDefault` ignores them.
+  - *Properties* has the *Settings* layout with `WorkAreaFit`.
+- **0.8.1's list is done:** your round-11 0.8.x items (F2–F4, R3–R7, the smaller ones) and the round 12–14
+  follow-ups (`002477a`). Once you pass this round, I make the release commit (date, FEATURES, ROADMAP) and
+  name it.
+- **Cases for the in-app check:**
+  - F4: an unreachable share as the sync folder. *A folder…* opens the picker at once.
+  - F2: copy `Work.json` to `Work-<PC>.json`, as OneDrive names a conflict copy. Load the copy: the PC stays
+    on Work, and the next change asks.
+  - ssh: `ssh.exe {ask:Host} tail {clipboard}`. `admin@server2` passes, and `server2;calc` is refused,
+    naming ssh.
+  - R5: with the installed bar starting with Windows, start a portable copy with the option off. The
+    installed bar's Run value stays. Turn the option on in the portable copy: no question, a notice names the
+    installed bar, and the value is still the installed bar's.
+  - R5 with no entry: on a PC where nothing starts the bar, turn the option on in a portable copy. It asks
+    first; *Yes* adds its entry, *No* adds none.
+  - R7: `portable.txt` next to a copy in a folder you cannot write. It starts, and says where its files went.
+  - R6: a shortcut to a folder, renamed away (`app-1.0` to `app-1.1`). *Repair* offers `app-1.1`, and
+    *Browse* picks a folder.
+  - UI: a divider after the last icon of a full row can be right-clicked; a `{files}` shortcut clicked
+    starts without `{files}`; *Properties* with *Advanced* open scrolls on a small screen.
+
+---
+
 ## 2026-11-06 (24) — 0.8.1: sync F2–F4 in; each placeholder judged where it stands
 
 The owner's go reached me through you, and I am following your order.
