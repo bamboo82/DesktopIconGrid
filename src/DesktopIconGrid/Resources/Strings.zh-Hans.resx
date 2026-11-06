@@ -1749,10 +1749,10 @@
     <value>如果在“启动应用”（任务管理器或设置）中禁用了该项目，即使勾选这里，工具栏也不会启动。请在那里重新启用。</value>
   </data>
   <data name="Launch_SshOptionValue" xml:space="preserve">
-    <value>未启动：ssh 会把这段文字当作自己的设置（在 -o 中，或当作更多选项），而设置可以在这台电脑上运行程序。请勿把占位符放在 -o 中，或在它前面写出设置名称（-o User={ask:User}）。</value>
+    <value>未启动：ssh 会把这段文字当作自己的设置或选项，其中有些会在这台电脑上运行或加载程序。占位符只能放在不运行任何东西的设置名称后面（-o User={ask:User}），不能放在 -F、-I、scp 的 -S 或 sftp 的 -b 中，也不能放在选项字母之间。</value>
   </data>
   <data name="Launch_SshNameIsOption" xml:space="preserve">
-    <value>未启动：主机或用户名以“-”开头，ssh 用它启动的程序（ProxyCommand）可能会把它当作选项。</value>
+    <value>未启动：主机或用户名以“-”开头，或在“@”后紧接着“-”，ssh 或它启动的程序可能会把它当作选项。</value>
   </data>
   <data name="Sync_ReplaceConflictCopy" xml:space="preserve">
     <value>要用这台电脑的工具栏替换“{0}”吗？它是同步程序为“{1}”保留的副本。之后这台电脑会链接到“{0}”并离开“{1}”，其他电脑则继续使用原来的副本。若要把这个工具栏带给它们，请改为覆盖“{1}”。</value>

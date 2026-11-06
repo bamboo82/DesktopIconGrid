@@ -122,13 +122,30 @@ public sealed class LaunchPlaceholderSafetyTests : IDisposable
     [InlineData("putty.exe", "-ssh {ask:Host}", "{ask:Host}", ArgumentReader.SshDestination)] // PuTTY reads plink's command line
     [InlineData("putty.exe", "-load {ask:Session}", "{ask:Session}", ArgumentReader.Plain)]
     [InlineData("ssh.exe", "-J {clipboard} server2", "{clipboard}", ArgumentReader.SshDestination)]
-    [InlineData("ssh.exe", "-F {clipboard} server2", "{clipboard}", ArgumentReader.Plain)] // a path (the hint warns)
+    [InlineData("ssh.exe", "-F {clipboard} server2", "{clipboard}", ArgumentReader.SshOption)] // review 16 P2′ c: a whole config file, ProxyCommand and all
     [InlineData("ssh.exe", "-- {clipboard} uptime", "{clipboard}", ArgumentReader.SshDestination)]
     [InlineData("wt.exe", "ssh {clipboard}", "{clipboard}", ArgumentReader.SshDestination)]
     [InlineData("plink.exe", "-batch -l {ask:User} server2 tail {clipboard}", "{ask:User}", ArgumentReader.SshDestination)]
     [InlineData("plink.exe", "-batch -l {ask:User} server2 tail {clipboard}", "{clipboard}", ArgumentReader.RemoteShell)]
     [InlineData("plink.exe", "-ssh {clipboard}", "{clipboard}", ArgumentReader.SshDestination)]
-    [InlineData("plink.exe", "-proxycmd {clipboard} server2", "{clipboard}", ArgumentReader.RemoteShell)]
+    [InlineData("plink.exe", "-proxycmd {clipboard} server2", "{clipboard}", ArgumentReader.SshOption)] // runs here, as ssh's ProxyCommand
+    [InlineData("plink.exe", "-m {clipboard} server2", "{clipboard}", ArgumentReader.SshOption)] // its text goes to the server as the command
+    [InlineData("ssh.exe", "-I {clipboard} server2", "{clipboard}", ArgumentReader.SshOption)] // a PKCS#11 library to load
+    [InlineData("ssh.exe", "-o SmartcardDevice={clipboard} server2", "{clipboard}", ArgumentReader.SshOption)] // -I's old name
+    [InlineData("ssh.exe", "-o Proxy\"Command\"={clipboard} server2", "{clipboard}", ArgumentReader.SshOption)] // ssh takes the quotes off
+    [InlineData("putty.exe", "-ssh {ask:Host} -pw {ask:Password}", "{ask:Password}", ArgumentReader.Plain)] // review 16 P6: options after the host
+    [InlineData("putty.exe", "-ssh {ask:Host} -l {ask:User}", "{ask:User}", ArgumentReader.SshDestination)]
+    [InlineData("putty.exe", "-ssh server2 {ask:Port}", "{ask:Port}", ArgumentReader.Plain)] // a bare word after the host: the port
+    [InlineData("scp.exe", "-S {clipboard} a.txt server2:/tmp/", "{clipboard}", ArgumentReader.SshOption)] // a program run instead of ssh
+    [InlineData("scp.exe", "-F {clipboard} a.txt server2:/tmp/", "{clipboard}", ArgumentReader.SshOption)]
+    [InlineData("scp.exe", "-o {clipboard} a.txt server2:/tmp/", "{clipboard}", ArgumentReader.SshOption)]
+    [InlineData("scp.exe", "{file} server2:/tmp/", "{file}", ArgumentReader.Plain)] // a local path
+    [InlineData("scp.exe", "C:\\out\\{file} server2:/tmp/", "{file}", ArgumentReader.Plain)] // a drive letter is no host
+    [InlineData("scp.exe", "{ask:Host}:/var/log/syslog .", "{ask:Host}", ArgumentReader.SshDestination)]
+    [InlineData("scp.exe", "server2:{clipboard} .", "{clipboard}", ArgumentReader.RemoteShell)] // the old protocol hands it to the remote shell
+    [InlineData("sftp.exe", "-b {clipboard} server2", "{clipboard}", ArgumentReader.SshOption)] // "!" lines run here
+    [InlineData("sftp.exe", "-D {clipboard}", "{clipboard}", ArgumentReader.SshOption)] // a local sftp-server, run here
+    [InlineData("sftp.exe", "{ask:Host}", "{ask:Host}", ArgumentReader.SshDestination)]
     [InlineData("plink.exe", "-load {ask:Session}", "{ask:Session}", ArgumentReader.Plain)]
     [InlineData("plink.exe", "-newer-option {clipboard} server2", "{clipboard}", ArgumentReader.RemoteShell)] // its value or the host: unsure, so strict
     [InlineData("wsl.exe", "-d {ask:Distro} grep {clipboard} notes.txt", "{ask:Distro}", ArgumentReader.Plain)] // wsl's own
@@ -152,11 +169,23 @@ public sealed class LaunchPlaceholderSafetyTests : IDisposable
     [InlineData("server2%h", "%")]
     [InlineData("服务器", "服")]
     [InlineData("-oProxyCommand=calc", "-")] // review 15: after "--" it is the host, and %h hands it to the proxy program
+    [InlineData("admin@-x", "-")] // review 16 P2′ e: the host after "@"
     [InlineData("server-2", null)]
     public void Ssh_destination_takes_what_user_at_host_and_an_ssh_URI_need(string value, string? refused)
     {
         // CVE-2023-51385: OpenSSH before 9.6 put such names into ProxyCommand's shell through %h and %u.
         Assert.Equal(refused, LaunchPlaceholders.Refused(value, ArgumentReader.SshDestination));
+    }
+
+    [Theory]
+    [InlineData("ssh.exe {ask:Host -- e.g. admin@server2} {clipboard}", true)] // review 16 P2′ d: the "--" is the prompt's
+    [InlineData("wsl.exe -- ssh server2 {clipboard}", true)] // wsl's "--", not ssh's
+    [InlineData("ssh.exe server2 -- {clipboard}", false)]
+    [InlineData("notepad.exe -- {clipboard}", false)]
+    [InlineData("notepad.exe --name={clipboard}", false)] // part of a word
+    public void Only_a_dash_dash_the_reading_program_sees_ends_its_options(string template, bool takesOption)
+    {
+        Assert.Equal(takesOption, LaunchPlaceholders.TakesOptionAt(template, template.IndexOf("{clipboard}", StringComparison.Ordinal)));
     }
 
     [Theory]
@@ -167,6 +196,7 @@ public sealed class LaunchPlaceholderSafetyTests : IDisposable
     {
         // Review 15 P2: ssh_config takes a space or "=" after the keyword, so the RemoteShell check let "ProxyCommand calc" through.
         Assert.NotNull(LaunchPlaceholders.Refused(value, ArgumentReader.SshOption));
+        Assert.NotNull(LaunchPlaceholders.Refused(string.Empty, ArgumentReader.SshOption)); // review 16: the empty one too
         Assert.NotNull(LaunchPlaceholders.RefusedInPath(@"C:\Users\me\x.conf", ArgumentReader.SshOption));
     }
 

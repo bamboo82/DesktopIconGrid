@@ -288,7 +288,9 @@ public sealed class LaunchService(ProcessTracker tracker, ILaunchPrompts? prompt
     {
         if (LaunchPlaceholders.Refused(value, reader) is { } character)
         {
-            AppLog.Default.Warning("Launch", $"A placeholder value was refused: it holds U+{char.ConvertToUtf32(character, 0):X4}, which {reader} could act on");
+            AppLog.Default.Warning("Launch", character.Length == 0
+                ? $"An empty placeholder value was refused for {reader}"
+                : $"A placeholder value was refused: it holds U+{char.ConvertToUtf32(character, 0):X4}, which {reader} could act on");
             return LaunchResult.Failure(RefusalMessage(character, reader));
         }
 

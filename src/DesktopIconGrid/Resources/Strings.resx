@@ -1749,10 +1749,10 @@ Details are in {1}.</value>
     <value>If the entry was turned off under Startup apps (Task Manager or Settings), the bar does not start even with this on. Turn it on there.</value>
   </data>
   <data name="Launch_SshOptionValue" xml:space="preserve">
-    <value>Not started: ssh would read the text as its own settings (in -o, or as more options), and a setting can run a program on this PC. Keep placeholders out of -o, or write the setting's name before them (-o User={ask:User}).</value>
+    <value>Not started: ssh would take the text as its own settings or options, some of which run or load a program on this PC. A placeholder may go after the name of a setting that runs nothing (-o User={ask:User}), never in -F, -I, scp's -S or sftp's -b, nor among option letters.</value>
   </data>
   <data name="Launch_SshNameIsOption" xml:space="preserve">
-    <value>Not started: the host or user name begins with “-”, so a program that ssh starts with it (a ProxyCommand) could take it as an option.</value>
+    <value>Not started: the host or user name begins with “-”, or has one right after “@”, so ssh, or a program it starts, could take it as an option.</value>
   </data>
   <data name="Sync_ReplaceConflictCopy" xml:space="preserve">
     <value>Replace "{0}" with this PC's bar? It is a copy a sync program kept of "{1}". This PC then stays linked to "{0}" and leaves "{1}", which the other PCs keep using. To bring this bar to them, save over "{1}" instead.</value>
