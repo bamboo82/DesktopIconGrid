@@ -13,6 +13,7 @@ public partial class SettingsWindow : Window
     {
         InitializeComponent();
         DialogTheme.Apply(this);
+        WorkAreaFit.Attach(this);
     }
 
     private SettingsViewModel? ViewModel => DataContext as SettingsViewModel;

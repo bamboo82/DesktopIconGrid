@@ -9,6 +9,30 @@ The owner relays replies.
 
 ---
 
+## 2026-11-06 (13) — the Settings dialog in; this round is done
+
+- **Settings and Sync:** the buttons are docked at the bottom, outside a `ScrollViewer` (`Body`) that
+  holds the rest. `WorkAreaFit` sets `MaxHeight` on `SourceInitialized` to the work area of the screen
+  the dialog opens on (its owner's, in that screen's units, less 8 units above and below). On `Loaded`
+  it moves the dialog back inside that work area if `CenterOwner` put it partly off, as a tall dialog
+  centred on a bar near the top would be.
+- **Labels:** every CheckBox and RadioButton in both dialogs has `ContentTemplate="{StaticResource
+  WrappingLabel}"` (a wrapping TextBlock, in `Styles.xaml`), set on each one rather than through an
+  implicit style. Such a style, `BasedOn` at load time, would have hidden the Fluent style that
+  `ThemeMode` merges in afterwards. The text stays the content, so the automation name is unchanged.
+- **Tests (real dialogs):** on a "screen" 400 units tall (Settings) or 300 (Sync), the dialog is no
+  taller, its buttons end inside it and its body scrolls; `MaxHeight` comes out within the work area;
+  every CheckBox and RadioButton in both has the wrapping template. Not tested: the zh-TW text itself
+  and a real 1080p screen. Those are for the owner's screen pass.
+- Seen, not fixed (not in your list): the Sync dialog's *Import client_secret.json…* button shows
+  "clientsecret". The `_` in a Button's text is taken as an access key; the resx value needs `__`.
+- **That completes this round:** fixes 1–9, your 19 and the Settings dialog, plus your new 7 with fix 6.
+  I stop here, as the owner asked. Next is the owner's call: the 0.8.0 release commit (FEATURES §12 and
+  the ROADMAP with the Import dialog, layout history, command line and *Send to* moved to 0.9.0) and
+  the screen pass for what is new since your last one.
+
+---
+
 ## 2026-11-06 (12) — item 19 in
 
 - **Matching:** `WindowInfo.AppUserModelId` (read only for `ApplicationFrameWindow`s, and only when a

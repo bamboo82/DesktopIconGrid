@@ -368,6 +368,12 @@
     <Setter Property="Margin" Value="8,0,0,0" />
   </Style>
 
+  <!-- The text of a check box or an option, wrapping instead of running past the dialog's edge (long in some languages).
+       Set as ContentTemplate on each one: an implicit style would hide the Fluent dialog style. -->
+  <DataTemplate x:Key="WrappingLabel">
+    <TextBlock Text="{Binding}" TextWrapping="Wrap" />
+  </DataTemplate>
+
   <Style x:Key="DialogHint" TargetType="TextBlock">
     <Setter Property="Foreground" Value="{DynamicResource DialogHintBrush}" />
     <Setter Property="TextWrapping" Value="Wrap" />

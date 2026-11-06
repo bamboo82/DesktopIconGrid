@@ -13,6 +13,7 @@ public partial class SyncWindow : Window
     {
         InitializeComponent();
         DialogTheme.Apply(this);
+        WorkAreaFit.Attach(this);
     }
 
     private SyncViewModel? ViewModel => DataContext as SyncViewModel;

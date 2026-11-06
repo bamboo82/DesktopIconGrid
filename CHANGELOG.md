@@ -99,6 +99,11 @@ layout history, and a command line with *Send to*.
   suspends the app, and its frame then holds no window of the app's process to recognise it by. The frame
   is now also recognised by the app ID it keeps. The matching is covered by tests and reading the ID by a
   test on a real window; the owner's screen pass found the bug and checked that the ID is still there.
+- The Settings dialog could be taller than the screen. In Chinese it was 1,089 pixels high, so on a 1080p
+  screen, or a laptop at 125 %, Save and Cancel were below the edge; some options were also cut off at
+  the right. The settings now scroll with Save and Cancel always in sight, the dialog is never taller
+  than the screen's work area and moves back onto it, and long options wrap. The Sync dialog does the
+  same. Covered by tests on the real dialogs.
 
 ## [0.7.0] – 2026-11-05
 
