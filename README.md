@@ -172,6 +172,13 @@ tests, publishes both zips and creates the GitHub release with that section as i
 git tag v0.2.0 && git push origin v0.2.0
 ```
 
+`main` follows the releases: after the tag, move it forward to the tagged commit (git refuses anything
+that is not a fast-forward, so `main` never loses a commit):
+
+```bash
+git push origin "v0.2.0^{commit}:main"
+```
+
 The solution also compiles on Linux and macOS (`EnableWindowsTargeting` is set), which is
 how CI builds it, but the app itself only runs on Windows.
 

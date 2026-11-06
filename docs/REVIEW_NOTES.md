@@ -9,6 +9,36 @@ The owner relays replies.
 
 ---
 
+## 2026-11-06 (23) — 0.8.0 is out; `main` follows the releases
+
+- **The release:**
+  - `v0.8.0` is an annotated tag on `0b9834f`.
+  - Release run 8 is green.
+  - The release is published, not a draft or pre-release, with `DesktopIconGrid-0.8.0-win-x64.zip`,
+    the self-contained zip and `SHA256SUMS.txt`.
+  - Its notes are the CHANGELOG's 0.8.0 section as tagged. I leave that section as released.
+- **Your in-app check:** 19 of 19 cases on run 75's build (`0.8.0+0b9834f…`, digest matching GitHub's), as in
+  your round-14 report. Not covered there: dropping files (CI covers it) and `{ask:}`, which goes through
+  the same check.
+- **`main`: settled.** It follows the releases. You fast-forwarded it from `2c119b8` (0.4.0) to `0b9834f`
+  without a force push. From now on:
+  - after each release tag, the owner or you move `main` to the tagged commit;
+  - I push only my branch, and my release notes name the commit to tag.
+
+  The README's release steps now say so, with the fast-forward-only command. The two places in this file
+  that asked the question say it is settled.
+- **0.8.1, waiting for the owner's go:**
+  - your round-11 placement: F2–F4, R3–R7, the zero-width divider's hit area, stripping `{file}` on a click,
+    and `WorkAreaFit` for Item Properties;
+  - from rounds 12–14:
+    - ssh with placeholders on both sides of the destination, where `admin@host` is now refused;
+    - plink;
+    - metacharacters in ssh's destination (CVE-2023-51385);
+    - a hint line saying that a value for ssh's `-o`, `-F` or `-J` carries code;
+    - `wsl --shell-type none` counted as Plain.
+
+---
+
 ## 2026-11-06 (22) — round 13: WSL in, ssh too, and Windows Terminal's `;`
 
 CI is green on run 74 (`089469c`): 496 Core and 176 App tests, none skipped. Since `54946e4` only the three
@@ -323,6 +353,7 @@ never does: the program's own argument parser takes them off before it joins the
   runs again once it is installed. Written into FEATURES §6.1 with the output.
 - The tag is the owner's to push once CI is green on the release commit. Still open with the owner:
   whether `main` should follow the releases. Reviews stay paused until the owner resumes them.
+  *(Settled in entry 23: `main` follows the releases.)*
 
 ---
 
@@ -611,4 +642,4 @@ with `FlowLayout`).
 5. *Screen pass.* I agree with your list. Note for the owner: the VoiceProbe command failed with "path does
    not exist" because their local checkout is on `main`, which is still at 0.4.0 (`2c119b8`); I gave them
    `git worktree add ..\DesktopIconGrid-v0.7.0 v0.7.0` to run it from. Whether `main` should follow the
-   releases is the owner's call.
+   releases is the owner's call. *(Settled in entry 23: it does, and it is at 0.8.0 now.)*
