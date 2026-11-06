@@ -11,6 +11,9 @@ namespace DesktopIconGrid.Services;
 
 public sealed class DialogService(IIconProvider icons) : IDialogService, ILaunchPrompts
 {
+    /// <summary>How long *Add app…* waits for the Start menu's list (hundreds of entries, each asked for its target).</summary>
+    private static readonly TimeSpan AddAppListTimeout = TimeSpan.FromSeconds(30);
+
     private AppLogWindow? _logWindow;
 
     /// <summary>Creates the view model for the sync dialog; set once sync is wired up.</summary>
@@ -117,8 +120,8 @@ public sealed class DialogService(IIconProvider icons) : IDialogService, ILaunch
         {
             DataContext = viewModel,
             Owner = Owner,
-            Load = () => IconWorker.Shared.RunAsync(InstalledApps.Enumerate),
-            IconOf = location => IconWorker.Shared.RunAsync(() => icons.GetIcon(location, 32)),
+            Load = async () => await IconWorker.Shared.RunAsync(InstalledApps.Enumerate, AddAppListTimeout, "installed apps") ?? [],
+            IconOf = location => IconWorker.Shared.RunAsync(() => icons.GetIcon(location, 32), IconWorker.LookupTimeout, location, IconWorker.IsOnSlowStorage(location)),
         };
         return window.ShowDialog() == true ? viewModel.Chosen : [];
     }

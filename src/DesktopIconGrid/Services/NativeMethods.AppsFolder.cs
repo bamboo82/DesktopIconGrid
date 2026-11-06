@@ -7,6 +7,13 @@ internal static partial class NativeMethods
 {
     public static readonly Guid FOLDERID_AppsFolder = new("1e87508d-89c2-42f0-8a7e-645a0f50ca58");
     public static readonly Guid BHID_EnumItems = new("94f60519-2850-4924-aa5a-d15e84868039");
+    public static readonly Guid BHID_PropertyStore = new("0384e1a4-1523-439c-a4c8-ab911052f586");
+
+    /// <summary><c>PKEY_Link_TargetParsingPath</c>: {B9B4B3FC-2B51-4A42-B5D8-324146AFCF25}, 2.</summary>
+    public static readonly PROPERTYKEY PKEY_Link_TargetParsingPath = new() { fmtid = new Guid("B9B4B3FC-2B51-4A42-B5D8-324146AFCF25"), pid = 2 };
+
+    /// <summary><c>PKEY_Link_Arguments</c>: {436F2667-14E2-4FEB-B30A-146C53B5B674}, 100.</summary>
+    public static readonly PROPERTYKEY PKEY_Link_Arguments = new() { fmtid = new Guid("436F2667-14E2-4FEB-B30A-146C53B5B674"), pid = 100 };
 
     public const uint SIGDN_NORMALDISPLAY = 0;
     public const uint SIGDN_PARENTRELATIVEPARSING = 0x80018001;

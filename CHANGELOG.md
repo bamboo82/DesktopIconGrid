@@ -67,8 +67,10 @@ spike has its first answer: no, for want of the zh-TW speech pack (FEATURES §6.
 - *Add app…* in the icon and empty-space menus: every installed app the Start menu lists, Microsoft Store
   apps included, with icons, filtered as you type; tick several and they are added at once. Store apps
   no longer need a desktop shortcut first. Desktop programs are stored by their real path, so the
-  running badge and switching work for them. The mapping from the Start menu's entries is covered by
-  tests; the list itself has not been seen on a screen.
+  running badge and switching work for them; that includes the ones the Start menu lists under an id of
+  their own (Chrome, Edge, Firefox, Office), when their shortcut starts the program without arguments.
+  The mapping from the Start menu's entries is covered by tests and reading the list by a test on
+  Windows; the dialog itself has not been seen on a screen.
 - Portable mode: put an empty `portable.txt` next to `DesktopIconGrid.exe` and the bar keeps its files in
   that folder instead of `%LocalAppData%`. `%APPDRIVE%` stands for the program's drive, and new shortcuts
   to files on that drive use it, so a USB drive that gets another letter keeps working. Covered by

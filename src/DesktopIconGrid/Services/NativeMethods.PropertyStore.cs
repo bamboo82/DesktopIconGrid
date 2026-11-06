@@ -57,6 +57,25 @@ internal static partial class NativeMethods
         int Commit();
     }
 
+    /// <summary>A string property of <paramref name="store"/> (<see cref="VT_LPWSTR"/>), or <see langword="null"/> when it has none.</summary>
+    public static string? StringOf(IPropertyStore store, PROPERTYKEY key)
+    {
+        ArgumentNullException.ThrowIfNull(store);
+        if (store.GetValue(ref key, out var value) != 0)
+        {
+            return null;
+        }
+
+        try
+        {
+            return value.vt == VT_LPWSTR && value.Pointer != IntPtr.Zero ? Marshal.PtrToStringUni(value.Pointer) : null;
+        }
+        finally
+        {
+            PropVariantClear(ref value);
+        }
+    }
+
     [DllImport("shell32.dll")]
     public static extern int SHGetPropertyStoreForWindow(IntPtr hwnd, ref Guid riid, [MarshalAs(UnmanagedType.Interface)] out IPropertyStore? propertyStore);
 
@@ -70,25 +89,9 @@ internal static partial class NativeMethods
         IPropertyStore? store = null;
         try
         {
-            if (SHGetPropertyStoreForWindow(hwnd, ref iid, out store) != 0 || store is null)
-            {
-                return null;
-            }
-
-            var key = PKEY_AppUserModel_ID;
-            if (store.GetValue(ref key, out var value) != 0)
-            {
-                return null;
-            }
-
-            try
-            {
-                return value.vt == VT_LPWSTR && value.Pointer != IntPtr.Zero ? Marshal.PtrToStringUni(value.Pointer) : null;
-            }
-            finally
-            {
-                PropVariantClear(ref value);
-            }
+            return SHGetPropertyStoreForWindow(hwnd, ref iid, out store) != 0 || store is null
+                ? null
+                : StringOf(store, PKEY_AppUserModel_ID);
         }
         catch (Exception ex) when (ex is COMException or InvalidCastException)
         {

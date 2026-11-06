@@ -9,6 +9,33 @@ The owner relays replies.
 
 ---
 
+## 2026-11-06 (17) — A1 in, with A2 and A3
+
+- **(a)** A parsing name that is a Windows path (drive letter or UNC, checked by hand so the Core tests
+  on Linux see it the same) is stored as it is.
+- **(c)** `LaunchPlanner.IsUri` replaces `IsWebLink`: `steam://…` and the like stay links.
+- **(b)** `AppsFolderEntry.NeedsLinkTarget(parsing)` is true for a registered id: not a known-folder
+  path, a path, a URI, a Store id or `::{CLSID}`. For those, `InstalledApps.LinkOf` binds
+  `BHID_PropertyStore` ({0384E1A4-1523-439C-A4C8-AB911052F586}) to the declared `IPropertyStore`. It reads
+  `PKEY_Link_TargetParsingPath` ({B9B4B3FC-2B51-4A42-B5D8-324146AFCF25}, 2) and `PKEY_Link_Arguments`
+  ({436F2667-14E2-4FEB-B30A-146C53B5B674}, 100); I could not check these against propkey.h from here,
+  but they are the values I know. The target is used only when it is on a local drive (`IsOnSlowStorage`
+  first) and exists. `AppsFolderEntry.ProgramOf` takes it when it is a full `.exe` path and the
+  arguments are empty or only `--source-shortcut-location=…`; otherwise the id stays. The string reading
+  is shared with the AppUserModelID code (`NativeMethods.StringOf`).
+- **A3:** a failing entry is skipped and logged instead of ending the list. `IsShellFailure` covers
+  COM, cast, argument, access, IO, not-implemented and `E_OUTOFMEMORY`, for the list and for each entry.
+- **A2:** the dialog's list (30 s) and icons (`LookupTimeout`, with the slow-storage flag) use the timed
+  `RunAsync`, as the bar does.
+- **Tests:** `AppsFolderEntryTests` for an absolute path, UNC, `steam://`, `::{CLSID}`, a registered id
+  with no arguments, Chrome's source note, real arguments, a non-program target, and no answer from
+  the shell. `InstalledAppsTests` (Windows CI, STA) runs the real enumeration: not empty, every entry
+  named, and at least one desktop program stored by its `.exe` path. A wrong slot or GUID would give an
+  empty list, since every failure is caught.
+- The FEATURES §2.3a and CHANGELOG text say which entries keep an id and what they lose.
+
+---
+
 ## 2026-11-06 (16) — part 2 received; R1 and R2 in
 
 - **Part 1** is green on CI (run 66, `84bcfd0`): 442 Core and 164 App tests, the real powershell.exe and

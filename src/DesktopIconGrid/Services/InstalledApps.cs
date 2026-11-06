@@ -1,3 +1,4 @@
+using System.IO;
 using System.Runtime.InteropServices;
 using DesktopIconGrid.Core.Diagnostics;
 using DesktopIconGrid.Core.Imports;
@@ -32,14 +33,17 @@ public static class InstalledApps
             {
                 try
                 {
-                    var app = AppsFolderEntry.ToApp(
-                        DisplayName(item, NativeMethods.SIGDN_NORMALDISPLAY),
-                        DisplayName(item, NativeMethods.SIGDN_PARENTRELATIVEPARSING),
-                        KnownFolderPath);
+                    var parsing = DisplayName(item, NativeMethods.SIGDN_PARENTRELATIVEPARSING);
+                    var (target, arguments) = AppsFolderEntry.NeedsLinkTarget(parsing) ? LinkOf(item) : (null, null);
+                    var app = AppsFolderEntry.ToApp(DisplayName(item, NativeMethods.SIGDN_NORMALDISPLAY), parsing, KnownFolderPath, target, arguments);
                     if (app is not null)
                     {
                         apps.Add(app);
                     }
+                }
+                catch (Exception ex) when (IsShellFailure(ex))
+                {
+                    AppLog.Default.Debug("Apps", $"An installed app was skipped: {ex.Message}"); // one bad entry does not cost the others
                 }
                 finally
                 {
@@ -47,7 +51,7 @@ public static class InstalledApps
                 }
             }
         }
-        catch (Exception ex) when (ex is COMException or InvalidCastException or ArgumentException)
+        catch (Exception ex) when (IsShellFailure(ex))
         {
             AppLog.Default.Warning("Apps", $"The list of installed apps could not be read: {ex.Message}");
         }
@@ -66,6 +70,46 @@ public static class InstalledApps
 
         AppLog.Default.Debug("Apps", $"{apps.Count} installed apps listed");
         return apps.OrderBy(a => a.Name, StringComparer.CurrentCultureIgnoreCase).ToList();
+    }
+
+    /// <summary>
+    /// What the shell throws for an entry or a list it cannot read; <c>E_OUTOFMEMORY</c> from a shell extension comes
+    /// back as <see cref="OutOfMemoryException"/>.
+    /// </summary>
+    private static bool IsShellFailure(Exception ex) =>
+        ex is COMException or InvalidCastException or ArgumentException or UnauthorizedAccessException or IOException
+            or NotImplementedException or OutOfMemoryException;
+
+    /// <summary>
+    /// What the Start menu shortcut behind a registered id starts, from the entry's property store: its target and
+    /// arguments, when the target is a file on a local drive that exists (a network target is not touched here).
+    /// </summary>
+    private static (string? Target, string? Arguments) LinkOf(NativeMethods.IShellItem item)
+    {
+        NativeMethods.IPropertyStore? store = null;
+        try
+        {
+            var handler = NativeMethods.BHID_PropertyStore;
+            var storeId = typeof(NativeMethods.IPropertyStore).GUID;
+            item.BindToHandler(IntPtr.Zero, ref handler, ref storeId, out var pointer);
+            store = (NativeMethods.IPropertyStore)Marshal.GetObjectForIUnknown(pointer);
+            Marshal.Release(pointer);
+            var target = NativeMethods.StringOf(store, NativeMethods.PKEY_Link_TargetParsingPath);
+            return target is null || IconWorker.IsOnSlowStorage(target) || !File.Exists(target)
+                ? (null, null)
+                : (target, NativeMethods.StringOf(store, NativeMethods.PKEY_Link_Arguments));
+        }
+        catch (Exception ex) when (IsShellFailure(ex))
+        {
+            return (null, null); // left to the shell, as before
+        }
+        finally
+        {
+            if (store is not null)
+            {
+                Marshal.ReleaseComObject(store);
+            }
+        }
     }
 
     private static string? DisplayName(NativeMethods.IShellItem item, uint kind)
