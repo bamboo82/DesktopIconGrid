@@ -25,6 +25,12 @@ public sealed class SyncProfile
 
     public string? AppVersion { get; set; }
 
+    /// <summary>
+    /// A random id of this save. Another PC's save is told by its revision, not its time: a sync program carries the
+    /// writer's own file time from PC to PC, and a PC's clock can be wrong (see <see cref="SyncService.IsNewerThanLocal"/>).
+    /// </summary>
+    public string? Revision { get; set; }
+
     /// <summary>Settings and items. The window placement is never included; it is device-specific.</summary>
     public LauncherLayout Layout { get; set; } = new();
 
@@ -42,6 +48,7 @@ public sealed class SyncProfile
             SavedBy = savedBy,
             SavedById = savedById,
             AppVersion = appVersion,
+            Revision = NewRevision(),
             Layout = new LauncherLayout
             {
                 Version = layout.Version,
@@ -52,6 +59,8 @@ public sealed class SyncProfile
             },
         };
     }
+
+    public static string NewRevision() => Guid.NewGuid().ToString("N");
 
     public string ToJson() => JsonSerializer.Serialize(this, LayoutStorage.JsonOptions);
 
@@ -95,6 +104,11 @@ public sealed class SyncProfile
             properties["deviceId"] = SavedById;
         }
 
+        if (!string.IsNullOrEmpty(Revision))
+        {
+            properties["revision"] = Revision;
+        }
+
         return properties;
     }
 }
@@ -107,6 +121,12 @@ public sealed record RemoteProfile(string Name, string FileId, DateTimeOffset? S
 {
     /// <summary>Installation id of the device that saved the copy, when it recorded one.</summary>
     public string? SavedById { get; init; }
+
+    /// <summary>The save's <see cref="SyncProfile.Revision"/>, when it recorded one.</summary>
+    public string? Revision { get; init; }
+
+    /// <summary>The copy could not be read when it was listed (a sync program may be writing it), so who saved it is not known.</summary>
+    public bool Unreadable { get; init; }
 
     public const string FileExtension = ".json";
 
@@ -140,9 +160,12 @@ public sealed record RemoteProfile(string Name, string FileId, DateTimeOffset? S
 
         file.AppProperties.TryGetValue("device", out var device);
         file.AppProperties.TryGetValue("deviceId", out var deviceId);
+        file.AppProperties.TryGetValue("revision", out var revision);
         return new RemoteProfile(name, file.Id, savedAt, string.IsNullOrWhiteSpace(device) ? null : device, file.Size)
         {
             SavedById = string.IsNullOrWhiteSpace(deviceId) ? null : deviceId,
+            Revision = string.IsNullOrWhiteSpace(revision) ? null : revision,
+            Unreadable = file.AppProperties.TryGetValue(FolderSyncClient.UnreadableProperty, out var unreadable) && unreadable == "true",
         };
     }
 }

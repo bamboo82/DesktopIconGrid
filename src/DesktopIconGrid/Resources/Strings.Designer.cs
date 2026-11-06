@@ -4623,6 +4623,15 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Not uploaded yet: "{0}" cannot be read right now (it may still be syncing). Your [rest of string was truncated]";.
+        /// </summary>
+        public static string Sync_UploadPostponed {
+            get {
+                return ResourceManager.GetString("Sync_UploadPostponed", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Uploaded to "{0}" at {1}..
         /// </summary>
         public static string Sync_UploadedAt {

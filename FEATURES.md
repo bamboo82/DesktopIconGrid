@@ -455,7 +455,12 @@ Keeps named copies of the settings and icons where several PCs can share them: o
 - **A synced folder** (0.8.0): *Where the copies are kept → A folder…* needs no Google project and no
   sign-in. Copies are written like `layout.json` (a temporary file, flushed, then moved over the old
   one). A copy's time is the file's last-write time, which the sync programs carry between PCs, and the
-  device that saved it is read from the copy, so the linked copy and the conflict rule work as on Drive.
+  device that saved it is read from the copy, so the linked copy works as on Drive. Which copy is newer is
+  decided by each save's random *revision*, not by the times: this PC remembers the revision it last wrote
+  or loaded, and another PC's save with another revision is a conflict however its time compares (a
+  sync program carries the writer's own time, a save made offline arrives late, and a clock can be wrong).
+  Copies from before 0.8.0 have no revision and are compared by time, as before. A linked copy that cannot
+  be read (still arriving) postpones the upload by a minute instead of being overwritten.
   A copy's name that Windows does not allow in a file name is kept inside the copy (`Home: desk` is
   saved as `Home_ desk.json` and listed as *Home: desk*). The copies OneDrive or Dropbox make after a
   conflict (`Work-LAPTOP.json`, `Work (1).json`) are listed under their own file names with their device

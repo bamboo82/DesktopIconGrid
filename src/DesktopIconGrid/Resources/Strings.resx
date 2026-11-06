@@ -1715,4 +1715,7 @@ Details are in {1}.</value>
   <data name="Repair_NoneSure" xml:space="preserve">
     <value>None of these is certainly the program: only the file name matches. Pick one, or use Browse….</value>
   </data>
+  <data name="Sync_UploadPostponed" xml:space="preserve">
+    <value>Not uploaded yet: "{0}" cannot be read right now (it may still be syncing). Your changes are kept and uploaded once it can be read.</value>
+  </data>
 </root>

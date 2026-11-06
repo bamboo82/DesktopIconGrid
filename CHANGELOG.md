@@ -49,8 +49,10 @@ spike has its first answer: no, for want of the zh-TW speech pack (FEATURES §6.
 - Sync through any folder: the sync dialog (now *Sync across PCs…*) can keep the settings copies in a
   folder that OneDrive, Dropbox, Google Drive for desktop or a network share keeps in step, instead of on
   Google Drive. No Google project, no sign-in. Device names, the linked copy, automatic upload and the
-  rule that never overwrites a newer copy from another PC work as before, with the file's time as the
-  clock. Copies the sync programs make after a conflict (`Work (1).json`, `Work-LAPTOP.json`) appear
+  rule that never overwrites a newer copy from another PC work as before. Which copy is newer is told by a
+  random revision in each save, not by the clocks: a sync program carries the writer's own file time, so
+  a save made offline, or on a PC whose clock is fast, could otherwise overwrite another PC's newer one. A
+  linked copy that cannot be read yet postpones the upload instead of being overwritten. Copies the sync programs make after a conflict (`Work (1).json`, `Work-LAPTOP.json`) appear
   under their own names, with their device and time, so they can be loaded or deleted. The Google account
   stays for Google Drive Buckets. The folder backend is covered by tests on real files, including two PCs
   sharing one folder; it has not yet been tried with OneDrive or Dropbox themselves.

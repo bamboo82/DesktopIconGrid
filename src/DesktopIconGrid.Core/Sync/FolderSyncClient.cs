@@ -23,6 +23,9 @@ public sealed class FolderSyncClient : IDriveClient
     /// <summary>Files bigger than this are not read for the listing; a copy is a few kilobytes.</summary>
     public const long MaxCopySize = 16 * 1024 * 1024;
 
+    /// <summary>Set ("true") on a listed copy that could not be read (see <see cref="RemoteProfile.Unreadable"/>).</summary>
+    public const string UnreadableProperty = "unreadable";
+
     private static readonly UTF8Encoding Utf8 = new(encoderShouldEmitUTF8Identifier: false);
 
     public FolderSyncClient(string folder)
@@ -74,16 +77,23 @@ public sealed class FolderSyncClient : IDriveClient
         foreach (var path in Directory.EnumerateFiles(Folder, "*" + RemoteProfile.FileExtension))
         {
             cancellationToken.ThrowIfCancellationRequested();
-            var info = new FileInfo(path);
-            if (!info.Name.EndsWith(RemoteProfile.FileExtension, StringComparison.OrdinalIgnoreCase) || info.Length > MaxCopySize)
+            try
             {
-                continue;
-            }
+                var info = new FileInfo(path);
+                if (!info.Name.EndsWith(RemoteProfile.FileExtension, StringComparison.OrdinalIgnoreCase) || info.Length > MaxCopySize)
+                {
+                    continue;
+                }
 
-            var properties = ReadProperties(info);
-            if (properties is not null)
+                var properties = ReadProperties(info);
+                if (properties is not null)
+                {
+                    files.Add(new DriveFile(info.Name, info.Name, new DateTimeOffset(info.LastWriteTimeUtc, TimeSpan.Zero), info.Length, properties));
+                }
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
             {
-                files.Add(new DriveFile(info.Name, info.Name, new DateTimeOffset(info.LastWriteTimeUtc, TimeSpan.Zero), info.Length, properties));
+                // Gone or locked between the listing and the look at it (a sync program at work): the others are still listed.
             }
         }
 
@@ -112,10 +122,12 @@ public sealed class FolderSyncClient : IDriveClient
             Add(properties, "device", Text("savedBy"));
             Add(properties, "deviceId", Text("savedById"));
             Add(properties, "savedAt", Text("savedAt"));
+            Add(properties, "revision", Text("revision"));
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException)
         {
             properties["profile"] = DisplayName(info.Name, null);
+            properties[UnreadableProperty] = "true";
         }
 
         return properties;

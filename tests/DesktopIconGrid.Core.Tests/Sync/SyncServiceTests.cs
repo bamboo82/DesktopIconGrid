@@ -201,11 +201,12 @@ public class SyncServiceTests
         await service.SaveProfileAsync("Work", SampleLayout(), CancellationToken.None);
         Assert.Null(await service.CheckForNewerCopyAsync(CancellationToken.None));
 
-        // Simulate another device saving the same copy later.
+        // Simulate another device saving the same copy later (every save has a revision of its own).
         var (file, (content, properties)) = drive.Files.Single();
         properties["device"] = "PC-2";
         properties["deviceId"] = "other-install";
         properties["savedAt"] = Now.AddMinutes(10).ToString("O");
+        properties["revision"] = "another-save";
         drive.Files[file] = (content, properties);
 
         var newer = await service.CheckForNewerCopyAsync(CancellationToken.None);
@@ -234,6 +235,7 @@ public class SyncServiceTests
         properties["device"] = "PC-2";
         properties["deviceId"] = "other-install";
         properties["savedAt"] = Now.AddMinutes(10).ToString("O");
+        properties["revision"] = "another-save";
         drive.Files[file] = (content, properties);
 
         var conflict = await service.AutoUploadAsync(SampleLayout(), CancellationToken.None);

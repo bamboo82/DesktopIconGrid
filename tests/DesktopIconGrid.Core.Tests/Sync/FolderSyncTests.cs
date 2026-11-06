@@ -124,6 +124,63 @@ public sealed class FolderSyncTests : IDisposable
     }
 
     [Fact]
+    public async Task Another_PCs_save_stops_the_upload_even_when_its_file_time_is_older_than_this_PCs_last_sync()
+    {
+        // The review: LAPTOP saved offline at 10:05; OneDrive then kept DESK's 10:00 save as Work.json (with DESK's own
+        // time) and LAPTOP's as a conflict copy. The times said "not newer", and LAPTOP's next upload overwrote DESK's.
+        var desk = Device("DESK");
+        var laptop = Device("LAPTOP");
+        await laptop.LoadProfileAsync(await desk.SaveProfileAsync("Work", Layout("Editor"), CancellationToken.None), CancellationToken.None);
+        Assert.Equal(AutoUploadOutcome.Uploaded, (await laptop.AutoUploadAsync(Layout("Editor", "Laptop"), CancellationToken.None)).Outcome);
+        File.Copy(PathOf("Work.json"), PathOf("Work-LAPTOP.json"));
+        await desk.SaveProfileAsync("Work", Layout("Editor", "Desk"), CancellationToken.None);
+        File.SetLastWriteTimeUtc(PathOf("Work.json"), DateTime.UtcNow.AddMinutes(-5));
+
+        var result = await laptop.AutoUploadAsync(Layout("Editor", "Laptop", "More"), CancellationToken.None);
+
+        Assert.Equal(AutoUploadOutcome.Conflict, result.Outcome);
+        Assert.Equal("DESK", result.Remote!.SavedBy);
+        Assert.Contains("Desk", File.ReadAllText(PathOf("Work.json")), StringComparison.Ordinal); // DESK's save stays
+        Assert.NotNull(await laptop.CheckForNewerCopyAsync(CancellationToken.None)); // and is offered at start-up
+    }
+
+    [Fact]
+    public async Task A_linked_copy_that_cannot_be_read_postpones_the_upload_and_is_left_alone()
+    {
+        var pc = Device("PC-1");
+        await pc.SaveProfileAsync("Work", Layout("Editor"), CancellationToken.None);
+        const string halfWritten = "{ \"name\": \"Work\", \"layout\": {";
+        File.WriteAllText(PathOf("Work.json"), halfWritten); // a sync program still writing it
+
+        var result = await pc.AutoUploadAsync(Layout("Editor", "Mail"), CancellationToken.None);
+
+        Assert.Equal(AutoUploadOutcome.Postponed, result.Outcome);
+        Assert.Equal(halfWritten, File.ReadAllText(PathOf("Work.json")));
+        Assert.Null(await pc.CheckForNewerCopyAsync(CancellationToken.None)); // not "newer" either: asked again later
+    }
+
+    [Fact]
+    public async Task Each_save_has_a_revision_that_the_listing_and_this_PC_remember()
+    {
+        var pc = Device("PC-1");
+        await pc.SaveProfileAsync("Work", Layout("Editor"), CancellationToken.None);
+        var first = pc.Settings.LastRevision;
+        await pc.SaveProfileAsync("Work", Layout("Editor", "Mail"), CancellationToken.None);
+
+        var listed = Assert.Single(await pc.ListProfilesAsync(CancellationToken.None));
+
+        Assert.NotNull(first);
+        Assert.NotEqual(first, pc.Settings.LastRevision);
+        Assert.Equal(pc.Settings.LastRevision, listed.Revision);
+        Assert.False(listed.Unreadable);
+        Assert.Equal(pc.Settings.LastRevision, SyncProfile.FromJson(File.ReadAllText(PathOf("Work.json"))).Revision);
+
+        var store = new SyncSettingsStore(Path.Combine(_folder, "sync.json"));
+        store.Save(pc.Settings);
+        Assert.Equal(pc.Settings.LastRevision, store.Load().LastRevision);
+    }
+
+    [Fact]
     public async Task Switching_between_Google_Drive_and_a_folder_unlinks_and_signing_out_of_Google_keeps_a_folder_link()
     {
         var pc = Device("PC-1", folder: null);

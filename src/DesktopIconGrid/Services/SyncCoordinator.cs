@@ -19,9 +19,13 @@ public sealed class SyncCoordinator : ObservableObject
 {
     private static readonly TimeSpan UploadDelay = TimeSpan.FromSeconds(5);
 
+    /// <summary>How long a postponed upload waits before it tries again (the linked copy could not be read).</summary>
+    private static readonly TimeSpan RetryDelay = TimeSpan.FromMinutes(1);
+
     private readonly ISyncHost _host;
     private readonly Func<string, string, bool> _confirm;
     private readonly DispatcherTimer _timer;
+    private readonly DispatcherTimer _retryTimer;
     private Task? _current;
     private bool _uploadRequestedWhileBusy;
     private bool _shuttingDown;
@@ -38,6 +42,15 @@ public sealed class SyncCoordinator : ObservableObject
         {
             _timer.Stop();
             await UploadNowAsync();
+        };
+        _retryTimer = new DispatcherTimer { Interval = RetryDelay };
+        _retryTimer.Tick += async (_, _) =>
+        {
+            _retryTimer.Stop();
+            if (!_shuttingDown && Service.IsLinked && Service.Settings.AutoUpload)
+            {
+                await UploadNowAsync();
+            }
         };
         host.LayoutChanged += (_, _) => ScheduleUpload();
     }
@@ -104,6 +117,7 @@ public sealed class SyncCoordinator : ObservableObject
     public async Task<bool> FlushPendingAsync(TimeSpan timeout)
     {
         _shuttingDown = true;
+        _retryTimer.Stop(); // a copy that could not be read is not waited for; the next start checks again
         var pending = _timer.IsEnabled || _uploadRequestedWhileBusy;
         _timer.Stop();
         if (!pending && !IsUploading)
@@ -162,6 +176,11 @@ public sealed class SyncCoordinator : ObservableObject
                     Report(
                         string.Format(Strings.Sync_NotUploaded, result.Remote?.Name, result.Remote?.SavedBy ?? Strings.Common_AnotherDevice, Describe(result.Remote?.SavedAt)),
                         LogLevel.Warning);
+                    break;
+                case AutoUploadOutcome.Postponed:
+                    Report(string.Format(Strings.Sync_UploadPostponed, result.Remote?.Name), LogLevel.Warning); // said once while it lasts
+                    _retryTimer.Stop();
+                    _retryTimer.Start();
                     break;
             }
         }

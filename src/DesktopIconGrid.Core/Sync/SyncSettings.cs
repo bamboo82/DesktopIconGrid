@@ -40,6 +40,9 @@ public sealed class SyncSettings
     /// <summary>When the linked copy was last uploaded from or downloaded to this device.</summary>
     public DateTimeOffset? LastSyncedAt { get; set; }
 
+    /// <summary>The <see cref="SyncProfile.Revision"/> this device last uploaded or downloaded for the linked copy.</summary>
+    public string? LastRevision { get; set; }
+
     /// <summary>Upload changes to the linked copy automatically.</summary>
     public bool AutoUpload { get; set; } = true;
 
@@ -72,6 +75,7 @@ public sealed class SyncSettings
         SyncFolder = string.IsNullOrWhiteSpace(SyncFolder) ? null : SyncFolder.Trim();
         LinkedProfile = string.IsNullOrWhiteSpace(LinkedProfile) ? null : LinkedProfile.Trim();
         LinkedFileId = string.IsNullOrWhiteSpace(LinkedFileId) ? null : LinkedFileId.Trim();
+        LastRevision = string.IsNullOrWhiteSpace(LastRevision) ? null : LastRevision.Trim();
         if (string.IsNullOrWhiteSpace(DeviceId))
         {
             DeviceId = NewDeviceId();

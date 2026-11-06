@@ -9,6 +9,29 @@ The owner relays replies.
 
 ---
 
+## 2026-11-06 (18) — F1 in
+
+- **Revision:** `SyncProfile.Revision` (a new GUID per save, from `FromLayout`), written into the copy's
+  JSON and into Drive's `appProperties` (`revision`). The folder listing reads it from the copy.
+  `RemoteProfile.Revision` carries it; `SyncSettings.LastRevision` (in sync.json) is set on save and on
+  load and cleared with the link.
+- **`IsNewerThanLocal`:** this PC's own save first (device id, as before), then: with revisions on both
+  sides, newer means a different revision; without (copies or settings from before), the old time
+  rule. The order changed so that a copy with no time but a revision is still judged.
+- **Unreadable:** the folder listing marks a copy it could not read (`unreadable`), and
+  `RemoteProfile.Unreadable` carries it. `AutoUploadAsync` returns the new `AutoUploadOutcome.Postponed`
+  (nothing written), and `CheckForNewerCopyAsync` does not offer it. The coordinator says so once
+  (`Sync_UploadPostponed`) and tries again after a minute (`_retryTimer`, stopped on exit).
+- Your smaller item about `FileInfo.Length`: the listing now skips a file that vanishes or locks
+  between the directory listing and the look at it, instead of failing as a whole.
+- **Tests:** your scenario as a test: DESK's save comes back with a time five minutes older than LAPTOP's
+  last sync, the upload is a conflict, DESK's save stays, and the startup check offers it. Also: a
+  half-written linked copy postpones and is left alone; each save gets a new revision that the listing,
+  the file and sync.json show. Two `SyncServiceTests` that faked another device's save by editing its
+  device fields now also give it a revision, as a real save would.
+
+---
+
 ## 2026-11-06 (17) — A1 in, with A2 and A3
 
 - **(a)** A parsing name that is a Windows path (drive letter or UNC, checked by hand so the Core tests

@@ -12,6 +12,9 @@ public enum AutoUploadOutcome
 
     /// <summary>Another device saved the linked copy after this device last synced; nothing was uploaded.</summary>
     Conflict,
+
+    /// <summary>The linked copy could not be read (a sync program may be writing it); nothing was uploaded, try again later.</summary>
+    Postponed,
 }
 
 public sealed record AutoUploadResult(AutoUploadOutcome Outcome, RemoteProfile? Remote = null);
@@ -215,6 +218,7 @@ public sealed class SyncService
         Settings.LinkedProfile = profile.Name;
         Settings.LinkedFileId = file.Id;
         Settings.LastSyncedAt = file.ModifiedTime ?? now; // Drive's clock (or the file's time in a folder), not this PC's
+        Settings.LastRevision = profile.Revision;
         SaveSettings();
         AppLog.Default.Info("Sync", $"Saved settings copy \"{profile.Name}\" to {StorageName} ({layout.Items.Count} items, {(existing is null ? "new" : "replaced")})");
 
@@ -235,6 +239,7 @@ public sealed class SyncService
         Settings.LinkedProfile = remote.Name;
         Settings.LinkedFileId = remote.FileId;
         Settings.LastSyncedAt = remote.SavedAt ?? profile.SavedAt;
+        Settings.LastRevision = profile.Revision ?? remote.Revision;
         SaveSettings();
         AppLog.Default.Info("Sync", $"Loaded settings copy \"{remote.Name}\" (saved by {profile.SavedBy} on {profile.SavedAt.LocalDateTime:g}, {profile.Layout.Items.Count} items)");
         return profile;
@@ -263,6 +268,7 @@ public sealed class SyncService
         Settings.LinkedProfile = null;
         Settings.LinkedFileId = null;
         Settings.LastSyncedAt = null;
+        Settings.LastRevision = null;
     }
 
     /// <summary>The Drive entry for the linked copy, or <see langword="null"/> when not linked or the copy was deleted.</summary>
@@ -278,11 +284,11 @@ public sealed class SyncService
                ?? profiles.FirstOrDefault(p => string.Equals(p.Name, Settings.LinkedProfile, StringComparison.OrdinalIgnoreCase));
     }
 
-    /// <summary>The linked copy, when another device saved it after this device last synced.</summary>
+    /// <summary>The linked copy, when another device saved it after this device last synced (one that cannot be read is asked about later).</summary>
     public async Task<RemoteProfile?> CheckForNewerCopyAsync(CancellationToken cancellationToken)
     {
         var remote = await FindLinkedProfileAsync(cancellationToken).ConfigureAwait(false);
-        return remote is not null && IsNewerThanLocal(remote, Settings) ? remote : null;
+        return remote is { Unreadable: false } && IsNewerThanLocal(remote, Settings) ? remote : null;
     }
 
     /// <summary>
@@ -297,6 +303,12 @@ public sealed class SyncService
         }
 
         var remote = await FindLinkedProfileAsync(cancellationToken).ConfigureAwait(false);
+        if (remote is { Unreadable: true })
+        {
+            AppLog.Default.Warning("Sync", $"Auto-upload postponed: \"{remote.Name}\" cannot be read right now");
+            return new AutoUploadResult(AutoUploadOutcome.Postponed, remote);
+        }
+
         if (remote is not null && IsNewerThanLocal(remote, Settings))
         {
             AppLog.Default.Warning("Sync", $"Auto-upload skipped: \"{remote.Name}\" was saved by {remote.SavedBy ?? "another device"} after this device last synced");
@@ -307,16 +319,16 @@ public sealed class SyncService
         return new AutoUploadResult(AutoUploadOutcome.Uploaded, saved);
     }
 
-    /// <summary>True when the copy was saved by a different device after this device's last sync.</summary>
+    /// <summary>
+    /// True when the copy was saved by a different device after this device's last sync. With revisions on both sides
+    /// that means another revision than the one this device last wrote or read: a sync program carries the writer's own
+    /// file time, a write while offline moves this device's last sync forward before the sync program has caught up, and
+    /// a clock can be wrong. Without them (copies or settings from before 0.8.0) the times decide, as before.
+    /// </summary>
     public static bool IsNewerThanLocal(RemoteProfile remote, SyncSettings settings)
     {
         ArgumentNullException.ThrowIfNull(remote);
         ArgumentNullException.ThrowIfNull(settings);
-        if (remote.SavedAt is not { } savedAt)
-        {
-            return false;
-        }
-
         var sameDevice = remote.SavedById is not null
             ? string.Equals(remote.SavedById, settings.DeviceId, StringComparison.Ordinal)
             : string.Equals(remote.SavedBy, settings.DeviceName, StringComparison.OrdinalIgnoreCase);
@@ -325,7 +337,12 @@ public sealed class SyncService
             return false;
         }
 
-        return settings.LastSyncedAt is null || savedAt > settings.LastSyncedAt.Value + ClockTolerance;
+        if (remote.Revision is { } revision && settings.LastRevision is { } last)
+        {
+            return !string.Equals(revision, last, StringComparison.Ordinal);
+        }
+
+        return remote.SavedAt is { } savedAt && (settings.LastSyncedAt is null || savedAt > settings.LastSyncedAt.Value + ClockTolerance);
     }
 
     public static string NormalizeProfileName(string name)

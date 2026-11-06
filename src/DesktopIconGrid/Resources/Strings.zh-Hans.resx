@@ -1715,4 +1715,7 @@
   <data name="Repair_NoneSure" xml:space="preserve">
     <value>这些都不一定是这个程序：只有文件名相符。请选一个，或用“浏览…”。</value>
   </data>
+  <data name="Sync_UploadPostponed" xml:space="preserve">
+    <value>尚未上传：目前无法读取“{0}”（可能仍在同步中）。您的更改会保留，等可以读取时再上传。</value>
+  </data>
 </root>
