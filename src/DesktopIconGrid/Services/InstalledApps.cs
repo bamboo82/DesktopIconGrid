@@ -2,6 +2,7 @@ using System.IO;
 using System.Runtime.InteropServices;
 using DesktopIconGrid.Core.Diagnostics;
 using DesktopIconGrid.Core.Imports;
+using DesktopIconGrid.Core.Launching;
 
 namespace DesktopIconGrid.Services;
 
@@ -108,6 +109,30 @@ public static class InstalledApps
             if (store is not null)
             {
                 Marshal.ReleaseComObject(store);
+            }
+        }
+    }
+
+    /// <summary>What the Start menu entry <c>shell:AppsFolder\<paramref name="parsingName"/></c> starts, read as <see cref="Enumerate"/> reads it.</summary>
+    internal static (string? Target, string? Arguments) LinkOf(string parsingName)
+    {
+        var shellItemId = typeof(NativeMethods.IShellItem).GUID;
+        NativeMethods.IShellItem? item = null;
+        try
+        {
+            return NativeMethods.SHCreateShellItem(PackagedApps.AppsFolderPrefix + parsingName, IntPtr.Zero, ref shellItemId, out item) == 0 && item is not null
+                ? LinkOf(item)
+                : (null, null);
+        }
+        catch (Exception ex) when (IsShellFailure(ex))
+        {
+            return (null, null);
+        }
+        finally
+        {
+            if (item is not null)
+            {
+                Marshal.ReleaseComObject(item);
             }
         }
     }

@@ -55,4 +55,8 @@ internal static partial class NativeMethods
 
     [DllImport("shell32.dll")]
     public static extern int SHGetKnownFolderPath(ref Guid rfid, uint dwFlags, IntPtr hToken, out IntPtr ppszPath);
+
+    /// <summary><c>SHCreateItemFromParsingName</c> for a shell item, such as the Start menu entry <c>shell:AppsFolder\MSEdge</c>.</summary>
+    [DllImport("shell32.dll", CharSet = CharSet.Unicode, EntryPoint = "SHCreateItemFromParsingName")]
+    public static extern int SHCreateShellItem(string pszPath, IntPtr pbc, ref Guid riid, [MarshalAs(UnmanagedType.Interface)] out IShellItem ppv);
 }
