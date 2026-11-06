@@ -1724,4 +1724,7 @@ Details are in {1}.</value>
   <data name="Launch_WordIsParameter" xml:space="preserve">
     <value>Not started: a word in the text begins with “-”, so PowerShell would take it as a parameter of the command.</value>
   </data>
+  <data name="Launch_WordIsRemoteOption" xml:space="preserve">
+    <value>Not started: a word in the text begins with “-”, so the command ssh runs on the other computer would take it as an option.</value>
+  </data>
 </root>

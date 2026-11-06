@@ -101,6 +101,34 @@ public sealed class LaunchServiceTests : IDisposable
     }
 
     [Fact]
+    public void A_value_the_Linux_shell_would_expand_is_refused_for_WSL()
+    {
+        var service = Create(new Prompts(clipboard: "$(echo INJECTED)", answer: null), out var tracker);
+        using (tracker)
+        {
+            var result = service.Launch(new ShortcutItem { Name = "Grep", Location = "wsl.exe", Parameters = "grep {clipboard} notes.txt" });
+
+            Assert.Equal(string.Format(Strings.Launch_UnsafeValue, '$', "WSL"), result.ErrorMessage);
+        }
+    }
+
+    [Fact]
+    public void What_ssh_sends_to_the_remote_shell_is_checked_as_bare_words_and_dropped_files_where_they_go()
+    {
+        var service = Create(new Prompts(clipboard: "x; rm -rf ~", answer: "x -rf"), out var tracker);
+        using (tracker)
+        {
+            var typed = service.Launch(new ShortcutItem { Name = "Show", Location = "ssh.exe", Parameters = "server2 cat {clipboard}" });
+            var asked = service.Launch(new ShortcutItem { Name = "Show", Location = "ssh.exe", Parameters = "server2 ls {ask:Folder}" });
+            var appended = service.LaunchWith(new ShortcutItem { Name = "Show", Location = "ssh.exe", Parameters = "server2 cat" }, [@"C:\t\a;b.txt"]);
+
+            Assert.Equal(string.Format(Strings.Launch_UnsafeValue, ';', "ssh"), typed.ErrorMessage);
+            Assert.Equal(Strings.Launch_WordIsRemoteOption, asked.ErrorMessage);
+            Assert.Equal(string.Format(Strings.Launch_UnsafeValue, ';', "ssh"), appended.ErrorMessage);
+        }
+    }
+
+    [Fact]
     public void The_clipboard_is_trimmed_and_a_value_of_several_lines_is_refused_for_any_program()
     {
         var trimmed = Create(new Prompts(clipboard: "  report.txt\r\n", answer: null), out var tracker);

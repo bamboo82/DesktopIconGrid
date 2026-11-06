@@ -62,7 +62,13 @@ public sealed class LaunchService(ProcessTracker tracker, ILaunchPrompts? prompt
             template = filled.Parameters;
         }
 
-        var reader = ReaderOf(shortcut, template);
+        // The files take the place of {file} or {files}, or go at the end: they are judged where they go (after ssh's destination).
+        var judged = template is not null
+                     && (template.Contains(DropArguments.FilePlaceholder, StringComparison.OrdinalIgnoreCase)
+                         || template.Contains(DropArguments.FilesPlaceholder, StringComparison.OrdinalIgnoreCase))
+            ? template
+            : $"{template} {DropArguments.FilesPlaceholder}";
+        var reader = ReaderOf(shortcut, judged);
         foreach (var path in paths)
         {
             if (LaunchPlaceholders.RefusedInPath(path, reader) is { } character)
@@ -229,9 +235,15 @@ public sealed class LaunchService(ProcessTracker tracker, ILaunchPrompts? prompt
     private static string RefusalMessage(string character, ArgumentReader reader) => character switch
     {
         "\r" or "\n" => Strings.Launch_ValueHasLineBreak,
-        "-" => Strings.Launch_WordIsParameter, // refused only in PowerShell script text, where it starts a word
+        "-" => reader == ArgumentReader.RemoteShell ? Strings.Launch_WordIsRemoteOption : Strings.Launch_WordIsParameter, // a word of bare words
         _ when character[0] == LaunchPlaceholders.FullwidthQuotationMark => Strings.Launch_LookalikeQuote,
-        _ => string.Format(Strings.Launch_UnsafeValue, character, reader == ArgumentReader.Cmd ? "cmd.exe" : "PowerShell"),
+        _ => string.Format(Strings.Launch_UnsafeValue, character, reader switch
+        {
+            ArgumentReader.Cmd => "cmd.exe",
+            ArgumentReader.PosixShell => "WSL",
+            ArgumentReader.RemoteShell => "ssh",
+            _ => "PowerShell",
+        }),
     };
 
     private LaunchResult StartWithLog(ShortcutItem shortcut, ProcessStartInfo startInfo)

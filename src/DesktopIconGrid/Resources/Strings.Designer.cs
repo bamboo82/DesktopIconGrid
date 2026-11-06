@@ -1383,6 +1383,15 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Not started: a word in the text begins with “-”, so the command ssh runs on the [rest of string was truncated]";.
+        /// </summary>
+        public static string Launch_WordIsRemoteOption {
+            get {
+                return ResourceManager.GetString("Launch_WordIsRemoteOption", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to All categories.
         /// </summary>
         public static string Log_AllCategories {

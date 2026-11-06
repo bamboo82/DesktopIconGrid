@@ -62,30 +62,35 @@ public static partial class LaunchPlaceholders
     /// <list type="bullet">
     /// <item>The program Windows runs for the location. cmd.exe reads it for a batch file (the shell runs it as
     /// <c>cmd /c</c>, and so does the log capture) and for cmd.exe itself. PowerShell reads it as script text for
-    /// powershell.exe without <c>-File</c> and for pwsh with <c>-Command</c>/<c>-EncodedCommand</c>. Any other
-    /// program parses it as arguments.</item>
+    /// powershell.exe without <c>-File</c> and for pwsh with <c>-Command</c>/<c>-EncodedCommand</c>. A Linux shell
+    /// reads it for wsl.exe without <c>-e</c>/<c>--exec</c> and for System32's bash.exe, the old WSL launcher. ssh
+    /// sends the words after its destination to the remote shell as a command. Any other program parses it as
+    /// arguments.</item>
     /// <item>A location without an extension is looked up as the shell does: under App Paths, in the start-in folder,
     /// then along PATH, each with every PATHEXT extension. Commands such as npm, npx, code or az are batch files there.
     /// It counts as cmd.exe when any match is a batch file, or when nothing is found. A shortcut file (<c>.lnk</c>) hands
     /// its arguments to a target that is not known here, so it counts as cmd.exe too.</item>
-    /// <item>cmd.exe or PowerShell named in the parameters. Programs such as <c>wt.exe</c>, <c>conhost.exe</c> and
-    /// <c>runas.exe</c> hand the rest of their command line to it.</item>
+    /// <item>cmd.exe, PowerShell, WSL or ssh named in the parameters. Programs such as <c>wt.exe</c>,
+    /// <c>conhost.exe</c> and <c>runas.exe</c> hand the rest of their command line to it.</item>
     /// </list>
     /// </summary>
     /// <param name="startIn">The folder the program starts in (the shell looks there for a name without a path).</param>
     /// <param name="registeredPathOf">The <c>App Paths</c> entry for a file name such as <c>code.exe</c>, or <see langword="null"/>.</param>
     /// <param name="searchPath">PATH (for tests); the process's own when <see langword="null"/>.</param>
     /// <param name="pathExtensions">PATHEXT (for tests); the process's own when <see langword="null"/>.</param>
+    /// <param name="systemDirectory">System32 (for tests); Windows' own when <see langword="null"/>.</param>
     public static ArgumentReader ReaderOf(
         string? location,
         string? parameters,
         string? startIn = null,
         Func<string, string?>? registeredPathOf = null,
         string? searchPath = null,
-        string? pathExtensions = null)
+        string? pathExtensions = null,
+        string? systemDirectory = null)
     {
+        var system = systemDirectory ?? Environment.SystemDirectory;
         var tokens = (parameters ?? string.Empty).Split([' ', '\t'], StringSplitOptions.RemoveEmptyEntries);
-        var reader = ReaderOfLocation(location, tokens, startIn, registeredPathOf, searchPath, pathExtensions);
+        var reader = ReaderOfLocation(location, tokens, startIn, registeredPathOf, searchPath, pathExtensions, system);
         for (var i = 0; i < tokens.Length && reader != ArgumentReader.PowerShellCommand; i++)
         {
             var named = FileNameOf(tokens[i]);
@@ -97,13 +102,25 @@ public static partial class LaunchPlaceholders
             {
                 reader = Stricter(reader, PowerShellReader(named, tokens[(i + 1)..]));
             }
+            else if (named is "wsl" or "wsl.exe")
+            {
+                reader = Stricter(reader, WslReader(tokens[(i + 1)..]));
+            }
+            else if (named is "bash" or "bash.exe" && IsWslBash(tokens[i].Trim('"', '\''), system))
+            {
+                reader = Stricter(reader, ArgumentReader.PosixShell);
+            }
+            else if (named is "ssh" or "ssh.exe")
+            {
+                reader = Stricter(reader, SshReader(tokens[(i + 1)..]));
+            }
         }
 
         return reader;
     }
 
     private static ArgumentReader ReaderOfLocation(
-        string? location, string[] tokens, string? startIn, Func<string, string?>? registeredPathOf, string? searchPath, string? pathExtensions)
+        string? location, string[] tokens, string? startIn, Func<string, string?>? registeredPathOf, string? searchPath, string? pathExtensions, string system)
     {
         var path = Environment.ExpandEnvironmentVariables(location?.Trim().Trim('"') ?? string.Empty);
         if (path.Length == 0 || LaunchPlanner.IsShellNamespace(path) || LaunchPlanner.IsSpecial(path) || LaunchPlanner.IsUri(path))
@@ -112,9 +129,14 @@ public static partial class LaunchPlaceholders
         }
 
         var name = FileNameOf(path);
-        if (name is "cmd" or "powershell" or "pwsh" || Path.GetExtension(name).Length > 0)
+        if (name is "bash" && IsWslBash(path, system))
         {
-            return ReaderOfFile(name, tokens);
+            return ArgumentReader.PosixShell; // Windows looks in System32 before PATH
+        }
+
+        if (name is "cmd" or "powershell" or "pwsh" or "wsl" || Path.GetExtension(name).Length > 0)
+        {
+            return ReaderOfFile(path, tokens, system);
         }
 
         if (Directory.Exists(path))
@@ -125,7 +147,7 @@ public static partial class LaunchPlaceholders
         var found = Candidates(path, startIn, registeredPathOf, searchPath, pathExtensions).ToList();
         return found.Count == 0
             ? ArgumentReader.Cmd // unknown here: it may be a batch file where it runs
-            : found.Select(file => ReaderOfFile(FileNameOf(file), tokens)).Aggregate(Stricter);
+            : found.Select(file => ReaderOfFile(file, tokens, system)).Aggregate(Stricter);
     }
 
     /// <summary>
@@ -185,15 +207,115 @@ public static partial class LaunchPlaceholders
         }
     }
 
-    /// <summary>Who reads the command line of the file called <paramref name="name"/> (lower case, with its extension).</summary>
-    private static ArgumentReader ReaderOfFile(string name, string[] tokens) => name switch
+    /// <summary>Who reads the command line of the file at <paramref name="path"/> (with its extension, or a name judged by itself).</summary>
+    private static ArgumentReader ReaderOfFile(string path, string[] tokens, string system)
     {
-        _ when name.EndsWith(".bat", StringComparison.Ordinal) || name.EndsWith(".cmd", StringComparison.Ordinal) => ArgumentReader.Cmd,
-        _ when name.EndsWith(".lnk", StringComparison.Ordinal) || name.EndsWith(".pif", StringComparison.Ordinal) => ArgumentReader.Cmd,
-        "cmd" or "cmd.exe" => ArgumentReader.Cmd,
-        "powershell" or "powershell.exe" or "pwsh" or "pwsh.exe" => PowerShellReader(name, tokens),
-        _ => ArgumentReader.Plain,
-    };
+        var name = FileNameOf(path);
+        return name switch
+        {
+            _ when name.EndsWith(".bat", StringComparison.Ordinal) || name.EndsWith(".cmd", StringComparison.Ordinal) => ArgumentReader.Cmd,
+            _ when name.EndsWith(".lnk", StringComparison.Ordinal) || name.EndsWith(".pif", StringComparison.Ordinal) => ArgumentReader.Cmd,
+            "cmd" or "cmd.exe" => ArgumentReader.Cmd,
+            "powershell" or "powershell.exe" or "pwsh" or "pwsh.exe" => PowerShellReader(name, tokens),
+            "wsl" or "wsl.exe" => WslReader(tokens),
+            "bash.exe" when IsWslBash(path, system) => ArgumentReader.PosixShell,
+            "ssh.exe" => SshReader(tokens),
+            _ => ArgumentReader.Plain,
+        };
+    }
+
+    /// <summary>
+    /// wsl.exe hands its command line, quotes and all, to the Linux shell: a quoted value stays one word there, but
+    /// <c>$(…)</c>, <c>`…`</c> and <c>$NAME</c> are expanded inside the quotes. Not with <c>-e</c>/<c>--exec</c> among
+    /// its own options (before the command starts): then it runs the program itself, the value one argument of it.
+    /// </summary>
+    private static ArgumentReader WslReader(IEnumerable<string> tokens)
+    {
+        using var token = tokens.GetEnumerator();
+        while (token.MoveNext())
+        {
+            switch (token.Current.Trim('"').ToLowerInvariant())
+            {
+                case "-e" or "--exec":
+                    return ArgumentReader.Plain;
+                case "-d" or "--distribution" or "--distribution-id" or "-u" or "--user" or "--cd" or "--shell-type":
+                    token.MoveNext(); // the option's value
+                    break;
+                case var option when option.StartsWith('-') && option != "--":
+                    break; // another option of wsl.exe itself
+                default:
+                    return ArgumentReader.PosixShell; // the command line starts here ("--" passes the rest to the shell)
+            }
+        }
+
+        return ArgumentReader.PosixShell;
+    }
+
+    /// <summary>
+    /// ssh joins the words after the destination into one command for the remote shell, without the quotes, so a value
+    /// there is read as bare words, as PowerShell reads script text (<c>ssh host cat {clipboard}</c>). A value up to the
+    /// destination (the host, a login name) is an argument of ssh itself. A dropped file without <c>{file}</c> goes at the
+    /// end, after the destination.
+    /// </summary>
+    private static ArgumentReader SshReader(IEnumerable<string> tokens)
+    {
+        const string optionsWithValue = "BbcDEeFIiJLlmOoPpQRSWw";
+        var afterDestination = false;
+        using var token = tokens.GetEnumerator();
+        while (token.MoveNext())
+        {
+            var word = token.Current.Trim('"');
+            if (afterDestination)
+            {
+                if (HoldsPlaceholder(word))
+                {
+                    return ArgumentReader.RemoteShell;
+                }
+            }
+            else if (word == "--")
+            {
+                afterDestination = token.MoveNext(); // the next word is the destination
+            }
+            else if (word.Length > 1 && word[0] == '-')
+            {
+                var letter = word.IndexOfAny(optionsWithValue.ToCharArray(), 1);
+                if (letter == word.Length - 1)
+                {
+                    token.MoveNext(); // -p 22, -vp 22: the value is the next word (-p22 holds its own)
+                }
+            }
+            else
+            {
+                afterDestination = true; // this word is the destination
+            }
+        }
+
+        return ArgumentReader.Plain;
+    }
+
+    private static bool HoldsPlaceholder(string word) =>
+        word.Contains(ClipboardPlaceholder, StringComparison.OrdinalIgnoreCase)
+        || word.Contains("{ask:", StringComparison.OrdinalIgnoreCase)
+        || word.Contains(DropArguments.FilePlaceholder, StringComparison.OrdinalIgnoreCase)
+        || word.Contains(DropArguments.FilesPlaceholder, StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// Whether <paramref name="path"/> is System32's bash.exe, the old WSL launcher: that folder, or no folder when
+    /// System32 has one (Windows looks there before PATH, so a plain <c>bash</c> is WSL's even with Git Bash on PATH).
+    /// </summary>
+    private static bool IsWslBash(string path, string system)
+    {
+        if (string.IsNullOrEmpty(system))
+        {
+            return false;
+        }
+
+        static string Folder(string value) => value.Replace('/', '\\').TrimEnd('\\');
+        var cut = path.LastIndexOfAny(['\\', '/']);
+        return cut < 0
+            ? File.Exists(Path.Combine(system, "bash.exe"))
+            : string.Equals(Folder(path[..cut]), Folder(system), StringComparison.OrdinalIgnoreCase);
+    }
 
     /// <summary>Script text for powershell.exe unless it runs a script with <c>-File</c>; for pwsh only with a command switch.</summary>
     private static ArgumentReader PowerShellReader(string name, IEnumerable<string> tokens)
@@ -224,12 +346,15 @@ public static partial class LaunchPlaceholders
     /// <list type="bullet">
     /// <item>Every program: a line break, and <see cref="FullwidthQuotationMark"/>.</item>
     /// <item>cmd.exe: also <c>" % ! ^ &amp; | &lt; &gt;</c>.</item>
+    /// <item>A Linux shell through WSL: also <c>$</c> and <c>`</c>, which are expanded inside the quotes it keeps
+    /// (<c>wsl.exe echo "$(echo hi)"</c> prints hi).</item>
     /// <item>PowerShell script text: everything but letters, digits, the space and <c>. _ - \ / :</c>, and a <c>-</c> that
     /// starts a word after a space. powershell.exe and pwsh take the quotes off their arguments before joining them into
     /// the script, so the value is read as bare words. There <c>(…)</c>, <c>|</c>, <c>&amp;</c>, <c>;</c>, <c>{…}</c>,
     /// <c>@</c>, quotes of every kind (also U+2018–U+201E) and more have a meaning, and every word that starts with
     /// <c>-</c> is a parameter (<c>Remove-Item x -Recurse</c>). At the start of the value the option rule decides, by
-    /// where the placeholder stands (<see cref="TakesOptionAt"/>).</item>
+    /// where the placeholder stands (<see cref="TakesOptionAt"/>). The same for the command ssh sends to the remote
+    /// shell, which also gets bare words.</item>
     /// </list>
     /// </summary>
     public static string? Refused(string value, ArgumentReader reader)
@@ -238,7 +363,8 @@ public static partial class LaunchPlaceholders
         return FirstNotAllowed(value, reader switch
         {
             ArgumentReader.Cmd => IsAllowedForCmd,
-            ArgumentReader.PowerShellCommand => IsAllowedInScriptText,
+            ArgumentReader.PosixShell => IsAllowedForPosixShell,
+            ArgumentReader.RemoteShell or ArgumentReader.PowerShellCommand => IsAllowedInScriptText,
             _ => IsAllowedForAny,
         });
     }
@@ -246,7 +372,8 @@ public static partial class LaunchPlaceholders
     /// <summary>
     /// What a dropped file's path holds that the program would act on even inside the quotes the path is given, or
     /// <see langword="null"/>. A file name cannot hold <c>"</c>, so it never leaves its quotes, but cmd.exe still expands
-    /// <c>%NAME%</c> there. PowerShell script text gets the path without its quotes (see <see cref="Refused"/>):
+    /// <c>%NAME%</c> there, and a Linux shell through WSL expands <c>$</c> and <c>`</c> there. PowerShell script text gets
+    /// the path without its quotes (see <see cref="Refused"/>):
     /// <c>a;Write-Output x;.txt</c> is a legal file name. <see cref="FullwidthQuotationMark"/> is refused for every
     /// program.
     /// </summary>
@@ -256,7 +383,8 @@ public static partial class LaunchPlaceholders
         return FirstNotAllowed(path, reader switch
         {
             ArgumentReader.Cmd => (text, index) => text[index] is not ('%' or FullwidthQuotationMark),
-            ArgumentReader.PowerShellCommand => IsAllowedInScriptText,
+            ArgumentReader.PosixShell => (text, index) => text[index] is not ('%' or '$' or '`' or FullwidthQuotationMark),
+            ArgumentReader.RemoteShell or ArgumentReader.PowerShellCommand => IsAllowedInScriptText,
             _ => (text, index) => text[index] != FullwidthQuotationMark,
         });
     }
@@ -290,6 +418,9 @@ public static partial class LaunchPlaceholders
     private static bool IsAllowedForAny(string text, int index) => text[index] is not ('\r' or '\n' or FullwidthQuotationMark);
 
     private static bool IsAllowedForCmd(string text, int index) => IsAllowedForAny(text, index) && "\"%!^&|<>".IndexOf(text[index]) < 0;
+
+    /// <summary>What cmd.exe takes, less <c>$</c> and <c>`</c>, so the readers stay in order of strictness (<c>cmd /c wsl …</c>).</summary>
+    private static bool IsAllowedForPosixShell(string text, int index) => IsAllowedForCmd(text, index) && text[index] is not ('$' or '`');
 
     private static bool IsAllowedInScriptText(string text, int index) => text[index] == '-'
         ? index == 0 || text[index - 1] != ' ' // a word of its own that starts with "-" is a parameter
@@ -327,6 +458,19 @@ public enum ArgumentReader
 
     /// <summary>cmd.exe, where quotes, <c>%</c>, <c>&amp;</c> and the like can end the argument and start a command.</summary>
     Cmd,
+
+    /// <summary>
+    /// A Linux shell through WSL (wsl.exe without <c>-e</c>, System32's bash.exe). It gets the command line with its
+    /// quotes, so a value stays one word, but expands <c>$(…)</c>, <c>`…`</c> and <c>$NAME</c> inside them. What cmd.exe
+    /// refuses is refused too, so each reader refuses at least what the one before it does.
+    /// </summary>
+    PosixShell,
+
+    /// <summary>
+    /// The remote shell ssh sends its command to: the words after the destination, joined without their quotes. A value
+    /// there is checked as PowerShell script text is.
+    /// </summary>
+    RemoteShell,
 
     /// <summary>PowerShell reading its arguments, without their quotes, as script text, where <c>(…)</c> and <c>$(…)</c> run.</summary>
     PowerShellCommand,

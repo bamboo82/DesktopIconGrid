@@ -1724,4 +1724,7 @@
   <data name="Launch_WordIsParameter" xml:space="preserve">
     <value>未啟動：文字中有一個字以「-」開頭，PowerShell 會把它當成命令的參數。</value>
   </data>
+  <data name="Launch_WordIsRemoteOption" xml:space="preserve">
+    <value>未啟動：文字中有一個字以「-」開頭，ssh 在另一部電腦上執行的命令會把它當成選項。</value>
+  </data>
 </root>

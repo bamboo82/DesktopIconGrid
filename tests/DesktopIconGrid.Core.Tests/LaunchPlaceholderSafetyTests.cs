@@ -44,6 +44,56 @@ public sealed class LaunchPlaceholderSafetyTests : IDisposable
         Assert.Equal(reader, LaunchPlaceholders.ReaderOf(location, parameters));
     }
 
+    [Theory]
+    [InlineData("wsl.exe", "grep {clipboard} notes.txt", ArgumentReader.PosixShell)]
+    [InlineData("wsl", "{clipboard}", ArgumentReader.PosixShell)]
+    [InlineData(@"C:\Windows\System32\wsl.exe", "-d Ubuntu -u root -- echo {clipboard}", ArgumentReader.PosixShell)]
+    [InlineData("wsl.exe", "grep -e {clipboard} notes.txt", ArgumentReader.PosixShell)] // grep's -e: the command had started
+    [InlineData("wsl.exe", "-e grep {clipboard} notes.txt", ArgumentReader.Plain)] // runs grep itself, no shell
+    [InlineData("wsl.exe", "--distribution Ubuntu --exec grep {clipboard} notes.txt", ArgumentReader.Plain)]
+    [InlineData("wt.exe", "wsl grep {clipboard} notes.txt", ArgumentReader.PosixShell)]
+    [InlineData("wt.exe", "-p Ubuntu wsl.exe -e grep {clipboard} notes.txt", ArgumentReader.Plain)]
+    [InlineData("cmd.exe", "/c wsl echo {clipboard}", ArgumentReader.PosixShell)] // which refuses what cmd.exe refuses too
+    public void WSL_hands_the_command_line_to_a_Linux_shell_unless_it_runs_the_program_itself(string location, string parameters, ArgumentReader reader)
+    {
+        Assert.Equal(reader, LaunchPlaceholders.ReaderOf(location, parameters, systemDirectory: _directory));
+    }
+
+    [Fact]
+    public void System32s_bash_is_WSL_and_another_bash_is_a_program()
+    {
+        var system = Directory.CreateDirectory(Path.Combine(_directory, "System32")).FullName;
+        var git = Directory.CreateDirectory(Path.Combine(_directory, "Git")).FullName;
+        File.WriteAllBytes(Path.Combine(git, "bash.exe"), []);
+        ArgumentReader Reader(string location, string parameters) =>
+            LaunchPlaceholders.ReaderOf(location, parameters, searchPath: git, pathExtensions: PathExtensions, systemDirectory: system);
+
+        Assert.Equal(ArgumentReader.Plain, Reader("bash", "script.sh {clipboard}")); // Git Bash, found on PATH
+        Assert.Equal(ArgumentReader.Plain, Reader("bash.exe", "script.sh {clipboard}"));
+
+        File.WriteAllBytes(Path.Combine(system, "bash.exe"), []); // WSL's: Windows looks in System32 before PATH
+        Assert.Equal(ArgumentReader.PosixShell, Reader("bash", "script.sh {clipboard}"));
+        Assert.Equal(ArgumentReader.PosixShell, Reader("bash.exe", "-c ls {clipboard}"));
+        Assert.Equal(ArgumentReader.PosixShell, Reader(Path.Combine(system, "bash.exe"), "{clipboard}"));
+        Assert.Equal(ArgumentReader.PosixShell, Reader("wt.exe", "bash {clipboard}"));
+        Assert.Equal(ArgumentReader.Plain, Reader(Path.Combine(git, "bash.exe"), "script.sh {clipboard}")); // named by its own path
+    }
+
+    [Theory]
+    [InlineData("ssh.exe", "server2 cat {clipboard}", ArgumentReader.RemoteShell)]
+    [InlineData("ssh.exe", "-p 2222 -i key admin@server2 tail -n 50 {ask:Log file}", ArgumentReader.RemoteShell)]
+    [InlineData("ssh.exe", "-p2222 -vv server2 cat {clipboard}", ArgumentReader.RemoteShell)]
+    [InlineData("ssh.exe", "-- server2 cat {file}", ArgumentReader.RemoteShell)]
+    [InlineData("ssh.exe", "server2 cat {files}", ArgumentReader.RemoteShell)]
+    [InlineData("wt.exe", "ssh server2 cat {clipboard}", ArgumentReader.RemoteShell)]
+    [InlineData("ssh.exe", "{clipboard}", ArgumentReader.Plain)] // the destination: an argument of ssh itself
+    [InlineData("ssh.exe", "-l {ask:User} server2 uptime", ArgumentReader.Plain)]
+    [InlineData("ssh.exe", "-o ConnectTimeout=5 {ask:Which host} uptime", ArgumentReader.Plain)] // a prompt with a space
+    public void Ssh_sends_the_words_after_its_destination_to_the_remote_shell(string location, string parameters, ArgumentReader reader)
+    {
+        Assert.Equal(reader, LaunchPlaceholders.ReaderOf(location, parameters));
+    }
+
     [Fact]
     public void A_name_without_an_extension_is_read_by_cmd_when_the_shell_finds_a_batch_file_for_it_or_nothing()
     {
@@ -85,6 +135,38 @@ public sealed class LaunchPlaceholderSafetyTests : IDisposable
     public void Cmd_never_gets_quotes_variables_or_operators(string value, string refused)
     {
         Assert.Equal(refused, LaunchPlaceholders.Refused(value, ArgumentReader.Cmd));
+    }
+
+    [Theory]
+    [InlineData("$(echo INJECTED)", "$")] // the review: wsl.exe echo "$(echo INJECTED)" printed INJECTED
+    [InlineData("`id`", "`")]
+    [InlineData("$HOME", "$")]
+    [InlineData("x\" & calc & \"", "\"")] // what cmd.exe refuses is refused too
+    [InlineData("100%PATH%", "%")]
+    public void A_Linux_shell_through_WSL_gets_no_expansion_inside_its_quotes(string value, string refused)
+    {
+        Assert.Equal(refused, LaunchPlaceholders.Refused(value, ArgumentReader.PosixShell));
+    }
+
+    [Fact]
+    public void A_Linux_shell_through_WSL_takes_what_stays_inside_the_quotes()
+    {
+        Assert.Null(LaunchPlaceholders.Refused("a;echo INJECTED2", ArgumentReader.PosixShell)); // the review: printed as written
+        Assert.Null(LaunchPlaceholders.Refused("notes (final) 'v2' *.txt -x", ArgumentReader.PosixShell));
+        Assert.Equal("$", LaunchPlaceholders.RefusedInPath(@"C:\In\a$(id).txt", ArgumentReader.PosixShell));
+        Assert.Equal("`", LaunchPlaceholders.RefusedInPath(@"C:\In\a`id`.txt", ArgumentReader.PosixShell));
+        Assert.Equal("%", LaunchPlaceholders.RefusedInPath(@"C:\In\100%PATH%.txt", ArgumentReader.PosixShell));
+        Assert.Null(LaunchPlaceholders.RefusedInPath(@"C:\In\Tom & Jerry (1)!.mp4", ArgumentReader.PosixShell));
+    }
+
+    [Fact]
+    public void The_command_ssh_sends_gets_what_PowerShell_script_text_gets()
+    {
+        Assert.Equal(";", LaunchPlaceholders.Refused("x; rm -rf ~", ArgumentReader.RemoteShell));
+        Assert.Equal("-", LaunchPlaceholders.Refused("x -rf", ArgumentReader.RemoteShell));
+        Assert.Equal("@", LaunchPlaceholders.Refused("admin@server2", ArgumentReader.RemoteShell)); // fine as the destination, which is Plain
+        Assert.Null(LaunchPlaceholders.Refused("/var/log/syslog.1", ArgumentReader.RemoteShell));
+        Assert.Equal(";", LaunchPlaceholders.RefusedInPath(@"C:\t\a;b.txt", ArgumentReader.RemoteShell));
     }
 
     [Theory]
