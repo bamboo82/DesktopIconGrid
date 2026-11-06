@@ -140,16 +140,27 @@ public sealed class DialogService(IIconProvider icons) : IDialogService, ILaunch
 
     public string? PickFolder(string title, string? initialFolder)
     {
-        var dialog = new Microsoft.Win32.OpenFolderDialog { Title = title, Multiselect = false };
-        // A network share that is off takes up to a minute to say so: such a folder is not looked at on the UI thread.
-        if (!string.IsNullOrWhiteSpace(initialFolder) && !IconWorker.IsOnSlowStorage(initialFolder) && System.IO.Directory.Exists(initialFolder))
-        {
-            dialog.InitialDirectory = initialFolder;
-        }
+        // A network share that is off takes up to a minute to say so: such a folder is not looked at on the UI thread,
+        // and the dialog is not left to open where it was last used either, which is that share when it was picked there.
+        var dialog = new Microsoft.Win32.OpenFolderDialog { Title = title, Multiselect = false, InitialDirectory = LocalFolderToOpen(initialFolder) };
 
         var owner = Owner;
         var picked = owner is null ? dialog.ShowDialog() : dialog.ShowDialog(owner);
         return picked == true && !string.IsNullOrWhiteSpace(dialog.FolderName) ? dialog.FolderName : null;
+    }
+
+    /// <summary><paramref name="folder"/> when it is on a local drive and there; otherwise Documents, or the profile folder when Documents is on a share.</summary>
+    internal static string LocalFolderToOpen(string? folder)
+    {
+        if (!string.IsNullOrWhiteSpace(folder) && !IconWorker.IsOnSlowStorage(folder) && System.IO.Directory.Exists(folder))
+        {
+            return folder;
+        }
+
+        var documents = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+        return documents.Length > 0 && !IconWorker.IsOnSlowStorage(documents) && System.IO.Directory.Exists(documents)
+            ? documents
+            : Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
     }
 
     private static Window? Owner

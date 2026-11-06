@@ -371,40 +371,11 @@ public partial class App : Application
 
         // Per-PC locations belong to this PC and user, not to the data folder (portable mode, copied data).
         ThisDevice.Id = machine ?? settings.DeviceId;
-        var tokenStore = new DpapiTokenStore(TokenFile(Path.GetDirectoryName(settingsStore.FilePath)!, machine));
+        var tokenStore = new DpapiTokenStore(DpapiTokenStore.FileForThisPc(Path.GetDirectoryName(settingsStore.FilePath)!, machine, DataLocation.IsPortable));
         var auth = new GoogleAuthorization(Http, tokenStore, () => settings.Credentials);
         var drive = new GoogleDriveClient(Http, auth);
         var version = Assembly.GetExecutingAssembly().GetName().Version?.ToString(3);
         return new SyncService(auth, drive, settings, () => settingsStore.Save(settings), version, files: drive);
-    }
-
-    /// <summary>
-    /// The Google sign-in's file. DPAPI ties it to one PC and user, so a portable copy keeps one per PC: PCs that share
-    /// the drive no longer sign each other out. The shared file of 0.8.0 is copied once to a PC that has none of its own
-    /// (it works only on the PC that wrote it).
-    /// </summary>
-    private static string TokenFile(string directory, string? machine)
-    {
-        var shared = Path.Combine(directory, "google-token.bin");
-        if (!DataLocation.IsPortable || machine is null)
-        {
-            return shared;
-        }
-
-        var own = Path.Combine(directory, $"google-token-{machine}.bin");
-        if (!File.Exists(own) && File.Exists(shared))
-        {
-            try
-            {
-                File.Copy(shared, own);
-            }
-            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-            {
-                AppLog.Default.Warning("Sync", $"The Google sign-in could not be copied for this PC: {ex.Message}");
-            }
-        }
-
-        return own;
     }
 
     private static HttpClient CreateHttpClient()
