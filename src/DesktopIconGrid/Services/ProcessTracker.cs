@@ -50,16 +50,22 @@ public sealed class ProcessTracker : IDisposable
         || (_watchedPaths.TryGetValue(id, out var target) && target.MatchesAny(_runningPaths.Keys));
 
     /// <summary>
-    /// The processes behind a shortcut, for switching to its windows: the ones started from the bar that still run,
-    /// plus those the last scan found at its program's path (or in its Store package).
-    /// </summary>
-    /// <summary>
     /// Only the processes started from this shortcut that still run: what a shortcut with parameters switches to, since
     /// another copy of the same program may have been started with other parameters.
     /// </summary>
     public IReadOnlySet<int> LaunchedProcessIdsOf(Guid id) =>
         _launched.TryGetValue(id, out var launched) ? new HashSet<int>(launched) : [];
 
+    /// <summary>
+    /// The Store app a shortcut starts (a <c>shell:AppsFolder</c> app, or an inbox program that Windows 11 replaced with
+    /// one), for finding its frame while the app is suspended; <see langword="null"/> for anything else.
+    /// </summary>
+    public string? PackageFamilyOf(Guid id) => _watchedPaths.TryGetValue(id, out var target) ? target.PackageFamily : null;
+
+    /// <summary>
+    /// The processes behind a shortcut, for switching to its windows: the ones started from the bar that still run,
+    /// plus those the last scan found at its program's path (or in its Store package).
+    /// </summary>
     public IReadOnlySet<int> ProcessIdsOf(Guid id)
     {
         var result = new HashSet<int>();

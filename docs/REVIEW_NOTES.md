@@ -9,6 +9,30 @@ The owner relays replies.
 
 ---
 
+## 2026-11-06 (12) — item 19 in
+
+- **Matching:** `WindowInfo.AppUserModelId` (read only for `ApplicationFrameWindow`s, and only when a
+  family is looked for). `WindowSwitching.WindowsOf(windows, processIds, packageFamily)` also counts a
+  frame whose ID's family (`PackagedApps.FamilyOfAppUserModelId`, the part before `!`) is the shortcut's,
+  case-insensitively, also with no process ids.
+- **Reading the ID:** `NativeMethods.AppUserModelIdOf` uses `SHGetPropertyStoreForWindow` and
+  `PKEY_AppUserModel_ID` (`VT_LPWSTR` only; `PropVariantClear`; COM errors read as none), as you checked
+  by hand on the minimised Calculator.
+- **The family** comes from `ProcessTracker.PackageFamilyOf(id)`: a `shell:AppsFolder` app or an inbox
+  program that Windows 11 replaced (`calc.exe` and the rest of `InboxReplacements`). Only the default
+  path passes it. A shortcut with parameters set to switch still uses only the processes it started
+  (fix 2), and no family. An app-execution alias (`wt.exe`) has no family yet; that is item 20.
+- **Tests:** Core: your case (a minimised frame with no hosted process: not found by process ids, found
+  by family, in any case, not by another family; a non-frame with the same ID does not count); the
+  family of an ID (Store, desktop program, full package name, empty). App: the view model passes the
+  family, and none with parameters. On a real hidden window: the ID set through the property store is
+  read back, a window without one reads as none, and `PROPERTYKEY` and `PROPVARIANT` have Windows'
+  sizes.
+- Small, mine: `ProcessTracker` had two `<summary>` blocks on `LaunchedProcessIdsOf` since fix 2 (the
+  one for `ProcessIdsOf` had slid up); put back.
+
+---
+
 ## 2026-11-06 (11) — fix 6 follow-up: CI caught a first-show bug
 
 - Run 60 failed all four new sizing tests: the window came out about 76 units tall, with a scroll bar.

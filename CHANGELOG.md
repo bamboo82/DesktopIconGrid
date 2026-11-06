@@ -94,6 +94,11 @@ layout history, and a command line with *Send to*.
   this version ignores a line's or gap's name when loading, and turning one into a label offers no text.
   Items from a newer version now keep their name as it was (0.7.0 also called nameless ones "Group").
   Covered by tests that put a saved bar through 0.6.0's rules.
+- A click on a Store app that had been minimised for a few seconds (Calculator, Notepad, Paint on
+  Windows 11, or an app added with *Add app…*) started a second copy instead of bringing it back: Windows
+  suspends the app, and its frame then holds no window of the app's process to recognise it by. The frame
+  is now also recognised by the app ID it keeps. The matching is covered by tests and reading the ID by a
+  test on a real window; the owner's screen pass found the bug and checked that the ID is still there.
 
 ## [0.7.0] – 2026-11-05
 

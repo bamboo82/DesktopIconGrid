@@ -222,7 +222,7 @@ version does not know is kept but not drawn.
 | Action | Result |
 | --- | --- |
 | Left click an icon | Launch (shortcut) or open popup (group). Option: double-click instead (groups and special icons still act on one click). Repeated clicks within 400 ms launch once. |
-| Left click a running program (0.7.0) | Like the taskbar: brings its window forward (restored if minimised); a second click while it is in front minimises it; with several windows each click goes to the next one. Store apps are found through the frame they are drawn in. Per shortcut, *Properties → Advanced → When it is running* can make clicks start another instead; documents, folders and links do that by default. |
+| Left click a running program (0.7.0) | Like the taskbar: brings its window forward (restored if minimised); a second click while it is in front minimises it; with several windows each click goes to the next one. Store apps are found through the frame they are drawn in, also when minimised and suspended (by the app ID the frame keeps, since 0.8.0). Per shortcut, *Properties → Advanced → When it is running* can make clicks start another instead; documents, folders and links do that by default. |
 | Shift+click or middle-click an icon | Starts another instance. |
 | Ctrl+Shift+click an icon | Starts it as administrator (an ordinary UAC prompt). |
 | Right click an icon | Item context menu (§4). |

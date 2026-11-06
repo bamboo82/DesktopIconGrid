@@ -7,10 +7,11 @@ namespace DesktopIconGrid.Services;
 public interface IWindowSwitcher
 {
     /// <summary>
-    /// Activates, cycles or minimises a window of <paramref name="processIds"/> (see <see cref="WindowSwitching.Decide"/>).
-    /// False when they have no window to switch to, so the caller starts the program.
+    /// Activates, cycles or minimises a window of <paramref name="processIds"/>, or a Store app frame of
+    /// <paramref name="packageFamily"/> (see <see cref="WindowSwitching.WindowsOf"/> and <see cref="WindowSwitching.Decide"/>).
+    /// False when there is no window to switch to, so the caller starts the program.
     /// </summary>
-    bool TrySwitch(IReadOnlySet<int> processIds);
+    bool TrySwitch(IReadOnlySet<int> processIds, string? packageFamily = null);
 }
 
 /// <summary>
@@ -48,15 +49,15 @@ public sealed class WindowSwitcher : IWindowSwitcher, IDisposable
         }
     }
 
-    public bool TrySwitch(IReadOnlySet<int> processIds)
+    public bool TrySwitch(IReadOnlySet<int> processIds, string? packageFamily = null)
     {
         ArgumentNullException.ThrowIfNull(processIds);
-        if (processIds.Count == 0 || !OperatingSystem.IsWindows())
+        if ((processIds.Count == 0 && packageFamily is null) || !OperatingSystem.IsWindows())
         {
             return false;
         }
 
-        var windows = WindowSwitching.WindowsOf(Snapshot(), processIds);
+        var windows = WindowSwitching.WindowsOf(Snapshot(withAppIds: packageFamily is not null), processIds, packageFamily);
         var action = WindowSwitching.Decide(windows, _lastForeground);
         switch (action.Kind)
         {
@@ -91,13 +92,16 @@ public sealed class WindowSwitcher : IWindowSwitcher, IDisposable
         }
     }
 
-    /// <summary>Every top-level window, topmost first, described for <see cref="WindowSwitching"/>.</summary>
-    internal static List<WindowInfo> Snapshot()
+    /// <summary>
+    /// Every top-level window, topmost first, described for <see cref="WindowSwitching"/>; <paramref name="withAppIds"/>
+    /// also reads the AppUserModelID of each Store app frame.
+    /// </summary>
+    internal static List<WindowInfo> Snapshot(bool withAppIds = false)
     {
         var windows = new List<WindowInfo>();
         NativeMethods.EnumWindowsProc callback = (hwnd, _) =>
         {
-            windows.Add(Describe(hwnd));
+            windows.Add(Describe(hwnd, withAppIds));
             return true;
         };
         NativeMethods.EnumWindows(callback, IntPtr.Zero);
@@ -105,7 +109,7 @@ public sealed class WindowSwitcher : IWindowSwitcher, IDisposable
         return windows;
     }
 
-    private static WindowInfo Describe(IntPtr hwnd)
+    private static WindowInfo Describe(IntPtr hwnd, bool withAppIds)
     {
         NativeMethods.GetWindowThreadProcessId(hwnd, out var processId);
         if (!NativeMethods.IsWindowVisible(hwnd))
@@ -114,6 +118,7 @@ public sealed class WindowSwitcher : IWindowSwitcher, IDisposable
         }
 
         var className = ClassNameOf(hwnd);
+        var isFrame = className == WindowSwitching.FrameWindowClass;
         var exStyle = NativeMethods.GetExStyle(hwnd);
         var cloaked = NativeMethods.DwmGetWindowAttribute(hwnd, NativeMethods.DWMWA_CLOAKED, out var cloakedValue, sizeof(int)) == 0 && cloakedValue != 0;
         return new WindowInfo(
@@ -126,7 +131,8 @@ public sealed class WindowSwitcher : IWindowSwitcher, IDisposable
             IsToolWindow: (exStyle & NativeMethods.WS_EX_TOOLWINDOW) != 0,
             IsAppWindow: (exStyle & NativeMethods.WS_EX_APPWINDOW) != 0,
             IsMinimized: NativeMethods.IsIconic(hwnd),
-            HostedProcessId: className == WindowSwitching.FrameWindowClass ? HostedProcess(hwnd) : null);
+            HostedProcessId: isFrame ? HostedProcess(hwnd) : null,
+            AppUserModelId: isFrame && withAppIds ? NativeMethods.AppUserModelIdOf(hwnd) : null);
     }
 
     /// <summary>The process of the Store app inside a frame: the owner of its <c>Windows.UI.Core.CoreWindow</c> child.</summary>

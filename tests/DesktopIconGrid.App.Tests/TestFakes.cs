@@ -129,10 +129,13 @@ internal sealed class FakeSwitcher : IWindowSwitcher
 
     public IReadOnlySet<int>? LastProcessIds { get; private set; }
 
-    public bool TrySwitch(IReadOnlySet<int> processIds)
+    public string? LastPackageFamily { get; private set; }
+
+    public bool TrySwitch(IReadOnlySet<int> processIds, string? packageFamily = null)
     {
         Calls++;
         LastProcessIds = processIds;
+        LastPackageFamily = packageFamily;
         return Answer;
     }
 }

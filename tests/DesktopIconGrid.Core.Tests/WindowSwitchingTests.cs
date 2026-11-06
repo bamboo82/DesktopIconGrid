@@ -16,8 +16,11 @@ public class WindowSwitchingTests
         bool tool = false,
         bool app = false,
         bool minimized = false,
-        int? hosted = null) =>
-        new(new IntPtr(handle), processId, className, visible, cloaked, owned, tool, app, minimized, hosted);
+        int? hosted = null,
+        string? appId = null) =>
+        new(new IntPtr(handle), processId, className, visible, cloaked, owned, tool, app, minimized, hosted, appId);
+
+    private const string Calculator = "Microsoft.WindowsCalculator_8wekyb3d8bbwe";
 
     [Fact]
     public void Only_windows_with_a_taskbar_button_count()
@@ -48,6 +51,23 @@ public class WindowSwitchingTests
         Assert.Equal([30, 10], found.Select(w => (int)w.Handle));
         Assert.Empty(WindowSwitching.WindowsOf(windows, new HashSet<int>()));
         Assert.Empty(WindowSwitching.WindowsOf(windows, new HashSet<int> { 1234 }));
+    }
+
+    [Fact]
+    public void A_minimised_Store_app_is_found_by_its_frame_s_AppUserModelID()
+    {
+        // The screen pass: 12 s after minimising, Calculator's frame had no CoreWindow child, so no hosted process.
+        var windows = new[]
+        {
+            Window(30, 7, className: WindowSwitching.FrameWindowClass, minimized: true, appId: Calculator + "!App"),
+            Window(50, 7, className: WindowSwitching.FrameWindowClass, appId: "Microsoft.WindowsNotepad_8wekyb3d8bbwe!App"),
+            Window(60, 7, className: "Notepad", appId: Calculator + "!App"), // only a frame counts by its id
+        };
+
+        Assert.Empty(WindowSwitching.WindowsOf(windows, new HashSet<int> { 42 })); // 0.7.0: started a second Calculator
+        Assert.Equal([30], WindowSwitching.WindowsOf(windows, new HashSet<int> { 42 }, Calculator).Select(w => (int)w.Handle));
+        Assert.Equal([30], WindowSwitching.WindowsOf(windows, new HashSet<int>(), Calculator.ToUpperInvariant()).Select(w => (int)w.Handle));
+        Assert.Empty(WindowSwitching.WindowsOf(windows, new HashSet<int>(), "Microsoft.Paint_8wekyb3d8bbwe"));
     }
 
     [Fact]

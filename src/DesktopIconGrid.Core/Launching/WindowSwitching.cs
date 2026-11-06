@@ -12,7 +12,12 @@ namespace DesktopIconGrid.Core.Launching;
 /// <param name="IsMinimized">Iconic.</param>
 /// <param name="HostedProcessId">
 /// For a Store app's <c>ApplicationFrameWindow</c> (owned by ApplicationFrameHost.exe): the process of its
-/// <c>Windows.UI.Core.CoreWindow</c> child, which is the app itself.
+/// <c>Windows.UI.Core.CoreWindow</c> child, which is the app itself. A minimised app is suspended after a few seconds
+/// and its child is gone; then there is none.
+/// </param>
+/// <param name="AppUserModelId">
+/// For a Store app's frame: the app's AppUserModelID (<c>Family!AppId</c>), which the frame keeps while the app is
+/// suspended. Read only when a package family is being looked for.
 /// </param>
 public sealed record WindowInfo(
     IntPtr Handle,
@@ -24,7 +29,8 @@ public sealed record WindowInfo(
     bool IsToolWindow,
     bool IsAppWindow,
     bool IsMinimized,
-    int? HostedProcessId = null);
+    int? HostedProcessId = null,
+    string? AppUserModelId = null);
 
 public enum SwitchKind
 {
@@ -70,19 +76,28 @@ public static class WindowSwitching
 
     /// <summary>
     /// The windows with a taskbar button that belong to <paramref name="processIds"/>, in the snapshot's z-order
-    /// (topmost first). A Store app's frame counts for the process of the app inside it.
+    /// (topmost first). A Store app's frame counts for the process of the app inside it, and for
+    /// <paramref name="packageFamily"/> (the app the shortcut starts, if it is a Store app) by the AppUserModelID it
+    /// keeps: a minimised app is suspended and its frame holds no window of the app's process any more.
     /// </summary>
-    public static IReadOnlyList<WindowInfo> WindowsOf(IEnumerable<WindowInfo> windows, IReadOnlySet<int> processIds)
+    public static IReadOnlyList<WindowInfo> WindowsOf(IEnumerable<WindowInfo> windows, IReadOnlySet<int> processIds, string? packageFamily = null)
     {
         ArgumentNullException.ThrowIfNull(windows);
         ArgumentNullException.ThrowIfNull(processIds);
-        return processIds.Count == 0
+        return processIds.Count == 0 && packageFamily is null
             ? []
             : windows.Where(w => HasTaskbarButton(w)
                                  && (processIds.Contains(w.ProcessId)
-                                     || (w.HostedProcessId is { } hosted && processIds.Contains(hosted))))
+                                     || (w.HostedProcessId is { } hosted && processIds.Contains(hosted))
+                                     || IsFrameOf(w, packageFamily)))
                      .ToList();
     }
+
+    /// <summary>A Store app's frame whose AppUserModelID is in <paramref name="packageFamily"/>.</summary>
+    private static bool IsFrameOf(WindowInfo window, string? packageFamily) =>
+        packageFamily is not null
+        && window.ClassName == FrameWindowClass
+        && string.Equals(PackagedApps.FamilyOfAppUserModelId(window.AppUserModelId), packageFamily, StringComparison.OrdinalIgnoreCase);
 
     /// <summary>
     /// The action for a click on a program whose windows are <paramref name="windows"/> (topmost first), given the

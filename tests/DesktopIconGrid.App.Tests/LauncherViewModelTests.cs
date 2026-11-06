@@ -225,6 +225,31 @@ public sealed class LauncherViewModelTests : IDisposable
     }
 
     [Fact]
+    public void A_Store_app_is_also_looked_for_by_its_package_so_a_suspended_one_is_found()
+    {
+        const string calculator = "Microsoft.WindowsCalculator_8wekyb3d8bbwe";
+        var switcher = new FakeSwitcher();
+        var (viewModel, model, _) = Create(switcher);
+        var app = (ShortcutItem)model.Items[0];
+        var withParameters = (ShortcutItem)model.Items[1]; // a second icon, so the double-click guard does not swallow the click
+        app.Location = withParameters.Location = $@"shell:AppsFolder\{calculator}!App";
+        withParameters.Parameters = "--x";
+        withParameters.WhenRunning = ShortcutItem.WhenRunningSwitch;
+        viewModel.Tracker.Watch(app);
+        viewModel.Tracker.Watch(withParameters);
+
+        viewModel.Activate(viewModel.RootItems.Items[0], null, ActivationModifiers.None);
+
+        Assert.Equal(calculator, switcher.LastPackageFamily); // its frame is found even when the app holds no window in it
+
+        viewModel.Activate(viewModel.RootItems.Items[1], null, ActivationModifiers.None);
+
+        Assert.Equal(2, switcher.Calls);
+        Assert.Null(switcher.LastPackageFamily); // with parameters: only the copies this shortcut started
+        Assert.Empty(_launcher.Launches);
+    }
+
+    [Fact]
     public void A_shortcut_set_to_start_another_never_switches()
     {
         var switcher = new FakeSwitcher();

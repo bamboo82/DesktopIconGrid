@@ -28,19 +28,24 @@ public static class PackagedApps
     public static string? FamilyOfAppsFolderItem(string? location)
     {
         var trimmed = location?.Trim();
-        if (trimmed is null || !trimmed.StartsWith(AppsFolderPrefix, StringComparison.OrdinalIgnoreCase))
+        return trimmed is null || !trimmed.StartsWith(AppsFolderPrefix, StringComparison.OrdinalIgnoreCase)
+            ? null
+            : FamilyOfAppUserModelId(trimmed[AppsFolderPrefix.Length..]); // a desktop program listed by path has none
+    }
+
+    /// <summary>
+    /// The package family of a Store app's AppUserModelID (<c>Family!AppId</c>), as its frame window carries it;
+    /// <see langword="null"/> for a desktop program's id or anything else.
+    /// </summary>
+    public static string? FamilyOfAppUserModelId(string? appUserModelId)
+    {
+        var bang = appUserModelId?.IndexOf('!') ?? -1;
+        if (bang <= 0)
         {
             return null;
         }
 
-        var appUserModelId = trimmed[AppsFolderPrefix.Length..];
-        var bang = appUserModelId.IndexOf('!');
-        if (bang <= 0)
-        {
-            return null; // a desktop program listed in the Apps folder by path or by its own id
-        }
-
-        var family = appUserModelId[..bang];
+        var family = appUserModelId![..bang].Trim();
         return IsFamilyName(family) ? family : null;
     }
 

@@ -2,6 +2,23 @@ using DesktopIconGrid.Core.Launching;
 
 namespace DesktopIconGrid.Core.Tests;
 
+/// <summary>A Store app's frame carries <c>Family!AppId</c>; a desktop program's id has no family.</summary>
+public class AppUserModelIdTests
+{
+    [Theory]
+    [InlineData("Microsoft.WindowsCalculator_8wekyb3d8bbwe!App", "Microsoft.WindowsCalculator_8wekyb3d8bbwe")]
+    [InlineData("Microsoft.WindowsTerminal_8wekyb3d8bbwe!App", "Microsoft.WindowsTerminal_8wekyb3d8bbwe")]
+    [InlineData("Microsoft.Windows.Explorer", null)] // a desktop program's own id
+    [InlineData("Contoso.App_1.0_x64!App", null)] // a full package name, not a family
+    [InlineData("!App", null)]
+    [InlineData("", null)]
+    [InlineData(null, null)]
+    public void The_family_is_the_part_before_the_bang(string? appUserModelId, string? family)
+    {
+        Assert.Equal(family, PackagedApps.FamilyOfAppUserModelId(appUserModelId));
+    }
+}
+
 /// <summary>Store apps run from package folders, so their processes are matched by package family.</summary>
 public class PackagedAppsTests
 {
