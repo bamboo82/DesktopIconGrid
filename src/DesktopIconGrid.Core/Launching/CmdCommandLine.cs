@@ -13,13 +13,12 @@ public static class CmdCommandLine
     /// <summary>
     /// Where the command after cmd.exe's <c>/c</c>, <c>/k</c> or <c>/r</c> starts in <paramref name="arguments"/> (after
     /// the spaces that follow the switch), or -1 when <paramref name="location"/> is not cmd.exe or there is no such switch.
-    /// cmd's own switches (<c>/d /q /s /v:on</c> …) may come before it.
+    /// cmd's own switches (<c>/d /q /s /v:on</c> …) may come before it, also written together (<c>/d/c</c>,
+    /// <c>/V:ON/C</c>): cmd looks for the next <c>/</c> within a word as well.
     /// </summary>
     public static int CommandStart(string? location, string? arguments)
     {
-        var path = Environment.ExpandEnvironmentVariables(location ?? string.Empty).Trim().Trim('"');
-        var name = path[(path.LastIndexOfAny(['\\', '/']) + 1)..].ToLowerInvariant();
-        if (name is not ("cmd" or "cmd.exe") || string.IsNullOrEmpty(arguments))
+        if (!IsCmd(location) || string.IsNullOrEmpty(arguments))
         {
             return -1;
         }
@@ -37,24 +36,46 @@ public static class CmdCommandLine
                 return -1; // a word that is no switch of cmd's: no command switch before it
             }
 
-            if (char.ToLowerInvariant(arguments[i + 1]) is 'c' or 'k' or 'r')
-            {
-                i += 2;
-                while (i < arguments.Length && char.IsWhiteSpace(arguments[i]))
-                {
-                    i++;
-                }
-
-                return i;
-            }
-
             while (i < arguments.Length && !char.IsWhiteSpace(arguments[i]))
             {
-                i++; // another switch of cmd's
+                if (arguments[i] == '/' && i + 1 < arguments.Length && char.ToLowerInvariant(arguments[i + 1]) is 'c' or 'k' or 'r')
+                {
+                    i += 2;
+                    while (i < arguments.Length && char.IsWhiteSpace(arguments[i]))
+                    {
+                        i++;
+                    }
+
+                    return i;
+                }
+
+                i++; // a switch of cmd's, or its value (/v:on, /t:0a)
             }
         }
 
         return -1;
+    }
+
+    /// <summary>
+    /// Whether cmd.exe, the location, reads the text at <paramref name="index"/> of <paramref name="arguments"/> as its own
+    /// switches: there is no <c>/c</c>, <c>/k</c> or <c>/r</c> before it. cmd looks for a <c>/</c> anywhere there, inside
+    /// quotes too, so a value holding <c>x/c calc</c> would run calc.
+    /// </summary>
+    public static bool ReadsAsSwitches(string? location, string? arguments, int index)
+    {
+        if (!IsCmd(location))
+        {
+            return false;
+        }
+
+        var start = CommandStart(location, arguments);
+        return start < 0 || index < start;
+    }
+
+    private static bool IsCmd(string? location)
+    {
+        var path = Environment.ExpandEnvironmentVariables(location ?? string.Empty).Trim().Trim('"');
+        return path[(path.LastIndexOfAny(['\\', '/']) + 1)..].ToLowerInvariant() is "cmd" or "cmd.exe";
     }
 
     /// <summary>

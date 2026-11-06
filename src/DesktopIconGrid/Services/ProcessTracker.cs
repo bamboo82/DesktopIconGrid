@@ -183,8 +183,12 @@ public sealed class ProcessTracker : IDisposable
         RunningChanged?.Invoke(this, id);
     }
 
-    /// <summary>Begins writing the process's output to a new log file for the shortcut. The session owns the process.</summary>
-    public ProcessLogSession StartLog(ShortcutItem shortcut, Process process, ProcessStartInfo startInfo)
+    /// <summary>
+    /// Begins writing the process's output to a new log file for the shortcut. The session owns the process. The file
+    /// starts with <paramref name="commandLine"/>, or the program and arguments it was started with: a launch that filled
+    /// in placeholders passes the template, since a filled value may be a password (<c>plink -pw {ask:Password}</c>).
+    /// </summary>
+    public ProcessLogSession StartLog(ShortcutItem shortcut, Process process, ProcessStartInfo startInfo, string? commandLine = null)
     {
         ArgumentNullException.ThrowIfNull(shortcut);
         Directory.CreateDirectory(LogDirectory);
@@ -192,7 +196,7 @@ public sealed class ProcessTracker : IDisposable
         TrimOldLogs(prefix);
 
         var path = Path.Combine(LogDirectory, $"{prefix}_{DateTime.Now:yyyyMMdd-HHmmss}.log");
-        var session = new ProcessLogSession(shortcut.Id, shortcut.Name, path, process, startInfo, _dispatcher);
+        var session = new ProcessLogSession(shortcut.Id, shortcut.Name, path, process, startInfo, _dispatcher, commandLine);
         if (_logs.Remove(shortcut.Id, out var previous))
         {
             previous.Dispose();
@@ -431,7 +435,7 @@ public sealed class ProcessLogSession : IDisposable
     private StreamWriter? _writer;
     private bool _processDisposed;
 
-    public ProcessLogSession(Guid itemId, string itemName, string logPath, Process process, ProcessStartInfo startInfo, Dispatcher dispatcher)
+    public ProcessLogSession(Guid itemId, string itemName, string logPath, Process process, ProcessStartInfo startInfo, Dispatcher dispatcher, string? commandLine = null)
     {
         ItemId = itemId;
         ItemName = itemName;
@@ -450,7 +454,7 @@ public sealed class ProcessLogSession : IDisposable
             Append($"[log file could not be created: {ex.Message}]");
         }
 
-        Append($"[{StartedAt.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture)}] {startInfo.FileName} {startInfo.Arguments}".TrimEnd());
+        Append($"[{StartedAt.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture)}] {commandLine ?? $"{startInfo.FileName} {startInfo.Arguments}"}".TrimEnd());
         if (!string.IsNullOrEmpty(startInfo.WorkingDirectory))
         {
             Append($"[working directory] {startInfo.WorkingDirectory}");

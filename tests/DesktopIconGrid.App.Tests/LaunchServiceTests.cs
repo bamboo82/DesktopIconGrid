@@ -246,17 +246,131 @@ public sealed class LaunchServiceTests : IDisposable
     }
 
     [Fact]
-    public void Windows_Terminal_hands_a_path_on_without_quotes_so_cmds_characters_are_refused_in_it()
+    public void After_Windows_Terminal_a_placeholder_cmd_reads_is_refused_and_one_its_program_reads_is_not()
     {
-        // Review 16 P5: Windows Terminal quotes an argument only when it holds a space, so cmd got a&calc&.txt bare.
-        var service = Create(new Prompts(clipboard: null, answer: "x\" & calc & \""), out var tracker);
+        // Review 16 P5, review 17 P8 and G2: Windows Terminal quotes an argument again only when it holds a space, and
+        // escapes nothing. Where cmd.exe reads after it, the placement is refused; elsewhere what would split the value.
+        var service = Create(new Prompts(clipboard: "file:///C:/x\" --upload-pack=calc \"y", answer: "x\" & calc & \""), out var tracker);
         using (tracker)
         {
             var dropped = service.LaunchWith(new ShortcutItem { Name = "Type", Location = "wt.exe", Parameters = "cmd /c type {file}" }, [@"C:\t\a&calc&.txt"]);
             var batch = service.Launch(new ShortcutItem { Name = "Build", Location = "wt.exe", Parameters = @"C:\proj\build.cmd {ask:Target}" });
+            var quote = service.Launch(new ShortcutItem { Name = "Clone", Location = "wt.exe", Parameters = "git clone {clipboard}" });
+            var folder = service.LaunchWith(
+                new ShortcutItem { Name = "Here", Location = Path.Combine(_directory, "wt.exe"), Parameters = "-d {file}" }, [@"C:\Program Files (x86)\R&D"]);
 
-            Assert.Equal(string.Format(Strings.Launch_UnsafeValue, '&', "Windows Terminal"), dropped.ErrorMessage);
-            Assert.Equal(string.Format(Strings.Launch_UnsafeValue, '"', "cmd.exe"), batch.ErrorMessage); // a batch file after a relay is cmd's
+            var refusedByCmd = string.Format(Strings.Launch_RelayDropsQuotes, "Windows Terminal", "cmd.exe");
+            Assert.Equal(refusedByCmd, dropped.ErrorMessage);
+            Assert.Equal(refusedByCmd, batch.ErrorMessage); // a batch file after a relay is cmd's
+            Assert.Equal(string.Format(Strings.Launch_RelaySplitsValue, "Windows Terminal"), quote.ErrorMessage);
+            Assert.Equal(LaunchOutcome.Failed, folder.Outcome); // went on, and failed only to start: there is no wt.exe there
+            Assert.NotEqual(refusedByCmd, folder.ErrorMessage);
+            Assert.NotEqual(string.Format(Strings.Launch_RelaySplitsValue, "Windows Terminal"), folder.ErrorMessage);
+            Assert.NotEqual(string.Format(Strings.Launch_UnsafeValue, '(', "Windows Terminal"), folder.ErrorMessage);
+        }
+    }
+
+    [Fact]
+    public void A_quoted_PowerShell_command_takes_a_placeholder_and_gets_the_value_as_it_is()
+    {
+        // Review 17 G3: powershell -Command "Get-Content {file}" was refused as a placeholder inside quotes, though
+        // PowerShell reads the value as bare words, and checks it as such.
+        var output = Path.Combine(_directory, "out.txt");
+        var service = Create(new Prompts(clipboard: null, answer: "hello world"), out var tracker);
+        using (tracker)
+        {
+            var result = service.Launch(new ShortcutItem
+            {
+                Name = "Write",
+                Location = "powershell.exe",
+                Parameters = $"-NoProfile -NonInteractive -Command \"Set-Content -LiteralPath '{output}' -Value '{{ask:Text}}'\"",
+            });
+
+            Assert.Equal(LaunchOutcome.Started, result.Outcome);
+            string? written = null;
+            for (var i = 0; i < 400 && written is null; i++)
+            {
+                try
+                {
+                    written = File.Exists(output) && File.ReadAllText(output).Trim() is { Length: > 0 } text ? text : null;
+                }
+                catch (IOException)
+                {
+                    // still being written
+                }
+
+                if (written is null)
+                {
+                    Thread.Sleep(50);
+                }
+            }
+
+            Assert.Equal("hello world", written);
+        }
+    }
+
+    [Theory]
+    [InlineData("/d/c {clipboard} {file}")] // review 17 P12: switches written together
+    [InlineData("/V:ON/C {clipboard} {file}")]
+    public void A_path_after_cmd_switches_written_together_keeps_its_quotes(string parameters)
+    {
+        // CmdCommandLine found no command switch in /d/c, so the pair cmd takes off was not added (P4 again).
+        var (tool, written) = ArgumentRecorder();
+        var dropped = Path.Combine(_directory, "a&mkdir injected&.txt");
+        var service = Create(new Prompts(clipboard: tool, answer: null), out var tracker);
+        using (tracker)
+        {
+            var result = service.LaunchWith(new ShortcutItem { Name = "Cmd", Location = "cmd.exe", Parameters = parameters }, [dropped]);
+
+            Assert.Equal(LaunchOutcome.Started, result.Outcome);
+            Assert.Equal($"\"{dropped}\"", written());
+        }
+    }
+
+    [Fact]
+    public void The_output_log_writes_the_template_not_the_filled_values()
+    {
+        // Review 17 P17: with Keep a log on, plink -pw {ask:Password} put the password into the shortcut's log file.
+        var (tool, written) = ArgumentRecorder();
+        var service = Create(new Prompts(clipboard: null, answer: "s3cret"), out var tracker);
+        using (tracker)
+        {
+            var result = service.Launch(new ShortcutItem { Name = "Tool", Location = tool, Parameters = "-pw {ask:Password}", CaptureLog = true });
+
+            Assert.Equal(LaunchOutcome.Started, result.Outcome);
+            Assert.Equal("-pw \"s3cret\"", written());
+            var log = Assert.Single(Directory.GetFiles(Path.Combine(_directory, "logs")));
+            using var reader = new StreamReader(new FileStream(log, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete));
+            var text = reader.ReadToEnd();
+            Assert.Contains("-pw {ask:Password}", text, StringComparison.Ordinal);
+            Assert.DoesNotContain("s3cret", text, StringComparison.Ordinal);
+        }
+    }
+
+    [Fact]
+    public void Values_a_quote_a_wrapper_or_a_slash_would_let_out_are_refused_before_anything_starts()
+    {
+        var edge = Path.Combine(_directory, "msedge.exe"); // not started: each launch here is refused first
+        var service = Create(new Prompts(clipboard: "x --no-sandbox --gpu-launcher=calc.exe", answer: "-c__import__('os').system('calc.exe')"), out var tracker);
+        using (tracker)
+        {
+            var touching = service.Launch(new ShortcutItem { Name = "Search", Location = edge, Parameters = "\"https://www.bing.com/search?q=\"{clipboard}" });
+            var single = service.Launch(new ShortcutItem { Name = "Commit", Location = "wsl.exe", Parameters = "git commit -m 'WIP {clipboard}'" });
+            var wrapped = service.Launch(new ShortcutItem { Name = "Py", Location = "wsl.exe", Parameters = "-- python3 {ask:Code}" });
+            var beforeSwitch = service.Launch(new ShortcutItem { Name = "Cmd", Location = "cmd.exe", Parameters = "{clipboard}" });
+
+            Assert.Equal(Strings.Launch_PlaceholderInQuotes, touching.ErrorMessage); // review 17 P10: a "" Edge would end the span at
+            Assert.Equal(Strings.Launch_PlaceholderInQuotes, single.ErrorMessage); // P9: bash's single quotes
+            Assert.Equal(Strings.Launch_ValueIsOption, wrapped.ErrorMessage); // P11: wsl's "--", and python3 reads -c
+            Assert.Equal(Strings.Launch_CmdSwitchValue, beforeSwitch.ErrorMessage); // P12: cmd looks for /c in the value
+        }
+
+        var slash = Create(new Prompts(clipboard: @"/user-data-dir=\\host\share", answer: null), out var tracker2);
+        using (tracker2)
+        {
+            var result = slash.Launch(new ShortcutItem { Name = "Open", Location = edge, Parameters = "{clipboard}" });
+
+            Assert.Equal(Strings.Launch_ValueIsSwitch, result.ErrorMessage); // P13: Chromium reads /name as --name
         }
     }
 

@@ -131,6 +131,12 @@ public class LaunchOptionsTests
     [InlineData("-o\"ProxyCommand {clipboard}\" server2")]
     [InlineData("\"{clipboard} more\"")]
     [InlineData("\"C:\\Program Files\\app.exe {ask:File}")] // a quote never closed
+    [InlineData("\"https://www.bing.com/search?q=\"{clipboard}")] // review 17 P10: the value's quote would make a "" there
+    [InlineData("{clipboard}\"x\"")]
+    [InlineData("\"{ask:A}\"{clipboard}")] // right outside a pair
+    [InlineData("{ask:A}{clipboard}")] // back to back
+    [InlineData("\"\"{clipboard}")]
+    [InlineData("\\\"{clipboard}")] // even a quote character: cmd.exe reads it as a quote
     public void A_placeholder_inside_quotes_with_other_text_is_found(string template)
     {
         Assert.True(LaunchPlaceholders.InsideQuotes(template));
@@ -142,8 +148,9 @@ public class LaunchOptionsTests
     [InlineData("--in={file} \"{files}\"x")]
     [InlineData("\"a b\" {clipboard} \"c d\"")] // quoted spans around it, closed
     [InlineData("{ask:Say \"hi\"} {clipboard}")] // quotes in a prompt are the prompt's
-    [InlineData("\\\"{clipboard}")] // an escaped quote is a character
+    [InlineData("\\\" {clipboard}")] // an escaped quote is a character
     [InlineData("\"say \"\"hi\"\"\" {clipboard}")] // "" inside a span is a quote character
+    [InlineData("{ask:A}\\{clipboard}")] // a backslash between them: \\"…" is a backslash and a quote
     public void A_placeholder_alone_or_outside_quotes_is_fine(string template)
     {
         Assert.False(LaunchPlaceholders.InsideQuotes(template));

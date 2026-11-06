@@ -46,7 +46,10 @@ public static partial class DropArguments
     /// a dropped path goes only where the template has <c>{file}</c> or <c>{files}</c>, never inside a value that holds
     /// one. <paramref name="parameters"/> should already have environment variables expanded.
     /// </summary>
-    public static IReadOnlyList<string> BuildArgumentSets(string? parameters, IReadOnlyList<string> paths, string? clipboard = null, IReadOnlyList<string>? answers = null)
+    /// <param name="fillInsideQuotes">See <see cref="LaunchPlaceholders.Fill"/>: every placeholder inside quotes with
+    /// other text has been judged, and its reader takes bare words.</param>
+    public static IReadOnlyList<string> BuildArgumentSets(
+        string? parameters, IReadOnlyList<string> paths, string? clipboard = null, IReadOnlyList<string>? answers = null, bool fillInsideQuotes = false)
     {
         ArgumentNullException.ThrowIfNull(paths);
         var cleaned = paths.Where(p => !string.IsNullOrWhiteSpace(p)).Select(p => p.Trim()).ToList();
@@ -62,15 +65,15 @@ public static partial class DropArguments
 
         if (template.Contains(FilesPlaceholder, StringComparison.OrdinalIgnoreCase))
         {
-            return [LaunchPlaceholders.Fill(template, clipboard, answers, files: cleaned)];
+            return [LaunchPlaceholders.Fill(template, clipboard, answers, files: cleaned, fillInsideQuotes: fillInsideQuotes)];
         }
 
         if (template.Contains(FilePlaceholder, StringComparison.OrdinalIgnoreCase))
         {
-            return cleaned.Select(path => LaunchPlaceholders.Fill(template, clipboard, answers, file: path)).ToList();
+            return cleaned.Select(path => LaunchPlaceholders.Fill(template, clipboard, answers, file: path, fillInsideQuotes: fillInsideQuotes)).ToList();
         }
 
-        var filled = LaunchPlaceholders.Fill(template, clipboard, answers);
+        var filled = LaunchPlaceholders.Fill(template, clipboard, answers, fillInsideQuotes: fillInsideQuotes);
         return [filled.Length == 0 ? all : $"{filled} {all}"];
     }
 

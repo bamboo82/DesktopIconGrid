@@ -1,5 +1,6 @@
 using System.Windows.Media;
 using DesktopIconGrid.Core.Models;
+using DesktopIconGrid.Resources;
 using DesktopIconGrid.Services;
 using DesktopIconGrid.ViewModels;
 
@@ -59,6 +60,31 @@ public class ItemPropertiesViewModelTests
 
         await viewModel.PreviewSettled;
         Assert.Equal(2, icons.Lookups); // one for the opening, one for the whole burst of edits
+    }
+
+    [Theory]
+    [InlineData("ssh.exe", "server2 \"tail -n 50 {ask:File}\"", null)] // review 17 G3
+    [InlineData("cmd.exe", "/c \"\"{file} x\"\"", "quotes")] // judged as a launch judges it, without cmd's own pair
+    [InlineData("notepad.exe", "\"--in={file}\"", "quotes")]
+    [InlineData("wt.exe", "cmd /c type {file}", "relay")]
+    [InlineData("cmd.exe", "{clipboard}", "switches")]
+    [InlineData("notepad.exe", "{file}", null)]
+    public void The_note_under_the_parameters_says_why_a_launch_would_refuse_them(string location, string parameters, string? note)
+    {
+        var viewModel = new ItemPropertiesViewModel(new ShortcutItem { Name = "Tool", Location = location }, isNew: false, new CountingIcons())
+        {
+            Parameters = parameters,
+        };
+
+        Assert.Equal(
+            note switch
+            {
+                "quotes" => Strings.Props_PlaceholderInQuotes,
+                "relay" => string.Format(Strings.Props_RelayDropsQuotes, "Windows Terminal", "cmd.exe"),
+                "switches" => Strings.Props_CmdSwitch,
+                _ => null,
+            },
+            viewModel.ParametersWarning);
     }
 
     [Fact]

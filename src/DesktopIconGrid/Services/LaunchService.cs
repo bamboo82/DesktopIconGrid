@@ -54,9 +54,20 @@ public sealed class LaunchService(ProcessTracker tracker, ILaunchPrompts? prompt
         var template = string.IsNullOrWhiteSpace(shortcut.Parameters)
             ? null
             : CmdCommandLine.Unwrapped(shortcut.EffectiveLocation, Environment.ExpandEnvironmentVariables(shortcut.Parameters));
-        if (QuotedWithOtherText(template) is { } inQuotes)
+
+        // The files take the place of {file} or {files}, or go at the end: they are judged where they go (after ssh's
+        // destination), on the template, before any value goes in and moves the words. {files} is judged as two {file},
+        // since its second path is a word of its own. Every placeholder, the files at the end too, must be able to stand
+        // where it does before anything is asked.
+        var judged = LaunchPlaceholders.SplitFiles(
+            template is not null
+            && (template.Contains(DropArguments.FilePlaceholder, StringComparison.OrdinalIgnoreCase)
+                || template.Contains(DropArguments.FilesPlaceholder, StringComparison.OrdinalIgnoreCase))
+                ? template
+                : $"{template} {DropArguments.FilesPlaceholder}");
+        if (RefusedPlacement(shortcut, judged) is { } misplaced)
         {
-            return inQuotes;
+            return misplaced;
         }
 
         string? clipboard = null;
@@ -72,24 +83,12 @@ public sealed class LaunchService(ProcessTracker tracker, ILaunchPrompts? prompt
             (clipboard, answers) = (values.Clipboard, values.Answers);
         }
 
-        // The files take the place of {file} or {files}, or go at the end: they are judged where they go (after ssh's
-        // destination), on the template, before any value goes in and moves the words. Then everything goes in at once.
-        var judged = template is not null
-                     && (template.Contains(DropArguments.FilePlaceholder, StringComparison.OrdinalIgnoreCase)
-                         || template.Contains(DropArguments.FilesPlaceholder, StringComparison.OrdinalIgnoreCase))
-            ? template
-            : $"{template} {DropArguments.FilesPlaceholder}";
+        // Then everything goes in at once.
         var readers = LaunchPlaceholders.FilePositions(judged).Select(index => ReaderAt(shortcut, judged, index)).Distinct().ToList();
         var terminal = LaunchPlaceholders.SplitsAtSemicolons(shortcut.EffectiveLocation, template);
         var relay = LaunchPlaceholders.DropsQuotes(shortcut.EffectiveLocation, template);
         foreach (var path in paths)
         {
-            if (relay is not null && LaunchPlaceholders.RefusedWithoutQuotes(path) is { } bare)
-            {
-                AppLog.Default.Warning("Launch", $"A dropped path was refused: {relay} hands it on without quotes, where \"{bare}\" is cmd.exe's: {path}");
-                return LaunchResult.Failure(string.Format(Strings.Launch_UnsafeValue, bare, relay));
-            }
-
             foreach (var reader in readers)
             {
                 if (LaunchPlaceholders.RefusedInPath(path, reader) is { } character)
@@ -99,6 +98,12 @@ public sealed class LaunchService(ProcessTracker tracker, ILaunchPrompts? prompt
                 }
             }
 
+            if (relay is not null && LaunchPlaceholders.SplitByRelay(path) is not null)
+            {
+                AppLog.Default.Warning("Launch", $"A dropped path was refused: {relay} quotes it again only at a space, and it ends in a backslash: {path}");
+                return LaunchResult.Failure(string.Format(Strings.Launch_RelaySplitsValue, relay));
+            }
+
             if (terminal && path.Contains(';', StringComparison.Ordinal))
             {
                 AppLog.Default.Warning("Launch", $"A dropped path was refused for Windows Terminal, which starts another command at \";\": {path}");
@@ -106,7 +111,7 @@ public sealed class LaunchService(ProcessTracker tracker, ILaunchPrompts? prompt
             }
         }
 
-        var argumentSets = DropArguments.BuildArgumentSets(template, paths, clipboard, answers);
+        var argumentSets = DropArguments.BuildArgumentSets(template, paths, clipboard, answers, fillInsideQuotes: true);
         if (argumentSets.Count == 0)
         {
             return LaunchResult.Failure(Strings.Launch_NothingToOpen);
@@ -117,7 +122,7 @@ public sealed class LaunchService(ProcessTracker tracker, ILaunchPrompts? prompt
         {
             var launch = (ShortcutItem)shortcut.Clone();
             launch.Parameters = CmdCommandLine.Wrapped(shortcut.EffectiveLocation, arguments);
-            var result = LaunchCore(launch, expandParameters: false);
+            var result = LaunchCore(launch, expandParameters: false, template: shortcut.Parameters);
             Log(shortcut, result); // the template, as a click logs it: a filled value may be a password (pscp -pw {ask:Password})
             switch (result.Outcome)
             {
@@ -132,7 +137,9 @@ public sealed class LaunchService(ProcessTracker tracker, ILaunchPrompts? prompt
         return failures.Count == 0 ? LaunchResult.Started : LaunchResult.Failure(string.Join("\n", failures.Distinct()));
     }
 
-    private LaunchResult LaunchCore(ShortcutItem shortcut, bool expandParameters = true, bool asAdministrator = false)
+    /// <param name="template">The parameters as written, when <paramref name="shortcut"/>'s are already filled in: what the
+    /// output log writes, never a filled value.</param>
+    private LaunchResult LaunchCore(ShortcutItem shortcut, bool expandParameters = true, bool asAdministrator = false, string? template = null)
     {
         if (expandParameters && DropArguments.WithoutFilePlaceholders(shortcut.Parameters) is var forClick && forClick != shortcut.Parameters?.Trim())
         {
@@ -145,15 +152,22 @@ public sealed class LaunchService(ProcessTracker tracker, ILaunchPrompts? prompt
         {
             // Expand the template first, then fill in the values: a '%' in the clipboard text or an answer stays as typed,
             // and so does a placeholder in them (one pass).
-            var template = CmdCommandLine.Unwrapped(shortcut.EffectiveLocation, Environment.ExpandEnvironmentVariables(shortcut.Parameters));
-            var values = AskForValues(shortcut, template);
+            var unwrapped = CmdCommandLine.Unwrapped(shortcut.EffectiveLocation, Environment.ExpandEnvironmentVariables(shortcut.Parameters));
+            if (RefusedPlacement(shortcut, unwrapped) is { } misplaced)
+            {
+                return misplaced;
+            }
+
+            var values = AskForValues(shortcut, unwrapped);
             if (values.Result is { } stopped)
             {
                 return stopped;
             }
 
+            template = shortcut.Parameters;
             shortcut = (ShortcutItem)shortcut.Clone();
-            shortcut.Parameters = CmdCommandLine.Wrapped(shortcut.EffectiveLocation, LaunchPlaceholders.Fill(template, values.Clipboard, values.Answers));
+            shortcut.Parameters = CmdCommandLine.Wrapped(
+                shortcut.EffectiveLocation, LaunchPlaceholders.Fill(unwrapped, values.Clipboard, values.Answers, fillInsideQuotes: true));
             expandParameters = false;
         }
 
@@ -179,7 +193,7 @@ public sealed class LaunchService(ProcessTracker tracker, ILaunchPrompts? prompt
         UseProgramFolderWhenStartInIsGone(shortcut, startInfo);
         if (CapturesOutput(shortcut, asAdministrator, startInfo))
         {
-            return StartWithLog(shortcut, OutputCapture.WithCapture(startInfo));
+            return StartWithLog(shortcut, OutputCapture.WithCapture(startInfo), template is null ? null : $"{shortcut.EffectiveLocation} {template}");
         }
 
         var result = ProcessLauncher.Start(startInfo);
@@ -204,20 +218,18 @@ public sealed class LaunchService(ProcessTracker tracker, ILaunchPrompts? prompt
 
     /// <summary>
     /// The values for <c>{clipboard}</c> and <c>{ask:…}</c> (see <see cref="LaunchPlaceholders"/>), each checked where it
-    /// goes in <paramref name="template"/>; the caller puts them in with one pass. Returns a result instead when the launch
-    /// stops: the clipboard holds no text, the user cancelled a question, a value holds something the
-    /// program that reads the command line could act on (see <see cref="LaunchPlaceholders.Refused"/>), or a value would
-    /// reach the program as an option (see <see cref="LaunchPlaceholders.TakesOptionAt"/>). The clipboard text is trimmed
-    /// first: a copied line often ends in a line break.
+    /// goes in <paramref name="template"/>, whose placements the caller has judged (<see cref="RefusedPlacement"/>); the
+    /// caller puts them in with one pass. Returns a result instead when the launch stops: the clipboard holds no text, the
+    /// user cancelled a question, a value holds something the program that reads the command line could act on (see
+    /// <see cref="LaunchPlaceholders.Refused"/>) or that a program handing it on would split it at
+    /// (<see cref="LaunchPlaceholders.SplitByRelay"/>), or a value would reach the program as an option or a switch (see
+    /// <see cref="LaunchPlaceholders.TakesOptionAt"/>). The clipboard text is trimmed first: a copied line often ends in a
+    /// line break.
     /// </summary>
     private (string? Clipboard, IReadOnlyList<string> Answers, LaunchResult? Result) AskForValues(ShortcutItem shortcut, string template)
     {
-        if (QuotedWithOtherText(template) is { } inQuotes)
-        {
-            return (null, [], inQuotes); // before anything is asked
-        }
-
         var terminal = LaunchPlaceholders.SplitsAtSemicolons(shortcut.EffectiveLocation, template);
+        var relay = LaunchPlaceholders.DropsQuotes(shortcut.EffectiveLocation, template);
         string? clipboard = null;
         if (LaunchPlaceholders.UsesClipboard(template))
         {
@@ -229,7 +241,7 @@ public sealed class LaunchService(ProcessTracker tracker, ILaunchPrompts? prompt
 
             foreach (var index in LaunchPlaceholders.ClipboardPositions(template)) // each place it goes is judged on its own
             {
-                if (Refuse(clipboard, ReaderAt(shortcut, template, index), LaunchPlaceholders.TakesOptionAt(template, index), terminal) is { } refused)
+                if (Refuse(clipboard, ReaderAt(shortcut, template, index), LaunchPlaceholders.TakesOptionAt(template, index, shortcut.EffectiveLocation), terminal, relay) is { } refused)
                 {
                     return (null, [], refused);
                 }
@@ -247,7 +259,7 @@ public sealed class LaunchService(ProcessTracker tracker, ILaunchPrompts? prompt
             }
 
             var position = askPositions[answers.Count];
-            if (Refuse(answer, ReaderAt(shortcut, template, position), LaunchPlaceholders.TakesOptionAt(template, position), terminal) is { } refused)
+            if (Refuse(answer, ReaderAt(shortcut, template, position), LaunchPlaceholders.TakesOptionAt(template, position, shortcut.EffectiveLocation), terminal, relay) is { } refused)
             {
                 return (null, [], refused);
             }
@@ -266,25 +278,39 @@ public sealed class LaunchService(ProcessTracker tracker, ILaunchPrompts? prompt
         LaunchPlaceholders.ReaderAt(shortcut.EffectiveLocation, template, index, shortcut.StartIn, InstalledPrograms.RegisteredPath);
 
     /// <summary>
-    /// The refusal of a template with a placeholder inside quotes with other text (<c>"--in={file}"</c>): the value's own
-    /// quotes would end the span, and what follows in it would stand outside every quote (see
-    /// <see cref="LaunchPlaceholders.InsideQuotes"/>).
+    /// The refusal of a template with a placeholder that cannot stand where it does for the program that reads it (see
+    /// <see cref="LaunchPlaceholders.PlacementAt"/>), before anything is asked: inside quotes with other text, where the
+    /// value's own quotes would end the span; where cmd.exe or WSL's shell reads it after a program that hands it on
+    /// without its quotes; or, for a value, among cmd.exe's own switches.
     /// </summary>
-    private static LaunchResult? QuotedWithOtherText(string? template)
+    private static LaunchResult? RefusedPlacement(ShortcutItem shortcut, string? template)
     {
-        if (!LaunchPlaceholders.InsideQuotes(template))
+        if (string.IsNullOrEmpty(template)
+            || LaunchPlaceholders.FirstMisplaced(shortcut.EffectiveLocation, template, index => ReaderAt(shortcut, template, index)) is not { } misplaced)
         {
             return null;
         }
 
-        AppLog.Default.Warning("Launch", "Not started: a placeholder stands inside quotes with other text");
-        return LaunchResult.Failure(Strings.Launch_PlaceholderInQuotes);
+        switch (misplaced.Problem)
+        {
+            case PlacementProblem.InsideQuotes:
+                AppLog.Default.Warning("Launch", "Not started: a placeholder stands inside quotes with other text, or touches a quote");
+                return LaunchResult.Failure(Strings.Launch_PlaceholderInQuotes);
+            case PlacementProblem.HandedOnWithoutQuotes:
+                var relay = LaunchPlaceholders.DropsQuotes(shortcut.EffectiveLocation, template) ?? string.Empty;
+                var reader = misplaced.Reader == ArgumentReader.Cmd ? "cmd.exe" : "WSL";
+                AppLog.Default.Warning("Launch", $"Not started: {relay} hands a placeholder on without its quotes, where {reader} reads it");
+                return LaunchResult.Failure(string.Format(Strings.Launch_RelayDropsQuotes, relay, reader));
+            default:
+                AppLog.Default.Warning("Launch", "Not started: a value would stand before cmd.exe's /c or /k, among its own switches");
+                return LaunchResult.Failure(Strings.Launch_CmdSwitchValue);
+        }
     }
 
     /// <summary>The refusal of a <c>;</c> for Windows Terminal (<see cref="LaunchPlaceholders.SplitsAtSemicolons"/>).</summary>
     private static LaunchResult TerminalRefusal => LaunchResult.Failure(string.Format(Strings.Launch_UnsafeValue, ';', "Windows Terminal"));
 
-    private static LaunchResult? Refuse(string value, ArgumentReader reader, bool takesOption, bool terminal)
+    private static LaunchResult? Refuse(string value, ArgumentReader reader, bool takesOption, bool terminal, string? relay)
     {
         if (LaunchPlaceholders.Refused(value, reader) is { } character)
         {
@@ -292,6 +318,12 @@ public sealed class LaunchService(ProcessTracker tracker, ILaunchPrompts? prompt
                 ? $"An empty placeholder value was refused for {reader}"
                 : $"A placeholder value was refused: it holds U+{char.ConvertToUtf32(character, 0):X4}, which {reader} could act on");
             return LaunchResult.Failure(RefusalMessage(character, reader));
+        }
+
+        if (relay is not null && LaunchPlaceholders.SplitByRelay(value) is { } split)
+        {
+            AppLog.Default.Warning("Launch", $"A placeholder value was refused: {relay} quotes it again only at a space, and U+{(int)split[0]:X4} would split it");
+            return LaunchResult.Failure(string.Format(Strings.Launch_RelaySplitsValue, relay));
         }
 
         if (terminal && value.Contains(';', StringComparison.Ordinal))
@@ -304,6 +336,12 @@ public sealed class LaunchService(ProcessTracker tracker, ILaunchPrompts? prompt
         {
             AppLog.Default.Warning("Launch", "A placeholder value was refused: it begins with \"-\" where an argument starts, so the program would take it as an option");
             return LaunchResult.Failure(Strings.Launch_ValueIsOption);
+        }
+
+        if (takesOption && LaunchPlaceholders.TakesSwitch(value, reader))
+        {
+            AppLog.Default.Warning("Launch", "A placeholder value was refused: it begins with \"/\" where an argument starts, so the program could take it as a switch");
+            return LaunchResult.Failure(Strings.Launch_ValueIsSwitch);
         }
 
         return null;
@@ -346,7 +384,7 @@ public sealed class LaunchService(ProcessTracker tracker, ILaunchPrompts? prompt
         startInfo.WorkingDirectory = own ?? string.Empty;
     }
 
-    private LaunchResult StartWithLog(ShortcutItem shortcut, ProcessStartInfo startInfo)
+    private LaunchResult StartWithLog(ShortcutItem shortcut, ProcessStartInfo startInfo, string? commandLine)
     {
         Process? process;
         try
@@ -363,7 +401,7 @@ public sealed class LaunchService(ProcessTracker tracker, ILaunchPrompts? prompt
             return LaunchResult.Failure(Strings.Launch_NotStarted);
         }
 
-        tracker.StartLog(shortcut, process, startInfo);
+        tracker.StartLog(shortcut, process, startInfo, commandLine);
         tracker.Track(shortcut.Id, process, disposeOnExit: false); // the log session drains the output, then disposes
         return LaunchResult.Started;
     }

@@ -1763,4 +1763,22 @@ Details are in {1}.</value>
   <data name="Props_PlaceholderInQuotes" xml:space="preserve">
     <value>A placeholder inside quotes with other text cannot be filled: write it as an argument of its own, or alone in quotes ("{file}").</value>
   </data>
+  <data name="Launch_RelayDropsQuotes" xml:space="preserve">
+    <value>Not started: {0} passes the text on without its quotes, and {1} would read it there as commands. Start {1} from the shortcut itself, not through {0}.</value>
+  </data>
+  <data name="Launch_RelaySplitsValue" xml:space="preserve">
+    <value>Not started: {0} passes the text on and quotes it again only where it holds a space, so a quotation mark, a tab or a “\” at its end would split it into other arguments.</value>
+  </data>
+  <data name="Launch_CmdSwitchValue" xml:space="preserve">
+    <value>Not started: the placeholder comes before /c or /k, where cmd.exe reads the text as its own switches. Put it after them.</value>
+  </data>
+  <data name="Launch_ValueIsSwitch" xml:space="preserve">
+    <value>Not started: the value begins with “/” where an argument starts, so the program could take it as a switch.</value>
+  </data>
+  <data name="Props_RelayDropsQuotes" xml:space="preserve">
+    <value>{0} passes values on without their quotes, so a placeholder that {1} reads after it is refused: start {1} from the shortcut itself.</value>
+  </data>
+  <data name="Props_CmdSwitch" xml:space="preserve">
+    <value>cmd.exe reads a placeholder before /c or /k as its own switches, so it is refused: put it after them.</value>
+  </data>
 </root>

@@ -77,6 +77,23 @@ public class DataLocationTests
     }
 
     [Fact]
+    public void The_program_drive_replaces_an_inherited_APPDRIVE_and_a_copy_on_a_share_clears_it()
+    {
+        // Review 17: a UNC copy started from a stick's bar kept the stick's %APPDRIVE%, and expanded paths as the stick.
+        Environment.SetEnvironmentVariable(DataLocation.AppDriveVariable, "Q:");
+        try
+        {
+            DataLocation.PublishProgramDrive();
+
+            Assert.Equal(DataLocation.DriveOf(AppContext.BaseDirectory), Environment.GetEnvironmentVariable(DataLocation.AppDriveVariable));
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable(DataLocation.AppDriveVariable, null);
+        }
+    }
+
+    [Fact]
     public void APPDRIVE_expands_like_any_variable()
     {
         Environment.SetEnvironmentVariable(DataLocation.AppDriveVariable, "F:");

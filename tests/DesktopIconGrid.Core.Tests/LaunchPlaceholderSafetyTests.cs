@@ -216,26 +216,51 @@ public sealed class LaunchPlaceholderSafetyTests : IDisposable
     [InlineData("WindowsTerminal.exe", "ssh {clipboard}", true, "Windows Terminal")] // review 16 P5: the packaged name too
     [InlineData("conhost.exe", "cmd /c type {file}", false, "conhost.exe")]
     [InlineData("cmd.exe", "/c wt cmd /c type {file}", true, "Windows Terminal")]
+    [InlineData(@"C:\Windows\System32\sudo.exe", "cmd /c type {file}", false, "sudo")] // review 17 P8: sudo and gsudo too
+    [InlineData("powershell.exe", "-Command gsudo Get-Content {file}", false, "gsudo")]
     [InlineData("notepad.exe", "{file}", false, null)]
-    public void Windows_Terminal_and_conhost_hand_arguments_on_without_their_quotes(string location, string parameters, bool splits, string? dropsQuotes)
+    public void Windows_Terminal_conhost_and_sudo_hand_arguments_on_without_their_quotes(string location, string parameters, bool splits, string? dropsQuotes)
     {
         Assert.Equal(splits, LaunchPlaceholders.SplitsAtSemicolons(location, parameters));
         Assert.Equal(dropsQuotes, LaunchPlaceholders.DropsQuotes(location, parameters));
-        Assert.Equal("&", LaunchPlaceholders.RefusedWithoutQuotes(@"C:\t\a&calc&.txt"));
-        Assert.Equal("(", LaunchPlaceholders.RefusedWithoutQuotes(@"C:\t\Report (2).txt"));
-        Assert.Null(LaunchPlaceholders.RefusedWithoutQuotes(@"C:\t\Report 2.txt"));
+    }
+
+    [Theory]
+    [InlineData("file:///C:/x\" --upload-pack=calc \"y", "\"")] // review 17 P8: wt re-quotes at the space, and escapes nothing
+    [InlineData("x\t--upload-pack=calc", "\t")] // a tab, which it does not quote
+    [InlineData(@"C:\My Files\", @"\")] // quoted for its space, the backslash would escape the closing quote
+    [InlineData(@"C:\", null)] // no space: not quoted, so the backslash stays one
+    [InlineData(@"C:\Program Files (x86)\R&D", null)] // review 17 G2: only cmd.exe or a shell would act on these
+    public void After_a_program_that_re_quotes_at_spaces_only_what_would_split_a_value_is_refused(string value, string? refused)
+    {
+        Assert.Equal(refused, LaunchPlaceholders.SplitByRelay(value));
     }
 
     [Fact]
     public void The_second_path_of_files_is_judged_where_it_lands()
     {
         // Review 16: wsl.exe --cd {files} with two folders: the second path starts the shell's command.
-        const string template = "--cd {files}";
+        var template = LaunchPlaceholders.SplitFiles("--cd {files}");
         var positions = LaunchPlaceholders.FilePositions(template);
 
+        Assert.Equal("--cd {file} {file}", template);
         Assert.Equal([5, 12], positions);
         Assert.Equal(ArgumentReader.Plain, LaunchPlaceholders.ReaderAt("wsl.exe", template, positions[0]));
         Assert.Equal(ArgumentReader.PosixShell, LaunchPlaceholders.ReaderAt("wsl.exe", template, positions[1]));
+    }
+
+    [Theory]
+    [InlineData("{files} server2:/tmp/")] // review 17 G1: the second path was judged at the start of the host's word
+    [InlineData("-r {files} server2:dir")]
+    [InlineData("\"{files}\" server2:/tmp/")]
+    public void Both_paths_of_files_are_local_paths_for_scp(string parameters)
+    {
+        var template = LaunchPlaceholders.SplitFiles(parameters);
+        var positions = LaunchPlaceholders.FilePositions(template);
+
+        Assert.Equal(2, positions.Count);
+        Assert.All(positions, index => Assert.Equal(ArgumentReader.Plain, LaunchPlaceholders.ReaderAt("scp.exe", template, index)));
+        Assert.Null(LaunchPlaceholders.RefusedInPath(@"C:\Users\me\report.txt", ArgumentReader.Plain));
     }
 
     [Fact]

@@ -1763,4 +1763,22 @@
   <data name="Props_PlaceholderInQuotes" xml:space="preserve">
     <value>與其他文字一起放在引號內的預留位置無法填入：請把它寫成單獨的引數，或單獨放在引號內（"{file}"）。</value>
   </data>
+  <data name="Launch_RelayDropsQuotes" xml:space="preserve">
+    <value>未啟動：{0} 會去掉引號再把文字傳下去，{1} 會在那裡把它當成命令讀取。請讓捷徑直接啟動 {1}，不要經過 {0}。</value>
+  </data>
+  <data name="Launch_RelaySplitsValue" xml:space="preserve">
+    <value>未啟動：{0} 把文字傳下去時，只在含有空格時重新加上引號，因此其中的引號、Tab 字元或結尾的「\」會把它拆成其他引數。</value>
+  </data>
+  <data name="Launch_CmdSwitchValue" xml:space="preserve">
+    <value>未啟動：預留位置在 /c 或 /k 之前，cmd.exe 會在那裡把文字當成它自己的選項。請把預留位置放在它們後面。</value>
+  </data>
+  <data name="Launch_ValueIsSwitch" xml:space="preserve">
+    <value>未啟動：這個值在引數開頭處以「/」開頭，程式可能會把它當成選項。</value>
+  </data>
+  <data name="Props_RelayDropsQuotes" xml:space="preserve">
+    <value>{0} 會去掉值的引號再傳下去，因此在它之後由 {1} 讀取的預留位置會被拒絕：請讓捷徑直接啟動 {1}。</value>
+  </data>
+  <data name="Props_CmdSwitch" xml:space="preserve">
+    <value>cmd.exe 會把 /c 或 /k 之前的預留位置當成它自己的選項，因此會被拒絕：請把它放在它們後面。</value>
+  </data>
 </root>

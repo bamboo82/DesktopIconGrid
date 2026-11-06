@@ -175,6 +175,7 @@ public sealed class ItemPropertiesViewModel : ObservableObject
             }
 
             OnPropertyChanged(nameof(CanSave));
+            OnPropertyChanged(nameof(ParametersWarning)); // who reads the placeholders
             RefreshPreviewAndWarning();
         }
     }
@@ -195,8 +196,40 @@ public sealed class ItemPropertiesViewModel : ObservableObject
     /// <summary>A path as typed or pasted, without the quotes Explorer's Copy as path puts around it ("E:\Apps\x.exe").</summary>
     private static string Unquoted(string path) => path.Trim().Trim('"').Trim();
 
-    /// <summary>Said under the parameters when a placeholder stands inside quotes with other text, which a launch refuses.</summary>
-    public string? ParametersWarning => LaunchPlaceholders.InsideQuotes(_parameters) ? Strings.Props_PlaceholderInQuotes : null;
+    /// <summary>
+    /// Said under the parameters when a placeholder stands where a launch refuses it, judged as a launch judges it (the
+    /// variables expanded, cmd.exe's pair around its command taken off, {files} as two {file}): inside quotes with other
+    /// text, after a program that hands it on without its quotes to cmd.exe or WSL, or before cmd.exe's /c.
+    /// </summary>
+    public string? ParametersWarning
+    {
+        get
+        {
+            if (string.IsNullOrWhiteSpace(_parameters) || IsGroup)
+            {
+                return null;
+            }
+
+            var location = Unquoted(_location);
+            var template = LaunchPlaceholders.SplitFiles(CmdCommandLine.Unwrapped(location, Environment.ExpandEnvironmentVariables(_parameters)));
+            if (LaunchPlaceholders.SpotsOf(template).Count == 0)
+            {
+                return null;
+            }
+
+            var startIn = Unquoted(_startIn);
+            var misplaced = LaunchPlaceholders.FirstMisplaced(
+                location, template, index => LaunchPlaceholders.ReaderAt(location, template, index, startIn, InstalledPrograms.RegisteredPath));
+            return misplaced?.Problem switch
+            {
+                PlacementProblem.InsideQuotes => Strings.Props_PlaceholderInQuotes,
+                PlacementProblem.HandedOnWithoutQuotes => string.Format(
+                    Strings.Props_RelayDropsQuotes, LaunchPlaceholders.DropsQuotes(location, template), misplaced.Value.Reader == ArgumentReader.Cmd ? "cmd.exe" : "WSL"),
+                PlacementProblem.CmdSwitches => Strings.Props_CmdSwitch,
+                _ => null,
+            };
+        }
+    }
 
     /// <summary>Until the user picks <see cref="SelectedWhenRunning"/>, it shows the default for the location and parameters.</summary>
     private void FollowDefaultWhenRunning()
@@ -252,7 +285,13 @@ public sealed class ItemPropertiesViewModel : ObservableObject
     public string StartIn
     {
         get => _startIn;
-        set => SetProperty(ref _startIn, value ?? string.Empty);
+        set
+        {
+            if (SetProperty(ref _startIn, value ?? string.Empty))
+            {
+                OnPropertyChanged(nameof(ParametersWarning)); // a bare name may be a batch file in this folder
+            }
+        }
     }
 
     public string StartInHint => Strings.Props_StartInHint;

@@ -1212,6 +1212,15 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Not started: the placeholder comes before /c or /k, where cmd.exe reads the text [rest of string was truncated]";.
+        /// </summary>
+        public static string Launch_CmdSwitchValue {
+            get {
+                return ResourceManager.GetString("Launch_CmdSwitchValue", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Layout file.
         /// </summary>
         public static string Launch_LayoutFileTitle {
@@ -1302,6 +1311,24 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Not started: {0} passes the text on without its quotes, and {1} would read it th [rest of string was truncated]";.
+        /// </summary>
+        public static string Launch_RelayDropsQuotes {
+            get {
+                return ResourceManager.GetString("Launch_RelayDropsQuotes", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Not started: {0} passes the text on and quotes it again only where it holds a sp [rest of string was truncated]";.
+        /// </summary>
+        public static string Launch_RelaySplitsValue {
+            get {
+                return ResourceManager.GetString("Launch_RelaySplitsValue", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Remove the group "{0}"?.
         /// </summary>
         public static string Launch_RemoveGroupQuestion {
@@ -1365,7 +1392,7 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Not started: the host or user name begins with “-”, so a program that ssh starts [rest of string was truncated]";.
+        ///   Looks up a localized string similar to Not started: the host or user name begins with “-”, or has one right after “@”, [rest of string was truncated]";.
         /// </summary>
         public static string Launch_SshNameIsOption {
             get {
@@ -1374,7 +1401,7 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Not started: ssh would read the text as its own settings (in -o, or as more opti [rest of string was truncated]";.
+        ///   Looks up a localized string similar to Not started: ssh would take the text as its own settings or options, some of whi [rest of string was truncated]";.
         /// </summary>
         public static string Launch_SshOptionValue {
             get {
@@ -1406,6 +1433,15 @@ namespace DesktopIconGrid.Resources {
         public static string Launch_ValueIsOption {
             get {
                 return ResourceManager.GetString("Launch_ValueIsOption", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Not started: the value begins with “/” where an argument starts, so the program [rest of string was truncated]";.
+        /// </summary>
+        public static string Launch_ValueIsSwitch {
+            get {
+                return ResourceManager.GetString("Launch_ValueIsSwitch", resourceCulture);
             }
         }
 
@@ -2697,6 +2733,15 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to cmd.exe reads a placeholder before /c or /k as its own switches, so it is refuse [rest of string was truncated]";.
+        /// </summary>
+        public static string Props_CmdSwitch {
+            get {
+                return ResourceManager.GetString("Props_CmdSwitch", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Downloading {0}….
         /// </summary>
         public static string Props_Downloading {
@@ -2873,6 +2918,15 @@ namespace DesktopIconGrid.Resources {
         public static string Props_ProgramFilter {
             get {
                 return ResourceManager.GetString("Props_ProgramFilter", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to {0} passes values on without their quotes, so a placeholder that {1} reads after [rest of string was truncated]";.
+        /// </summary>
+        public static string Props_RelayDropsQuotes {
+            get {
+                return ResourceManager.GetString("Props_RelayDropsQuotes", resourceCulture);
             }
         }
 
@@ -3723,20 +3777,20 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to If the entry was turned off under Startup apps (Task Manager or Settings), the b [rest of string was truncated]";.
-        /// </summary>
-        public static string Settings_StartupDisabledHint {
-            get {
-                return ResourceManager.GetString("Settings_StartupDisabledHint", resourceCulture);
-            }
-        }
-
-        /// <summary>
         ///   Looks up a localized string similar to Start with Windows.
         /// </summary>
         public static string Settings_StartWithWindows {
             get {
                 return ResourceManager.GetString("Settings_StartWithWindows", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to If the entry was turned off under Startup apps (Task Manager or Settings), the b [rest of string was truncated]";.
+        /// </summary>
+        public static string Settings_StartupDisabledHint {
+            get {
+                return ResourceManager.GetString("Settings_StartupDisabledHint", resourceCulture);
             }
         }
 

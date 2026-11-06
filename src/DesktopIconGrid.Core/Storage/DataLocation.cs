@@ -79,14 +79,12 @@ public static class DataLocation
             ? char.ToUpperInvariant(directory[0]) + ":"
             : null;
 
-    /// <summary>Sets <c>%APPDRIVE%</c> for this process, and so for the programs it starts, to the program's drive.</summary>
-    public static void PublishProgramDrive()
-    {
-        if (DriveOf(AppContext.BaseDirectory) is { } drive)
-        {
-            Environment.SetEnvironmentVariable(AppDriveVariable, drive);
-        }
-    }
+    /// <summary>
+    /// Sets <c>%APPDRIVE%</c> for this process, and so for the programs it starts, to the program's drive. A copy run
+    /// from a share has none, and clears the one it may have inherited: started from a stick's bar, it would otherwise
+    /// expand <c>%APPDRIVE%</c> as the stick.
+    /// </summary>
+    public static void PublishProgramDrive() => Environment.SetEnvironmentVariable(AppDriveVariable, DriveOf(AppContext.BaseDirectory));
 
     /// <summary>
     /// In portable mode, a path on the program's own drive is written with <c>%APPDRIVE%</c>; otherwise, and on Windows'

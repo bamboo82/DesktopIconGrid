@@ -1763,4 +1763,22 @@
   <data name="Props_PlaceholderInQuotes" xml:space="preserve">
     <value>与其他文字一起放在引号内的占位符无法填入：请把它写成单独的参数，或单独放在引号内（"{file}"）。</value>
   </data>
+  <data name="Launch_RelayDropsQuotes" xml:space="preserve">
+    <value>未启动：{0} 会去掉引号再把文字传下去，{1} 会在那里把它当成命令读取。请让快捷方式直接启动 {1}，不要经过 {0}。</value>
+  </data>
+  <data name="Launch_RelaySplitsValue" xml:space="preserve">
+    <value>未启动：{0} 把文字传下去时，只在含有空格时重新加上引号，因此其中的引号、Tab 字符或结尾的“\”会把它拆成其他参数。</value>
+  </data>
+  <data name="Launch_CmdSwitchValue" xml:space="preserve">
+    <value>未启动：占位符在 /c 或 /k 之前，cmd.exe 会在那里把文字当成它自己的选项。请把占位符放在它们后面。</value>
+  </data>
+  <data name="Launch_ValueIsSwitch" xml:space="preserve">
+    <value>未启动：这个值在参数开头处以“/”开头，程序可能会把它当成选项。</value>
+  </data>
+  <data name="Props_RelayDropsQuotes" xml:space="preserve">
+    <value>{0} 会去掉值的引号再传下去，因此在它之后由 {1} 读取的占位符会被拒绝：请让快捷方式直接启动 {1}。</value>
+  </data>
+  <data name="Props_CmdSwitch" xml:space="preserve">
+    <value>cmd.exe 会把 /c 或 /k 之前的占位符当成它自己的选项，因此会被拒绝：请把它放在它们后面。</value>
+  </data>
 </root>

@@ -31,14 +31,19 @@ public static partial class LaunchPlaceholders
     /// <paramref name="file"/> for <c>{file}</c> and <paramref name="files"/> for <c>{files}</c> (left as written when
     /// <see langword="null"/>). Each value is quoted as one argument (<see cref="DropArguments.Quote"/>). Nothing put in is
     /// read again: a value that holds <c>{file}</c> or <c>{clipboard}</c> keeps it as text, where it was checked. Where a
-    /// placeholder stands is read as the C runtime reads a command line (<see cref="SpotsOf"/>): quotes written as a pair
-    /// around the placeholder alone (<c>"{x}"</c>) give way to the value's own, and a run of backslashes right before a
-    /// placeholder is doubled, since the value's quote now follows it. A placeholder inside quotes with other text
-    /// (<c>"--in={file}"</c>) cannot be filled: its value's quotes would end the span (see <see cref="InsideQuotes"/>).
-    /// <paramref name="parameters"/> should already have its environment variables expanded, so a <c>%</c> in a value
-    /// is never expanded.
+    /// placeholder stands is read as the C runtime (the UCRT) reads a command line (<see cref="SpotsOf"/>): quotes written
+    /// as a pair around the placeholder alone (<c>"{x}"</c>) give way to the value's own, and a run of backslashes right
+    /// before a placeholder is doubled, since the value's quote now follows it. A placeholder inside quotes with other text
+    /// (<c>"--in={file}"</c>) is refused, since its value's quotes would end the span (see <see cref="InsideQuotes"/>),
+    /// unless <paramref name="fillInsideQuotes"/> says its reader takes the value as bare words
+    /// (<see cref="TakesBareWords"/>): then the value goes in as it is, which must hold no quote, and backslashes at its end
+    /// are doubled when a quote of the template follows. <paramref name="parameters"/> should already have its environment
+    /// variables expanded, so a <c>%</c> in a value is never expanded.
     /// </summary>
-    public static string Fill(string parameters, string? clipboard, IReadOnlyList<string> answers, string? file = null, IReadOnlyList<string>? files = null)
+    /// <param name="fillInsideQuotes">The caller has judged every placeholder inside quotes with other text, and found
+    /// that its reader takes bare words (<see cref="PlacementAt"/>).</param>
+    public static string Fill(
+        string parameters, string? clipboard, IReadOnlyList<string> answers, string? file = null, IReadOnlyList<string>? files = null, bool fillInsideQuotes = false)
     {
         ArgumentNullException.ThrowIfNull(parameters);
         ArgumentNullException.ThrowIfNull(answers);
@@ -51,18 +56,18 @@ public static partial class LaunchPlaceholders
             builder.Append(parameters, last, start - last);
             last = end;
             var name = parameters[spot.Start..spot.End];
-            string? value;
+            IReadOnlyList<string>? values;
             if (name.Equals(ClipboardPlaceholder, StringComparison.OrdinalIgnoreCase))
             {
-                value = DropArguments.Quote(clipboard ?? string.Empty);
+                values = [clipboard ?? string.Empty];
             }
             else if (name.Equals(DropArguments.FilesPlaceholder, StringComparison.OrdinalIgnoreCase))
             {
-                value = files is null ? null : string.Join(' ', files.Select(DropArguments.Quote));
+                values = files;
             }
             else if (name.Equals(DropArguments.FilePlaceholder, StringComparison.OrdinalIgnoreCase))
             {
-                value = file is null ? null : DropArguments.Quote(file);
+                values = file is null ? null : [file];
             }
             else
             {
@@ -71,24 +76,57 @@ public static partial class LaunchPlaceholders
                     throw new ArgumentException("Fewer answers than {ask:…} placeholders.", nameof(answers));
                 }
 
-                value = DropArguments.Quote(answers[next++]);
+                values = [answers[next++]];
             }
 
-            if (value is null)
+            if (values is null)
             {
                 builder.Append(parameters, start, end - start); // no files: as written
                 continue;
             }
 
-            if (spot.Kind == PlaceholderSpot.InsideQuotes)
+            if (spot.Kind != PlaceholderSpot.InsideQuotes)
+            {
+                builder.Append('\\', spot.Backslashes).Append(string.Join(' ', values.Select(DropArguments.Quote)));
+                continue;
+            }
+
+            if (!fillInsideQuotes)
             {
                 throw new ArgumentException("A placeholder inside quotes with other text cannot be filled; such a template is refused first.", nameof(parameters));
             }
 
-            builder.Append('\\', spot.Backslashes).Append(value);
+            var raw = string.Join(' ', values);
+            if (raw.IndexOfAny(['"', FullwidthQuotationMark]) >= 0)
+            {
+                throw new ArgumentException("A value inside quotes cannot hold a quote; its reader refuses one first.", nameof(parameters));
+            }
+
+            builder.Append(raw);
+            if (QuoteFollows(parameters, end))
+            {
+                var run = 0;
+                while (run < builder.Length && builder[builder.Length - 1 - run] == '\\')
+                {
+                    run++;
+                }
+
+                builder.Append('\\', run); // they now come before a quote: doubled, they stay backslashes
+            }
         }
 
         return builder.Append(parameters, last, parameters.Length - last).ToString();
+    }
+
+    /// <summary>Whether a quote follows <paramref name="index"/> in <paramref name="text"/>, after any backslashes.</summary>
+    private static bool QuoteFollows(string text, int index)
+    {
+        while (index < text.Length && text[index] == '\\')
+        {
+            index++;
+        }
+
+        return index < text.Length && text[index] == '"';
     }
 
     /// <summary>Where a placeholder stands among the template's quotes (see <see cref="SpotsOf"/>).</summary>
@@ -108,11 +146,37 @@ public static partial class LaunchPlaceholders
     public readonly record struct Spot(int Start, int End, PlaceholderSpot Kind, int Backslashes);
 
     /// <summary>
-    /// The placeholders of <paramref name="template"/> in order, read as the C runtime (CommandLineToArgvW) reads a command
-    /// line: a <c>"</c> opens or closes a quoted span, unless an odd run of backslashes comes before it, and <c>""</c>
-    /// inside a span is a quote character. A placeholder's own text (a prompt may hold quotes) is passed over.
+    /// The placeholders of <paramref name="template"/> in order, read as the C runtime (the UCRT) reads a command line: a
+    /// <c>"</c> opens or closes a quoted span, unless an odd run of backslashes comes before it, and <c>""</c> inside a
+    /// span is a quote character, the span going on (CommandLineToArgvW ends it there: <see cref="SpotAt"/> holds a
+    /// placeholder to both). A placeholder's own text (a prompt may hold quotes) is passed over. A placeholder whose value
+    /// would touch a quote counts as inside quotes: a quote written right before or after it, a quote right outside its
+    /// pair, or another placeholder right next to it (<c>"…q="{clipboard}</c>, <c>{x}{y}</c>). Filling would make a
+    /// <c>""</c> there, which the two read differently.
     /// </summary>
-    public static IReadOnlyList<Spot> SpotsOf(string template)
+    public static IReadOnlyList<Spot> SpotsOf(string template) => Touching(template, ScanSpots(template));
+
+    /// <summary>Where each value's quotes would go: around the placeholder, or in place of its pair.</summary>
+    private static (int Start, int End) Outer(Spot spot) => spot.Kind == PlaceholderSpot.QuotedAlone ? (spot.Start - 1, spot.End + 1) : (spot.Start, spot.End);
+
+    private static List<Spot> Touching(string template, List<Spot> spots)
+    {
+        var result = new List<Spot>(spots.Count);
+        for (var k = 0; k < spots.Count; k++)
+        {
+            var spot = spots[k];
+            var (start, end) = Outer(spot);
+            var before = spot.Backslashes == 0 && start > 0 && (template[start - 1] == '"' || (k > 0 && Outer(spots[k - 1]).End == start));
+            var after = end < template.Length && (template[end] == '"' || (k + 1 < spots.Count && Outer(spots[k + 1]).Start == end));
+            result.Add(spot.Kind != PlaceholderSpot.InsideQuotes && (before || after)
+                ? spot with { Kind = PlaceholderSpot.InsideQuotes, Backslashes = 0 }
+                : spot);
+        }
+
+        return result;
+    }
+
+    private static List<Spot> ScanSpots(string template)
     {
         ArgumentNullException.ThrowIfNull(template);
         var spots = new List<Spot>();
@@ -183,19 +247,26 @@ public static partial class LaunchPlaceholders
         return spots;
     }
 
-    /// <summary>Whether a placeholder stands inside quotes with other text, where its value's own quotes would end the span.</summary>
+    /// <summary>
+    /// Whether a placeholder stands inside quotes with other text, where its value's own quotes would end the span, or
+    /// touches a quote (<see cref="SpotsOf"/>). Whether that is refused depends on who reads it (<see cref="PlacementAt"/>).
+    /// </summary>
     public static bool InsideQuotes(string? template) =>
         !string.IsNullOrEmpty(template) && SpotsOf(template).Any(spot => spot.Kind == PlaceholderSpot.InsideQuotes);
 
     /// <summary>
-    /// A program that starts the program named in its own arguments: Windows Terminal, conhost, runas and Windows'
-    /// sudo. What it starts may be a batch file, which cmd.exe reads: named so (<c>build.cmd</c>), or a bare name that
-    /// Windows finds as one on PATH (<see cref="StartsABatchFile"/>).
+    /// A program that starts the program named in its own arguments: Windows Terminal, conhost, runas, Windows' sudo and
+    /// gsudo. What it starts may be a batch file, which cmd.exe reads: named so (<c>build.cmd</c>), or a bare name that
+    /// Windows finds as one on PATH (<see cref="StartsABatchFile"/>). gsudo hands anything but a program to cmd.exe.
     /// </summary>
     private static bool IsRelay(string name) =>
-        name is "wt" or "wt.exe" or "windowsterminal" or "windowsterminal.exe" or "conhost" or "conhost.exe" or "runas" or "runas.exe" or "sudo" or "sudo.exe";
+        name is "wt" or "wt.exe" or "windowsterminal" or "windowsterminal.exe" or "conhost" or "conhost.exe" or "runas" or "runas.exe" or "sudo" or "sudo.exe"
+            or "gsudo" or "gsudo.exe";
 
-    /// <summary>Whether a word a relay may start is a bare name that Windows finds as a batch file (PATHEXT, PATH).</summary>
+    /// <summary>
+    /// Whether a word a relay may start is a bare name that Windows finds as a batch file (PATHEXT, PATH). A name found
+    /// nowhere while a folder was passed over (<see cref="Candidates"/>) may be one there, so it counts as one.
+    /// </summary>
     private static bool StartsABatchFile(string word, string? startIn, Func<string, string?>? registeredPathOf, string? searchPath, string? pathExtensions)
     {
         if (word.Length == 0 || word[0] is '-' or '/' || Path.HasExtension(word) || AnyPlaceholder().IsMatch(word))
@@ -203,8 +274,9 @@ public static partial class LaunchPlaceholders
             return false;
         }
 
-        return Candidates(word, startIn, registeredPathOf, searchPath, pathExtensions)
-            .Any(file => FileNameOf(file) is var name && (name.EndsWith(".bat", StringComparison.Ordinal) || name.EndsWith(".cmd", StringComparison.Ordinal)));
+        var found = Candidates(word, startIn, registeredPathOf, searchPath, pathExtensions, out var skipped);
+        return found.Any(file => FileNameOf(file) is var name && (name.EndsWith(".bat", StringComparison.Ordinal) || name.EndsWith(".cmd", StringComparison.Ordinal)))
+            || (found.Count == 0 && skipped);
     }
 
     /// <summary>The extensions Windows tries for a name without one when <c>PATHEXT</c> is not set.</summary>
@@ -248,14 +320,15 @@ public static partial class LaunchPlaceholders
         string? pathExtensions = null,
         string? systemDirectory = null)
     {
-        var positions = ClipboardPositions(parameters ?? string.Empty).Concat(AskPositions(parameters ?? string.Empty)).Concat(FilePositions(parameters)).ToList();
+        var split = SplitFiles(parameters);
+        var positions = ClipboardPositions(split).Concat(AskPositions(split)).Concat(FilePositions(split)).ToList();
         if (positions.Count == 0)
         {
-            positions.Add((parameters ?? string.Empty).Length); // a dropped file goes at the end
+            positions.Add(split.Length); // a dropped file goes at the end
         }
 
         return positions
-            .Select(index => ReaderAt(location, parameters, index, startIn, registeredPathOf, searchPath, pathExtensions, systemDirectory))
+            .Select(index => ReaderAt(location, split, index, startIn, registeredPathOf, searchPath, pathExtensions, systemDirectory))
             .Aggregate(Stricter);
     }
 
@@ -300,7 +373,7 @@ public static partial class LaunchPlaceholders
             var restAt = at - i - 1; // the placeholder's place among the words after this one; negative when it comes before
             reader = Stricter(reader, named switch
             {
-                "cmd" or "cmd.exe" => ArgumentReader.Cmd,
+                "cmd" or "cmd.exe" or "gsudo" or "gsudo.exe" => ArgumentReader.Cmd, // gsudo runs what is no program as %COMSPEC% /s /c "…"
                 _ when named.EndsWith(".bat", StringComparison.Ordinal) || named.EndsWith(".cmd", StringComparison.Ordinal) => ArgumentReader.Cmd,
                 _ when relayed && StartsABatchFile(words[i].Bare, startIn, registeredPathOf, searchPath, pathExtensions) => ArgumentReader.Cmd,
                 "powershell" or "powershell.exe" or "pwsh" or "pwsh.exe" => PowerShellReader(named, rest.Select(word => word.Text)),
@@ -319,23 +392,37 @@ public static partial class LaunchPlaceholders
     }
 
     /// <summary>
-    /// Where the dropped files go in <paramref name="template"/>: each <c>{file}</c> and <c>{files}</c> (with the quote
-    /// written before it, if any), and for <c>{files}</c> also the place right after its word, where its second path
-    /// lands (<c>wsl --cd {files}</c>: the first is --cd's value, the second starts the shell's command).
+    /// Where the dropped files go in <paramref name="template"/>: each <c>{file}</c> and <c>{files}</c>, with the quote
+    /// written before it, if any. Judge <see cref="SplitFiles"/>'s template, where each <c>{files}</c> is two <c>{file}</c>,
+    /// so its second path is judged as the word of its own it becomes.
     /// </summary>
-    public static IReadOnlyList<int> FilePositions(string? template)
+    public static IReadOnlyList<int> FilePositions(string? template) =>
+        QuotedFiles().Matches(template ?? string.Empty).Select(match => match.Index).ToList();
+
+    /// <summary>
+    /// <paramref name="template"/> with each <c>{files}</c> written as two <c>{file}</c> placeholders (<c>"{file}"
+    /// "{file}"</c> for <c>"{files}"</c>), as the paths land: the second one is a word of its own. <c>wsl --cd {files}</c>
+    /// puts the first in --cd's value and starts the shell's command with the second, and <c>scp {files} host:/dir/</c>
+    /// takes both as local paths.
+    /// </summary>
+    public static string SplitFiles(string? template)
     {
-        var positions = new List<int>();
-        foreach (Match match in QuotedFiles().Matches(template ?? string.Empty))
+        var text = template ?? string.Empty;
+        var builder = new System.Text.StringBuilder(text.Length + 16);
+        var last = 0;
+        foreach (var spot in ScanSpots(text))
         {
-            positions.Add(match.Index);
-            if (match.Value.Contains(DropArguments.FilesPlaceholder, StringComparison.OrdinalIgnoreCase))
+            if (!text.AsSpan(spot.Start, spot.End - spot.Start).Equals(DropArguments.FilesPlaceholder, StringComparison.OrdinalIgnoreCase))
             {
-                positions.Add(match.Index + match.Length);
+                continue;
             }
+
+            builder.Append(text, last, spot.Start - last);
+            builder.Append(spot.Kind == PlaceholderSpot.QuotedAlone ? "{file}\" \"{file}" : "{file} {file}");
+            last = spot.End;
         }
 
-        return positions;
+        return builder.Append(text, last, text.Length - last).ToString();
     }
 
     /// <summary>A word of the parameters and where it starts. A prompt with spaces in it (<c>{ask:Which host}</c>) is one word.</summary>
@@ -359,35 +446,48 @@ public static partial class LaunchPlaceholders
         Names(location, parameters).Any(name => name is "wt" or "wt.exe" or "windowsterminal" or "windowsterminal.exe");
 
     /// <summary>
-    /// The program that rebuilds the command line it hands on, and quotes an argument only when it holds a space:
-    /// Windows Terminal ("Windows Terminal") or conhost ("conhost.exe"), as the location or named in the parameters;
-    /// <see langword="null"/> otherwise. A value or a dropped path without a space then reaches the next program without
-    /// its quotes, so what cmd.exe would act on there (<c>&amp; | &lt; &gt; ^ ( )</c>) is refused in it.
+    /// The program that rebuilds the command line it hands on, quoting an argument only when it holds a space (or a tab)
+    /// and escaping nothing: Windows Terminal ("Windows Terminal"), conhost ("conhost.exe"), Windows' sudo ("sudo") or
+    /// gsudo ("gsudo"), as the location or named in the parameters; <see langword="null"/> otherwise. A value or a dropped
+    /// path without a space then reaches the next program without its quotes. Where cmd.exe or a Linux shell reads it there,
+    /// the placement is refused (<see cref="PlacementAt"/>); elsewhere what would split it is (<see cref="SplitByRelay"/>).
     /// </summary>
     public static string? DropsQuotes(string? location, string? parameters)
     {
         foreach (var name in Names(location, parameters))
         {
-            if (name is "wt" or "wt.exe" or "windowsterminal" or "windowsterminal.exe")
+            switch (name)
             {
-                return "Windows Terminal";
-            }
-
-            if (name is "conhost" or "conhost.exe")
-            {
-                return "conhost.exe";
+                case "wt" or "wt.exe" or "windowsterminal" or "windowsterminal.exe":
+                    return "Windows Terminal";
+                case "conhost" or "conhost.exe":
+                    return "conhost.exe";
+                case "sudo" or "sudo.exe":
+                    return "sudo";
+                case "gsudo" or "gsudo.exe":
+                    return "gsudo";
             }
         }
 
         return null;
     }
 
-    /// <summary>What cmd.exe acts on outside quotes, refused where a program hands a value on without them (<see cref="DropsQuotes"/>).</summary>
-    public static string? RefusedWithoutQuotes(string value)
+    /// <summary>
+    /// What would split <paramref name="value"/> into other arguments after a program that hands it on re-quoted only at
+    /// a space (<see cref="DropsQuotes"/>), or <see langword="null"/>: a quote, which it does not escape (<c>"x" --upload-pack=calc
+    /// "y"</c>), a tab, which it does not quote, and a backslash at the end of a value it quotes, which then escapes the
+    /// closing quote. A dropped path holds no quote or tab.
+    /// </summary>
+    public static string? SplitByRelay(string value)
     {
         ArgumentNullException.ThrowIfNull(value);
-        var index = value.IndexOfAny(['&', '|', '<', '>', '^', '(', ')']);
-        return index < 0 ? null : value[index].ToString();
+        var index = value.IndexOfAny(['"', '\t', FullwidthQuotationMark]);
+        if (index >= 0)
+        {
+            return value[index].ToString();
+        }
+
+        return value.EndsWith('\\') && value.IndexOfAny([' ', '\t']) >= 0 ? "\\" : null;
     }
 
     private static IEnumerable<string> Names(string? location, string? parameters) =>
@@ -409,7 +509,7 @@ public static partial class LaunchPlaceholders
             return ArgumentReader.PosixShell; // Windows looks in System32 before PATH
         }
 
-        if (name is "cmd" or "powershell" or "pwsh" or "wsl" || Path.GetExtension(name).Length > 0)
+        if (name is "cmd" or "powershell" or "pwsh" or "wsl" or "gsudo" || Path.GetExtension(name).Length > 0)
         {
             return ReaderOfFile(path, words, at, offset, system);
         }
@@ -419,7 +519,7 @@ public static partial class LaunchPlaceholders
             return ArgumentReader.Plain; // a folder opens in Explorer
         }
 
-        var found = Candidates(path, startIn, registeredPathOf, searchPath, pathExtensions).ToList();
+        var found = Candidates(path, startIn, registeredPathOf, searchPath, pathExtensions, out _);
         return found.Count == 0
             ? ArgumentReader.Cmd // unknown here: it may be a batch file where it runs
             : found.Select(file => ReaderOfFile(file, words, at, offset, system)).Aggregate(Stricter);
@@ -428,27 +528,36 @@ public static partial class LaunchPlaceholders
     /// <summary>
     /// The files the shell may run for <paramref name="path"/>, which has no extension: the App Paths entry of the name,
     /// then the name with each PATHEXT extension in the start-in folder and along PATH (a path is only tried where it
-    /// points).
+    /// points). A folder on a share or on a drive that is not fixed is passed over, and <paramref name="skipped"/> says so:
+    /// an offline share would hold up the launch for every name and extension.
     /// </summary>
-    private static IEnumerable<string> Candidates(
-        string path, string? startIn, Func<string, string?>? registeredPathOf, string? searchPath, string? pathExtensions)
+    private static List<string> Candidates(
+        string path, string? startIn, Func<string, string?>? registeredPathOf, string? searchPath, string? pathExtensions, out bool skipped)
     {
         var extensions = (pathExtensions ?? Environment.GetEnvironmentVariable("PATHEXT") ?? DefaultPathExtensions)
             .Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
             .Where(extension => extension.StartsWith('.'))
             .ToList();
-        IEnumerable<string> Existing(string folderAndName)
+        var found = new List<string>();
+        var passedOver = false;
+        void Look(string folderAndName)
         {
+            if (IsSlowFolder(folderAndName))
+            {
+                passedOver = true;
+                return;
+            }
+
             foreach (var extension in extensions)
             {
                 var candidate = folderAndName + extension;
                 if (File.Exists(candidate))
                 {
-                    yield return candidate;
+                    found.Add(candidate);
                 }
                 else if (File.Exists(folderAndName + extension.ToLowerInvariant()))
                 {
-                    yield return folderAndName + extension.ToLowerInvariant(); // a case-sensitive file system (tests)
+                    found.Add(folderAndName + extension.ToLowerInvariant()); // a case-sensitive file system (tests)
                 }
             }
         }
@@ -456,18 +565,14 @@ public static partial class LaunchPlaceholders
         var startFolder = string.IsNullOrWhiteSpace(startIn) ? null : Environment.ExpandEnvironmentVariables(startIn.Trim().Trim('"'));
         if (path.IndexOfAny(['\\', '/']) >= 0)
         {
-            var full = Path.IsPathRooted(path) || startFolder is null ? path : Path.Combine(startFolder, path);
-            foreach (var file in Existing(full))
-            {
-                yield return file;
-            }
-
-            yield break;
+            Look(Path.IsPathRooted(path) || startFolder is null ? path : Path.Combine(startFolder, path));
+            skipped = passedOver;
+            return found;
         }
 
         if (registeredPathOf?.Invoke(path + ".exe") is { } registered)
         {
-            yield return registered;
+            found.Add(registered);
         }
 
         var folders = (startFolder is null ? [] : new[] { startFolder })
@@ -475,10 +580,36 @@ public static partial class LaunchPlaceholders
                 .Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries));
         foreach (var folder in folders)
         {
-            foreach (var file in Existing(Path.Combine(folder, path)))
-            {
-                yield return file;
-            }
+            Look(Path.Combine(folder, path));
+        }
+
+        skipped = passedOver;
+        return found;
+    }
+
+    /// <summary>
+    /// Whether a look at <paramref name="path"/> can wait on the network or a disc: a share, or a drive that is network,
+    /// removable, optical or unknown (from GetDriveType, which does no I/O). A letter with no drive behind it fails at once.
+    /// </summary>
+    private static bool IsSlowFolder(string path)
+    {
+        if (path.StartsWith(@"\\", StringComparison.Ordinal) || path.StartsWith("//", StringComparison.Ordinal))
+        {
+            return true;
+        }
+
+        if (!OperatingSystem.IsWindows() || path.Length < 2 || path[1] != ':' || !char.IsAsciiLetter(path[0]))
+        {
+            return false;
+        }
+
+        try
+        {
+            return new DriveInfo(path[..1]).DriveType is DriveType.Network or DriveType.Removable or DriveType.CDRom or DriveType.Unknown;
+        }
+        catch (Exception ex) when (ex is ArgumentException or IOException or UnauthorizedAccessException)
+        {
+            return true;
         }
     }
 
@@ -488,9 +619,10 @@ public static partial class LaunchPlaceholders
         var name = FileNameOf(path);
         return name switch
         {
+            "gsudo" => ArgumentReader.Cmd,
             _ when name.EndsWith(".bat", StringComparison.Ordinal) || name.EndsWith(".cmd", StringComparison.Ordinal) => ArgumentReader.Cmd,
             _ when name.EndsWith(".lnk", StringComparison.Ordinal) || name.EndsWith(".pif", StringComparison.Ordinal) => ArgumentReader.Cmd,
-            "cmd" or "cmd.exe" => ArgumentReader.Cmd,
+            "cmd" or "cmd.exe" or "gsudo.exe" => ArgumentReader.Cmd,
             "powershell" or "powershell.exe" or "pwsh" or "pwsh.exe" => PowerShellReader(name, words.Select(word => word.Text)),
             "wsl" or "wsl.exe" => WslReader(words, at),
             "bash.exe" when IsWslBash(path, system) => ArgumentReader.PosixShell,
@@ -598,6 +730,8 @@ public static partial class LaunchPlaceholders
                 return ArgumentReader.SshOption; // a config file (ProxyCommand, Match exec …), a PKCS#11 library to load
             case 'S' or 'D' or 'b' when scp:
                 return ArgumentReader.SshOption; // scp and sftp: a program run instead of ssh or sftp-server; sftp's batch file (! runs a command here)
+            case 's' when scp:
+                return ArgumentReader.RemoteShell; // sftp's subsystem: with a "/" in it, the command the server runs
             case 'o':
                 var line = Masked(before).TrimStart('"').TrimStart();
                 var end = line.IndexOfAny(['=', ' ', '\t']);
@@ -697,21 +831,32 @@ public static partial class LaunchPlaceholders
 
     /// <summary>
     /// scp and sftp, which read ssh's <c>-o</c>, <c>-F</c> and <c>-J</c>, and run a program named by <c>-S</c> (and
-    /// sftp's <c>-D</c>) here; sftp's <c>-b</c> names a batch file whose <c>!</c> lines run here (<see cref="SshValueReader"/>).
-    /// Options come first (getopt stops at the first operand). An operand is a local path or <c>[user@]host:path</c>: a
-    /// placeholder before the colon of its word is a host (<see cref="ArgumentReader.SshDestination"/>), one after it a
-    /// remote path, which scp's old protocol hands to the remote shell; a whole word, or a local path, is one argument.
-    /// sftp's first operand is its destination.
+    /// sftp's <c>-D</c>) here; sftp's <c>-b</c> names a batch file whose <c>!</c> lines run here, and its <c>-s</c> may be
+    /// the command the server runs (<see cref="SshValueReader"/>). Options come first (getopt stops at the first operand).
+    /// An operand is a local path or <c>[user@]host:path</c>: a placeholder before the colon of its word is a host
+    /// (<see cref="ArgumentReader.SshDestination"/>), one after it a remote path; a whole word, or a local path, is one
+    /// argument. scp's old protocol hands a remote path to the remote shell. It is the default before OpenSSH 9.0, which
+    /// Windows 10 still has, so a remote path counts as the remote shell's unless <c>-s</c> (SFTP) comes after any
+    /// <c>-O</c>. sftp's first operand is its destination.
     /// </summary>
     private static ArgumentReader ScpReader(IReadOnlyList<Word> words, int at, int offset, bool sftp)
     {
         var letters = (sftp ? SftpOptionsWithValue : ScpOptionsWithValue).ToCharArray();
+        var overSftp = sftp; // scp's -s: the SFTP protocol, where no shell reads the remote path
         for (var j = 0; j < words.Count && j <= at; j++)
         {
             var word = Masked(words[j].Bare);
             if (word == "--")
             {
-                return at > j ? ScpOperand(words, at, offset, sftp, first: at == j + 1) : ArgumentReader.Plain;
+                return at > j ? ScpOperand(words, at, offset, sftp, overSftp, first: at == j + 1) : ArgumentReader.Plain;
+            }
+
+            if (!sftp && word.Length > 1 && word[0] == '-' && word != "--")
+            {
+                foreach (var flag in word[1..].TakeWhile(c => !letters.Contains(c)))
+                {
+                    overSftp = flag == 's' || (overSftp && flag != 'O');
+                }
             }
 
             if (word.Length > 1 && word[0] == '-')
@@ -742,13 +887,13 @@ public static partial class LaunchPlaceholders
                 continue;
             }
 
-            return ScpOperand(words, at, offset, sftp, first: at == j); // the operands start here
+            return ScpOperand(words, at, offset, sftp, overSftp, first: at == j); // the operands start here
         }
 
         return sftp ? ArgumentReader.SshDestination : ArgumentReader.Plain; // a file dropped at the end
     }
 
-    private static ArgumentReader ScpOperand(IReadOnlyList<Word> words, int at, int offset, bool sftp, bool first)
+    private static ArgumentReader ScpOperand(IReadOnlyList<Word> words, int at, int offset, bool sftp, bool overSftp, bool first)
     {
         if (at >= words.Count)
         {
@@ -773,7 +918,7 @@ public static partial class LaunchPlaceholders
             return sftp && first ? ArgumentReader.SshDestination : ArgumentReader.Plain;
         }
 
-        return offset < colon ? ArgumentReader.SshDestination : sftp ? ArgumentReader.Plain : ArgumentReader.RemoteShell;
+        return offset < colon ? ArgumentReader.SshDestination : overSftp ? ArgumentReader.Plain : ArgumentReader.RemoteShell;
     }
 
     /// <summary>plink's options that take a value (PuTTY 0.8x), and its flags.</summary>
@@ -948,10 +1093,14 @@ public static partial class LaunchPlaceholders
     /// <summary>
     /// Whether a value that starts with <c>-</c> would reach the program as an option where
     /// <paramref name="placeholderIndex"/> stands in <paramref name="template"/>: the placeholder starts a word (nothing
-    /// before it but a quote), and no <c>--</c> word comes before it. Most programs read such a word as an option, for
-    /// example <c>python "-cprint(1+1)"</c> runs the code, and <c>git clone "--upload-pack=…"</c> runs a command.
+    /// before it but a quote), and no <c>--</c> of the program that reads it comes before it. Most programs read such a
+    /// word as an option, for example <c>python "-cprint(1+1)"</c> runs the code, and <c>git clone "--upload-pack=…"</c>
+    /// runs a command. A <c>--</c> belongs to the nearest program named before it (<paramref name="location"/> when none
+    /// is): a wrapper's own <c>--</c> (wsl, Windows Terminal, conhost, sudo, gsudo, runas, npx) ends only the wrapper's
+    /// options, so it does not count once a word (the program it starts) stands between it and the placeholder, and dotnet
+    /// hands what follows its <c>--</c> to the app it runs (<c>dotnet run -- {x}</c>).
     /// </summary>
-    public static bool TakesOptionAt(string template, int placeholderIndex)
+    public static bool TakesOptionAt(string template, int placeholderIndex, string? location = null)
     {
         ArgumentNullException.ThrowIfNull(template);
         var before = template[..placeholderIndex];
@@ -962,21 +1111,67 @@ public static partial class LaunchPlaceholders
 
         // Words as the readers see them (a prompt with "--" in it is one word), back to the program that reads the
         // placeholder: a "--" before that program's name is another program's (wsl.exe -- ssh host {clipboard}).
-        var words = Words(template).TakeWhile(word => word.Start < placeholderIndex).Reverse();
-        foreach (var word in words)
+        var words = Words(template).TakeWhile(word => word.Start < placeholderIndex).ToList();
+        for (var k = words.Count - 1; k >= 0; k--)
         {
-            if (word.Bare == "--")
+            if (words[k].Bare == "--")
             {
-                return false;
+                var owner = OwnerOfDashDash(words, k, location);
+                return owner == "dotnet" || (IsWrapper(owner) && k < words.Count - 1);
             }
 
-            if (ReadsItsOwnOptions(FileNameOf(word.Text)))
+            if (ReadsItsOwnOptions(FileNameOf(words[k].Text)))
             {
                 return true;
             }
         }
 
         return true;
+    }
+
+    /// <summary>
+    /// Whether a value that starts with <c>/</c> would reach the program as a switch where <c>-</c> would be an option
+    /// (<see cref="TakesOptionAt"/>). Chromium and Electron programs (Edge, Chrome, VS Code, Teams) take <c>/name</c> as
+    /// <c>--name</c>, Windows Script Host reads <c>//</c> options after the script, and many Windows programs read
+    /// <c>/x</c>. No Windows path or URL starts with <c>/</c>; a Linux path does, so the shells' readers take it.
+    /// </summary>
+    public static bool TakesSwitch(string value, ArgumentReader reader)
+    {
+        ArgumentNullException.ThrowIfNull(value);
+        return value.StartsWith('/') && reader is not (ArgumentReader.PosixShell or ArgumentReader.RemoteShell or ArgumentReader.PowerShellCommand);
+    }
+
+    /// <summary>The program a <c>--</c> belongs to: the nearest one named before it, or the location's.</summary>
+    private static string OwnerOfDashDash(List<Word> words, int dashDash, string? location)
+    {
+        for (var k = dashDash - 1; k >= 0; k--)
+        {
+            var name = ProgramName(words[k].Text);
+            if (IsWrapper(name) || name == "dotnet" || ReadsItsOwnOptions(name))
+            {
+                return name;
+            }
+        }
+
+        return ProgramName(Environment.ExpandEnvironmentVariables(location ?? string.Empty));
+    }
+
+    /// <summary>A program that starts the program named after its own <c>--</c>.</summary>
+    private static bool IsWrapper(string name) => IsRelay(name) || name is "wsl" or "npx" or "pnpx" or "bunx";
+
+    /// <summary>A file name without a folder or a program's extension: <c>npx</c> for <c>C:\nodejs\npx.cmd</c>.</summary>
+    private static string ProgramName(string pathOrToken)
+    {
+        var name = FileNameOf(pathOrToken);
+        foreach (var extension in (string[])[".exe", ".cmd", ".bat", ".com"])
+        {
+            if (name.EndsWith(extension, StringComparison.Ordinal))
+            {
+                return name[..^extension.Length];
+            }
+        }
+
+        return name;
     }
 
     /// <summary>A program named in the parameters whose own options come after its name (ssh, wsl, cmd, a relay …).</summary>
@@ -999,13 +1194,15 @@ public static partial class LaunchPlaceholders
 
     /// <summary>
     /// What <c>user@host</c>, <c>[v6]:port</c> and an <c>ssh://</c> URI need: ASCII letters and digits and
-    /// <c>. - _ @ : [ ] /</c>, but no <c>-</c> to start the name or right after <c>@</c>. Nothing a shell, or ssh's own <c>%h</c>/<c>%u</c> in a
+    /// <c>. - _ @ : [ ] /</c>, but no <c>-</c> to start the name or one of its parts (right after <c>@ / [ :</c>, as in
+    /// <c>ssh://-x@server2</c> or <c>[-x]</c>). Nothing a shell, or ssh's own <c>%h</c>/<c>%u</c> in a
     /// <c>ProxyCommand</c>, could act on (CVE-2023-51385, where OpenSSH before 9.6 passed such names on), and no name
     /// that the proxy program would take as an option (<c>ssh -- {clipboard}</c> holding <c>-x</c>; OpenSSH 9.6 refuses
     /// such a host name too).
     /// </summary>
     private static bool IsAllowedInSshDestination(string text, int index) =>
-        char.IsAsciiLetterOrDigit(text[index]) || text[index] is '.' or '_' or '@' or ':' or '[' or ']' or '/' || (text[index] == '-' && index > 0 && text[index - 1] != '@');
+        char.IsAsciiLetterOrDigit(text[index]) || text[index] is '.' or '_' or '@' or ':' or '[' or ']' or '/'
+        || (text[index] == '-' && index > 0 && text[index - 1] is not ('@' or '/' or '[' or ':'));
 
     /// <summary>What cmd.exe takes, less <c>$</c> and <c>`</c>, so the readers stay in order of strictness (<c>cmd /c wsl …</c>).</summary>
     private static bool IsAllowedForPosixShell(string text, int index) => IsAllowedForCmd(text, index) && text[index] is not ('$' or '`');
