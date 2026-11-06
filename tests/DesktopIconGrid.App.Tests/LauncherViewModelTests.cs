@@ -435,6 +435,58 @@ public sealed class LauncherViewModelTests : IDisposable
     }
 
     [Fact]
+    public void Repair_for_every_PC_keeps_another_PCs_own_location_and_moves_a_start_in_that_was_the_program_folder()
+    {
+        var previous = ThisDevice.Id;
+        ThisDevice.Id = "this-pc";
+        try
+        {
+            var (viewModel, model, dialogs) = Create();
+            var shortcut = (ShortcutItem)model.Items[0];
+            shortcut.SetLocationFor("other-pc", @"D:\Tools\a.exe"); // that PC's path differs, so it has its own
+            shortcut.StartIn = @"C:\"; // the folder of C:\a.exe, as a Windows shortcut sets it
+            var other = (ShortcutItem)model.Items[1];
+            other.StartIn = @"D:\Projects";
+            dialogs.RepairAnswer = new RepairResult(@"E:\Apps\a.exe", OnlyThisPc: false);
+
+            viewModel.RepairItem(viewModel.RootItems.Items[0]);
+
+            Assert.Equal(@"E:\Apps\a.exe", shortcut.Location);
+            Assert.Equal(@"D:\Tools\a.exe", shortcut.LocationFor("other-pc"));
+            Assert.Null(shortcut.StartIn); // it moves with the program: each PC starts it in its own folder
+
+            dialogs.RepairAnswer = new RepairResult(@"E:\Apps\b.exe", OnlyThisPc: true);
+            viewModel.RepairItem(viewModel.RootItems.Items[1]);
+
+            Assert.Equal(@"D:\Projects", other.StartIn); // a folder of its own stays
+        }
+        finally
+        {
+            ThisDevice.Id = previous;
+        }
+    }
+
+    [Fact]
+    public async Task The_names_table_marks_missing_shortcuts_with_the_bars_own_check_off_the_window_thread()
+    {
+        // The review: the table ran LocationProbe.IsMissing on the UI thread for every row, past the injected check.
+        var testThread = Environment.CurrentManagedThreadId;
+        var checkedOn = new System.Collections.Concurrent.ConcurrentBag<int>();
+        var (viewModel, _, _) = Create(isMissing: shortcut =>
+        {
+            checkedOn.Add(Environment.CurrentManagedThreadId);
+            return shortcut.Name == "B";
+        });
+
+        var table = new NameTableViewModel(viewModel);
+        await table.MissingChecked.WaitAsync(TimeSpan.FromSeconds(10));
+
+        Assert.Equal(["B"], table.Rows.Where(r => NameTableViewModel.Matches(r, NameTableViewModel.MissingHere)).Select(r => r.GivenName));
+        Assert.NotEmpty(checkedOn);
+        Assert.DoesNotContain(testThread, checkedOn);
+    }
+
+    [Fact]
     public void Repair_points_the_shortcut_at_the_chosen_path_for_this_PC_only_or_for_every_PC()
     {
         var previous = ThisDevice.Id;

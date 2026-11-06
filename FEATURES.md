@@ -94,7 +94,10 @@ icon shows its name and location in a tooltip regardless of how the icon is draw
   at in each (it says so when it stopped early). The Store's `WindowsApps` folder is searched only for
   the program's own package. A match on the file name alone is listed last and not chosen for you: it
   may be another program's `launcher.exe`. *Browse…* picks one by hand. The fix applies to *this PC
-  only* (the default) or to *every PC that shares the bar*.
+  only* (the default) or to *every PC that shares the bar*, where a PC with a location of its own keeps
+  it (it has one because its path differs). A *Start in* that was only the program's folder moves with the
+  program: it is cleared, so every PC starts the program in its own folder, and a *Start in* that is not on
+  this PC falls back to the program's folder instead of stopping the start (0.8.1).
 - *This PC only* is stored in the shortcut as `"locations": { "<this PC>": "…" }` beside the common
   `location`, so it travels with the sync copy and each PC finds its own path. *This PC* is the PC and
   Windows user, keyed by a hash of Windows' machine id and the user's SID that is worked out at every

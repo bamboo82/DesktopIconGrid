@@ -165,6 +165,24 @@ public sealed class LaunchServiceTests : IDisposable
     }
 
     [Fact]
+    public void A_start_in_folder_that_is_not_on_this_PC_gives_way_to_the_programs_own_folder()
+    {
+        var program = Path.Combine(_directory, "tool.exe");
+        var gone = new ShortcutItem { Name = "Tool", Location = program, StartIn = Path.Combine(_directory, "project-on-another-PC") };
+        var startInfo = new System.Diagnostics.ProcessStartInfo(program) { WorkingDirectory = gone.StartIn };
+
+        LaunchService.UseProgramFolderWhenStartInIsGone(gone, startInfo);
+
+        Assert.Equal(_directory, startInfo.WorkingDirectory);
+
+        var there = new ShortcutItem { Name = "Tool", Location = program, StartIn = Path.Combine(_directory, "logs") };
+        Directory.CreateDirectory(there.StartIn);
+        var kept = new System.Diagnostics.ProcessStartInfo(program) { WorkingDirectory = there.StartIn };
+        LaunchService.UseProgramFolderWhenStartInIsGone(there, kept);
+        Assert.Equal(there.StartIn, kept.WorkingDirectory);
+    }
+
+    [Fact]
     public void The_clipboard_is_trimmed_and_a_value_of_several_lines_is_refused_for_any_program()
     {
         var trimmed = Create(new Prompts(clipboard: "  report.txt\r\n", answer: null), out var tracker);

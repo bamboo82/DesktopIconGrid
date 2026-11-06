@@ -1593,7 +1593,7 @@ Details are in {1}.</value>
     <value>Only on this PC (other PCs keep their own location)</value>
   </data>
   <data name="Repair_EveryPc" xml:space="preserve">
-    <value>On every PC that shares this bar</value>
+    <value>On every PC that shares this bar (a PC with a location of its own keeps it)</value>
   </data>
   <data name="Repair_Repair" xml:space="preserve">
     <value>Repair</value>

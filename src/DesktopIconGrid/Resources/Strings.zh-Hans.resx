@@ -1593,7 +1593,7 @@
     <value>仅限这台电脑（其他电脑保留各自的位置）</value>
   </data>
   <data name="Repair_EveryPc" xml:space="preserve">
-    <value>所有共享此工具栏的电脑</value>
+    <value>所有共享此工具栏的电脑（有自己位置的电脑仍保留它）</value>
   </data>
   <data name="Repair_Repair" xml:space="preserve">
     <value>修复</value>

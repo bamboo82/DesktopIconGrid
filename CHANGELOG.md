@@ -37,6 +37,13 @@ switches, portable mode and *Repair…* on more kinds of PC, and the smaller ite
 - `portable.txt` next to a program whose folder cannot be written (under Program Files without elevation, on a
   read-only drive) stopped the app with "Startup failed". It now keeps its files in `%LocalAppData%`, as without
   `portable.txt`, and says so once at start.
+- A repaired shortcut could still fail to start on its old *Start in* folder. A *Start in* that was only the
+  program's folder (as Windows shortcuts set it) now moves with the program, and a *Start in* that is not on
+  this PC (another PC's project folder) gives way to the program's own folder instead of stopping the start.
+- *Repair… → On every PC that shares this bar* said it applied everywhere, but a PC with a location of its
+  own kept it. That is the right thing (its path differs), so the choice now says so.
+- *Edit names…* checked every shortcut's target on the window's thread when it opened. It now uses the bar's
+  own check on the icon worker, as the icons do.
 - Each placeholder is now checked where it stands. In `ssh {ask:Host} tail {clipboard}`, the host takes
   `admin@server2`, and the words after it are still checked as the remote shell reads them; 0.8.0 checked
   both values as the command, so `admin@server2` was refused. The values of wsl's own options (`-d`, `-u`,

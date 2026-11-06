@@ -1593,7 +1593,7 @@
     <value>僅限這部電腦（其他電腦保留各自的位置）</value>
   </data>
   <data name="Repair_EveryPc" xml:space="preserve">
-    <value>所有共用此工具列的電腦</value>
+    <value>所有共用此工具列的電腦（有自己位置的電腦仍保留它）</value>
   </data>
   <data name="Repair_Repair" xml:space="preserve">
     <value>修復</value>

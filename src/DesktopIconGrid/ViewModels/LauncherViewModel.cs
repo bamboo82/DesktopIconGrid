@@ -266,6 +266,31 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
     }
 
     /// <summary>
+    /// Whether <see cref="ShortcutItem.StartIn"/> is just the folder of the program (as a Windows shortcut sets it), the
+    /// shared one or this PC's own: then it says nothing the program's own folder does not, and moves with it.
+    /// </summary>
+    private static bool StartsInProgramFolder(ShortcutItem shortcut)
+    {
+        if (string.IsNullOrWhiteSpace(shortcut.StartIn))
+        {
+            return false;
+        }
+
+        var startIn = Environment.ExpandEnvironmentVariables(shortcut.StartIn.Trim().Trim('"')).TrimEnd('\\', '/');
+        return new[] { shortcut.Location, shortcut.EffectiveLocation }
+            .Select(location => Path.GetDirectoryName(Environment.ExpandEnvironmentVariables(location?.Trim().Trim('"') ?? string.Empty)))
+            .Any(folder => !string.IsNullOrEmpty(folder) && string.Equals(folder.TrimEnd('\\', '/'), startIn, StringComparison.OrdinalIgnoreCase));
+    }
+
+    /// <summary>What the bar already knows of an item's target (<see cref="ItemViewModel.IsMissing"/>), when it shows the item.</summary>
+    internal bool? KnownMissing(Guid id) => _viewModels.TryGetValue(id, out var viewModel) ? viewModel.IsMissing : null;
+
+    /// <summary>The bar's own missing check (see <see cref="CheckMissing"/>), on the icon worker, for a shortcut it may not show yet.</summary>
+    internal Task<bool> IsMissingAsync(ShortcutItem shortcut) =>
+        IconWorker.Shared.RunAsync(() => _isMissing(shortcut))
+            .ContinueWith(task => task.IsCompletedSuccessfully && task.Result, CancellationToken.None, TaskContinuationOptions.None, TaskScheduler.Default);
+
+    /// <summary>
     /// Checks on the icon worker whether the shortcut's target is on this PC (<see cref="LocationProbe"/>: local paths
     /// only, so a network or removable drive never stalls the bar).
     /// </summary>
@@ -951,6 +976,11 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
 
         var draft = (ShortcutItem)shortcut.Clone();
         var path = DataLocation.ForStorage(repair.Path); // %APPDRIVE% on a portable copy's own drive
+        if (StartsInProgramFolder(shortcut))
+        {
+            draft.StartIn = null; // it followed the old program: now every PC starts the program in its own folder
+        }
+
         if (repair.OnlyThisPc && ThisDevice.Id is { } device)
         {
             draft.SetLocationFor(device, path);

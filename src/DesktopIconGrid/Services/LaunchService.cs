@@ -149,6 +149,7 @@ public sealed class LaunchService(ProcessTracker tracker, ILaunchPrompts? prompt
         }
 
         var startInfo = plan.StartInfo!;
+        UseProgramFolderWhenStartInIsGone(shortcut, startInfo);
         if (CapturesOutput(shortcut, asAdministrator, startInfo))
         {
             return StartWithLog(shortcut, OutputCapture.WithCapture(startInfo));
@@ -270,6 +271,25 @@ public sealed class LaunchService(ProcessTracker tracker, ILaunchPrompts? prompt
             _ => "PowerShell",
         }),
     };
+
+    /// <summary>
+    /// A <see cref="ShortcutItem.StartIn"/> folder that is not on this PC (another PC's project folder, the folder of a
+    /// program that moved) would stop the start with "The directory name is invalid": the program's own folder is used
+    /// instead. Only local fixed drives are looked at, so an offline share never holds up a click.
+    /// </summary>
+    internal static void UseProgramFolderWhenStartInIsGone(ShortcutItem shortcut, ProcessStartInfo startInfo)
+    {
+        var folder = startInfo.WorkingDirectory;
+        if (string.IsNullOrWhiteSpace(shortcut.StartIn) || string.IsNullOrEmpty(folder)
+            || LocationProbe.CheckablePath(folder) is null || IconWorker.IsOnSlowStorage(folder) || Directory.Exists(folder))
+        {
+            return;
+        }
+
+        var own = LaunchPlanner.DefaultWorkingDirectory(Environment.ExpandEnvironmentVariables(shortcut.EffectiveLocation.Trim().Trim('"')));
+        AppLog.Default.Warning("Launch", $"\"{shortcut.Name}\": Start in {folder} is not on this PC; it starts in {own ?? "the default folder"}");
+        startInfo.WorkingDirectory = own ?? string.Empty;
+    }
 
     private LaunchResult StartWithLog(ShortcutItem shortcut, ProcessStartInfo startInfo)
     {

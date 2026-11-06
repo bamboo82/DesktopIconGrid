@@ -3039,7 +3039,7 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to On every PC that shares this bar.
+        ///   Looks up a localized string similar to On every PC that shares this bar (a PC with a location of its own keeps it).
         /// </summary>
         public static string Repair_EveryPc {
             get {

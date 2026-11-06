@@ -15,6 +15,7 @@ namespace DesktopIconGrid.ViewModels;
 public sealed class NameRowViewModel : ObservableObject
 {
     private string _givenName;
+    private bool _isMissing;
 
     public NameRowViewModel(LauncherItem item, string originalName, string kind, string? groupName, string location)
     {
@@ -26,14 +27,20 @@ public sealed class NameRowViewModel : ObservableObject
         ModifiedAt = item.ModifiedAt?.LocalDateTime;
         InitialName = item.Name;
         _givenName = item.Name;
-        IsMissing = item is ShortcutItem shortcut && LocationProbe.IsMissing(shortcut, IconWorker.IsOnSlowStorage);
         ColorTag = ColorTags.Find(item.ColorTag)?.Name;
         ColorTagName = ColorTagNames.Of(item.ColorTag);
         ColorTagBrush = ColorTags.Find(item.ColorTag) is { } tag ? ThemeManager.ToBrush(tag.Color) : null;
     }
 
-    /// <summary>A shortcut whose target is not on this PC (see <see cref="LocationProbe"/>).</summary>
-    public bool IsMissing { get; }
+    /// <summary>
+    /// A shortcut whose target is not on this PC (see <see cref="LocationProbe"/>): the bar's own answer, and then its
+    /// check on the icon worker, never on the window's thread.
+    /// </summary>
+    public bool IsMissing
+    {
+        get => _isMissing;
+        internal set => SetProperty(ref _isMissing, value);
+    }
 
     /// <summary>The item's known colour tag (<see cref="ColorTags"/>), or <see langword="null"/>.</summary>
     public string? ColorTag { get; }
@@ -96,6 +103,7 @@ public sealed class NameTableViewModel : ObservableObject
     public const string MissingHere = "?";
 
     private readonly LauncherViewModel _root;
+    private readonly TaskScheduler _uiScheduler = SynchronizationContext.Current is null ? TaskScheduler.Default : TaskScheduler.FromCurrentSynchronizationContext();
     private TagFilterOption _selectedTagFilter;
 
     public NameTableViewModel(LauncherViewModel root)
@@ -128,6 +136,8 @@ public sealed class NameTableViewModel : ObservableObject
         RowsView = CollectionViewSource.GetDefaultView(Rows);
         RowsView.Filter = row => row is NameRowViewModel r && Matches(r, _selectedTagFilter.Tag);
 
+        MissingChecked = CheckMissingAsync();
+
         UseOriginalCommand = new RelayCommand<NameRowViewModel>(row => row.GivenName = row.OriginalName, row => row is not null && !row.IsOriginal);
         UseOriginalForAllCommand = new RelayCommand(() =>
         {
@@ -139,6 +149,41 @@ public sealed class NameTableViewModel : ObservableObject
     }
 
     public ObservableCollection<NameRowViewModel> Rows { get; } = [];
+
+    /// <summary>Done when every shortcut's target has been checked (tests wait for it).</summary>
+    internal Task MissingChecked { get; }
+
+    /// <summary>
+    /// Marks the shortcuts whose target is missing: at once from the bar's icons where it has them, and from the same
+    /// check on the icon worker for every shortcut, group members the bar has not shown yet included.
+    /// </summary>
+    private Task CheckMissingAsync()
+    {
+        var checks = new List<Task>();
+        foreach (var row in Rows)
+        {
+            if (_root.Model.Find(row.Id) is not ShortcutItem shortcut)
+            {
+                continue;
+            }
+
+            row.IsMissing = _root.KnownMissing(row.Id) ?? false;
+            checks.Add(_root.IsMissingAsync(shortcut).ContinueWith(
+                task =>
+                {
+                    row.IsMissing = task.Result;
+                    if (_selectedTagFilter.Tag == MissingHere)
+                    {
+                        RowsView.Refresh();
+                    }
+                },
+                CancellationToken.None,
+                TaskContinuationOptions.OnlyOnRanToCompletion,
+                _uiScheduler));
+        }
+
+        return Task.WhenAll(checks);
+    }
 
     /// <summary>The rows the table shows: <see cref="Rows"/> through the colour-tag filter.</summary>
     public ICollectionView RowsView { get; }
