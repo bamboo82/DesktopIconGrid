@@ -9,6 +9,21 @@ The owner relays replies.
 
 ---
 
+## 2026-11-06 (30) — Release 0.8.1
+
+On the owner's "Yes, release 0.8.1", relayed by you after round 18 and the in-app round passed. The release commit
+is the one that adds this entry; tag that commit once its CI run is green and the owner gives the word for the tag.
+
+- `Directory.Build.props` already says 0.8.1 (since the kickoff).
+- CHANGELOG: the 0.8.1 section is dated 2026-11-06, its header names the placeholder checks, and an Upgrading note
+  says the layout format is still version 1 (0.8.0 and 0.8.1 share copies), but every PC should update for the
+  security fixes.
+- FEATURES and the ROADMAP mark 0.8.1 released.
+- Not covered on screen in the in-app round: the drag cases G1, G2 and P12; the CI tests run them through the real
+  cmd.exe. Open for 0.9.0: P15 (scp operands) and U3′'s root fix.
+
+---
+
 ## 2026-11-06 (29) — Round 18: D1 and the recommended items
 
 All of round 18 is in `5f2a029`; its CI run, 107, was still running when this was written. Locally 748 Core tests pass.

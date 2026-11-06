@@ -3,10 +3,13 @@
 All notable changes to Desktop Icon Grid. The format follows [Keep a Changelog](https://keepachangelog.com/);
 version numbers follow [Semantic Versioning](https://semver.org/).
 
-## [0.8.1] – Unreleased
+## [0.8.1] – 2026-11-06
 
 The fixes the review of 0.8.0 placed after the release: folder sync with conflict copies and storage
-switches, portable mode and *Repair…* on more kinds of PC, and the smaller items.
+switches, portable mode and *Repair…* on more kinds of PC, the placeholder checks, and the smaller items.
+
+Upgrading: 0.8.1 reads and writes the same layout format as 0.8.0 (version 1), so PCs on either can share a
+settings copy. Update every PC all the same: 0.8.0 lacks the placeholder fixes listed under Security.
 
 ### Security
 

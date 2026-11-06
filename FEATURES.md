@@ -579,7 +579,7 @@ shortcuts that survive other PCs (missing targets, repair, per-device locations,
 app…*. It came early to carry the fixes from the review of 0.6.0 and 0.7.0, so the rest of its plan
 moved to 0.9.0.
 
-**0.8.1** *(in progress)* — the fixes the review of 0.8.0 placed after the release: loading a sync
+**0.8.1** *(done, released 2026-11-06)* — the fixes the review of 0.8.0 placed after the release: loading a sync
 program's conflict copy, switching where the copies are kept while an upload runs, an offline network
 share, portable mode on the system drive and on read-only media, the Run entry of several copies,
 *Repair…* for a folder, and the placeholder checks for ssh and WSL that 0.8.0 left for later.

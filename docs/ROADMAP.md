@@ -252,8 +252,8 @@ folder.
   separators, colour tags (plus the voice spike, result written down only: FEATURES §6.1).
 - **0.8.0 "One bar, every PC"** (released 2026-11-06, early, to carry the fixes from the review of 0.6.0
   and 0.7.0): 5, 6, and *Add app…* from 7.
-- **0.8.1**: the fixes the review of 0.8.0 placed after the release (folder sync, portable mode, *Repair…*,
-  the smaller items and the placeholder follow-ups).
+- **0.8.1** (released 2026-11-06): the fixes the review of 0.8.0 placed after the release (folder sync,
+  portable mode, *Repair…*, the smaller items and the placeholder follow-ups).
 - **0.9.0 "The bar tells you things"**: first what moved from 0.8.0 (the imports of 7, whose readers are
   already in; layout history; command line and Send To), then 8 with the trust rule, 9, 10, more gauges,
   mic tile, clock and timer, paste to a bucket.
