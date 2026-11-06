@@ -1688,4 +1688,10 @@
   <data name="Import_SourceSsh" xml:space="preserve">
     <value>SSH 主机</value>
   </data>
+  <data name="Launch_UnsafeValue" xml:space="preserve">
+    <value>未启动：文字中含有“{0}”，{1} 可能会把它当成命令执行。</value>
+  </data>
+  <data name="Launch_ValueHasLineBreak" xml:space="preserve">
+    <value>未启动：剪贴板文字或回答超过一行。</value>
+  </data>
 </root>

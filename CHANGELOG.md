@@ -8,6 +8,18 @@ version numbers follow [Semantic Versioning](https://semver.org/).
 "One bar, every PC": sync through any folder, shortcuts that survive other PCs, *Add app…* and imports,
 layout history, and a command line with *Send to*.
 
+### Security
+
+- `{clipboard}` and `{ask:…}` values could run commands when the shortcut's program reads its command line
+  through cmd.exe (a `.bat` or `.cmd` file, `cmd.exe` itself, or the log capture of a batch file) or as
+  PowerShell script text (`powershell.exe` without `-File`, `pwsh -Command`). The quoting that keeps a
+  value one argument for other programs does not hold there, so copied text such as `x" & calc & "` could
+  start a program, elevated with *Run as administrator*. Such values are now refused before anything
+  starts, with a notification naming the character (for cmd.exe `" % ! ^ & | < >`, for PowerShell
+  `$` `` ` `` `; ' "`), and a value of more than one line is refused for every program; the clipboard
+  text is trimmed first. Affects 0.7.0. Covered by tests for each refused character, each kind of
+  program and the plain values that still pass.
+
 ### Added
 
 - Sync through any folder: the sync dialog (now *Sync across PCs…*) can keep the settings copies in a

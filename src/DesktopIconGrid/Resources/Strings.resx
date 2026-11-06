@@ -1688,4 +1688,10 @@ Details are in {1}.</value>
   <data name="Import_SourceSsh" xml:space="preserve">
     <value>SSH hosts</value>
   </data>
+  <data name="Launch_UnsafeValue" xml:space="preserve">
+    <value>Not started: the text contains “{0}”, which {1} could run as a command.</value>
+  </data>
+  <data name="Launch_ValueHasLineBreak" xml:space="preserve">
+    <value>Not started: the clipboard text or the answer has more than one line.</value>
+  </data>
 </root>

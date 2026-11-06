@@ -1320,6 +1320,24 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Not started: the text contains “{0}”, which {1} could run as a command..
+        /// </summary>
+        public static string Launch_UnsafeValue {
+            get {
+                return ResourceManager.GetString("Launch_UnsafeValue", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Not started: the clipboard text or the answer has more than one line..
+        /// </summary>
+        public static string Launch_ValueHasLineBreak {
+            get {
+                return ResourceManager.GetString("Launch_ValueHasLineBreak", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to All categories.
         /// </summary>
         public static string Log_AllCategories {

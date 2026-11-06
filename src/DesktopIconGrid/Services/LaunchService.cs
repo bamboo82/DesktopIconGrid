@@ -140,17 +140,25 @@ public sealed class LaunchService(ProcessTracker tracker, ILaunchPrompts? prompt
 
     /// <summary>
     /// Fills in <c>{clipboard}</c> and <c>{ask:…}</c> (see <see cref="LaunchPlaceholders"/>). Returns a result instead
-    /// when the launch stops: the clipboard holds no text, or the user cancelled a question.
+    /// when the launch stops: the clipboard holds no text, the user cancelled a question, or a value holds something the
+    /// program that reads the command line could run (cmd.exe for a batch file, PowerShell script text; see
+    /// <see cref="LaunchPlaceholders.Refused"/>). The clipboard text is trimmed first: a copied line often ends in a line break.
     /// </summary>
     private (string Parameters, LaunchResult? Result) FillPlaceholders(ShortcutItem shortcut, string template)
     {
+        var reader = LaunchPlaceholders.ReaderOf(shortcut.EffectiveLocation, template);
         string? clipboard = null;
         if (LaunchPlaceholders.UsesClipboard(template))
         {
-            clipboard = prompts?.ClipboardText();
+            clipboard = prompts?.ClipboardText()?.Trim();
             if (string.IsNullOrEmpty(clipboard))
             {
                 return (template, LaunchResult.Failure(Strings.Launch_ClipboardEmpty));
+            }
+
+            if (Refuse(clipboard, reader) is { } refused)
+            {
+                return (template, refused);
             }
         }
 
@@ -163,10 +171,28 @@ public sealed class LaunchService(ProcessTracker tracker, ILaunchPrompts? prompt
                 return (template, LaunchResult.Cancelled);
             }
 
+            if (Refuse(answer, reader) is { } refused)
+            {
+                return (template, refused);
+            }
+
             answers.Add(answer);
         }
 
         return (LaunchPlaceholders.Fill(template, clipboard, answers), null);
+    }
+
+    private static LaunchResult? Refuse(string value, ArgumentReader reader)
+    {
+        if (LaunchPlaceholders.Refused(value, reader) is not { } character)
+        {
+            return null;
+        }
+
+        AppLog.Default.Warning("Launch", $"A placeholder value was refused: it holds {(int)character:X4}, which {reader} could act on");
+        return LaunchResult.Failure(character is '\r' or '\n'
+            ? Strings.Launch_ValueHasLineBreak
+            : string.Format(Strings.Launch_UnsafeValue, character, reader == ArgumentReader.Cmd ? "cmd.exe" : "PowerShell"));
     }
 
     private LaunchResult StartWithLog(ShortcutItem shortcut, ProcessStartInfo startInfo)
