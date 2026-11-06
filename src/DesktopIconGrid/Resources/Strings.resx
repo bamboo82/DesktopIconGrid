@@ -1709,4 +1709,10 @@ Details are in {1}.</value>
   <data name="Launch_ValueIsOption" xml:space="preserve">
     <value>Not started: the value begins with “-”, so the program would take it as an option. If the program accepts “--” (the end of its options), put it before the placeholder in Parameters.</value>
   </data>
+  <data name="Repair_StoppedEarly" xml:space="preserve">
+    <value>The search stopped before it had looked in every folder: use Browse… if the program is not listed.</value>
+  </data>
+  <data name="Repair_NoneSure" xml:space="preserve">
+    <value>None of these is certainly the program: only the file name matches. Pick one, or use Browse….</value>
+  </data>
 </root>

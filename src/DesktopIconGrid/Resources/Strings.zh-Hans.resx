@@ -1709,4 +1709,10 @@
   <data name="Launch_ValueIsOption" xml:space="preserve">
     <value>未启动：这个值以“-”开头，程序会把它当成选项。若程序接受“--”（选项结束），请在“参数”中把它放在占位符前面。</value>
   </data>
+  <data name="Repair_StoppedEarly" xml:space="preserve">
+    <value>搜索在查遍所有文件夹之前就停止了：若列表中没有这个程序，请用“浏览…”。</value>
+  </data>
+  <data name="Repair_NoneSure" xml:space="preserve">
+    <value>这些都不一定是这个程序：只有文件名相符。请选一个，或用“浏览…”。</value>
+  </data>
 </root>

@@ -3057,6 +3057,15 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to None of these is certainly the program: only the file name matches. Pick one, or [rest of string was truncated]";.
+        /// </summary>
+        public static string Repair_NoneSure {
+            get {
+                return ResourceManager.GetString("Repair_NoneSure", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Nothing found. Use Browse… to pick the program..
         /// </summary>
         public static string Repair_NothingFound {
@@ -3116,6 +3125,15 @@ namespace DesktopIconGrid.Resources {
         public static string Repair_Searching {
             get {
                 return ResourceManager.GetString("Repair_Searching", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The search stopped before it had looked in every folder: use Browse… if the prog [rest of string was truncated]";.
+        /// </summary>
+        public static string Repair_StoppedEarly {
+            get {
+                return ResourceManager.GetString("Repair_StoppedEarly", resourceCulture);
             }
         }
 

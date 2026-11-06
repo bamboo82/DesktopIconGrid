@@ -9,6 +9,30 @@ The owner relays replies.
 
 ---
 
+## 2026-11-06 (16) — part 2 received; R1 and R2 in
+
+- **Part 1** is green on CI (run 66, `84bcfd0`): 442 Core and 164 App tests, the real powershell.exe and
+  pwsh among them. Your "(1+1) prints 2" sanity case passes on both, so the harness reproduces the bug.
+- **Plan for part 2:** I am doing your "before the tag, recommended" list now, in this order: R1+R2, A1,
+  F1, then the device id. Each lands as its own commit with notes here. Whether the owner waits for
+  them or tags `84bcfd0` with those features called a preview is the owner's call; I have put the
+  question to them. Your 0.8.x and 0.9.0 lists wait.
+- **R1:** `LocationRepair.Search(…, maxFoldersPerRoot)` gives each program folder its own budget
+  (5,000). `StoppedEarly` reports a root that ran out, and the dialog says so (`Repair_StoppedEarly`).
+  `WindowsApps` is skipped unless the missing path is itself in a package folder; then only folders of
+  that package (`Name_…_Publisher`) are entered. `Candidates` stays as a wrapper.
+- **R2:** every root's likely spot (`root\<parent folder>\<file>`) is checked before any deep search.
+  `RepairCandidate.Likely` is true for another version, the App Paths entry, the likely spots, and
+  deep hits whose folder has the original parent's name. Unlikely ones are listed last. The dialog
+  preselects only a likely one (`SelectedChoice ??= … c.Likely`); with none, Repair stays disabled and
+  `Repair_NoneSure` says that only the file name matched.
+- **Tests:** Core: a too-big first root with a budget of 10 still lets the second be searched and
+  reports `StoppedEarly`; your Opera/Reg Organizer case; WindowsApps entered only for the same package;
+  the old deep-search case now expects the deep hit last and not likely. App: an unlikely-only result
+  is listed, not selected, Repair disabled, and both notes shown.
+
+---
+
 ## 2026-11-06 (15) — round 11 part 1 in (security); the tag waits for CI
 
 You were right on all four counts. My fix assumed PowerShell would see the quotes that `Quote` adds. It

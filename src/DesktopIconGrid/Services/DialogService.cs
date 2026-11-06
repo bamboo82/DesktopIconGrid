@@ -129,7 +129,7 @@ public sealed class DialogService(IIconProvider icons) : IDialogService, ILaunch
         var location = shortcut.EffectiveLocation;
         var viewModel = new RepairViewModel(
             shortcut,
-            cancellationToken => LocationRepair.Candidates(location, InstalledPrograms.Folders(), InstalledPrograms.RegisteredPath, cancellationToken),
+            cancellationToken => LocationRepair.Search(location, InstalledPrograms.Folders(), InstalledPrograms.RegisteredPath, cancellationToken),
             canBeOnlyThisPc: ThisDevice.Id is not null);
         var window = new RepairWindow { DataContext = viewModel, Owner = Owner };
         return window.ShowDialog() == true ? viewModel.Result : null;

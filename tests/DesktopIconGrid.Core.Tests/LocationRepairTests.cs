@@ -54,10 +54,57 @@ public sealed class LocationRepairTests : IDisposable
         Assert.Equal(
             [
                 new RepairCandidate(registered, RepairReason.Registered),
-                new RepairCandidate(deep, RepairReason.InstalledProgram),
-                new RepairCandidate(likely, RepairReason.InstalledProgram),
+                new RepairCandidate(likely, RepairReason.InstalledProgram), // a folder of the same name, in any root, before any deep search
+                new RepairCandidate(deep, RepairReason.InstalledProgram, Likely: false), // the file name alone
             ],
             found);
+    }
+
+    [Fact]
+    public void Every_program_folder_is_searched_even_when_the_first_is_too_big_and_the_search_says_it_stopped()
+    {
+        // The review: 5,882 folders in Program Files used the whole budget, so Program Files (x86) was never searched.
+        for (var i = 0; i < 30; i++)
+        {
+            Directory.CreateDirectory(Folder("pf", $"Vendor{i}", "x"));
+        }
+
+        var target = Make("pf86", "Acme", "Tools", "tool.exe");
+
+        var search = LocationRepair.Search(@"U:\E\Tool\tool.exe", [Folder("pf"), Folder("pf86")], maxFoldersPerRoot: 10);
+
+        Assert.True(search.StoppedEarly);
+        Assert.Equal([new RepairCandidate(target, RepairReason.InstalledProgram, Likely: false)], search.Candidates);
+        Assert.False(LocationRepair.Search(@"U:\E\Tool\tool.exe", [Folder("pf86")], maxFoldersPerRoot: 10).StoppedEarly);
+    }
+
+    [Fact]
+    public void A_folder_of_the_same_name_comes_first_and_a_match_on_the_file_name_alone_comes_last()
+    {
+        // The review: seven launcher.exe on one PC, and Reg Organizer's was offered first for Opera.
+        var other = Make("pf", "Reg Organizer", "launcher.exe");
+        var opera = Make("programs", "Opera", "launcher.exe");
+
+        var search = LocationRepair.Search(@"C:\Users\me\AppData\Local\Programs\Opera\launcher.exe", [Folder("pf"), Folder("programs")]);
+
+        Assert.Equal(
+            [new RepairCandidate(opera, RepairReason.InstalledProgram), new RepairCandidate(other, RepairReason.InstalledProgram, Likely: false)],
+            search.Candidates);
+        Assert.False(search.StoppedEarly);
+    }
+
+    [Fact]
+    public void The_Store_folder_is_searched_only_for_the_package_the_program_came_from()
+    {
+        Make("pf", "WindowsApps", "Other.App_1.0.0.0_x64__abcdefghijklm", "tool.exe");
+        var same = Make("pf", "WindowsApps", "Contoso.Tool_2.0.0.0_x64__abcdefghijklm", "bin", "tool.exe");
+
+        Assert.Empty(LocationRepair.Search(@"U:\Tools\tool.exe", [Folder("pf")]).Candidates); // not a Store program: not entered
+
+        var search = LocationRepair.Search(@"C:\Program Files\WindowsApps\Contoso.Tool_1.0.0.0_x64__abcdefghijklm\tool.exe", [Folder("pf")]);
+
+        Assert.Contains(search.Candidates, c => c.Path == same);
+        Assert.DoesNotContain(search.Candidates, c => c.Path.Contains("Other.App", StringComparison.Ordinal));
     }
 
     [Fact]

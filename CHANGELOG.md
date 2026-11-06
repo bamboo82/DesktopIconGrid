@@ -60,8 +60,10 @@ spike has its first answer: no, for want of the zh-TW speech pack (FEATURES §6.
   installed programs — or lets you browse for it. The fix is for *this PC only* by default: it is stored
   in the shortcut per PC, so it travels with sync copies and every PC finds its own path. *Properties*
   has the same *Only on this PC* choice, and *Edit names…* can show the shortcuts missing on this PC.
-  Only local fixed drives are checked, never network or removable ones. The search is covered by tests
-  on real folders and the per-PC location by model and view-model tests; not yet seen on a screen.
+  Only local fixed drives are checked, never network or removable ones. Each folder for installed
+  programs is searched with a limit of its own, a folder of the same name first; a match on the file name
+  alone is offered but never chosen for you. The search is covered by tests on real folders and the
+  per-PC location by model and view-model tests; not yet seen on a screen.
 - *Add app…* in the icon and empty-space menus: every installed app the Start menu lists, Microsoft Store
   apps included, with icons, filtered as you type; tick several and they are added at once. Store apps
   no longer need a desktop shortcut first. Desktop programs are stored by their real path, so the

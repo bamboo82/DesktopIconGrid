@@ -1709,4 +1709,10 @@
   <data name="Launch_ValueIsOption" xml:space="preserve">
     <value>未啟動：這個值以「-」開頭，程式會把它當成選項。若程式接受「--」（選項結束），請在「參數」中把它放在預留位置前面。</value>
   </data>
+  <data name="Repair_StoppedEarly" xml:space="preserve">
+    <value>搜尋在查遍所有資料夾之前就停止了：若清單中沒有這個程式，請用「瀏覽…」。</value>
+  </data>
+  <data name="Repair_NoneSure" xml:space="preserve">
+    <value>這些都不一定是這個程式：只有檔名相符。請選一個，或用「瀏覽…」。</value>
+  </data>
 </root>

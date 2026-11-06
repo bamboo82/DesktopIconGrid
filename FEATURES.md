@@ -89,9 +89,12 @@ icon shows its name and location in a tooltip regardless of how the icon is draw
 - *Repair…* (the context menu of a missing shortcut, or a click on it) looks for the program: the same
   file in a sibling folder that differs only by its version number, newest first
   (`app-1.0.9172` → `app-1.0.9203`, also a level or two up the path); the program's `App Paths` entry;
-  and the same file name in Program Files, Program Files (x86) and `%LocalAppData%\Programs`, up to three
-  folders deep, with a cap on how many folders are looked at. *Browse…* picks one by hand. The fix
-  applies to *this PC only* (the default) or to *every PC that shares the bar*.
+  a folder of the same name in Program Files, Program Files (x86) and `%LocalAppData%\Programs`; then
+  the same file name in each of them, up to three folders deep, with a cap on how many folders are looked
+  at in each (it says so when it stopped early). The Store's `WindowsApps` folder is searched only for
+  the program's own package. A match on the file name alone is listed last and not chosen for you: it
+  may be another program's `launcher.exe`. *Browse…* picks one by hand. The fix applies to *this PC
+  only* (the default) or to *every PC that shares the bar*.
 - *This PC only* is stored in the shortcut as `"locations": { "<deviceId>": "…" }` beside the common
   `location`, so it travels with the sync copy and each PC finds its own path; the device id is the
   sync device id, now kept from the first start. *Properties* shows the location on this PC and has the
