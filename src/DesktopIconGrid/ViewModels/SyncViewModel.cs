@@ -8,7 +8,7 @@ using DesktopIconGrid.Services;
 
 namespace DesktopIconGrid.ViewModels;
 
-/// <summary>Backs the "Sync with Google Drive" dialog.</summary>
+/// <summary>Backs the "Sync across PCs" dialog: where the copies are kept, the Google account, and the copies.</summary>
 public sealed class SyncViewModel : ObservableObject
 {
     public const string CloudConsoleUrl = "https://console.cloud.google.com/apis/credentials";
@@ -34,9 +34,11 @@ public sealed class SyncViewModel : ObservableObject
             }
         };
 
-        ConnectCommand = new RelayCommand(() => _ = ConnectAsync(), () => HasCredentials && !IsBusy && !IsConnected);
+        ConnectCommand = new RelayCommand(() => _ = ConnectAsync(), () => HasCredentials && !IsBusy && !IsGoogleConnected);
         CancelCommand = new RelayCommand(() => _operation?.Cancel(), () => IsBusy);
-        DisconnectCommand = new RelayCommand(() => _ = DisconnectAsync(), () => IsConnected && !IsBusy);
+        DisconnectCommand = new RelayCommand(() => _ = DisconnectAsync(), () => IsGoogleConnected && !IsBusy);
+        ChooseFolderCommand = new RelayCommand(() => _ = ChooseFolderAsync(), () => !IsBusy);
+        UseGoogleCommand = new RelayCommand(() => _ = UseGoogleDriveAsync(), () => !IsBusy);
         RefreshCommand = new RelayCommand(() => _ = RefreshAsync(), () => IsConnected && !IsBusy);
         SaveAsCommand = new RelayCommand(() => _ = SaveAsAsync(), () => IsConnected && !IsBusy && !string.IsNullOrWhiteSpace(NewProfileName));
         OverwriteCommand = new RelayCommand(() => _ = OverwriteAsync(), () => IsConnected && !IsBusy && SelectedProfile is not null);
@@ -122,13 +124,93 @@ public sealed class SyncViewModel : ObservableObject
 
     public string CredentialsHelp => Strings.Sync_ConsoleHelp;
 
+    // ----- where the copies are kept ---------------------------------------------------------------
+
+    public bool UsesFolder => Service.UsesFolder;
+
+    public bool UsesGoogle => !UsesFolder;
+
+    public string SyncFolder => Settings.SyncFolder ?? string.Empty;
+
+    /// <summary>Picks the folder for the copies (a OneDrive, Dropbox or network folder) and keeps them there from now on.</summary>
+    public ICommand ChooseFolderCommand { get; }
+
+    public ICommand UseGoogleCommand { get; }
+
+    /// <summary>Where the folder picker opens the first time: the OneDrive folder when there is one.</summary>
+    public static string? SuggestedFolder()
+    {
+        var oneDrive = Environment.GetEnvironmentVariable("OneDrive");
+        return !string.IsNullOrWhiteSpace(oneDrive) ? oneDrive : Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+    }
+
+    /// <summary>The folder choice, and then the folder's copies listed (tests await it; the command does not).</summary>
+    internal async Task ChooseFolderAsync()
+    {
+        var folder = _dialogs.PickFolder(Strings.Sync_PickFolderTitle, Settings.SyncFolder ?? SuggestedFolder());
+        if (folder is null || !ConfirmUnlink(folder))
+        {
+            NotifyStateChanged(); // the radio button goes back to what is in use
+            return;
+        }
+
+        try
+        {
+            Service.UseFolder(folder);
+            StatusText = string.Format(Strings.Sync_UsingFolder, Settings.SyncFolder);
+        }
+        catch (Exception ex) when (SyncCoordinator.IsSyncError(ex) || ex is ArgumentException)
+        {
+            StatusText = ex.Message;
+        }
+
+        Profiles.Clear();
+        NotifyStateChanged();
+        if (IsConnected)
+        {
+            await RefreshAsync();
+        }
+    }
+
+    internal async Task UseGoogleDriveAsync()
+    {
+        if (!UsesFolder || !ConfirmUnlink(newFolder: null))
+        {
+            NotifyStateChanged();
+            return;
+        }
+
+        Service.UseGoogleDrive();
+        StatusText = Strings.Sync_UsingGoogle;
+        Profiles.Clear();
+        NotifyStateChanged();
+        if (IsConnected)
+        {
+            await RefreshAsync();
+        }
+    }
+
+    /// <summary>A linked device is unlinked when the copies move: asks first. True to go ahead.</summary>
+    private bool ConfirmUnlink(string? newFolder)
+    {
+        var sameFolder = newFolder is not null && UsesFolder
+                         && string.Equals(System.IO.Path.GetFullPath(newFolder), Settings.SyncFolder, StringComparison.OrdinalIgnoreCase);
+        return sameFolder
+               || Settings.LinkedProfile is not { } linked
+               || _dialogs.Confirm(Strings.Sync_SwitchStorageTitle, string.Format(Strings.Sync_SwitchUnlinks, linked));
+    }
+
     // ----- connection -----------------------------------------------------------------------------
 
+    /// <summary>The copies can be reached: a folder is chosen, or the Google account is connected.</summary>
     public bool IsConnected => Service.IsConnected;
 
-    public bool IsNotConnected => !IsConnected;
+    public bool IsGoogleConnected => Service.IsGoogleConnected;
 
-    public string ConnectionText => IsConnected
+    public bool IsGoogleNotConnected => !IsGoogleConnected;
+
+    /// <summary>The Google account's state (for copies on Google Drive, and for buckets).</summary>
+    public string ConnectionText => IsGoogleConnected
         ? string.Format(Strings.Sync_ConnectedAs, Settings.AccountEmail ?? Strings.Common_AGoogleAccount)
         : Strings.Sync_NotConnected;
 
@@ -266,8 +348,16 @@ public sealed class SyncViewModel : ObservableObject
         return RunAsync(Strings.Sync_Disconnecting, async ct =>
         {
             await Service.DisconnectAsync(ct);
-            Profiles.Clear();
-            SelectedProfile = null;
+            if (Service.IsConnected)
+            {
+                await RefreshProfilesAsync(ct); // the copies are in a folder: still there
+            }
+            else
+            {
+                Profiles.Clear();
+                SelectedProfile = null;
+            }
+
             StatusText = Strings.Sync_Disconnected;
         });
     }
@@ -436,8 +526,12 @@ public sealed class SyncViewModel : ObservableObject
 
     private void NotifyStateChanged()
     {
+        OnPropertyChanged(nameof(UsesFolder));
+        OnPropertyChanged(nameof(UsesGoogle));
+        OnPropertyChanged(nameof(SyncFolder));
         OnPropertyChanged(nameof(IsConnected));
-        OnPropertyChanged(nameof(IsNotConnected));
+        OnPropertyChanged(nameof(IsGoogleConnected));
+        OnPropertyChanged(nameof(IsGoogleNotConnected));
         OnPropertyChanged(nameof(ConnectionText));
         OnPropertyChanged(nameof(LinkedText));
         OnPropertyChanged(nameof(HasCredentials));

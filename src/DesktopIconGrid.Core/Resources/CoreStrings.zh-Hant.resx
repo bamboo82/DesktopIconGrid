@@ -103,4 +103,7 @@
   <data name="Layout_Missing" xml:space="preserve">
     <value>檔案不存在。</value>
   </data>
+  <data name="Sync_FolderMissing" xml:space="preserve">
+    <value>找不到同步資料夾 {0}。它所在的磁碟已連接嗎？</value>
+  </data>
 </root>

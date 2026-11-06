@@ -319,5 +319,14 @@ namespace DesktopIconGrid.Core.Resources {
                 return ResourceManager.GetString("Section_Tools", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The sync folder {0} cannot be found. Is its drive connected?.
+        /// </summary>
+        public static string Sync_FolderMissing {
+            get {
+                return ResourceManager.GetString("Sync_FolderMissing", resourceCulture);
+            }
+        }
     }
 }

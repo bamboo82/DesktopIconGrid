@@ -21,7 +21,7 @@ button at the top-right and a small options arrow at the bottom-right.
 | Close button (`×`) | Phase 1: exits the app. Phase 3: hides the bar to the tray instead. |
 | Bottom-right arrow | Opens the options menu: *Settings…*, *Launch Multi Launch group*, *About*, *Exit*. |
 | Edges / corners | Resizable (WindowChrome resize border, no caption). The icon grid reflows to the new width. |
-| Tray icon | While the app runs, an icon in the notification area offers: Show/Hide bar, Reset bar position (moves it to the middle of the primary screen when it is lost on a disconnected monitor), New shortcut, New group, Edit names, Launch Multi Launch group, Always on top, Settings, Sync with Google Drive, Log viewer, Open layout file location, About, Exit. Left-click toggles the bar. The close button hides the bar to the tray (setting). |
+| Tray icon | While the app runs, an icon in the notification area offers: Show/Hide bar, Reset bar position (moves it to the middle of the primary screen when it is lost on a disconnected monitor), New shortcut, New group, Edit names, Launch Multi Launch group, Always on top, Settings, Sync across PCs, Log viewer, Open layout file location, About, Exit. Left-click toggles the bar. The close button hides the bar to the tray (setting). |
 | Transparency | Settings → Transparency (0–80 %) lets the desktop show through the bar and the group popup; with a Mica or Acrylic background it sets how much of the blurred backdrop shows while the icons stay sharp. |
 | Show/hide hotkey | A system-wide combination set in Settings (e.g. `Ctrl+Alt+Space`) hides the bar or brings it to the front from any program. |
 | Show-at-pointer hotkey (0.7.0) | A second combination opens the icons in a small window under the mouse pointer with the search box focused, on the pointer's monitor and inside its work area. It works while the bar is hidden or auto-hidden; groups open in place with a back button (or Backspace); it closes after a launch, on Esc and when it loses the focus. |
@@ -378,18 +378,30 @@ Settings live in the same JSON file as the layout and apply immediately on *Save
 }
 ```
 
-## 9. Google Drive sync
+## 9. Sync across PCs (Google Drive or a synced folder)
 
-Keeps named copies of the settings and icons on Google Drive so several PCs can share them.
+Keeps named copies of the settings and icons where several PCs can share them: on Google Drive, or
+(0.8.0) in any folder that OneDrive, Dropbox, Google Drive for desktop or a network share keeps in step.
 
-- **Copies**: a `DesktopIconGrid` folder in My Drive holds one JSON file per copy
-  (`Work.json`, `Home.json`, …) containing the settings and items, plus who saved it and when.
+- **Copies**: one JSON file per copy (`Work.json`, `Home.json`, …) containing the settings and items,
+  plus who saved it and when — in a `DesktopIconGrid` folder in My Drive, or in the chosen folder.
   The window position stays on the device. Any number of copies, each with its own name.
+- **A synced folder** (0.8.0): *Where the copies are kept → A folder…* needs no Google project and no
+  sign-in. Copies are written like `layout.json` (a temporary file, flushed, then moved over the old
+  one). A copy's time is the file's last-write time, which the sync programs carry between PCs, and the
+  device that saved it is read from the copy, so the linked copy and the conflict rule work as on Drive.
+  A copy's name that Windows does not allow in a file name is kept inside the copy (`Home: desk` is
+  saved as `Home_ desk.json` and listed as *Home: desk*). The copies OneDrive or Dropbox make after a
+  conflict (`Work-LAPTOP.json`, `Work (1).json`) are listed under their own file names with their device
+  and time, so they can be loaded or deleted; a file that cannot be read yet (still arriving) is listed
+  without a device and is never overwritten as this PC's own copy. Choosing another place unlinks the
+  device (after asking) and moves nothing. The Google account stays available for Google Drive Buckets.
 - **Device name**: each PC has a name (defaults to the computer name) shown to other devices
   as the one that saved a copy.
-- **Dialog** (options menu ▸ *Sync with Google Drive…*): connect/disconnect the Google account,
-  enter the device name, list the copies with their save time and device, *Save as* a new
-  copy, *Overwrite* or *Load* the selected copy, *Delete* a copy.
+- **Dialog** (options menu ▸ *Sync across PCs…*, called *Sync with Google Drive…* before 0.8.0):
+  where the copies are kept, connect/disconnect the Google account, enter the device name, list the
+  copies with their save time and device, *Save as* a new copy, *Overwrite* or *Load* the selected
+  copy, *Delete* a copy.
 - **Linked copy**: saving or loading links the device to that copy. Changes are then uploaded
   automatically a few seconds after they happen, and at startup the app offers to load the
   copy when another device saved a newer version. Auto-upload never overwrites a newer copy
@@ -401,8 +413,8 @@ Keeps named copies of the settings and icons on Google Drive so several PCs can 
   Cloud Console (project → enable Drive API → consent screen → Desktop app credential). The
   dialog accepts the client ID/secret or the downloaded `client_secret.json`. Publishing the
   consent screen avoids the 7-day token expiry of "Testing" status.
-- Local state in `%LocalAppData%\DesktopIconGrid\sync.json` (device name, credentials, linked
-  copy, last sync time) and `google-token.bin` (encrypted token).
+- Local state in `%LocalAppData%\DesktopIconGrid\sync.json` (device name, credentials, the sync
+  folder if one is used, linked copy, last sync time) and `google-token.bin` (encrypted token).
 
 ## 10. Icon extraction
 

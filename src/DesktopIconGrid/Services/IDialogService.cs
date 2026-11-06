@@ -34,4 +34,7 @@ public interface IDialogService
 
     /// <summary>Asks for a line of text, starting from <paramref name="initialValue"/>; <see langword="null"/> on Cancel.</summary>
     string? AskText(string title, string prompt, string? initialValue);
+
+    /// <summary>Asks for a folder, starting in <paramref name="initialFolder"/> when it exists; <see langword="null"/> on Cancel.</summary>
+    string? PickFolder(string title, string? initialFolder);
 }

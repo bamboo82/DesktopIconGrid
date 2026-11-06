@@ -189,7 +189,7 @@ public sealed class DriveBucketHandler : ISpecialIconHandler
             return false;
         }
 
-        var message = _sync.IsConnected ? Strings.Bucket_NeedWholeDrive : Strings.Bucket_NeedDrive;
+        var message = _sync.IsGoogleConnected ? Strings.Bucket_NeedWholeDrive : Strings.Bucket_NeedDrive;
         if (!_dialogs.Confirm(Strings.Bucket_AccessTitle, message))
         {
             return false;

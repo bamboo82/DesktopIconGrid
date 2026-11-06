@@ -25,6 +25,12 @@ public sealed class SyncSettings
     /// <summary>E-mail of the connected Google account, for display only.</summary>
     public string? AccountEmail { get; set; }
 
+    /// <summary>
+    /// A folder to keep the copies in instead of Google Drive (one that OneDrive, Dropbox or a network share keeps in
+    /// step across PCs); <see langword="null"/> for Google Drive. See <see cref="FolderSyncClient"/>.
+    /// </summary>
+    public string? SyncFolder { get; set; }
+
     /// <summary>The copy this device uploads to and checks for updates. <see langword="null"/> when not linked.</summary>
     public string? LinkedProfile { get; set; }
 
@@ -63,6 +69,7 @@ public sealed class SyncSettings
         ClientId = string.IsNullOrWhiteSpace(ClientId) ? null : ClientId.Trim();
         ClientSecret = string.IsNullOrWhiteSpace(ClientSecret) ? null : ClientSecret.Trim();
         ClientSecretProtected = string.IsNullOrWhiteSpace(ClientSecretProtected) ? null : ClientSecretProtected.Trim();
+        SyncFolder = string.IsNullOrWhiteSpace(SyncFolder) ? null : SyncFolder.Trim();
         LinkedProfile = string.IsNullOrWhiteSpace(LinkedProfile) ? null : LinkedProfile.Trim();
         LinkedFileId = string.IsNullOrWhiteSpace(LinkedFileId) ? null : LinkedFileId.Trim();
         if (string.IsNullOrWhiteSpace(DeviceId))

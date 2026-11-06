@@ -108,6 +108,19 @@ public sealed class DialogService(IIconProvider icons) : IDialogService, ILaunch
 
     public string? AskText(string title, string prompt, string? initialValue) => InputWindow.Show(Owner, title, prompt, initialValue);
 
+    public string? PickFolder(string title, string? initialFolder)
+    {
+        var dialog = new Microsoft.Win32.OpenFolderDialog { Title = title, Multiselect = false };
+        if (!string.IsNullOrWhiteSpace(initialFolder) && System.IO.Directory.Exists(initialFolder))
+        {
+            dialog.InitialDirectory = initialFolder;
+        }
+
+        var owner = Owner;
+        var picked = owner is null ? dialog.ShowDialog() : dialog.ShowDialog(owner);
+        return picked == true && !string.IsNullOrWhiteSpace(dialog.FolderName) ? dialog.FolderName : null;
+    }
+
     private static Window? Owner
     {
         get

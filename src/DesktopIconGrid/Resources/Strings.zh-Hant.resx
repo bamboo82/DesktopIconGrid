@@ -128,7 +128,7 @@
     <value>開啟檔案位置</value>
   </data>
   <data name="Menu_Sync" xml:space="preserve">
-    <value>與 Google 雲端硬碟同步…</value>
+    <value>跨電腦同步…</value>
   </data>
   <data name="Menu_EditNames" xml:space="preserve">
     <value>編輯名稱…</value>
@@ -811,7 +811,7 @@
     <value>選擇儲存選取項目的位置</value>
   </data>
   <data name="Sync_Title" xml:space="preserve">
-    <value>與 Google 雲端硬碟同步</value>
+    <value>跨電腦同步</value>
   </data>
   <data name="Sync_Credentials" xml:space="preserve">
     <value>Google API 憑證</value>
@@ -859,7 +859,7 @@
     <value>取消連結這部裝置</value>
   </data>
   <data name="Sync_Copies" xml:space="preserve">
-    <value>Google 雲端硬碟上的設定副本</value>
+    <value>設定副本</value>
   </data>
   <data name="Sync_SavedBy" xml:space="preserve">
     <value>儲存者</value>
@@ -922,16 +922,16 @@
     <value>已中斷連線。</value>
   </data>
   <data name="Sync_LoadingCopies" xml:space="preserve">
-    <value>正在從 Google 雲端硬碟載入副本…</value>
+    <value>正在載入副本…</value>
   </data>
   <data name="Sync_NoCopies" xml:space="preserve">
-    <value>Google 雲端硬碟上尚無設定副本。輸入名稱並按「儲存」。</value>
+    <value>尚無設定副本。輸入名稱並按「儲存」。</value>
   </data>
   <data name="Sync_OneCopy" xml:space="preserve">
-    <value>Google 雲端硬碟上有 1 個副本。</value>
+    <value>有 1 個副本。</value>
   </data>
   <data name="Sync_CopyCount" xml:space="preserve">
-    <value>Google 雲端硬碟上有 {0} 個副本。</value>
+    <value>有 {0} 個副本。</value>
   </data>
   <data name="Sync_ReplaceCopyTitle" xml:space="preserve">
     <value>取代副本</value>
@@ -942,7 +942,7 @@
 要以這部裝置的設定取代嗎？</value>
   </data>
   <data name="Sync_ReplaceSelected" xml:space="preserve">
-    <value>要以這部裝置的設定與圖示取代 Google 雲端硬碟上的「{0}」嗎？</value>
+    <value>要以這部裝置的設定與圖示取代「{0}」嗎？</value>
   </data>
   <data name="Sync_Saving" xml:space="preserve">
     <value>正在儲存「{0}」…</value>
@@ -963,7 +963,7 @@
     <value>刪除副本</value>
   </data>
   <data name="Sync_DeleteQuestion" xml:space="preserve">
-    <value>要從 Google 雲端硬碟刪除「{0}」嗎？連結到它的其他裝置將找不到它。</value>
+    <value>要刪除副本「{0}」嗎？連結到它的其他裝置將找不到它。</value>
   </data>
   <data name="Sync_Deleting" xml:space="preserve">
     <value>正在刪除「{0}」…</value>
@@ -984,10 +984,10 @@
     <value>JSON 檔案|*.json|所有檔案|*.*</value>
   </data>
   <data name="Sync_Notification" xml:space="preserve">
-    <value>Google 雲端硬碟同步</value>
+    <value>同步</value>
   </data>
   <data name="Sync_NotUploaded" xml:space="preserve">
-    <value>未上傳：「{0}」已由 {1} 於 {2} 儲存。請開啟「與 Google 雲端硬碟同步」載入或覆寫它。</value>
+    <value>未上傳：「{0}」已由 {1} 於 {2} 儲存。請開啟「跨電腦同步」載入或覆寫它。</value>
   </data>
   <data name="Sync_UploadFailed" xml:space="preserve">
     <value>上傳失敗：{0}</value>
@@ -999,7 +999,7 @@
     <value>「{0}」已是最新。</value>
   </data>
   <data name="Sync_NewerTitle" xml:space="preserve">
-    <value>Google 雲端硬碟上有較新的設定副本</value>
+    <value>有較新的設定副本</value>
   </data>
   <data name="Sync_NewerQuestion" xml:space="preserve">
     <value>「{0}」已由 {1} 於 {2} 儲存。
@@ -1007,7 +1007,7 @@
 現在載入嗎？這部裝置上的設定與圖示將被取代。</value>
   </data>
   <data name="Sync_NewerNotLoaded" xml:space="preserve">
-    <value>Google 雲端硬碟上有較新的「{0}」；尚未載入。</value>
+    <value>另一部電腦儲存了較新的「{0}」；尚未載入。</value>
   </data>
   <data name="Sync_StartupCheckFailed" xml:space="preserve">
     <value>啟動檢查失敗：{0}</value>
@@ -1498,5 +1498,41 @@
   </data>
   <data name="Names_ShowName" xml:space="preserve">
     <value>顯示有此色彩標籤的項目</value>
+  </data>
+  <data name="Sync_Storage" xml:space="preserve">
+    <value>副本存放位置</value>
+  </data>
+  <data name="Sync_UseGoogle" xml:space="preserve">
+    <value>Google 雲端硬碟（需要下方的 Google 登入）</value>
+  </data>
+  <data name="Sync_UseFolder" xml:space="preserve">
+    <value>由 OneDrive、Dropbox 或網路共用保持同步的資料夾（不需登入）</value>
+  </data>
+  <data name="Sync_ChooseFolder" xml:space="preserve">
+    <value>選擇…</value>
+  </data>
+  <data name="Sync_FolderName" xml:space="preserve">
+    <value>同步資料夾</value>
+  </data>
+  <data name="Sync_PickFolderTitle" xml:space="preserve">
+    <value>選擇存放設定副本的資料夾</value>
+  </data>
+  <data name="Sync_FolderHint" xml:space="preserve">
+    <value>使用同一個同步資料夾的每部電腦都會看到相同的副本。OneDrive 或 Dropbox 因衝突而產生的副本會以各自的檔名列出，可載入或刪除。</value>
+  </data>
+  <data name="Sync_SwitchStorageTitle" xml:space="preserve">
+    <value>變更副本存放位置</value>
+  </data>
+  <data name="Sync_SwitchUnlinks" xml:space="preserve">
+    <value>這部裝置已連結到「{0}」。變更副本存放位置會取消連結；副本本身仍留在原處。要繼續嗎？</value>
+  </data>
+  <data name="Sync_UsingFolder" xml:space="preserve">
+    <value>副本現在存放在 {0}。</value>
+  </data>
+  <data name="Sync_UsingGoogle" xml:space="preserve">
+    <value>副本現在存放在 Google 雲端硬碟。</value>
+  </data>
+  <data name="Sync_AccountForBuckets" xml:space="preserve">
+    <value>Google 帳戶（用於 Google 雲端硬碟上的副本與 Google 雲端硬碟投遞箱）</value>
   </data>
 </root>

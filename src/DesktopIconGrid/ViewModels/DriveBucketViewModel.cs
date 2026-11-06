@@ -102,7 +102,7 @@ public sealed class DriveBucketViewModel : ObservableObject
         ? Strings.Bucket_NotAvailable
         : !_sync.HasCredentials
             ? Strings.Bucket_SetUpFirst
-            : !_sync.IsConnected
+            : !_sync.IsGoogleConnected
                 ? Strings.Bucket_NotConnected
                 : _sync.HasFullDriveAccess
                     ? string.Format(Strings.Bucket_ConnectedFull, _sync.Settings.AccountEmail ?? Strings.Common_AGoogleAccount)

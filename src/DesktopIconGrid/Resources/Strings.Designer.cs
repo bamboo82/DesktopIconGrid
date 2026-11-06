@@ -1725,7 +1725,7 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Sync with Google Drive….
+        ///   Looks up a localized string similar to Sync across PCs….
         /// </summary>
         public static string Menu_Sync {
             get {
@@ -3417,11 +3417,29 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Google account (for copies on Google Drive and for Google Drive Buckets).
+        /// </summary>
+        public static string Sync_AccountForBuckets {
+            get {
+                return ResourceManager.GetString("Sync_AccountForBuckets", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Upload my changes to the linked copy automatically.
         /// </summary>
         public static string Sync_AutoUpload {
             get {
                 return ResourceManager.GetString("Sync_AutoUpload", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Choose….
+        /// </summary>
+        public static string Sync_ChooseFolder {
+            get {
+                return ResourceManager.GetString("Sync_ChooseFolder", resourceCulture);
             }
         }
 
@@ -3498,7 +3516,7 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Settings copies on Google Drive.
+        ///   Looks up a localized string similar to Settings copies.
         /// </summary>
         public static string Sync_Copies {
             get {
@@ -3507,7 +3525,7 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to {0} copies on Google Drive..
+        ///   Looks up a localized string similar to {0} copies..
         /// </summary>
         public static string Sync_CopyCount {
             get {
@@ -3543,7 +3561,7 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Delete "{0}" from Google Drive? Other devices linked to it will no longer find i [rest of string was truncated]";.
+        ///   Looks up a localized string similar to Delete the copy "{0}"? Other devices linked to it will no longer find it..
         /// </summary>
         public static string Sync_DeleteQuestion {
             get {
@@ -3620,6 +3638,24 @@ namespace DesktopIconGrid.Resources {
         public static string Sync_Disconnecting {
             get {
                 return ResourceManager.GetString("Sync_Disconnecting", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Every PC that uses the same synced folder sees the same copies. Copies that OneD [rest of string was truncated]";.
+        /// </summary>
+        public static string Sync_FolderHint {
+            get {
+                return ResourceManager.GetString("Sync_FolderHint", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Sync folder.
+        /// </summary>
+        public static string Sync_FolderName {
+            get {
+                return ResourceManager.GetString("Sync_FolderName", resourceCulture);
             }
         }
 
@@ -3732,7 +3768,7 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Loading copies from Google Drive….
+        ///   Looks up a localized string similar to Loading copies….
         /// </summary>
         public static string Sync_LoadingCopies {
             get {
@@ -3741,7 +3777,7 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to A newer "{0}" is on Google Drive; it was not loaded..
+        ///   Looks up a localized string similar to A newer "{0}" was saved on another PC; it was not loaded..
         /// </summary>
         public static string Sync_NewerNotLoaded {
             get {
@@ -3759,7 +3795,7 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Newer settings copy on Google Drive.
+        ///   Looks up a localized string similar to Newer settings copy.
         /// </summary>
         public static string Sync_NewerTitle {
             get {
@@ -3768,7 +3804,7 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to No settings copies on Google Drive yet. Give one a name and click Save..
+        ///   Looks up a localized string similar to No settings copies yet. Give one a name and click Save..
         /// </summary>
         public static string Sync_NoCopies {
             get {
@@ -3804,7 +3840,7 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Not uploaded: "{0}" was saved by {1} on {2}. Open Sync with Google Drive to load [rest of string was truncated]";.
+        ///   Looks up a localized string similar to Not uploaded: "{0}" was saved by {1} on {2}. Open Sync across PCs to load it or [rest of string was truncated]";.
         /// </summary>
         public static string Sync_NotUploaded {
             get {
@@ -3813,7 +3849,7 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Google Drive sync.
+        ///   Looks up a localized string similar to Sync.
         /// </summary>
         public static string Sync_Notification {
             get {
@@ -3831,7 +3867,7 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to 1 copy on Google Drive..
+        ///   Looks up a localized string similar to 1 copy..
         /// </summary>
         public static string Sync_OneCopy {
             get {
@@ -3867,6 +3903,15 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Choose the folder for the settings copies.
+        /// </summary>
+        public static string Sync_PickFolderTitle {
+            get {
+                return ResourceManager.GetString("Sync_PickFolderTitle", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Replace copy.
         /// </summary>
         public static string Sync_ReplaceCopyTitle {
@@ -3885,7 +3930,7 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Replace "{0}" on Google Drive with this device's settings and icons?.
+        ///   Looks up a localized string similar to Replace "{0}" with this device's settings and icons?.
         /// </summary>
         public static string Sync_ReplaceSelected {
             get {
@@ -3957,6 +4002,33 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Where the copies are kept.
+        /// </summary>
+        public static string Sync_Storage {
+            get {
+                return ResourceManager.GetString("Sync_Storage", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Keep the copies elsewhere.
+        /// </summary>
+        public static string Sync_SwitchStorageTitle {
+            get {
+                return ResourceManager.GetString("Sync_SwitchStorageTitle", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to This device is linked to "{0}". Keeping the copies elsewhere unlinks it; the cop [rest of string was truncated]";.
+        /// </summary>
+        public static string Sync_SwitchUnlinks {
+            get {
+                return ResourceManager.GetString("Sync_SwitchUnlinks", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to This device.
         /// </summary>
         public static string Sync_ThisDevice {
@@ -3966,7 +4038,7 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Sync with Google Drive.
+        ///   Looks up a localized string similar to Sync across PCs.
         /// </summary>
         public static string Sync_Title {
             get {
@@ -4016,6 +4088,42 @@ namespace DesktopIconGrid.Resources {
         public static string Sync_UploadedAt {
             get {
                 return ResourceManager.GetString("Sync_UploadedAt", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to A folder that OneDrive, Dropbox or a network share keeps in step (no sign-in).
+        /// </summary>
+        public static string Sync_UseFolder {
+            get {
+                return ResourceManager.GetString("Sync_UseFolder", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Google Drive (needs the Google sign-in below).
+        /// </summary>
+        public static string Sync_UseGoogle {
+            get {
+                return ResourceManager.GetString("Sync_UseGoogle", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Copies are now kept in {0}..
+        /// </summary>
+        public static string Sync_UsingFolder {
+            get {
+                return ResourceManager.GetString("Sync_UsingFolder", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Copies are now kept on Google Drive..
+        /// </summary>
+        public static string Sync_UsingGoogle {
+            get {
+                return ResourceManager.GetString("Sync_UsingGoogle", resourceCulture);
             }
         }
 

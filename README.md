@@ -37,8 +37,9 @@ with Windows DPAPI.
   icon size, spacing, labels, single or double click, always on top.
 - **Three languages** — English, 繁體中文 and 简体中文, following the Windows display language or
   *Settings → Language*.
-- **Google Drive sync** — keep named copies of your settings on Google Drive ("Work",
-  "Home", …), load them on another PC, and let linked devices upload changes automatically.
+- **Sync across PCs** — keep named copies of your settings ("Work", "Home", …) in a folder that
+  OneDrive, Dropbox or a network share keeps in step, or on Google Drive; load them on another PC, and
+  let linked devices upload changes automatically.
 - Everything is saved automatically to `%LocalAppData%\DesktopIconGrid\layout.json`.
 
 See [FEATURES.md](FEATURES.md) for the full feature plan and delivery phases, and
@@ -87,18 +88,26 @@ Google Drive Bucket, and [docs/THEMES.md](docs/THEMES.md) for the themes.
 | Resize the bar | Drag any edge or corner |
 | Settings | Options menu (▸) → *Settings…*, or `Ctrl+,` |
 | Use the bar in Chinese or English | Settings → *Language*; *Same as Windows* follows the display language. Applies at the next start |
-| Sync with Google Drive | Options menu (▸) → *Sync with Google Drive…* (see below) |
+| Sync across PCs | Options menu (▸) → *Sync across PCs…* (see below) |
 
-## Sync with Google Drive
+## Sync across PCs
 
-The sync dialog keeps named copies of your settings and icons in a `DesktopIconGrid` folder
-in your Google Drive. Save the current bar as "Work", load it on another PC, or keep several
+The sync dialog keeps named copies of your settings and icons where all your PCs can reach them:
+
+- **A synced folder** (simplest): choose *A folder that OneDrive, Dropbox or a network share keeps in
+  step* and pick a folder, for example `OneDrive\DesktopIconGrid`. Nothing to set up and no sign-in;
+  pick the same folder on the other PCs.
+- **Google Drive**: copies go to a `DesktopIconGrid` folder in your Google Drive, after the one-time
+  Google setup below.
+
+Save the current bar as "Work", load it on another PC, or keep several
 copies and switch between them. A device that saved or loaded a copy is *linked* to it:
 changes are uploaded automatically a few seconds after they happen, and when another device
 saved a newer version the app offers to load it at startup. Each PC has a device name
 (defaults to the computer name) so you can see who saved what.
 
-Google requires every app to use its own OAuth client, so a one-time setup is needed:
+For copies on Google Drive, and for Google Drive Buckets, Google requires every app to use its own
+OAuth client, so a one-time setup is needed:
 
 1. Open [Google Cloud Console](https://console.cloud.google.com/apis/credentials) and create a
    project (or pick one).
@@ -110,7 +119,7 @@ Google requires every app to use its own OAuth client, so a one-time setup is ne
    scope the first time you use one; it is a restricted scope, so an unverified app shows
    Google's "unverified app" warning that you, as the project owner, can accept.
 4. *Credentials → Create credentials → OAuth client ID → Desktop app*. Download the JSON.
-5. In Desktop Icon Grid: options menu (▸) → *Sync with Google Drive…* → *Import
+5. In Desktop Icon Grid: options menu (▸) → *Sync across PCs…* → *Import
    client_secret.json…* (or paste the client ID and secret), then *Connect…* and sign in
    in the browser.
 

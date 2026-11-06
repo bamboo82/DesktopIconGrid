@@ -103,4 +103,7 @@
   <data name="Layout_Missing" xml:space="preserve">
     <value>The file does not exist.</value>
   </data>
+  <data name="Sync_FolderMissing" xml:space="preserve">
+    <value>The sync folder {0} cannot be found. Is its drive connected?</value>
+  </data>
 </root>

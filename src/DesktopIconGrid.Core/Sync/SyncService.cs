@@ -17,8 +17,10 @@ public enum AutoUploadOutcome
 public sealed record AutoUploadResult(AutoUploadOutcome Outcome, RemoteProfile? Remote = null);
 
 /// <summary>
-/// Orchestrates the Google Drive sync: connecting an account, listing the named settings copies,
-/// saving the current layout as a copy, loading one, and keeping track of the copy this device is linked to.
+/// Orchestrates the sync: listing the named settings copies, saving the current layout as a copy, loading one, and
+/// keeping track of the copy this device is linked to. The copies live on Google Drive (after connecting an account)
+/// or, when <see cref="SyncSettings.SyncFolder"/> is set, as files in that folder with no sign-in
+/// (<see cref="FolderSyncClient"/>). The Google account also serves Google Drive Buckets, whichever is used for copies.
 /// </summary>
 public sealed class SyncService
 {
@@ -26,6 +28,7 @@ public sealed class SyncService
 
     private readonly GoogleAuthorization _auth;
     private readonly IDriveClient _drive;
+    private FolderSyncClient? _folder;
     private readonly Action _saveSettings;
     private readonly Func<DateTimeOffset> _clock;
     private readonly string? _appVersion;
@@ -79,7 +82,69 @@ public sealed class SyncService
 
     public bool HasCredentials => Settings.Credentials.IsComplete;
 
-    public bool IsConnected => _auth.IsAuthorized;
+    /// <summary>The copies are kept in <see cref="SyncSettings.SyncFolder"/> rather than on Google Drive.</summary>
+    public bool UsesFolder => Settings.SyncFolder is not null;
+
+    /// <summary>The copies can be reached: a folder is chosen, or the Google account is connected.</summary>
+    public bool IsConnected => UsesFolder || IsGoogleConnected;
+
+    /// <summary>A Google account is connected (for copies on Google Drive, and for buckets).</summary>
+    public bool IsGoogleConnected => _auth.IsAuthorized;
+
+    /// <summary>Where the copies are read and written: the chosen folder, or Google Drive.</summary>
+    private IDriveClient Copies
+    {
+        get
+        {
+            if (Settings.SyncFolder is not { } folder)
+            {
+                return _drive;
+            }
+
+            if (_folder is null || !string.Equals(_folder.Folder, Path.GetFullPath(folder), StringComparison.OrdinalIgnoreCase))
+            {
+                _folder = new FolderSyncClient(folder);
+            }
+
+            return _folder;
+        }
+    }
+
+    private string StorageName => Settings.SyncFolder ?? "Google Drive";
+
+    /// <summary>
+    /// Keeps the copies in <paramref name="folder"/> from now on, creating it when needed. The device is unlinked:
+    /// the copy it was linked to is elsewhere. The copies themselves are not moved.
+    /// </summary>
+    public void UseFolder(string folder)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(folder);
+        var full = Path.GetFullPath(folder.Trim());
+        Directory.CreateDirectory(full);
+        if (string.Equals(Settings.SyncFolder, full, StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        Settings.SyncFolder = full;
+        ForgetLink();
+        SaveSettings();
+        AppLog.Default.Info("Sync", $"Settings copies are kept in the folder {full}");
+    }
+
+    /// <summary>Keeps the copies on Google Drive again; the device is unlinked from the folder's copy.</summary>
+    public void UseGoogleDrive()
+    {
+        if (Settings.SyncFolder is null)
+        {
+            return;
+        }
+
+        Settings.SyncFolder = null;
+        ForgetLink();
+        SaveSettings();
+        AppLog.Default.Info("Sync", "Settings copies are kept on Google Drive");
+    }
 
     /// <summary>Connected and linked to a named copy.</summary>
     public bool IsLinked => IsConnected && !string.IsNullOrWhiteSpace(Settings.LinkedProfile);
@@ -94,19 +159,24 @@ public sealed class SyncService
         return user;
     }
 
+    /// <summary>Signs out of Google. A link to a copy on Google Drive goes with it; one to a copy in a folder stays.</summary>
     public async Task DisconnectAsync(CancellationToken cancellationToken)
     {
         await _auth.RevokeAsync(cancellationToken).ConfigureAwait(false);
         Settings.AccountEmail = null;
-        Settings.LinkedProfile = null;
-        Settings.LastSyncedAt = null;
+        if (!UsesFolder)
+        {
+            Settings.LinkedProfile = null;
+            Settings.LastSyncedAt = null;
+        }
+
         SaveSettings();
         AppLog.Default.Info("Sync", "Disconnected from Google Drive");
     }
 
     public async Task<IReadOnlyList<RemoteProfile>> ListProfilesAsync(CancellationToken cancellationToken)
     {
-        var files = await _drive.ListFilesAsync(cancellationToken).ConfigureAwait(false);
+        var files = await Copies.ListFilesAsync(cancellationToken).ConfigureAwait(false);
         return files
             .Select(RemoteProfile.FromFile)
             .OfType<RemoteProfile>()
@@ -135,7 +205,7 @@ public sealed class SyncService
 
         var now = _clock();
         var profile = SyncProfile.FromLayout(existing?.Name ?? name, layout, Settings.DeviceName, now, _appVersion, Settings.DeviceId);
-        var file = await _drive.UploadJsonAsync(
+        var file = await Copies.UploadJsonAsync(
             profile.Name + RemoteProfile.FileExtension,
             profile.ToJson(),
             profile.ToAppProperties(),
@@ -144,9 +214,9 @@ public sealed class SyncService
 
         Settings.LinkedProfile = profile.Name;
         Settings.LinkedFileId = file.Id;
-        Settings.LastSyncedAt = file.ModifiedTime ?? now; // Drive's clock, not this PC's
+        Settings.LastSyncedAt = file.ModifiedTime ?? now; // Drive's clock (or the file's time in a folder), not this PC's
         SaveSettings();
-        AppLog.Default.Info("Sync", $"Saved settings copy \"{profile.Name}\" to Google Drive ({layout.Items.Count} items, {(existing is null ? "new" : "replaced")})");
+        AppLog.Default.Info("Sync", $"Saved settings copy \"{profile.Name}\" to {StorageName} ({layout.Items.Count} items, {(existing is null ? "new" : "replaced")})");
 
         return RemoteProfile.FromFile(file) ?? new RemoteProfile(profile.Name, file.Id, now, Settings.DeviceName, file.Size);
     }
@@ -155,7 +225,7 @@ public sealed class SyncService
     public async Task<SyncProfile> LoadProfileAsync(RemoteProfile remote, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(remote);
-        var json = await _drive.DownloadTextAsync(remote.FileId, cancellationToken).ConfigureAwait(false);
+        var json = await Copies.DownloadTextAsync(remote.FileId, cancellationToken).ConfigureAwait(false);
         var profile = SyncProfile.FromJson(json);
         if (string.IsNullOrWhiteSpace(profile.Name))
         {
@@ -173,8 +243,8 @@ public sealed class SyncService
     public async Task DeleteProfileAsync(RemoteProfile remote, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(remote);
-        await _drive.DeleteAsync(remote.FileId, cancellationToken).ConfigureAwait(false);
-        AppLog.Default.Info("Sync", $"Deleted settings copy \"{remote.Name}\" from Google Drive");
+        await Copies.DeleteAsync(remote.FileId, cancellationToken).ConfigureAwait(false);
+        AppLog.Default.Info("Sync", $"Deleted settings copy \"{remote.Name}\" from {StorageName}");
         if (string.Equals(Settings.LinkedFileId, remote.FileId, StringComparison.Ordinal)
             || (Settings.LinkedFileId is null && string.Equals(Settings.LinkedProfile, remote.Name, StringComparison.OrdinalIgnoreCase)))
         {
@@ -184,10 +254,15 @@ public sealed class SyncService
 
     public void Unlink()
     {
+        ForgetLink();
+        SaveSettings();
+    }
+
+    private void ForgetLink()
+    {
         Settings.LinkedProfile = null;
         Settings.LinkedFileId = null;
         Settings.LastSyncedAt = null;
-        SaveSettings();
     }
 
     /// <summary>The Drive entry for the linked copy, or <see langword="null"/> when not linked or the copy was deleted.</summary>

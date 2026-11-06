@@ -128,7 +128,7 @@
     <value>Open file location</value>
   </data>
   <data name="Menu_Sync" xml:space="preserve">
-    <value>Sync with Google Drive…</value>
+    <value>Sync across PCs…</value>
   </data>
   <data name="Menu_EditNames" xml:space="preserve">
     <value>Edit names…</value>
@@ -811,7 +811,7 @@ Sign in in your browser now?</value>
     <value>Choose where to save the selected items</value>
   </data>
   <data name="Sync_Title" xml:space="preserve">
-    <value>Sync with Google Drive</value>
+    <value>Sync across PCs</value>
   </data>
   <data name="Sync_Credentials" xml:space="preserve">
     <value>Google API credentials</value>
@@ -859,7 +859,7 @@ Sign in in your browser now?</value>
     <value>Unlink this device</value>
   </data>
   <data name="Sync_Copies" xml:space="preserve">
-    <value>Settings copies on Google Drive</value>
+    <value>Settings copies</value>
   </data>
   <data name="Sync_SavedBy" xml:space="preserve">
     <value>Saved by</value>
@@ -922,16 +922,16 @@ Sign in in your browser now?</value>
     <value>Disconnected.</value>
   </data>
   <data name="Sync_LoadingCopies" xml:space="preserve">
-    <value>Loading copies from Google Drive…</value>
+    <value>Loading copies…</value>
   </data>
   <data name="Sync_NoCopies" xml:space="preserve">
-    <value>No settings copies on Google Drive yet. Give one a name and click Save.</value>
+    <value>No settings copies yet. Give one a name and click Save.</value>
   </data>
   <data name="Sync_OneCopy" xml:space="preserve">
-    <value>1 copy on Google Drive.</value>
+    <value>1 copy.</value>
   </data>
   <data name="Sync_CopyCount" xml:space="preserve">
-    <value>{0} copies on Google Drive.</value>
+    <value>{0} copies.</value>
   </data>
   <data name="Sync_ReplaceCopyTitle" xml:space="preserve">
     <value>Replace copy</value>
@@ -942,7 +942,7 @@ Sign in in your browser now?</value>
 Replace it with this device's settings?</value>
   </data>
   <data name="Sync_ReplaceSelected" xml:space="preserve">
-    <value>Replace "{0}" on Google Drive with this device's settings and icons?</value>
+    <value>Replace "{0}" with this device's settings and icons?</value>
   </data>
   <data name="Sync_Saving" xml:space="preserve">
     <value>Saving "{0}"…</value>
@@ -963,7 +963,7 @@ Replace it with this device's settings?</value>
     <value>Delete copy</value>
   </data>
   <data name="Sync_DeleteQuestion" xml:space="preserve">
-    <value>Delete "{0}" from Google Drive? Other devices linked to it will no longer find it.</value>
+    <value>Delete the copy "{0}"? Other devices linked to it will no longer find it.</value>
   </data>
   <data name="Sync_Deleting" xml:space="preserve">
     <value>Deleting "{0}"…</value>
@@ -984,10 +984,10 @@ Replace it with this device's settings?</value>
     <value>JSON files|*.json|All files|*.*</value>
   </data>
   <data name="Sync_Notification" xml:space="preserve">
-    <value>Google Drive sync</value>
+    <value>Sync</value>
   </data>
   <data name="Sync_NotUploaded" xml:space="preserve">
-    <value>Not uploaded: "{0}" was saved by {1} on {2}. Open Sync with Google Drive to load it or overwrite it.</value>
+    <value>Not uploaded: "{0}" was saved by {1} on {2}. Open Sync across PCs to load it or overwrite it.</value>
   </data>
   <data name="Sync_UploadFailed" xml:space="preserve">
     <value>Upload failed: {0}</value>
@@ -999,7 +999,7 @@ Replace it with this device's settings?</value>
     <value>"{0}" is up to date.</value>
   </data>
   <data name="Sync_NewerTitle" xml:space="preserve">
-    <value>Newer settings copy on Google Drive</value>
+    <value>Newer settings copy</value>
   </data>
   <data name="Sync_NewerQuestion" xml:space="preserve">
     <value>"{0}" was saved by {1} on {2}.
@@ -1007,7 +1007,7 @@ Replace it with this device's settings?</value>
 Load it now? The settings and icons on this device will be replaced.</value>
   </data>
   <data name="Sync_NewerNotLoaded" xml:space="preserve">
-    <value>A newer "{0}" is on Google Drive; it was not loaded.</value>
+    <value>A newer "{0}" was saved on another PC; it was not loaded.</value>
   </data>
   <data name="Sync_StartupCheckFailed" xml:space="preserve">
     <value>Startup check failed: {0}</value>
@@ -1498,5 +1498,41 @@ Details are in {1}.</value>
   </data>
   <data name="Names_ShowName" xml:space="preserve">
     <value>Show items with this colour tag</value>
+  </data>
+  <data name="Sync_Storage" xml:space="preserve">
+    <value>Where the copies are kept</value>
+  </data>
+  <data name="Sync_UseGoogle" xml:space="preserve">
+    <value>Google Drive (needs the Google sign-in below)</value>
+  </data>
+  <data name="Sync_UseFolder" xml:space="preserve">
+    <value>A folder that OneDrive, Dropbox or a network share keeps in step (no sign-in)</value>
+  </data>
+  <data name="Sync_ChooseFolder" xml:space="preserve">
+    <value>Choose…</value>
+  </data>
+  <data name="Sync_FolderName" xml:space="preserve">
+    <value>Sync folder</value>
+  </data>
+  <data name="Sync_PickFolderTitle" xml:space="preserve">
+    <value>Choose the folder for the settings copies</value>
+  </data>
+  <data name="Sync_FolderHint" xml:space="preserve">
+    <value>Every PC that uses the same synced folder sees the same copies. Copies that OneDrive or Dropbox made after a conflict show up under their own file names, so you can load or delete them.</value>
+  </data>
+  <data name="Sync_SwitchStorageTitle" xml:space="preserve">
+    <value>Keep the copies elsewhere</value>
+  </data>
+  <data name="Sync_SwitchUnlinks" xml:space="preserve">
+    <value>This device is linked to "{0}". Keeping the copies elsewhere unlinks it; the copy itself stays where it is. Continue?</value>
+  </data>
+  <data name="Sync_UsingFolder" xml:space="preserve">
+    <value>Copies are now kept in {0}.</value>
+  </data>
+  <data name="Sync_UsingGoogle" xml:space="preserve">
+    <value>Copies are now kept on Google Drive.</value>
+  </data>
+  <data name="Sync_AccountForBuckets" xml:space="preserve">
+    <value>Google account (for copies on Google Drive and for Google Drive Buckets)</value>
   </data>
 </root>

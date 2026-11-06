@@ -65,6 +65,8 @@ public sealed class LauncherViewModelTests : IDisposable
         public string? TextAnswer { get; set; }
 
         public string? AskText(string title, string prompt, string? initialValue) => TextAnswer;
+
+        public string? PickFolder(string title, string? initialFolder) => null;
     }
 
     /// <summary>Records every launch and answers with <see cref="Result"/> (a failure unless a test says otherwise).</summary>

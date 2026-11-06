@@ -8,6 +8,17 @@ version numbers follow [Semantic Versioning](https://semver.org/).
 "One bar, every PC": sync through any folder, shortcuts that survive other PCs, *Add app…* and imports,
 layout history, and a command line with *Send to*.
 
+### Added
+
+- Sync through any folder: the sync dialog (now *Sync across PCs…*) can keep the settings copies in a
+  folder that OneDrive, Dropbox, Google Drive for desktop or a network share keeps in step, instead of on
+  Google Drive. No Google project, no sign-in. Device names, the linked copy, automatic upload and the
+  rule that never overwrites a newer copy from another PC work as before, with the file's time as the
+  clock. Copies the sync programs make after a conflict (`Work (1).json`, `Work-LAPTOP.json`) appear
+  under their own names, with their device and time, so they can be loaded or deleted. The Google account
+  stays for Google Drive Buckets. The folder backend is covered by tests on real files, including two PCs
+  sharing one folder; it has not yet been tried with OneDrive or Dropbox themselves.
+
 ## [0.7.0] – 2026-11-05
 
 "Get there faster", the first release of the plan in [docs/ROADMAP.md](docs/ROADMAP.md): a click on a
