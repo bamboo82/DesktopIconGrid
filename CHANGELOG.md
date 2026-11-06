@@ -12,7 +12,9 @@ moves to 0.9.0.
 
 Upgrading: update every PC that shares a settings copy. When 0.6.0 saves a linked copy it removes what
 0.7.0 and 0.8.0 added (the launch options, colour tags, *When it is running*, the *Show at pointer*
-hotkey, the per-PC locations); 0.7.0 and later keep it.
+hotkey, the per-PC locations); 0.7.0 and later keep it. Meanwhile a PC still on 0.7.0 can share a copy on
+Google Drive with 0.8.0: its saves are told by Drive's time, as before, so they are offered, never
+overwritten.
 
 Note for whoever tests this build: the owner's screen pass of 0.7.0 confirmed four of the bugs fixed here.
 What is new in this release has been seen on no screen yet, nor have the fixes that need real input: the
@@ -31,7 +33,8 @@ spike has its first answer: no, for want of the zh-TW speech pack (FEATURES §6.
     extension that Windows finds as a batch file (npm, npx, code and many more) or that is not found
     here. For these, `" % ! ^ & | < >` are refused.
   - PowerShell reads it as script text for `powershell.exe` without `-File` and for `pwsh -Command`.
-    For these, only letters, digits, spaces and `. _ - \ / :` pass.
+    For these, only letters, digits, spaces and `. _ - \ / :` pass, and no word may start with `-`,
+    which PowerShell would take as a parameter (`x -Recurse`).
   - A program that hands its command line on to cmd.exe or PowerShell (`wt cmd /c …`, `runas`,
     `conhost`) is treated like them.
   - For every program, a value of more than one line is refused, and so is the fullwidth quotation mark
@@ -51,7 +54,8 @@ spike has its first answer: no, for want of the zh-TW speech pack (FEATURES §6.
   Google Drive. No Google project, no sign-in. Device names, the linked copy, automatic upload and the
   rule that never overwrites a newer copy from another PC work as before. Which copy is newer is told by a
   random revision in each save, not by the clocks: a sync program carries the writer's own file time, so
-  a save made offline, or on a PC whose clock is fast, could otherwise overwrite another PC's newer one. A
+  a save made offline, or on a PC whose clock is fast, could otherwise overwrite another PC's newer one. On
+  Google Drive, whose times are Drive's own, a later time counts as well. A
   linked copy that cannot be read yet postpones the upload instead of being overwritten. Copies the sync programs make after a conflict (`Work (1).json`, `Work-LAPTOP.json`) appear
   under their own names, with their device and time, so they can be loaded or deleted. The Google account
   stays for Google Drive Buckets. The folder backend is covered by tests on real files, including two PCs
@@ -73,8 +77,8 @@ spike has its first answer: no, for want of the zh-TW speech pack (FEATURES §6.
   no longer need a desktop shortcut first. Desktop programs are stored by their real path, so the
   running badge and switching work for them; that includes the ones the Start menu lists under an id of
   their own (Chrome, Edge, Firefox, Office), when their shortcut starts the program without arguments.
-  The mapping from the Start menu's entries is covered by tests and reading the list by a test on
-  Windows; the dialog itself has not been seen on a screen.
+  The mapping from the Start menu's entries is covered by tests, and reading the list and Edge's entry by
+  tests on Windows; the dialog itself has not been seen on a screen.
 - Portable mode: put an empty `portable.txt` next to `DesktopIconGrid.exe` and the bar keeps its files in
   that folder instead of `%LocalAppData%`. `%APPDRIVE%` stands for the program's drive, and new shortcuts
   to files on that drive use it, so a USB drive that gets another letter keeps working. Covered by
@@ -90,6 +94,11 @@ spike has its first answer: no, for want of the zh-TW speech pack (FEATURES §6.
 
 ### Fixed
 
+- When another program had `sync.json` open at start (a virus scan at logon, a sync program), the sync
+  settings started blank for that session, and saving any change in the sync dialog replaced the real
+  ones: the link, the sync folder, the Google client. They are now kept in memory only and never written
+  over the file, the sync dialog says so, and the next start reads the file again. Covered by tests that
+  hold the file open.
 - *Run as administrator* together with *Keep a log* started the program without elevation and without a
   word (the log needs the program started directly, which cannot ask for elevation). It now starts
   elevated and unlogged, and *Keep a log* is greyed out while *Run as administrator* is ticked, with the

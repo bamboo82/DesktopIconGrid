@@ -51,7 +51,7 @@ A launchable entry. Fields come straight from the *Shortcut Properties* dialog:
 | --- | --- |
 | Name | Caption (shown as tooltip, and as label when labels are enabled). Pre-filled from the file name. |
 | Location | A file, a folder or a URL. `%ENV%` variables are expanded at launch. The `…` button opens a file picker. |
-| Parameters | Command-line arguments passed to the program. `{file}`/`{files}` take dropped files; `{clipboard}` inserts the clipboard text and `{ask:Question}` asks for a value when the shortcut is started (each quoted as one argument; Cancel cancels the launch). A value is refused, before anything starts, when the program could run it: through cmd.exe (a batch file, also one found for a command without an extension, or cmd.exe itself) `" % ! ^ & | < >`; as PowerShell script text anything but letters, digits, spaces and `. _ - \ / :`. For every program, a value is refused when it has more than one line, holds `＂`, or begins with `-` where an argument starts with no `--` before it (0.8.0). |
+| Parameters | Command-line arguments passed to the program. `{file}`/`{files}` take dropped files; `{clipboard}` inserts the clipboard text and `{ask:Question}` asks for a value when the shortcut is started (each quoted as one argument; Cancel cancels the launch). A value is refused, before anything starts, when the program could run it: through cmd.exe (a batch file, also one found for a command without an extension, or cmd.exe itself) `" % ! ^ & | < >`; as PowerShell script text anything but letters, digits, spaces and `. _ - \ / :`, and a word that starts with `-` (a parameter there). For every program, a value is refused when it has more than one line, holds `＂`, or begins with `-` where an argument starts with no `--` before it (0.8.0). |
 | Icon | Default = extracted from the Location. *Change icon…* picks a `.png/.jpg/.ico/.bmp` image or an `.exe/.dll/.ico` resource (`path,index` is accepted). *Text icon…* draws text instead (see below). *From a web address…* downloads an image once, scales it to 256 px, centres it on a transparent square and keeps it as a local PNG. *Use default* clears the override. |
 
 **Running badge and output log.** A green dot in the corner of a shortcut shows that a program
@@ -426,7 +426,11 @@ Settings live in the same JSON file as the layout and apply immediately on *Save
   the bar from PC to PC. `%APPDRIVE%` is the program's drive (`E:`): new shortcuts to files on that
   drive are stored as `%APPDRIVE%\…`, so they keep working when the drive gets another letter, and any
   location may use it. The Google sign-in and client secret are encrypted for the Windows user, so on
-  another PC Google asks for a sign-in again; a sync folder needs none.
+  another PC Google asks for a sign-in again; a sync folder needs none. The sync settings on the drive
+  belong to the PC that used them last: on each change of PC the bar takes a new sync device id and that
+  PC's name (A, then B, then A again makes three ids, and a name typed by hand is not carried along).
+  Nothing is lost by it: the copy it last synced is known by its revision, so it is not mistaken for
+  another PC's newer one.
 - A corrupt file is renamed to `layout.json.corrupt-<timestamp>` and the app starts
   with an empty bar, telling the user where the backup is.
 - Shape (abridged):
@@ -462,7 +466,9 @@ Keeps named copies of the settings and icons where several PCs can share them: o
   decided by each save's random *revision*, not by the times: this PC remembers the revision it last wrote
   or loaded, and another PC's save with another revision is a conflict however its time compares (a
   sync program carries the writer's own time, a save made offline arrives late, and a clock can be wrong).
-  Copies from before 0.8.0 have no revision and are compared by time, as before. A linked copy that cannot
+  Copies from before 0.8.0 have no revision and are compared by time, as before. On Google Drive, whose
+  times are Drive's own, a later time counts as well: a PC still on 0.7.0 names only the properties it
+  knows when it updates a copy, and Drive keeps the revision of the save before it. A linked copy that cannot
   be read (still arriving) postpones the upload by a minute instead of being overwritten.
   A copy's name that Windows does not allow in a file name is kept inside the copy (`Home: desk` is
   saved as `Home_ desk.json` and listed as *Home: desk*). The copies OneDrive or Dropbox make after a
@@ -488,7 +494,10 @@ Keeps named copies of the settings and icons where several PCs can share them: o
   dialog accepts the client ID/secret or the downloaded `client_secret.json`. Publishing the
   consent screen avoids the 7-day token expiry of "Testing" status.
 - Local state in `%LocalAppData%\DesktopIconGrid\sync.json` (device name, credentials, the sync
-  folder if one is used, linked copy, last sync time) and `google-token.bin` (encrypted token).
+  folder if one is used, linked copy, last sync time) and `google-token.bin` (encrypted token). When
+  another program holds `sync.json` at start (a virus scan at logon, a sync program), the session runs
+  with blank sync settings kept in memory only, never written over the file, and the sync dialog says
+  so; the next start reads them again (0.8.0).
 
 ## 10. Icon extraction
 
