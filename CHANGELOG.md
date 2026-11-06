@@ -24,8 +24,8 @@ spike has its first answer: no, for want of the zh-TW speech pack (FEATURES §6.
 ### Security
 
 - `{clipboard}` and `{ask:…}` values could run commands when the shortcut's program reads its command line
-  through cmd.exe or as PowerShell script text. The quoting that keeps a value one argument for other
-  programs does not hold there. Copied text such as `x" & calc & "` could start a program through cmd.exe,
+  through cmd.exe, as PowerShell script text, through a Linux shell in WSL, or as the command ssh sends.
+  The quoting that keeps a value one argument for other programs does not hold there. Copied text such as `x" & calc & "` could start a program through cmd.exe,
   elevated with *Run as administrator*, and PowerShell takes the quotes off before it reads the words, so
   `(calc)` ran too. Such values are now refused before anything starts, with a notification naming the
   character:
@@ -35,17 +35,27 @@ spike has its first answer: no, for want of the zh-TW speech pack (FEATURES §6.
   - PowerShell reads it as script text for `powershell.exe` without `-File` and for `pwsh -Command`.
     For these, only letters, digits, spaces and `. _ - \ / :` pass, and no word may start with `-`,
     which PowerShell would take as a parameter (`x -Recurse`).
-  - A program that hands its command line on to cmd.exe or PowerShell (`wt cmd /c …`, `runas`,
-    `conhost`) is treated like them.
+  - A Linux shell reads it for `wsl.exe`, unless `-e`/`--exec` runs the program itself, and for the old WSL
+    launcher, `bash.exe` in System32. It keeps the quotes, but expands `$(…)` and `` `…` `` inside them
+    (`wsl echo "$(…)"` ran the command), so `$` and `` ` `` are refused as well as what cmd.exe refuses.
+  - ssh sends the words after its destination to the other computer's shell as a command, without their
+    quotes. A value there is checked as PowerShell script text is; the destination and ssh's own options
+    are not.
+  - A program that hands its command line on to cmd.exe, PowerShell, WSL or ssh (`wt cmd /c …`, `runas`,
+    `conhost`) is treated like them. Windows Terminal itself starts another command at every `;`, even
+    inside quotes, so a `;` is refused wherever `wt` reads the command line.
   - For every program, a value of more than one line is refused, and so is the fullwidth quotation mark
     `＂`, which Windows can turn into `"` for older programs. The clipboard text is trimmed first.
   - For every program, a value that begins with `-` where an argument starts is refused unless `--`
     comes before it, because most programs would take it as an option (`python "-c…"` runs code).
 
   A file dropped on such a shortcut is refused when its name holds `%` (cmd.exe expands `%NAME%` even
-  inside quotes) or, for PowerShell script text, anything but the characters above. Affects 0.7.0.
-  Covered by tests for each refused character and each kind of program, and on Windows by running the
-  real powershell.exe and pwsh with the command lines the app builds.
+  inside quotes), for WSL also `$` or `` ` ``, for Windows Terminal `;`, and for PowerShell script text or
+  an ssh command anything but the characters above. A placeholder written inside code for another
+  program (`python -c "…{clipboard}…"`, `node -e`, `bash -c`) puts the value into that code: that is the
+  shortcut's choice, and the Parameters hint says to avoid it. Affects 0.7.0. Covered by tests for each
+  refused character and each kind of program, and on Windows by running the real powershell.exe and pwsh
+  with the command lines the app builds; WSL, ssh and Windows Terminal by tests of the rules only.
 
 ### Added
 
