@@ -53,22 +53,74 @@ public sealed class SyncSettingsStoreTests : IDisposable
     }
 
     [Fact]
-    public void An_unreadable_protected_secret_is_dropped_and_clearing_the_secret_removes_it_from_disk()
+    public void An_unreadable_protected_secret_is_kept_and_clearing_this_PCs_secret_removes_only_its_own()
     {
         File.WriteAllText(Path_, """{"clientId":"id","clientSecretProtected":"garbage"}""");
         var store = new SyncSettingsStore(Path_, new ReversingProtector());
 
         var loaded = store.Load();
         Assert.Null(loaded.ClientSecret);
-        Assert.Null(loaded.ClientSecretProtected);
+        Assert.Equal("garbage", loaded.ClientSecretProtected); // another PC's, perhaps: not this one's to drop
 
         loaded.ClientSecret = "new";
         store.Save(loaded);
         loaded.ClientSecret = null;
         store.Save(loaded);
 
-        Assert.DoesNotContain("sealed:", File.ReadAllText(Path_));
+        var json = File.ReadAllText(Path_);
+        Assert.DoesNotContain("sealed:", json); // this PC's own is gone
+        Assert.Contains("garbage", json);
         Assert.Null(store.Load().ClientSecret);
+    }
+
+    /// <summary>DPAPI for one PC and user: what another PC protected cannot be read here.</summary>
+    private sealed class PcProtector(string pc) : ISecretProtector
+    {
+        public string Protect(string secret) => pc + ":" + secret;
+
+        public string? Unprotect(string protectedValue) => protectedValue.StartsWith(pc + ":", StringComparison.Ordinal) ? protectedValue[(pc.Length + 1)..] : null;
+    }
+
+    [Fact]
+    public void PCs_that_share_the_settings_keep_each_their_own_client_secret()
+    {
+        // The review: on a portable copy, another PC could not read DESK's secret, and its next save wrote null over it.
+        var desk = new SyncSettingsStore(Path_, new PcProtector("desk"), machineKey: "pc-desk");
+        var laptop = new SyncSettingsStore(Path_, new PcProtector("laptop"), machineKey: "pc-laptop");
+        var settings = desk.Load();
+        settings.ClientId = "id";
+        settings.ClientSecret = "s3cret";
+        desk.Save(settings);
+
+        var onLaptop = laptop.Load();
+        Assert.Null(onLaptop.ClientSecret);
+        laptop.Save(onLaptop); // any save, after an upload for one
+        Assert.Equal("s3cret", desk.Load().ClientSecret);
+
+        onLaptop.ClientSecret = "s3cret"; // entered again on LAPTOP
+        laptop.Save(onLaptop);
+        Assert.Equal("s3cret", desk.Load().ClientSecret);
+        Assert.Equal("s3cret", laptop.Load().ClientSecret);
+
+        var clearing = laptop.Load();
+        clearing.ClientSecret = null; // LAPTOP removes its own
+        laptop.Save(clearing);
+        Assert.Null(laptop.Load().ClientSecret);
+        Assert.Equal("s3cret", desk.Load().ClientSecret);
+    }
+
+    [Fact]
+    public void A_secret_another_PC_saved_with_0_8_0_survives_this_PCs_first_save()
+    {
+        File.WriteAllText(Path_, """{"clientId":"id","clientSecretProtected":"desk:s3cret"}""");
+        var laptop = new SyncSettingsStore(Path_, new PcProtector("laptop"), machineKey: "pc-laptop");
+        var settings = laptop.Load();
+
+        settings.ClientSecret = "laptop-secret";
+        laptop.Save(settings);
+
+        Assert.Equal("s3cret", new SyncSettingsStore(Path_, new PcProtector("desk"), machineKey: "pc-desk").Load().ClientSecret);
+        Assert.Equal("laptop-secret", laptop.Load().ClientSecret);
     }
 
     [Fact]

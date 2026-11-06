@@ -431,8 +431,10 @@ Settings live in the same JSON file as the layout and apply immediately on *Save
   location may use it, except on Windows' own drive, whose paths are written as they are (0.8.1). A
   `portable.txt` in a folder that cannot be written (Program Files without elevation, read-only media) is
   set aside: the data goes to `%LocalAppData%`, and the app says so once at start (0.8.1). The Google
-  sign-in and client secret are encrypted for the Windows user, so on
-  another PC Google asks for a sign-in again; a sync folder needs none. The sync settings on the drive
+  sign-in and client secret are encrypted for the Windows user, so each PC keeps its own on the drive (the
+  client secret in `sync.json` under the PC's key, the sign-in in `google-token-<PC>.bin`): on a PC new to
+  the drive Google asks for a sign-in, and the client secret, once, and PCs that share the drive no longer
+  sign each other out (0.8.1); a sync folder needs none. The sync settings on the drive
   belong to the PC that used them last: on each change of PC the bar takes a new sync device id and that
   PC's name (A, then B, then A again makes three ids, and a name typed by hand is not carried along).
   Nothing is lost by it: the copy it last synced is known by its revision, so it is not mistaken for

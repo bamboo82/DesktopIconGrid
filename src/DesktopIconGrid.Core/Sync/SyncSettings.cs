@@ -23,8 +23,22 @@ public sealed class SyncSettings
     /// <summary>The OAuth client secret in clear, in memory. On disk it is stored as <see cref="ClientSecretProtected"/> when a protector is available.</summary>
     public string? ClientSecret { get; set; }
 
-    /// <summary>The client secret as written by an <see cref="ISecretProtector"/>; present in <c>sync.json</c> instead of the clear value.</summary>
+    /// <summary>
+    /// The client secret as written by an <see cref="ISecretProtector"/>; present in <c>sync.json</c> instead of the clear
+    /// value. This PC's, as versions before 0.8.1 read it; see <see cref="ClientSecretsByPc"/>.
+    /// </summary>
     public string? ClientSecretProtected { get; set; }
+
+    /// <summary>
+    /// The protected client secret of each PC that uses these settings, by <see cref="MachineKey"/>. A protector ties a
+    /// value to one PC and user (DPAPI), so settings carried from PC to PC (a portable copy) keep every PC's own instead
+    /// of each PC erasing the others'. A value whose PC is not known (from 0.8.0) is kept under a name of its own.
+    /// </summary>
+    public Dictionary<string, string>? ClientSecretsByPc { get; set; }
+
+    /// <summary>The stored value this PC's protector read the client secret from, so a save replaces that one and no other.</summary>
+    [JsonIgnore]
+    internal string? OwnSecretValue { get; set; }
 
     /// <summary>E-mail of the connected Google account, for display only.</summary>
     public string? AccountEmail { get; set; }
@@ -108,6 +122,8 @@ public sealed class SyncSettings
         ClientId = string.IsNullOrWhiteSpace(ClientId) ? null : ClientId.Trim();
         ClientSecret = string.IsNullOrWhiteSpace(ClientSecret) ? null : ClientSecret.Trim();
         ClientSecretProtected = string.IsNullOrWhiteSpace(ClientSecretProtected) ? null : ClientSecretProtected.Trim();
+        ClientSecretsByPc = ClientSecretsByPc?.Where(pair => !string.IsNullOrWhiteSpace(pair.Key) && !string.IsNullOrWhiteSpace(pair.Value))
+            .ToDictionary(pair => pair.Key.Trim(), pair => pair.Value.Trim(), StringComparer.Ordinal) is { Count: > 0 } secrets ? secrets : null;
         SyncFolder = string.IsNullOrWhiteSpace(SyncFolder) ? null : SyncFolder.Trim();
         MachineFingerprint = string.IsNullOrWhiteSpace(MachineFingerprint) ? null : MachineFingerprint.Trim();
         LinkedProfile = string.IsNullOrWhiteSpace(LinkedProfile) ? null : LinkedProfile.Trim();
@@ -131,12 +147,16 @@ public sealed class SyncSettingsStore
 
     private bool _toldStandInKept;
 
-    public SyncSettingsStore(string filePath, ISecretProtector? protector = null)
+    /// <param name="machineKey">This PC's <see cref="MachineKey"/>, under which its protected client secret is kept (see <see cref="SyncSettings.ClientSecretsByPc"/>).</param>
+    public SyncSettingsStore(string filePath, ISecretProtector? protector = null, string? machineKey = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(filePath);
         FilePath = Path.GetFullPath(filePath);
         Protector = protector;
+        MachineKey = string.IsNullOrWhiteSpace(machineKey) ? null : machineKey;
     }
+
+    public string? MachineKey { get; }
 
     public string FilePath { get; }
 
@@ -201,13 +221,22 @@ public sealed class SyncSettingsStore
                     AppLog.Default.Warning("Sync", $"The client secret could not be re-saved encrypted yet: {ex.Message}");
                 }
             }
-            else if (settings.ClientSecretProtected is { } sealedSecret)
+            else
             {
-                settings.ClientSecret = Protector.Unprotect(sealedSecret);
-                if (settings.ClientSecret is null)
+                // This PC's own first, then the one older versions wrote, then any other: a PC's protector reads only its own.
+                foreach (var stored in StoredSecrets(settings))
                 {
-                    AppLog.Default.Warning("Sync", "The stored Google client secret could not be decrypted (another user or machine?); enter it again");
-                    settings.ClientSecretProtected = null;
+                    if (Protector.Unprotect(stored) is { } secret)
+                    {
+                        settings.ClientSecret = secret;
+                        settings.OwnSecretValue = stored;
+                        break;
+                    }
+                }
+
+                if (settings.ClientSecret is null && (settings.ClientSecretProtected is not null || settings.ClientSecretsByPc is not null))
+                {
+                    AppLog.Default.Warning("Sync", "The stored Google client secret was protected on another PC or for another user; enter it again here (the other PC keeps its own)");
                 }
             }
         }
@@ -243,9 +272,30 @@ public sealed class SyncSettingsStore
         if (Protector is not null)
         {
             written = settings.Clone();
-            written.ClientSecretProtected = settings.ClientSecret is { } secret ? Protector.Protect(secret) : null;
+            var secrets = new Dictionary<string, string>(settings.ClientSecretsByPc ?? [], StringComparer.Ordinal);
+            foreach (var key in secrets.Where(pair => pair.Value == settings.OwnSecretValue || pair.Key == MachineKey).Select(pair => pair.Key).ToList())
+            {
+                secrets.Remove(key); // this PC's old value, wherever it was
+            }
+
+            var legacy = settings.ClientSecretProtected == settings.OwnSecretValue ? null : settings.ClientSecretProtected; // another PC's
+            var protectedHere = settings.ClientSecret is { } secret ? Protector.Protect(secret) : null;
+            if (protectedHere is not null && legacy is not null && !secrets.ContainsValue(legacy))
+            {
+                secrets[UnknownPcKey(legacy)] = legacy; // from 0.8.0, its PC not known: kept for it beside this PC's
+            }
+
+            if (MachineKey is not null && protectedHere is not null)
+            {
+                secrets[MachineKey] = protectedHere;
+            }
+
+            written.ClientSecretProtected = protectedHere ?? legacy;
+            written.ClientSecretsByPc = secrets.Count > 0 ? secrets : null;
             written.ClientSecret = null;
             settings.ClientSecretProtected = written.ClientSecretProtected;
+            settings.ClientSecretsByPc = written.ClientSecretsByPc;
+            settings.OwnSecretValue = protectedHere;
         }
 
         Directory.CreateDirectory(Path.GetDirectoryName(FilePath)!);
@@ -258,6 +308,28 @@ public sealed class SyncSettingsStore
 
         File.Move(tempPath, FilePath, overwrite: true);
     }
+
+    /// <summary>The protected client secrets to try, this PC's own first.</summary>
+    private IEnumerable<string> StoredSecrets(SyncSettings settings)
+    {
+        if (MachineKey is not null && settings.ClientSecretsByPc?.TryGetValue(MachineKey, out var own) == true)
+        {
+            yield return own;
+        }
+
+        if (settings.ClientSecretProtected is { } legacy)
+        {
+            yield return legacy;
+        }
+
+        foreach (var other in settings.ClientSecretsByPc?.Where(pair => pair.Key != MachineKey).Select(pair => pair.Value) ?? [])
+        {
+            yield return other;
+        }
+    }
+
+    private static string UnknownPcKey(string value) =>
+        "unknown-" + Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(value)))[..12].ToLowerInvariant();
 
     private static string ReadWithRetry(string path)
     {

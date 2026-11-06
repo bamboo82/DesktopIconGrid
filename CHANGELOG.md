@@ -44,6 +44,11 @@ switches, portable mode and *Repair…* on more kinds of PC, and the smaller ite
   own kept it. That is the right thing (its path differs), so the choice now says so.
 - *Edit names…* checked every shortcut's target on the window's thread when it opened. It now uses the bar's
   own check on the icon worker, as the icons do.
+- Google in portable mode: the client secret and the sign-in are encrypted for one PC and user, and the copy
+  on the drive held only one of each. Another PC could not read them, so its next save erased the first PC's
+  secret, and each sign-in replaced the other PC's, so two PCs kept signing each other out. Each PC now keeps
+  its own: the secret in `sync.json` under the PC's key (a secret saved by 0.8.0 is kept for its PC), the
+  sign-in in a file of its own. A PC new to the drive asks once. Covered by tests with a protector per PC.
 - Each placeholder is now checked where it stands. In `ssh {ask:Host} tail {clipboard}`, the host takes
   `admin@server2`, and the words after it are still checked as the remote shell reads them; 0.8.0 checked
   both values as the command, so `admin@server2` was refused. The values of wsl's own options (`-d`, `-u`,
