@@ -9,13 +9,9 @@ public sealed class LauncherLayout
     /// <summary>
     /// Raised only when existing data changes meaning. New properties need no bump: every level of the document
     /// keeps the properties it does not know (<see cref="ExtensionData"/>), so older versions pass them on.
-    /// 2 (0.8.1): paths in Windows' own folders that a 0.8.0 portable copy wrote with <c>%APPDRIVE%</c> are repaired
-    /// once, when a layout of version 1 is loaded (see <c>LauncherModel.FromLayout</c>).
+    /// 0.8.0 shows a box at every start for a layout of a higher version, so a number is raised only for a real change.
     /// </summary>
-    public const int CurrentVersion = 2;
-
-    /// <summary>The last version whose paths may need the repair of version 2.</summary>
-    public const int BeforeWindowsDriveRepair = 1;
+    public const int CurrentVersion = 1;
 
     public int Version { get; set; } = CurrentVersion;
 

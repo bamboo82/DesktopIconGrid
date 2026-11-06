@@ -52,23 +52,25 @@ public sealed class LauncherModel
     public static LauncherModel FromLayout(LauncherLayout layout) => FromLayout(layout, exists: null, appDrive: null, systemDrive: null);
 
     /// <summary>
-    /// Builds a model from a layout file, repairing duplicate ids and nested groups, and, in a layout of version 1, the
-    /// paths 0.8.0 wrote with <c>%APPDRIVE%</c> in Windows' own folders (see <see cref="Healed"/>). Each PC's own
-    /// location is left as it is: it is that PC's. By default the files are looked for here, and the drives are this
-    /// PC's (<c>%APPDRIVE%</c> and <c>%SystemDrive%</c>).
+    /// Builds a model from a layout file, repairing duplicate ids and nested groups, and giving this PC its own location
+    /// for a path that 0.8.0 wrote with <c>%APPDRIVE%</c> in Windows' own folders when that is where it is here (see
+    /// <see cref="RepairForThisPc"/>). By default the files are looked for here, and the drives and the PC are this one's
+    /// (<c>%APPDRIVE%</c>, <c>%SystemDrive%</c>, <see cref="ThisDevice.Id"/>).
     /// </summary>
-    public static LauncherModel FromLayout(LauncherLayout layout, Func<string, bool>? exists, string? appDrive, string? systemDrive)
+    public static LauncherModel FromLayout(
+        LauncherLayout layout, Func<string, bool>? exists, string? appDrive, string? systemDrive, string? deviceId = null, Func<string, bool>? isSlowDrive = null)
     {
         ArgumentNullException.ThrowIfNull(layout);
         appDrive ??= Environment.GetEnvironmentVariable(DataLocation.AppDriveVariable);
         systemDrive ??= Environment.GetEnvironmentVariable("SystemDrive");
+        deviceId ??= ThisDevice.Id;
         var model = new LauncherModel(layout.Settings?.Clone() ?? new LauncherSettings(), layout.Window)
         {
             FormatVersion = Math.Max(layout.Version, LauncherLayout.CurrentVersion),
             _unknownProperties = UnknownProperties.Copy(layout.ExtensionData),
-            _driveRepair = layout.Version <= LauncherLayout.BeforeWindowsDriveRepair && appDrive is { Length: 2 } && systemDrive is { Length: 2 }
+            _driveRepair = deviceId is not null && appDrive is { Length: 2 } && systemDrive is { Length: 2 }
                            && !string.Equals(appDrive, systemDrive, StringComparison.OrdinalIgnoreCase)
-                ? new DriveRepair(exists ?? (path => File.Exists(path) || Directory.Exists(path)), appDrive, systemDrive)
+                ? new DriveRepair(exists ?? (path => File.Exists(path) || Directory.Exists(path)), appDrive, systemDrive, deviceId, isSlowDrive ?? IsSlowDrive)
                 : null,
         };
         if (layout.Window is { IsUsable: false })
@@ -111,41 +113,55 @@ public sealed class LauncherModel
     };
 
     /// <summary>A path of 0.8.0's under Windows' own folders, with its drive back (see <see cref="DataLocation.WithWindowsDrive"/>); counted as a repair.</summary>
-    /// <summary>
-    /// What <see cref="FromLayout(LauncherLayout, Func{string, bool}?, string?, string?)"/> needs to repair a layout of
-    /// version 1: whether a path is there, the drive <c>%APPDRIVE%</c> stands for, and Windows' drive.
-    /// </summary>
-    private sealed record DriveRepair(Func<string, bool> Exists, string AppDrive, string SystemDrive);
+    /// <summary>What <see cref="RepairForThisPc"/> needs: whether a path is there, the two drives, this PC, and whether a drive is slow to look at.</summary>
+    private sealed record DriveRepair(Func<string, bool> Exists, string AppDrive, string SystemDrive, string DeviceId, Func<string, bool> IsSlowDrive);
 
     private DriveRepair? _driveRepair;
 
-    /// <summary>
-    /// A <c>%APPDRIVE%</c> path in Windows' own folders, from 0.8.0, given Windows' drive back when that is where it is:
-    /// missing where <c>%APPDRIVE%</c> points, and there on Windows' drive. A portable copy's own program on a second
-    /// disk (<c>D:\Program Files (x86)\Steam</c>) is there where <c>%APPDRIVE%</c> points, and stays as it is.
-    /// </summary>
-    private string? Healed(string? path)
+    /// <summary>A drive whose look may hang or wake hardware (removable, optical, network) or that is not there.</summary>
+    private static bool IsSlowDrive(string drive)
     {
-        if (_driveRepair is not { } repair || path is null)
+        try
         {
-            return path;
+            return new DriveInfo(drive).DriveType is not (DriveType.Fixed or DriveType.Ram);
+        }
+        catch (ArgumentException)
+        {
+            return true;
+        }
+    }
+
+    /// <summary>
+    /// A path 0.8.0 wrote with <c>%APPDRIVE%</c> in Windows' own folders, from a portable copy on Windows' drive, is
+    /// Windows' drive on the PC where it is there and missing where <c>%APPDRIVE%</c> points. That decides for this PC
+    /// alone: the shortcut gets this PC's own location (or its own one is rewritten), and the shared location, the start
+    /// folder and the icon stay as they are, since a copy on another PC's second disk may mean its own D: by them. Windows'
+    /// drive is looked at first; a slow app drive (a stick, a share) counts as missing without a look. It is safe to repeat:
+    /// a path already on Windows' drive is no candidate.
+    /// </summary>
+    private void RepairForThisPc(ShortcutItem shortcut)
+    {
+        if (_driveRepair is not { } repair)
+        {
+            return;
         }
 
+        var own = shortcut.Locations is { } locations && locations.TryGetValue(repair.DeviceId, out var mine) ? mine : null;
+        var path = (own ?? shortcut.Location)?.Trim();
         var healed = DataLocation.WithWindowsDrive(path, repair.SystemDrive);
-        if (string.Equals(healed, path, StringComparison.Ordinal))
+        if (path is null || healed is null || string.Equals(healed, path, StringComparison.Ordinal) || !repair.Exists(healed))
         {
-            return path;
+            return;
         }
 
         var prefix = $"%{DataLocation.AppDriveVariable}%";
-        var atAppDrive = repair.AppDrive + path.TrimStart()[prefix.Length..];
-        if (repair.Exists(atAppDrive) || !repair.Exists(healed!))
+        if (!repair.IsSlowDrive(repair.AppDrive) && repair.Exists(repair.AppDrive + path[prefix.Length..]))
         {
-            return path;
+            return; // there where %APPDRIVE% points: this copy's own (a second disk's Program Files)
         }
 
+        shortcut.SetLocationFor(repair.DeviceId, healed);
         RepairCount++;
-        return healed;
     }
 
     private void Adopt(LauncherItem item, HashSet<Guid> seen)
@@ -159,7 +175,6 @@ public sealed class LauncherModel
 
         item.Name = item.Name?.Trim() ?? string.Empty;
         item.TextIcon = item.TextIcon?.Normalized();
-        item.IconPath = Healed(item.IconPath);
         item.ColorTag = ColorTags.Normalize(item.ColorTag);
         if (item is SeparatorItem separator)
         {
@@ -171,8 +186,8 @@ public sealed class LauncherModel
         }
         else if (item is ShortcutItem shortcut)
         {
-            shortcut.Location = Healed(shortcut.Location?.Trim()) ?? string.Empty;
-            shortcut.StartIn = Healed(shortcut.StartIn);
+            shortcut.Location = shortcut.Location?.Trim() ?? string.Empty;
+            RepairForThisPc(shortcut);
 
             if (shortcut.Name.Length == 0)
             {

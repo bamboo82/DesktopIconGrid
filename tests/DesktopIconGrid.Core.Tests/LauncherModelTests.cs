@@ -21,49 +21,60 @@ public class LauncherModelTests
 
     private static string[] Names(IEnumerable<LauncherItem> items) => items.Select(i => i.Name).ToArray();
 
-    private static LauncherLayout VersionOne(params LauncherItem[] items) => new() { Version = 1, Items = [.. items] };
+    private static LauncherLayout Layout(params LauncherItem[] items) => new() { Version = 1, Items = [.. items] };
 
     [Fact]
     public void A_copy_on_a_second_disk_keeps_its_own_paths_in_Windows_folders()
     {
-        // Review 16 R4′: D:\Program Files (x86)\Steam was rewritten to C: at every start, as 0.8.0's paths are repaired.
+        // Review 16 R4′: D:\Program Files (x86)\Steam was rewritten to C: at every start.
         var steam = DataLocation.WithAppDrive(@"D:\Program Files (x86)\Steam\steam.exe", "D:"); // as ForStorage stores it on D:
-        Assert.Equal(@"%APPDRIVE%\Program Files (x86)\Steam\steam.exe", steam);
         var there = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { @"D:\Program Files (x86)\Steam\steam.exe", @"C:\Program Files (x86)\Steam\steam.exe" };
 
-        var model = LauncherModel.FromLayout(VersionOne(new ShortcutItem { Name = "Steam", Location = steam }), there.Contains, "D:", "C:");
+        var model = LauncherModel.FromLayout(Layout(new ShortcutItem { Name = "Steam", Location = steam }), there.Contains, "D:", "C:", "desk", _ => false);
 
-        Assert.Equal(steam, ((ShortcutItem)model.Items[0]).Location);
+        var shortcut = (ShortcutItem)model.Items[0];
+        Assert.Equal(steam, shortcut.Location);
+        Assert.Null(shortcut.Locations);
         Assert.Equal(0, model.RepairCount);
     }
 
     [Fact]
-    public void A_path_0_8_0_wrote_for_Windows_drive_is_repaired_once_and_never_another_PCs_own()
+    public void A_path_0_8_0_wrote_for_Windows_drive_gives_this_PC_its_own_location_and_changes_nothing_else()
     {
+        // Review 17 R4″: the repair decided the shared location for every PC from this PC's disks, behind a version number
+        // that 0.8.0 shows a box for at every start.
         var notepad = new ShortcutItem
         {
             Name = "Notepad",
             Location = @"%APPDRIVE%\Windows\System32\notepad.exe",
-            IconPath = @"%APPDRIVE%\Windows\System32\shell32.dll",
+            IconPath = @"%APPDRIVE%\Windows\System32\shell32.dll,3",
             Locations = new() { ["laptop"] = @"%APPDRIVE%\Windows\notepad.exe" },
         };
-        var there = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { @"C:\Windows\System32\notepad.exe", @"C:\Windows\System32\shell32.dll" };
+        var there = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { @"C:\Windows\System32\notepad.exe" };
 
-        var model = LauncherModel.FromLayout(VersionOne(notepad), there.Contains, "E:", "C:"); // a stick at E:
+        var model = LauncherModel.FromLayout(Layout(notepad), there.Contains, "E:", "C:", "stick-pc", _ => true); // a stick: no look at E:
 
         var repaired = (ShortcutItem)model.Items[0];
-        Assert.Equal(@"C:\Windows\System32\notepad.exe", repaired.Location);
-        Assert.Equal(@"C:\Windows\System32\shell32.dll", repaired.IconPath);
-        Assert.Equal(@"%APPDRIVE%\Windows\notepad.exe", repaired.Locations!["laptop"]); // that PC's, as it wrote it
-        Assert.Equal(2, model.RepairCount);
+        Assert.Equal(@"%APPDRIVE%\Windows\System32\notepad.exe", repaired.Location); // the shared location is everyone's
+        Assert.Equal(@"C:\Windows\System32\notepad.exe", repaired.Locations!["stick-pc"]); // this PC's own
+        Assert.Equal(@"%APPDRIVE%\Windows\notepad.exe", repaired.Locations["laptop"]); // another PC's
+        Assert.Equal(@"%APPDRIVE%\Windows\System32\shell32.dll,3", repaired.IconPath);
+        Assert.Equal(1, model.RepairCount);
+        Assert.Equal(1, model.ToLayout().Version);
 
-        // Saved as version 2: the next load repairs nothing, even what is missing everywhere.
-        var saved = model.ToLayout();
-        Assert.Equal(LauncherLayout.CurrentVersion, saved.Version);
-        ((ShortcutItem)saved.Items[0]).Location = @"%APPDRIVE%\Windows\System32\gone.exe";
-        var again = LauncherModel.FromLayout(saved, _ => true, "E:", "C:");
-        Assert.Equal(@"%APPDRIVE%\Windows\System32\gone.exe", ((ShortcutItem)again.Items[0]).Location);
-        Assert.Equal(0, again.RepairCount);
+        var again = LauncherModel.FromLayout(model.ToLayout(), there.Contains, "E:", "C:", "stick-pc", _ => true);
+        Assert.Equal(0, again.RepairCount); // safe to repeat
+    }
+
+    [Theory]
+    [InlineData("C:")] // a copy on Windows' drive: %APPDRIVE% is C: already
+    [InlineData(null)] // a copy on a share has no %APPDRIVE%
+    public void A_copy_that_cannot_repair_changes_neither_paths_nor_the_version(string? appDrive)
+    {
+        var model = LauncherModel.FromLayout(Layout(new ShortcutItem { Name = "Notepad", Location = @"%APPDRIVE%\Windows\notepad.exe" }), _ => true, appDrive ?? "", "C:", "desk", _ => false);
+
+        Assert.Null(((ShortcutItem)model.Items[0]).Locations);
+        Assert.Equal(1, model.ToLayout().Version);
     }
 
     [Fact]
