@@ -2,6 +2,7 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Interop;
+using System.Windows.Media;
 using DesktopIconGrid.Core;
 using DesktopIconGrid.Core.Models;
 using DesktopIconGrid.ViewModels;
@@ -96,6 +97,44 @@ public sealed class PointerWindowTests(WpfThread wpf) : IDisposable
         Assert.True(scroller.ComputedVerticalScrollBarVisibility == Visibility.Collapsed, $"a scroll bar: {Describe(window)}");
         Assert.True(scroller.ExtentHeight <= scroller.ViewportHeight + 0.5, $"rows cut off: {Describe(window)}");
         Assert.True(scroller.ViewportHeight - scroller.ExtentHeight < cellHeight / 2, $"an empty row: {Describe(window)}");
+    }
+
+    private static bool IsWithin(DependencyObject? element, DependencyObject ancestor)
+    {
+        for (var current = element; current is not null; current = VisualTreeHelper.GetParent(current))
+        {
+            if (ReferenceEquals(current, ancestor))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    [Fact]
+    public void A_divider_after_a_full_row_is_seen_and_hit_inside_the_view()
+    {
+        // Review 15 UI2: the divider of a full row took its room past the row's end, where the scroll viewer clips, so
+        // it was as invisible as before with 1 unit to click. The pointer window's rows hold their cells exactly.
+        var model = Shortcuts(PointerWindow.MaxColumns);
+        model.Add(new SeparatorItem { Kind = SeparatorItem.Line });
+        model.Add(Shortcut(99));
+        WithWindow(model, (window, _) =>
+        {
+            var scroller = window.Icons.Scroller;
+            var host = window.Icons.ItemsHost;
+            var divider = (FrameworkElement)host.ItemContainerGenerator.ContainerFromIndex(PointerWindow.MaxColumns);
+            var lastIcon = (FrameworkElement)host.ItemContainerGenerator.ContainerFromIndex(PointerWindow.MaxColumns - 1);
+            var middle = divider.TranslatePoint(new Point(divider.ActualWidth / 2, divider.ActualHeight / 2), scroller);
+
+            Assert.True(middle.X > 0 && middle.X < scroller.ViewportWidth, $"the divider's middle is at {middle.X}, outside the view's {scroller.ViewportWidth}: {Describe(window)}");
+            var hit = scroller.InputHitTest(middle) as DependencyObject;
+            Assert.True(IsWithin(hit, divider), $"a click on the divider's middle at {middle} lands on {hit}");
+
+            var iconMiddle = lastIcon.TranslatePoint(new Point(lastIcon.ActualWidth / 2, lastIcon.ActualHeight / 2), scroller);
+            Assert.True(IsWithin(scroller.InputHitTest(iconMiddle) as DependencyObject, lastIcon), "the last icon of the row is no longer hit in its middle");
+        });
     }
 
     [Fact]

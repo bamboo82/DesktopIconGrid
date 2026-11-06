@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Threading;
 using DesktopIconGrid.Core.Models;
 using DesktopIconGrid.Resources;
 using DesktopIconGrid.ViewModels;
@@ -80,6 +81,56 @@ public sealed class DialogFitTests(WpfThread wpf)
             };
             window.Advanced.IsExpanded = true;
             FitsAShortScreen(window, window.Body, 400, Strings.Common_Save, Strings.Common_Cancel);
+        });
+    }
+
+    /// <summary>Lets the window take the size and place its last change asks for.</summary>
+    private static void Settle(Window window)
+    {
+        window.UpdateLayout();
+        var frame = new DispatcherFrame();
+        window.Dispatcher.BeginInvoke(DispatcherPriority.ContextIdle, () => frame.Continue = false);
+        Dispatcher.PushFrame(frame);
+        window.UpdateLayout();
+    }
+
+    [Fact]
+    public void Item_properties_near_the_bottom_of_the_screen_move_up_when_Advanced_opens()
+    {
+        // Review 15 UI1: Advanced is closed when the dialog opens; opening it grew the window downward, under the taskbar
+        // when it had opened near the bottom (centred on a bar there), with Save and Cancel.
+        wpf.Invoke(() =>
+        {
+            var window = new ItemPropertiesWindow
+            {
+                DataContext = new ItemPropertiesViewModel(new ShortcutItem { Name = "Tool", Location = @"C:\Tools\tool.exe" }, isNew: false, new NoIcons()),
+                WindowStartupLocation = WindowStartupLocation.Manual,
+            };
+            try
+            {
+                window.Show();
+                Settle(window);
+                var work = SystemParameters.WorkArea;
+                window.Top = work.Bottom - window.ActualHeight - 2;
+                Settle(window);
+                var closedHeight = window.ActualHeight;
+
+                window.Advanced.IsExpanded = true;
+                Settle(window);
+
+                Assert.True(window.ActualHeight > closedHeight + 20, $"Advanced did not make the dialog taller: {closedHeight} to {window.ActualHeight}");
+                var toUnits = PresentationSource.FromVisual(window)!.CompositionTarget!.TransformFromDevice;
+                foreach (var label in new[] { Strings.Common_Save, Strings.Common_Cancel })
+                {
+                    var button = LogicalDescendants<Button>(window).Single(b => Equals(b.Content, label));
+                    var bottom = toUnits.Transform(button.PointToScreen(new Point(0, button.ActualHeight))).Y;
+                    Assert.True(bottom <= work.Bottom + 0.5, $"{label} ends at {bottom}, below the work area's {work.Bottom}");
+                }
+            }
+            finally
+            {
+                window.Close();
+            }
         });
     }
 

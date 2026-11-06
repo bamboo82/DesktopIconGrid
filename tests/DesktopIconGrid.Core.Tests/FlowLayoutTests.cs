@@ -42,22 +42,24 @@ public class FlowLayoutTests
         // so its last icon wrapped and every later row was off by one.
         var boxes = FlowLayout.Arrange([Cell, Cell, Cell, Divider, Cell, Cell, Cell, Cell], 3 * W + 4, W, H);
 
-        Assert.Equal(new FlowBox(3 * W, 0, FlowLayout.MinimumHitWidth, H), boxes[3]); // what is left of the row, at least the hit width
+        // What is left of the row is 4 units: it takes the hit width at the row's end, over the last cell's padding.
+        Assert.Equal(new FlowBox(3 * W + 4 - FlowLayout.MinimumHitWidth, 0, FlowLayout.MinimumHitWidth, H), boxes[3]);
         Assert.Equal([new FlowBox(0, H, W, H), new FlowBox(W, H, W, H), new FlowBox(2 * W, H, W, H)], boxes.Skip(4).Take(3));
         Assert.Equal(new FlowBox(0, 2 * H, W, H), boxes[7]);
-        Assert.Equal((3 * W + FlowLayout.MinimumHitWidth, 3 * H), FlowLayout.Extent(boxes)); // the panel caps it at its width
+        Assert.Equal((3 * W + 4, 3 * H), FlowLayout.Extent(boxes)); // nothing past the width, which the scroll viewer would clip
     }
 
     [Fact]
-    public void A_divider_in_a_row_with_no_room_left_reaches_into_the_margin_so_it_can_still_be_used()
+    public void A_divider_in_a_row_with_no_room_left_takes_the_end_of_the_row_so_it_can_still_be_used()
     {
-        // The review: with no width it could not be seen, right-clicked or dragged, and Tab landed on it unseen.
+        // Review 11: with no width it could not be seen, right-clicked or dragged, and Tab landed on it unseen. Review 15
+        // UI2: the room it then took past the row's end was clipped by the scroll viewer; it is now inside the row.
         var boxes = FlowLayout.Arrange([Cell, Cell, Divider, Divider, Cell], 2 * W, W, H);
 
-        Assert.Equal(new FlowBox(2 * W, 0, FlowLayout.MinimumHitWidth, H), boxes[2]);
-        Assert.Equal(new FlowBox(2 * W, 0, FlowLayout.MinimumHitWidth, H), boxes[3]); // stacked there, never further out
+        Assert.Equal(new FlowBox(2 * W - FlowLayout.MinimumHitWidth, 0, FlowLayout.MinimumHitWidth, H), boxes[2]);
+        Assert.Equal(boxes[2], boxes[3]); // stacked there
         Assert.Equal(new FlowBox(0, H, W, H), boxes[4]);
-        Assert.Equal((2 * W + FlowLayout.MinimumHitWidth, 2 * H), FlowLayout.Extent(boxes));
+        Assert.Equal((2 * W, 2 * H), FlowLayout.Extent(boxes));
     }
 
     [Fact]

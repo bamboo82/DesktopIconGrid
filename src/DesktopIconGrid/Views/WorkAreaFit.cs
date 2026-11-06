@@ -8,7 +8,8 @@ namespace DesktopIconGrid.Views;
 /// <summary>
 /// Keeps a dialog that sizes itself to its content inside the work area of the screen it opens on: never taller than
 /// that work area (its body scrolls instead, with its buttons still in sight), and moved back inside it when it opened
-/// partly off it, as a tall dialog centred on a bar near the edge of the screen would.
+/// partly off it, as a tall dialog centred on a bar near the edge of the screen would, or when it grew past an edge
+/// afterwards (Advanced opened in Properties, a hint appeared).
 /// </summary>
 internal static class WorkAreaFit
 {
@@ -20,7 +21,11 @@ internal static class WorkAreaFit
     {
         ArgumentNullException.ThrowIfNull(window);
         window.SourceInitialized += (_, _) => LimitHeight(window);
-        window.Loaded += (_, _) => MoveInside(window);
+        window.Loaded += (_, _) =>
+        {
+            MoveInside(window);
+            window.SizeChanged += (_, _) => MoveInside(window); // SizeToContent grows it downward
+        };
     }
 
     /// <summary>The work area of the screen the dialog opens on: its owner's, or its own.</summary>
