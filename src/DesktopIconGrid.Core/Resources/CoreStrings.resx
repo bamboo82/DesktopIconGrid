@@ -106,4 +106,7 @@
   <data name="Sync_FolderMissing" xml:space="preserve">
     <value>The sync folder {0} cannot be found. Is its drive connected?</value>
   </data>
+  <data name="Sync_CopyBusy" xml:space="preserve">
+    <value>The copy "{0}" cannot be read right now; a sync program may be writing it. Try again in a moment. If it stays so, delete that copy or save under another name.</value>
+  </data>
 </root>

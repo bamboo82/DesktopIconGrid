@@ -321,6 +321,15 @@ namespace DesktopIconGrid.Core.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to The copy "{0}" cannot be read right now; a sync program may be writing it. Try a [rest of string was truncated]";.
+        /// </summary>
+        public static string Sync_CopyBusy {
+            get {
+                return ResourceManager.GetString("Sync_CopyBusy", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to The sync folder {0} cannot be found. Is its drive connected?.
         /// </summary>
         public static string Sync_FolderMissing {

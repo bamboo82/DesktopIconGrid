@@ -1,5 +1,7 @@
+using System.Globalization;
 using DesktopIconGrid.Core.Diagnostics;
 using DesktopIconGrid.Core.Models;
+using DesktopIconGrid.Core.Resources;
 
 namespace DesktopIconGrid.Core.Sync;
 
@@ -275,9 +277,18 @@ public sealed class SyncService
         fileId ??= string.Equals(Settings.LinkedProfile, name, StringComparison.OrdinalIgnoreCase) ? Settings.LinkedFileId : null;
         var existing = (fileId is null ? null : profiles.FirstOrDefault(p => string.Equals(p.FileId, fileId, StringComparison.Ordinal)))
                        ?? profiles.FirstOrDefault(p => string.Equals(p.Name, name, StringComparison.OrdinalIgnoreCase));
+        if (existing is { Unreadable: true })
+        {
+            // A sync program may be writing it: what it holds is not known, and a write now may leave a conflict copy.
+            throw new IOException(string.Format(CultureInfo.CurrentCulture, CoreStrings.Sync_CopyBusy, existing.Name));
+        }
 
+        // The caller's name, not the one the copy is listed under: a copy whose file name was taken by another file
+        // (config (2).json) or could not be read just now (listed as its file name) keeps the name it has. Only the
+        // spelling of the stored name is kept when the two differ in case alone.
         var now = _clock();
-        var profile = SyncProfile.FromLayout(existing?.Name ?? name, layout, Settings.DeviceName, now, _appVersion, Settings.DeviceId);
+        var savedName = existing is not null && string.Equals(existing.Name, name, StringComparison.OrdinalIgnoreCase) ? existing.Name : name;
+        var profile = SyncProfile.FromLayout(savedName, layout, Settings.DeviceName, now, _appVersion, Settings.DeviceId);
         var file = await copies.UploadJsonAsync(
             profile.Name + RemoteProfile.FileExtension,
             profile.ToJson(),
@@ -329,7 +340,8 @@ public sealed class SyncService
             var original = (await ListAsync(copies, cancellationToken).ConfigureAwait(false))
                 .FirstOrDefault(p => !p.IsConflictCopy && string.Equals(p.Name, profile.Name, StringComparison.OrdinalIgnoreCase));
             linkedName = profile.Name;
-            linkedFileId = original?.FileId; // none left: the next upload writes it again
+            linkedFileId = original?.FileId // none left: the next upload writes it again, unless its file name is taken
+                ?? (copies is FolderSyncClient folder && folder.FileNameIsTaken(profile.Name) ? remote.FileId : null);
         }
 
         LinkChanged(); // even for the linked copy again: an upload of the bar this replaces must not follow

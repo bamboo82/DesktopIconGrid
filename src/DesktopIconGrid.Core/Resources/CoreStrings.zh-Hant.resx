@@ -106,4 +106,7 @@
   <data name="Sync_FolderMissing" xml:space="preserve">
     <value>找不到同步資料夾 {0}。它所在的磁碟已連接嗎？</value>
   </data>
+  <data name="Sync_CopyBusy" xml:space="preserve">
+    <value>目前無法讀取副本「{0}」，可能有同步程式正在寫入。請稍後再試。若一直如此，請刪除該副本或改用其他名稱儲存。</value>
+  </data>
 </root>

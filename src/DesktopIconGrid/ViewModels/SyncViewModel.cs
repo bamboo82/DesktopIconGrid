@@ -413,7 +413,12 @@ public sealed class SyncViewModel : ObservableObject
             return Task.CompletedTask;
         }
 
-        if (!_dialogs.Confirm(Strings.Sync_ReplaceCopyTitle, string.Format(Strings.Sync_ReplaceSelected, selected.Name)))
+        // A sync program's copy keeps its own name when it is replaced (writing the original's name into it would
+        // make two files of one copy again), so this PC leaves the original for it: the question says so.
+        var question = selected.IsConflictCopy
+            ? string.Format(Strings.Sync_ReplaceConflictCopy, selected.Name, selected.NameInside)
+            : string.Format(Strings.Sync_ReplaceSelected, selected.Name);
+        if (!_dialogs.Confirm(Strings.Sync_ReplaceCopyTitle, question))
         {
             return Task.CompletedTask;
         }

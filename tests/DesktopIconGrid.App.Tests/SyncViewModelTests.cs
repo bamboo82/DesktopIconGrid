@@ -3,6 +3,7 @@ using System.Net.Http;
 using DesktopIconGrid.Core.Imports;
 using DesktopIconGrid.Core.Models;
 using DesktopIconGrid.Core.Sync;
+using DesktopIconGrid.Resources;
 using DesktopIconGrid.Services;
 using DesktopIconGrid.ViewModels;
 
@@ -53,6 +54,8 @@ public sealed class SyncViewModelTests : IDisposable
 
         public int Confirmations { get; private set; }
 
+        public string? LastMessage { get; private set; }
+
         public bool ShowItemProperties(LauncherItem item, bool isNew) => false;
 
         public LauncherSettings? ShowSettings(LauncherSettings current) => null;
@@ -60,6 +63,7 @@ public sealed class SyncViewModelTests : IDisposable
         public bool Confirm(string title, string message)
         {
             Confirmations++;
+            LastMessage = message;
             return ConfirmAnswer;
         }
 
@@ -114,6 +118,25 @@ public sealed class SyncViewModelTests : IDisposable
             OnBarSeen = locationsOnBar;
             return AddAppAnswer;
         }
+    }
+
+    [Fact]
+    public void Replacing_a_sync_programs_copy_says_this_PC_stays_with_it_and_leaves_the_original()
+    {
+        // Review 15, on entry 24: the copy keeps its own name when replaced, so this PC leaves "Work" for it.
+        var settings = new SyncSettings { DeviceName = "PC-1", SyncFolder = _folder };
+        var auth = new GoogleAuthorization(new HttpClient(), new InMemoryTokenStore(), () => new OAuthClientCredentials("id", "secret"));
+        var dialogs = new Dialogs { ConfirmAnswer = false };
+        var viewModel = new SyncViewModel(new SyncCoordinator(new SyncService(auth, new NoDrive(), settings, () => { }), new Host(), (_, _) => true), dialogs);
+        viewModel.SelectedProfile = new RemoteProfile("Work-LAPTOP", "Work-LAPTOP.json", null, "LAPTOP", 10) { NameInside = "Work" };
+
+        viewModel.OverwriteCommand.Execute(null);
+
+        Assert.Equal(string.Format(Strings.Sync_ReplaceConflictCopy, "Work-LAPTOP", "Work"), dialogs.LastMessage);
+
+        viewModel.SelectedProfile = new RemoteProfile("Home", "Home.json", null, "LAPTOP", 10) { NameInside = "Home" };
+        viewModel.OverwriteCommand.Execute(null);
+        Assert.Equal(string.Format(Strings.Sync_ReplaceSelected, "Home"), dialogs.LastMessage);
     }
 
     [Fact]

@@ -68,6 +68,47 @@ public sealed class FolderSyncTests : IDisposable
     }
 
     [Fact]
+    public async Task A_copy_whose_file_name_another_file_holds_keeps_its_name_and_every_PC_one_file()
+    {
+        // Review 15 U3: another program's config.json made DESK's "config" config (2).json, listed as a sync program's
+        // copy of a missing "config". DESK's next upload renamed it "config (2)" (the listed name), and LAPTOP, which
+        // loaded it and linked by name, made config (3).json at its first upload: two files, both PCs "up to date".
+        File.WriteAllText(PathOf("config.json"), "{\"theme\":\"another program's\"}");
+        var desk = Device("DESK");
+        var laptop = Device("LAPTOP");
+        await desk.SaveProfileAsync("config", Layout("a"), CancellationToken.None);
+        Assert.Equal("config (2).json", desk.Settings.LinkedFileId);
+
+        Assert.Equal(AutoUploadOutcome.Uploaded, (await desk.AutoUploadAsync(Layout("b"), CancellationToken.None)).Outcome);
+        Assert.Equal("config", SyncProfile.FromJson(File.ReadAllText(PathOf("config (2).json"))).Name); // not renamed
+
+        var listed = (await laptop.ListProfilesAsync(CancellationToken.None)).Single(c => c.FileId == "config (2).json");
+        await laptop.LoadProfileAsync(listed, CancellationToken.None);
+        Assert.Equal("config (2).json", laptop.Settings.LinkedFileId); // no original, and its file name is taken: stays with this file
+        Assert.Equal(AutoUploadOutcome.Uploaded, (await laptop.AutoUploadAsync(Layout("c"), CancellationToken.None)).Outcome);
+
+        Assert.False(File.Exists(PathOf("config (3).json")));
+        var deskAgain = await desk.AutoUploadAsync(Layout("d"), CancellationToken.None);
+        Assert.Equal(AutoUploadOutcome.Conflict, deskAgain.Outcome); // the same file: DESK sees LAPTOP's save
+        Assert.Equal("config (2).json", deskAgain.Remote?.FileId);
+        Assert.Equal("{\"theme\":\"another program's\"}", File.ReadAllText(PathOf("config.json")));
+    }
+
+    [Fact]
+    public async Task A_save_from_the_dialog_leaves_a_copy_that_cannot_be_read_just_now()
+    {
+        // Review 11, still open in 15: only the automatic upload waited for a copy a sync program may be writing.
+        var desk = Device("DESK");
+        await desk.SaveProfileAsync("Work", Layout("a"), CancellationToken.None);
+        File.WriteAllText(PathOf("Work.json"), "{\"name\":\"Work\",\"layout\":"); // half written
+
+        var refused = await Assert.ThrowsAsync<IOException>(() => desk.SaveProfileAsync("Work", Layout("b"), CancellationToken.None));
+
+        Assert.Contains("Work", refused.Message, StringComparison.Ordinal);
+        Assert.Equal("{\"name\":\"Work\",\"layout\":", File.ReadAllText(PathOf("Work.json")));
+    }
+
+    [Fact]
     public async Task Conflict_copies_are_listed_under_their_file_names_and_other_files_are_left_out()
     {
         var pc = Device("PC-1");

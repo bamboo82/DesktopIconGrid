@@ -193,8 +193,16 @@ public sealed class FolderSyncClient : IDriveClient
     }
 
     /// <summary>
+    /// Whether the file a copy called <paramref name="name"/> would be saved as is taken by a file that is not listed as
+    /// that copy: another program's <c>config.json</c>, a copy too large to read. A new copy of that name then gets a
+    /// number (<see cref="FreeFileName"/>) and is listed as a copy of a missing original.
+    /// </summary>
+    public bool FileNameIsTaken(string name) =>
+        File.Exists(Path.Combine(Folder, FileNames.Safe(name.Trim()) + RemoteProfile.FileExtension));
+
+    /// <summary>
     /// A file name for a new copy: the copy's name made safe for Windows, numbered when another copy's name became the
-    /// same file name (<c>a:b</c> and <c>a?b</c> are both <c>a_b.json</c>).
+    /// same file name (<c>a:b</c> and <c>a?b</c> are both <c>a_b.json</c>), or another file holds it.
     /// </summary>
     private string FreeFileName(string fileName)
     {

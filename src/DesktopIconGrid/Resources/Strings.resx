@@ -1754,4 +1754,7 @@ Details are in {1}.</value>
   <data name="Launch_SshNameIsOption" xml:space="preserve">
     <value>Not started: the host or user name begins with “-”, so a program that ssh starts with it (a ProxyCommand) could take it as an option.</value>
   </data>
+  <data name="Sync_ReplaceConflictCopy" xml:space="preserve">
+    <value>Replace "{0}" with this PC's bar? It is a copy a sync program kept of "{1}". This PC then stays linked to "{0}" and leaves "{1}", which the other PCs keep using. To bring this bar to them, save over "{1}" instead.</value>
+  </data>
 </root>

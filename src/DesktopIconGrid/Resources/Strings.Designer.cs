@@ -4542,6 +4542,15 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Replace "{0}" with this PC's bar? It is a copy a sync program kept of "{1}". Thi [rest of string was truncated]";.
+        /// </summary>
+        public static string Sync_ReplaceConflictCopy {
+            get {
+                return ResourceManager.GetString("Sync_ReplaceConflictCopy", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Replace copy.
         /// </summary>
         public static string Sync_ReplaceCopyTitle {

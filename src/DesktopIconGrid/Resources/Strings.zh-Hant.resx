@@ -1754,4 +1754,7 @@
   <data name="Launch_SshNameIsOption" xml:space="preserve">
     <value>未啟動：主機或使用者名稱以「-」開頭，ssh 用它啟動的程式（ProxyCommand）可能會把它當成選項。</value>
   </data>
+  <data name="Sync_ReplaceConflictCopy" xml:space="preserve">
+    <value>要以這部電腦的工具列取代「{0}」嗎？它是同步程式為「{1}」保留的副本。之後這部電腦會連結到「{0}」並離開「{1}」，其他電腦則繼續使用「{1}」。若要把這個工具列帶給它們，請改為覆寫「{1}」。</value>
+  </data>
 </root>
