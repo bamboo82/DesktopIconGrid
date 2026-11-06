@@ -123,39 +123,52 @@ public sealed class FolderSyncClient : IDriveClient
     }
 
     /// <summary>
-    /// A copy whose own file name was taken when it was first saved (another program's <c>config.json</c>, a copy too large
-    /// to list) got a number from <see cref="FreeFileName"/>: <c>config (2).json</c> with "config" inside. It is listed as
-    /// the original "config" as long as no listed copy of that name holds <c>config.json</c>; otherwise it is a sync
-    /// program's copy (Google Drive's numbering) of that one.
+    /// Which file is the original of each copy's name, as the listing as a whole says. The original of "N" is the file
+    /// <c>Safe(N).json</c> that says "N" inside, or that cannot be read right now (it may well be that copy: a sync program
+    /// at work, a new PC still downloading). Only without one is a numbered file the original: the lowest-numbered
+    /// <c>Safe(N) (k).json</c> that says "N", which <see cref="FreeFileName"/> gave the copy when its own file name was
+    /// taken (another program's <c>config.json</c>). Any other numbered file that says "N" is a sync program's copy of it
+    /// (Google Drive's numbering, Explorer's Keep both) and is listed under its file name, so the start-up check names it:
+    /// <c>Home_ desk (2).json</c> next to a readable <c>Home_ desk.json</c> that says "Home: desk" too.
     /// </summary>
     private static void ListNumberedOriginals(List<DriveFile> files)
     {
-        var originals = files
-            .Where(f => f.AppProperties.TryGetValue(NameInsideProperty, out var inside) && f.Name.Equals(FileNames.Safe(inside) + RemoteProfile.FileExtension, StringComparison.OrdinalIgnoreCase))
-            .Select(f => f.AppProperties[NameInsideProperty].Trim())
-            .ToHashSet(StringComparer.OrdinalIgnoreCase);
-        foreach (var file in files)
+        var unreadable = files.Where(f => f.AppProperties.ContainsKey(UnreadableProperty)).Select(f => StemOf(f.Name)).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var named = files.Where(f => f.AppProperties.TryGetValue(NameInsideProperty, out var inside) && !string.IsNullOrWhiteSpace(inside));
+        foreach (var copies in named.GroupBy(f => f.AppProperties[NameInsideProperty].Trim(), StringComparer.OrdinalIgnoreCase))
         {
-            if (!file.AppProperties.TryGetValue(NameInsideProperty, out var inside) || originals.Contains(inside.Trim()))
+            var safe = FileNames.Safe(copies.Key);
+            var hasOwnFile = unreadable.Contains(safe) || copies.Any(f => string.Equals(StemOf(f.Name), safe, StringComparison.OrdinalIgnoreCase));
+            var numbered = copies
+                .Select(file => (File: file, Number: NumberAfter(StemOf(file.Name), safe)))
+                .Where(entry => entry.Number >= 2)
+                .OrderBy(entry => entry.Number)
+                .ToList();
+            for (var k = 0; k < numbered.Count; k++)
             {
-                continue;
-            }
-
-            var name = inside.Trim();
-            var safe = FileNames.Safe(name);
-            var stem = file.Name[..^RemoteProfile.FileExtension.Length];
-            if (string.Equals(safe, name, StringComparison.Ordinal) && stem.StartsWith(safe + " (", StringComparison.OrdinalIgnoreCase) && stem.EndsWith(')')
-                && int.TryParse(stem.AsSpan(safe.Length + 2, stem.Length - safe.Length - 3), NumberStyles.None, CultureInfo.InvariantCulture, out var number) && number >= 2
-                && file.AppProperties is IDictionary<string, string> properties)
-            {
-                properties["profile"] = name;
+                if (numbered[k].File.AppProperties is IDictionary<string, string> properties)
+                {
+                    properties["profile"] = k == 0 && !hasOwnFile ? copies.Key : StemOf(numbered[k].File.Name);
+                }
             }
         }
     }
 
+    private static string StemOf(string fileName) =>
+        fileName.EndsWith(RemoteProfile.FileExtension, StringComparison.OrdinalIgnoreCase) ? fileName[..^RemoteProfile.FileExtension.Length] : fileName;
+
+    /// <summary>The <c>k</c> of a stem written <c>{safe} (k)</c>, or 0.</summary>
+    private static int NumberAfter(string stem, string safe) =>
+        stem.StartsWith(safe + " (", StringComparison.OrdinalIgnoreCase) && stem.EndsWith(')')
+        && int.TryParse(stem.AsSpan(safe.Length + 2, stem.Length - safe.Length - 3), NumberStyles.None, CultureInfo.InvariantCulture, out var number)
+            ? number
+            : 0;
+
     /// <summary>
     /// What the listing shows of a copy, read from the copy; <see langword="null"/> for JSON that is not a copy. A file
-    /// that cannot be read or parsed right now is kept, without a device.
+    /// that cannot be read right now (locked by a sync program at work), or that starts like a copy and does not parse
+    /// (one being written), is kept as unreadable, without a device. Another program's file that does not parse
+    /// (settings with comments, an empty file) is no copy.
     /// </summary>
     private static Dictionary<string, string>? ReadProperties(FileInfo info)
     {
@@ -178,13 +191,54 @@ public sealed class FolderSyncClient : IDriveClient
             Add(properties, "savedAt", Text("savedAt"));
             Add(properties, "revision", Text("revision"));
         }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException)
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException || (ex is JsonException && StartsLikeACopy(info)))
         {
             properties["profile"] = DisplayName(info.Name, null);
             properties[UnreadableProperty] = "true";
         }
+        catch (JsonException)
+        {
+            return null;
+        }
 
         return properties;
+    }
+
+    /// <summary>The properties a copy holds (<see cref="SyncProfile"/>), one of which comes first in any copy.</summary>
+    private static readonly string[] CopyProperties = ["format", "name", "savedAt", "savedBy", "savedById", "appVersion", "revision", "layout"];
+
+    /// <summary>
+    /// Whether the file starts as a copy does, as far as it has been written: <c>{</c>, then one of a copy's own properties
+    /// (every version writes <c>"format"</c> first). A file that cannot be read now counts as one.
+    /// </summary>
+    private static bool StartsLikeACopy(FileInfo info)
+    {
+        try
+        {
+            using var stream = new FileStream(info.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+            var buffer = new byte[256];
+            var length = stream.ReadAtLeast(buffer, buffer.Length, throwOnEndOfStream: false);
+            var text = Utf8.GetString(buffer, 0, length).TrimStart('\uFEFF').TrimStart();
+            if (!text.StartsWith('{'))
+            {
+                return false;
+            }
+
+            var rest = text[1..].TrimStart();
+            if (rest.Length == 0 || rest[0] != '"')
+            {
+                return false; // nothing yet, or another program's (a comment, an array)
+            }
+
+            var end = rest.IndexOf('"', 1);
+            return end < 0
+                ? CopyProperties.Any(property => property.StartsWith(rest[1..], StringComparison.OrdinalIgnoreCase)) // cut short in the name
+                : CopyProperties.Contains(rest[1..end], StringComparer.OrdinalIgnoreCase);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            return true;
+        }
     }
 
     private DriveFile Write(string fileName, string json, IReadOnlyDictionary<string, string> appProperties, string? existingFileId)
@@ -201,7 +255,16 @@ public sealed class FolderSyncClient : IDriveClient
                 stream.Flush(flushToDisk: true);
             }
 
-            File.Move(tempPath, path, overwrite: true);
+            try
+            {
+                File.Move(tempPath, path, overwrite: true);
+            }
+            catch (Exception ex) when (IsHeldByAnotherProgram(ex, path))
+            {
+                // A sync program holds the copy just now: the same as a copy that cannot be read, try again later.
+                var copyName = appProperties.TryGetValue("profile", out var listed) ? listed : DisplayName(name, null);
+                throw new CopyBusyException(string.Format(CultureInfo.CurrentCulture, CoreStrings.Sync_CopyBusy, copyName));
+            }
         }
         finally
         {
@@ -218,11 +281,35 @@ public sealed class FolderSyncClient : IDriveClient
             }
         }
 
+        // Listed under the copy's own name: this is the file the copy was written to, numbered or not ("config", not
+        // "config (2)", in the messages that name it).
         var info = new FileInfo(path);
         var properties = new Dictionary<string, string>(appProperties);
-        properties["profile"] = DisplayName(name, appProperties.TryGetValue("profile", out var inside) ? inside : null);
+        properties["profile"] = appProperties.TryGetValue("profile", out var inside) && !string.IsNullOrWhiteSpace(inside) ? inside.Trim() : DisplayName(name, null);
         Add(properties, NameInsideProperty, inside);
         return new DriveFile(name, name, new DateTimeOffset(info.LastWriteTimeUtc, TimeSpan.Zero), info.Length, properties);
+    }
+
+    /// <summary>
+    /// Whether replacing the copy at <paramref name="path"/> failed because another program has it open: a sharing or lock
+    /// violation, or access denied to a copy that is there and not read-only (Windows refuses to replace a file that is
+    /// open; the folder took the new file a moment before, so it is not the folder's permissions).
+    /// </summary>
+    private static bool IsHeldByAnotherProgram(Exception ex, string path)
+    {
+        if (ex is IOException io)
+        {
+            return (io.HResult & 0xFFFF) is 32 or 33; // ERROR_SHARING_VIOLATION, ERROR_LOCK_VIOLATION
+        }
+
+        try
+        {
+            return ex is UnauthorizedAccessException && File.Exists(path) && !File.GetAttributes(path).HasFlag(FileAttributes.ReadOnly);
+        }
+        catch (Exception probe) when (probe is IOException or UnauthorizedAccessException)
+        {
+            return false;
+        }
     }
 
     /// <summary>

@@ -143,11 +143,6 @@ public sealed class SyncService
     private string StorageName => Settings.SyncFolder ?? "Google Drive";
 
     /// <summary>
-    /// Runs <paramref name="operation"/> alone, on the storage in use when it starts. An upload that listed one folder so
-    /// finishes there before the copies move elsewhere, instead of writing that folder's file name into the next one,
-    /// and nothing links this device again to a copy it was unlinked from while the operation waited for the network.
-    /// </summary>
-    /// <summary>
     /// Changes whenever a copy is loaded (the linked one again included) and whenever this device is linked to another
     /// copy or unlinked; always inside the lock. An automatic upload passes the value it read when it took the bar, and
     /// writes nothing when the value moved while it waited: that bar was replaced by the load, or belongs to a copy
@@ -157,6 +152,11 @@ public sealed class SyncService
 
     private void LinkChanged() => Interlocked.Increment(ref _linkGeneration);
 
+    /// <summary>
+    /// Runs <paramref name="operation"/> alone, on the storage in use when it starts. An upload that listed one folder so
+    /// finishes there before the copies move elsewhere, instead of writing that folder's file name into the next one,
+    /// and nothing links this device again to a copy it was unlinked from while the operation waited for the network.
+    /// </summary>
     private async Task<T> ExclusiveAsync<T>(Func<IDriveClient, Task<T>> operation, CancellationToken cancellationToken)
     {
         await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
@@ -339,15 +339,23 @@ public sealed class SyncService
             profile.Name = remote.Name;
         }
 
-        var linkedName = remote.Name;
+        // Linked under the name the copy holds: the listing may be older than the file (made while a sync program wrote
+        // it, and listed under its file name).
+        var linkedName = profile.Name;
         var linkedFileId = remote.FileId;
         if (remote.IsConflictCopy)
         {
             var listing = await ListAsync(copies, cancellationToken).ConfigureAwait(false);
-            var ownFile = FileNames.Safe(profile.Name.Trim()) + RemoteProfile.FileExtension;
+            var safe = FileNames.Safe(profile.Name.Trim());
+            var ownFile = safe + RemoteProfile.FileExtension;
+
+            // A file of the copy's own name that cannot be read now is taken for it, unless numbered ones are listed: one
+            // of them may be this name's, and that one another name's ("Home? desk" next to "Home: desk").
+            var numbered = listing.Any(p => p.FileId.StartsWith(safe + " (", StringComparison.OrdinalIgnoreCase));
             var original = listing.FirstOrDefault(p => !p.IsConflictCopy && string.Equals(p.Name, profile.Name, StringComparison.OrdinalIgnoreCase))
-                           ?? (copies is FolderSyncClient ? listing.FirstOrDefault(p => p.Unreadable && string.Equals(p.FileId, ownFile, StringComparison.OrdinalIgnoreCase)) : null);
-            linkedName = profile.Name;
+                           ?? (copies is FolderSyncClient && !numbered
+                               ? listing.FirstOrDefault(p => p.Unreadable && string.Equals(p.FileId, ownFile, StringComparison.OrdinalIgnoreCase))
+                               : null);
 
             // None left: the next upload writes it again. Unless that file is taken by something else (another program's
             // config.json), for a name that needs no change: then this copy is the one there is.

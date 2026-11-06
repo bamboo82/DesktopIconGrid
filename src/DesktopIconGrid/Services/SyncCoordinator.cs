@@ -99,6 +99,9 @@ public sealed class SyncCoordinator : ObservableObject
     /// <summary>True while the debounce timer is armed (an upload will start in a few seconds).</summary>
     internal bool IsUploadScheduled => _timer.IsEnabled;
 
+    /// <summary>True while a postponed upload waits to be tried again.</summary>
+    internal bool IsRetryScheduled => _retryTimer.IsEnabled;
+
     public LauncherLayout ExportLayout() => _host.ExportLayout();
 
     public void ScheduleUpload()
@@ -113,14 +116,15 @@ public sealed class SyncCoordinator : ObservableObject
     }
 
     /// <summary>
-    /// Before exit: waits for an upload that is already running and then runs the pending debounced upload, if any,
-    /// without re-arming the timer afterwards. Returns false when that did not finish within <paramref name="timeout"/>.
+    /// Before exit: waits for an upload that is already running and then runs the pending debounced upload, or the one
+    /// postponed while a copy could not be read, if any, without re-arming a timer afterwards. Returns false when that did
+    /// not finish within <paramref name="timeout"/>.
     /// </summary>
     public async Task<bool> FlushPendingAsync(TimeSpan timeout)
     {
         _shuttingDown = true;
-        _retryTimer.Stop(); // a copy that could not be read is not waited for; the next start checks again
-        var pending = _timer.IsEnabled || _uploadRequestedWhileBusy;
+        var pending = _timer.IsEnabled || _uploadRequestedWhileBusy || _retryTimer.IsEnabled; // a postponed upload gets one more try
+        _retryTimer.Stop();
         _timer.Stop();
         if (!pending && !IsUploading)
         {
@@ -192,9 +196,13 @@ public sealed class SyncCoordinator : ObservableObject
                         LogLevel.Warning);
                     break;
                 case AutoUploadOutcome.Postponed:
-                    Report(string.Format(Strings.Sync_UploadPostponed, result.Remote?.Name), LogLevel.Warning); // said once while it lasts
-                    _retryTimer.Stop();
-                    _retryTimer.Start();
+                    Report(string.Format(Strings.Sync_UploadPostponed, result.Remote?.Name ?? Service.Settings.LinkedProfile), LogLevel.Warning); // said once while it lasts
+                    if (!_shuttingDown)
+                    {
+                        _retryTimer.Stop();
+                        _retryTimer.Start();
+                    }
+
                     break;
             }
         }

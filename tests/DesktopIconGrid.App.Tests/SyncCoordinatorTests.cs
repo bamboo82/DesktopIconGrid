@@ -154,6 +154,28 @@ public class SyncCoordinatorTests
     }
 
     [Fact]
+    public async Task Flush_tries_an_upload_postponed_while_the_copy_could_not_be_read()
+    {
+        // Review 17, U7 left over: an upload postponed until the copy could be read was dropped at exit.
+        var (coordinator, drive, host) = Create();
+        await coordinator.Service.SaveProfileAsync("Work", LayoutOf("a"), CancellationToken.None);
+        drive.Files["id1"].Properties[FolderSyncClient.UnreadableProperty] = "true"; // a sync program at work
+        drive.Log.Clear();
+        host.Layout = LayoutOf("b");
+
+        await coordinator.UploadNowAsync();
+        Assert.True(coordinator.IsRetryScheduled);
+        Assert.Contains("Work", coordinator.Status, StringComparison.Ordinal); // the copy is named
+        Assert.Empty(drive.Log);
+
+        drive.Files["id1"].Properties.Remove(FolderSyncClient.UnreadableProperty); // done by the time the app closes
+        Assert.True(await coordinator.FlushPendingAsync(TimeSpan.FromSeconds(5)));
+
+        Assert.Equal(["update id1"], drive.Log);
+        Assert.False(coordinator.IsRetryScheduled);
+    }
+
+    [Fact]
     public async Task Flush_with_nothing_pending_returns_at_once()
     {
         var (coordinator, drive, _) = Create();

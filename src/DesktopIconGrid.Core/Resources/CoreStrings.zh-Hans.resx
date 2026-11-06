@@ -107,6 +107,6 @@
     <value>找不到同步文件夹 {0}。它所在的磁盘已连接吗？</value>
   </data>
   <data name="Sync_CopyBusy" xml:space="preserve">
-    <value>目前无法读取副本“{0}”，可能有同步程序正在写入。请稍后再试。如果一直如此，请删除该副本或改用其他名称保存。</value>
+    <value>目前无法读取副本“{0}”，可能有同步程序正在写入。请稍后再试，或改用其他名称保存。</value>
   </data>
 </root>

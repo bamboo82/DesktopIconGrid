@@ -150,6 +150,149 @@ public sealed class FolderSyncTests : IDisposable
     }
 
     [Fact]
+    public async Task While_a_copy_cannot_be_read_a_numbered_file_of_its_name_stays_a_sync_programs_copy()
+    {
+        // Review 17 U8: with Work.json unreadable (a new PC still downloading it), Explorer's or a sync program's
+        // Work (2).json was listed as "Work": saves went into it, and PCs linked to it stayed there.
+        var desk = Device("DESK");
+        await desk.SaveProfileAsync("Work", Layout("a"), CancellationToken.None);
+        File.Copy(PathOf("Work.json"), PathOf("Work (2).json"));
+        File.WriteAllText(PathOf("Work.json"), "{\n  \"format\": 1,\n  \"name\": \"Work\",\n  \"lay"); // being written
+
+        var laptop = Device("LAPTOP");
+        var copies = await laptop.ListProfilesAsync(CancellationToken.None);
+        Assert.True(copies.Single(c => c.FileId == "Work (2).json").IsConflictCopy);
+        Assert.Equal("Work", copies.Single(c => c.FileId == "Work.json").Name);
+
+        await Assert.ThrowsAsync<CopyBusyException>(() => laptop.SaveProfileAsync("Work", Layout("b"), CancellationToken.None));
+        Assert.Equal("Work", SyncProfile.FromJson(File.ReadAllText(PathOf("Work (2).json"))).Name);
+        Assert.Equal(["a"], SyncProfile.FromJson(File.ReadAllText(PathOf("Work (2).json"))).Layout.Items.Select(i => i.Name));
+    }
+
+    [Fact]
+    public async Task Of_two_numbered_originals_only_the_lowest_is_one()
+    {
+        // Review 17 U9: DESK's "config" became config (2).json, and LAPTOP, which could not read it yet, made
+        // config (3).json: both were listed as "config", and the two PCs split, both "up to date".
+        File.WriteAllText(PathOf("config.json"), "{\"theme\":\"another program's\"}");
+        var desk = Device("DESK");
+        await desk.SaveProfileAsync("config", Layout("a"), CancellationToken.None);
+        File.Copy(PathOf("config (2).json"), PathOf("config (3).json"));
+
+        var copies = await desk.ListProfilesAsync(CancellationToken.None);
+        Assert.Equal("config", copies.Single(c => c.FileId == "config (2).json").Name);
+        var third = copies.Single(c => c.FileId == "config (3).json");
+        Assert.Equal("config (3)", third.Name);
+        Assert.True(third.IsConflictCopy);
+        Assert.Equal(["config (3).json"], (await desk.CheckLinkedCopyAsync(CancellationToken.None)).ConflictCopies.Select(c => c.FileId)); // named at start-up
+    }
+
+    [Fact]
+    public async Task A_sync_programs_numbered_copy_of_a_name_with_forbidden_characters_is_no_second_original()
+    {
+        // Review 17, U3′ left over: Home_ desk (2).json, a copy of a readable Home_ desk.json, was listed as "Home: desk" too.
+        var desk = Device("DESK");
+        await desk.SaveProfileAsync("Home: desk", Layout("a"), CancellationToken.None);
+        File.Copy(PathOf("Home_ desk.json"), PathOf("Home_ desk (2).json"));
+
+        var copies = await desk.ListProfilesAsync(CancellationToken.None);
+
+        Assert.Equal("Home: desk", copies.Single(c => c.FileId == "Home_ desk.json").Name);
+        Assert.True(copies.Single(c => c.FileId == "Home_ desk (2).json").IsConflictCopy);
+    }
+
+    [Fact]
+    public async Task Another_programs_json_that_does_not_parse_is_no_copy()
+    {
+        // Review 17 U10: VS Code's settings (with comments) or an empty file were listed as copies that could not be
+        // read, and a save of that name was told to delete the other program's file.
+        File.WriteAllText(PathOf("settings.json"), "{\n  // the editor\n  \"editor.fontSize\": 14,\n}");
+        File.WriteAllText(PathOf("empty.json"), string.Empty);
+        var pc = Device("PC-1");
+
+        Assert.Empty(await pc.ListProfilesAsync(CancellationToken.None));
+        var saved = await pc.SaveProfileAsync("settings", Layout("a"), CancellationToken.None);
+
+        Assert.Equal("settings (2).json", saved.FileId);
+        Assert.Equal("settings", saved.Name); // said as the copy's name, not its file's
+        Assert.Equal("{\n  // the editor\n  \"editor.fontSize\": 14,\n}", File.ReadAllText(PathOf("settings.json")));
+    }
+
+    [Fact]
+    public async Task A_numbered_copy_is_named_by_its_own_name_when_saved_and_uploaded()
+    {
+        // Review 17: "Saved "config (2)"" and "Uploaded to "config (2)"" for a copy called config.
+        File.WriteAllText(PathOf("config.json"), "{\"theme\":\"another program's\"}");
+        var desk = Device("DESK");
+
+        var saved = await desk.SaveProfileAsync("config", Layout("a"), CancellationToken.None);
+        var uploaded = await desk.AutoUploadAsync(Layout("b"), CancellationToken.None);
+
+        Assert.Equal(("config", "config (2).json"), (saved.Name, saved.FileId));
+        Assert.Equal(AutoUploadOutcome.Uploaded, uploaded.Outcome);
+        Assert.Equal("config", uploaded.Remote?.Name);
+    }
+
+    [Fact]
+    public async Task A_conflict_copy_does_not_take_an_unreadable_file_for_its_original_while_numbered_ones_are_listed()
+    {
+        // Review 17, U3′ left over: U5's fallback linked "Home: desk" to Home_ desk.json, which may hold "Home? desk".
+        var desk = Device("DESK");
+        await desk.SaveProfileAsync("Home? desk", Layout("a"), CancellationToken.None);
+        await desk.SaveProfileAsync("Home: desk", Layout("b"), CancellationToken.None); // Home_ desk (2).json
+        File.Copy(PathOf("Home_ desk (2).json"), PathOf("Home_ desk-LAPTOP.json"));
+        File.WriteAllText(PathOf("Home_ desk.json"), "{\"format\": 1, \"name\": \"Home? desk\", \"lay"); // being written
+
+        var laptop = Device("LAPTOP");
+        var conflict = (await laptop.ListProfilesAsync(CancellationToken.None)).Single(c => c.FileId == "Home_ desk-LAPTOP.json");
+        await laptop.LoadProfileAsync(conflict, CancellationToken.None);
+
+        Assert.Equal("Home: desk", laptop.Settings.LinkedProfile);
+        Assert.NotEqual("Home_ desk.json", laptop.Settings.LinkedFileId);
+    }
+
+    [Fact]
+    public async Task A_copy_loaded_from_a_listing_made_while_it_could_not_be_read_is_linked_under_the_name_it_holds()
+    {
+        // Review 17, U3′ left over: the PC kept "Home_ desk", the listed name, until its first upload.
+        var desk = Device("DESK");
+        await desk.SaveProfileAsync("Home: desk", Layout("a"), CancellationToken.None);
+        var whole = File.ReadAllText(PathOf("Home_ desk.json"));
+        File.WriteAllText(PathOf("Home_ desk.json"), "{\"format\": 1, \"name\": \"Home: d"); // being written
+        var laptop = Device("LAPTOP");
+        var listed = (await laptop.ListProfilesAsync(CancellationToken.None)).Single(c => c.FileId == "Home_ desk.json");
+        Assert.Equal("Home_ desk", listed.Name);
+        File.WriteAllText(PathOf("Home_ desk.json"), whole); // written by now
+
+        await laptop.LoadProfileAsync(listed, CancellationToken.None);
+
+        Assert.Equal("Home: desk", laptop.Settings.LinkedProfile);
+        Assert.Equal("Home_ desk.json", laptop.Settings.LinkedFileId);
+    }
+
+    [Fact]
+    public async Task An_upload_to_a_copy_another_program_holds_open_is_postponed()
+    {
+        // Review 17, U7 left over: a sharing violation when the new file took the copy's place said "upload failed",
+        // with no retry.
+        var desk = Device("DESK");
+        await desk.SaveProfileAsync("Work", Layout("a"), CancellationToken.None);
+        if (!OperatingSystem.IsWindows())
+        {
+            return; // only Windows keeps a file that is open from being replaced
+        }
+
+        using (new FileStream(PathOf("Work.json"), FileMode.Open, FileAccess.Read, FileShare.Read)) // readable, not replaceable
+        {
+            var result = await desk.AutoUploadAsync(Layout("b"), CancellationToken.None);
+
+            Assert.Equal(AutoUploadOutcome.Postponed, result.Outcome);
+        }
+
+        Assert.Equal(["a"], SyncProfile.FromJson(File.ReadAllText(PathOf("Work.json"))).Layout.Items.Select(i => i.Name));
+    }
+
+    [Fact]
     public async Task A_name_from_a_listing_made_while_a_copy_could_not_be_read_does_not_rename_it()
     {
         // Review 16 U6: the dialog listed Home_ desk.json as "Home_ desk"; a few seconds later Overwrite wrote that name in.

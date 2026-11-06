@@ -112,7 +112,6 @@ public sealed class LauncherModel
         ExtensionData = UnknownProperties.Copy(_unknownProperties),
     };
 
-    /// <summary>A path of 0.8.0's under Windows' own folders, with its drive back (see <see cref="DataLocation.WithWindowsDrive"/>); counted as a repair.</summary>
     /// <summary>What <see cref="RepairForThisPc"/> needs: whether a path is there, the two drives, this PC, and whether a drive is slow to look at.</summary>
     private sealed record DriveRepair(Func<string, bool> Exists, string AppDrive, string SystemDrive, string DeviceId, Func<string, bool> IsSlowDrive);
 
