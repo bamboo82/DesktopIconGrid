@@ -107,6 +107,33 @@ public static class DataLocation
     }
 
     /// <summary><paramref name="path"/> with its drive written as <c>%APPDRIVE%</c> when it is on <paramref name="drive"/>.</summary>
+    /// <summary>The folders of Windows' own drive, which a stick does not hold: a path in them is Windows' drive on every PC.</summary>
+    private static readonly string[] WindowsFolders = ["Windows", "Program Files", "Program Files (x86)", "ProgramData", "Users"];
+
+    /// <summary>
+    /// A path that 0.8.0 stored with <c>%APPDRIVE%</c> from a portable copy on Windows' own drive (0.8.1 stores those as
+    /// they are, see <see cref="StorageDrive"/>), given that drive back when it lies in one of Windows' own folders:
+    /// there it can only mean <paramref name="systemDrive"/>, where a copy on a stick would read it as the stick's. Any
+    /// other <c>%APPDRIVE%</c> path may be a stick's own program, written by a copy on the stick, and stays as it is.
+    /// </summary>
+    public static string? WithWindowsDrive(string? path, string? systemDrive)
+    {
+        var prefix = $"%{AppDriveVariable}%";
+        if (path is null || systemDrive is not { Length: 2 } || !path.TrimStart().StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+        {
+            return path;
+        }
+
+        var rest = path.TrimStart()[prefix.Length..];
+        if (rest.Length < 2 || rest[0] is not ('\\' or '/'))
+        {
+            return path;
+        }
+
+        var folder = rest[1..].Split(['\\', '/'])[0];
+        return WindowsFolders.Contains(folder, StringComparer.OrdinalIgnoreCase) ? systemDrive + rest : path;
+    }
+
     public static string WithAppDrive(string path, string? drive)
     {
         ArgumentNullException.ThrowIfNull(path);

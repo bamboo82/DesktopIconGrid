@@ -76,8 +76,9 @@ public static partial class LocationRepair
 
         var fileName = parts[^1];
         var parentName = parts[^2];
-        var isFolder = LooksLikeFolder(path);
-        Func<string, bool> exists = isFolder ? Directory.Exists : File.Exists;
+        // A file or a folder, whichever the old name turns out to be: no guess from the name holds for both
+        // (node-v20.11.0-win-x64 and Contoso.Web are folders, Makefile and .wslconfig files).
+        static bool exists(string candidate) => File.Exists(candidate) || Directory.Exists(candidate);
         var found = new List<RepairCandidate>();
         var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { System.IO.Path.GetFullPath(path) };
         void Add(string candidate, RepairReason reason, bool likely)
@@ -88,7 +89,7 @@ public static partial class LocationRepair
             }
         }
 
-        foreach (var candidate in OtherVersions(path, parts, firstLevel: isFolder ? 0 : 1))
+        foreach (var candidate in OtherVersions(path, parts, firstLevel: 0))
         {
             Add(candidate, RepairReason.OtherVersion, likely: true);
         }
@@ -119,20 +120,6 @@ public static partial class LocationRepair
         }
 
         return new RepairSearch([.. found.Where(c => c.Likely), .. found.Where(c => !c.Likely)], stoppedEarly);
-    }
-
-    /// <summary>
-    /// Whether a missing location most likely named a folder: its last part has no extension, or only a number after its
-    /// last dot (<c>app-1.0.9172</c>). Files nearly always end in a letter extension on Windows. A folder is looked for as
-    /// a folder (its other versions too), and browsed for with a folder picker.
-    /// </summary>
-    public static bool LooksLikeFolder(string location)
-    {
-        ArgumentNullException.ThrowIfNull(location);
-        var path = Environment.ExpandEnvironmentVariables(location.Trim().Trim('"')).TrimEnd('\\', '/');
-        var name = path[(path.LastIndexOfAny(['\\', '/']) + 1)..];
-        var dot = name.LastIndexOf('.');
-        return dot <= 0 || dot == name.Length - 1 || name[(dot + 1)..].All(char.IsAsciiDigit);
     }
 
     /// <summary>The Store package folder name (<c>Name_Version_Arch__Publisher</c>) a path lies in, or <see langword="null"/>.</summary>

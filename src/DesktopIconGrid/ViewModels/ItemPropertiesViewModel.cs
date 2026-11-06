@@ -3,6 +3,7 @@ using System.Windows;
 using System.Windows.Media;
 using DesktopIconGrid.Core.Launching;
 using DesktopIconGrid.Core.Models;
+using DesktopIconGrid.Core.Storage;
 using DesktopIconGrid.Infrastructure;
 using DesktopIconGrid.Resources;
 using DesktopIconGrid.Services;
@@ -434,11 +435,11 @@ public sealed class ItemPropertiesViewModel : ObservableObject
         {
             if (_onlyThisPc && CanBeOnlyThisPc && _sharedLocation.Length > 0)
             {
-                shortcut.SetLocationFor(ThisDevice.Id!, _location.Trim()); // the common location stays for the other PCs
+                shortcut.SetLocationFor(ThisDevice.Id!, DataLocation.ForStorage(_location.Trim())); // the common location stays for the other PCs
             }
             else
             {
-                shortcut.Location = _location.Trim();
+                shortcut.Location = DataLocation.ForStorage(_location.Trim()); // typed or pasted: %APPDRIVE% in portable mode, as picked ones
                 if (ThisDevice.Id is { } device)
                 {
                     shortcut.SetLocationFor(device, null);
@@ -452,7 +453,7 @@ public sealed class ItemPropertiesViewModel : ObservableObject
                 : _switchesWhenRunning == LaunchPlanner.SwitchesByDefault(shortcut.EffectiveLocation, shortcut.Parameters)
                     ? null // the location's own default: stored as nothing, so it keeps following the location
                     : _switchesWhenRunning ? ShortcutItem.WhenRunningSwitch : ShortcutItem.WhenRunningStart;
-            shortcut.StartIn = string.IsNullOrWhiteSpace(_startIn) ? null : _startIn.Trim();
+            shortcut.StartIn = string.IsNullOrWhiteSpace(_startIn) ? null : DataLocation.ForStorage(_startIn.Trim());
             shortcut.WindowState = _windowState.Value;
             shortcut.RunAsAdministrator = _runAsAdministrator;
             shortcut.Browser = _browser.Browser;

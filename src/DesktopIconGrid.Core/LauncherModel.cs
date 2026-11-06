@@ -95,6 +95,18 @@ public sealed class LauncherModel
         ExtensionData = UnknownProperties.Copy(_unknownProperties),
     };
 
+    /// <summary>A path of 0.8.0's under Windows' own folders, with its drive back (see <see cref="DataLocation.WithWindowsDrive"/>); counted as a repair.</summary>
+    private string? Healed(string? path)
+    {
+        var healed = DataLocation.WithWindowsDrive(path, Environment.GetEnvironmentVariable("SystemDrive"));
+        if (!string.Equals(healed, path, StringComparison.Ordinal))
+        {
+            RepairCount++;
+        }
+
+        return healed;
+    }
+
     private void Adopt(LauncherItem item, HashSet<Guid> seen)
     {
         if (item.Id == Guid.Empty || !seen.Add(item.Id))
@@ -106,6 +118,7 @@ public sealed class LauncherModel
 
         item.Name = item.Name?.Trim() ?? string.Empty;
         item.TextIcon = item.TextIcon?.Normalized();
+        item.IconPath = Healed(item.IconPath);
         item.ColorTag = ColorTags.Normalize(item.ColorTag);
         if (item is SeparatorItem separator)
         {
@@ -117,7 +130,16 @@ public sealed class LauncherModel
         }
         else if (item is ShortcutItem shortcut)
         {
-            shortcut.Location = shortcut.Location?.Trim() ?? string.Empty;
+            shortcut.Location = Healed(shortcut.Location?.Trim()) ?? string.Empty;
+            shortcut.StartIn = Healed(shortcut.StartIn);
+            if (shortcut.Locations is { } locations)
+            {
+                foreach (var (device, location) in locations.ToList())
+                {
+                    locations[device] = Healed(location) ?? location;
+                }
+            }
+
             if (shortcut.Name.Length == 0)
             {
                 shortcut.Name = ShortcutItem.SuggestName(shortcut.Location);

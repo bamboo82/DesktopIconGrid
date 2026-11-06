@@ -46,16 +46,21 @@ public sealed class LocationRepairTests : IDisposable
         Assert.Equal([new RepairCandidate(newer, RepairReason.OtherVersion)], found);
     }
 
-    [Theory]
-    [InlineData(@"C:\Tools\app-1.0.9172", true)]
-    [InlineData(@"C:\Tools\Notes", true)]
-    [InlineData(@"C:\Tools\Notes\", true)]
-    [InlineData(@"%USERPROFILE%\.config", true)]
-    [InlineData(@"C:\Tools\app.exe", false)]
-    [InlineData(@"C:\Tools\read.me.txt", false)]
-    public void A_location_with_no_letter_extension_is_taken_for_a_folder(string location, bool folder)
+    [Fact]
+    public void Versioned_folders_and_files_whose_names_mislead_the_guess_are_found()
     {
-        Assert.Equal(folder, LocationRepair.LooksLikeFolder(location));
+        // Review 15 R6′: node-v20.11.0-win-x64 and Contoso.Web were taken for files, Makefile for a folder, so Repair
+        // said "Nothing found" for R6's own case, a version renamed.
+        var node = Folder("tools", "node-v22.1.0-win-x64");
+        Directory.CreateDirectory(node);
+        Assert.Equal([new RepairCandidate(node, RepairReason.OtherVersion)], LocationRepair.Candidates(Folder("tools", "node-v20.11.0-win-x64"), []));
+
+        var web = Folder("pf", "Contoso", "Contoso.Web");
+        Directory.CreateDirectory(web);
+        Assert.Contains(web, LocationRepair.Candidates(Folder("old", "Contoso", "Contoso.Web"), [Folder("pf")]).Select(c => c.Path));
+
+        var makefile = Make("pf", "Build", "Makefile");
+        Assert.Contains(makefile, LocationRepair.Candidates(Folder("old", "Build", "Makefile"), [Folder("pf")]).Select(c => c.Path));
     }
 
     [Fact]

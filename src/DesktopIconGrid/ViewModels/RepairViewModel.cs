@@ -37,9 +37,6 @@ public sealed class RepairViewModel : ObservableObject
 
     public string Location { get; }
 
-    /// <summary>The missing location was a folder (<see cref="LocationRepair.LooksLikeFolder"/>): browse for a folder.</summary>
-    public bool IsFolder => LocationRepair.LooksLikeFolder(Location);
-
     public string Intro => string.Format(Strings.Repair_Intro, Name, Location);
 
     public ObservableCollection<RepairChoice> Choices { get; } = [];

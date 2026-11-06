@@ -27,7 +27,14 @@
     </ListBox>
 
     <DockPanel Margin="0,6,0,0">
-      <Button DockPanel.Dock="Right" Content="{x:Static r:Strings.Repair_Browse}" Padding="10,3" Margin="8,0,0,0" Click="Browse_Click" />
+      <Button DockPanel.Dock="Right" Content="{x:Static r:Strings.Repair_Browse}" Padding="10,3" Margin="8,0,0,0" Click="Browse_Click">
+        <Button.ContextMenu>
+          <ContextMenu>
+            <MenuItem Header="{x:Static r:Strings.Props_BrowseFile}" Click="BrowseFile_Click" />
+            <MenuItem Header="{x:Static r:Strings.Props_BrowseFolder}" Click="BrowseFolder_Click" />
+          </ContextMenu>
+        </Button.ContextMenu>
+      </Button>
       <ProgressBar DockPanel.Dock="Left" Width="80" Height="4" Margin="0,0,8,0" IsIndeterminate="True"
                    Visibility="{Binding IsSearching, Converter={StaticResource BoolToVisibility}}" />
       <TextBlock Text="{Binding Status}" VerticalAlignment="Center" TextWrapping="Wrap" />

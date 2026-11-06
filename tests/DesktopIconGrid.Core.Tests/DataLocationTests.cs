@@ -5,6 +5,21 @@ namespace DesktopIconGrid.Core.Tests;
 /// <summary>Portable mode: data next to the program, and shortcuts that follow the program's drive letter.</summary>
 public class DataLocationTests
 {
+    [Theory]
+    [InlineData(@"%APPDRIVE%\Windows\System32\notepad.exe", @"C:\Windows\System32\notepad.exe")] // 0.8.0 on C: wrote it
+    [InlineData(@"%appdrive%\Program Files\App\app.exe", @"C:\Program Files\App\app.exe")]
+    [InlineData(@"%APPDRIVE%\Users\me\Documents", @"C:\Users\me\Documents")]
+    [InlineData(@"%APPDRIVE%\PortableApps\x.exe", @"%APPDRIVE%\PortableApps\x.exe")] // a stick's own: stays
+    [InlineData(@"%APPDRIVE%\WindowsApps\x.exe", @"%APPDRIVE%\WindowsApps\x.exe")]
+    [InlineData(@"D:\Windows\x.exe", @"D:\Windows\x.exe")]
+    [InlineData(null, null)]
+    public void Paths_of_0_8_0_under_Windows_folders_get_Windows_drive_back(string? stored, string? healed)
+    {
+        // Review 15 R4: a 0.8.0 copy on C: stored %APPDRIVE%\Windows\…, which a copy on a stick reads as the stick's.
+        Assert.Equal(healed, DataLocation.WithWindowsDrive(stored, "C:"));
+        Assert.Equal(stored, DataLocation.WithWindowsDrive(stored, null)); // off Windows: nothing to go by
+    }
+
     [Fact]
     public void Portable_txt_next_to_the_program_keeps_the_data_there()
     {

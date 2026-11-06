@@ -1,6 +1,8 @@
 using System.ComponentModel;
 using System.IO;
 using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using DesktopIconGrid.Resources;
 using DesktopIconGrid.ViewModels;
 using Microsoft.Win32;
@@ -36,21 +38,30 @@ public partial class RepairWindow : Window
         base.OnClosed(e);
     }
 
+    /// <summary>A file or a folder, as the "…" button in Properties offers: no guess from the old name holds for both.</summary>
     private void Browse_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button { ContextMenu: { } menu } button)
+        {
+            menu.PlacementTarget = button;
+            menu.Placement = PlacementMode.Bottom;
+            menu.IsOpen = true;
+        }
+    }
+
+    private void BrowseFolder_Click(object sender, RoutedEventArgs e)
+    {
+        var folders = new OpenFolderDialog { Title = Strings.Repair_Title, Multiselect = false };
+        if (ViewModel is { } viewModel && folders.ShowDialog(this) == true && !string.IsNullOrWhiteSpace(folders.FolderName))
+        {
+            viewModel.AddChosen(folders.FolderName);
+        }
+    }
+
+    private void BrowseFile_Click(object sender, RoutedEventArgs e)
     {
         if (ViewModel is not { } viewModel)
         {
-            return;
-        }
-
-        if (viewModel.IsFolder)
-        {
-            var folders = new OpenFolderDialog { Title = Strings.Repair_Title, Multiselect = false };
-            if (folders.ShowDialog(this) == true && !string.IsNullOrWhiteSpace(folders.FolderName))
-            {
-                viewModel.AddChosen(folders.FolderName);
-            }
-
             return;
         }
 
