@@ -37,24 +37,30 @@ switches, portable mode and *Repair…* on more kinds of PC, and the smaller ite
 - Starting a portable copy with *Start with Windows* off removed the installed bar's autostart: every copy
   shares one Run entry, and it was removed whatever program it named. A copy now removes or rewrites the
   entry only when it names that copy. An entry for another copy that is still there is left alone, and
-  turning the option on says so; one for a program that is gone is taken over, as before. A portable copy
-  adds an entry on a PC only after asking, so a stick no longer leaves entries behind on every PC it visits.
-  Covered by tests against a stand-in for the registry.
-- Portable mode wrote some paths with their drive letter: a program chosen in *Repair…*, and an icon picked or
-  downloaded in *Properties*, which lands in the portable folder itself. They broke when the drive got another
-  letter. They are now written with `%APPDRIVE%`, as other paths are.
+  turning the option on says so; one for a program that is gone, a drive letter this PC does not have
+  included (a stick that was pulled out), is taken over, as before. A portable copy adds or takes over an
+  entry on a PC only after asking (*No* turns the option off again), so a stick no longer leaves entries
+  behind on every PC it visits, and it counts its own entry made under another drive letter as its own.
+  *Settings* also says that an entry turned off under *Startup apps* keeps the bar from starting. Covered by
+  tests against a stand-in for the registry, one of them on a real unused drive letter.
+- Portable mode wrote some paths with their drive letter: a program chosen in *Repair…*, an icon picked or
+  downloaded in *Properties*, which lands in the portable folder itself, and a location or *Start in* typed or
+  pasted there. They broke when the drive got another letter. They are now written with `%APPDRIVE%`, as other
+  paths are.
 - A portable copy run from the system drive (`C:\Tools`) wrote every C: path with `%APPDRIVE%`,
   `C:\Windows\System32\cmd.exe` too, so a copy on a stick that loaded them looked for them on the stick.
-  Paths on Windows' own drive are now written as they are.
+  Paths on Windows' own drive are now written as they are, and such paths that 0.8.0 wrote in Windows' own
+  folders (Windows, Program Files, ProgramData, Users) get Windows' drive back when a layout is loaded.
 - *Repair…* could not fix a shortcut to a missing folder: it looked for files only, and *Browse* picked a file.
-  A location without a letter extension (`Notes`, `app-1.0.9172`) is now looked for as a folder, other
-  versions of it included, and *Browse* picks a folder.
+  It now looks for a file or a folder of that name, whichever is there, other versions of a folder included
+  (`node-v20.11.0-win-x64` finds `node-v22.1.0-win-x64`), and *Browse* offers *File…* and *Folder…*.
 - `portable.txt` next to a program whose folder cannot be written (under Program Files without elevation, on a
   read-only drive) stopped the app with "Startup failed". It now keeps its files in `%LocalAppData%`, as without
   `portable.txt`, and says so once at start.
 - A repaired shortcut could still fail to start on its old *Start in* folder. A *Start in* that was only the
   program's folder (as Windows shortcuts set it) now moves with the program, and a *Start in* that is not on
-  this PC (another PC's project folder) gives way to the program's own folder instead of stopping the start.
+  this PC (another PC's project folder, on a drive letter this PC may not have) gives way to the program's own
+  folder instead of stopping the start.
 - *Repair… → On every PC that shares this bar* said it applied everywhere, but a PC with a location of its
   own kept it. That is the right thing (its path differs), so the choice now says so.
 - *Edit names…* checked every shortcut's target on the window's thread when it opened. It now uses the bar's
@@ -63,14 +69,17 @@ switches, portable mode and *Repair…* on more kinds of PC, and the smaller ite
   on the drive held only one of each. Another PC could not read them, so its next save erased the first PC's
   secret, and each sign-in replaced the other PC's, so two PCs kept signing each other out. Each PC now keeps
   its own: the secret in `sync.json` under the PC's key (a secret saved by 0.8.0 is kept for its PC), the
-  sign-in in a file of its own. A PC new to the drive asks once. Covered by tests with a protector per PC.
+  sign-in in a file of its own, which the shared sign-in of 0.8.0 becomes only on the PC that wrote it, so a
+  *Disconnect* stays done. A PC new to the drive asks once. Covered by tests with a protector per PC.
 - A divider at the end of a full row had no width, so it could not be seen, right-clicked or dragged, though
-  Tab still landed on it. It now keeps at least a sliver of room, reaching into the bar's margin.
+  Tab still landed on it. It now takes a sliver of room at the row's end, over the last icon's padding, inside
+  the view. Covered by a test that clicks it on the real control.
 - A click on a shortcut whose parameters take dropped files (`notepad++.exe {files}`) passed `{files}` to the
   program as a word, and such a shortcut started another copy instead of switching to the running one. A
   click now leaves `{file}` and `{files}` out, and they no longer count as parameters for switching.
 - *Properties* could grow taller than the screen, with *Advanced* open in Chinese most of all. It now scrolls
-  with Save and Cancel always in sight, like *Settings*. Covered by a test on the real dialog.
+  with Save and Cancel always in sight, like *Settings*, and moves back up when opening *Advanced* makes it
+  reach past the bottom of the screen. Covered by tests on the real dialog.
 - Each placeholder is now checked where it stands. In `ssh {ask:Host} tail {clipboard}`, the host takes
   `admin@server2`, and the words after it are still checked as the remote shell reads them; 0.8.0 checked
   both values as the command, so `admin@server2` was refused. The values of wsl's own options (`-d`, `-u`,
@@ -80,15 +89,27 @@ switches, portable mode and *Repair…* on more kinds of PC, and the smaller ite
   conflicted copy) linked the PC to that file while the other PCs stayed on `Work.json`. Each then uploaded
   to its own file, and both said "up to date". The copy is now loaded, the PC stays linked to `Work`, and
   the next upload asks before it replaces another PC's save there. The start-up question and the "not
-  uploaded" message name such copies, which nothing did before.
+  uploaded" message name such copies, which nothing did before. Replacing such a copy from the dialog says
+  that the PC then stays with it and leaves `Work`.
 - Moving the copies to a folder or back to Google Drive, or unlinking, while an automatic upload ran could
   write that upload into the new place, over a copy there and without the conflict check, and then link
   the PC again. These now wait for the upload, and each sync operation uses the place it started with.
 - With the copies on a network share that was off, choosing a folder froze the bar for up to a minute.
-  Such a share is no longer looked at on the window's thread, and the folder is made on a worker.
+  Such a share is no longer looked at on the window's thread, the folder picker opens on a local folder
+  rather than on that share, and the folder is made on a worker.
 - A copy whose name Windows does not allow in a file name, numbered because another copy's name became the
   same file name ("Home? desk" in `Home_ desk (2).json`), was listed under the file's name, and an upload
-  renamed it to that.
+  renamed it to that. So did a copy whose file name another file held (another program's `config.json`):
+  listed as a sync program's copy, it got a third file when another PC loaded it. Saves now keep the copy's
+  own name, a PC that loads such a copy stays with its file, and a save from the dialog waits, as uploads do,
+  while a copy cannot be read.
+- An automatic upload that came due while a copy loaded (its timer runs on under the sync dialog) wrote the
+  bar the load replaced into the copy just loaded, and every other PC on it was offered that bar. Loading the
+  linked copy again to undo a change went the same way. Such an upload now writes nothing; a change made
+  after the load uploads as usual.
+- A shortcut on a drive letter this PC does not have at all (another PC's `D:`, a stick that is not plugged
+  in) counted as on slow storage and was never marked missing. Windows says such a letter is not there
+  without touching any drive, so it is marked now.
 
 ## [0.8.0] – 2026-11-06
 
