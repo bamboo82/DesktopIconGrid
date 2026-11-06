@@ -102,10 +102,63 @@ public sealed class FolderSyncTests : IDisposable
         await desk.SaveProfileAsync("Work", Layout("a"), CancellationToken.None);
         File.WriteAllText(PathOf("Work.json"), "{\"name\":\"Work\",\"layout\":"); // half written
 
-        var refused = await Assert.ThrowsAsync<IOException>(() => desk.SaveProfileAsync("Work", Layout("b"), CancellationToken.None));
+        var refused = await Assert.ThrowsAsync<CopyBusyException>(() => desk.SaveProfileAsync("Work", Layout("b"), CancellationToken.None));
 
         Assert.Contains("Work", refused.Message, StringComparison.Ordinal);
         Assert.Equal("{\"name\":\"Work\",\"layout\":", File.ReadAllText(PathOf("Work.json")));
+    }
+
+    [Fact]
+    public async Task A_numbered_original_is_listed_under_its_own_name_and_a_sync_programs_copy_of_it_links_there()
+    {
+        // Review 16 U3′: config (2).json, numbered because another program held config.json, was listed as a sync
+        // program's copy of a "config" that did not exist: wrong questions, no question on Save, and a conflict copy of it
+        // pinned the PC that loaded it.
+        File.WriteAllText(PathOf("config.json"), "{\"theme\":\"another program's\"}");
+        var desk = Device("DESK");
+        await desk.SaveProfileAsync("config", Layout("a"), CancellationToken.None);
+        File.Copy(PathOf("config (2).json"), PathOf("config (2)-LAPTOP.json")); // OneDrive's copy of it
+
+        var copies = await Device("LAPTOP").ListProfilesAsync(CancellationToken.None);
+        var original = copies.Single(c => c.FileId == "config (2).json");
+        Assert.Equal("config", original.Name);
+        Assert.False(original.IsConflictCopy);
+        var conflict = copies.Single(c => c.FileId == "config (2)-LAPTOP.json");
+        Assert.True(conflict.IsConflictCopy);
+
+        var laptop = Device("LAPTOP");
+        await laptop.LoadProfileAsync(conflict, CancellationToken.None);
+        Assert.Equal("config (2).json", laptop.Settings.LinkedFileId); // to the original, not the copy
+    }
+
+    [Fact]
+    public async Task A_conflict_copy_loaded_while_its_original_cannot_be_read_links_to_the_original()
+    {
+        // Review 16 U5: "Home: desk" in Home_ desk.json could not be read, so the original was not found; its file name was
+        // taken, and the PC stayed on OneDrive's copy without a word.
+        var desk = Device("DESK");
+        await desk.SaveProfileAsync("Home: desk", Layout("a"), CancellationToken.None);
+        File.Copy(PathOf("Home_ desk.json"), PathOf("Home_ desk-LAPTOP.json"));
+        File.WriteAllText(PathOf("Home_ desk.json"), "{\"name\":\"Home: desk\",\"layout\":"); // being written
+
+        var laptop = Device("LAPTOP");
+        var conflict = (await laptop.ListProfilesAsync(CancellationToken.None)).Single(c => c.FileId == "Home_ desk-LAPTOP.json");
+        await laptop.LoadProfileAsync(conflict, CancellationToken.None);
+
+        Assert.Equal("Home_ desk.json", laptop.Settings.LinkedFileId);
+        Assert.Equal("Home: desk", laptop.Settings.LinkedProfile);
+    }
+
+    [Fact]
+    public async Task A_name_from_a_listing_made_while_a_copy_could_not_be_read_does_not_rename_it()
+    {
+        // Review 16 U6: the dialog listed Home_ desk.json as "Home_ desk"; a few seconds later Overwrite wrote that name in.
+        var desk = Device("DESK");
+        await desk.SaveProfileAsync("Home: desk", Layout("a"), CancellationToken.None);
+
+        await desk.SaveProfileAsync("Home_ desk", Layout("b"), "Home_ desk.json", CancellationToken.None);
+
+        Assert.Equal("Home: desk", SyncProfile.FromJson(File.ReadAllText(PathOf("Home_ desk.json"))).Name);
     }
 
     [Fact]

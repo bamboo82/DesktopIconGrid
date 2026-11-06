@@ -261,6 +261,75 @@ public class SyncServiceTests
         Assert.Null(service.Settings.LinkedProfile);
     }
 
+    /// <summary>Drive whose files can no longer be read from the given listing on (a sync program at work).</summary>
+    private sealed class UnreadableFromDrive(FakeDrive inner, int fromListing) : IDriveClient
+    {
+        private int _listings;
+
+        public Task<DriveUser> GetUserAsync(CancellationToken cancellationToken) => inner.GetUserAsync(cancellationToken);
+
+        public async Task<IReadOnlyList<DriveFile>> ListFilesAsync(CancellationToken cancellationToken)
+        {
+            var files = await inner.ListFilesAsync(cancellationToken);
+            return ++_listings < fromListing
+                ? files
+                : files.Select(f => f with { AppProperties = new Dictionary<string, string>(f.AppProperties) { [FolderSyncClient.UnreadableProperty] = "true" } }).ToList();
+        }
+
+        public Task<DriveFile> UploadJsonAsync(string fileName, string json, IReadOnlyDictionary<string, string> appProperties, string? existingFileId, CancellationToken cancellationToken) =>
+            inner.UploadJsonAsync(fileName, json, appProperties, existingFileId, cancellationToken);
+
+        public Task<string> DownloadTextAsync(string fileId, CancellationToken cancellationToken) => inner.DownloadTextAsync(fileId, cancellationToken);
+
+        public Task DeleteAsync(string fileId, CancellationToken cancellationToken) => inner.DeleteAsync(fileId, cancellationToken);
+    }
+
+    [Fact]
+    public async Task An_upload_that_finds_its_copy_busy_only_when_it_saves_is_postponed_not_failed()
+    {
+        // Review 16 U7: the save's own listing threw "delete that copy", shown as a failed upload with no retry.
+        var store = new InMemoryTokenStore { Token = new OAuthToken("at", "rt", Now.AddHours(1), null) };
+        var auth = new GoogleAuthorization(new HttpClient(new FakeHttpHandler()), store, () => new OAuthClientCredentials("id", "secret"), clock: () => Now);
+        var drive = new FakeDrive();
+        var setup = new SyncService(auth, drive, new SyncSettings { DeviceName = "PC-1" }, () => { }, "0.8.1", () => Now);
+        await setup.SaveProfileAsync("Work", LayoutOf("one"), CancellationToken.None);
+        var service = new SyncService(auth, new UnreadableFromDrive(drive, fromListing: 2), setup.Settings, () => { }, "0.8.1", () => Now);
+
+        var result = await service.AutoUploadAsync(LayoutOf("two"), CancellationToken.None);
+
+        Assert.Equal(AutoUploadOutcome.Postponed, result.Outcome);
+    }
+
+    [Fact]
+    public async Task A_load_whose_settings_cannot_be_saved_leaves_the_link_as_it_was()
+    {
+        // Review 16 U1′: the link moved in memory, the load failed, and the old bar then went up into the loaded copy.
+        var failNext = false;
+        var store = new InMemoryTokenStore { Token = new OAuthToken("at", "rt", Now.AddHours(1), null) };
+        var auth = new GoogleAuthorization(new HttpClient(new FakeHttpHandler()), store, () => new OAuthClientCredentials("id", "secret"), clock: () => Now);
+        var drive = new FakeDrive();
+        var service = new SyncService(auth, drive, new SyncSettings { DeviceName = "PC-1" }, () =>
+        {
+            if (failNext)
+            {
+                failNext = false;
+                throw new IOException("sync.json is held by a scan");
+            }
+        }, "0.8.1", () => Now);
+        await service.SaveProfileAsync("Work", LayoutOf("work-app"), CancellationToken.None);
+        await service.SaveProfileAsync("Home", LayoutOf("home-app"), CancellationToken.None);
+        var work = (await service.ListProfilesAsync(CancellationToken.None)).Single(p => p.Name == "Work");
+        var takenAt = service.LinkGeneration;
+
+        failNext = true;
+        await Assert.ThrowsAsync<IOException>(() => service.LoadProfileAsync(work, CancellationToken.None));
+
+        Assert.Equal("Home", service.Settings.LinkedProfile);
+        Assert.Equal(takenAt, service.LinkGeneration);
+        Assert.Equal(AutoUploadOutcome.Uploaded, (await service.AutoUploadAsync(LayoutOf("home-app-moved"), takenAt, CancellationToken.None)).Outcome);
+        Assert.Contains("work-app", drive.Files[work.FileId].Content, StringComparison.Ordinal); // Work untouched
+    }
+
     private static (SyncService Service, FakeDrive Drive, SyncSettings Settings, List<int> Saves) CreateService(bool connected = true, DateTimeOffset? now = null, FakeHttpHandler? http = null)
     {
         var store = new InMemoryTokenStore

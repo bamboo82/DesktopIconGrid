@@ -2,6 +2,7 @@ using System.Globalization;
 using DesktopIconGrid.Core.Diagnostics;
 using DesktopIconGrid.Core.Models;
 using DesktopIconGrid.Core.Resources;
+using DesktopIconGrid.Core.Storage;
 
 namespace DesktopIconGrid.Core.Sync;
 
@@ -25,6 +26,9 @@ public enum AutoUploadOutcome
     /// </summary>
     LinkChanged,
 }
+
+/// <summary>A copy that cannot be read right now, which a save leaves alone (a sync program may be writing it).</summary>
+public sealed class CopyBusyException(string message) : IOException(message);
 
 public sealed record AutoUploadResult(AutoUploadOutcome Outcome, RemoteProfile? Remote = null)
 {
@@ -280,14 +284,16 @@ public sealed class SyncService
         if (existing is { Unreadable: true })
         {
             // A sync program may be writing it: what it holds is not known, and a write now may leave a conflict copy.
-            throw new IOException(string.Format(CultureInfo.CurrentCulture, CoreStrings.Sync_CopyBusy, existing.Name));
+            throw new CopyBusyException(string.Format(CultureInfo.CurrentCulture, CoreStrings.Sync_CopyBusy, existing.Name));
         }
 
         // The caller's name, not the one the copy is listed under: a copy whose file name was taken by another file
         // (config (2).json) or could not be read just now (listed as its file name) keeps the name it has. Only the
         // spelling of the stored name is kept when the two differ in case alone.
         var now = _clock();
-        var savedName = existing is not null && string.Equals(existing.Name, name, StringComparison.OrdinalIgnoreCase) ? existing.Name : name;
+        // A readable original keeps the name this listing gives it: the caller's may come from a listing made while a sync
+        // program wrote it ("Home_ desk" for "Home: desk"). Anything else gets the caller's.
+        var savedName = existing is { IsConflictCopy: false, Unreadable: false } ? existing.Name : name;
         var profile = SyncProfile.FromLayout(savedName, layout, Settings.DeviceName, now, _appVersion, Settings.DeviceId);
         var file = await copies.UploadJsonAsync(
             profile.Name + RemoteProfile.FileExtension,
@@ -337,19 +343,37 @@ public sealed class SyncService
         var linkedFileId = remote.FileId;
         if (remote.IsConflictCopy)
         {
-            var original = (await ListAsync(copies, cancellationToken).ConfigureAwait(false))
-                .FirstOrDefault(p => !p.IsConflictCopy && string.Equals(p.Name, profile.Name, StringComparison.OrdinalIgnoreCase));
+            var listing = await ListAsync(copies, cancellationToken).ConfigureAwait(false);
+            var ownFile = FileNames.Safe(profile.Name.Trim()) + RemoteProfile.FileExtension;
+            var original = listing.FirstOrDefault(p => !p.IsConflictCopy && string.Equals(p.Name, profile.Name, StringComparison.OrdinalIgnoreCase))
+                           ?? (copies is FolderSyncClient ? listing.FirstOrDefault(p => p.Unreadable && string.Equals(p.FileId, ownFile, StringComparison.OrdinalIgnoreCase)) : null);
             linkedName = profile.Name;
-            linkedFileId = original?.FileId // none left: the next upload writes it again, unless its file name is taken
-                ?? (copies is FolderSyncClient folder && folder.FileNameIsTaken(profile.Name) ? remote.FileId : null);
+
+            // None left: the next upload writes it again. Unless that file is taken by something else (another program's
+            // config.json), for a name that needs no change: then this copy is the one there is.
+            linkedFileId = original?.FileId
+                ?? (copies is FolderSyncClient folder && string.Equals(FileNames.Safe(profile.Name.Trim()), profile.Name.Trim(), StringComparison.Ordinal)
+                    && folder.FileNameIsTaken(profile.Name) ? remote.FileId : null);
         }
 
-        LinkChanged(); // even for the linked copy again: an upload of the bar this replaces must not follow
+        // The link moves only once sync.json holds it: should the save fail, this PC stays linked as it was, with the bar
+        // that goes with it, and an upload waiting for its turn goes to the copy it was meant for.
+        var before = (Settings.LinkedProfile, Settings.LinkedFileId, Settings.LastSyncedAt, Settings.LastRevision);
         Settings.LinkedProfile = linkedName;
         Settings.LinkedFileId = linkedFileId;
         Settings.LastSyncedAt = remote.SavedAt ?? profile.SavedAt;
         Settings.LastRevision = profile.Revision ?? remote.Revision;
-        SaveSettings();
+        try
+        {
+            SaveSettings();
+        }
+        catch
+        {
+            (Settings.LinkedProfile, Settings.LinkedFileId, Settings.LastSyncedAt, Settings.LastRevision) = before;
+            throw;
+        }
+
+        LinkChanged(); // even for the linked copy again: an upload of the bar this replaces must not follow
         AppLog.Default.Info("Sync", $"Loaded settings copy \"{remote.Name}\" (saved by {profile.SavedBy} on {profile.SavedAt.LocalDateTime:g}, {profile.Layout.Items.Count} items)");
         return profile;
     }
@@ -458,7 +482,18 @@ public sealed class SyncService
             return new AutoUploadResult(AutoUploadOutcome.Conflict, remote) { ConflictCopies = conflictCopies };
         }
 
-        var saved = await SaveAsync(copies, NormalizeProfileName(Settings.LinkedProfile!), layout, remote?.FileId ?? Settings.LinkedFileId, cancellationToken).ConfigureAwait(false);
+        RemoteProfile saved;
+        try
+        {
+            saved = await SaveAsync(copies, NormalizeProfileName(Settings.LinkedProfile!), layout, remote?.FileId ?? Settings.LinkedFileId, cancellationToken).ConfigureAwait(false);
+        }
+        catch (CopyBusyException)
+        {
+            // It could not be read any more by the time the save listed the folder: the same as above, try again later.
+            AppLog.Default.Warning("Sync", $"Auto-upload postponed: \"{remote?.Name ?? Settings.LinkedProfile}\" cannot be read right now");
+            return new AutoUploadResult(AutoUploadOutcome.Postponed, remote) { ConflictCopies = conflictCopies };
+        }
+
         return new AutoUploadResult(AutoUploadOutcome.Uploaded, saved) { ConflictCopies = conflictCopies };
     }, cancellationToken);
 

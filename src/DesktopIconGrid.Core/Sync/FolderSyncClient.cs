@@ -58,8 +58,9 @@ public sealed class FolderSyncClient : IDriveClient
     /// The name a copy is listed under: the name inside it when the file is named after it, otherwise the file name
     /// (a conflict copy such as <c>Work (1).json</c> says "Work" inside). A name Windows does not allow in a file name
     /// counts with the number <see cref="FreeFileName"/> gives it when another copy's name became the same file name:
-    /// "Home? desk" in <c>Home_ desk (2).json</c>. A name that needs no change never gets a number that way, so
-    /// <c>Work (2).json</c> stays a sync program's conflict copy.
+    /// "Home? desk" in <c>Home_ desk (2).json</c>. A name that needs no change gets a number only when its own file was
+    /// taken by something that is not a copy of it; the listing as a whole decides that (see
+    /// <see cref="ListNumberedOriginals"/>), and here <c>Work (2).json</c> is a sync program's conflict copy.
     /// </summary>
     public static string DisplayName(string fileName, string? nameInside)
     {
@@ -117,7 +118,39 @@ public sealed class FolderSyncClient : IDriveClient
             }
         }
 
+        ListNumberedOriginals(files);
         return files;
+    }
+
+    /// <summary>
+    /// A copy whose own file name was taken when it was first saved (another program's <c>config.json</c>, a copy too large
+    /// to list) got a number from <see cref="FreeFileName"/>: <c>config (2).json</c> with "config" inside. It is listed as
+    /// the original "config" as long as no listed copy of that name holds <c>config.json</c>; otherwise it is a sync
+    /// program's copy (Google Drive's numbering) of that one.
+    /// </summary>
+    private static void ListNumberedOriginals(List<DriveFile> files)
+    {
+        var originals = files
+            .Where(f => f.AppProperties.TryGetValue(NameInsideProperty, out var inside) && f.Name.Equals(FileNames.Safe(inside) + RemoteProfile.FileExtension, StringComparison.OrdinalIgnoreCase))
+            .Select(f => f.AppProperties[NameInsideProperty].Trim())
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        foreach (var file in files)
+        {
+            if (!file.AppProperties.TryGetValue(NameInsideProperty, out var inside) || originals.Contains(inside.Trim()))
+            {
+                continue;
+            }
+
+            var name = inside.Trim();
+            var safe = FileNames.Safe(name);
+            var stem = file.Name[..^RemoteProfile.FileExtension.Length];
+            if (string.Equals(safe, name, StringComparison.Ordinal) && stem.StartsWith(safe + " (", StringComparison.OrdinalIgnoreCase) && stem.EndsWith(')')
+                && int.TryParse(stem.AsSpan(safe.Length + 2, stem.Length - safe.Length - 3), NumberStyles.None, CultureInfo.InvariantCulture, out var number) && number >= 2
+                && file.AppProperties is IDictionary<string, string> properties)
+            {
+                properties["profile"] = name;
+            }
+        }
     }
 
     /// <summary>
