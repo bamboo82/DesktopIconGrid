@@ -26,8 +26,10 @@ public readonly record struct FlowEntry(FlowSlot Slot, double ContentWidth = 0, 
 
 /// <summary>
 /// The bar's grid: items in reading order, wrapping to the next row when the next one does not fit, like a wrap
-/// panel with a fixed cell size. Dividers and captions are narrower than a cell and stay in the row. When the width
-/// holds a single cell (a bar docked to the left or right edge), they lie across the column instead.
+/// panel with a fixed cell size. Dividers and captions are narrower than a cell and stay in the row; a divider never
+/// wraps on its own, it takes what is left of its row (perhaps nothing), so the next row starts at the edge as it
+/// would without it. When the width holds a single cell (a bar docked to the left or right edge), dividers and
+/// captions lie across the column instead.
 /// </summary>
 public static class FlowLayout
 {
@@ -68,8 +70,16 @@ public static class FlowLayout
             };
             if (x > 0 && x + itemWidth > width + Tolerance)
             {
-                x = 0;
-                y += cellHeight;
+                if (entry.Slot == FlowSlot.Narrow)
+                {
+                    // At the start of the next row it would divide nothing and push that row, and every one after, out of line.
+                    itemWidth = Math.Max(0, width - x);
+                }
+                else
+                {
+                    x = 0;
+                    y += cellHeight;
+                }
             }
 
             boxes.Add(new FlowBox(x, y, itemWidth, cellHeight));

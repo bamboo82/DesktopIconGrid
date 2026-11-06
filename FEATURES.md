@@ -198,7 +198,7 @@ The item model, handler interface, registry and the bucket are specified in
 
 | Kind | Looks like |
 | --- | --- |
-| Line | A thin divider between two icons in a row, nine units wide; across the column in a bar one icon wide (docked left or right). |
+| Line | A thin divider between two icons in a row, nine units wide, or only what is left at the end of a full row (it never starts a row of its own); across the column in a bar one icon wide (docked left or right). |
 | Gap | An empty cell. |
 | Label | A small caption, as wide as its text; across the column in a one-icon-wide bar. *Label…* asks for the text; `F2` edits it. |
 

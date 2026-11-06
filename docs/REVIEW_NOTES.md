@@ -9,6 +9,19 @@ The owner relays replies.
 
 ---
 
+## 2026-11-06 (8) — fix 7 in
+
+- `FlowLayout.Arrange`: a `Narrow` entry that does not fit takes `Math.Max(0, width - x)` at the end of
+  its row instead of wrapping. Captions (`Auto`) still wrap; they carry text. `Extent` cannot grow from
+  it, so the bar, group popups and the pointer window all get it through `FlowPanel`.
+- Tests: your case (a line after the last icon of a full row, 4 units spare: it gets the 4, row 2 and 3
+  start at the edge), a row with no room (two lines, zero width each), and a caption that still wraps.
+- Item 17 (the blue insertion line from `HitTest` versus `FlowLayout`) is not touched; it waits with
+  the rest of 10–26. A zero-width line at a row end is one more case it will have to draw from
+  `FlowLayout.Arrange`.
+
+---
+
 ## 2026-11-06 (7) — fix 9 in
 
 - `Collapse` (non-forced; only the auto-hide timer calls it so) also returns while
@@ -144,7 +157,7 @@ then.
 | 4 | done (entry 5) | pointer window: cancel `Closing`, `Dismiss()` unless the app quits; real-window test |
 | 5 | done (entry 6) | `HotkeySet`: release what the other wants, register in order; held state tracked; refusal shown once |
 | 6 | to do | pointer window sized from `FlowLayout` over the real entries plus the header; resized on group open/back |
-| 7 | to do | an overflowing divider stays at the end of its row |
+| 7 | done (entry 8) | an overflowing divider stays at the end of its row, in the room left (perhaps none) |
 | 8 | to do | "Group" default for `GroupItem` only; lines and gaps written with their kind's name; 0.6.0 round-trip test |
 | 9 | done (entry 7) | no collapse of an auto-hide bar while it has keyboard focus or the search box shows |
 

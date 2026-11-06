@@ -77,6 +77,10 @@ layout history, and a command line with *Send to*.
   while you typed in its search box; Enter then opened a match nobody could see. It now stays out while
   it has the keyboard or its search box is open, and tucks away once you work in another window.
   Checked in code only.
+- A line after the last icon of a full row moved to the start of the next row, where it divided nothing
+  and pushed that row nine units in, so its last icon wrapped and every later row was out of line (on the
+  bar, in group popups and in *Show at pointer*). It now stays at the end of its row in whatever room is
+  left there, perhaps none. Covered by layout tests.
 
 ## [0.7.0] – 2026-11-05
 
