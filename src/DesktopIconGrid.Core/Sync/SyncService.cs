@@ -355,7 +355,7 @@ public sealed class SyncService
 
             // A file of the copy's own name that cannot be read now is taken for it, unless numbered ones are listed: one
             // of them may be this name's, and that one another name's ("Home? desk" next to "Home: desk").
-            var numbered = listing.Any(p => p.FileId.StartsWith(safe + " (", StringComparison.OrdinalIgnoreCase));
+            var numbered = listing.Any(p => FolderSyncClient.NumberAfter(Path.GetFileNameWithoutExtension(p.FileId), safe) >= 2); // as the listing numbers them
             var original = listing.FirstOrDefault(p => !p.IsConflictCopy && string.Equals(p.Name, profile.Name, StringComparison.OrdinalIgnoreCase))
                            ?? (copies is FolderSyncClient && !numbered
                                ? listing.FirstOrDefault(p => p.Unreadable && string.Equals(p.FileId, ownFile, StringComparison.OrdinalIgnoreCase))

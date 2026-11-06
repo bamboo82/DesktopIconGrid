@@ -1071,7 +1071,7 @@ public static partial class LaunchPlaceholders
     /// <summary>
     /// What a dropped file's path holds that the program would act on even inside the quotes the path is given, or
     /// <see langword="null"/>. A file name cannot hold <c>"</c>, so it never leaves its quotes, but cmd.exe still expands
-    /// <c>%NAME%</c> there, and a Linux shell through WSL expands <c>$</c> and <c>`</c> there. PowerShell script text gets
+    /// <c>%NAME%</c> there, and <c>!NAME!</c> with delayed expansion on (<c>cmd /V:ON</c>, a batch file's <c>setlocal</c>), and a Linux shell through WSL expands <c>$</c> and <c>`</c> there. PowerShell script text gets
     /// the path without its quotes (see <see cref="Refused"/>):
     /// <c>a;Write-Output x;.txt</c> is a legal file name. <see cref="FullwidthQuotationMark"/> is refused for every
     /// program.
@@ -1081,8 +1081,8 @@ public static partial class LaunchPlaceholders
         ArgumentNullException.ThrowIfNull(path);
         return FirstNotAllowed(path, reader switch
         {
-            ArgumentReader.Cmd => (text, index) => text[index] is not ('%' or FullwidthQuotationMark),
-            ArgumentReader.PosixShell => (text, index) => text[index] is not ('%' or '$' or '`' or FullwidthQuotationMark),
+            ArgumentReader.Cmd => (text, index) => text[index] is not ('%' or '!' or FullwidthQuotationMark), // ! for delayed expansion (/V:ON, setlocal)
+            ArgumentReader.PosixShell => (text, index) => text[index] is not ('%' or '!' or '$' or '`' or FullwidthQuotationMark),
             ArgumentReader.SshDestination => IsAllowedInSshDestination,
             ArgumentReader.RemoteShell or ArgumentReader.PowerShellCommand => IsAllowedInScriptText,
             ArgumentReader.SshOption => (_, _) => false,

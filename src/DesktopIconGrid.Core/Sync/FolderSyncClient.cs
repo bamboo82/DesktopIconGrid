@@ -158,7 +158,7 @@ public sealed class FolderSyncClient : IDriveClient
         fileName.EndsWith(RemoteProfile.FileExtension, StringComparison.OrdinalIgnoreCase) ? fileName[..^RemoteProfile.FileExtension.Length] : fileName;
 
     /// <summary>The <c>k</c> of a stem written <c>{safe} (k)</c>, or 0.</summary>
-    private static int NumberAfter(string stem, string safe) =>
+    internal static int NumberAfter(string stem, string safe) =>
         stem.StartsWith(safe + " (", StringComparison.OrdinalIgnoreCase) && stem.EndsWith(')')
         && int.TryParse(stem.AsSpan(safe.Length + 2, stem.Length - safe.Length - 3), NumberStyles.None, CultureInfo.InvariantCulture, out var number)
             ? number

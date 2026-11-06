@@ -150,6 +150,15 @@ public class PlaceholderPlacementTests
         Assert.Null(LaunchPlaceholders.Refused("ssh://admin@my-host:2222", ArgumentReader.SshDestination));
     }
 
+    [Fact]
+    public void A_dropped_path_with_delayed_expansion_is_refused_for_cmd()
+    {
+        // Review 18 D3: cmd /V:ON, or a batch file's setlocal EnableDelayedExpansion, expands !NAME! inside quotes.
+        Assert.Equal("!", LaunchPlaceholders.RefusedInPath(@"C:\t\x!COMSPEC!.txt", ArgumentReader.Cmd));
+        Assert.Equal("!", LaunchPlaceholders.RefusedInPath(@"C:\t\x!COMSPEC!.txt", ArgumentReader.PosixShell));
+        Assert.Null(LaunchPlaceholders.RefusedInPath(@"C:\t\x!COMSPEC!.txt", ArgumentReader.Plain));
+    }
+
     [Theory]
     [InlineData("sftp.exe", "-s {clipboard} server2", ArgumentReader.RemoteShell)] // review 17 P16: sftp's subsystem may be a command
     [InlineData("scp.exe", "server2:{ask:Path} .", ArgumentReader.RemoteShell)] // review 17 G4: the old protocol, Windows 10's default

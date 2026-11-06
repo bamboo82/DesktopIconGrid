@@ -266,6 +266,23 @@ public sealed class FolderSyncTests : IDisposable
     }
 
     [Fact]
+    public async Task A_file_with_words_in_brackets_does_not_count_as_numbered()
+    {
+        // Review 18 D5: "Work (old).json" turned off the fallback to Work.json, which only numbered files should.
+        var desk = Device("DESK");
+        await desk.SaveProfileAsync("Work", Layout("a"), CancellationToken.None);
+        File.Copy(PathOf("Work.json"), PathOf("Work-LAPTOP.json"));
+        File.Copy(PathOf("Work.json"), PathOf("Work (old).json"));
+        File.WriteAllText(PathOf("Work.json"), "{\"format\": 1, \"name\": \"Wo"); // being written
+
+        var laptop = Device("LAPTOP");
+        var conflict = (await laptop.ListProfilesAsync(CancellationToken.None)).Single(c => c.FileId == "Work-LAPTOP.json");
+        await laptop.LoadProfileAsync(conflict, CancellationToken.None);
+
+        Assert.Equal("Work.json", laptop.Settings.LinkedFileId);
+    }
+
+    [Fact]
     public async Task A_copy_loaded_from_a_listing_made_while_it_could_not_be_read_is_linked_under_the_name_it_holds()
     {
         // Review 17, U3′ left over: the PC kept "Home_ desk", the listed name, until its first upload.

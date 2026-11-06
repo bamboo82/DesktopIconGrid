@@ -15,6 +15,13 @@ public sealed class LauncherLayout
 
     public int Version { get; set; } = CurrentVersion;
 
+    /// <summary>
+    /// The format a file's version stands for. Version 2 was written only by test builds of 0.8.1 (CI runs 93–100,
+    /// never a release) and holds nothing version 1 does not: it is read, and saved, as 1, so neither 0.8.0 nor 0.8.1
+    /// takes it for a newer version. Anything above is.
+    /// </summary>
+    public static int FormatOf(int version) => version == 2 ? CurrentVersion : version;
+
     public LauncherSettings Settings { get; set; } = new();
 
     public WindowPlacement? Window { get; set; }

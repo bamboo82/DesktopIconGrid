@@ -66,7 +66,7 @@ public sealed class LauncherModel
         deviceId ??= ThisDevice.Id;
         var model = new LauncherModel(layout.Settings?.Clone() ?? new LauncherSettings(), layout.Window)
         {
-            FormatVersion = Math.Max(layout.Version, LauncherLayout.CurrentVersion),
+            FormatVersion = Math.Max(LauncherLayout.FormatOf(layout.Version), LauncherLayout.CurrentVersion),
             _unknownProperties = UnknownProperties.Copy(layout.ExtensionData),
             _driveRepair = deviceId is not null && appDrive is { Length: 2 } && systemDrive is { Length: 2 }
                            && !string.Equals(appDrive, systemDrive, StringComparison.OrdinalIgnoreCase)
@@ -154,9 +154,11 @@ public sealed class LauncherModel
         }
 
         var prefix = $"%{DataLocation.AppDriveVariable}%";
-        if (!repair.IsSlowDrive(repair.AppDrive) && repair.Exists(repair.AppDrive + path[prefix.Length..]))
+        // A slow app drive (a stick) counts as missing without a look, but not for this PC's own entry: someone chose
+        // "only this PC" for it, and it may well be on the stick (review 18 D4).
+        if ((own is not null || !repair.IsSlowDrive(repair.AppDrive)) && repair.Exists(repair.AppDrive + path[prefix.Length..]))
         {
-            return; // there where %APPDRIVE% points: this copy's own (a second disk's Program Files)
+            return; // there where %APPDRIVE% points: this copy's own (a second disk's Program Files, the stick's own)
         }
 
         shortcut.SetLocationFor(repair.DeviceId, healed);

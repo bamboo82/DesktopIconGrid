@@ -90,6 +90,9 @@ public partial class App : Application
             AppLog.Default.Warning("App", $"{DataLocation.PortableMarker} found, but the program's folder cannot be written; data in {DataLocation.Directory}");
         }
 
+        // The sync service sets ThisDevice.Id, which the load needs: a portable copy's repair of 0.8.0's paths gives this
+        // PC its own location, and does nothing without the id (review 18 D1).
+        var syncService = CreateSyncService();
         var storage = new LayoutStorage(LayoutStorage.GetDefaultFilePath());
         var load = storage.Load();
         var model = LauncherModel.FromLayout(load.Layout);
@@ -112,7 +115,6 @@ public partial class App : Application
         _tracker = new ProcessTracker(Dispatcher, AppPaths.LogsDirectory);
         _monitor = new SystemMonitor(Dispatcher);
         Func<Window?> owner = () => Current?.MainWindow;
-        var syncService = CreateSyncService();
         var cacheDirectory = AppPaths.DriveCacheDirectory;
         var specialIcons = new SpecialIconRegistry([
             new CpuUsageHandler(_monitor, owner),

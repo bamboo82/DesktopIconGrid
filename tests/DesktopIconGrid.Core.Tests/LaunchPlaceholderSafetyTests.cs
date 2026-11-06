@@ -348,7 +348,8 @@ public sealed class LaunchPlaceholderSafetyTests : IDisposable
         Assert.Equal("$", LaunchPlaceholders.RefusedInPath(@"C:\In\a$(id).txt", ArgumentReader.PosixShell));
         Assert.Equal("`", LaunchPlaceholders.RefusedInPath(@"C:\In\a`id`.txt", ArgumentReader.PosixShell));
         Assert.Equal("%", LaunchPlaceholders.RefusedInPath(@"C:\In\100%PATH%.txt", ArgumentReader.PosixShell));
-        Assert.Null(LaunchPlaceholders.RefusedInPath(@"C:\In\Tom & Jerry (1)!.mp4", ArgumentReader.PosixShell));
+        Assert.Null(LaunchPlaceholders.RefusedInPath(@"C:\In\Tom & Jerry (1).mp4", ArgumentReader.PosixShell));
+        Assert.Equal("!", LaunchPlaceholders.RefusedInPath(@"C:\In\Tom & Jerry (1)!.mp4", ArgumentReader.PosixShell)); // review 18 D3: delayed expansion
     }
 
     [Fact]
@@ -421,7 +422,8 @@ public sealed class LaunchPlaceholderSafetyTests : IDisposable
     public void A_dropped_path_is_refused_for_what_works_inside_its_quotes_and_for_PowerShell_as_bare_words()
     {
         Assert.Equal("%", LaunchPlaceholders.RefusedInPath(@"C:\In\100%PATH%.txt", ArgumentReader.Cmd));
-        Assert.Null(LaunchPlaceholders.RefusedInPath(@"C:\In\Tom & Jerry (1)!.mp4", ArgumentReader.Cmd)); // literal inside quotes
+        Assert.Null(LaunchPlaceholders.RefusedInPath(@"C:\In\Tom & Jerry (1).mp4", ArgumentReader.Cmd)); // literal inside quotes
+        Assert.Equal("!", LaunchPlaceholders.RefusedInPath(@"C:\In\Tom & Jerry (1)!.mp4", ArgumentReader.Cmd)); // review 18 D3: delayed expansion
         Assert.Equal(";", LaunchPlaceholders.RefusedInPath(@"C:\t\a;Write-Output INJECTED;.txt", ArgumentReader.PowerShellCommand)); // the review
         Assert.Equal("$", LaunchPlaceholders.RefusedInPath(@"C:\In\a$(calc).txt", ArgumentReader.PowerShellCommand));
         Assert.Equal("(", LaunchPlaceholders.RefusedInPath(@"C:\In\a (1).txt", ArgumentReader.PowerShellCommand));

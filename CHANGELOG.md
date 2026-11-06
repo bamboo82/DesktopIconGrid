@@ -71,10 +71,12 @@ switches, portable mode and *Repair…* on more kinds of PC, and the smaller ite
   the program that reads it (0.8.0). A wrapper's own `--` counted for the program after it: `wsl.exe -- python3
   {clipboard}` let `-c…` through to python3, and so did `wt -- python …`, `npx -- tool …` and `dotnet run --`.
   A `--` now belongs to the nearest program named before it, or the shortcut's program; a wrapper's (wsl,
-  Windows Terminal, conhost, sudo, gsudo, runas, npx) counts only when nothing stands between it and the
+  Windows Terminal, conhost, sudo, gsudo, runas, npx, pnpx, bunx) counts only when nothing stands between it and the
   placeholder, and dotnet's never, since what follows it is the app's. A value that starts with `/` is refused
   where one that starts with `-` would be, except for a shell: Chromium and Electron programs (Edge, Chrome,
   VS Code, Teams) read `/name` as a switch, and Windows Script Host reads `//` options after the script.
+- A dropped file's name holding `!` is refused where cmd.exe reads it, as `%` was: with delayed expansion on
+  (`cmd /V:ON`, a batch file's `setlocal EnableDelayedExpansion`), cmd expands `!NAME!` inside quotes too.
 - A drop wrote the filled parameters to `app.log`, and *Keep a log* writes them at the top of the shortcut's
   log: a password typed for `pscp -pw {ask:Password} {file}` landed in both. Both now write the parameters as
   written. Older than 0.8.1.
@@ -103,9 +105,10 @@ switches, portable mode and *Repair…* on more kinds of PC, and the smaller ite
   Paths on Windows' own drive are now written as they are. For such a path that 0.8.0 wrote in Windows' own
   folders (Windows, Program Files, ProgramData, Users), a PC where it is missing on the drive `%APPDRIVE%` points
   to, and there on Windows' drive, gets a location of its own on Windows' drive. Each PC decides for itself, at
-  every load: the shared location, *Start in* and the icon stay as they are, so a copy's own programs on a
-  second disk (`D:\Program Files (x86)\Steam`) keep working on the PC that has them, and the layout's format
-  stays the one 0.8.0 reads.
+  every load, the one at start-up included: the shared location, *Start in* and the icon stay as they are, so a
+  copy's own programs on a second disk (`D:\Program Files (x86)\Steam`) keep working on the PC that has them, a
+  location the PC already has of its own is replaced only when it is not there either, and the layout's format
+  stays the one 0.8.0 reads. A layout of version 2, which only test builds of 0.8.1 wrote, reads as version 1.
 - A copy run from a share kept the `%APPDRIVE%` it inherited when a stick's bar started it, and expanded paths
   as the stick. It now clears it.
 - *Repair…* could not fix a shortcut to a missing folder: it looked for files only, and *Browse* picked a file.

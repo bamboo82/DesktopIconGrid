@@ -118,6 +118,7 @@ public sealed class LayoutStorage
     {
         layout.Settings ??= new LauncherSettings();
         layout.Items ??= [];
+        layout.Version = LauncherLayout.FormatOf(layout.Version);
         int? newerVersion = layout.Version > LauncherLayout.CurrentVersion ? layout.Version : null;
         _loadedNewerVersion = newerVersion;
         return new LoadResult(layout, isFirstRun, corruptBackup, error)

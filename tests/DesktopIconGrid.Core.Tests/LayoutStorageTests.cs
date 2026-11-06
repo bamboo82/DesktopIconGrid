@@ -137,6 +137,19 @@ public sealed class LayoutStorageTests : IDisposable
     }
 
     [Fact]
+    public void A_file_of_version_2_from_a_test_build_is_no_newer_version()
+    {
+        // Review 18 D2: only CI builds 93–100 wrote version 2; 0.8.1 showed the "newer version" box for it at every start.
+        Directory.CreateDirectory(Path.GetDirectoryName(FilePath)!);
+        File.WriteAllText(FilePath, """{ "version": 2, "items": [] }""");
+
+        var result = new LayoutStorage(FilePath).Load();
+
+        Assert.Null(result.NewerVersion);
+        Assert.Equal(1, result.Layout.Version);
+    }
+
+    [Fact]
     public void Unknown_item_kinds_survive_a_round_trip_and_newer_versions_are_preserved()
     {
         Directory.CreateDirectory(Path.GetDirectoryName(FilePath)!);

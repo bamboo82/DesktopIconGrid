@@ -66,6 +66,54 @@ public class LauncherModelTests
         Assert.Equal(0, again.RepairCount); // safe to repeat
     }
 
+    [Fact]
+    public void The_repair_takes_this_PCs_id_from_ThisDevice_when_none_is_passed()
+    {
+        // Review 18 D1: the start-up load ran before ThisDevice.Id was set, so the repair never ran there. The other tests
+        // passed a device id and could not see it.
+        var previous = ThisDevice.Id;
+        ThisDevice.Id = "stick-pc";
+        try
+        {
+            var notepad = new ShortcutItem { Name = "Notepad", Location = @"%APPDRIVE%\Windows\notepad.exe" };
+
+            var model = LauncherModel.FromLayout(Layout(notepad), path => path == @"C:\Windows\notepad.exe", "E:", "C:", isSlowDrive: _ => true);
+
+            Assert.Equal(@"C:\Windows\notepad.exe", ((ShortcutItem)model.Items[0]).Locations!["stick-pc"]);
+        }
+        finally
+        {
+            ThisDevice.Id = previous;
+        }
+    }
+
+    [Fact]
+    public void This_PCs_own_entry_on_the_stick_is_looked_at_before_it_is_replaced()
+    {
+        // Review 18 D4: a stick counted as missing without a look, and an "only this PC" path on it was replaced.
+        var tool = new ShortcutItem
+        {
+            Name = "Tool",
+            Location = @"C:\Tools\tool.exe",
+            Locations = new() { ["stick-pc"] = @"%APPDRIVE%\Program Files\Tool\tool.exe" },
+        };
+        var there = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { @"C:\Program Files\Tool\tool.exe", @"E:\Program Files\Tool\tool.exe" };
+
+        var model = LauncherModel.FromLayout(Layout(tool), there.Contains, "E:", "C:", "stick-pc", _ => true);
+
+        Assert.Equal(@"%APPDRIVE%\Program Files\Tool\tool.exe", ((ShortcutItem)model.Items[0]).Locations!["stick-pc"]);
+        Assert.Equal(0, model.RepairCount);
+    }
+
+    [Theory]
+    [InlineData(2, 1)] // review 18 D2: written only by test builds of 0.8.1, and nothing new in it
+    [InlineData(1, 1)]
+    [InlineData(3, 3)] // a real newer version stays newer
+    public void Version_2_reads_as_1(int written, int kept)
+    {
+        Assert.Equal(kept, LauncherModel.FromLayout(new LauncherLayout { Version = written }).ToLayout().Version);
+    }
+
     [Theory]
     [InlineData("C:")] // a copy on Windows' drive: %APPDRIVE% is C: already
     [InlineData(null)] // a copy on a share has no %APPDRIVE%
