@@ -248,11 +248,13 @@ folder.
 
 ## Releases
 
-- **0.7.0 "Get there faster"**: the prerequisite, 1, 2, 3, launch feedback, separators, colour tags
-  (plus the voice spike, result written down only).
-- **0.8.0 "One bar, every PC"**: 5, 6, 7, layout history, command line and Send To.
-- **0.9.0 "The bar tells you things"**: 8 with the trust rule, 9, 10, more gauges, mic tile, clock and
-  timer, paste to a bucket.
+- **0.7.0 "Get there faster"** (released 2026-11-05): the prerequisite, 1, 2, 3, launch feedback,
+  separators, colour tags (plus the voice spike, result written down only: FEATURES §6.1).
+- **0.8.0 "One bar, every PC"** (released 2026-11-06, early, to carry the fixes from the review of 0.6.0
+  and 0.7.0): 5, 6, and *Add app…* from 7.
+- **0.9.0 "The bar tells you things"**: first what moved from 0.8.0 (the imports of 7, whose readers are
+  already in; layout history; command line and Send To), then 8 with the trust rule, 9, 10, more gauges,
+  mic tile, clock and timer, paste to a bucket.
 - **0.10.0 "Bigger moves"**: 4 (workspaces), 12 (send to a device), 11 (voice, if the spike says yes).
 - **1.0.0 "Ship it"**: the existing backlog — installer (MSIX/winget), code signing, toast notifications.
 

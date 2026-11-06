@@ -318,9 +318,24 @@ voice commands in a later design, so this is where that vocabulary is maintained
 **Voice spike (0.7.0).** The question: does `Windows.Media.SpeechRecognition.SpeechRecognizer` with a list
 constraint recognise these names in zh-TW from an unpackaged app on Windows 11 — yes or no?
 
-**Result: not answered yet.** The spike needs a Windows 11 PC with a microphone and the Chinese (Traditional,
-Taiwan) speech pack; the machine this release was built on is Linux, and CI has no audio. What is known
-without running it:
+**Result of the first run (2026-11-06, on the owner's PC): no, for want of the zh-TW speech pack.**
+
+```
+Windows 10.0.22631.0, 64-bit process, not packaged
+Speech languages installed: en-US
+Windows speech language: en-US
+Failed: 0x800455BC COMException: 找不到與此錯誤碼關聯的文字。
+The requested language is not supported.
+ANSWER: no (see the error above)
+```
+
+Windows 11 23H2, unpackaged: the recogniser was reached, but only the en-US speech pack is installed, so
+zh-TW is refused (`0x800455BC`). As planned for this case, the zh-TW speech pack becomes a documented
+requirement of voice launch, and the probe runs again once the pack is installed (see below). Whether a
+list constraint then recognises these names, on the device and without online-speech consent, is still
+open until that second run.
+
+What was known before running it:
 
 - The recogniser is a WinRT API. An unpackaged .NET process reaches it through the Windows SDK projection of
   a `net10.0-windows10.0.19041.0` target framework, with no package added: `tools/VoiceProbe` compiles that
@@ -335,7 +350,7 @@ without running it:
   Whether that will affect `Windows.Media.SpeechRecognition` is not stated anywhere; the probe shows the state
   of a current build.
 
-To settle it, on the owner's PC (a few minutes):
+To run it (a few minutes; again once the zh-TW speech pack is installed):
 
 ```
 dotnet run --project tools/VoiceProbe -- zh-TW 記事本 小算盤 檔案總管
@@ -518,13 +533,17 @@ description and the "done when" of every item:
 **0.7.0 "Get there faster"** *(done)* — unknown JSON properties kept through load and save (the
 prerequisite for everything after it); click a running item to switch to it; the launch options every
 `.lnk` has; type to find, and open the grid at the pointer; launch feedback; separators; colour tags. The
-voice spike's probe is in `tools/VoiceProbe`; its answer is still to be written down (§6.1).
+voice spike's first answer (§6.1): no, for want of the zh-TW speech pack; it runs again once the pack is
+installed.
 
-**0.8.0 "One bar, every PC"** *(in progress)* — sync through any folder (OneDrive, Dropbox, NAS); shortcuts that survive
-other PCs (missing targets, repair, per-device locations, portable mode); *Add app…* and imports; layout
-history; command line and Send To.
+**0.8.0 "One bar, every PC"** *(done, released early)* — sync through any folder (OneDrive, Dropbox, NAS);
+shortcuts that survive other PCs (missing targets, repair, per-device locations, portable mode); *Add
+app…*. It came early to carry the fixes from the review of 0.6.0 and 0.7.0, so the rest of its plan
+moved to 0.9.0.
 
-**0.9.0 "The bar tells you things"** — command tile, with commands from a synced copy paused until
+**0.9.0 "The bar tells you things"** — first what moved from 0.8.0: the import dialog (its readers for
+Windows Terminal, SSH, WinSCP and PuTTY, the taskbar and the desktop are already in), layout history,
+command line and Send To. Then the command tile, with commands from a synced copy paused until
 approved on each PC; health light on a shortcut; folder stacks; more gauges; microphone tile; clock and
 timer; paste to a bucket.
 

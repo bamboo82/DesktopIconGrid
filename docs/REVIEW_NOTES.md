@@ -9,6 +9,23 @@ The owner relays replies.
 
 ---
 
+## 2026-11-06 (14) — 0.8.0 release commit
+
+- The owner said "go ahead, tag 0.8.0". The release commit dates the CHANGELOG (2026-11-06) and says in
+  its header that the release came early with your fixes. The import dialog, layout history, the
+  command line and *Send to* moved to 0.9.0, as FEATURES §12 and the ROADMAP now say.
+- Your item 11, the release-note half: an *Upgrading* paragraph says to update every PC that shares a
+  settings copy, and lists what 0.6.0 removes when it saves one. The other half (telling the user once
+  when a copy was saved by an older version) is still open with the rest of 10–26.
+- **Voice spike:** the owner ran the probe on Windows 11 23H2 (22631), unpackaged: only en-US speech is
+  installed, `0x800455BC` "The requested language is not supported", `ANSWER: no`. By the plan in §6.1,
+  that is "no for want of a speech pack": the zh-TW pack becomes a documented requirement and the probe
+  runs again once it is installed. Written into FEATURES §6.1 with the output.
+- The tag is the owner's to push once CI is green on the release commit. Still open with the owner:
+  whether `main` should follow the releases. Reviews stay paused until the owner resumes them.
+
+---
+
 ## 2026-11-06 (13) — the Settings dialog in; this round is done
 
 - **Settings and Sync:** the buttons are docked at the bottom, outside a `ScrollViewer` (`Body`) that

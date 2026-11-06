@@ -3,10 +3,21 @@
 All notable changes to Desktop Icon Grid. The format follows [Keep a Changelog](https://keepachangelog.com/);
 version numbers follow [Semantic Versioning](https://semver.org/).
 
-## [0.8.0] – Unreleased
+## [0.8.0] – 2026-11-06
 
-"One bar, every PC": sync through any folder, shortcuts that survive other PCs, *Add app…* and imports,
-layout history, and a command line with *Send to*.
+"One bar, every PC", released early because it carries the fixes from the review of 0.6.0 and 0.7.0,
+among them a security fix: sync through any folder, shortcuts that survive other PCs, and *Add app…*.
+The rest of the plan for this release (the import dialog, layout history, a command line and *Send to*)
+moves to 0.9.0.
+
+Upgrading: update every PC that shares a settings copy. When 0.6.0 saves a linked copy it removes what
+0.7.0 and 0.8.0 added (the launch options, colour tags, *When it is running*, the *Show at pointer*
+hotkey, the per-PC locations); 0.7.0 and later keep it.
+
+Note for whoever tests this build: the owner's screen pass of 0.7.0 confirmed four of the bugs fixed here.
+What is new in this release has been seen on no screen yet, nor have the fixes that need real input: the
+hotkey swap, auto-hide while typing, Settings at 1080p in Chinese, a minimised Calculator. The voice
+spike has its first answer: no, for want of the zh-TW speech pack (FEATURES §6.1).
 
 ### Security
 
