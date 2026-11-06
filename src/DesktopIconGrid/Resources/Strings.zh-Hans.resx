@@ -1718,4 +1718,7 @@
   <data name="Sync_UploadPostponed" xml:space="preserve">
     <value>尚未上传：目前无法读取“{0}”（可能仍在同步中）。您的更改会保留，等可以读取时再上传。</value>
   </data>
+  <data name="Sync_SettingsNotRead" xml:space="preserve">
+    <value>Desktop Icon Grid 启动时，同步设置（sync.json）正被其他程序使用，因此无法读取。设置本身没有改动：重新启动 Desktop Icon Grid 即可使用。在此之前，这里所做的更改都不会保存。</value>
+  </data>
 </root>

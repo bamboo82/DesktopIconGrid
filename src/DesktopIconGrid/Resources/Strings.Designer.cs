@@ -4533,6 +4533,15 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Your sync settings (sync.json) were in use by another program when Desktop Icon [rest of string was truncated]";.
+        /// </summary>
+        public static string Sync_SettingsNotRead {
+            get {
+                return ResourceManager.GetString("Sync_SettingsNotRead", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Startup check failed: {0}.
         /// </summary>
         public static string Sync_StartupCheckFailed {

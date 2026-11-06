@@ -1718,4 +1718,7 @@ Details are in {1}.</value>
   <data name="Sync_UploadPostponed" xml:space="preserve">
     <value>Not uploaded yet: "{0}" cannot be read right now (it may still be syncing). Your changes are kept and uploaded once it can be read.</value>
   </data>
+  <data name="Sync_SettingsNotRead" xml:space="preserve">
+    <value>Your sync settings (sync.json) were in use by another program when Desktop Icon Grid started, so they could not be read. They are untouched: restart Desktop Icon Grid to use them. Until then, nothing changed here is saved.</value>
+  </data>
 </root>

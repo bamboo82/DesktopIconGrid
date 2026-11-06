@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using DesktopIconGrid.Core.Diagnostics;
 using DesktopIconGrid.Core.Storage;
 
@@ -51,6 +52,14 @@ public sealed class SyncSettings
 
     /// <summary>Offer to load the linked copy at startup when another device saved a newer version.</summary>
     public bool CheckAtStartup { get; set; } = true;
+
+    /// <summary>
+    /// These settings stand in for a <c>sync.json</c> that is there but could not be read (another program held it).
+    /// They are kept in memory only: <see cref="SyncSettingsStore.Save"/> never writes them over the file, so the link,
+    /// the folder, the Google client and the device id in it are all there at the next start.
+    /// </summary>
+    [JsonIgnore]
+    public bool IsStandIn { get; internal set; }
 
     public OAuthClientCredentials Credentials => new(ClientId?.Trim() ?? string.Empty, ClientSecret?.Trim() ?? string.Empty);
 
@@ -120,6 +129,8 @@ public sealed class SyncSettingsStore
 {
     public const string FileName = "sync.json";
 
+    private bool _toldStandInKept;
+
     public SyncSettingsStore(string filePath, ISecretProtector? protector = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(filePath);
@@ -135,12 +146,14 @@ public sealed class SyncSettingsStore
 
     /// <summary>
     /// Returns defaults when the file is missing or unreadable. A file that is locked for a moment (a virus scanner, a
-    /// sync program) is tried again; one that is not valid JSON is kept beside it as <c>sync.json.unreadable</c>, and its
+    /// sync program) is tried again; when it stays locked, the defaults are a stand-in (<see cref="SyncSettings.IsStandIn"/>)
+    /// that is never saved over it. One that is not valid JSON is kept beside it as <c>sync.json.unreadable</c>, and its
     /// device id is kept when it can still be found in it, so this PC does not become another device.
     /// </summary>
     public SyncSettings Load()
     {
         SyncSettings? settings = null;
+        var standIn = false;
         if (File.Exists(FilePath))
         {
             string? text = null;
@@ -151,7 +164,8 @@ public sealed class SyncSettingsStore
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
             {
-                AppLog.Default.Warning("Sync", $"{FileName} could not be read; this session uses a new device id: {ex.Message}");
+                standIn = File.Exists(FilePath);
+                AppLog.Default.Warning("Sync", $"{FileName} could not be read; until the next start, sync uses settings kept in memory only, never saved over it: {ex.Message}");
             }
             catch (JsonException ex)
             {
@@ -169,6 +183,7 @@ public sealed class SyncSettingsStore
         }
 
         settings ??= new SyncSettings();
+        settings.IsStandIn = standIn;
         settings.Normalize();
 
         if (Protector is not null)
@@ -200,9 +215,29 @@ public sealed class SyncSettingsStore
         return settings;
     }
 
+    /// <summary>
+    /// Writes the settings. Stand-in settings (<see cref="SyncSettings.IsStandIn"/>) are not written while the file they
+    /// stand in for is there: they would replace the real settings with blank ones.
+    /// </summary>
     public void Save(SyncSettings settings)
     {
         ArgumentNullException.ThrowIfNull(settings);
+        if (settings.IsStandIn)
+        {
+            if (File.Exists(FilePath))
+            {
+                if (!_toldStandInKept)
+                {
+                    _toldStandInKept = true;
+                    AppLog.Default.Warning("Sync", $"Sync settings not saved: {FileName} could not be read at start, and these would replace it");
+                }
+
+                return;
+            }
+
+            settings.IsStandIn = false; // the file is gone, so these are the settings now
+        }
+
         settings.Normalize();
         var written = settings;
         if (Protector is not null)

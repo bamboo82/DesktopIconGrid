@@ -20,6 +20,10 @@
     <ScrollViewer x:Name="Body" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Focusable="False">
       <StackPanel Margin="14,14,14,0">
 
+        <!-- sync.json was locked at start: these settings stand in for it and are not saved -->
+        <TextBlock Text="{x:Static r:Strings.Sync_SettingsNotRead}" TextWrapping="Wrap" FontWeight="SemiBold" Margin="0,0,0,10"
+                   Visibility="{Binding SettingsNotRead, Converter={StaticResource BoolToVisibility}}" />
+
         <!-- Where the copies are kept -->
         <GroupBox Header="{x:Static r:Strings.Sync_Storage}" Padding="8">
           <StackPanel>

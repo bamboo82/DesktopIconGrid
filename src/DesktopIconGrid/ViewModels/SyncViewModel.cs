@@ -52,6 +52,9 @@ public sealed class SyncViewModel : ObservableObject
 
     private SyncSettings Settings => Service.Settings;
 
+    /// <summary>sync.json could not be read at start: these settings only stand in for it and are not saved (<see cref="SyncSettings.IsStandIn"/>).</summary>
+    public bool SettingsNotRead => Settings.IsStandIn;
+
     // ----- credentials and device ---------------------------------------------------------------
 
     public string ClientId

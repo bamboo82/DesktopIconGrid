@@ -149,6 +149,25 @@ public sealed class SyncViewModelTests : IDisposable
     }
 
     [Fact]
+    public void The_dialog_says_when_sync_json_could_not_be_read_at_start()
+    {
+        var store = new SyncSettingsStore(Path.Combine(_folder, SyncSettingsStore.FileName));
+        store.Save(new SyncSettings { DeviceName = "PC-1", LinkedProfile = "Work" });
+        SyncSettings standIn;
+        using (new FileStream(store.FilePath, FileMode.Open, FileAccess.ReadWrite, FileShare.None))
+        {
+            standIn = store.Load(); // another program holds it
+        }
+
+        var auth = new GoogleAuthorization(new HttpClient(), new InMemoryTokenStore(), () => new OAuthClientCredentials("id", "secret"));
+        SyncViewModel Dialog(SyncSettings settings) =>
+            new(new SyncCoordinator(new SyncService(auth, new NoDrive(), settings, () => store.Save(settings)), new Host(), (_, _) => true), new Dialogs());
+
+        Assert.True(Dialog(standIn).SettingsNotRead);
+        Assert.False(Dialog(store.Load()).SettingsNotRead);
+    }
+
+    [Fact]
     public async Task Cancelling_the_folder_picker_changes_nothing()
     {
         var settings = new SyncSettings { DeviceName = "PC-1" };

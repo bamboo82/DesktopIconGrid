@@ -65,6 +65,40 @@ public sealed class DeviceIdentityTests : IDisposable
     }
 
     [Fact]
+    public void A_sync_json_locked_at_start_is_never_replaced_by_the_settings_that_stood_in_for_it()
+    {
+        // The review's T2: the lock is gone by the time the app saves at start (a virus scan at logon, a sync program).
+        var here = MachineKey.From(MachineGuid, UserSid);
+        var store = new SyncSettingsStore(Path.Combine(_folder, SyncSettingsStore.FileName));
+        store.Save(new SyncSettings { DeviceId = "desk-id", DeviceName = "DESK", MachineFingerprint = here, SyncFolder = "/sync", LinkedProfile = "Work", LastRevision = "r1" });
+        var saved = File.ReadAllBytes(store.FilePath);
+
+        SyncSettings standIn;
+        using (new FileStream(store.FilePath, FileMode.Open, FileAccess.ReadWrite, FileShare.None))
+        {
+            standIn = store.Load();
+        }
+
+        Assert.True(standIn.IsStandIn);
+        Assert.Null(standIn.LinkedProfile);
+        Assert.True(standIn.AdoptMachine(here)); // what the app does at start, and then it saves
+        store.Save(standIn);
+        standIn.LinkedProfile = "Changed in this session";
+        store.Save(standIn);
+
+        Assert.Equal(saved, File.ReadAllBytes(store.FilePath));
+        var next = store.Load();
+        Assert.False(next.IsStandIn);
+        Assert.Equal(("desk-id", "DESK", "Work", "r1"), (next.DeviceId, next.DeviceName, next.LinkedProfile, next.LastRevision));
+
+        File.Delete(store.FilePath); // gone by the next save: nothing is lost by writing then
+        store.Save(standIn);
+
+        Assert.False(standIn.IsStandIn);
+        Assert.Equal("Changed in this session", store.Load().LinkedProfile);
+    }
+
+    [Fact]
     public void The_fingerprint_and_the_last_revision_are_saved_with_the_settings()
     {
         var store = new SyncSettingsStore(Path.Combine(_folder, SyncSettingsStore.FileName));
