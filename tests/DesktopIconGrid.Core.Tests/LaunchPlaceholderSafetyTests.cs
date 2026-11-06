@@ -182,6 +182,43 @@ public sealed class LaunchPlaceholderSafetyTests : IDisposable
         Assert.Equal(splits, LaunchPlaceholders.SplitsAtSemicolons(location, parameters));
     }
 
+    [Theory]
+    [InlineData("WindowsTerminal.exe", "ssh {clipboard}", true, "Windows Terminal")] // review 16 P5: the packaged name too
+    [InlineData("conhost.exe", "cmd /c type {file}", false, "conhost.exe")]
+    [InlineData("cmd.exe", "/c wt cmd /c type {file}", true, "Windows Terminal")]
+    [InlineData("notepad.exe", "{file}", false, null)]
+    public void Windows_Terminal_and_conhost_hand_arguments_on_without_their_quotes(string location, string parameters, bool splits, string? dropsQuotes)
+    {
+        Assert.Equal(splits, LaunchPlaceholders.SplitsAtSemicolons(location, parameters));
+        Assert.Equal(dropsQuotes, LaunchPlaceholders.DropsQuotes(location, parameters));
+        Assert.Equal("&", LaunchPlaceholders.RefusedWithoutQuotes(@"C:\t\a&calc&.txt"));
+        Assert.Equal("(", LaunchPlaceholders.RefusedWithoutQuotes(@"C:\t\Report (2).txt"));
+        Assert.Null(LaunchPlaceholders.RefusedWithoutQuotes(@"C:\t\Report 2.txt"));
+    }
+
+    [Fact]
+    public void A_batch_file_a_relay_starts_is_read_by_cmd()
+    {
+        // Review 16 P5: wt.exe C:\proj\build.cmd {ask:Target} counted as a plain program, so x" & calc & " passed.
+        var folder = Directory.CreateTempSubdirectory("dig-relay-").FullName;
+        try
+        {
+            File.WriteAllText(Path.Combine(folder, "build.cmd"), "@echo %*");
+            ArgumentReader At(string location, string parameters) =>
+                LaunchPlaceholders.ReaderAt(location, parameters, parameters.IndexOf("{ask:", StringComparison.Ordinal), searchPath: folder, pathExtensions: ".EXE;.CMD", systemDirectory: string.Empty);
+
+            Assert.Equal(ArgumentReader.Cmd, At("wt.exe", @"C:\proj\build.cmd {ask:Target}"));
+            Assert.Equal(ArgumentReader.Cmd, At("wt.exe", "-p Dev build {ask:Target}")); // found on PATH as a batch file
+            Assert.Equal(ArgumentReader.Cmd, At("runas.exe", "/user:admin build {ask:Target}"));
+            Assert.Equal(ArgumentReader.Plain, At("wt.exe", "-p Dev notepad {ask:Target}")); // nothing of the kind on PATH
+            Assert.Equal(ArgumentReader.Plain, At("notepad.exe", "build {ask:Target}")); // no relay: build is notepad's argument
+        }
+        finally
+        {
+            Directory.Delete(folder, recursive: true);
+        }
+    }
+
     [Fact]
     public void A_name_without_an_extension_is_read_by_cmd_when_the_shell_finds_a_batch_file_for_it_or_nothing()
     {

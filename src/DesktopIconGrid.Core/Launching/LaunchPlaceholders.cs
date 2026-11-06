@@ -187,6 +187,26 @@ public static partial class LaunchPlaceholders
     public static bool InsideQuotes(string? template) =>
         !string.IsNullOrEmpty(template) && SpotsOf(template).Any(spot => spot.Kind == PlaceholderSpot.InsideQuotes);
 
+    /// <summary>
+    /// A program that starts the program named in its own arguments: Windows Terminal, conhost, runas and Windows'
+    /// sudo. What it starts may be a batch file, which cmd.exe reads: named so (<c>build.cmd</c>), or a bare name that
+    /// Windows finds as one on PATH (<see cref="StartsABatchFile"/>).
+    /// </summary>
+    private static bool IsRelay(string name) =>
+        name is "wt" or "wt.exe" or "windowsterminal" or "windowsterminal.exe" or "conhost" or "conhost.exe" or "runas" or "runas.exe" or "sudo" or "sudo.exe";
+
+    /// <summary>Whether a word a relay may start is a bare name that Windows finds as a batch file (PATHEXT, PATH).</summary>
+    private static bool StartsABatchFile(string word, string? startIn, Func<string, string?>? registeredPathOf, string? searchPath, string? pathExtensions)
+    {
+        if (word.Length == 0 || word[0] is '-' or '/' || Path.HasExtension(word) || AnyPlaceholder().IsMatch(word))
+        {
+            return false;
+        }
+
+        return Candidates(word, startIn, registeredPathOf, searchPath, pathExtensions)
+            .Any(file => FileNameOf(file) is var name && (name.EndsWith(".bat", StringComparison.Ordinal) || name.EndsWith(".cmd", StringComparison.Ordinal)));
+    }
+
     /// <summary>The extensions Windows tries for a name without one when <c>PATHEXT</c> is not set.</summary>
     private const string DefaultPathExtensions = ".COM;.EXE;.BAT;.CMD;.VBS;.VBE;.JS;.JSE;.WSF;.WSH;.MSC";
 
@@ -266,14 +286,23 @@ public static partial class LaunchPlaceholders
 
         var offset = at < words.Count ? placeholderIndex - words[at].Start : 0;
         var reader = ReaderOfLocation(location, words, at, offset, startIn, registeredPathOf, searchPath, pathExtensions, system);
+        var relayed = IsRelay(FileNameOf(Environment.ExpandEnvironmentVariables(location ?? string.Empty).Trim().Trim('"')));
         for (var i = 0; i < words.Count && reader != ArgumentReader.PowerShellCommand; i++)
         {
             var named = FileNameOf(words[i].Text);
+            if (IsRelay(named))
+            {
+                relayed = true;
+                continue;
+            }
+
             var rest = words.GetRange(i + 1, words.Count - i - 1);
             var restAt = at - i - 1; // the placeholder's place among the words after this one; negative when it comes before
             reader = Stricter(reader, named switch
             {
                 "cmd" or "cmd.exe" => ArgumentReader.Cmd,
+                _ when named.EndsWith(".bat", StringComparison.Ordinal) || named.EndsWith(".cmd", StringComparison.Ordinal) => ArgumentReader.Cmd,
+                _ when relayed && StartsABatchFile(words[i].Bare, startIn, registeredPathOf, searchPath, pathExtensions) => ArgumentReader.Cmd,
                 "powershell" or "powershell.exe" or "pwsh" or "pwsh.exe" => PowerShellReader(named, rest.Select(word => word.Text)),
                 "wsl" or "wsl.exe" => restAt >= 0 ? WslReader(rest, restAt) : ArgumentReader.PosixShell,
                 "bash" or "bash.exe" when IsWslBash(words[i].Bare.Trim('\''), system) => ArgumentReader.PosixShell,
@@ -302,16 +331,49 @@ public static partial class LaunchPlaceholders
         WordPattern().Matches(parameters ?? string.Empty).Select(m => new Word(m.Value, m.Index)).ToList();
 
     /// <summary>
-    /// Whether Windows Terminal reads the command line: <c>wt.exe</c> as the location or named in the parameters. It
-    /// splits its arguments at every <c>;</c>, inside quotes too, and runs what follows as a command of its own
-    /// (<c>wt ssh "host;calc"</c> opens a second tab with calc), so no value or dropped path may hold one there.
+    /// Whether Windows Terminal reads the command line: <c>wt.exe</c> (or <c>WindowsTerminal.exe</c>) as the location or
+    /// named in the parameters. It splits its arguments at every <c>;</c>, inside quotes too, and runs what follows as a
+    /// command of its own (<c>wt ssh "host;calc"</c> opens a second tab with calc), so no value or dropped path may hold
+    /// one there.
     /// </summary>
-    public static bool SplitsAtSemicolons(string? location, string? parameters)
+    public static bool SplitsAtSemicolons(string? location, string? parameters) =>
+        Names(location, parameters).Any(name => name is "wt" or "wt.exe" or "windowsterminal" or "windowsterminal.exe");
+
+    /// <summary>
+    /// The program that rebuilds the command line it hands on, and quotes an argument only when it holds a space:
+    /// Windows Terminal ("Windows Terminal") or conhost ("conhost.exe"), as the location or named in the parameters;
+    /// <see langword="null"/> otherwise. A value or a dropped path without a space then reaches the next program without
+    /// its quotes, so what cmd.exe would act on there (<c>&amp; | &lt; &gt; ^ ( )</c>) is refused in it.
+    /// </summary>
+    public static string? DropsQuotes(string? location, string? parameters)
     {
-        static bool IsTerminal(string token) => FileNameOf(token) is "wt" or "wt.exe";
-        return IsTerminal(Environment.ExpandEnvironmentVariables(location ?? string.Empty))
-               || (parameters ?? string.Empty).Split([' ', '\t'], StringSplitOptions.RemoveEmptyEntries).Any(IsTerminal);
+        foreach (var name in Names(location, parameters))
+        {
+            if (name is "wt" or "wt.exe" or "windowsterminal" or "windowsterminal.exe")
+            {
+                return "Windows Terminal";
+            }
+
+            if (name is "conhost" or "conhost.exe")
+            {
+                return "conhost.exe";
+            }
+        }
+
+        return null;
     }
+
+    /// <summary>What cmd.exe acts on outside quotes, refused where a program hands a value on without them (<see cref="DropsQuotes"/>).</summary>
+    public static string? RefusedWithoutQuotes(string value)
+    {
+        ArgumentNullException.ThrowIfNull(value);
+        var index = value.IndexOfAny(['&', '|', '<', '>', '^', '(', ')']);
+        return index < 0 ? null : value[index].ToString();
+    }
+
+    private static IEnumerable<string> Names(string? location, string? parameters) =>
+        new[] { FileNameOf(Environment.ExpandEnvironmentVariables(location ?? string.Empty)) }
+            .Concat((parameters ?? string.Empty).Split([' ', '\t'], StringSplitOptions.RemoveEmptyEntries).Select(FileNameOf));
 
     private static ArgumentReader ReaderOfLocation(
         string? location, List<Word> words, int at, int offset, string? startIn, Func<string, string?>? registeredPathOf, string? searchPath, string? pathExtensions, string system)

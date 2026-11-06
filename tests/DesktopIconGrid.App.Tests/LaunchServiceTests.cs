@@ -210,6 +210,38 @@ public sealed class LaunchServiceTests : IDisposable
     }
 
     [Fact]
+    public void A_path_after_cmd_c_keeps_its_quotes()
+    {
+        // Review 16 P4: cmd /c "C:\…\a&calc&.txt" took off the path's own quotes ("old behavior") and ran calc.
+        var (tool, written) = ArgumentRecorder();
+        var dropped = Path.Combine(_directory, "a&mkdir injected&.txt");
+        var service = Create(new Prompts(clipboard: tool, answer: null), out var tracker);
+        using (tracker)
+        {
+            var result = service.LaunchWith(new ShortcutItem { Name = "Cmd", Location = "cmd.exe", Parameters = "/c {clipboard} {file}" }, [dropped]);
+
+            Assert.Equal(LaunchOutcome.Started, result.Outcome);
+            Assert.Equal($"\"{dropped}\"", written());
+            Assert.False(Directory.Exists(Path.Combine(_directory, "injected")));
+        }
+    }
+
+    [Fact]
+    public void Windows_Terminal_hands_a_path_on_without_quotes_so_cmds_characters_are_refused_in_it()
+    {
+        // Review 16 P5: Windows Terminal quotes an argument only when it holds a space, so cmd got a&calc&.txt bare.
+        var service = Create(new Prompts(clipboard: null, answer: "x\" & calc & \""), out var tracker);
+        using (tracker)
+        {
+            var dropped = service.LaunchWith(new ShortcutItem { Name = "Type", Location = "wt.exe", Parameters = "cmd /c type {file}" }, [@"C:\t\a&calc&.txt"]);
+            var batch = service.Launch(new ShortcutItem { Name = "Build", Location = "wt.exe", Parameters = @"C:\proj\build.cmd {ask:Target}" });
+
+            Assert.Equal(string.Format(Strings.Launch_UnsafeValue, '&', "Windows Terminal"), dropped.ErrorMessage);
+            Assert.Equal(string.Format(Strings.Launch_UnsafeValue, '"', "cmd.exe"), batch.ErrorMessage); // a batch file after a relay is cmd's
+        }
+    }
+
+    [Fact]
     public void A_dropped_file_never_goes_into_a_value_that_holds_the_file_placeholder()
     {
         // Review 15 P1: "x{file}" passed cmd.exe's check (letters and braces); the drop then put the path inside it, so

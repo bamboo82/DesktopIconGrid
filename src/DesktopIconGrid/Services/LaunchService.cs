@@ -50,7 +50,10 @@ public sealed class LaunchService(ProcessTracker tracker, ILaunchPrompts? prompt
         }
 
         // Expand the template first so dropped paths containing '%' are never re-expanded.
-        var template = string.IsNullOrWhiteSpace(shortcut.Parameters) ? null : Environment.ExpandEnvironmentVariables(shortcut.Parameters);
+        // cmd.exe's own pair around a /c command is put back after filling (CmdCommandLine).
+        var template = string.IsNullOrWhiteSpace(shortcut.Parameters)
+            ? null
+            : CmdCommandLine.Unwrapped(shortcut.EffectiveLocation, Environment.ExpandEnvironmentVariables(shortcut.Parameters));
         if (QuotedWithOtherText(template) is { } inQuotes)
         {
             return inQuotes;
@@ -78,8 +81,15 @@ public sealed class LaunchService(ProcessTracker tracker, ILaunchPrompts? prompt
             : $"{template} {DropArguments.FilesPlaceholder}";
         var readers = LaunchPlaceholders.FilePositions(judged).Select(index => ReaderAt(shortcut, judged, index)).Distinct().ToList();
         var terminal = LaunchPlaceholders.SplitsAtSemicolons(shortcut.EffectiveLocation, template);
+        var relay = LaunchPlaceholders.DropsQuotes(shortcut.EffectiveLocation, template);
         foreach (var path in paths)
         {
+            if (relay is not null && LaunchPlaceholders.RefusedWithoutQuotes(path) is { } bare)
+            {
+                AppLog.Default.Warning("Launch", $"A dropped path was refused: {relay} hands it on without quotes, where \"{bare}\" is cmd.exe's: {path}");
+                return LaunchResult.Failure(string.Format(Strings.Launch_UnsafeValue, bare, relay));
+            }
+
             foreach (var reader in readers)
             {
                 if (LaunchPlaceholders.RefusedInPath(path, reader) is { } character)
@@ -106,7 +116,7 @@ public sealed class LaunchService(ProcessTracker tracker, ILaunchPrompts? prompt
         foreach (var arguments in argumentSets)
         {
             var launch = (ShortcutItem)shortcut.Clone();
-            launch.Parameters = arguments;
+            launch.Parameters = CmdCommandLine.Wrapped(shortcut.EffectiveLocation, arguments);
             var result = LaunchCore(launch, expandParameters: false);
             Log(launch, result);
             switch (result.Outcome)
@@ -135,7 +145,7 @@ public sealed class LaunchService(ProcessTracker tracker, ILaunchPrompts? prompt
         {
             // Expand the template first, then fill in the values: a '%' in the clipboard text or an answer stays as typed,
             // and so does a placeholder in them (one pass).
-            var template = Environment.ExpandEnvironmentVariables(shortcut.Parameters);
+            var template = CmdCommandLine.Unwrapped(shortcut.EffectiveLocation, Environment.ExpandEnvironmentVariables(shortcut.Parameters));
             var values = AskForValues(shortcut, template);
             if (values.Result is { } stopped)
             {
@@ -143,7 +153,7 @@ public sealed class LaunchService(ProcessTracker tracker, ILaunchPrompts? prompt
             }
 
             shortcut = (ShortcutItem)shortcut.Clone();
-            shortcut.Parameters = LaunchPlaceholders.Fill(template, values.Clipboard, values.Answers);
+            shortcut.Parameters = CmdCommandLine.Wrapped(shortcut.EffectiveLocation, LaunchPlaceholders.Fill(template, values.Clipboard, values.Answers));
             expandParameters = false;
         }
 
