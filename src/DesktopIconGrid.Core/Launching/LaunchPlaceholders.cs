@@ -318,9 +318,25 @@ public static partial class LaunchPlaceholders
         return reader;
     }
 
-    /// <summary>Where the <c>{file}</c> and <c>{files}</c> placeholders stand in <paramref name="template"/> (each with the quote written before it, if any).</summary>
-    public static IReadOnlyList<int> FilePositions(string? template) =>
-        QuotedFiles().Matches(template ?? string.Empty).Select(m => m.Index).ToList();
+    /// <summary>
+    /// Where the dropped files go in <paramref name="template"/>: each <c>{file}</c> and <c>{files}</c> (with the quote
+    /// written before it, if any), and for <c>{files}</c> also the place right after its word, where its second path
+    /// lands (<c>wsl --cd {files}</c>: the first is --cd's value, the second starts the shell's command).
+    /// </summary>
+    public static IReadOnlyList<int> FilePositions(string? template)
+    {
+        var positions = new List<int>();
+        foreach (Match match in QuotedFiles().Matches(template ?? string.Empty))
+        {
+            positions.Add(match.Index);
+            if (match.Value.Contains(DropArguments.FilesPlaceholder, StringComparison.OrdinalIgnoreCase))
+            {
+                positions.Add(match.Index + match.Length);
+            }
+        }
+
+        return positions;
+    }
 
     /// <summary>A word of the parameters and where it starts. A prompt with spaces in it (<c>{ask:Which host}</c>) is one word.</summary>
     private readonly record struct Word(string Text, int Start)

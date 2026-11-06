@@ -192,6 +192,9 @@ public sealed class ItemPropertiesViewModel : ObservableObject
         }
     }
 
+    /// <summary>A path as typed or pasted, without the quotes Explorer's Copy as path puts around it ("E:\Apps\x.exe").</summary>
+    private static string Unquoted(string path) => path.Trim().Trim('"').Trim();
+
     /// <summary>Said under the parameters when a placeholder stands inside quotes with other text, which a launch refuses.</summary>
     public string? ParametersWarning => LaunchPlaceholders.InsideQuotes(_parameters) ? Strings.Props_PlaceholderInQuotes : null;
 
@@ -439,11 +442,11 @@ public sealed class ItemPropertiesViewModel : ObservableObject
         {
             if (_onlyThisPc && CanBeOnlyThisPc && _sharedLocation.Length > 0)
             {
-                shortcut.SetLocationFor(ThisDevice.Id!, DataLocation.ForStorage(_location.Trim())); // the common location stays for the other PCs
+                shortcut.SetLocationFor(ThisDevice.Id!, DataLocation.ForStorage(Unquoted(_location))); // the common location stays for the other PCs
             }
             else
             {
-                shortcut.Location = DataLocation.ForStorage(_location.Trim()); // typed or pasted: %APPDRIVE% in portable mode, as picked ones
+                shortcut.Location = DataLocation.ForStorage(Unquoted(_location)); // typed or pasted: %APPDRIVE% in portable mode, as picked ones
                 if (ThisDevice.Id is { } device)
                 {
                     shortcut.SetLocationFor(device, null);
@@ -457,7 +460,7 @@ public sealed class ItemPropertiesViewModel : ObservableObject
                 : _switchesWhenRunning == LaunchPlanner.SwitchesByDefault(shortcut.EffectiveLocation, shortcut.Parameters)
                     ? null // the location's own default: stored as nothing, so it keeps following the location
                     : _switchesWhenRunning ? ShortcutItem.WhenRunningSwitch : ShortcutItem.WhenRunningStart;
-            shortcut.StartIn = string.IsNullOrWhiteSpace(_startIn) ? null : DataLocation.ForStorage(_startIn.Trim());
+            shortcut.StartIn = string.IsNullOrWhiteSpace(_startIn) ? null : DataLocation.ForStorage(Unquoted(_startIn));
             shortcut.WindowState = _windowState.Value;
             shortcut.RunAsAdministrator = _runAsAdministrator;
             shortcut.Browser = _browser.Browser;

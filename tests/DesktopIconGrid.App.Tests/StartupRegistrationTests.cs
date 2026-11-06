@@ -145,7 +145,7 @@ public class StartupRegistrationTests
         // The stick, back as F:, can remove the entry it made as E: ...
         var key = new FakeRunKey();
         key.Values[StartupRegistration.ValueName] = $"\"{stickBefore}\"";
-        var portable = new StartupRegistration(key, stickNow, fileExists: _ => false, portable: true, onFixedDisk: OnFixedDisk);
+        var portable = new StartupRegistration(key, stickNow, fileExists: _ => false, portable: true, couldBeThisStick: path => !OnFixedDisk(path));
         Assert.Equal(StartupChange.Removed, portable.Apply(startWithWindows: false, startHidden: false));
 
         // ... or keep it in step, without asking: it is its own entry.
@@ -156,15 +156,29 @@ public class StartupRegistrationTests
         // The same folders on C: are the installed bar's, not the stick's.
         const string installed = @"C:\DIG\DesktopIconGrid.exe";
         key.Values[StartupRegistration.ValueName] = $"\"{installed}\"";
-        var fromE = new StartupRegistration(key, stickBefore, fileExists: path => path == installed, portable: true, onFixedDisk: OnFixedDisk);
+        var fromE = new StartupRegistration(key, stickBefore, fileExists: path => path == installed, portable: true, couldBeThisStick: path => !OnFixedDisk(path));
         Assert.Equal(StartupChange.None, fromE.Apply(startWithWindows: false, startHidden: false));
         Assert.Equal(StartupChange.LeftToAnotherCopy, fromE.Apply(startWithWindows: true, startHidden: false));
         Assert.Equal($"\"{installed}\"", key.Values[StartupRegistration.ValueName]);
 
         // An installed copy has no such rule.
         key.Values[StartupRegistration.ValueName] = $"\"{stickBefore}\"";
-        var notPortable = new StartupRegistration(key, stickNow, fileExists: _ => true, onFixedDisk: OnFixedDisk);
+        var notPortable = new StartupRegistration(key, stickNow, fileExists: _ => true, couldBeThisStick: path => !OnFixedDisk(path));
         Assert.Equal(StartupChange.None, notPortable.Apply(startWithWindows: false, startHidden: false));
+    }
+
+    [Fact]
+    public void A_network_letter_with_the_same_folders_is_never_the_sticks()
+    {
+        // Review 16 R9: a Tools share mapped as T:, set to start with Windows, lost its entry to a stick copy of it.
+        var key = new FakeRunKey();
+        key.Values[StartupRegistration.ValueName] = "\"T:\\Tools\\DIG\\DesktopIconGrid.exe\"";
+        var stick = new StartupRegistration(key, @"F:\Tools\DIG\DesktopIconGrid.exe", fileExists: _ => true, portable: true,
+            couldBeThisStick: path => path.StartsWith("E:", StringComparison.OrdinalIgnoreCase)); // T: is a network letter here
+
+        Assert.Equal(StartupChange.None, stick.Apply(startWithWindows: false, startHidden: false));
+        Assert.Equal(StartupChange.LeftToAnotherCopy, stick.Apply(startWithWindows: true, startHidden: false));
+        Assert.Equal("\"T:\\Tools\\DIG\\DesktopIconGrid.exe\"", key.Values[StartupRegistration.ValueName]);
     }
 
     [Fact]

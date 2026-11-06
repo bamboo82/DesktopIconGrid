@@ -78,7 +78,7 @@ public static partial class LocationRepair
         var parentName = parts[^2];
         // A file or a folder, whichever the old name turns out to be: no guess from the name holds for both
         // (node-v20.11.0-win-x64 and Contoso.Web are folders, Makefile and .wslconfig files).
-        static bool exists(string candidate) => File.Exists(candidate) || Directory.Exists(candidate);
+        static bool exists(string candidate) => System.IO.Path.Exists(candidate);
         var found = new List<RepairCandidate>();
         var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { System.IO.Path.GetFullPath(path) };
         void Add(string candidate, RepairReason reason, bool likely)
@@ -89,7 +89,7 @@ public static partial class LocationRepair
             }
         }
 
-        foreach (var candidate in OtherVersions(path, parts, firstLevel: 0))
+        foreach (var candidate in OtherVersions(path, parts, firstLevel: 0, cancellationToken))
         {
             Add(candidate, RepairReason.OtherVersion, likely: true);
         }
@@ -142,7 +142,7 @@ public static partial class LocationRepair
     /// in their numbers, with the rest of the path appended; the highest version first. <paramref name="firstLevel"/> 0
     /// counts the last part too, for a location that is a folder itself.
     /// </summary>
-    private static IEnumerable<string> OtherVersions(string path, string[] parts, int firstLevel)
+    private static IEnumerable<string> OtherVersions(string path, string[] parts, int firstLevel, CancellationToken cancellationToken)
     {
         var results = new List<(string Path, long[] Version)>();
         var separator = path.Contains('\\', StringComparison.Ordinal) ? '\\' : '/';
@@ -170,10 +170,12 @@ public static partial class LocationRepair
                 parent += separator; // C: alone means "the current folder on C:"
             }
 
+            cancellationToken.ThrowIfCancellationRequested();
             IEnumerable<string> siblings;
             try
             {
-                siblings = Directory.EnumerateDirectories(parent).ToList();
+                // The last part may be a file (rufus-4.3.exe); further up, only folders hold what follows.
+                siblings = (level == 0 ? Directory.EnumerateFileSystemEntries(parent) : Directory.EnumerateDirectories(parent)).ToList();
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException)
             {
@@ -259,14 +261,24 @@ public static partial class LocationRepair
         return results;
     }
 
-    /// <summary>The name with every run of digits replaced, so <c>app-1.0.9172</c> and <c>app-1.0.9203</c> look alike.</summary>
-    private static string Mask(string name) => Digits().Replace(name, "#");
+    /// <summary>
+    /// The name with every run of digits replaced, so <c>app-1.0.9172</c> and <c>app-1.0.9203</c> look alike. The digits of
+    /// an architecture (<c>x64</c>, <c>x86</c>, <c>arm64</c>, <c>win32</c> …) are part of the name, not of its version: a
+    /// win-x86 build is no other version of a win-x64 one.
+    /// </summary>
+    private static string Mask(string name) => Digits().Replace(name, m => InArchitecture(name, m) ? m.Value : "#");
 
     private static long[] Version(string name) =>
-        Digits().Matches(name).Select(m => long.TryParse(m.Value, out var n) ? n : 0).ToArray();
+        Digits().Matches(name).Where(m => !InArchitecture(name, m)).Select(m => long.TryParse(m.Value, out var n) ? n : 0).ToArray();
+
+    private static bool InArchitecture(string name, Match digits) =>
+        Architecture().Matches(name).Any(arch => digits.Index >= arch.Index && digits.Index + digits.Length <= arch.Index + arch.Length);
 
     [GeneratedRegex("[0-9]+", RegexOptions.CultureInvariant)]
     private static partial Regex Digits();
+
+    [GeneratedRegex("(?<![a-z0-9])(?:x86_64|x86|x64|amd64|arm64|aarch64|i[3-6]86|win32|win64)(?![a-z0-9])", RegexOptions.CultureInvariant | RegexOptions.IgnoreCase)]
+    private static partial Regex Architecture();
 
     private sealed class VersionComparer : IComparer<long[]>
     {

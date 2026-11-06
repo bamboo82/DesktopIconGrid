@@ -62,6 +62,23 @@ public class ItemPropertiesViewModelTests
     }
 
     [Fact]
+    public void A_path_pasted_with_quotes_is_stored_without_them()
+    {
+        // Review 16 R3′: Explorer's Copy as path gives "E:\Apps\x.exe"; with the quote, the drive was not recognised.
+        var shortcut = new ShortcutItem { Name = "X", Location = @"C:\x.exe" };
+        var viewModel = new ItemPropertiesViewModel(shortcut, isNew: false, new CountingIcons())
+        {
+            Location = "\"E:\\Apps\\x.exe\"",
+            StartIn = "\"E:\\Apps\"",
+        };
+
+        Assert.True(viewModel.Apply());
+
+        Assert.Equal(@"E:\Apps\x.exe", shortcut.Location);
+        Assert.Equal(@"E:\Apps", shortcut.StartIn);
+    }
+
+    [Fact]
     public void When_running_follows_the_location_until_the_user_picks_it()
     {
         var shortcut = new ShortcutItem { Name = "Report", Location = @"C:\Docs\report.docx" };

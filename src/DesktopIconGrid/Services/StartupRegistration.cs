@@ -65,18 +65,19 @@ public enum StartupChange
 /// names another copy that is still there (the installed bar, while a portable one is tried) is left alone; one that
 /// names a program that is gone (moved, uninstalled, on a drive letter this PC does not have) is taken over, when
 /// adding an entry is allowed. A portable copy also counts as its own an entry that names it on another drive letter
-/// that is not a fixed disk here: the stick it runs from, mounted under another letter last time. The command is the
+/// with no drive behind it, or a removable one: the stick it runs from, mounted under another letter last time (never a
+/// fixed disk, nor a network letter, which may hold the same folders). The command is the
 /// executable in quotes, followed by <see cref="HiddenArgument"/> when the bar should start in the tray.
 /// </summary>
 /// <param name="fileExists">Whether a program is there; by default a program on a share or a mounted removable drive counts as there without a look.</param>
 /// <param name="portable">A portable copy (<c>portable.txt</c> next to it).</param>
-/// <param name="onFixedDisk">Whether a path's drive letter is a fixed disk on this PC; by default from GetDriveType, which does no I/O.</param>
+/// <param name="couldBeThisStick">Whether a path's drive letter could be this portable copy's stick under another letter: one with no drive behind it, or a removable drive (never a fixed disk or a network letter); by default from GetDriveType, which does no I/O.</param>
 public sealed class StartupRegistration(
     IRunKey key,
     string executablePath,
     Func<string, bool>? fileExists = null,
     bool portable = false,
-    Func<string, bool>? onFixedDisk = null)
+    Func<string, bool>? couldBeThisStick = null)
 {
     public const string ValueName = "DesktopIconGrid";
     public const string HiddenArgument = "--hidden";
@@ -88,7 +89,7 @@ public sealed class StartupRegistration(
     /// </summary>
     private readonly Func<string, bool> _fileExists = fileExists ?? (path => IconWorker.IsOnSlowStorage(path) || File.Exists(path));
 
-    private readonly Func<string, bool> _onFixedDisk = onFixedDisk ?? (path => IconWorker.DriveTypeOf(path) is DriveType.Fixed or DriveType.Ram);
+    private readonly Func<string, bool> _couldBeThisStick = couldBeThisStick ?? (path => IconWorker.DriveTypeOf(path) is DriveType.NoRootDirectory or DriveType.Removable);
 
     public string ExecutablePath { get; } = executablePath;
 
@@ -179,7 +180,7 @@ public sealed class StartupRegistration(
 
     private bool NamesThisProgram(string command) =>
         TryParse(command, out var executable, out _)
-        && (SamePath(executable, ExecutablePath) || (portable && OnlyTheDriveLetterDiffers(executable, ExecutablePath) && !_onFixedDisk(executable)));
+        && (SamePath(executable, ExecutablePath) || (portable && OnlyTheDriveLetterDiffers(executable, ExecutablePath) && _couldBeThisStick(executable)));
 
     /// <summary><c>E:\Tools\DIG\DesktopIconGrid.exe</c> and <c>F:\Tools\DIG\DesktopIconGrid.exe</c>: one stick, mounted under another letter.</summary>
     private static bool OnlyTheDriveLetterDiffers(string a, string b)

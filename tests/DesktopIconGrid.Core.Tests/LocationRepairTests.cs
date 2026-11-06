@@ -39,11 +39,24 @@ public sealed class LocationRepairTests : IDisposable
         // The review's R6: only files were accepted, so a missing folder had nothing to repair it with.
         var newer = Folder("tools", "app-1.0.9203");
         Directory.CreateDirectory(newer);
-        Make("tools", "app-1.0.9300"); // a file of that name: not the folder
+        var file = Make("tools", "app-1.0.9300"); // a file of that name: offered too, since the old name cannot tell the kind
 
         var found = LocationRepair.Candidates(Folder("tools", "app-1.0.9172"), []);
 
-        Assert.Equal([new RepairCandidate(newer, RepairReason.OtherVersion)], found);
+        Assert.Equal([new RepairCandidate(file, RepairReason.OtherVersion), new RepairCandidate(newer, RepairReason.OtherVersion)], found);
+    }
+
+    [Fact]
+    public void A_versioned_file_is_found_and_another_architecture_is_no_other_version()
+    {
+        // Review 16, R6′'s rest: level 0 listed folders only, and x86 counted as a version number, so win-x86 sorted first.
+        var rufus = Make("tools", "rufus-4.4.exe");
+        Assert.Equal([new RepairCandidate(rufus, RepairReason.OtherVersion)], LocationRepair.Candidates(Folder("tools", "rufus-4.3.exe"), []));
+
+        var x64 = Folder("tools", "node-v22.1.0-win-x64");
+        Directory.CreateDirectory(x64);
+        Directory.CreateDirectory(Folder("tools", "node-v22.1.0-win-x86"));
+        Assert.Equal([new RepairCandidate(x64, RepairReason.OtherVersion)], LocationRepair.Candidates(Folder("tools", "node-v20.11.0-win-x64"), []));
     }
 
     [Fact]

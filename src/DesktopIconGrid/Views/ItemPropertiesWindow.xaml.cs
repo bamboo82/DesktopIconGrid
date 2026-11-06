@@ -193,7 +193,12 @@ public partial class ItemPropertiesWindow : Window
             return string.Empty;
         }
 
-        var expanded = Environment.ExpandEnvironmentVariables(path.Trim());
+        var expanded = Environment.ExpandEnvironmentVariables(path.Trim().Trim('"'));
+        if (IconWorker.IsOnSlowStorage(expanded))
+        {
+            return DialogService.LocalFolderToOpen(null); // a share that is off would freeze the dialog; not its memory either
+        }
+
         var comma = expanded.LastIndexOf(',');
         if (comma > 0 && int.TryParse(expanded.AsSpan(comma + 1), out _))
         {
@@ -208,7 +213,7 @@ public partial class ItemPropertiesWindow : Window
             }
 
             var directory = Path.GetDirectoryName(expanded);
-            return directory is not null && Directory.Exists(directory) ? directory : string.Empty;
+            return directory is not null && Directory.Exists(directory) ? directory : DialogService.LocalFolderToOpen(null);
         }
         catch (ArgumentException)
         {

@@ -4,6 +4,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using DesktopIconGrid.Resources;
+using DesktopIconGrid.Services;
 using DesktopIconGrid.ViewModels;
 using Microsoft.Win32;
 
@@ -51,7 +52,7 @@ public partial class RepairWindow : Window
 
     private void BrowseFolder_Click(object sender, RoutedEventArgs e)
     {
-        var folders = new OpenFolderDialog { Title = Strings.Repair_Title, Multiselect = false };
+        var folders = new OpenFolderDialog { Title = Strings.Repair_Title, Multiselect = false, InitialDirectory = NearestFolder(ViewModel?.Location) };
         if (ViewModel is { } viewModel && folders.ShowDialog(this) == true && !string.IsNullOrWhiteSpace(folders.FolderName))
         {
             viewModel.AddChosen(folders.FolderName);
@@ -70,12 +71,40 @@ public partial class RepairWindow : Window
             Title = Strings.Repair_Title,
             Filter = Strings.Common_AllFilesFilter,
             FileName = Path.GetFileName(viewModel.Location.TrimEnd('\\', '/')),
-            InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles),
+            InitialDirectory = NearestFolder(viewModel.Location),
         };
         if (dialog.ShowDialog(this) == true)
         {
             viewModel.AddChosen(dialog.FileName);
         }
+    }
+
+    /// <summary>
+    /// The nearest folder above the old location that is still there, on a local drive (a share that is off would hold
+    /// up the dialog); otherwise a local folder, so the picker does not open where it was last used.
+    /// </summary>
+    private static string NearestFolder(string? location)
+    {
+        var path = Environment.ExpandEnvironmentVariables(location?.Trim().Trim('"') ?? string.Empty);
+        if (path.Length > 0 && !IconWorker.IsOnSlowStorage(path))
+        {
+            try
+            {
+                for (var folder = Path.GetDirectoryName(path); !string.IsNullOrEmpty(folder); folder = Path.GetDirectoryName(folder))
+                {
+                    if (Directory.Exists(folder))
+                    {
+                        return folder;
+                    }
+                }
+            }
+            catch (Exception ex) when (ex is ArgumentException or NotSupportedException or PathTooLongException)
+            {
+                // not a path: the local fallback below
+            }
+        }
+
+        return DialogService.LocalFolderToOpen(null);
     }
 
     private void Repair_Click(object sender, RoutedEventArgs e) => DialogResult = ViewModel?.CanRepair == true;

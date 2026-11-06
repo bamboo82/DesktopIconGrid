@@ -156,6 +156,7 @@ public partial class App : Application
                 return;
             }
 
+            var justTicked = settings.StartWithWindows && !applied.StartWithWindows;
             applied = (settings.StartWithWindows, settings.StartHidden);
             var change = ApplyStartupRegistration(startup, settings, mayAdd: !DataLocation.IsPortableCopy);
             if (change == StartupChange.NotAdded)
@@ -164,9 +165,11 @@ public partial class App : Application
                 {
                     change = ApplyStartupRegistration(startup, settings, mayAdd: true);
                 }
-                else
+                else if (justTicked)
                 {
-                    // No: the option goes off again, instead of showing on while nothing starts on this PC.
+                    // No to what was just ticked: the option goes off again, instead of showing on while nothing starts.
+                    // When it was on already (set on another PC, carried by the stick or a synced copy) and only Start
+                    // hidden changed, it stays on: off here would take the entry away on that PC at its next start.
                     var off = settings.Clone();
                     off.StartWithWindows = false;
                     applied = (false, off.StartHidden);

@@ -227,6 +227,18 @@ public sealed class LaunchPlaceholderSafetyTests : IDisposable
     }
 
     [Fact]
+    public void The_second_path_of_files_is_judged_where_it_lands()
+    {
+        // Review 16: wsl.exe --cd {files} with two folders: the second path starts the shell's command.
+        const string template = "--cd {files}";
+        var positions = LaunchPlaceholders.FilePositions(template);
+
+        Assert.Equal([5, 12], positions);
+        Assert.Equal(ArgumentReader.Plain, LaunchPlaceholders.ReaderAt("wsl.exe", template, positions[0]));
+        Assert.Equal(ArgumentReader.PosixShell, LaunchPlaceholders.ReaderAt("wsl.exe", template, positions[1]));
+    }
+
+    [Fact]
     public void A_batch_file_a_relay_starts_is_read_by_cmd()
     {
         // Review 16 P5: wt.exe C:\proj\build.cmd {ask:Target} counted as a plain program, so x" & calc & " passed.

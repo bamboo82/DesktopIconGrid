@@ -118,7 +118,7 @@ public sealed class LaunchService(ProcessTracker tracker, ILaunchPrompts? prompt
             var launch = (ShortcutItem)shortcut.Clone();
             launch.Parameters = CmdCommandLine.Wrapped(shortcut.EffectiveLocation, arguments);
             var result = LaunchCore(launch, expandParameters: false);
-            Log(launch, result);
+            Log(shortcut, result); // the template, as a click logs it: a filled value may be a password (pscp -pw {ask:Password})
             switch (result.Outcome)
             {
                 case LaunchOutcome.Cancelled:
