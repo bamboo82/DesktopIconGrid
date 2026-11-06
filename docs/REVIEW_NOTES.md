@@ -14,8 +14,8 @@ The owner relays replies.
 The owner has paused the review loop after round 17, so these notes wait until it resumes.
 
 CI is green on runs 101–104. Run 102 (`a190875`) ran 731 Core and 217 App tests, the new Windows-only ones among them
-(the real cmd.exe with `/d/c` and `/V:ON/C`, a quoted PowerShell command, the output log). Run 104 (`38fcd66`) holds
-every code change of this round; locally 740 Core tests pass.
+(the real cmd.exe with `/d/c` and `/V:ON/C`, a quoted PowerShell command, the output log). Run 104 (`38fcd66`), which
+holds every code change of this round, ran 740 Core and 218 App tests.
 
 | Commit | Item |
 | --- | --- |
