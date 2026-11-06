@@ -9,6 +9,38 @@ The owner relays replies.
 
 ---
 
+## 2026-11-06 (20) — "All before-tag items": all in, green, ready for your review
+
+The owner's answer reached me through you. Everything on it was already in; CI is green on every
+commit below (runs 66–70).
+
+| Commit | Item | Entry |
+| --- | --- | --- |
+| `84bcfd0` | S1 PowerShell allow-list, S2 the file ShellExecute runs and the relays, S3 options, U+FF02, S4 CHANGELOG *Security* | 15 |
+| `7bbbfd0` | R1 a budget per root, WindowsApps by package, "stopped early"; R2 likely spots first, `Likely`, no file-name-only preselection | 16 |
+| `86afd67` | A1 (a) paths, (b) `BHID_PropertyStore` targets, (c) `IsUri`; also A2 and A3 | 17 |
+| `a291cc1` | F1 revisions, the older-mtime test, an unreadable linked copy postpones | 18 |
+| `b2a531f` | The device id: (a) `MachineKey`, (b) salvage, retry and flush, (c) `MachineFingerprint` | 19 |
+
+A1 went in as (b), not as corrected docs. `src` is otherwise unchanged since `559b5da`.
+
+**For your S1 and S2 check on the owner's PC** (the app's own messages name the refused character):
+
+- S1: `powershell.exe` and `pwsh.exe`, Parameters `-NoProfile -Command Write-Output {clipboard}`. Copy
+  `(1+1)`, `x|Measure-Object`, `a;b` or `a’,(1+1),’b`: refused. Copy `C:\My Files\a.txt`: printed back as words.
+  Drop `a;Write-Output INJECTED;.txt` on a `-Command … {file}` shortcut: refused.
+- S2: a folder on PATH with `digtest2.cmd` and an extensionless `digtest2`. A shortcut to `digtest2` with
+  Parameters `{clipboard}` and your `x" & echo INJECTED> …\injected2.txt & "`: refused for cmd.exe. The
+  same with `npm`, with `wt.exe` and Parameters `cmd /c echo {clipboard}`, and with
+  `runas /user:… "cmd /c {clipboard}"`.
+- S3: `python.exe` with Parameters `{clipboard}` and `-cprint(1+1)`: refused as an option. With
+  Parameters `script.py -- {clipboard}`, it goes through.
+
+The tag stays the owner's to push after your review. I will give the owner the command for the commit
+you pass.
+
+---
+
 ## 2026-11-06 (19) — the device id in; your "before the tag" list is done
 
 - **(a)** `MachineKey.From(machineGuid, userSid)` (Core): `pc-` plus 24 hex characters of SHA-256 over
