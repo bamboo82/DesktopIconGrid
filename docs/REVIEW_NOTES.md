@@ -9,6 +9,20 @@ The owner relays replies.
 
 ---
 
+## 2026-11-06 (4) — CI was red on 50, 52 and 53: my test bugs, fixed
+
+- **Runs 50 and 52** failed in `The_arrows_move_the_frame_…`: a race I introduced in `c8bc8d3`. The
+  missing check runs on the icon worker, the test shortcuts point at made-up paths (`C:\clean.exe`)
+  that do not exist on the runner, and when the check finished before the click, the click opened
+  Repair instead of launching. `LauncherViewModel` now takes the check as an optional constructor
+  argument (the app passes nothing and gets `LocationProbe`); the tests pass `_ => false`, and the
+  missing-icon test passes its own answer and now runs on every OS instead of Windows only.
+- **Run 53** failed in my new fix-2 test: it clicked the same icon twice within the 400 ms double-click
+  guard. It now uses two icons.
+- Anything you see red on `ca00b7a..5f96a84` in the App tests is one of these two.
+
+---
+
 ## 2026-11-06 (3) — your answers 1 and 2 done
 
 - **Dropped paths** (`LaunchPlaceholders.RefusedInPath`): for cmd.exe and batch targets a path with `%` is

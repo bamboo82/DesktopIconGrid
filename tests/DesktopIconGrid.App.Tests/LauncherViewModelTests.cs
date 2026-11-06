@@ -140,7 +140,11 @@ public sealed class LauncherViewModelTests : IDisposable
 
     private readonly RecordingLauncher _launcher = new();
 
-    private (LauncherViewModel ViewModel, LauncherModel Model, RecordingDialogs Dialogs) Create(IWindowSwitcher? windows = null)
+    /// <summary>
+    /// A bar of three shortcuts to made-up paths. Nothing counts as missing unless <paramref name="isMissing"/> says so:
+    /// the real check would find those paths missing on a CI machine, at a moment of its choosing.
+    /// </summary>
+    private (LauncherViewModel ViewModel, LauncherModel Model, RecordingDialogs Dialogs) Create(IWindowSwitcher? windows = null, Func<ShortcutItem, bool>? isMissing = null)
     {
         var model = new LauncherModel();
         model.Add(new ShortcutItem { Name = "A", Location = "C:\\a.exe" });
@@ -157,7 +161,8 @@ public sealed class LauncherViewModelTests : IDisposable
             tracker,
             new SpecialIconRegistry([]),
             action => action(),
-            windows);
+            windows,
+            isMissing ?? (_ => false));
         return (viewModel, model, dialogs);
     }
 
@@ -536,13 +541,8 @@ public sealed class LauncherViewModelTests : IDisposable
     [Fact]
     public void A_click_on_a_shortcut_that_is_still_missing_opens_Repair_instead_of_launching()
     {
-        if (!OperatingSystem.IsWindows())
-        {
-            return; // only a drive-letter path is ever missing
-        }
-
-        var (viewModel, model, dialogs) = Create();
-        ((ShortcutItem)model.Items[0]).Location = @"C:\Nowhere-0f1e\gone.exe";
+        var stillMissing = true;
+        var (viewModel, _, dialogs) = Create(isMissing: _ => stillMissing);
         var item = viewModel.RootItems.Items[0];
         item.IsMissing = true;
 
@@ -550,6 +550,15 @@ public sealed class LauncherViewModelTests : IDisposable
 
         Assert.Equal(["A"], dialogs.RepairRequests);
         Assert.Empty(_launcher.Launches);
+
+        stillMissing = false; // it came back since the icon was drawn
+        viewModel.Activate(viewModel.RootItems.Items[1], null, ActivationModifiers.None); // another icon: no double-click guard
+        item.IsMissing = true;
+        viewModel.Activate(viewModel.RootItems.Items[0], null, ActivationModifiers.None);
+
+        Assert.False(item.IsMissing);
+        Assert.Single(dialogs.RepairRequests);
+        Assert.Contains(_launcher.Launches, l => l.Location == @"C:\a.exe");
     }
 
     [Fact]
@@ -580,10 +589,16 @@ public sealed class LauncherViewModelTests : IDisposable
         File.WriteAllBytes(exe, []);
         var switcher = new FakeSwitcher();
         var (viewModel, model, _) = Create(switcher);
-        var shortcut = (ShortcutItem)model.Items[0];
-        shortcut.Location = exe;
-        shortcut.Parameters = "/v:server2";
-        viewModel.Tracker.Watch(shortcut);
+        var byDefault = (ShortcutItem)model.Items[0];
+        var toldToSwitch = (ShortcutItem)model.Items[1]; // a second icon, so the double-click guard does not swallow the click
+        foreach (var shortcut in new[] { byDefault, toldToSwitch })
+        {
+            shortcut.Location = exe;
+            shortcut.Parameters = "/v:server2";
+            viewModel.Tracker.Watch(shortcut);
+        }
+
+        toldToSwitch.WhenRunning = ShortcutItem.WhenRunningSwitch;
         viewModel.Tracker.ApplySnapshot(new Dictionary<string, IReadOnlyList<int>>(StringComparer.OrdinalIgnoreCase) { [exe] = [4242] }); // server1, opened elsewhere
 
         viewModel.Activate(viewModel.RootItems.Items[0], null, ActivationModifiers.None);
@@ -591,8 +606,7 @@ public sealed class LauncherViewModelTests : IDisposable
         Assert.Equal(0, switcher.Calls); // the default with parameters: start another
         Assert.Single(_launcher.Launches);
 
-        shortcut.WhenRunning = ShortcutItem.WhenRunningSwitch;
-        viewModel.Activate(viewModel.RootItems.Items[0], null, ActivationModifiers.None);
+        viewModel.Activate(viewModel.RootItems.Items[1], null, ActivationModifiers.None);
 
         Assert.Equal(1, switcher.Calls);
         Assert.Empty(switcher.LastProcessIds!); // not the server1 window: this shortcut started nothing that still runs

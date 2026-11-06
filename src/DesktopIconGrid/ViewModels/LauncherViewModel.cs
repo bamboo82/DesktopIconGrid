@@ -35,6 +35,9 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
     private Guid _lastLaunchedId;
     private DateTime _lastLaunchedAt;
     private readonly IWindowSwitcher? _windows;
+
+    /// <summary>Whether a shortcut's target is missing on this PC (<see cref="LocationProbe"/>; tests give their own answer).</summary>
+    private readonly Func<ShortcutItem, bool> _isMissing;
     private string _searchText = string.Empty;
     private ItemViewModel? _launching;
     private int _launchFeedbackVersion;
@@ -52,8 +55,10 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
         ProcessTracker tracker,
         SpecialIconRegistry specialIcons,
         Action<Action>? defer = null,
-        IWindowSwitcher? windows = null)
+        IWindowSwitcher? windows = null,
+        Func<ShortcutItem, bool>? isMissing = null)
     {
+        _isMissing = isMissing ?? (shortcut => LocationProbe.IsMissing(shortcut, IconWorker.IsOnSlowStorage));
         Model = model;
         _storage = storage;
         Icons = icons;
@@ -266,7 +271,7 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
     /// </summary>
     private void CheckMissing(ItemViewModel viewModel, ShortcutItem shortcut)
     {
-        IconWorker.Shared.RunAsync(() => LocationProbe.IsMissing(shortcut, IconWorker.IsOnSlowStorage))
+        IconWorker.Shared.RunAsync(() => _isMissing(shortcut))
             .ContinueWith(
                 task => viewModel.IsMissing = task.IsCompletedSuccessfully && task.Result,
                 CancellationToken.None,
@@ -511,7 +516,7 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
         if (item.IsMissing)
         {
             // Checked again now (a fixed local drive: quick): it may have come back since.
-            item.IsMissing = LocationProbe.IsMissing(shortcutToLaunch, IconWorker.IsOnSlowStorage);
+            item.IsMissing = _isMissing(shortcutToLaunch);
             if (item.IsMissing)
             {
                 RepairItem(item);
