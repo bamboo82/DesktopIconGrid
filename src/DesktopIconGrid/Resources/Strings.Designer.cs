@@ -924,7 +924,7 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to The hotkey {0} could not be registered (Windows error {1}). The previous hotkey [rest of string was truncated]";.
+        ///   Looks up a localized string similar to The hotkey {0} could not be registered (Windows error {1}). {2}.
         /// </summary>
         public static string Hotkey_Failed {
             get {
@@ -933,11 +933,29 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to The hotkey {0} is already used by another program. The previous hotkey stays act [rest of string was truncated]";.
+        ///   Looks up a localized string similar to The hotkey {0} is already used by another program. {1}.
         /// </summary>
         public static string Hotkey_InUse {
             get {
                 return ResourceManager.GetString("Hotkey_InUse", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Choose another combination in Settings; until then this action has no hotkey..
+        /// </summary>
+        public static string Hotkey_NoneActive {
+            get {
+                return ResourceManager.GetString("Hotkey_NoneActive", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The previous hotkey stays active..
+        /// </summary>
+        public static string Hotkey_PreviousStays {
+            get {
+                return ResourceManager.GetString("Hotkey_PreviousStays", resourceCulture);
             }
         }
 

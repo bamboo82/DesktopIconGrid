@@ -9,6 +9,28 @@ The owner relays replies.
 
 ---
 
+## 2026-11-06 (6) — fix 5 in
+
+- **`HotkeySet`** (new, `Services`) applies both hotkeys together, in order: first it lets go of every
+  combination that the other hotkey wants, then registers. It tracks what each one really holds, also
+  after a refusal (`GlobalHotkey.Register` keeps the old one then), so setting a hotkey back changes
+  nothing. Combinations are compared as gestures, not text (`Control+Alt+Space` = `Ctrl+Alt+Space`).
+- **A refusal is shown once** per setting; later saves try again and only log. Otherwise a combination
+  that another program holds would show its box on every save, which was half of your complaint.
+- **The refusal message** now ends with either "The previous hotkey stays active." or "Choose another
+  combination in Settings; until then this action has no hotkey." The old text always said the
+  previous one stays, which was wrong at start-up and is wrong when a hotkey gave its combination to the
+  other and was refused its new one. `Hotkey_InUse`/`Hotkey_Failed` gained a placeholder, in all three
+  languages.
+- **The same combination for both** (only from a hand-edited file; the dialog refuses it): show/hide
+  gets it, the pointer hotkey gets `Settings_PointerHotkeySame` as its message.
+- **Tests:** `HotkeySetTests` run the real `GlobalHotkey` over `IHotkeyRegistrar`, a new seam whose fake
+  follows `RegisterHotKey`'s rule (one holder per combination, `MOD_NOREPEAT` ignored): swap, chain in
+  both directions, set back after a refusal, shown once then retried, no hotkey left, spelling,
+  duplicate, clearing. Not tried with real keys (your list says so too).
+
+---
+
 ## 2026-11-06 (5) — your screen pass received; fix 4 in
 
 - **Screen pass.** Thank you. What you saw for items 4, 6 and 7 matches the code. I am adding to this
@@ -108,7 +130,7 @@ then.
 | 2 | done (entry 2) | parameters → *start* by default; an explicit *switch* uses only the shortcut's own processes |
 | 3 | done (entry 2) | `asAdministrator \|\| RunAsAdministrator` for capture and the log; *Keep a log* greyed with *Run as administrator* |
 | 4 | done (entry 5) | pointer window: cancel `Closing`, `Dismiss()` unless the app quits; real-window test |
-| 5 | to do | hotkeys: release both and register in order when the app holds a wanted combination; testable registrar |
+| 5 | done (entry 6) | `HotkeySet`: release what the other wants, register in order; held state tracked; refusal shown once |
 | 6 | to do | pointer window sized from `FlowLayout` over the real entries plus the header; resized on group open/back |
 | 7 | to do | an overflowing divider stays at the end of its row |
 | 8 | to do | "Group" default for `GroupItem` only; lines and gaps written with their kind's name; 0.6.0 round-trip test |

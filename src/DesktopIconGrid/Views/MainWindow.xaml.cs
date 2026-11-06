@@ -24,9 +24,8 @@ public partial class MainWindow : Window
 {
     private readonly LauncherViewModel _viewModel;
     private GlobalHotkey? _hotkey;
-    private string? _registeredHotkey;
     private GlobalHotkey? _pointerHotkey;
-    private string? _registeredPointerHotkey;
+    private HotkeySet? _hotkeys;
     private PointerWindow? _pointerWindow;
     private TrayIcon? _tray;
     private TrayMenuHost? _trayMenu;
@@ -68,6 +67,7 @@ public partial class MainWindow : Window
             _hotkey.Pressed += (_, _) => ToggleVisibility();
             _pointerHotkey = new GlobalHotkey(source, GlobalHotkey.PointerIds);
             _pointerHotkey.Pressed += (_, _) => TogglePointerWindow();
+            _hotkeys = new HotkeySet((_hotkey, "Show/hide hotkey"), (_pointerHotkey, "Show-at-pointer hotkey"));
             ApplyHotkeys(reportErrors: true);
         }
 
@@ -279,6 +279,7 @@ public partial class MainWindow : Window
         SystemParameters.StaticPropertyChanged -= OnSystemParametersChanged;
         SystemEvents.DisplaySettingsChanged -= OnDisplaySettingsChanged;
         DisposeDocking();
+        _hotkeys = null;
         _hotkey?.Dispose();
         _hotkey = null;
         _pointerHotkey?.Dispose();
@@ -408,19 +409,20 @@ public partial class MainWindow : Window
     }
 
     /// <summary>
-    /// Registers the show/hide and Show-at-pointer hotkeys from the settings. When the two were swapped in one save,
-    /// the show/hide one fails while the other still holds its combination, so it is tried once more afterwards.
+    /// Registers the show/hide and Show-at-pointer hotkeys from the settings, together (see <see cref="HotkeySet"/>:
+    /// swapping the two in one save works, and a refusal is shown once).
     /// </summary>
     private void ApplyHotkeys(bool reportErrors)
     {
-        var settings = _viewModel.Model.Settings;
-        var toggleError = RegisterHotkey(_hotkey, settings.ToggleHotkey, ref _registeredHotkey, "Show/hide hotkey");
-        var pointerError = RegisterHotkey(_pointerHotkey, settings.ShowAtPointerHotkey, ref _registeredPointerHotkey, "Show-at-pointer hotkey");
-        if (toggleError is not null && pointerError is null)
+        if (_hotkeys is null)
         {
-            toggleError = RegisterHotkey(_hotkey, settings.ToggleHotkey, ref _registeredHotkey, "Show/hide hotkey");
+            return;
         }
 
+        var settings = _viewModel.Model.Settings;
+        var refusals = _hotkeys.Apply([settings.ToggleHotkey, settings.ShowAtPointerHotkey]);
+        var toggleError = refusals[0];
+        var pointerError = refusals[1];
         if (!reportErrors)
         {
             return;
@@ -435,35 +437,6 @@ public partial class MainWindow : Window
         {
             MessageBox.Show(this, pointerError, Strings.Main_PointerHotkeyTitle, MessageBoxButton.OK, MessageBoxImage.Warning);
         }
-    }
-
-    /// <summary>
-    /// Registers <paramref name="text"/> on <paramref name="hotkey"/> unless that is already done (an empty or
-    /// unreadable text clears it). Returns Windows' refusal as a message, or <see langword="null"/>.
-    /// </summary>
-    private static string? RegisterHotkey(GlobalHotkey? hotkey, string? text, ref string? registered, string name)
-    {
-        if (hotkey is null || string.Equals(text, registered, StringComparison.Ordinal))
-        {
-            return null;
-        }
-
-        HotkeyGesture? gesture = null;
-        if (!string.IsNullOrWhiteSpace(text) && !HotkeyGesture.TryParse(text, out gesture))
-        {
-            gesture = null;
-        }
-
-        if (!hotkey.Register(gesture, out var error))
-        {
-            registered = null;
-            AppLog.Default.Warning("Hotkey", error ?? $"{name} could not be registered");
-            return error ?? string.Empty;
-        }
-
-        registered = text;
-        AppLog.Default.Info("Hotkey", gesture is null ? $"{name} cleared" : $"{name} registered: {gesture}");
-        return null;
     }
 
     // ----- type to find ------------------------------------------------------------------------------

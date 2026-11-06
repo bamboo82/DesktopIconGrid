@@ -1320,10 +1320,10 @@ Details are in {1}.</value>
     <value>Combine the key with Ctrl, Alt or Win.</value>
   </data>
   <data name="Hotkey_InUse" xml:space="preserve">
-    <value>The hotkey {0} is already used by another program. The previous hotkey stays active.</value>
+    <value>The hotkey {0} is already used by another program. {1}</value>
   </data>
   <data name="Hotkey_Failed" xml:space="preserve">
-    <value>The hotkey {0} could not be registered (Windows error {1}). The previous hotkey stays active.</value>
+    <value>The hotkey {0} could not be registered (Windows error {1}). {2}</value>
   </data>
   <data name="Sound_RecordingFailed" xml:space="preserve">
     <value>Recording failed (MCI error {0}). Check that a microphone is connected and that Windows allows desktop apps to use it.</value>
@@ -1696,5 +1696,11 @@ Details are in {1}.</value>
   </data>
   <data name="Props_LogNotElevated" xml:space="preserve">
     <value>Not with Run as administrator: Windows cannot hand an elevated program's output to the bar.</value>
+  </data>
+  <data name="Hotkey_PreviousStays" xml:space="preserve">
+    <value>The previous hotkey stays active.</value>
+  </data>
+  <data name="Hotkey_NoneActive" xml:space="preserve">
+    <value>Choose another combination in Settings; until then this action has no hotkey.</value>
   </data>
 </root>

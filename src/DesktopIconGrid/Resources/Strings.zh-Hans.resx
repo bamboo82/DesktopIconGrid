@@ -1320,10 +1320,10 @@
     <value>请搭配 Ctrl、Alt 或 Win 键。</value>
   </data>
   <data name="Hotkey_InUse" xml:space="preserve">
-    <value>热键 {0} 已被其他程序使用。先前的热键仍然有效。</value>
+    <value>热键 {0} 已被其他程序使用。{1}</value>
   </data>
   <data name="Hotkey_Failed" xml:space="preserve">
-    <value>无法注册热键 {0}（Windows 错误 {1}）。先前的热键仍然有效。</value>
+    <value>无法注册热键 {0}（Windows 错误 {1}）。{2}</value>
   </data>
   <data name="Sound_RecordingFailed" xml:space="preserve">
     <value>录音失败（MCI 错误 {0}）。请确认已连接麦克风，且 Windows 允许桌面应用使用它。</value>
@@ -1696,5 +1696,11 @@
   </data>
   <data name="Props_LogNotElevated" xml:space="preserve">
     <value>无法与“以管理员身份运行”同时使用：Windows 无法把提升权限之程序的输出交给工具栏。</value>
+  </data>
+  <data name="Hotkey_PreviousStays" xml:space="preserve">
+    <value>先前的热键仍然有效。</value>
+  </data>
+  <data name="Hotkey_NoneActive" xml:space="preserve">
+    <value>请在“设置”中选择其他组合；在那之前，此操作没有热键。</value>
   </data>
 </root>

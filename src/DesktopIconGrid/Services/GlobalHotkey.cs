@@ -148,10 +148,20 @@ public sealed record HotkeyGesture(ModifierKeys Modifiers, Key Key)
     }
 }
 
+/// <summary><c>RegisterHotKey</c> and <c>UnregisterHotKey</c> for one window; tests stand in for Windows with a fake.</summary>
+internal interface IHotkeyRegistrar
+{
+    /// <summary>Registers the combination under <paramref name="id"/>; false with the Win32 error code when Windows refuses.</summary>
+    bool Register(int id, uint modifiers, uint virtualKey, out int errorCode);
+
+    void Unregister(int id);
+}
+
 /// <summary>
 /// Registers one system-wide hotkey on a window and raises <see cref="Pressed"/> when it fires. Each hotkey of a
 /// window takes two ids of its own (<see cref="ShowHideIds"/>, <see cref="PointerIds"/>): a new combination is
-/// registered under the spare id before the old one is let go.
+/// registered under the spare id before the old one is let go. Windows refuses a combination that any hotkey holds,
+/// the app's own other one included; <see cref="HotkeySet"/> applies the app's hotkeys together for that reason.
 /// </summary>
 public sealed class GlobalHotkey : IDisposable
 {
@@ -165,23 +175,34 @@ public sealed class GlobalHotkey : IDisposable
     private const uint ModNoRepeat = 0x4000;
     private const int ErrorHotkeyAlreadyRegistered = 1409;
 
-    private readonly HwndSource _source;
+    private readonly IHotkeyRegistrar _registrar;
+    private readonly HwndSource? _source;
     private readonly int _firstId;
     private readonly int _secondId;
     private int? _registeredId;
     private bool _disposed;
 
     public GlobalHotkey(HwndSource source, int firstId = ShowHideIds)
+        : this(new WindowRegistrar(source), firstId)
     {
         _source = source;
+        _source.AddHook(WndProc);
+    }
+
+    /// <summary>A hotkey on <paramref name="registrar"/> and no window: it never fires (for tests).</summary>
+    internal GlobalHotkey(IHotkeyRegistrar registrar, int firstId = ShowHideIds)
+    {
+        _registrar = registrar;
         _firstId = firstId;
         _secondId = firstId + 1;
-        _source.AddHook(WndProc);
     }
 
     public event EventHandler? Pressed;
 
-    /// <summary>Registers <paramref name="gesture"/> (or clears the hotkey when <see langword="null"/>). Returns false with a message when Windows refuses it.</summary>
+    /// <summary>
+    /// Registers <paramref name="gesture"/> (or clears the hotkey when <see langword="null"/>). Returns false with a
+    /// message when Windows refuses it; the combination held before stays, and the message says whether there is one.
+    /// </summary>
     public bool Register(HotkeyGesture? gesture, out string? error)
     {
         error = null;
@@ -193,12 +214,12 @@ public sealed class GlobalHotkey : IDisposable
 
         // Register the new combination under the other id first, so a rejected gesture keeps the working one.
         var newId = _registeredId == _firstId ? _secondId : _firstId;
-        if (!NativeMethods.RegisterHotKey(_source.Handle, newId, gesture.NativeModifiers | ModNoRepeat, gesture.VirtualKey))
+        if (!_registrar.Register(newId, gesture.NativeModifiers | ModNoRepeat, gesture.VirtualKey, out var code))
         {
-            var code = Marshal.GetLastWin32Error();
+            var state = _registeredId is null ? Strings.Hotkey_NoneActive : Strings.Hotkey_PreviousStays;
             error = code == ErrorHotkeyAlreadyRegistered
-                ? string.Format(Strings.Hotkey_InUse, gesture)
-                : string.Format(Strings.Hotkey_Failed, gesture, code);
+                ? string.Format(Strings.Hotkey_InUse, gesture, state)
+                : string.Format(Strings.Hotkey_Failed, gesture, code, state);
             return false;
         }
 
@@ -211,7 +232,7 @@ public sealed class GlobalHotkey : IDisposable
     {
         if (_registeredId is { } id)
         {
-            NativeMethods.UnregisterHotKey(_source.Handle, id);
+            _registrar.Unregister(id);
             _registeredId = null;
         }
     }
@@ -225,7 +246,7 @@ public sealed class GlobalHotkey : IDisposable
 
         _disposed = true;
         Unregister();
-        _source.RemoveHook(WndProc);
+        _source?.RemoveHook(WndProc);
     }
 
     private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
@@ -237,6 +258,23 @@ public sealed class GlobalHotkey : IDisposable
         }
 
         return IntPtr.Zero;
+    }
+
+    private sealed class WindowRegistrar(HwndSource source) : IHotkeyRegistrar
+    {
+        public bool Register(int id, uint modifiers, uint virtualKey, out int errorCode)
+        {
+            if (NativeMethods.RegisterHotKey(source.Handle, id, modifiers, virtualKey))
+            {
+                errorCode = 0;
+                return true;
+            }
+
+            errorCode = Marshal.GetLastWin32Error();
+            return false;
+        }
+
+        public void Unregister(int id) => NativeMethods.UnregisterHotKey(source.Handle, id);
     }
 
     private static class NativeMethods

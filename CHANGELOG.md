@@ -67,6 +67,12 @@ layout history, and a command line with *Send to*.
 - Alt+F4 on the *Show at pointer* window closed it for good: every later press of its hotkey showed an
   "unexpected error" until the app was restarted. Alt+F4 now hides it, like Esc. Covered by a test that
   builds the real window, sends it what Alt+F4 sends and shows it again.
+- Swapping the show/hide and *Show at pointer* hotkeys in one save failed for both, with two "already used
+  by another program" messages about the app's own keys; the keys kept their old jobs while Settings
+  showed the new ones, and every later save showed both messages again. Setting a hotkey back after a
+  refused change failed the same way. Both work now. A refused combination is reported once (it is tried
+  again on later saves), and the message says whether the previous hotkey still works or the action has
+  none, which the old message got wrong at start-up. Covered by tests against a stand-in for Windows.
 
 ## [0.7.0] – 2026-11-05
 

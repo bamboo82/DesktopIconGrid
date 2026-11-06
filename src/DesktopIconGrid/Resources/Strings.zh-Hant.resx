@@ -1320,10 +1320,10 @@
     <value>請搭配 Ctrl、Alt 或 Win 鍵。</value>
   </data>
   <data name="Hotkey_InUse" xml:space="preserve">
-    <value>快速鍵 {0} 已被其他程式使用。先前的快速鍵仍然有效。</value>
+    <value>快速鍵 {0} 已被其他程式使用。{1}</value>
   </data>
   <data name="Hotkey_Failed" xml:space="preserve">
-    <value>無法註冊快速鍵 {0}（Windows 錯誤 {1}）。先前的快速鍵仍然有效。</value>
+    <value>無法註冊快速鍵 {0}（Windows 錯誤 {1}）。{2}</value>
   </data>
   <data name="Sound_RecordingFailed" xml:space="preserve">
     <value>錄音失敗（MCI 錯誤 {0}）。請確認已連接麥克風，且 Windows 允許桌面應用程式使用它。</value>
@@ -1696,5 +1696,11 @@
   </data>
   <data name="Props_LogNotElevated" xml:space="preserve">
     <value>無法與「以系統管理員身分執行」同時使用：Windows 無法把提升權限之程式的輸出交給工具列。</value>
+  </data>
+  <data name="Hotkey_PreviousStays" xml:space="preserve">
+    <value>先前的快速鍵仍然有效。</value>
+  </data>
+  <data name="Hotkey_NoneActive" xml:space="preserve">
+    <value>請在「設定」中選擇其他組合；在那之前，這項動作沒有快速鍵。</value>
   </data>
 </root>
