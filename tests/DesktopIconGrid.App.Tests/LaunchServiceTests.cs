@@ -118,12 +118,14 @@ public sealed class LaunchServiceTests : IDisposable
         var service = Create(new Prompts(clipboard: "server2;notepad", answer: null), out var tracker);
         using (tracker)
         {
-            var typed = service.Launch(new ShortcutItem { Name = "Connect", Location = "wt.exe", Parameters = "ssh {clipboard}" });
+            var typed = service.Launch(new ShortcutItem { Name = "Open", Location = "wt.exe", Parameters = "notepad {clipboard}" });
             var dropped = service.LaunchWith(new ShortcutItem { Name = "Edit", Location = "wt.exe", Parameters = "notepad {file}" }, [@"C:\t\a;calc.txt"]);
+            var host = service.Launch(new ShortcutItem { Name = "Connect", Location = "wt.exe", Parameters = "ssh {clipboard}" });
 
             var refusal = string.Format(Strings.Launch_UnsafeValue, ';', "Windows Terminal");
             Assert.Equal(refusal, typed.ErrorMessage);
             Assert.Equal(refusal, dropped.ErrorMessage);
+            Assert.Equal(string.Format(Strings.Launch_UnsafeValue, ';', "ssh"), host.ErrorMessage); // ssh's destination check comes first there
         }
     }
 
