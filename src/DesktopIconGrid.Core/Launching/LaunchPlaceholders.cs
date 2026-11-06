@@ -224,10 +224,12 @@ public static partial class LaunchPlaceholders
     /// <list type="bullet">
     /// <item>Every program: a line break, and <see cref="FullwidthQuotationMark"/>.</item>
     /// <item>cmd.exe: also <c>" % ! ^ &amp; | &lt; &gt;</c>.</item>
-    /// <item>PowerShell script text: everything but letters, digits, the space and <c>. _ - \ / :</c>. powershell.exe and
-    /// pwsh take the quotes off their arguments before joining them into the script, so the value is read as bare
-    /// words. There <c>(…)</c>, <c>|</c>, <c>&amp;</c>, <c>;</c>, <c>{…}</c>, <c>@</c>, quotes of every kind (also
-    /// U+2018–U+201E) and more have a meaning.</item>
+    /// <item>PowerShell script text: everything but letters, digits, the space and <c>. _ - \ / :</c>, and a <c>-</c> that
+    /// starts a word after a space. powershell.exe and pwsh take the quotes off their arguments before joining them into
+    /// the script, so the value is read as bare words. There <c>(…)</c>, <c>|</c>, <c>&amp;</c>, <c>;</c>, <c>{…}</c>,
+    /// <c>@</c>, quotes of every kind (also U+2018–U+201E) and more have a meaning, and every word that starts with
+    /// <c>-</c> is a parameter (<c>Remove-Item x -Recurse</c>). At the start of the value the option rule decides, by
+    /// where the placeholder stands (<see cref="TakesOptionAt"/>).</item>
     /// </list>
     /// </summary>
     public static string? Refused(string value, ArgumentReader reader)
@@ -289,8 +291,9 @@ public static partial class LaunchPlaceholders
 
     private static bool IsAllowedForCmd(string text, int index) => IsAllowedForAny(text, index) && "\"%!^&|<>".IndexOf(text[index]) < 0;
 
-    private static bool IsAllowedInScriptText(string text, int index) =>
-        char.IsLetterOrDigit(text, index) || text[index] is ' ' or '.' or '_' or '-' or '\\' or '/' or ':';
+    private static bool IsAllowedInScriptText(string text, int index) => text[index] == '-'
+        ? index == 0 || text[index - 1] != ' ' // a word of its own that starts with "-" is a parameter
+        : char.IsLetterOrDigit(text, index) || text[index] is ' ' or '.' or '_' or '\\' or '/' or ':';
 
     private static string? FirstNotAllowed(string text, Func<string, int, bool> allowed)
     {

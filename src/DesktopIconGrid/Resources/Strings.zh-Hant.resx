@@ -1721,4 +1721,7 @@
   <data name="Sync_SettingsNotRead" xml:space="preserve">
     <value>Desktop Icon Grid 啟動時，同步設定（sync.json）正被其他程式使用，因此無法讀取。設定本身沒有變動：重新啟動 Desktop Icon Grid 即可使用。在那之前，這裡所做的變更都不會儲存。</value>
   </data>
+  <data name="Launch_WordIsParameter" xml:space="preserve">
+    <value>未啟動：文字中有一個字以「-」開頭，PowerShell 會把它當成命令的參數。</value>
+  </data>
 </root>

@@ -43,6 +43,17 @@ public sealed class RealPowerShellTests
     }
 
     [Theory]
+    [InlineData("powershell.exe")]
+    [InlineData("pwsh.exe")]
+    public void The_danger_is_real_a_word_of_the_value_that_starts_with_a_dash_is_a_parameter(string program)
+    {
+        // The review of round 12: -NoEnumerate is taken by Write-Output, so only "x" is printed.
+        Assert.Equal(["x"], Run(program, LaunchPlaceholders.Fill(Template, "x -NoEnumerate", [])));
+    }
+
+    [Theory]
+    [InlineData("powershell.exe", "x -NoEnumerate")]
+    [InlineData("pwsh.exe", "x -NoEnumerate")]
     [InlineData("powershell.exe", "(1+1)")]
     [InlineData("powershell.exe", "x|Measure-Object|Select-Object -Expand Count")]
     [InlineData("powershell.exe", "a;b")]

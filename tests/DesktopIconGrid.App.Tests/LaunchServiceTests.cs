@@ -89,6 +89,18 @@ public sealed class LaunchServiceTests : IDisposable
     }
 
     [Fact]
+    public void A_word_PowerShell_would_take_as_a_parameter_is_refused()
+    {
+        var service = Create(new Prompts(clipboard: @"x -Destination \\host\share", answer: null), out var tracker);
+        using (tracker)
+        {
+            var result = service.Launch(new ShortcutItem { Name = "Back up", Location = "powershell.exe", Parameters = @"-NoProfile -Command Copy-Item {clipboard} D:\bak" });
+
+            Assert.Equal(Strings.Launch_WordIsParameter, result.ErrorMessage);
+        }
+    }
+
+    [Fact]
     public void The_clipboard_is_trimmed_and_a_value_of_several_lines_is_refused_for_any_program()
     {
         var trimmed = Create(new Prompts(clipboard: "  report.txt\r\n", answer: null), out var tracker);

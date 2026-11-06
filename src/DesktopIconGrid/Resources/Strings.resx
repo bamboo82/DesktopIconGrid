@@ -1721,4 +1721,7 @@ Details are in {1}.</value>
   <data name="Sync_SettingsNotRead" xml:space="preserve">
     <value>Your sync settings (sync.json) were in use by another program when Desktop Icon Grid started, so they could not be read. They are untouched: restart Desktop Icon Grid to use them. Until then, nothing changed here is saved.</value>
   </data>
+  <data name="Launch_WordIsParameter" xml:space="preserve">
+    <value>Not started: a word in the text begins with “-”, so PowerShell would take it as a parameter of the command.</value>
+  </data>
 </root>

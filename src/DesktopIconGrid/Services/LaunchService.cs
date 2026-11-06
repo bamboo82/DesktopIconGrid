@@ -229,6 +229,7 @@ public sealed class LaunchService(ProcessTracker tracker, ILaunchPrompts? prompt
     private static string RefusalMessage(string character, ArgumentReader reader) => character switch
     {
         "\r" or "\n" => Strings.Launch_ValueHasLineBreak,
+        "-" => Strings.Launch_WordIsParameter, // refused only in PowerShell script text, where it starts a word
         _ when character[0] == LaunchPlaceholders.FullwidthQuotationMark => Strings.Launch_LookalikeQuote,
         _ => string.Format(Strings.Launch_UnsafeValue, character, reader == ArgumentReader.Cmd ? "cmd.exe" : "PowerShell"),
     };

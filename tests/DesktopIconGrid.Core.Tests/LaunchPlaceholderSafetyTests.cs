@@ -121,6 +121,19 @@ public sealed class LaunchPlaceholderSafetyTests : IDisposable
         Assert.Null(LaunchPlaceholders.Refused(value, ArgumentReader.PowerShellCommand));
     }
 
+    [Theory]
+    [InlineData("x -Recurse", "-")] // the review: Remove-Item {clipboard}
+    [InlineData(@"x -Destination \\host\share", "-")] // Copy-Item {clipboard} D:\bak
+    [InlineData("a  --b", "-")]
+    [InlineData("x-Recurse a-b C:-x", null)] // inside a word
+    [InlineData("-Recurse", null)] // at the start, where the placeholder stands decides (the option rule)
+    public void In_PowerShell_script_text_a_dash_that_starts_a_word_is_a_parameter(string value, string? refused)
+    {
+        Assert.Equal(refused, LaunchPlaceholders.Refused(value, ArgumentReader.PowerShellCommand));
+        Assert.Null(LaunchPlaceholders.Refused(value, ArgumentReader.Plain)); // one argument there, whatever it holds
+        Assert.Null(LaunchPlaceholders.Refused(value, ArgumentReader.Cmd));
+    }
+
     [Fact]
     public void Other_programs_get_any_value_but_a_line_break_or_the_fullwidth_quotation_mark()
     {
@@ -139,6 +152,7 @@ public sealed class LaunchPlaceholderSafetyTests : IDisposable
         Assert.Equal("$", LaunchPlaceholders.RefusedInPath(@"C:\In\a$(calc).txt", ArgumentReader.PowerShellCommand));
         Assert.Equal("(", LaunchPlaceholders.RefusedInPath(@"C:\In\a (1).txt", ArgumentReader.PowerShellCommand));
         Assert.Null(LaunchPlaceholders.RefusedInPath(@"C:\My Files\report-2026_v2.txt", ArgumentReader.PowerShellCommand));
+        Assert.Equal("-", LaunchPlaceholders.RefusedInPath(@"C:\In\a -Force\b.txt", ArgumentReader.PowerShellCommand)); // a folder named "a -Force"
         Assert.Null(LaunchPlaceholders.RefusedInPath(@"C:\In\a$(calc)%x%.txt", ArgumentReader.Plain));
         Assert.Equal("\uFF02", LaunchPlaceholders.RefusedInPath("C:\\In\\a\uFF02b.txt", ArgumentReader.Plain));
         Assert.Equal("\uFF02", LaunchPlaceholders.RefusedInPath("C:\\In\\a\uFF02b.txt", ArgumentReader.Cmd));

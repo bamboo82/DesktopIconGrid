@@ -1374,6 +1374,15 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Not started: a word in the text begins with “-”, so PowerShell would take it as [rest of string was truncated]";.
+        /// </summary>
+        public static string Launch_WordIsParameter {
+            get {
+                return ResourceManager.GetString("Launch_WordIsParameter", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to All categories.
         /// </summary>
         public static string Log_AllCategories {
