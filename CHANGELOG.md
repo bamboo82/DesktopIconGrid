@@ -12,7 +12,7 @@ switches, portable mode and *Repair…* on more kinds of PC, and the smaller ite
 
 - ssh's destination, login name (`-l`) and jump host (`-J`) are now checked too: only what `user@host`,
   `[v6]:port` and an `ssh://` address need passes (letters, digits and `. - _ @ : [ ] /`, no `-` to start the
-  name or right after `@`). OpenSSH before 9.6 could pass other characters in a host or user name on to a
+  name or one of its parts, right after `@`, `/`, `[` or `:`). OpenSSH before 9.6 could pass other characters in a host or user name on to a
   `ProxyCommand` (CVE-2023-51385), and a name that starts with `-` reaches ssh or the proxy program as an
   option.
 - ssh's `-o` takes a line of its settings, with a space or `=` after the setting's name, and some settings run
@@ -24,31 +24,60 @@ switches, portable mode and *Repair…* on more kinds of PC, and the smaller ite
   After another name written in the template, the value is checked as the command ssh sends
   (`-o ConnectTimeout={ask:Seconds}`), or as a host (`HostName`, `User`, `ProxyJump`). A placeholder among an
   option's letters (`-v{clipboard}`) is refused too: its value would add options. OpenSSH reads options after
-  the host as well, unless `--` came first, and so does the check; only a `--` that ssh itself sees counts, not
-  one in a prompt or one of another program's. scp and sftp are read the same way, and their `-S` (a program
-  run instead of ssh), sftp's `-D` and `-b` (a batch whose `!` lines run here) are refused; a placeholder before
-  the colon of `host:path` is checked as a host.
+  the host as well, unless `--` came first, and so does the check; a `--` in a prompt does not count. scp and
+  sftp are read the same way, and their `-S` (a program run instead of ssh), sftp's `-D` and `-b` (a batch
+  whose `!` lines run here) are refused. In a word written `host:path`, a placeholder before the colon is
+  checked as a host, and one after it as the remote shell reads it, unless `-s` asks scp for SFTP (scp's old
+  protocol, the default before OpenSSH 9.0, which Windows 10 has, hands the path to the remote shell); sftp's
+  `-s` may be the command the server runs. A placeholder that makes up a whole operand is checked as a local
+  path, not as a host: write `host:` in the template for the host to be checked.
 - A value that held `{file}` got a dropped file's path put inside it, after the value had been checked: with
   `{clipboard}` for a batch file and `x{file}` on the clipboard, a file called `Invoice&calc&.pdf` reached
   cmd.exe with its `&` outside every quote. An answer that held `{clipboard}` got the clipboard the same way.
   All placeholders now go in with one pass over the template, and nothing put in is read again. Dropped files
   are judged where the template puts them, before a value with spaces can move the words they follow
-  (`wsl -u {clipboard} cat {file}` with `root --exec`), and `{files}`'s second path where it lands. Older than
-  0.8.1.
+  (`wsl -u {clipboard} cat {file}` with `root --exec`); `{files}` is judged as two `{file}`, its second path a
+  word of its own (`scp {files} host:/dir/` takes local paths), and files added at the end are judged for
+  quotes too. Older than 0.8.1.
 - A placeholder inside quotes with other text (`"--in={file}"`, `git commit -m "WIP {clipboard}"`) had its
   value's own quotes end the template's, so the value stood outside every quote: a dropped `a&calc&.txt` ran
-  calc through a batch file. The template is now read as Windows' C runtime reads a command line, and such a
-  placeholder is refused before anything starts, with a note under the parameters in *Properties*; a
-  placeholder written alone in quotes (`"{file}"`) is fine. A backslash written right before a placeholder
-  (`%USERPROFILE%\{ask:File}`) is doubled, so the value's quote stays a quote. Older than 0.8.1.
+  calc through a batch file. A placeholder is now filled only where every program that reads the line sees it
+  alike: the C runtime (the UCRT, for which `""` inside quotes is a quote character), CommandLineToArgvW
+  (Chromium, Electron and Windows Terminal, for which that `""` ends the quotes), cmd.exe for a value it reads
+  (a backslash does not escape a quote there), and WSL's shell, whose `'…'` quotes too. A placeholder whose
+  value would touch a quote (`"https://www.bing.com/search?q="{clipboard}`, `{ask:A}{clipboard}`) counts as
+  inside quotes. Such a placement is refused before anything starts, with a note under the parameters in
+  *Properties*, which judges them as a launch does. A placeholder written alone in quotes (`"{file}"`) is fine,
+  and so is one inside a quoted command for ssh's remote shell or PowerShell (`ssh host "tail -n 50
+  {ask:File}"`, `powershell -Command "Get-Content {file}"`), which check a value as bare words anyway: it goes
+  in as it is. A backslash written right before a placeholder (`%USERPROFILE%\{ask:File}`) is doubled, so the
+  value's quote stays a quote. Older than 0.8.1.
 - `cmd.exe /c {file}`: when the command after `/c`, `/k` or `/r` starts with a quote, cmd takes off its first
   and last quote, so a dropped `a&calc&.txt` lost its quotes and ran calc. The command now gets one more pair,
   as Windows gives a batch file's, and a pair written around the whole command (`/c ""…" "{file}""`) keeps
-  working. Older than 0.8.1.
-- Windows Terminal and conhost hand their arguments on quoted only when they hold a space, so a dropped path
-  with `& | < > ^ ( )` in it is refused after them (`wt cmd /c type {file}`). A batch file that a relay (`wt`,
-  conhost, runas, sudo) starts, named so or found on PATH, is read as cmd.exe reads it. `WindowsTerminal.exe`
-  counts as `wt`. Older than 0.8.1.
+  working. cmd's switches written together (`/d/c`, `/V:ON/C`) are read as cmd reads them, and a value before
+  the command switch is refused, since cmd looks for its switches in it. Older than 0.8.1.
+- Windows Terminal, conhost, Windows' sudo and gsudo hand their arguments on quoted only when they hold a
+  space, and escape nothing. After them, a placeholder that cmd.exe or WSL's shell reads is refused
+  (`wt cmd /c type {file}`, a batch file one of them starts, anything gsudo starts, which it hands to cmd.exe
+  unless it is a program). Elsewhere a value with a quote or a tab, or a backslash at the end of one with a
+  space, is refused, since it would split into other arguments (`wt git clone {clipboard}` with
+  `x" --upload-pack=calc "y`), and what only the next program reads keeps working (`wt -d {file}` with
+  `C:\Program Files (x86)`). A batch file that a relay (`wt`, conhost, runas, sudo, gsudo) starts, named so or
+  found on PATH, is read as cmd.exe reads it. The PATH lookup skips shares and slow drives, which could hold up
+  the launch, and a name found nowhere else counts as a batch file. `WindowsTerminal.exe` counts as `wt`. Older
+  than 0.8.1.
+- A value that starts with `-` where an argument starts is refused unless a `--` before it ends the options of
+  the program that reads it (0.8.0). A wrapper's own `--` counted for the program after it: `wsl.exe -- python3
+  {clipboard}` let `-c…` through to python3, and so did `wt -- python …`, `npx -- tool …` and `dotnet run --`.
+  A `--` now belongs to the nearest program named before it, or the shortcut's program; a wrapper's (wsl,
+  Windows Terminal, conhost, sudo, gsudo, runas, npx) counts only when nothing stands between it and the
+  placeholder, and dotnet's never, since what follows it is the app's. A value that starts with `/` is refused
+  where one that starts with `-` would be, except for a shell: Chromium and Electron programs (Edge, Chrome,
+  VS Code, Teams) read `/name` as a switch, and Windows Script Host reads `//` options after the script.
+- A drop wrote the filled parameters to `app.log`, and *Keep a log* writes them at the top of the shortcut's
+  log: a password typed for `pscp -pw {ask:Password} {file}` landed in both. Both now write the parameters as
+  written. Older than 0.8.1.
 - plink, PuTTY's command-line ssh, is checked the same way; its `-proxycmd` (a command run here) and `-m` (a file
   sent as the command) are refused. PuTTY reads plink's options anywhere and has no remote command, so after
   its host the options are read as plink's and a bare word is the port. After an option of plink's that this
@@ -71,10 +100,14 @@ switches, portable mode and *Repair…* on more kinds of PC, and the smaller ite
   paths are.
 - A portable copy run from the system drive (`C:\Tools`) wrote every C: path with `%APPDRIVE%`,
   `C:\Windows\System32\cmd.exe` too, so a copy on a stick that loaded them looked for them on the stick.
-  Paths on Windows' own drive are now written as they are. Such a path that 0.8.0 wrote in Windows' own folders
-  (Windows, Program Files, ProgramData, Users) gets Windows' drive back once, when a layout from before 0.8.1 is
-  loaded, and only when it is missing where `%APPDRIVE%` points and there on Windows' drive: a copy's own
-  programs on a second disk (`D:\Program Files (x86)\Steam`) stay as they are, and so does each PC's own location.
+  Paths on Windows' own drive are now written as they are. For such a path that 0.8.0 wrote in Windows' own
+  folders (Windows, Program Files, ProgramData, Users), a PC where it is missing on the drive `%APPDRIVE%` points
+  to, and there on Windows' drive, gets a location of its own on Windows' drive. Each PC decides for itself, at
+  every load: the shared location, *Start in* and the icon stay as they are, so a copy's own programs on a
+  second disk (`D:\Program Files (x86)\Steam`) keep working on the PC that has them, and the layout's format
+  stays the one 0.8.0 reads.
+- A copy run from a share kept the `%APPDRIVE%` it inherited when a stick's bar started it, and expanded paths
+  as the stick. It now clears it.
 - *Repair…* could not fix a shortcut to a missing folder: it looked for files only, and *Browse* picked a file.
   It now looks for a file or a folder of that name, whichever is there, other versions of a folder included
   (`node-v20.11.0-win-x64` finds `node-v22.1.0-win-x64`), and *Browse* offers *File…* and *Folder…*.
@@ -127,7 +160,19 @@ switches, portable mode and *Repair…* on more kinds of PC, and the smaller ite
   listed as a sync program's copy, it got a third file when another PC loaded it. Saves now keep the copy's
   own name, such a copy is listed under its own name (it is the original while no copy of that name holds its
   file), a PC that loads a sync program's copy of it links to it, and a save from the dialog refuses a copy that
-  cannot be read just then; an upload waits and tries again.
+  cannot be read just then; an upload waits and tries again. *Saved* and *Uploaded* name it by its own name.
+- While a copy's own file could not be read (a new PC still downloading it), a sync program's numbered copy of
+  it (`Work (2).json`) was listed as the copy itself, and saves went into it; two numbered files of one name were
+  both listed as it, and the PCs on them split. Now the copy is its own file, readable or not, and only without
+  one the lowest-numbered file of its name; any other is listed as a sync program's copy, which the start-up
+  check names. A PC that loads a copy from a listing made while it could not be read is linked under the name
+  in the copy, and a sync program's copy is no longer linked to an unreadable file that may be another name's.
+- Another program's `.json` in the folder that does not parse (settings with comments, an empty file) was
+  listed as a copy that could not be read, and a save under its name said to delete it. It is no longer
+  listed, and that message no longer says to delete anything.
+- An upload that found the copy held open by a sync program just as it replaced it failed with no retry. It now
+  waits and tries again, as for a copy that cannot be read, and an upload still waiting gets one more try when
+  the app closes.
 - A load whose `sync.json` could not be saved (held by a scan, a full or pulled stick) left the PC linked to the
   loaded copy in memory with the old bar, which the next upload then wrote into it. The link now moves only
   once it is saved.
