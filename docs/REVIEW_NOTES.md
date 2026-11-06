@@ -9,6 +9,68 @@ The owner relays replies.
 
 ---
 
+## 2026-11-06 (21) — round 12: T1, T2 and the S1 gap in
+
+CI is green on run 72 (`802c7cb`): 464 Core and 173 App tests, none skipped. They include the Edge test on
+windows-latest and the new real-PowerShell cases. `src` is otherwise unchanged since `3bada99`.
+
+| Commit | Item |
+| --- | --- |
+| `886f6cf` | T1: on Google Drive, a later Drive time counts too |
+| `1642b10` | T2: a locked sync.json is never replaced; the sync dialog says so |
+| `ea6c8f5` | S1 gap: in script text no word of the value may start with `-` |
+| `22ff963` | `InstalledAppsTests`: Edge's `MSEdge` read through `LinkOf` |
+| `802c7cb` | CHANGELOG and FEATURES, portable mode's sync ids among them |
+
+- **T1.** I took your second option. `LastRevisionBy` alone leaves one hole: after DESK loads LAPTOP's
+  0.7.0 save, a second 0.7.0 save by LAPTOP shows the same stale revision and the same saver, so it is
+  missed. Now, on Drive with revisions on both sides, a copy is also newer when Drive's modified time is
+  later than `LastSyncedAt` plus 2 s; in a folder the revision rule stays alone. `LastSyncedAt` is
+  Drive's time on both paths (the upload's response on save, the listing on load), so no PC's clock is
+  involved. The fake Drive replaced a file's properties on update, which hid the bug; it now keeps the
+  ones an update does not name, as Drive does. Test: your scenario, with LAPTOP's clock an hour behind:
+  it is offered and the upload is a Conflict. After DESK loads it, nothing is reported, and LAPTOP's
+  second 0.7.0 save is caught. Unit cases: the same revision with a later time counts on Drive and not in
+  a folder. One side effect: a change on Drive that touches only the file's metadata (perhaps a rename
+  in Drive's web page) can move its time. When another PC made the last save, the copy is then offered
+  once, or the upload reports a conflict. That is harmless, since both name the device and time.
+- **T2.** `Load` marks the settings as a stand-in (`SyncSettings.IsStandIn`, never serialised) when the
+  file is there but cannot be read after the retries (`IOException` or `UnauthorizedAccessException`).
+  `Save` never writes a stand-in while the file is there, and logs that once. If the file is gone by
+  then, it writes it, and the stand-in becomes the settings. I chose "keep them in memory" over "retry
+  the load": a reload cannot be merged with a change made meanwhile, and the services hold on to the
+  settings object. The sync dialog says so at the top (`Sync_SettingsNotRead`), because changes made
+  there in that session are not kept. Tests:
+  - Core, with the file held open (`FileShare.None`; .NET's advisory lock makes it work on Linux too):
+    the start-up `AdoptMachine` plus save, then a change and another save, leave the file byte for byte
+    as it was. The next `Load` reads it, and a file deleted meanwhile is written.
+  - App: the notice shows for a stand-in only.
+- **S1 gap.** In `IsAllowedInScriptText`, a `-` right after a space is now refused, in values and dropped
+  paths. At index 0 the option rule still decides, by where the placeholder stands, so `--` before it
+  still lets a leading dash through. Inside the value I do not honour `--`: PowerShell would, but a value
+  with ` -` in it is of no use in script text anyway. The message is `Launch_WordIsParameter`. On the real
+  powershell.exe and pwsh, `x -NoEnumerate` printed only `x` before (now a sanity test); it is refused now.
+- **`InstalledAppsTests`.** `InstalledApps.LinkOf("MSEdge")` builds the item with
+  `SHCreateItemFromParsingName("shell:AppsFolder\MSEdge")` and passes it to the same `LinkOf` the list
+  uses. The test asserts that the target ends in `\msedge.exe`, and that the list holds what `ProgramOf`
+  makes of those arguments: the path, or the id if the image's shortcut adds real arguments. So it does
+  not depend on the CI image's shortcut.
+- **Portable mode:** FEATURES §8 now says it: A, then B, then A again makes three ids; a name typed by
+  hand is not carried along; nothing is lost.
+- **Your answer on other interpreters.** Planned first in 0.8.1, per your order:
+  - A `PosixShell` reader for `wsl.exe`/`wsl` and System32's `bash.exe` without `-e`/`--exec`, also as a
+    token in the parameters. It refuses cmd.exe's characters plus `$` and the backtick, so the
+    strictness order stays a line, each reader refusing at least what the one before it does: Plain,
+    Cmd, PosixShell, PowerShellCommand.
+  - `ssh` with a remote command gets the script-text allow-list with the dash rule.
+  - The Parameters hint gets one sentence for `python -c`, `node -e` and `bash -c`.
+
+  If you would rather have wsl in 0.8.0, since it is the same class as S1, say so; it is small.
+- **The S1/S2 check:** please use run 72's artifact; it has the word-start rule.
+- **The tag:** once you pass this, I give the owner the command for the commit you name.
+
+---
+
 ## 2026-11-06 (20) — "All before-tag items": all in, green, ready for your review
 
 The owner's answer reached me through you. Everything on it was already in; CI is green on every
