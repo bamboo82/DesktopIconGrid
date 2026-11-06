@@ -9,6 +9,86 @@ The owner relays replies.
 
 ---
 
+## 2026-11-06 (26) — Round 15: the must-fix list and the recommended items
+
+CI is green on run 91 (`ae0f952`): 590 Core and 200 App tests, none skipped; the build has no warnings.
+
+| Commit | Item |
+| --- | --- |
+| `4b720e7` | CI: run 84's flaky test made deterministic |
+| `d8bceb2` | U1: an upload that waited behind a load writes nothing |
+| `c593d98` | R5′, L1, R5″, and the *Startup apps* note next to the option |
+| `57db4e0`, `8cd33cf` | UI1 (the second commit makes it work: runs 86–89 were red on its new test), UI2 |
+| `4154024` | P2: ssh's `-o`, options after the host; smaller: a leading `-` in a host or user, PuTTY |
+| `25e88f7` | P1: one pass for every placeholder; dropped files judged on the template |
+| `95f6d57` | U2: the picker never opens on a share; U4: the portable sign-in moves to its PC once |
+| `db1c55e` | R6′: Repair finds files and folders alike; R3 for typed paths; R4 for 0.8.0's paths |
+| `de5c69d` | U3 and round 11's leftovers; the question for replacing a conflict copy |
+| `ae0f952` | Strings: that question's translations had one placeholder too many (run 90); CHANGELOG, FEATURES (`{file}` last) |
+| this one | these notes |
+
+- **CI.** Run 84's red test was not one of your suspects. It was `ItemPropertiesViewModelTests.Typing_a_location_resolves_the_preview_once_after_the_last_keystroke`, with 3 lookups for 2. Its edits were `Task.Delay(10)` apart against a 150 ms debounce, so a slow runner let a preview through between them. The pause is now `ItemPropertiesViewModel.PausePreview`, per dialog, and the test ends the pauses itself and waits on `PreviewSettled`. No sleep is left.
+- **U1.** I did not compare the file id and revision as you suggested: loading the linked copy again to undo a change keeps both, and that case is in your list. Instead:
+  - `SyncService.LinkGeneration` moves, inside the lock, on every load, on a save that links elsewhere, and whenever the link is forgotten.
+  - `AutoUploadAsync(layout, takenAt, …)` returns the new `LinkChanged` outcome and writes nothing when the generation moved.
+  - The load releases the lock before the bar is replaced on the UI thread, so an upload could still take the old bar with the new generation. `LoadAndApplyAsync` therefore counts a load in progress, and an upload due meanwhile takes nothing.
+  - When the bar has been replaced, the timers stop and a waiting request is dropped. When a load fails, an upload that came due is scheduled again.
+  - It does not export again after `LinkChanged`. That would write the loaded bar back as this PC's save and offer it to every other PC; a change made after the load asks for its own upload.
+- **R5′ and L1.** The fix is at the source: `IconWorker.IsOnSlowStorage` no longer counts `NoRootDirectory` as slow, because a look at a letter with no drive behind it finds nothing at once. `DriveTypeOf` gives the type without I/O.
+  - This also marks a shortcut on such a letter as missing (FEATURES says so) and keeps such a folder from the picker.
+  - A portable copy counts an entry under another letter as its own only when that letter is not a fixed disk here, so an installed bar on C: with the same folders is safe.
+  - L1 also looks at an optical drive, since the program would start there anyway.
+  - One test uses a real unused drive letter on the runner.
+- **R5″.** All three: *No* clears the option, taking over a gone program's entry needs leave to add one, and `mayAdd` comes from `DataLocation.IsPortableCopy` (`portable.txt` is there).
+- **UI1.** 57db4e0 ran `MoveInside` in `SizeChanged`, which comes before `HwndSource` resizes the window, so it read the old size. The new test caught it in runs 86–89, as you asked. 8cd33cf moves the dialog at Background priority after the size change, and the test has passed since run 90. Run 90 was still red on `StringsTests`: the Chinese of the new conflict-copy question named the original once more than the English. `ae0f952` fixes that, and a check of every string in both resource sets finds no other difference.
+- **UI2, a different fix.** Keeping 6 units free in every row costs a column wherever the width holds its cells exactly: the first-run bar (`36 + 6 cells`), a group's popup (`n cells + 8`), the pointer window (up to 6 cells), and every saved bar sized so. Instead:
+  - The divider takes its 6 units inside the row, at its end, over the last cell. It is drawn after the cell, so it is on top where they meet.
+  - That strip is the cell's padding (10 units by default, at least 2).
+  - The test is on the real control: in the pointer window, whose row holds six cells exactly, the divider after the sixth icon is hit in its middle, and the sixth icon still is in its own.
+- **P2.** The new strictest reader, `ArgumentReader.SshOption`, refuses every value with its own message. It applies to:
+  - a placeholder that starts `-o`'s value or stands in the setting's name;
+  - one after a setting that runs or loads something: your five, plus `PermitLocalCommand`, `Include`, `XAuthLocation` and `Match`;
+  - one among an option's letters (`-v{x}`; `oProxyCommand=calc` there is `-o`).
+
+  The parse:
+  - A quoted value over two words (`-o "ProxyCommand {x}"`) is one argument, as Windows hands it on. The word splitter made it two, and the second was judged as the host.
+  - `HostName`, `User` and `ProxyJump` are judged as hosts; other names written in the template keep the remote command's check.
+  - `SshReader` follows OpenSSH's two getopt rounds, so options after the host are judged as options unless `--` came first.
+  - Placeholders are masked when option letters are read, so `{clipboard}` is no `-c`.
+  - The CHANGELOG now says what is checked.
+- **P1.** `LaunchPlaceholders.Fill` puts in every placeholder with one regex pass, files included, and `LaunchService` asks for the values first and fills once. The dropped files' readers are worked out on the template. Your example is an App test with a real `tool.bat` that writes the arguments it gets, and your wsl case is another.
+- **U2, U4, R3.** As you suggested.
+  - U2: `LocalFolderToOpen` gives the dialog the folder, or Documents, or the profile folder.
+  - U4: `DpapiTokenStore.FileForThisPc` moves the shared file when it decrypts here, and only then. It has tests now.
+  - R3: `Apply` stores typed paths through `ForStorage`.
+- **R6′.** The search takes either kind under the old name, and Browse offers *File…* and *Folder…*. `LooksLikeFolder` had no use left and is gone.
+- **R4, narrower than suggested.** A copy on Windows' drive rewriting every `%APPDRIVE%` path as C: would also rewrite a stick's own programs when a layout is synced between the two. Only paths in Windows' own folders (Windows, Program Files, ProgramData, Users) get the drive back. That happens in `FromLayout`, at start and for a loaded copy, and on any copy, since those folders can only mean Windows' drive.
+- **U3.**
+  - `SaveAsync` writes the caller's name. It keeps the stored spelling only when the two differ in case alone, which also fixes round 11's "Home_ desk".
+  - `LoadAsync` stays with the loaded file when there is no original and `FolderSyncClient.FileNameIsTaken`. When the name is free, the original is still written again.
+  - A dialog save refuses a copy that cannot be read just then. The message also says what to do when that lasts, since a half-written copy and a broken one look alike.
+  - Your answer to entry 24 is in: replacing a conflict copy asks with `Sync_ReplaceConflictCopy`.
+- **Test gaps from your list.** Each now has a test:
+  - F3 is held in `ListFilesAsync`.
+  - U1 has a Core test and an App test.
+  - An unlink cancelled while waiting for the lock changes nothing.
+  - U3 and `TokenFile` (now `FileForThisPc`) have their own tests.
+- **Smaller.** FEATURES says to write `{file}` last. The rest are in the commits above.
+- **Cases for the in-app check:**
+  - U1: linked to Home, move an icon, open *Sync across PCs* and load Work at once. Work is as it was (load it on another PC), and nothing more uploads until the next change.
+  - R5′: let a stick copy start with Windows, take the stick out, then start the installed bar with the option on. Task Manager's *Startup apps* names the installed bar.
+  - R5″: in a portable copy on a PC with no entry, turn the option on and answer *No*. The option is off again.
+  - UI1: with the bar near the bottom of the screen, open *Properties*, then *Advanced*. The dialog moves up, with Save in sight.
+  - UI2: put a line after the last icon of a full row. It shows at the row's end and right-clicks.
+  - P2: `ssh.exe -o {clipboard} server2` with `ProxyCommand calc` copied is refused, naming ssh's settings. `ssh.exe server2 -o ConnectTimeout={ask:Seconds} uptime` with `5` starts.
+  - P1: `tool.bat` with `{clipboard}` and `x{file}` copied, and a file named `a&calc&.txt` dropped. calc does not start.
+  - U2: pick a share in *A folder…*, take it offline, and choose a folder again. The picker opens at once, on Documents.
+  - U4: in a portable copy, *Disconnect*, then restart. Google stays disconnected.
+  - R6′: a shortcut to `node-v20.11.0-win-x64` after it became `node-v22…`. *Repair…* offers the new folder, and *Browse* offers *File…* and *Folder…*.
+  - U3: another program's `config.json` in the sync folder. Save "config" on one PC, load it on another and change something there. There is one file, `config (2).json`, with "config" inside.
+
+---
+
 ## 2026-11-06 (25) — 0.8.1: R3–R7, the smaller items and the UI items in; the list is done
 
 CI is green on run 83 (`09f2160`): 554 Core and 185 App tests, none skipped; the build has no warnings.
