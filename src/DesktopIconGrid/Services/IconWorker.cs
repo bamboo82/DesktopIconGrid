@@ -66,8 +66,9 @@ public sealed class IconWorker : IDisposable
     public bool IsRetired => _retired;
 
     /// <summary>
-    /// True for paths on network shares and on drives that are not fixed disks (or whose letter is currently not
-    /// mapped); their lookups queue behind the local ones. Does not touch the network itself.
+    /// True for paths on network shares and on drives that are not fixed disks (removable, optical, mapped network
+    /// letters); their lookups queue behind the local ones, and some callers count them as there without a look. A
+    /// letter with no drive behind it is not slow: nothing is there, and a look says so at once. Does no I/O.
     /// </summary>
     public static bool IsOnSlowStorage(string? path)
     {
@@ -77,23 +78,35 @@ public sealed class IconWorker : IDisposable
         }
 
         var expanded = Environment.ExpandEnvironmentVariables(path.Trim());
-        if (expanded.StartsWith(@"\\", StringComparison.Ordinal))
+        return expanded.StartsWith(@"\\", StringComparison.Ordinal)
+            || DriveTypeOf(expanded) is { } type && type is not (DriveType.Fixed or DriveType.Ram or DriveType.NoRootDirectory);
+    }
+
+    /// <summary>
+    /// The type of the drive whose letter starts <paramref name="path"/>, from GetDriveType, which does no I/O
+    /// (<see cref="DriveType.NoRootDirectory"/> for a letter with no drive behind it); <see langword="null"/> for a
+    /// UNC path, a path without a drive letter, or off Windows.
+    /// </summary>
+    public static DriveType? DriveTypeOf(string? path)
+    {
+        if (string.IsNullOrWhiteSpace(path))
         {
-            return true;
+            return null;
         }
 
+        var expanded = Environment.ExpandEnvironmentVariables(path.Trim());
         if (!OperatingSystem.IsWindows() || expanded.Length < 2 || expanded[1] != ':' || !char.IsAsciiLetter(expanded[0]))
         {
-            return false;
+            return null;
         }
 
         try
         {
-            return new DriveInfo(expanded[..1]).DriveType is not (DriveType.Fixed or DriveType.Ram);
+            return new DriveInfo(expanded[..1]).DriveType;
         }
         catch (ArgumentException)
         {
-            return false;
+            return null;
         }
     }
 

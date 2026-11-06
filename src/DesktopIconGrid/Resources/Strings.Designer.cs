@@ -3687,6 +3687,15 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to If the entry was turned off under Startup apps (Task Manager or Settings), the b [rest of string was truncated]";.
+        /// </summary>
+        public static string Settings_StartupDisabledHint {
+            get {
+                return ResourceManager.GetString("Settings_StartupDisabledHint", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Start with Windows.
         /// </summary>
         public static string Settings_StartWithWindows {

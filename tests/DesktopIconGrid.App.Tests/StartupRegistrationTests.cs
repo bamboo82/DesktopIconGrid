@@ -1,3 +1,4 @@
+using System.IO;
 using DesktopIconGrid.Services;
 
 namespace DesktopIconGrid.App.Tests;
@@ -103,6 +104,81 @@ public class StartupRegistrationTests
         Assert.Equal(StartupChange.Written, registration.Apply(startWithWindows: true, startHidden: true, mayAdd: false)); // its own: updated
         Assert.Equal($"\"{Exe}\" --hidden", key.Values[StartupRegistration.ValueName]);
         Assert.Equal(StartupChange.Removed, registration.Apply(startWithWindows: false, startHidden: true, mayAdd: false));
+    }
+
+    /// <summary>A drive letter with no drive behind it on this PC (GetDriveType's NoRootDirectory).</summary>
+    internal static char UnusedDriveLetter()
+    {
+        for (var letter = 'Z'; letter >= 'D'; letter--)
+        {
+            if (IconWorker.DriveTypeOf(letter + @":\") == DriveType.NoRootDirectory)
+            {
+                return letter;
+            }
+        }
+
+        throw new InvalidOperationException("Every drive letter is in use");
+    }
+
+    [Fact]
+    public void An_entry_on_a_drive_letter_this_PC_lacks_names_a_program_that_is_gone()
+    {
+        // Review 15 R5′: a stick's entry (E:) counted as another copy that is still there once the stick was gone, so
+        // the installed bar could neither replace nor remove it. GetDriveType says so without touching any drive.
+        var letter = UnusedDriveLetter();
+        Assert.False(IconWorker.IsOnSlowStorage(letter + @":\DIG\DesktopIconGrid.exe"));
+        var key = new FakeRunKey();
+        key.Values[StartupRegistration.ValueName] = $"\"{letter}:\\DIG\\DesktopIconGrid.exe\" --hidden";
+        var installed = new StartupRegistration(key, Exe); // the default look
+
+        Assert.Equal(StartupChange.Written, installed.Apply(startWithWindows: true, startHidden: false));
+        Assert.Equal($"\"{Exe}\"", key.Values[StartupRegistration.ValueName]);
+    }
+
+    [Fact]
+    public void A_portable_copy_counts_its_entry_from_another_drive_letter_as_its_own_but_never_a_fixed_disks()
+    {
+        const string stickBefore = @"E:\DIG\DesktopIconGrid.exe";
+        const string stickNow = @"F:\DIG\DesktopIconGrid.exe";
+        static bool OnFixedDisk(string path) => path.StartsWith("C:", StringComparison.OrdinalIgnoreCase);
+
+        // The stick, back as F:, can remove the entry it made as E: ...
+        var key = new FakeRunKey();
+        key.Values[StartupRegistration.ValueName] = $"\"{stickBefore}\"";
+        var portable = new StartupRegistration(key, stickNow, fileExists: _ => false, portable: true, onFixedDisk: OnFixedDisk);
+        Assert.Equal(StartupChange.Removed, portable.Apply(startWithWindows: false, startHidden: false));
+
+        // ... or keep it in step, without asking: it is its own entry.
+        key.Values[StartupRegistration.ValueName] = $"\"{stickBefore}\"";
+        Assert.Equal(StartupChange.Written, portable.Apply(startWithWindows: true, startHidden: true, mayAdd: false));
+        Assert.Equal($"\"{stickNow}\" --hidden", key.Values[StartupRegistration.ValueName]);
+
+        // The same folders on C: are the installed bar's, not the stick's.
+        const string installed = @"C:\DIG\DesktopIconGrid.exe";
+        key.Values[StartupRegistration.ValueName] = $"\"{installed}\"";
+        var fromE = new StartupRegistration(key, stickBefore, fileExists: path => path == installed, portable: true, onFixedDisk: OnFixedDisk);
+        Assert.Equal(StartupChange.None, fromE.Apply(startWithWindows: false, startHidden: false));
+        Assert.Equal(StartupChange.LeftToAnotherCopy, fromE.Apply(startWithWindows: true, startHidden: false));
+        Assert.Equal($"\"{installed}\"", key.Values[StartupRegistration.ValueName]);
+
+        // An installed copy has no such rule.
+        key.Values[StartupRegistration.ValueName] = $"\"{stickBefore}\"";
+        var notPortable = new StartupRegistration(key, stickNow, fileExists: _ => true, onFixedDisk: OnFixedDisk);
+        Assert.Equal(StartupChange.None, notPortable.Apply(startWithWindows: false, startHidden: false));
+    }
+
+    [Fact]
+    public void Taking_over_a_gone_programs_entry_needs_leave_to_add_one()
+    {
+        // Review 15 R5″: a portable copy with the option on wrote its entry over a leftover one at start, without asking.
+        var key = new FakeRunKey();
+        key.Values[StartupRegistration.ValueName] = "\"C:\\Old\\DesktopIconGrid.exe\"";
+        var registration = new StartupRegistration(key, Exe, fileExists: _ => false);
+
+        Assert.Equal(StartupChange.NotAdded, registration.Apply(startWithWindows: true, startHidden: false, mayAdd: false));
+        Assert.Equal(0, key.Writes);
+        Assert.Equal(StartupChange.Written, registration.Apply(startWithWindows: true, startHidden: false, mayAdd: true));
+        Assert.Equal($"\"{Exe}\"", key.Values[StartupRegistration.ValueName]);
     }
 
     [Theory]

@@ -49,7 +49,10 @@ public enum StartupChange
     /// <summary>This program's entry was removed.</summary>
     Removed,
 
-    /// <summary>There was no entry, and adding one was not allowed (a portable copy asks first).</summary>
+    /// <summary>
+    /// There was no entry, or only one naming a program that is gone, and adding one was not allowed (a portable copy
+    /// asks first).
+    /// </summary>
     NotAdded,
 
     /// <summary>The entry names another copy of the program that is still there; it was left as it is.</summary>
@@ -60,16 +63,32 @@ public enum StartupChange
 /// Keeps the per-user Run entry in step with the "start with Windows" settings: written when the setting is on, removed
 /// when it is off, but only when it names this program. One value serves every copy of the app, so an entry that
 /// names another copy that is still there (the installed bar, while a portable one is tried) is left alone; one that
-/// names a program that is gone (moved, uninstalled) is taken over. The command is the executable in quotes, followed
-/// by <see cref="HiddenArgument"/> when the bar should start in the tray.
+/// names a program that is gone (moved, uninstalled, on a drive letter this PC does not have) is taken over, when
+/// adding an entry is allowed. A portable copy also counts as its own an entry that names it on another drive letter
+/// that is not a fixed disk here: the stick it runs from, mounted under another letter last time. The command is the
+/// executable in quotes, followed by <see cref="HiddenArgument"/> when the bar should start in the tray.
 /// </summary>
-public sealed class StartupRegistration(IRunKey key, string executablePath, Func<string, bool>? fileExists = null)
+/// <param name="fileExists">Whether a program is there; by default a program on a share or a mounted removable drive counts as there without a look.</param>
+/// <param name="portable">A portable copy (<c>portable.txt</c> next to it).</param>
+/// <param name="onFixedDisk">Whether a path's drive letter is a fixed disk on this PC; by default from GetDriveType, which does no I/O.</param>
+public sealed class StartupRegistration(
+    IRunKey key,
+    string executablePath,
+    Func<string, bool>? fileExists = null,
+    bool portable = false,
+    Func<string, bool>? onFixedDisk = null)
 {
     public const string ValueName = "DesktopIconGrid";
     public const string HiddenArgument = "--hidden";
 
-    /// <summary>A program on a network share or a removable drive counts as there without a look: an offline share would hold up the start.</summary>
+    /// <summary>
+    /// A program on a network share or a mounted removable drive counts as there without a look: an offline share would
+    /// hold up the start. A drive letter with nothing behind it is not slow (see <see cref="IconWorker.IsOnSlowStorage"/>),
+    /// so its program is looked for, and is gone.
+    /// </summary>
     private readonly Func<string, bool> _fileExists = fileExists ?? (path => IconWorker.IsOnSlowStorage(path) || File.Exists(path));
+
+    private readonly Func<string, bool> _onFixedDisk = onFixedDisk ?? (path => IconWorker.DriveTypeOf(path) is DriveType.Fixed or DriveType.Ram);
 
     public string ExecutablePath { get; } = executablePath;
 
@@ -149,16 +168,37 @@ public sealed class StartupRegistration(IRunKey key, string executablePath, Func
             return StartupChange.LeftToAnotherCopy;
         }
 
-        if (current is null && !mayAdd)
+        if (!ours && !mayAdd)
         {
-            return StartupChange.NotAdded;
+            return StartupChange.NotAdded; // no entry, or a gone program's: taking it over adds this copy
         }
 
         key.SetValue(ValueName, wanted);
         return StartupChange.Written;
     }
 
-    private bool NamesThisProgram(string command) => TryParse(command, out var executable, out _) && SamePath(executable, ExecutablePath);
+    private bool NamesThisProgram(string command) =>
+        TryParse(command, out var executable, out _)
+        && (SamePath(executable, ExecutablePath) || (portable && OnlyTheDriveLetterDiffers(executable, ExecutablePath) && !_onFixedDisk(executable)));
+
+    /// <summary><c>E:\Tools\DIG\DesktopIconGrid.exe</c> and <c>F:\Tools\DIG\DesktopIconGrid.exe</c>: one stick, mounted under another letter.</summary>
+    private static bool OnlyTheDriveLetterDiffers(string a, string b)
+    {
+        try
+        {
+            a = Path.GetFullPath(a);
+            b = Path.GetFullPath(b);
+        }
+        catch (Exception ex) when (ex is ArgumentException or NotSupportedException or PathTooLongException)
+        {
+            return false;
+        }
+
+        return a.Length > 2 && a[1] == ':' && b.Length > 2 && b[1] == ':'
+            && char.IsAsciiLetter(a[0]) && char.IsAsciiLetter(b[0])
+            && char.ToUpperInvariant(a[0]) != char.ToUpperInvariant(b[0])
+            && string.Equals(a[2..], b[2..], StringComparison.OrdinalIgnoreCase);
+    }
 
     /// <summary>An entry this app wrote for a program that is not there any more; anything else may be another copy's.</summary>
     private bool NamesAProgramThatIsGone(string command) => TryParse(command, out var executable, out _) && !_fileExists(executable);

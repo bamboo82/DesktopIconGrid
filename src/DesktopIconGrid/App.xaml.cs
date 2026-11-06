@@ -147,7 +147,7 @@ public partial class App : Application
         // A portable copy never adds a Run entry by itself on the PCs it visits: only when the option is turned on there.
         var startup = CreateStartupRegistration();
         var applied = (viewModel.Model.Settings.StartWithWindows, viewModel.Model.Settings.StartHidden);
-        ApplyStartupRegistration(startup, viewModel.Model.Settings, mayAdd: !DataLocation.IsPortable);
+        ApplyStartupRegistration(startup, viewModel.Model.Settings, mayAdd: !DataLocation.IsPortableCopy);
         viewModel.SettingsChanged += (_, _) =>
         {
             var settings = viewModel.Model.Settings;
@@ -157,11 +157,21 @@ public partial class App : Application
             }
 
             applied = (settings.StartWithWindows, settings.StartHidden);
-            var change = ApplyStartupRegistration(startup, settings, mayAdd: !DataLocation.IsPortable);
-            if (change == StartupChange.NotAdded
-                && dialogs.Confirm(Strings.Settings_StartWithWindows, string.Format(Strings.Startup_PortableQuestion, startup?.ExecutablePath)))
+            var change = ApplyStartupRegistration(startup, settings, mayAdd: !DataLocation.IsPortableCopy);
+            if (change == StartupChange.NotAdded)
             {
-                change = ApplyStartupRegistration(startup, settings, mayAdd: true);
+                if (dialogs.Confirm(Strings.Settings_StartWithWindows, string.Format(Strings.Startup_PortableQuestion, startup?.ExecutablePath)))
+                {
+                    change = ApplyStartupRegistration(startup, settings, mayAdd: true);
+                }
+                else
+                {
+                    // No: the option goes off again, instead of showing on while nothing starts on this PC.
+                    var off = settings.Clone();
+                    off.StartWithWindows = false;
+                    applied = (false, off.StartHidden);
+                    viewModel.ApplySettings(off);
+                }
             }
 
             if (change == StartupChange.LeftToAnotherCopy)
@@ -302,7 +312,7 @@ public partial class App : Application
     private static StartupRegistration? CreateStartupRegistration()
     {
         var executable = Environment.ProcessPath;
-        return string.IsNullOrEmpty(executable) ? null : new StartupRegistration(new RegistryRunKey(), executable);
+        return string.IsNullOrEmpty(executable) ? null : new StartupRegistration(new RegistryRunKey(), executable, portable: DataLocation.IsPortableCopy);
     }
 
     /// <summary>

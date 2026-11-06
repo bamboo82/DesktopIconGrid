@@ -85,7 +85,9 @@ icon shows its name and location in a tooltip regardless of how the icon is draw
 - *Missing here*: a shortcut whose location is a path on a local fixed drive that names neither a file
   nor a folder is drawn faded with a small "?" and says so in its tooltip. The check is a quick
   existence test on the icon worker; links, `shell:`/`special:` locations, bare program names, UNC paths
-  and network or removable drives are never checked.
+  and network, removable or optical drives are never checked. A drive letter this PC does not have at all
+  (another PC's `D:`, a stick that is not plugged in) is not a slow drive: Windows says so without touching
+  any drive, so such a shortcut is marked.
 - *Repair…* (the context menu of a missing shortcut, or a click on it) looks for the program: the same
   file in a sibling folder that differs only by its version number, newest first
   (`app-1.0.9172` → `app-1.0.9203`, also a level or two up the path); the program's `App Paths` entry;

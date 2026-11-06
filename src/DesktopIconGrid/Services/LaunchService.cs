@@ -282,13 +282,16 @@ public sealed class LaunchService(ProcessTracker tracker, ILaunchPrompts? prompt
     /// <summary>
     /// A <see cref="ShortcutItem.StartIn"/> folder that is not on this PC (another PC's project folder, the folder of a
     /// program that moved) would stop the start with "The directory name is invalid": the program's own folder is used
-    /// instead. Only local fixed drives are looked at, so an offline share never holds up a click.
+    /// instead. Shares and removable drives are not looked at, so an offline share never holds up a click.
     /// </summary>
     internal static void UseProgramFolderWhenStartInIsGone(ShortcutItem shortcut, ProcessStartInfo startInfo)
     {
+        // A share or a mounted removable drive counts as there without a look: an offline share would hold up the start.
+        // A drive letter this PC does not have is not slow storage, and an optical drive is looked at: the program would
+        // start there anyway.
         var folder = startInfo.WorkingDirectory;
-        if (string.IsNullOrWhiteSpace(shortcut.StartIn) || string.IsNullOrEmpty(folder)
-            || LocationProbe.CheckablePath(folder) is null || IconWorker.IsOnSlowStorage(folder) || Directory.Exists(folder))
+        if (string.IsNullOrWhiteSpace(shortcut.StartIn) || string.IsNullOrEmpty(folder) || LocationProbe.CheckablePath(folder) is null
+            || (IconWorker.IsOnSlowStorage(folder) && IconWorker.DriveTypeOf(folder) is not DriveType.CDRom) || Directory.Exists(folder))
         {
             return;
         }

@@ -1745,4 +1745,7 @@
   <data name="App_PortableReadOnly" xml:space="preserve">
     <value>portable.txt 位於程式旁，但其資料夾無法寫入（位於 Program Files 下，或在唯讀磁碟機上），因此工具列目前將檔案保存在 {0}。</value>
   </data>
+  <data name="Settings_StartupDisabledHint" xml:space="preserve">
+    <value>若在「啟動應用程式」（工作管理員或設定）中停用了此項目，即使勾選這裡，工具列也不會啟動。請在那裡重新啟用。</value>
+  </data>
 </root>

@@ -1745,4 +1745,7 @@ Details are in {1}.</value>
   <data name="App_PortableReadOnly" xml:space="preserve">
     <value>portable.txt is next to the program, but its folder cannot be written (it is under Program Files, or on a read-only drive), so the bar keeps its files in {0} for now.</value>
   </data>
+  <data name="Settings_StartupDisabledHint" xml:space="preserve">
+    <value>If the entry was turned off under Startup apps (Task Manager or Settings), the bar does not start even with this on. Turn it on there.</value>
+  </data>
 </root>

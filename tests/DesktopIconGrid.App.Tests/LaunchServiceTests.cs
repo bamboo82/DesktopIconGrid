@@ -185,6 +185,20 @@ public sealed class LaunchServiceTests : IDisposable
     }
 
     [Fact]
+    public void A_start_in_folder_on_a_drive_letter_this_PC_lacks_gives_way_too()
+    {
+        // Review 15 L1: D:\Projects\X on a laptop without D: counted as slow storage, there without a look.
+        var letter = StartupRegistrationTests.UnusedDriveLetter();
+        var program = Path.Combine(_directory, "tool.exe");
+        var away = new ShortcutItem { Name = "Tool", Location = program, StartIn = letter + @":\Projects\X" };
+        var startInfo = new System.Diagnostics.ProcessStartInfo(program) { WorkingDirectory = away.StartIn };
+
+        LaunchService.UseProgramFolderWhenStartInIsGone(away, startInfo);
+
+        Assert.Equal(_directory, startInfo.WorkingDirectory);
+    }
+
+    [Fact]
     public void The_clipboard_is_trimmed_and_a_value_of_several_lines_is_refused_for_any_program()
     {
         var trimmed = Create(new Prompts(clipboard: "  report.txt\r\n", answer: null), out var tracker);

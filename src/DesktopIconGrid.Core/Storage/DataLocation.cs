@@ -32,6 +32,12 @@ public static class DataLocation
     public static bool PortableFolderIsReadOnly => Here.Value.ReadOnlyPortable;
 
     /// <summary>
+    /// <c>portable.txt</c> is next to the program, whether or not its data could stay there: the copy travels, and
+    /// asks before it adds a Run entry on a PC it visits.
+    /// </summary>
+    public static bool IsPortableCopy => IsPortable || PortableFolderIsReadOnly;
+
+    /// <summary>
     /// The data folder for a program in <paramref name="programDirectory"/>, whether that is portable mode, and whether
     /// portable mode was asked for in a folder <paramref name="canWrite"/> says cannot be written (the data then goes to
     /// <c>%LocalAppData%</c>, as without <c>portable.txt</c>, instead of stopping the app).

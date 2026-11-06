@@ -1745,4 +1745,7 @@
   <data name="App_PortableReadOnly" xml:space="preserve">
     <value>portable.txt 位于程序旁，但其文件夹无法写入（位于 Program Files 下，或在只读驱动器上），因此工具栏目前将文件保存在 {0}。</value>
   </data>
+  <data name="Settings_StartupDisabledHint" xml:space="preserve">
+    <value>如果在“启动应用”（任务管理器或设置）中禁用了该项目，即使勾选这里，工具栏也不会启动。请在那里重新启用。</value>
+  </data>
 </root>
