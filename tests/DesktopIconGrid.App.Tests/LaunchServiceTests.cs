@@ -12,7 +12,26 @@ public sealed class LaunchServiceTests : IDisposable
 {
     private readonly string _directory = Directory.CreateTempSubdirectory("dig-launch-").FullName;
 
-    public void Dispose() => Directory.Delete(_directory, recursive: true);
+    /// <summary>
+    /// Deletes the test folder. A batch file a test started (through cmd.exe, in this folder) may still be exiting
+    /// after it wrote what the test reads, and holds the folder until it has (CI run 93): the delete waits for it a
+    /// little, and a folder still held is left to the temp folder rather than failing a test that passed.
+    /// </summary>
+    public void Dispose()
+    {
+        for (var attempt = 0; attempt < 50; attempt++)
+        {
+            try
+            {
+                Directory.Delete(_directory, recursive: true);
+                return;
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                Thread.Sleep(100);
+            }
+        }
+    }
 
     private sealed class Prompts(string? clipboard, string? answer) : ILaunchPrompts
     {
