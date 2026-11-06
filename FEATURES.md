@@ -380,6 +380,12 @@ Settings live in the same JSON file as the layout and apply immediately on *Save
 
 - File: `%LocalAppData%\DesktopIconGrid\layout.json`, written atomically
   (temp file + rename) after every change and on exit.
+- Portable mode (0.8.0): with a file called `portable.txt` next to `DesktopIconGrid.exe`, `layout.json`,
+  `sync.json`, the logs and the caches live in the program's folder instead, so a tools drive carries
+  the bar from PC to PC. `%APPDRIVE%` is the program's drive (`E:`): new shortcuts to files on that
+  drive are stored as `%APPDRIVE%\…`, so they keep working when the drive gets another letter, and any
+  location may use it. The Google sign-in and client secret are encrypted for the Windows user, so on
+  another PC Google asks for a sign-in again; a sync folder needs none.
 - A corrupt file is renamed to `layout.json.corrupt-<timestamp>` and the app starts
   with an empty bar, telling the user where the backup is.
 - Shape (abridged):

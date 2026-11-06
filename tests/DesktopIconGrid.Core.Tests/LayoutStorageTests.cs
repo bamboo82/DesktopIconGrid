@@ -202,7 +202,7 @@ public sealed class LayoutStorageTests : IDisposable
     }
 
     [Fact]
-    public void Default_path_is_under_local_app_data()
+    public void Default_path_is_under_local_app_data_without_portable_txt()
     {
         var path = LayoutStorage.GetDefaultFilePath();
 

@@ -2,6 +2,7 @@ using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
+using DesktopIconGrid.Core.Storage;
 using DesktopIconGrid.Resources;
 using DesktopIconGrid.Services;
 using DesktopIconGrid.ViewModels;
@@ -52,7 +53,7 @@ public partial class ItemPropertiesWindow : Window
 
         if (dialog.ShowDialog(this) == true)
         {
-            viewModel.Location = dialog.FileName;
+            viewModel.Location = DataLocation.ForStorage(dialog.FileName);
         }
     }
 
@@ -71,7 +72,7 @@ public partial class ItemPropertiesWindow : Window
 
         if (dialog.ShowDialog(this) == true)
         {
-            viewModel.Location = dialog.FolderName;
+            viewModel.Location = DataLocation.ForStorage(dialog.FolderName);
         }
     }
 

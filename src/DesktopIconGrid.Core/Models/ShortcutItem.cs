@@ -142,7 +142,7 @@ public sealed class ShortcutItem : LauncherItem
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(path);
         var location = path.Trim();
-        return new ShortcutItem { Name = SuggestName(location), Location = location };
+        return new ShortcutItem { Name = SuggestName(location), Location = Storage.DataLocation.ForStorage(location) };
     }
 
     /// <summary>Derives a caption from a file path, folder path or URL.</summary>

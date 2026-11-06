@@ -78,6 +78,7 @@ Google Drive Bucket, and [docs/THEMES.md](docs/THEMES.md) for the themes.
 | Show or hide the bar from anywhere | Set a hotkey in Settings (e.g. `Ctrl+Alt+Space`) |
 | Find an icon by typing | Click the bar (or use its hotkey) and type part of a name or its initials (`vsc`); `Enter` opens the framed match, the arrows move the frame, `Esc` clears |
 | Open your icons under the mouse | Settings → *Show at pointer*: pick a hotkey; it opens the icons where the pointer is, with the search box ready, even while the bar is hidden |
+| Carry the bar on a USB drive | Put an empty `portable.txt` next to `DesktopIconGrid.exe`: settings stay in that folder, and shortcuts to the drive use `%APPDRIVE%`, so a new drive letter does not break them |
 | Start with Windows | Settings → *Window* → *Start with Windows*; tick *Start hidden* to begin in the tray (the same as running `DesktopIconGrid.exe --hidden`) |
 | Dock the bar to a screen edge | Settings → *Dock to edge*; maximised windows stop at the bar. *Auto-hide* collapses it until the pointer touches the edge |
 | See a program's output | *Properties → Keep a log of the program's output*, then right-click → *Show log…* |

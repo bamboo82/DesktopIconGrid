@@ -40,11 +40,8 @@ public sealed class LayoutStorage
 
     public string Directory => Path.GetDirectoryName(FilePath)!;
 
-    /// <summary><c>%LocalAppData%\DesktopIconGrid\layout.json</c>.</summary>
-    public static string GetDefaultFilePath() => Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData, Environment.SpecialFolderOption.DoNotVerify),
-        ApplicationFolderName,
-        FileName);
+    /// <summary><c>%LocalAppData%\DesktopIconGrid\layout.json</c>, or next to the program in portable mode (<see cref="DataLocation"/>).</summary>
+    public static string GetDefaultFilePath() => Path.Combine(DataLocation.Directory, FileName);
 
     public LoadResult Load()
     {

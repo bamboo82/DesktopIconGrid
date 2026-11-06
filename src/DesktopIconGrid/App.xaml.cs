@@ -78,8 +78,13 @@ public partial class App : Application
             return;
         }
 
+        DataLocation.PublishProgramDrive();
         AppLog.Default.AttachFile(Path.Combine(AppPaths.LogsDirectory, "app.log"));
         AppLog.Default.Info("App", $"Desktop Icon Grid {Assembly.GetExecutingAssembly().GetName().Version?.ToString(3)} starting");
+        if (DataLocation.IsPortable)
+        {
+            AppLog.Default.Info("App", $"Portable mode ({DataLocation.PortableMarker} found): data in {DataLocation.Directory}, %{DataLocation.AppDriveVariable}% = {Environment.GetEnvironmentVariable(DataLocation.AppDriveVariable)}");
+        }
 
         var storage = new LayoutStorage(LayoutStorage.GetDefaultFilePath());
         var load = storage.Load();

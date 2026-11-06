@@ -26,6 +26,10 @@ layout history, and a command line with *Send to*.
   has the same *Only on this PC* choice, and *Edit names…* can show the shortcuts missing on this PC.
   Only local fixed drives are checked, never network or removable ones. The search is covered by tests
   on real folders and the per-PC location by model and view-model tests; not yet seen on a screen.
+- Portable mode: put an empty `portable.txt` next to `DesktopIconGrid.exe` and the bar keeps its files in
+  that folder instead of `%LocalAppData%`. `%APPDRIVE%` stands for the program's drive, and new shortcuts
+  to files on that drive use it, so a USB drive that gets another letter keeps working. Covered by
+  tests of the rules; not yet run from a USB drive.
 
 ## [0.7.0] – 2026-11-05
 
