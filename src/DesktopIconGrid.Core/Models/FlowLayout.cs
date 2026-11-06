@@ -27,14 +27,20 @@ public readonly record struct FlowEntry(FlowSlot Slot, double ContentWidth = 0, 
 /// <summary>
 /// The bar's grid: items in reading order, wrapping to the next row when the next one does not fit, like a wrap
 /// panel with a fixed cell size. Dividers and captions are narrower than a cell and stay in the row; a divider never
-/// wraps on its own, it takes what is left of its row (perhaps nothing), so the next row starts at the edge as it
-/// would without it. When the width holds a single cell (a bar docked to the left or right edge), dividers and
-/// captions lie across the column instead.
+/// wraps on its own, it takes what is left of its row, at least <see cref="MinimumHitWidth"/> reaching into the grid's
+/// margin, so the next row starts at the edge as it would without it. When the width holds a single cell (a bar docked
+/// to the left or right edge), dividers and captions lie across the column instead.
 /// </summary>
 public static class FlowLayout
 {
     /// <summary>The thickness of a divider's slot.</summary>
     public const double NarrowSize = 9;
+
+    /// <summary>
+    /// The least room a divider at the end of a full row gets, reaching past the row's end into the grid's margin: with
+    /// none it could not be seen, right-clicked or dragged, though Tab still landed on it.
+    /// </summary>
+    public const double MinimumHitWidth = 6;
 
     private const double Tolerance = 0.5;
 
@@ -72,8 +78,10 @@ public static class FlowLayout
             {
                 if (entry.Slot == FlowSlot.Narrow)
                 {
-                    // At the start of the next row it would divide nothing and push that row, and every one after, out of line.
-                    itemWidth = Math.Max(0, width - x);
+                    // At the start of the next row it would divide nothing and push that row, and every one after, out of
+                    // line. It stays at the row's end, with room to be used; dividers after it stack there.
+                    x = Math.Min(x, width);
+                    itemWidth = Math.Max(MinimumHitWidth, width - x);
                 }
                 else
                 {

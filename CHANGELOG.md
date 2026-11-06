@@ -49,6 +49,13 @@ switches, portable mode and *Repair…* on more kinds of PC, and the smaller ite
   secret, and each sign-in replaced the other PC's, so two PCs kept signing each other out. Each PC now keeps
   its own: the secret in `sync.json` under the PC's key (a secret saved by 0.8.0 is kept for its PC), the
   sign-in in a file of its own. A PC new to the drive asks once. Covered by tests with a protector per PC.
+- A divider at the end of a full row had no width, so it could not be seen, right-clicked or dragged, though
+  Tab still landed on it. It now keeps at least a sliver of room, reaching into the bar's margin.
+- A click on a shortcut whose parameters take dropped files (`notepad++.exe {files}`) passed `{files}` to the
+  program as a word, and such a shortcut started another copy instead of switching to the running one. A
+  click now leaves `{file}` and `{files}` out, and they no longer count as parameters for switching.
+- *Properties* could grow taller than the screen, with *Advanced* open in Chinese most of all. It now scrolls
+  with Save and Cancel always in sight, like *Settings*. Covered by a test on the real dialog.
 - Each placeholder is now checked where it stands. In `ssh {ask:Host} tail {clipboard}`, the host takes
   `admin@server2`, and the words after it are still checked as the remote shell reads them; 0.8.0 checked
   both values as the command, so `admin@server2` was refused. The values of wsl's own options (`-d`, `-u`,

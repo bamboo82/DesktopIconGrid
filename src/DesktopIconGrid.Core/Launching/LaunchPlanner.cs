@@ -163,10 +163,11 @@ public static class LaunchPlanner
     /// <summary>
     /// The default when no choice is stored: a program is brought forward, unless the shortcut passes parameters
     /// (<c>mstsc /v:server2</c>, <c>putty -load prod</c>, <c>code C:\proj2</c>), since the copy already running may have
-    /// been started with other ones. Documents, folders and links start again.
+    /// been started with other ones. Documents, folders and links start again. <c>{file}</c> and <c>{files}</c> do not
+    /// count: a click brings no files (<see cref="DropArguments.WithoutFilePlaceholders"/>).
     /// </summary>
     public static bool SwitchesByDefault(string? location, string? parameters) =>
-        IsProgramLocation(location) && string.IsNullOrWhiteSpace(parameters);
+        IsProgramLocation(location) && DropArguments.WithoutFilePlaceholders(parameters) is null;
 
     /// <summary>A program: an <c>.exe</c> or <c>.com</c> file, a bare command (<c>notepad</c>), or a Store app from the Apps folder.</summary>
     public static bool IsProgramLocation(string? location)

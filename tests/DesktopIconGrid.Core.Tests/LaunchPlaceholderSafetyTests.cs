@@ -317,4 +317,25 @@ public sealed class LaunchPlaceholderSafetyTests : IDisposable
         Assert.True(LaunchPlaceholders.TakesOptionAt(template, positions[0]));
         Assert.False(LaunchPlaceholders.TakesOptionAt(template, positions[1]));
     }
+
+    [Theory]
+    [InlineData("{files}", null)]
+    [InlineData("\"{file}\"", null)]
+    [InlineData("-multiInst {files}", "-multiInst")]
+    [InlineData("--open {FILE} --wait", "--open --wait")]
+    [InlineData("-n", "-n")]
+    [InlineData(null, null)]
+    public void A_click_brings_no_files_so_file_placeholders_are_taken_out(string? parameters, string? forClick)
+    {
+        // The review: a click on a {files} shortcut started notepad++.exe {files}.
+        Assert.Equal(forClick, DropArguments.WithoutFilePlaceholders(parameters));
+    }
+
+    [Fact]
+    public void File_placeholders_do_not_make_a_program_start_again_instead_of_switching()
+    {
+        Assert.True(LaunchPlanner.SwitchesByDefault(@"C:\Tools\notepad++.exe", "{files}"));
+        Assert.True(LaunchPlanner.SwitchesByDefault(@"C:\Tools\notepad++.exe", "\"{file}\""));
+        Assert.False(LaunchPlanner.SwitchesByDefault(@"C:\Tools\notepad++.exe", "-multiInst {files}"));
+    }
 }

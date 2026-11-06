@@ -42,21 +42,22 @@ public class FlowLayoutTests
         // so its last icon wrapped and every later row was off by one.
         var boxes = FlowLayout.Arrange([Cell, Cell, Cell, Divider, Cell, Cell, Cell, Cell], 3 * W + 4, W, H);
 
-        Assert.Equal(new FlowBox(3 * W, 0, 4, H), boxes[3]); // what is left of the row
+        Assert.Equal(new FlowBox(3 * W, 0, FlowLayout.MinimumHitWidth, H), boxes[3]); // what is left of the row, at least the hit width
         Assert.Equal([new FlowBox(0, H, W, H), new FlowBox(W, H, W, H), new FlowBox(2 * W, H, W, H)], boxes.Skip(4).Take(3));
         Assert.Equal(new FlowBox(0, 2 * H, W, H), boxes[7]);
-        Assert.Equal((3 * W + 4, 3 * H), FlowLayout.Extent(boxes));
+        Assert.Equal((3 * W + FlowLayout.MinimumHitWidth, 3 * H), FlowLayout.Extent(boxes)); // the panel caps it at its width
     }
 
     [Fact]
-    public void A_divider_in_a_row_with_no_room_left_takes_none()
+    public void A_divider_in_a_row_with_no_room_left_reaches_into_the_margin_so_it_can_still_be_used()
     {
+        // The review: with no width it could not be seen, right-clicked or dragged, and Tab landed on it unseen.
         var boxes = FlowLayout.Arrange([Cell, Cell, Divider, Divider, Cell], 2 * W, W, H);
 
-        Assert.Equal(new FlowBox(2 * W, 0, 0, H), boxes[2]);
-        Assert.Equal(new FlowBox(2 * W, 0, 0, H), boxes[3]);
+        Assert.Equal(new FlowBox(2 * W, 0, FlowLayout.MinimumHitWidth, H), boxes[2]);
+        Assert.Equal(new FlowBox(2 * W, 0, FlowLayout.MinimumHitWidth, H), boxes[3]); // stacked there, never further out
         Assert.Equal(new FlowBox(0, H, W, H), boxes[4]);
-        Assert.Equal((2 * W, 2 * H), FlowLayout.Extent(boxes));
+        Assert.Equal((2 * W + FlowLayout.MinimumHitWidth, 2 * H), FlowLayout.Extent(boxes));
     }
 
     [Fact]

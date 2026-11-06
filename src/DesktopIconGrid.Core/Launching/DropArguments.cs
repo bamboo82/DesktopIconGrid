@@ -9,10 +9,26 @@ namespace DesktopIconGrid.Core.Launching;
 /// by all files at once; without a placeholder the files are appended to the parameters.
 /// Paths are quoted the way Windows' command-line parser expects (so <c>C:\</c> stays <c>C:\</c>).
 /// </summary>
-public static class DropArguments
+public static partial class DropArguments
 {
     public const string FilePlaceholder = "{file}";
     public const string FilesPlaceholder = "{files}";
+
+    /// <summary>
+    /// The parameters for a click, which brings no files: <c>{file}</c> and <c>{files}</c> (with the quotes written around
+    /// them, and the space before) taken out, so the program does not get them as words. <see langword="null"/> when
+    /// nothing is left.
+    /// </summary>
+    public static string? WithoutFilePlaceholders(string? parameters)
+    {
+        if (parameters is null)
+        {
+            return null;
+        }
+
+        var stripped = FilePlaceholderPattern().Replace(parameters, string.Empty).Trim();
+        return stripped.Length == 0 ? null : stripped;
+    }
 
     /// <summary>Programs, scripts and documents can open dropped files; links, shell folders and special actions cannot.</summary>
     public static bool SupportsOpenWith(ShortcutItem shortcut)
@@ -88,4 +104,7 @@ public static class DropArguments
         builder.Append('"');
         return builder.ToString();
     }
+
+    [System.Text.RegularExpressions.GeneratedRegex("\\s*\"?\\{files?\\}\"?", System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.CultureInvariant)]
+    private static partial System.Text.RegularExpressions.Regex FilePlaceholderPattern();
 }

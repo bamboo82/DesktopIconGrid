@@ -10,92 +10,20 @@
         ShowInTaskbar="False"
         Icon="{StaticResource AppIconImage}"
         FocusManager.FocusedElement="{Binding ElementName=NameBox}">
-  <Grid Margin="14">
-    <Grid.ColumnDefinitions>
-      <ColumnDefinition Width="Auto" MinWidth="80" />
-      <ColumnDefinition Width="*" />
-      <ColumnDefinition Width="Auto" />
-    </Grid.ColumnDefinitions>
-    <Grid.RowDefinitions>
-      <RowDefinition Height="Auto" />
-      <RowDefinition Height="Auto" />
-      <RowDefinition Height="Auto" />
-      <RowDefinition Height="Auto" />
-      <RowDefinition Height="Auto" />
-      <RowDefinition Height="Auto" />
-      <RowDefinition Height="Auto" />
-      <RowDefinition Height="Auto" />
-      <RowDefinition Height="Auto" />
-      <RowDefinition Height="Auto" />
-    </Grid.RowDefinitions>
-
-    <!-- Name -->
-    <TextBlock Grid.Row="0" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Common_NameLabel}" Margin="0,0,12,8" />
-    <TextBox x:Name="NameBox" Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="2"
-             Style="{StaticResource DialogTextBox}"
-             Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" />
-
-    <!-- Location -->
-    <TextBlock Grid.Row="1" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Props_Location}" Margin="0,0,12,8"
-               IsEnabled="{Binding IsShortcut}" />
-    <TextBox Grid.Row="1" Grid.Column="1"
-             Style="{StaticResource DialogTextBox}"
-             Text="{Binding Location, UpdateSourceTrigger=PropertyChanged}"
-             IsEnabled="{Binding IsShortcut}" />
-    <Button x:Name="BrowseButton" Grid.Row="1" Grid.Column="2"
-            Content="…" Width="32" Margin="6,0,0,8" Padding="0,3"
-            IsEnabled="{Binding IsShortcut}"
-            Click="Browse_Click">
-      <Button.ContextMenu>
-        <ContextMenu>
-          <MenuItem Header="{x:Static r:Strings.Props_BrowseFile}" Click="BrowseFile_Click" />
-          <MenuItem Header="{x:Static r:Strings.Props_BrowseFolder}" Click="BrowseFolder_Click" />
-        </ContextMenu>
-      </Button.ContextMenu>
-    </Button>
-
-    <StackPanel Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2">
-      <TextBlock Style="{StaticResource DialogHint}"
-                 Text="{Binding LocationHint}"
-                 IsEnabled="{Binding IsShortcut}" />
-      <CheckBox Content="{x:Static r:Strings.Props_OnlyThisPc}" IsChecked="{Binding OnlyThisPc}" Margin="0,6,0,0"
-                ToolTip="{x:Static r:Strings.Props_OnlyThisPcToolTip}"
-                Visibility="{Binding CanBeOnlyThisPc, Converter={StaticResource BoolToVisibility}}" />
-      <TextBlock Style="{StaticResource DialogHint}" Margin="20,2,0,0" Text="{Binding OtherPcsText}"
-                 Visibility="{Binding ShowsOtherPcs, Converter={StaticResource BoolToVisibility}}" />
+  <DockPanel>
+    <!-- Save and Cancel stay in sight; the properties above them scroll when the screen is too short for them all. -->
+    <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right" Margin="14,6,14,14">
+      <Button Content="{x:Static r:Strings.Common_Save}" Style="{StaticResource DialogButton}" IsDefault="True"
+              IsEnabled="{Binding CanSave}" Click="Save_Click" />
+      <Button Content="{x:Static r:Strings.Common_Cancel}" Style="{StaticResource DialogButton}" IsCancel="True" />
     </StackPanel>
 
-    <!-- Parameters -->
-    <TextBlock Grid.Row="3" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Props_Parameters}" Margin="0,0,12,8"
-               IsEnabled="{Binding IsShortcut}" />
-    <TextBox Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="2"
-             Style="{StaticResource DialogTextBox}"
-             Text="{Binding Parameters, UpdateSourceTrigger=PropertyChanged}"
-             IsEnabled="{Binding IsShortcut}" />
-
-    <TextBlock Grid.Row="4" Grid.Column="1" Grid.ColumnSpan="2"
-               Style="{StaticResource DialogHint}"
-               Text="{Binding ParametersHint}"
-               IsEnabled="{Binding IsShortcut}"
-               Visibility="{Binding IsShortcut, Converter={StaticResource BoolToVisibility}}" />
-
-    <!-- Output log -->
-    <TextBlock Grid.Row="5" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Props_Log}" VerticalAlignment="Top" Margin="0,2,12,0"
-               Visibility="{Binding IsShortcut, Converter={StaticResource BoolToVisibility}}" />
-    <StackPanel Grid.Row="5" Grid.Column="1" Grid.ColumnSpan="2" Margin="0,0,0,10"
-                Visibility="{Binding IsShortcut, Converter={StaticResource BoolToVisibility}}">
-      <CheckBox Content="{x:Static r:Strings.Props_KeepLog}" IsChecked="{Binding CaptureLog}" IsEnabled="{Binding CanCaptureLog}" />
-      <TextBlock Style="{StaticResource DialogHint}" Margin="0,4,0,0" Text="{Binding CaptureLogHint}" />
-    </StackPanel>
-
-    <!-- Advanced -->
-    <Expander Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="3" Margin="0,0,0,10"
-              Header="{x:Static r:Strings.Props_Advanced}"
-              Visibility="{Binding IsShortcut, Converter={StaticResource BoolToVisibility}}">
-      <Grid Margin="0,6,0,0">
+    <ScrollViewer x:Name="Body" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Focusable="False">
+      <Grid Margin="14,14,14,0">
         <Grid.ColumnDefinitions>
           <ColumnDefinition Width="Auto" MinWidth="80" />
           <ColumnDefinition Width="*" />
+          <ColumnDefinition Width="Auto" />
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
           <RowDefinition Height="Auto" />
@@ -106,89 +34,166 @@
           <RowDefinition Height="Auto" />
           <RowDefinition Height="Auto" />
           <RowDefinition Height="Auto" />
+          <RowDefinition Height="Auto" />
+          <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <TextBlock Grid.Row="0" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Props_WhenRunning}" Margin="0,0,12,4" />
-        <ComboBox Grid.Row="0" Grid.Column="1" HorizontalAlignment="Left" MinWidth="200" Margin="0,0,0,4"
-                  ItemsSource="{Binding WhenRunningOptions}" SelectedItem="{Binding SelectedWhenRunning}" DisplayMemberPath="Name"
-                  AutomationProperties.Name="{x:Static r:Strings.Props_WhenRunningName}" />
-        <TextBlock Grid.Row="1" Grid.Column="1" Style="{StaticResource DialogHint}" Margin="0,0,0,8" Text="{Binding WhenRunningHint}" />
+        <!-- Name -->
+        <TextBlock Grid.Row="0" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Common_NameLabel}" Margin="0,0,12,8" />
+        <TextBox x:Name="NameBox" Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="2"
+                 Style="{StaticResource DialogTextBox}"
+                 Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" />
 
-        <TextBlock Grid.Row="2" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Props_StartIn}" Margin="0,0,12,4" />
-        <TextBox Grid.Row="2" Grid.Column="1" Style="{StaticResource DialogTextBox}" Margin="0,0,0,4"
-                 Text="{Binding StartIn, UpdateSourceTrigger=PropertyChanged}"
-                 AutomationProperties.Name="{x:Static r:Strings.Props_StartInName}" />
-        <TextBlock Grid.Row="3" Grid.Column="1" Style="{StaticResource DialogHint}" Margin="0,0,0,8" Text="{Binding StartInHint}" />
+        <!-- Location -->
+        <TextBlock Grid.Row="1" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Props_Location}" Margin="0,0,12,8"
+                   IsEnabled="{Binding IsShortcut}" />
+        <TextBox Grid.Row="1" Grid.Column="1"
+                 Style="{StaticResource DialogTextBox}"
+                 Text="{Binding Location, UpdateSourceTrigger=PropertyChanged}"
+                 IsEnabled="{Binding IsShortcut}" />
+        <Button x:Name="BrowseButton" Grid.Row="1" Grid.Column="2"
+                Content="…" Width="32" Margin="6,0,0,8" Padding="0,3"
+                IsEnabled="{Binding IsShortcut}"
+                Click="Browse_Click">
+          <Button.ContextMenu>
+            <ContextMenu>
+              <MenuItem Header="{x:Static r:Strings.Props_BrowseFile}" Click="BrowseFile_Click" />
+              <MenuItem Header="{x:Static r:Strings.Props_BrowseFolder}" Click="BrowseFolder_Click" />
+            </ContextMenu>
+          </Button.ContextMenu>
+        </Button>
 
-        <TextBlock Grid.Row="4" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Props_Run}" Margin="0,0,12,8" />
-        <ComboBox Grid.Row="4" Grid.Column="1" HorizontalAlignment="Left" MinWidth="200" Margin="0,0,0,8"
-                  ItemsSource="{Binding WindowStateOptions}" SelectedItem="{Binding SelectedWindowState}" DisplayMemberPath="Name"
-                  AutomationProperties.Name="{x:Static r:Strings.Props_RunName}" />
+        <StackPanel Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2">
+          <TextBlock Style="{StaticResource DialogHint}"
+                     Text="{Binding LocationHint}"
+                     IsEnabled="{Binding IsShortcut}" />
+          <CheckBox Content="{x:Static r:Strings.Props_OnlyThisPc}" IsChecked="{Binding OnlyThisPc}" Margin="0,6,0,0"
+                    ToolTip="{x:Static r:Strings.Props_OnlyThisPcToolTip}"
+                    Visibility="{Binding CanBeOnlyThisPc, Converter={StaticResource BoolToVisibility}}" />
+          <TextBlock Style="{StaticResource DialogHint}" Margin="20,2,0,0" Text="{Binding OtherPcsText}"
+                     Visibility="{Binding ShowsOtherPcs, Converter={StaticResource BoolToVisibility}}" />
+        </StackPanel>
 
-        <CheckBox Grid.Row="5" Grid.Column="1" Margin="0,0,0,10" Content="{x:Static r:Strings.Props_RunAsAdmin}" IsChecked="{Binding RunAsAdministrator}" />
+        <!-- Parameters -->
+        <TextBlock Grid.Row="3" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Props_Parameters}" Margin="0,0,12,8"
+                   IsEnabled="{Binding IsShortcut}" />
+        <TextBox Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="2"
+                 Style="{StaticResource DialogTextBox}"
+                 Text="{Binding Parameters, UpdateSourceTrigger=PropertyChanged}"
+                 IsEnabled="{Binding IsShortcut}" />
 
-        <TextBlock Grid.Row="6" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Props_Browser}" Margin="0,0,12,4"
-                   IsEnabled="{Binding IsWebLink}" />
-        <ComboBox Grid.Row="6" Grid.Column="1" HorizontalAlignment="Left" MinWidth="240" Margin="0,0,0,4"
-                  ItemsSource="{Binding BrowserOptions}" SelectedItem="{Binding SelectedBrowser}" DisplayMemberPath="Name"
-                  IsEnabled="{Binding IsWebLink}"
-                  AutomationProperties.Name="{x:Static r:Strings.Props_BrowserName}" />
-        <CheckBox Grid.Row="7" Grid.Column="1" Margin="0,0,0,4" Content="{x:Static r:Strings.Props_AppWindow}"
-                  IsChecked="{Binding AppWindow}" IsEnabled="{Binding CanChooseAppWindow}" />
-      </Grid>
-    </Expander>
+        <TextBlock Grid.Row="4" Grid.Column="1" Grid.ColumnSpan="2"
+                   Style="{StaticResource DialogHint}"
+                   Text="{Binding ParametersHint}"
+                   IsEnabled="{Binding IsShortcut}"
+                   Visibility="{Binding IsShortcut, Converter={StaticResource BoolToVisibility}}" />
 
-    <!-- Icon -->
-    <TextBlock Grid.Row="7" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Props_Icon}" VerticalAlignment="Top" Margin="0,6,12,0" />
-    <StackPanel Grid.Row="7" Grid.Column="1" Grid.ColumnSpan="2" Orientation="Horizontal" Margin="0,0,0,8">
-      <Border Width="36" Height="36" Margin="0,0,10,0" VerticalAlignment="Center">
-        <Grid>
-          <Image Source="{Binding Preview, TargetNullValue={StaticResource PlaceholderIconImage}}"
-                 Width="32" Height="32"
-                 Stretch="Uniform"
-                 RenderOptions.BitmapScalingMode="HighQuality"
-                 Visibility="{Binding ShowsImagePreview, Converter={StaticResource BoolToVisibility}}" />
-          <Border Width="34" Height="34" CornerRadius="5" ClipToBounds="True"
-                  Background="{DynamicResource Theme.Background}"
-                  BorderBrush="{DynamicResource Theme.Border}" BorderThickness="1"
-                  Visibility="{Binding HasTextIcon, Converter={StaticResource BoolToVisibility}}">
-            <TextBlock Text="{Binding PreviewText}"
-                       FontFamily="{Binding PreviewFontFamily}"
-                       FontSize="{Binding PreviewFontSize}"
-                       FontWeight="{Binding PreviewFontWeight}"
-                       Foreground="{Binding PreviewTextBrush}"
-                       TextAlignment="Center" TextWrapping="Wrap"
-                       HorizontalAlignment="Center" VerticalAlignment="Center" />
+        <!-- Output log -->
+        <TextBlock Grid.Row="5" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Props_Log}" VerticalAlignment="Top" Margin="0,2,12,0"
+                   Visibility="{Binding IsShortcut, Converter={StaticResource BoolToVisibility}}" />
+        <StackPanel Grid.Row="5" Grid.Column="1" Grid.ColumnSpan="2" Margin="0,0,0,10"
+                    Visibility="{Binding IsShortcut, Converter={StaticResource BoolToVisibility}}">
+          <CheckBox Content="{x:Static r:Strings.Props_KeepLog}" IsChecked="{Binding CaptureLog}" IsEnabled="{Binding CanCaptureLog}" />
+          <TextBlock Style="{StaticResource DialogHint}" Margin="0,4,0,0" Text="{Binding CaptureLogHint}" />
+        </StackPanel>
+
+        <!-- Advanced -->
+        <Expander x:Name="Advanced" Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="3" Margin="0,0,0,10"
+                  Header="{x:Static r:Strings.Props_Advanced}"
+                  Visibility="{Binding IsShortcut, Converter={StaticResource BoolToVisibility}}">
+          <Grid Margin="0,6,0,0">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="Auto" MinWidth="80" />
+              <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+              <RowDefinition Height="Auto" />
+              <RowDefinition Height="Auto" />
+              <RowDefinition Height="Auto" />
+              <RowDefinition Height="Auto" />
+              <RowDefinition Height="Auto" />
+              <RowDefinition Height="Auto" />
+              <RowDefinition Height="Auto" />
+              <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <TextBlock Grid.Row="0" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Props_WhenRunning}" Margin="0,0,12,4" />
+            <ComboBox Grid.Row="0" Grid.Column="1" HorizontalAlignment="Left" MinWidth="200" Margin="0,0,0,4"
+                      ItemsSource="{Binding WhenRunningOptions}" SelectedItem="{Binding SelectedWhenRunning}" DisplayMemberPath="Name"
+                      AutomationProperties.Name="{x:Static r:Strings.Props_WhenRunningName}" />
+            <TextBlock Grid.Row="1" Grid.Column="1" Style="{StaticResource DialogHint}" Margin="0,0,0,8" Text="{Binding WhenRunningHint}" />
+
+            <TextBlock Grid.Row="2" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Props_StartIn}" Margin="0,0,12,4" />
+            <TextBox Grid.Row="2" Grid.Column="1" Style="{StaticResource DialogTextBox}" Margin="0,0,0,4"
+                     Text="{Binding StartIn, UpdateSourceTrigger=PropertyChanged}"
+                     AutomationProperties.Name="{x:Static r:Strings.Props_StartInName}" />
+            <TextBlock Grid.Row="3" Grid.Column="1" Style="{StaticResource DialogHint}" Margin="0,0,0,8" Text="{Binding StartInHint}" />
+
+            <TextBlock Grid.Row="4" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Props_Run}" Margin="0,0,12,8" />
+            <ComboBox Grid.Row="4" Grid.Column="1" HorizontalAlignment="Left" MinWidth="200" Margin="0,0,0,8"
+                      ItemsSource="{Binding WindowStateOptions}" SelectedItem="{Binding SelectedWindowState}" DisplayMemberPath="Name"
+                      AutomationProperties.Name="{x:Static r:Strings.Props_RunName}" />
+
+            <CheckBox Grid.Row="5" Grid.Column="1" Margin="0,0,0,10" Content="{x:Static r:Strings.Props_RunAsAdmin}" IsChecked="{Binding RunAsAdministrator}" />
+
+            <TextBlock Grid.Row="6" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Props_Browser}" Margin="0,0,12,4"
+                       IsEnabled="{Binding IsWebLink}" />
+            <ComboBox Grid.Row="6" Grid.Column="1" HorizontalAlignment="Left" MinWidth="240" Margin="0,0,0,4"
+                      ItemsSource="{Binding BrowserOptions}" SelectedItem="{Binding SelectedBrowser}" DisplayMemberPath="Name"
+                      IsEnabled="{Binding IsWebLink}"
+                      AutomationProperties.Name="{x:Static r:Strings.Props_BrowserName}" />
+            <CheckBox Grid.Row="7" Grid.Column="1" Margin="0,0,0,4" Content="{x:Static r:Strings.Props_AppWindow}"
+                      IsChecked="{Binding AppWindow}" IsEnabled="{Binding CanChooseAppWindow}" />
+          </Grid>
+        </Expander>
+
+        <!-- Icon -->
+        <TextBlock Grid.Row="7" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Props_Icon}" VerticalAlignment="Top" Margin="0,6,12,0" />
+        <StackPanel Grid.Row="7" Grid.Column="1" Grid.ColumnSpan="2" Orientation="Horizontal" Margin="0,0,0,8">
+          <Border Width="36" Height="36" Margin="0,0,10,0" VerticalAlignment="Center">
+            <Grid>
+              <Image Source="{Binding Preview, TargetNullValue={StaticResource PlaceholderIconImage}}"
+                     Width="32" Height="32"
+                     Stretch="Uniform"
+                     RenderOptions.BitmapScalingMode="HighQuality"
+                     Visibility="{Binding ShowsImagePreview, Converter={StaticResource BoolToVisibility}}" />
+              <Border Width="34" Height="34" CornerRadius="5" ClipToBounds="True"
+                      Background="{DynamicResource Theme.Background}"
+                      BorderBrush="{DynamicResource Theme.Border}" BorderThickness="1"
+                      Visibility="{Binding HasTextIcon, Converter={StaticResource BoolToVisibility}}">
+                <TextBlock Text="{Binding PreviewText}"
+                           FontFamily="{Binding PreviewFontFamily}"
+                           FontSize="{Binding PreviewFontSize}"
+                           FontWeight="{Binding PreviewFontWeight}"
+                           Foreground="{Binding PreviewTextBrush}"
+                           TextAlignment="Center" TextWrapping="Wrap"
+                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+              </Border>
+            </Grid>
           </Border>
-        </Grid>
-      </Border>
-      <Button Content="{x:Static r:Strings.Props_ChangeIcon}" Padding="10,3" VerticalAlignment="Center" Click="ChangeIcon_Click">
-        <Button.ContextMenu>
-          <ContextMenu>
-            <MenuItem Header="{x:Static r:Strings.Props_BrowseImage}" Click="ChangeIconFile_Click" />
-            <MenuItem Header="{x:Static r:Strings.Props_FromWeb}" Click="ChangeIconUrl_Click" />
-          </ContextMenu>
-        </Button.ContextMenu>
-      </Button>
-      <Button Content="{x:Static r:Strings.Props_TextIcon}" Padding="10,3" Margin="8,0,0,0" VerticalAlignment="Center" Click="TextIcon_Click"
-              ToolTip="{x:Static r:Strings.Props_TextIconToolTip}" />
-      <Button Content="{x:Static r:Strings.Props_UseDefault}" Padding="10,3" Margin="8,0,0,0" VerticalAlignment="Center"
-              IsEnabled="{Binding HasCustomIcon}" Click="UseDefaultIcon_Click" />
-    </StackPanel>
+          <Button Content="{x:Static r:Strings.Props_ChangeIcon}" Padding="10,3" VerticalAlignment="Center" Click="ChangeIcon_Click">
+            <Button.ContextMenu>
+              <ContextMenu>
+                <MenuItem Header="{x:Static r:Strings.Props_BrowseImage}" Click="ChangeIconFile_Click" />
+                <MenuItem Header="{x:Static r:Strings.Props_FromWeb}" Click="ChangeIconUrl_Click" />
+              </ContextMenu>
+            </Button.ContextMenu>
+          </Button>
+          <Button Content="{x:Static r:Strings.Props_TextIcon}" Padding="10,3" Margin="8,0,0,0" VerticalAlignment="Center" Click="TextIcon_Click"
+                  ToolTip="{x:Static r:Strings.Props_TextIconToolTip}" />
+          <Button Content="{x:Static r:Strings.Props_UseDefault}" Padding="10,3" Margin="8,0,0,0" VerticalAlignment="Center"
+                  IsEnabled="{Binding HasCustomIcon}" Click="UseDefaultIcon_Click" />
+        </StackPanel>
 
-    <!-- Warning -->
-    <TextBlock Grid.Row="8" Grid.Column="0" Grid.ColumnSpan="3"
-               Text="{Binding Warning}"
-               Foreground="{DynamicResource WarningBrush}"
-               TextWrapping="Wrap"
-               Margin="0,0,0,8"
-               Visibility="{Binding HasWarning, Converter={StaticResource BoolToVisibility}}" />
+        <!-- Warning -->
+        <TextBlock Grid.Row="8" Grid.Column="0" Grid.ColumnSpan="3"
+                   Text="{Binding Warning}"
+                   Foreground="{DynamicResource WarningBrush}"
+                   TextWrapping="Wrap"
+                   Margin="0,0,0,8"
+                   Visibility="{Binding HasWarning, Converter={StaticResource BoolToVisibility}}" />
 
-    <!-- Buttons -->
-    <StackPanel Grid.Row="9" Grid.Column="0" Grid.ColumnSpan="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,6,0,0">
-      <Button Content="{x:Static r:Strings.Common_Save}" Style="{StaticResource DialogButton}" IsDefault="True"
-              IsEnabled="{Binding CanSave}" Click="Save_Click" />
-      <Button Content="{x:Static r:Strings.Common_Cancel}" Style="{StaticResource DialogButton}" IsCancel="True" />
-    </StackPanel>
-  </Grid>
+      </Grid>
+    </ScrollViewer>
+  </DockPanel>
 </Window>

@@ -21,6 +21,7 @@ public partial class ItemPropertiesWindow : Window
     {
         InitializeComponent();
         DialogTheme.Apply(this);
+        WorkAreaFit.Attach(this);
     }
 
     private ItemPropertiesViewModel? ViewModel => DataContext as ItemPropertiesViewModel;

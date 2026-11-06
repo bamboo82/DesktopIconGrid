@@ -69,6 +69,21 @@ public sealed class DialogFitTests(WpfThread wpf)
     }
 
     [Fact]
+    public void Item_properties_scroll_on_a_short_screen_with_the_advanced_options_open()
+    {
+        // The review: 18 rows, no scroll bar, and eight more rows of hints once Advanced is open.
+        wpf.Invoke(() =>
+        {
+            var window = new ItemPropertiesWindow
+            {
+                DataContext = new ItemPropertiesViewModel(new ShortcutItem { Name = "Tool", Location = @"C:\Tools\tool.exe" }, isNew: false, new NoIcons()),
+            };
+            window.Advanced.IsExpanded = true;
+            FitsAShortScreen(window, window.Body, 400, Strings.Common_Save, Strings.Common_Cancel);
+        });
+    }
+
+    [Fact]
     public void Sync_scrolls_on_a_short_screen_with_Close_in_sight()
     {
         wpf.Invoke(() =>

@@ -116,6 +116,13 @@ public sealed class LaunchService(ProcessTracker tracker, ILaunchPrompts? prompt
 
     private LaunchResult LaunchCore(ShortcutItem shortcut, bool expandParameters = true, bool asAdministrator = false)
     {
+        if (expandParameters && DropArguments.WithoutFilePlaceholders(shortcut.Parameters) is var forClick && forClick != shortcut.Parameters?.Trim())
+        {
+            // A click brings no files: {file} and {files} would reach the program as words (Open with fills them in).
+            shortcut = (ShortcutItem)shortcut.Clone();
+            shortcut.Parameters = forClick;
+        }
+
         if (expandParameters && !string.IsNullOrWhiteSpace(shortcut.Parameters) && LaunchPlaceholders.HasAny(shortcut.Parameters))
         {
             // Expand the template first, then fill in the values: a '%' in the clipboard text or an answer stays as typed.
