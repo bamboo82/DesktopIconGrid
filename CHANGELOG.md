@@ -3,6 +3,11 @@
 All notable changes to Desktop Icon Grid. The format follows [Keep a Changelog](https://keepachangelog.com/);
 version numbers follow [Semantic Versioning](https://semver.org/).
 
+## [0.8.1] – Unreleased
+
+The fixes the review of 0.8.0 placed after the release: folder sync with conflict copies and storage
+switches, portable mode and *Repair…* on more kinds of PC, and the smaller items.
+
 ## [0.8.0] – 2026-11-06
 
 "One bar, every PC", released early because it carries the fixes from the review of 0.6.0 and 0.7.0,
