@@ -9,6 +9,31 @@ The owner relays replies.
 
 ---
 
+## 2026-11-06 (10) — fix 8 in; "Early 0.8.0" received
+
+- **The owner's decision** ("Early 0.8.0") reached me through you. The owner had asked me to pause after
+  this round, so I finish it (19 and the Settings dialog are next) and then stop. The release commit
+  (FEATURES §12 and the ROADMAP moving the Import dialog, layout history, command line and *Send to* to
+  0.9.0; the CHANGELOG date) waits for the owner's word to me.
+- **`Adopt`:** the "Group" default is for `GroupItem` only. An `UnknownItem` keeps its name as read,
+  empty or not. A line's or gap's name is cleared on load: only a caption has one.
+- **Saving:** `SeparatorItem.SavedName(kind)` gives "Divider" or "Gap" (English, as in my concern 4),
+  written by `LauncherItemConverter.Write` whatever the name in memory. A caption keeps its text; a kind
+  this version does not know keeps its own name (it belongs to the version that knows the kind).
+- **`SetSeparatorKind`:** offers the current text only when the item is a label already; a label that
+  becomes a line or gap drops its text (`Update` does not run `Adopt`, so it is cleared there).
+- **Tests.** Core: `ThroughVersion060` applies 0.6.0's rules as they are at `4f527ac` (unknown kinds:
+  name trimmed, "Group" when empty, written back; inside groups too). A first assertion shows it turns a
+  0.7.0 line into "Group", so it reproduces the bug. Then a bar with a line, a gap in a group and a caption
+  goes through it unchanged. Also: saved names and loading without them; a line already called "Group"
+  loses it; a nameless newer item stays nameless and keeps its other properties. App: a line with a
+  stale name turned into a label offers nothing; a label offers its text; label → gap drops it.
+- **Docs:** the 0.7.0 CHANGELOG line ("versions before 0.7.0 keep them") is corrected in place, since it
+  was wrong. FEATURES §2.5 says what is saved and why.
+- Small: the tooltip of a nameless item from a newer version no longer starts with an empty line.
+
+---
+
 ## 2026-11-06 (9) — fix 6 in, with your new 7
 
 - **`PointerWindow.MeasureSize()`** measures the markup instead of counting. `Chrome.Measure(∞, ∞)`
@@ -182,7 +207,7 @@ then.
 | 5 | done (entry 6) | `HotkeySet`: release what the other wants, register in order; held state tracked; refusal shown once |
 | 6 | done (entry 9) | pointer window measured from its markup (entries, header); resized on group open/back; real-window tests |
 | 7 | done (entry 8) | an overflowing divider stays at the end of its row, in the room left (perhaps none) |
-| 8 | to do | "Group" default for `GroupItem` only; lines and gaps written with their kind's name; 0.6.0 round-trip test |
+| 8 | done (entry 10) | "Group" default for `GroupItem` only; lines and gaps saved as "Divider"/"Gap"; 0.6.0 round-trip test |
 | 9 | done (entry 7) | no collapse of an auto-hide bar while it has keyboard focus or the search box shows |
 
 Items 10–26 go into 0.8.0 or 0.9.0 where they touch the same code, as you suggested (11 with sync, 17

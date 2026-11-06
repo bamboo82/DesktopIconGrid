@@ -57,7 +57,14 @@ internal sealed class RecordingDialogs : IDialogService
 
     public string? TextAnswer { get; set; }
 
-    public string? AskText(string title, string prompt, string? initialValue) => TextAnswer;
+    /// <summary>The text the last question offered to start from.</summary>
+    public string? OfferedText { get; private set; }
+
+    public string? AskText(string title, string prompt, string? initialValue)
+    {
+        OfferedText = initialValue;
+        return TextAnswer;
+    }
 
     public string? PickFolder(string title, string? initialFolder) => null;
 

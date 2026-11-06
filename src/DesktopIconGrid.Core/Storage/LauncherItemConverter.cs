@@ -111,6 +111,11 @@ public sealed class LauncherItemConverter : JsonConverter<LauncherItem>
             ordered[key] = node?.DeepClone();
         }
 
+        if (value is SeparatorItem separator && SeparatorItem.SavedName(separator.Kind) is { } savedName)
+        {
+            ordered["name"] = savedName; // for 0.6.0, which would name a nameless one "Group" (see SavedName)
+        }
+
         ordered.WriteTo(writer, options);
     }
 }

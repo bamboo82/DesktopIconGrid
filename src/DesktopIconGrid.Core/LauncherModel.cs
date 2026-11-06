@@ -110,6 +110,10 @@ public sealed class LauncherModel
         if (item is SeparatorItem separator)
         {
             separator.Kind = separator.Kind?.Trim() is { Length: > 0 } kind ? kind : SeparatorItem.Line; // a caption may be empty
+            if (SeparatorItem.SavedName(separator.Kind) is not null)
+            {
+                separator.Name = string.Empty; // only a caption has a name; a line's or gap's is there for 0.6.0
+            }
         }
         else if (item is ShortcutItem shortcut)
         {
@@ -128,9 +132,9 @@ public sealed class LauncherModel
                 item.Name = special.Kind.Length == 0 ? CoreStrings.Item_SpecialIconPlaceholder : special.Kind;
             }
         }
-        else if (item.Name.Length == 0)
+        else if (item is GroupItem && item.Name.Length == 0)
         {
-            item.Name = "Group";
+            item.Name = "Group"; // not an item from a newer version: it is written back as it was read, name and all
         }
     }
 

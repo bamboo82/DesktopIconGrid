@@ -211,7 +211,7 @@ public sealed class ItemViewModel : ObservableObject
 
             if (IsUnknown)
             {
-                return string.Format(Strings.Item_NewerVersionToolTip, Name);
+                return string.Format(Strings.Item_NewerVersionToolTip, Name).TrimStart('\n'); // it may have no name
             }
 
             var location = string.IsNullOrEmpty(Parameters) ? Location : $"{Location} {Parameters}";

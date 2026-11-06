@@ -88,6 +88,12 @@ layout history, and a command line with *Send to*.
   opens or a search goes back to the top level. Its search box no longer shows a tooltip over the first
   row each time it opens (the key help is still there for screen readers). Covered by tests on the real
   window.
+- Lines and gaps that went through a 0.6.0 PC (by sync) came back named "Group": 0.6.0 gives that name to
+  every nameless item from a newer version and saves it, and *Line → Label…* then offered "Group" as the
+  text. Lines and gaps are now saved with a name of their own ("Divider", "Gap") that 0.6.0 leaves alone;
+  this version ignores a line's or gap's name when loading, and turning one into a label offers no text.
+  Items from a newer version now keep their name as it was (0.7.0 also called nameless ones "Group").
+  Covered by tests that put a saved bar through 0.6.0's rules.
 
 ## [0.7.0] – 2026-11-05
 
@@ -137,7 +143,8 @@ voice until it answers.
 - Separators: *Add separator ▸ Line / Gap / Label…* on an icon or on empty space. A line is a thin divider
   between icons, a gap an empty cell, a label a small caption as wide as its text; in a bar one icon wide
   they lie across it. They can be dragged, switched to another kind and removed from their own menu, and
-  sit in groups too. Versions before 0.7.0 keep them as items from a newer version.
+  sit in groups too. Versions before 0.7.0 keep them as items from a newer version, but 0.6.0 names lines
+  and gaps "Group" (fixed in 0.8.0).
 - Colour tags: right-click → *Colour tag ▸* (seven colours or none), drawn as a corner on the icon. The
   names table has a *Colour tag* column and *Show:* narrows it to one colour or to the untagged items.
   Launch feedback, separators and tags are covered by tests of the layout and the view models; none of

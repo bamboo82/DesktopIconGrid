@@ -629,7 +629,10 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
         AddSeparator(list, index + 1, kind);
     }
 
-    /// <summary>Turns a separator into another kind. Choosing a label (again) asks for its text, offering the current one.</summary>
+    /// <summary>
+    /// Turns a separator into another kind. Choosing a label asks for its text, offering the current one when it is a
+    /// label already; a line's or gap's name means nothing (it may be "Group" from a 0.6.0 PC), so it is not offered.
+    /// </summary>
     public void SetSeparatorKind(ItemViewModel item, string kind)
     {
         if (item.Model is not SeparatorItem separator)
@@ -641,7 +644,8 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
         draft.Kind = kind;
         if (draft.EffectiveKind == SeparatorItem.Label)
         {
-            var text = _dialogs.AskText(Strings.Separator_LabelTitle, Strings.Separator_LabelPrompt, separator.Name)?.Trim();
+            var current = separator.EffectiveKind == SeparatorItem.Label ? separator.Name : null;
+            var text = _dialogs.AskText(Strings.Separator_LabelTitle, Strings.Separator_LabelPrompt, current)?.Trim();
             if (string.IsNullOrEmpty(text))
             {
                 return;
@@ -652,6 +656,10 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
         else if (draft.EffectiveKind == separator.EffectiveKind)
         {
             return;
+        }
+        else
+        {
+            draft.Name = string.Empty; // a caption's text does not stay with a line or a gap
         }
 
         Model.Update(draft);

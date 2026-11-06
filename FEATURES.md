@@ -205,7 +205,10 @@ The item model, handler interface, registry and the bucket are specified in
 Separators have no click action and are left out of searches and of the names table; they are outlined
 under the pointer so they can be found, dragged like icons, changed into another kind or removed from
 their own menu, and may sit inside groups. Versions before 0.7.0 show them as items from a newer version
-and keep them; a kind this version does not know is kept and drawn as a line.
+and keep them. Since 0.8.0 lines and gaps are saved with the name "Divider" or "Gap", which the bar ignores:
+0.6.0 names every nameless item from a newer version "Group" and saves that, so lines saved nameless by
+0.7.0 came back from a 0.6.0 PC called "Group". A kind this version does not know is kept and drawn as a
+line.
 
 ### 2.6 Colour tags (0.7.0)
 

@@ -52,6 +52,30 @@ public sealed class LauncherViewModelTests : IDisposable
     private static IEnumerable<string> Names(IEnumerable<LauncherItem> items) => items.Select(i => i.Name);
 
     [Fact]
+    public void A_line_turned_into_a_label_offers_no_text_even_with_a_stale_name()
+    {
+        var (viewModel, model, dialogs) = Create();
+        viewModel.AddSeparator(viewModel.RootItems, 1, SeparatorItem.Line);
+        model.Items[1].Name = "Group"; // what 0.6.0 named it, before this version ignored a line's name on loading
+        dialogs.TextAnswer = "Work";
+
+        viewModel.SetSeparatorKind(viewModel.RootItems.Items[1], SeparatorItem.Label);
+
+        Assert.Null(dialogs.OfferedText);
+        Assert.Equal("Work", model.Items[1].Name);
+
+        dialogs.TextAnswer = "Home";
+        viewModel.SetSeparatorKind(viewModel.RootItems.Items[1], SeparatorItem.Label); // a label again: its text is offered
+
+        Assert.Equal("Work", dialogs.OfferedText);
+        Assert.Equal("Home", model.Items[1].Name);
+
+        viewModel.SetSeparatorKind(viewModel.RootItems.Items[1], SeparatorItem.Gap);
+
+        Assert.Equal(string.Empty, model.Items[1].Name);
+    }
+
+    [Fact]
     public void Removing_a_shortcut_asks_nothing_and_undo_puts_it_back_where_it_was()
     {
         var previous = LauncherViewModel.UndoWindow;
