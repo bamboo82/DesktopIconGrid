@@ -1,5 +1,6 @@
 using DesktopIconGrid.Core;
 using DesktopIconGrid.Core.Models;
+using DesktopIconGrid.Core.Storage;
 
 namespace DesktopIconGrid.Core.Tests;
 
@@ -19,6 +20,51 @@ public class LauncherModelTests
     }
 
     private static string[] Names(IEnumerable<LauncherItem> items) => items.Select(i => i.Name).ToArray();
+
+    private static LauncherLayout VersionOne(params LauncherItem[] items) => new() { Version = 1, Items = [.. items] };
+
+    [Fact]
+    public void A_copy_on_a_second_disk_keeps_its_own_paths_in_Windows_folders()
+    {
+        // Review 16 R4′: D:\Program Files (x86)\Steam was rewritten to C: at every start, as 0.8.0's paths are repaired.
+        var steam = DataLocation.WithAppDrive(@"D:\Program Files (x86)\Steam\steam.exe", "D:"); // as ForStorage stores it on D:
+        Assert.Equal(@"%APPDRIVE%\Program Files (x86)\Steam\steam.exe", steam);
+        var there = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { @"D:\Program Files (x86)\Steam\steam.exe", @"C:\Program Files (x86)\Steam\steam.exe" };
+
+        var model = LauncherModel.FromLayout(VersionOne(new ShortcutItem { Name = "Steam", Location = steam }), there.Contains, "D:", "C:");
+
+        Assert.Equal(steam, ((ShortcutItem)model.Items[0]).Location);
+        Assert.Equal(0, model.RepairCount);
+    }
+
+    [Fact]
+    public void A_path_0_8_0_wrote_for_Windows_drive_is_repaired_once_and_never_another_PCs_own()
+    {
+        var notepad = new ShortcutItem
+        {
+            Name = "Notepad",
+            Location = @"%APPDRIVE%\Windows\System32\notepad.exe",
+            IconPath = @"%APPDRIVE%\Windows\System32\shell32.dll",
+            Locations = new() { ["laptop"] = @"%APPDRIVE%\Windows\notepad.exe" },
+        };
+        var there = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { @"C:\Windows\System32\notepad.exe", @"C:\Windows\System32\shell32.dll" };
+
+        var model = LauncherModel.FromLayout(VersionOne(notepad), there.Contains, "E:", "C:"); // a stick at E:
+
+        var repaired = (ShortcutItem)model.Items[0];
+        Assert.Equal(@"C:\Windows\System32\notepad.exe", repaired.Location);
+        Assert.Equal(@"C:\Windows\System32\shell32.dll", repaired.IconPath);
+        Assert.Equal(@"%APPDRIVE%\Windows\notepad.exe", repaired.Locations!["laptop"]); // that PC's, as it wrote it
+        Assert.Equal(2, model.RepairCount);
+
+        // Saved as version 2: the next load repairs nothing, even what is missing everywhere.
+        var saved = model.ToLayout();
+        Assert.Equal(LauncherLayout.CurrentVersion, saved.Version);
+        ((ShortcutItem)saved.Items[0]).Location = @"%APPDRIVE%\Windows\System32\gone.exe";
+        var again = LauncherModel.FromLayout(saved, _ => true, "E:", "C:");
+        Assert.Equal(@"%APPDRIVE%\Windows\System32\gone.exe", ((ShortcutItem)again.Items[0]).Location);
+        Assert.Equal(0, again.RepairCount);
+    }
 
     [Fact]
     public void Add_appends_in_order()

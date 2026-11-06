@@ -49,13 +49,27 @@ public sealed class LauncherModel
     // ----- loading / saving -------------------------------------------------------------
 
     /// <summary>Builds a model from a layout file, repairing duplicate ids and nested groups.</summary>
-    public static LauncherModel FromLayout(LauncherLayout layout)
+    public static LauncherModel FromLayout(LauncherLayout layout) => FromLayout(layout, exists: null, appDrive: null, systemDrive: null);
+
+    /// <summary>
+    /// Builds a model from a layout file, repairing duplicate ids and nested groups, and, in a layout of version 1, the
+    /// paths 0.8.0 wrote with <c>%APPDRIVE%</c> in Windows' own folders (see <see cref="Healed"/>). Each PC's own
+    /// location is left as it is: it is that PC's. By default the files are looked for here, and the drives are this
+    /// PC's (<c>%APPDRIVE%</c> and <c>%SystemDrive%</c>).
+    /// </summary>
+    public static LauncherModel FromLayout(LauncherLayout layout, Func<string, bool>? exists, string? appDrive, string? systemDrive)
     {
         ArgumentNullException.ThrowIfNull(layout);
+        appDrive ??= Environment.GetEnvironmentVariable(DataLocation.AppDriveVariable);
+        systemDrive ??= Environment.GetEnvironmentVariable("SystemDrive");
         var model = new LauncherModel(layout.Settings?.Clone() ?? new LauncherSettings(), layout.Window)
         {
             FormatVersion = Math.Max(layout.Version, LauncherLayout.CurrentVersion),
             _unknownProperties = UnknownProperties.Copy(layout.ExtensionData),
+            _driveRepair = layout.Version <= LauncherLayout.BeforeWindowsDriveRepair && appDrive is { Length: 2 } && systemDrive is { Length: 2 }
+                           && !string.Equals(appDrive, systemDrive, StringComparison.OrdinalIgnoreCase)
+                ? new DriveRepair(exists ?? (path => File.Exists(path) || Directory.Exists(path)), appDrive, systemDrive)
+                : null,
         };
         if (layout.Window is { IsUsable: false })
         {
@@ -83,6 +97,7 @@ public sealed class LauncherModel
             model._items.Add(copy);
         }
 
+        model._driveRepair = null; // items added later are this version's
         return model;
     }
 
@@ -96,14 +111,40 @@ public sealed class LauncherModel
     };
 
     /// <summary>A path of 0.8.0's under Windows' own folders, with its drive back (see <see cref="DataLocation.WithWindowsDrive"/>); counted as a repair.</summary>
+    /// <summary>
+    /// What <see cref="FromLayout(LauncherLayout, Func{string, bool}?, string?, string?)"/> needs to repair a layout of
+    /// version 1: whether a path is there, the drive <c>%APPDRIVE%</c> stands for, and Windows' drive.
+    /// </summary>
+    private sealed record DriveRepair(Func<string, bool> Exists, string AppDrive, string SystemDrive);
+
+    private DriveRepair? _driveRepair;
+
+    /// <summary>
+    /// A <c>%APPDRIVE%</c> path in Windows' own folders, from 0.8.0, given Windows' drive back when that is where it is:
+    /// missing where <c>%APPDRIVE%</c> points, and there on Windows' drive. A portable copy's own program on a second
+    /// disk (<c>D:\Program Files (x86)\Steam</c>) is there where <c>%APPDRIVE%</c> points, and stays as it is.
+    /// </summary>
     private string? Healed(string? path)
     {
-        var healed = DataLocation.WithWindowsDrive(path, Environment.GetEnvironmentVariable("SystemDrive"));
-        if (!string.Equals(healed, path, StringComparison.Ordinal))
+        if (_driveRepair is not { } repair || path is null)
         {
-            RepairCount++;
+            return path;
         }
 
+        var healed = DataLocation.WithWindowsDrive(path, repair.SystemDrive);
+        if (string.Equals(healed, path, StringComparison.Ordinal))
+        {
+            return path;
+        }
+
+        var prefix = $"%{DataLocation.AppDriveVariable}%";
+        var atAppDrive = repair.AppDrive + path.TrimStart()[prefix.Length..];
+        if (repair.Exists(atAppDrive) || !repair.Exists(healed!))
+        {
+            return path;
+        }
+
+        RepairCount++;
         return healed;
     }
 
@@ -132,13 +173,6 @@ public sealed class LauncherModel
         {
             shortcut.Location = Healed(shortcut.Location?.Trim()) ?? string.Empty;
             shortcut.StartIn = Healed(shortcut.StartIn);
-            if (shortcut.Locations is { } locations)
-            {
-                foreach (var (device, location) in locations.ToList())
-                {
-                    locations[device] = Healed(location) ?? location;
-                }
-            }
 
             if (shortcut.Name.Length == 0)
             {
