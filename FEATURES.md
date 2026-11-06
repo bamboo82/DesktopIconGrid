@@ -464,7 +464,7 @@ prerequisite for everything after it); click a running item to switch to it; the
 `.lnk` has; type to find, and open the grid at the pointer; launch feedback; separators; colour tags. The
 voice spike's probe is in `tools/VoiceProbe`; its answer is still to be written down (§6.1).
 
-**0.8.0 "One bar, every PC"** — sync through any folder (OneDrive, Dropbox, NAS); shortcuts that survive
+**0.8.0 "One bar, every PC"** *(in progress)* — sync through any folder (OneDrive, Dropbox, NAS); shortcuts that survive
 other PCs (missing targets, repair, per-device locations, portable mode); *Add app…* and imports; layout
 history; command line and Send To.
 

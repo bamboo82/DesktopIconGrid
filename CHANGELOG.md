@@ -3,6 +3,11 @@
 All notable changes to Desktop Icon Grid. The format follows [Keep a Changelog](https://keepachangelog.com/);
 version numbers follow [Semantic Versioning](https://semver.org/).
 
+## [0.8.0] – Unreleased
+
+"One bar, every PC": sync through any folder, shortcuts that survive other PCs, *Add app…* and imports,
+layout history, and a command line with *Send to*.
+
 ## [0.7.0] – 2026-11-05
 
 "Get there faster", the first release of the plan in [docs/ROADMAP.md](docs/ROADMAP.md): a click on a
