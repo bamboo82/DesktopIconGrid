@@ -120,5 +120,20 @@ public sealed class LaunchServiceTests : IDisposable
         Assert.False(LaunchService.CapturesOutput(elevated, asAdministrator: false, program)); // the stored option
         Assert.Equal(LaunchPlanner.RunAsVerb, LaunchPlanner.Plan(elevated).StartInfo!.Verb);
     }
+
+    [Fact]
+    public void A_dropped_file_whose_name_cmd_would_expand_is_refused_for_a_batch_file()
+    {
+        var service = Create(new Prompts(clipboard: null, answer: null), out var tracker);
+        using (tracker)
+        {
+            var batch = new ShortcutItem { Name = "Convert", Location = Path.Combine(_directory, "convert.bat"), Parameters = "{file}" };
+
+            var result = service.LaunchWith(batch, [Path.Combine(_directory, "100%PATH%.txt")]);
+
+            Assert.Equal(LaunchOutcome.Failed, result.Outcome);
+            Assert.Equal(string.Format(Strings.Launch_UnsafeValue, '%', "cmd.exe"), result.ErrorMessage);
+        }
+    }
 }
 

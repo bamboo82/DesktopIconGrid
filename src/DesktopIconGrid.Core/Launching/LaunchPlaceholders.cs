@@ -97,6 +97,25 @@ public static partial class LaunchPlaceholders
         return index < 0 ? null : value[index];
     }
 
+    /// <summary>
+    /// The character of a dropped file's path that <paramref name="reader"/> would act on even inside the quotes the
+    /// path is given, or <see langword="null"/>. A file name cannot hold <c>"</c>, so it never leaves its quotes, but
+    /// cmd.exe still expands <c>%NAME%</c> there (the batch file would silently get another argument) and PowerShell
+    /// script text still runs <c>$(…)</c> and reads the backtick as an escape.
+    /// </summary>
+    public static char? RefusedInPath(string path, ArgumentReader reader)
+    {
+        ArgumentNullException.ThrowIfNull(path);
+        var refused = reader switch
+        {
+            ArgumentReader.Cmd => "%",
+            ArgumentReader.PowerShellCommand => "$`",
+            _ => string.Empty,
+        };
+        var index = refused.Length == 0 ? -1 : path.AsSpan().IndexOfAny(refused);
+        return index < 0 ? null : path[index];
+    }
+
     private static readonly System.Buffers.SearchValues<char> LineBreaks = System.Buffers.SearchValues.Create("\r\n");
     private static readonly System.Buffers.SearchValues<char> CmdSpecial = System.Buffers.SearchValues.Create("\"%!^&|<>\r\n");
     private static readonly System.Buffers.SearchValues<char> PowerShellSpecial = System.Buffers.SearchValues.Create("$`;'\"\r\n");

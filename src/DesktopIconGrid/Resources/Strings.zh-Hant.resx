@@ -365,7 +365,7 @@
     <value>位置可以是檔案、資料夾或網址。</value>
   </data>
   <data name="Props_ParametersHint" xml:space="preserve">
-    <value>拖放到圖示上的檔案會取代 {file}（每個檔案啟動一次）或 {files}（一次全部）；沒有預留位置時則附加在參數後面。{clipboard} 插入剪貼簿文字，{ask:問題} 會詢問一個值。</value>
+    <value>拖放到圖示上的檔案會取代 {file}（每個檔案啟動一次）或 {files}（一次全部）；沒有預留位置時則附加在參數後面。{clipboard} 插入剪貼簿文字，{ask:問題} 會詢問一個值。若程式是批次檔、cmd.exe 或 PowerShell（以 -File 執行指令碼時除外），會檢查這些值，可能被當成命令執行的值會被拒絕。</value>
   </data>
   <data name="Props_LogHint" xml:space="preserve">
     <value>僅適用於主控台程式與批次檔：程式在沒有自己視窗的情況下執行，輸出寫入記錄檔，圖示的「顯示記錄」指令可即時顯示。</value>

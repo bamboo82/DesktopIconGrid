@@ -60,4 +60,15 @@ public class LaunchPlaceholderSafetyTests
         Assert.Null(LaunchPlaceholders.Refused("x\" & calc & \"", ArgumentReader.Plain)); // one quoted argument, whatever it holds
         Assert.Equal('\n', LaunchPlaceholders.Refused("one\ntwo", ArgumentReader.Plain));
     }
+
+    [Fact]
+    public void A_dropped_path_is_refused_only_for_what_works_inside_its_quotes()
+    {
+        Assert.Equal('%', LaunchPlaceholders.RefusedInPath(@"C:\In\100%PATH%.txt", ArgumentReader.Cmd));
+        Assert.Null(LaunchPlaceholders.RefusedInPath(@"C:\In\Tom & Jerry (1)!.mp4", ArgumentReader.Cmd)); // literal inside quotes
+        Assert.Equal('$', LaunchPlaceholders.RefusedInPath(@"C:\In\a$(calc).txt", ArgumentReader.PowerShellCommand));
+        Assert.Equal('`', LaunchPlaceholders.RefusedInPath(@"C:\In\a`b.txt", ArgumentReader.PowerShellCommand));
+        Assert.Null(LaunchPlaceholders.RefusedInPath(@"C:\In\a$(calc)%x%.txt", ArgumentReader.Plain));
+    }
 }
+

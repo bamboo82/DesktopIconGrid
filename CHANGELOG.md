@@ -17,8 +17,10 @@ layout history, and a command line with *Send to*.
   start a program, elevated with *Run as administrator*. Such values are now refused before anything
   starts, with a notification naming the character (for cmd.exe `" % ! ^ & | < >`, for PowerShell
   `$` `` ` `` `; ' "`), and a value of more than one line is refused for every program; the clipboard
-  text is trimmed first. Affects 0.7.0. Covered by tests for each refused character, each kind of
-  program and the plain values that still pass.
+  text is trimmed first. A file dropped on such a shortcut is refused when its name holds `%` (for
+  cmd.exe, which expands `%NAME%` even inside quotes) or `$` or `` ` `` (for PowerShell script text).
+  Affects 0.7.0. Covered by tests for each refused character, each kind of program and the plain values
+  that still pass.
 
 ### Added
 

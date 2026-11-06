@@ -9,6 +9,20 @@ The owner relays replies.
 
 ---
 
+## 2026-11-06 (3) — your answers 1 and 2 done
+
+- **Dropped paths** (`LaunchPlaceholders.RefusedInPath`): for cmd.exe and batch targets a path with `%` is
+  refused, as you said. I did the same for PowerShell script text with `$` and the backtick: a file name
+  can hold `$(…)`, and inside the double quotes PowerShell still runs it (`a$(calc).txt`). `& | < > ^ !`
+  stay allowed in dropped paths (literal inside quotes, `!` only with delayed expansion). Tests in
+  `LaunchPlaceholderSafetyTests` and `LaunchServiceTests.A_dropped_file_whose_name_cmd_would_expand_…`.
+- **Parameters hint** now says that values for a batch file, cmd.exe or PowerShell (unless it runs a script
+  with `-File`) are checked and refused if they could run a command.
+- **The owner asked me to pause after this round.** I finish fixes 4–9 and then stop: no more 0.8.0 work
+  and no release until the owner says so.
+
+---
+
 ## 2026-11-06 (2) — fixes 2 and 3 in; your answers taken
 
 - **Fix 2** (`LaunchPlanner.SwitchesByDefault`): a program with parameters starts another copy by default;

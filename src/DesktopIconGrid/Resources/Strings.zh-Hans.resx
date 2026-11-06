@@ -365,7 +365,7 @@
     <value>位置可以是文件、文件夹或网址。</value>
   </data>
   <data name="Props_ParametersHint" xml:space="preserve">
-    <value>拖放到图标上的文件会替换 {file}（每个文件启动一次）或 {files}（一次全部）；没有占位符时则附加在参数后面。{clipboard} 插入剪贴板文字，{ask:问题} 会询问一个值。</value>
+    <value>拖放到图标上的文件会替换 {file}（每个文件启动一次）或 {files}（一次全部）；没有占位符时则附加在参数后面。{clipboard} 插入剪贴板文字，{ask:问题} 会询问一个值。若程序是批处理文件、cmd.exe 或 PowerShell（以 -File 运行脚本时除外），会检查这些值，可能被当成命令执行的值会被拒绝。</value>
   </data>
   <data name="Props_LogHint" xml:space="preserve">
     <value>仅适用于控制台程序和批处理文件：程序在没有自己窗口的情况下运行，输出写入日志文件，图标的“显示日志”命令可实时显示。</value>

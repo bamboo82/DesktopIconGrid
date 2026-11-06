@@ -62,6 +62,16 @@ public sealed class LaunchService(ProcessTracker tracker, ILaunchPrompts? prompt
             template = filled.Parameters;
         }
 
+        var reader = LaunchPlaceholders.ReaderOf(shortcut.EffectiveLocation, template);
+        foreach (var path in paths)
+        {
+            if (LaunchPlaceholders.RefusedInPath(path, reader) is { } character)
+            {
+                AppLog.Default.Warning("Launch", $"A dropped path was refused for {reader}: {path}");
+                return LaunchResult.Failure(string.Format(Strings.Launch_UnsafeValue, character, reader == ArgumentReader.Cmd ? "cmd.exe" : "PowerShell"));
+            }
+        }
+
         var argumentSets = DropArguments.BuildArgumentSets(template, paths);
         if (argumentSets.Count == 0)
         {

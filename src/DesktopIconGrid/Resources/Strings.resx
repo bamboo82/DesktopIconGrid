@@ -365,7 +365,7 @@ Made by a newer version of Desktop Icon Grid; kept as a placeholder.</value>
     <value>The location may be a file, a folder or a URL.</value>
   </data>
   <data name="Props_ParametersHint" xml:space="preserve">
-    <value>Files dropped onto the icon replace {file} (one launch per file) or {files} (all at once); without a placeholder they are appended. {clipboard} inserts the clipboard text, {ask:Question} asks for a value.</value>
+    <value>Files dropped onto the icon replace {file} (one launch per file) or {files} (all at once); without a placeholder they are appended. {clipboard} inserts the clipboard text, {ask:Question} asks for a value. For a batch file, cmd.exe or PowerShell (unless it runs a script with -File) these values are checked and refused if they could run a command.</value>
   </data>
   <data name="Props_LogHint" xml:space="preserve">
     <value>Console programs and batch files only: the program runs without its own window, its output goes to a log file and the icon's Show log command displays it live.</value>
