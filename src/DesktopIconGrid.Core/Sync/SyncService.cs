@@ -15,6 +15,13 @@ public enum AutoUploadOutcome
 
     /// <summary>The linked copy could not be read (a sync program may be writing it); nothing was uploaded, try again later.</summary>
     Postponed,
+
+    /// <summary>
+    /// A copy was loaded, or this device was linked elsewhere or unlinked, while the upload waited its turn (see
+    /// <see cref="SyncService.LinkGeneration"/>): the bar it carried is not the one for the copy now linked. Nothing was
+    /// uploaded.
+    /// </summary>
+    LinkChanged,
 }
 
 public sealed record AutoUploadResult(AutoUploadOutcome Outcome, RemoteProfile? Remote = null)
@@ -44,6 +51,7 @@ public sealed class SyncService
     private readonly GoogleAuthorization _auth;
     private readonly IDriveClient _drive;
     private readonly SemaphoreSlim _gate = new(1, 1);
+    private int _linkGeneration;
     private FolderSyncClient? _folder;
     private readonly Action _saveSettings;
     private readonly Func<DateTimeOffset> _clock;
@@ -133,6 +141,16 @@ public sealed class SyncService
     /// finishes there before the copies move elsewhere, instead of writing that folder's file name into the next one,
     /// and nothing links this device again to a copy it was unlinked from while the operation waited for the network.
     /// </summary>
+    /// <summary>
+    /// Changes whenever a copy is loaded (the linked one again included) and whenever this device is linked to another
+    /// copy or unlinked; always inside the lock. An automatic upload passes the value it read when it took the bar, and
+    /// writes nothing when the value moved while it waited: that bar was replaced by the load, or belongs to a copy
+    /// this device has left.
+    /// </summary>
+    public int LinkGeneration => Volatile.Read(ref _linkGeneration);
+
+    private void LinkChanged() => Interlocked.Increment(ref _linkGeneration);
+
     private async Task<T> ExclusiveAsync<T>(Func<IDriveClient, Task<T>> operation, CancellationToken cancellationToken)
     {
         await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
@@ -267,6 +285,12 @@ public sealed class SyncService
             existing?.FileId,
             cancellationToken).ConfigureAwait(false);
 
+        if (!string.Equals(Settings.LinkedProfile, profile.Name, StringComparison.OrdinalIgnoreCase)
+            || !string.Equals(Settings.LinkedFileId, file.Id, StringComparison.Ordinal))
+        {
+            LinkChanged();
+        }
+
         Settings.LinkedProfile = profile.Name;
         Settings.LinkedFileId = file.Id;
         Settings.LastSyncedAt = file.ModifiedTime ?? now; // Drive's clock (or the file's time in a folder), not this PC's
@@ -308,6 +332,7 @@ public sealed class SyncService
             linkedFileId = original?.FileId; // none left: the next upload writes it again
         }
 
+        LinkChanged(); // even for the linked copy again: an upload of the bar this replaces must not follow
         Settings.LinkedProfile = linkedName;
         Settings.LinkedFileId = linkedFileId;
         Settings.LastSyncedAt = remote.SavedAt ?? profile.SavedAt;
@@ -343,6 +368,7 @@ public sealed class SyncService
 
     private void ForgetLink()
     {
+        LinkChanged();
         Settings.LinkedProfile = null;
         Settings.LinkedFileId = null;
         Settings.LastSyncedAt = null;
@@ -382,11 +408,26 @@ public sealed class SyncService
     }, cancellationToken);
 
     /// <summary>
-    /// Uploads the layout to the linked copy unless another device saved a newer version in the meantime,
-    /// in which case nothing is written and the conflict is reported.
+    /// Uploads the layout, taken just now, to the linked copy unless another device saved a newer version in the
+    /// meantime, in which case nothing is written and the conflict is reported.
     /// </summary>
-    public Task<AutoUploadResult> AutoUploadAsync(LauncherLayout layout, CancellationToken cancellationToken) => ExclusiveAsync(async copies =>
+    public Task<AutoUploadResult> AutoUploadAsync(LauncherLayout layout, CancellationToken cancellationToken) =>
+        AutoUploadAsync(layout, LinkGeneration, cancellationToken);
+
+    /// <summary>
+    /// Uploads the layout to the linked copy unless another device saved a newer version in the meantime (nothing is
+    /// written and the conflict is reported), or a copy was loaded or the link changed since the layout was taken at
+    /// <paramref name="takenAt"/> (a <see cref="LinkGeneration"/>): then the layout is not the bar for the linked copy
+    /// any more, and nothing is written either.
+    /// </summary>
+    public Task<AutoUploadResult> AutoUploadAsync(LauncherLayout layout, int takenAt, CancellationToken cancellationToken) => ExclusiveAsync(async copies =>
     {
+        if (takenAt != LinkGeneration)
+        {
+            AppLog.Default.Info("Sync", "Auto-upload dropped: a copy was loaded, or the link changed, while it waited");
+            return new AutoUploadResult(AutoUploadOutcome.LinkChanged);
+        }
+
         if (!IsLinked || !Settings.AutoUpload)
         {
             return new AutoUploadResult(AutoUploadOutcome.Skipped);

@@ -29,6 +29,8 @@ public sealed class SyncCoordinator : ObservableObject
     private Task? _current;
     private bool _uploadRequestedWhileBusy;
     private bool _shuttingDown;
+    private int _loading;
+    private bool _uploadDueAfterLoad;
     private string _status = string.Empty;
 
     /// <param name="confirm">Asks the user a yes/no question (title, message) when a newer copy is found at startup.</param>
@@ -166,7 +168,18 @@ public sealed class SyncCoordinator : ObservableObject
     {
         try
         {
-            var result = await Service.AutoUploadAsync(_host.ExportLayout(), CancellationToken.None);
+            if (_loading > 0)
+            {
+                // A copy is being loaded: the bar it replaces is uploaded nowhere (not even to the copy being left, so
+                // loading the linked copy again undoes a change). Should the load fail, the upload is due again.
+                _uploadDueAfterLoad = true;
+                return;
+            }
+
+            // The generation is read with the bar, on this thread: a load that finishes while the upload waits for its
+            // turn moves it, and the upload then writes nothing (the bar it carries is the one the load replaced).
+            var takenAt = Service.LinkGeneration;
+            var result = await Service.AutoUploadAsync(_host.ExportLayout(), takenAt, CancellationToken.None);
             switch (result.Outcome)
             {
                 case AutoUploadOutcome.Uploaded:
@@ -235,11 +248,38 @@ public sealed class SyncCoordinator : ObservableObject
         }
     }
 
+    /// <summary>
+    /// Loads a copy and puts it on the bar. Until the bar is replaced no upload takes it (the load has already moved
+    /// <see cref="SyncService.LinkGeneration"/> by then), and afterwards nothing that was waiting to upload the old bar
+    /// does: changes from now on ask for an upload of their own.
+    /// </summary>
     public async Task LoadAndApplyAsync(RemoteProfile remote, CancellationToken cancellationToken)
     {
-        var profile = await Service.LoadProfileAsync(remote, cancellationToken);
-        _host.ReplaceLayout(profile.Layout);
-        Status = string.Format(Strings.Sync_LoadedFrom, remote.Name, profile.SavedBy, Describe(profile.SavedAt));
+        _loading++;
+        var replaced = false;
+        try
+        {
+            var profile = await Service.LoadProfileAsync(remote, cancellationToken);
+            _host.ReplaceLayout(profile.Layout);
+            replaced = true;
+            Status = string.Format(Strings.Sync_LoadedFrom, remote.Name, profile.SavedBy, Describe(profile.SavedAt));
+        }
+        finally
+        {
+            _loading--;
+            if (replaced)
+            {
+                _timer.Stop();
+                _retryTimer.Stop();
+                _uploadRequestedWhileBusy = false;
+                _uploadDueAfterLoad = false;
+            }
+            else if (_uploadDueAfterLoad && _loading == 0)
+            {
+                _uploadDueAfterLoad = false;
+                ScheduleUpload(); // the bar is still the one that was waiting to go up
+            }
+        }
     }
 
     /// <summary>

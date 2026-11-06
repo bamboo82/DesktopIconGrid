@@ -21,6 +21,9 @@ public class SyncCoordinatorTests
         /// <summary>When set, uploads wait here (an upload "in flight").</summary>
         public TaskCompletionSource? Gate { get; set; }
 
+        /// <summary>When set, downloads wait here (a load "in flight").</summary>
+        public TaskCompletionSource? DownloadGate { get; set; }
+
         public Task<DriveUser> GetUserAsync(CancellationToken cancellationToken) => Task.FromResult(new DriveUser("me@example.com", "Me"));
 
         public Task<IReadOnlyList<DriveFile>> ListFilesAsync(CancellationToken cancellationToken)
@@ -45,7 +48,15 @@ public class SyncCoordinatorTests
             return new DriveFile(id, fileName, null, json.Length, properties);
         }
 
-        public Task<string> DownloadTextAsync(string fileId, CancellationToken cancellationToken) => Task.FromResult(Files[fileId].Content);
+        public async Task<string> DownloadTextAsync(string fileId, CancellationToken cancellationToken)
+        {
+            if (DownloadGate is { } gate)
+            {
+                await gate.Task;
+            }
+
+            return Files[fileId].Content;
+        }
 
         public Task DeleteAsync(string fileId, CancellationToken cancellationToken)
         {
@@ -86,6 +97,60 @@ public class SyncCoordinatorTests
         var service = new SyncService(auth, drive, settings, () => { }, "0.2.0");
         var host = new FakeHost();
         return (new SyncCoordinator(service, host, (_, _) => true), drive, host);
+    }
+
+    private static LauncherLayout LayoutOf(string itemName) => new() { Items = [new ShortcutItem { Name = itemName, Location = "C:\\" + itemName + ".exe" }] };
+
+    /// <summary>A PC with a copy "Work" to load, linked to "Home", whose bar has a change.</summary>
+    private static async Task<(SyncCoordinator Coordinator, FakeDrive Drive, FakeHost Host, RemoteProfile Work)> LinkedToHomeWithWork()
+    {
+        var (coordinator, drive, host) = Create();
+        await coordinator.Service.SaveProfileAsync("Work", LayoutOf("work-app"), CancellationToken.None);
+        await coordinator.Service.SaveProfileAsync("Home", LayoutOf("home-app"), CancellationToken.None);
+        var work = (await coordinator.Service.ListProfilesAsync(CancellationToken.None)).Single(p => p.Name == "Work");
+        drive.Log.Clear();
+        host.Layout = LayoutOf("home-app-moved");
+        return (coordinator, drive, host, work);
+    }
+
+    [Fact]
+    public async Task An_upload_due_while_a_copy_loads_takes_nothing_and_the_load_drops_it()
+    {
+        // Review 15 U1: the timer keeps running under the sync dialog; the bar it takes while a copy downloads (or after
+        // the download, before the bar is replaced) must not go into the copy the load links to.
+        var (coordinator, drive, host, work) = await LinkedToHomeWithWork();
+        host.Change(); // the change is waiting for the timer
+        Assert.True(coordinator.IsUploadScheduled);
+        drive.DownloadGate = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        var loading = coordinator.LoadAndApplyAsync(work, CancellationToken.None);
+        await coordinator.UploadNowAsync(); // a tick during the download (the retry timer's, or a second change's)
+        Assert.Empty(drive.Log);
+
+        drive.DownloadGate.SetResult();
+        await loading;
+
+        Assert.Equal("work-app", Assert.Single(host.Layout.Items).Name);
+        Assert.False(coordinator.IsUploadScheduled); // the change to the old bar is not uploaded after the load either
+        Assert.False(coordinator.IsUploading);
+        Assert.Empty(drive.Log);
+        Assert.Contains("work-app", drive.Files[work.FileId].Content, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task An_upload_due_while_a_load_fails_is_due_again_afterwards()
+    {
+        var (coordinator, drive, _, work) = await LinkedToHomeWithWork();
+        drive.DownloadGate = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var loading = coordinator.LoadAndApplyAsync(work, CancellationToken.None);
+        await coordinator.UploadNowAsync(); // the timer's tick during the download, for the change
+        Assert.False(coordinator.IsUploadScheduled);
+
+        drive.DownloadGate.SetException(new HttpRequestException("offline"));
+        await Assert.ThrowsAsync<HttpRequestException>(() => loading);
+
+        Assert.Equal("Home", coordinator.Service.Settings.LinkedProfile);
+        Assert.True(coordinator.IsUploadScheduled); // the bar is still Home's, with its change
     }
 
     [Fact]

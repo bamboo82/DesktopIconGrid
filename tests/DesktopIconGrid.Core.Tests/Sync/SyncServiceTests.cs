@@ -75,46 +75,68 @@ public class SyncServiceTests
         }
     }
 
-    /// <summary>Drive whose uploads wait, once <see cref="Hold"/> is set, until the test lets them go.</summary>
+    /// <summary>Drive whose <see cref="HoldOn"/> calls wait, once <see cref="Hold"/> is set, until the test lets them go.</summary>
     private sealed class HeldDrive : IDriveClient
     {
         public FakeDrive Inner { get; } = new();
 
         public TaskCompletionSource? Hold { get; set; }
 
-        public TaskCompletionSource UploadStarted { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        /// <summary>The call that waits: "upload", "list" or "download".</summary>
+        public string HoldOn { get; set; } = "upload";
+
+        /// <summary>Set when a held call has started waiting.</summary>
+        public TaskCompletionSource Held { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        private async Task WaitIfHeld(string call)
+        {
+            if (Hold is { } hold && call == HoldOn)
+            {
+                Held.TrySetResult();
+                await hold.Task;
+            }
+        }
 
         public Task<DriveUser> GetUserAsync(CancellationToken cancellationToken) => Inner.GetUserAsync(cancellationToken);
 
-        public Task<IReadOnlyList<DriveFile>> ListFilesAsync(CancellationToken cancellationToken) => Inner.ListFilesAsync(cancellationToken);
+        public async Task<IReadOnlyList<DriveFile>> ListFilesAsync(CancellationToken cancellationToken)
+        {
+            await WaitIfHeld("list");
+            return await Inner.ListFilesAsync(cancellationToken);
+        }
 
         public async Task<DriveFile> UploadJsonAsync(string fileName, string json, IReadOnlyDictionary<string, string> appProperties, string? existingFileId, CancellationToken cancellationToken)
         {
-            if (Hold is { } hold)
-            {
-                UploadStarted.TrySetResult();
-                await hold.Task;
-            }
-
+            await WaitIfHeld("upload");
             return await Inner.UploadJsonAsync(fileName, json, appProperties, existingFileId, cancellationToken);
         }
 
-        public Task<string> DownloadTextAsync(string fileId, CancellationToken cancellationToken) => Inner.DownloadTextAsync(fileId, cancellationToken);
+        public async Task<string> DownloadTextAsync(string fileId, CancellationToken cancellationToken)
+        {
+            await WaitIfHeld("download");
+            return await Inner.DownloadTextAsync(fileId, cancellationToken);
+        }
 
         public Task DeleteAsync(string fileId, CancellationToken cancellationToken) => Inner.DeleteAsync(fileId, cancellationToken);
     }
 
-    /// <summary>A PC linked to "Work" on Google Drive, with an upload of it waiting to be let go.</summary>
-    private static async Task<(SyncService Service, HeldDrive Drive, Task<AutoUploadResult> Upload)> UploadingService()
+    private static (SyncService Service, HeldDrive Drive) HeldService()
     {
         var store = new InMemoryTokenStore { Token = new OAuthToken("at", "rt", Now.AddHours(1), null) };
         var auth = new GoogleAuthorization(new HttpClient(new FakeHttpHandler()), store, () => new OAuthClientCredentials("id", "secret"), clock: () => Now);
         var drive = new HeldDrive();
-        var service = new SyncService(auth, drive, new SyncSettings { DeviceName = "PC-1" }, () => { }, "0.8.1", () => Now);
+        return (new SyncService(auth, drive, new SyncSettings { DeviceName = "PC-1" }, () => { }, "0.8.1", () => Now), drive);
+    }
+
+    /// <summary>A PC linked to "Work" on Google Drive, with an upload of it waiting in <paramref name="holdOn"/> to be let go.</summary>
+    private static async Task<(SyncService Service, HeldDrive Drive, Task<AutoUploadResult> Upload)> UploadingService(string holdOn = "upload")
+    {
+        var (service, drive) = HeldService();
         await service.SaveProfileAsync("Work", SampleLayout(), CancellationToken.None);
+        drive.HoldOn = holdOn;
         drive.Hold = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var upload = service.AutoUploadAsync(SampleLayout(), CancellationToken.None);
-        await drive.UploadStarted.Task; // it has listed Drive and is writing
+        await drive.Held.Task; // it holds the lock and is listing, or writing, on Drive
         return (service, drive, upload);
     }
 
@@ -122,10 +144,11 @@ public class SyncServiceTests
     public async Task The_copies_move_to_a_folder_only_after_a_running_upload_has_finished_where_it_started()
     {
         // The review's F3: an upload that listed one place could write into the next one, and then link this PC again.
+        // It is held while it lists Drive: before 0.8.1 the write that followed went to whatever storage was in use then.
         var folder = Directory.CreateTempSubdirectory("dig-sync-switch-").FullName;
         try
         {
-            var (service, drive, upload) = await UploadingService();
+            var (service, drive, upload) = await UploadingService(holdOn: "list");
 
             var switching = service.UseFolderAsync(folder);
             await Task.Delay(50);
@@ -161,6 +184,81 @@ public class SyncServiceTests
 
         Assert.Null(service.Settings.LinkedProfile);
         Assert.Null(service.Settings.LastRevision);
+    }
+
+    private static LauncherLayout LayoutOf(string itemName) => new() { Items = [new ShortcutItem { Name = itemName, Location = "C:\\" + itemName + ".exe" }] };
+
+    [Theory]
+    [InlineData("Work")] // DESK, linked to Home, loads Work
+    [InlineData("Home")] // DESK loads its linked copy again, to undo a change
+    public async Task An_upload_that_waited_behind_a_load_writes_nothing(string loaded)
+    {
+        // Review 15 U1: the upload took the bar (Home's items, with a change) while the load was downloading, and
+        // used to write it into the copy just loaded once the load had linked this PC to it.
+        var (service, drive) = HeldService();
+        await service.SaveProfileAsync("Work", LayoutOf("work-app"), CancellationToken.None);
+        await service.SaveProfileAsync("Home", LayoutOf("home-app"), CancellationToken.None);
+        var copy = (await service.ListProfilesAsync(CancellationToken.None)).Single(p => p.Name == loaded);
+        var before = drive.Inner.Files[copy.FileId].Content;
+        drive.HoldOn = "download";
+        drive.Hold = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        var loading = service.LoadProfileAsync(copy, CancellationToken.None);
+        await drive.Held.Task; // the load holds the lock and is downloading
+        var takenAt = service.LinkGeneration; // the bar is taken now, still linked to Home
+        var upload = service.AutoUploadAsync(LayoutOf("home-app-moved"), takenAt, CancellationToken.None);
+        await Task.Delay(50);
+        Assert.False(upload.IsCompleted); // waits for the load
+
+        drive.Hold.SetResult();
+        await loading;
+
+        Assert.Equal(AutoUploadOutcome.LinkChanged, (await upload).Outcome);
+        Assert.Equal(loaded, service.Settings.LinkedProfile);
+        Assert.Equal(before, drive.Inner.Files[copy.FileId].Content); // the loaded copy is as it was
+        Assert.DoesNotContain(drive.Inner.Files.Values, file => file.Content.Contains("home-app-moved", StringComparison.Ordinal));
+
+        // The next change is taken after the load, and goes up as usual.
+        Assert.Equal(AutoUploadOutcome.Uploaded, (await service.AutoUploadAsync(LayoutOf("after-load"), CancellationToken.None)).Outcome);
+        Assert.Contains("after-load", drive.Inner.Files[copy.FileId].Content, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task An_upload_waits_its_turn_but_saves_and_its_own_uploads_do_not_count_as_a_new_link()
+    {
+        var (service, drive, _, _) = CreateService();
+        await service.SaveProfileAsync("Work", LayoutOf("one"), CancellationToken.None);
+        var takenAt = service.LinkGeneration;
+
+        Assert.Equal(AutoUploadOutcome.Uploaded, (await service.AutoUploadAsync(LayoutOf("two"), takenAt, CancellationToken.None)).Outcome);
+        Assert.Equal(takenAt, service.LinkGeneration); // its own upload: the same link
+        await service.SaveProfileAsync("Work", LayoutOf("three"), CancellationToken.None);
+        Assert.Equal(takenAt, service.LinkGeneration); // the linked copy saved again from the dialog
+
+        await service.SaveProfileAsync("Other", LayoutOf("four"), CancellationToken.None);
+        Assert.NotEqual(takenAt, service.LinkGeneration); // linked elsewhere
+        Assert.Equal(AutoUploadOutcome.LinkChanged, (await service.AutoUploadAsync(LayoutOf("five"), takenAt, CancellationToken.None)).Outcome);
+        Assert.DoesNotContain(drive.Files.Values, file => file.Content.Contains("five", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task An_operation_cancelled_while_it_waits_for_its_turn_leaves_the_link_and_the_lock_alone()
+    {
+        var (service, drive, upload) = await UploadingService();
+        using var cancel = new CancellationTokenSource();
+
+        var unlinking = service.UnlinkAsync(cancel.Token);
+        await Task.Delay(50);
+        Assert.False(unlinking.IsCompleted);
+        await cancel.CancelAsync();
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => unlinking);
+
+        drive.Hold!.SetResult();
+        Assert.Equal(AutoUploadOutcome.Uploaded, (await upload).Outcome);
+        Assert.Equal("Work", service.Settings.LinkedProfile); // the cancelled unlink did nothing
+
+        await service.UnlinkAsync().WaitAsync(TimeSpan.FromSeconds(5)); // and the lock is free
+        Assert.Null(service.Settings.LinkedProfile);
     }
 
     private static (SyncService Service, FakeDrive Drive, SyncSettings Settings, List<int> Saves) CreateService(bool connected = true, DateTimeOffset? now = null, FakeHttpHandler? http = null)
