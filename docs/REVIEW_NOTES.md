@@ -9,6 +9,50 @@ The owner relays replies.
 
 ---
 
+## 2026-11-06 (15) — round 11 part 1 in (security); the tag waits for CI
+
+You were right on all four counts. My fix assumed PowerShell would see the quotes that `Quote` adds. It
+never does: the program's own argument parser takes them off before it joins the words into the script.
+
+- **1. PowerShell script text** (`LaunchPlaceholders.Refused` / `RefusedInPath`, `IsAllowedInScriptText`):
+  your allowlist, for values and dropped paths alike: `char.IsLetterOrDigit(text, index)`
+  (surrogate-aware, so CJK outside the BMP passes), space, and `. _ - \ / :`. The first refused
+  character, a surrogate pair counted whole, is named in the message. `Refused`/`RefusedInPath` now
+  return `string?` for that reason. The single-quoted-literal approach is left for later, as you say.
+- **2. The file Windows runs** (`ReaderOf(location, parameters, startIn, registeredPathOf, searchPath,
+  pathExtensions)`): a location without an extension is looked up under App Paths (`name.exe`, through
+  `InstalledPrograms.RegisteredPath`), in the start-in folder, then along PATH, each with every PATHEXT
+  extension. It counts as cmd.exe if any match is `.bat`/`.cmd`, or if nothing is found (your "count it
+  as Cmd unless it resolves to an .exe or .com"). The names cmd, powershell and pwsh are judged by name.
+  A `.lnk` location counts as cmd.exe, since its target is not known here. Any token in the parameters
+  naming cmd(.exe), powershell(.exe) or pwsh(.exe) (quotes trimmed, any folder) makes the reader at least
+  that strict, with the PowerShell switches read from the tokens after it. That covers wt, conhost and
+  runas, and anything else that hands its command line on. `ArgumentReader` is ordered by strictness;
+  the strictest wins.
+- **3. Options:** `TakesOptionAt(template, index)`: the placeholder starts a word (only a quote before it
+  in its word), and no `--` word comes before it. Each value is checked where its own placeholder
+  stands (`ClipboardPositions`, `AskPositions`), for every program. Only ASCII `-` counts; Windows' `/`
+  options are not covered (tell me if you want them: `/`-prefixed values would then be refused where an
+  argument starts, which breaks Unix-style paths). U+FF02 is refused for every program, in values and
+  dropped paths, with its own message.
+- **4.** The CHANGELOG Security entry now states exactly these rules, keeps "Affects 0.7.0", and names
+  the real-PowerShell tests.
+- **Small:** `Sync_Import` is `client__secret` in all three languages.
+- **Tests:** Core: your cases for PowerShell (also `a&b`, `@{}`, `{}`, `,`, en dash, U+2019/U+201C, tab,
+  an emoji named whole) and the ones that pass (paths with spaces, UNC, CJK, U+20000). Bare-name
+  resolution on a temp PATH with `npm.cmd` next to an extensionless `npm`, start-in, App Paths vs a PATH
+  `.cmd`, and an unknown name. The interpreter tokens; the option rule (8 templates and ask positions);
+  U+FF02. App: `LaunchService` refuses an option value (and lets it through after `--` or inside
+  `--file=`), refuses U+FF02, and refuses your dropped `a;Write-Output INJECTED;.txt`.
+  `RealPowerShellTests` runs powershell.exe and pwsh on CI. A sanity test shows `(1+1)` really prints 2
+  without the refusal. Each of your values is either refused or printed back word for word.
+- Not covered, for your judgement: other interpreters that take script text from an argument
+  (`bash -c`, `wsl -e`, `python -c "…{clipboard}…"`, `node -e`). The template would have to put the
+  placeholder inside the code, so it is the template's choice, like `-Command {clipboard}`. A value
+  starting with `-` is now refused there where it starts an argument.
+
+---
+
 ## 2026-11-06 (14) — 0.8.0 release commit
 
 - The owner said "go ahead, tag 0.8.0". The release commit dates the CHANGELOG (2026-11-06) and says in

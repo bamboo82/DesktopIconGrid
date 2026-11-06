@@ -62,13 +62,13 @@ public sealed class LaunchService(ProcessTracker tracker, ILaunchPrompts? prompt
             template = filled.Parameters;
         }
 
-        var reader = LaunchPlaceholders.ReaderOf(shortcut.EffectiveLocation, template);
+        var reader = ReaderOf(shortcut, template);
         foreach (var path in paths)
         {
             if (LaunchPlaceholders.RefusedInPath(path, reader) is { } character)
             {
                 AppLog.Default.Warning("Launch", $"A dropped path was refused for {reader}: {path}");
-                return LaunchResult.Failure(string.Format(Strings.Launch_UnsafeValue, character, reader == ArgumentReader.Cmd ? "cmd.exe" : "PowerShell"));
+                return LaunchResult.Failure(RefusalMessage(character, reader));
             }
         }
 
@@ -160,13 +160,14 @@ public sealed class LaunchService(ProcessTracker tracker, ILaunchPrompts? prompt
 
     /// <summary>
     /// Fills in <c>{clipboard}</c> and <c>{ask:…}</c> (see <see cref="LaunchPlaceholders"/>). Returns a result instead
-    /// when the launch stops: the clipboard holds no text, the user cancelled a question, or a value holds something the
-    /// program that reads the command line could run (cmd.exe for a batch file, PowerShell script text; see
-    /// <see cref="LaunchPlaceholders.Refused"/>). The clipboard text is trimmed first: a copied line often ends in a line break.
+    /// when the launch stops: the clipboard holds no text, the user cancelled a question, a value holds something the
+    /// program that reads the command line could act on (see <see cref="LaunchPlaceholders.Refused"/>), or a value would
+    /// reach the program as an option (see <see cref="LaunchPlaceholders.TakesOptionAt"/>). The clipboard text is trimmed
+    /// first: a copied line often ends in a line break.
     /// </summary>
     private (string Parameters, LaunchResult? Result) FillPlaceholders(ShortcutItem shortcut, string template)
     {
-        var reader = LaunchPlaceholders.ReaderOf(shortcut.EffectiveLocation, template);
+        var reader = ReaderOf(shortcut, template);
         string? clipboard = null;
         if (LaunchPlaceholders.UsesClipboard(template))
         {
@@ -176,13 +177,15 @@ public sealed class LaunchService(ProcessTracker tracker, ILaunchPrompts? prompt
                 return (template, LaunchResult.Failure(Strings.Launch_ClipboardEmpty));
             }
 
-            if (Refuse(clipboard, reader) is { } refused)
+            var takesOption = LaunchPlaceholders.ClipboardPositions(template).Any(index => LaunchPlaceholders.TakesOptionAt(template, index));
+            if (Refuse(clipboard, reader, takesOption) is { } refused)
             {
                 return (template, refused);
             }
         }
 
         var answers = new List<string>();
+        var askPositions = LaunchPlaceholders.AskPositions(template);
         foreach (var prompt in LaunchPlaceholders.Prompts(template))
         {
             var answer = prompts?.Ask(shortcut.Name, prompt.Length == 0 ? Strings.Launch_AskValue : prompt);
@@ -191,7 +194,7 @@ public sealed class LaunchService(ProcessTracker tracker, ILaunchPrompts? prompt
                 return (template, LaunchResult.Cancelled);
             }
 
-            if (Refuse(answer, reader) is { } refused)
+            if (Refuse(answer, reader, LaunchPlaceholders.TakesOptionAt(template, askPositions[answers.Count])) is { } refused)
             {
                 return (template, refused);
             }
@@ -202,18 +205,33 @@ public sealed class LaunchService(ProcessTracker tracker, ILaunchPrompts? prompt
         return (LaunchPlaceholders.Fill(template, clipboard, answers), null);
     }
 
-    private static LaunchResult? Refuse(string value, ArgumentReader reader)
+    /// <summary>Who reads the shortcut's command line: its program as Windows finds it (App Paths, its start-in folder, PATH), and what its parameters hand on to.</summary>
+    private static ArgumentReader ReaderOf(ShortcutItem shortcut, string? template) =>
+        LaunchPlaceholders.ReaderOf(shortcut.EffectiveLocation, template, shortcut.StartIn, InstalledPrograms.RegisteredPath);
+
+    private static LaunchResult? Refuse(string value, ArgumentReader reader, bool takesOption)
     {
-        if (LaunchPlaceholders.Refused(value, reader) is not { } character)
+        if (LaunchPlaceholders.Refused(value, reader) is { } character)
         {
-            return null;
+            AppLog.Default.Warning("Launch", $"A placeholder value was refused: it holds U+{char.ConvertToUtf32(character, 0):X4}, which {reader} could act on");
+            return LaunchResult.Failure(RefusalMessage(character, reader));
         }
 
-        AppLog.Default.Warning("Launch", $"A placeholder value was refused: it holds {(int)character:X4}, which {reader} could act on");
-        return LaunchResult.Failure(character is '\r' or '\n'
-            ? Strings.Launch_ValueHasLineBreak
-            : string.Format(Strings.Launch_UnsafeValue, character, reader == ArgumentReader.Cmd ? "cmd.exe" : "PowerShell"));
+        if (takesOption && value.StartsWith('-'))
+        {
+            AppLog.Default.Warning("Launch", "A placeholder value was refused: it begins with \"-\" where an argument starts, so the program would take it as an option");
+            return LaunchResult.Failure(Strings.Launch_ValueIsOption);
+        }
+
+        return null;
     }
+
+    private static string RefusalMessage(string character, ArgumentReader reader) => character switch
+    {
+        "\r" or "\n" => Strings.Launch_ValueHasLineBreak,
+        _ when character[0] == LaunchPlaceholders.FullwidthQuotationMark => Strings.Launch_LookalikeQuote,
+        _ => string.Format(Strings.Launch_UnsafeValue, character, reader == ArgumentReader.Cmd ? "cmd.exe" : "PowerShell"),
+    };
 
     private LaunchResult StartWithLog(ShortcutItem shortcut, ProcessStartInfo startInfo)
     {

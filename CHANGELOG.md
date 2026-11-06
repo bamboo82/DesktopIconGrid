@@ -22,16 +22,27 @@ spike has its first answer: no, for want of the zh-TW speech pack (FEATURES §6.
 ### Security
 
 - `{clipboard}` and `{ask:…}` values could run commands when the shortcut's program reads its command line
-  through cmd.exe (a `.bat` or `.cmd` file, `cmd.exe` itself, or the log capture of a batch file) or as
-  PowerShell script text (`powershell.exe` without `-File`, `pwsh -Command`). The quoting that keeps a
-  value one argument for other programs does not hold there, so copied text such as `x" & calc & "` could
-  start a program, elevated with *Run as administrator*. Such values are now refused before anything
-  starts, with a notification naming the character (for cmd.exe `" % ! ^ & | < >`, for PowerShell
-  `$` `` ` `` `; ' "`), and a value of more than one line is refused for every program; the clipboard
-  text is trimmed first. A file dropped on such a shortcut is refused when its name holds `%` (for
-  cmd.exe, which expands `%NAME%` even inside quotes) or `$` or `` ` `` (for PowerShell script text).
-  Affects 0.7.0. Covered by tests for each refused character, each kind of program and the plain values
-  that still pass.
+  through cmd.exe or as PowerShell script text. The quoting that keeps a value one argument for other
+  programs does not hold there. Copied text such as `x" & calc & "` could start a program through cmd.exe,
+  elevated with *Run as administrator*, and PowerShell takes the quotes off before it reads the words, so
+  `(calc)` ran too. Such values are now refused before anything starts, with a notification naming the
+  character:
+  - cmd.exe reads the command line of a batch file, of `cmd.exe` itself, and of a command without an
+    extension that Windows finds as a batch file (npm, npx, code and many more) or that is not found
+    here. For these, `" % ! ^ & | < >` are refused.
+  - PowerShell reads it as script text for `powershell.exe` without `-File` and for `pwsh -Command`.
+    For these, only letters, digits, spaces and `. _ - \ / :` pass.
+  - A program that hands its command line on to cmd.exe or PowerShell (`wt cmd /c …`, `runas`,
+    `conhost`) is treated like them.
+  - For every program, a value of more than one line is refused, and so is the fullwidth quotation mark
+    `＂`, which Windows can turn into `"` for older programs. The clipboard text is trimmed first.
+  - For every program, a value that begins with `-` where an argument starts is refused unless `--`
+    comes before it, because most programs would take it as an option (`python "-c…"` runs code).
+
+  A file dropped on such a shortcut is refused when its name holds `%` (cmd.exe expands `%NAME%` even
+  inside quotes) or, for PowerShell script text, anything but the characters above. Affects 0.7.0.
+  Covered by tests for each refused character and each kind of program, and on Windows by running the
+  real powershell.exe and pwsh with the command lines the app builds.
 
 ### Added
 

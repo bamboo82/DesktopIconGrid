@@ -122,6 +122,51 @@ public sealed class LaunchServiceTests : IDisposable
     }
 
     [Fact]
+    public void A_value_that_would_be_an_option_is_refused_unless_double_dash_ends_the_options()
+    {
+        var python = Path.Combine(_directory, "python.exe"); // not started: the refusal comes first
+        var service = Create(new Prompts(clipboard: "-cprint(1+1)", answer: "--upload-pack=calc"), out var tracker);
+        using (tracker)
+        {
+            var asCode = service.Launch(new ShortcutItem { Name = "Run", Location = python, Parameters = "{clipboard}" });
+            var asOption = service.Launch(new ShortcutItem { Name = "Clone", Location = python, Parameters = "clone {ask:Repository} dir" });
+            var afterDoubleDash = service.Launch(new ShortcutItem { Name = "Open", Location = python, Parameters = "script.py -- {clipboard}" });
+            var insideAWord = service.Launch(new ShortcutItem { Name = "Open", Location = python, Parameters = "--file={clipboard}" });
+
+            Assert.Equal(Strings.Launch_ValueIsOption, asCode.ErrorMessage);
+            Assert.Equal(Strings.Launch_ValueIsOption, asOption.ErrorMessage);
+            Assert.NotEqual(Strings.Launch_ValueIsOption, afterDoubleDash.ErrorMessage); // went on, and failed only to start
+            Assert.NotEqual(Strings.Launch_ValueIsOption, insideAWord.ErrorMessage);
+        }
+    }
+
+    [Fact]
+    public void The_fullwidth_quotation_mark_is_refused_for_any_program()
+    {
+        var service = Create(new Prompts(clipboard: "repo\uFF02 --upload-pack=calc", answer: null), out var tracker);
+        using (tracker)
+        {
+            var result = service.Launch(new ShortcutItem { Name = "Clone", Location = Path.Combine(_directory, "git.exe"), Parameters = "clone {clipboard}" });
+
+            Assert.Equal(Strings.Launch_LookalikeQuote, result.ErrorMessage);
+        }
+    }
+
+    [Fact]
+    public void A_dropped_file_whose_name_PowerShell_would_run_is_refused_for_script_text()
+    {
+        var service = Create(new Prompts(clipboard: null, answer: null), out var tracker);
+        using (tracker)
+        {
+            var shortcut = new ShortcutItem { Name = "Show", Location = "powershell.exe", Parameters = "-NoProfile -Command Get-Item {file}" };
+
+            var result = service.LaunchWith(shortcut, [@"C:\t\a;Write-Output INJECTED;.txt"]);
+
+            Assert.Equal(string.Format(Strings.Launch_UnsafeValue, ';', "PowerShell"), result.ErrorMessage);
+        }
+    }
+
+    [Fact]
     public void A_dropped_file_whose_name_cmd_would_expand_is_refused_for_a_batch_file()
     {
         var service = Create(new Prompts(clipboard: null, answer: null), out var tracker);

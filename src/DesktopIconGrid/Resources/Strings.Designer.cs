@@ -1221,6 +1221,15 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Not started: “＂” (a full-width quotation mark) can reach the program as an ordin [rest of string was truncated]";.
+        /// </summary>
+        public static string Launch_LookalikeQuote {
+            get {
+                return ResourceManager.GetString("Launch_LookalikeQuote", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Right-click a shortcut and choose "Add to Multi Launch group". Every member star [rest of string was truncated]";.
         /// </summary>
         public static string Launch_MultiEmpty {
@@ -1352,6 +1361,15 @@ namespace DesktopIconGrid.Resources {
         public static string Launch_ValueHasLineBreak {
             get {
                 return ResourceManager.GetString("Launch_ValueHasLineBreak", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Not started: the value begins with “-”, so the program would take it as an optio [rest of string was truncated]";.
+        /// </summary>
+        public static string Launch_ValueIsOption {
+            get {
+                return ResourceManager.GetString("Launch_ValueIsOption", resourceCulture);
             }
         }
 
@@ -4164,7 +4182,7 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Import client_secret.json….
+        ///   Looks up a localized string similar to Import client__secret.json….
         /// </summary>
         public static string Sync_Import {
             get {
