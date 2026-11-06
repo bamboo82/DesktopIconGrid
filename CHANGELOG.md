@@ -19,6 +19,12 @@ switches, portable mode and *Repair…* on more kinds of PC, and the smaller ite
 
 ### Fixed
 
+- Starting a portable copy with *Start with Windows* off removed the installed bar's autostart: every copy
+  shares one Run entry, and it was removed whatever program it named. A copy now removes or rewrites the
+  entry only when it names that copy. An entry for another copy that is still there is left alone, and
+  turning the option on says so; one for a program that is gone is taken over, as before. A portable copy
+  adds an entry on a PC only after asking, so a stick no longer leaves entries behind on every PC it visits.
+  Covered by tests against a stand-in for the registry.
 - Each placeholder is now checked where it stands. In `ssh {ask:Host} tail {clipboard}`, the host takes
   `admin@server2`, and the words after it are still checked as the remote shell reads them; 0.8.0 checked
   both values as the command, so `admin@server2` was refused. The values of wsl's own options (`-d`, `-u`,

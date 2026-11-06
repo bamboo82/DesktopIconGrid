@@ -140,9 +140,31 @@ public partial class App : Application
         viewModel.FlushBeforeExit = () => _sync.FlushPendingAsync(TimeSpan.FromSeconds(5));
         _ = Task.Run(() => DriveCache.Purge(cacheDirectory, TimeSpan.FromDays(1)));
 
+        // A portable copy never adds a Run entry by itself on the PCs it visits: only when the option is turned on there.
         var startup = CreateStartupRegistration();
-        ApplyStartupRegistration(startup, viewModel.Model.Settings);
-        viewModel.SettingsChanged += (_, _) => ApplyStartupRegistration(startup, viewModel.Model.Settings);
+        var applied = (viewModel.Model.Settings.StartWithWindows, viewModel.Model.Settings.StartHidden);
+        ApplyStartupRegistration(startup, viewModel.Model.Settings, mayAdd: !DataLocation.IsPortable);
+        viewModel.SettingsChanged += (_, _) =>
+        {
+            var settings = viewModel.Model.Settings;
+            if ((settings.StartWithWindows, settings.StartHidden) == applied)
+            {
+                return;
+            }
+
+            applied = (settings.StartWithWindows, settings.StartHidden);
+            var change = ApplyStartupRegistration(startup, settings, mayAdd: !DataLocation.IsPortable);
+            if (change == StartupChange.NotAdded
+                && dialogs.Confirm(Strings.Settings_StartWithWindows, string.Format(Strings.Startup_PortableQuestion, startup?.ExecutablePath)))
+            {
+                change = ApplyStartupRegistration(startup, settings, mayAdd: true);
+            }
+
+            if (change == StartupChange.LeftToAnotherCopy)
+            {
+                dialogs.Notify(Strings.Settings_StartWithWindows, string.Format(Strings.Startup_AnotherCopy, startup?.RegisteredExecutable));
+            }
+        };
 
         var window = new MainWindow(viewModel);
         MainWindow = window;
@@ -272,26 +294,39 @@ public partial class App : Application
         return string.IsNullOrEmpty(executable) ? null : new StartupRegistration(new RegistryRunKey(), executable);
     }
 
-    /// <summary>Writes, repairs or removes the Run entry so it matches the settings; registry trouble is logged, never fatal.</summary>
-    private static void ApplyStartupRegistration(StartupRegistration? startup, LauncherSettings settings)
+    /// <summary>
+    /// Writes, repairs or removes this program's Run entry so it matches the settings (see <see cref="StartupRegistration.Apply"/>);
+    /// registry trouble is logged, never fatal.
+    /// </summary>
+    private static StartupChange ApplyStartupRegistration(StartupRegistration? startup, LauncherSettings settings, bool mayAdd)
     {
         if (startup is null)
         {
-            return;
+            return StartupChange.None;
         }
 
         try
         {
-            if (startup.Apply(settings.StartWithWindows, settings.StartHidden))
+            var change = startup.Apply(settings.StartWithWindows, settings.StartHidden, mayAdd);
+            switch (change)
             {
-                AppLog.Default.Info("App", settings.StartWithWindows
-                    ? $"Registered to start with Windows{(settings.StartHidden ? " (hidden)" : string.Empty)}: {startup.ExecutablePath}"
-                    : "No longer starts with Windows");
+                case StartupChange.Written:
+                    AppLog.Default.Info("App", $"Registered to start with Windows{(settings.StartHidden ? " (hidden)" : string.Empty)}: {startup.ExecutablePath}");
+                    break;
+                case StartupChange.Removed:
+                    AppLog.Default.Info("App", "No longer starts with Windows");
+                    break;
+                case StartupChange.LeftToAnotherCopy:
+                    AppLog.Default.Info("App", $"Start with Windows is left to another copy: {startup.RegisteredExecutable}");
+                    break;
             }
+
+            return change;
         }
         catch (Exception ex) when (ex is SecurityException or UnauthorizedAccessException or IOException)
         {
             AppLog.Default.Warning("App", $"The Run registry entry could not be updated: {ex.Message}");
+            return StartupChange.None;
         }
     }
 

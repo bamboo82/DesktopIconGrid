@@ -1736,4 +1736,10 @@ Details are in {1}.</value>
   <data name="Sync_LoadedConflictCopy" xml:space="preserve">
     <value>Loaded "{0}", a copy the sync program kept of "{1}". This device stays linked to "{1}", and the next upload asks before it replaces another PC's save there.</value>
   </data>
+  <data name="Startup_PortableQuestion" xml:space="preserve">
+    <value>This is a portable copy, in {0}. Start it with Windows on this PC? Windows finds it only while that drive is there.</value>
+  </data>
+  <data name="Startup_AnotherCopy" xml:space="preserve">
+    <value>Another copy of Desktop Icon Grid already starts with Windows ({0}), so this one was not added. Turn the option off in that copy first.</value>
+  </data>
 </root>

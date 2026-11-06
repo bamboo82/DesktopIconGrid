@@ -3966,6 +3966,24 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Another copy of Desktop Icon Grid already starts with Windows ({0}), so this one [rest of string was truncated]";.
+        /// </summary>
+        public static string Startup_AnotherCopy {
+            get {
+                return ResourceManager.GetString("Startup_AnotherCopy", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to This is a portable copy, in {0}. Start it with Windows on this PC? Windows finds [rest of string was truncated]";.
+        /// </summary>
+        public static string Startup_PortableQuestion {
+            get {
+                return ResourceManager.GetString("Startup_PortableQuestion", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Google account.
         /// </summary>
         public static string Sync_Account {

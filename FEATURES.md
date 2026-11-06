@@ -407,7 +407,7 @@ warnings and errors. The last 2000 entries stay in memory and all of them are ap
 | Windows 11 style dialogs | on (follow the system light/dark mode) |
 | Dock to edge | not docked (top, bottom, left or right edge as a desktop toolbar) |
 | Auto-hide | off (with a dock edge: two-pixel strip until the pointer touches the edge) |
-| Start with Windows | off (current user's Run key; repaired when the program moves) |
+| Start with Windows | off (current user's Run key; repaired when the program moves). One entry serves every copy: a copy changes it only when it names that copy, leaves another copy's alone (and says so), and a portable copy adds one on a PC only after asking (0.8.1) |
 | Start hidden | off (with Start with Windows: only the tray icon until shown) |
 | Show/hide hotkey | none (set in Settings; needs Ctrl, Alt or Win) |
 | Show-at-pointer hotkey | none (needs Ctrl, Alt or Win, and a combination other than the show/hide one) |

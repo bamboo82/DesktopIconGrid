@@ -1736,4 +1736,10 @@
   <data name="Sync_LoadedConflictCopy" xml:space="preserve">
     <value>已加载“{0}”，这是同步程序保留的“{1}”副本。这台设备仍链接到“{1}”，下次上传若会替换其他电脑保存的内容，会先询问。</value>
   </data>
+  <data name="Startup_PortableQuestion" xml:space="preserve">
+    <value>这是便携式副本，位于 {0}。要在这台电脑上随 Windows 启动它吗？只有在该驱动器存在时，Windows 才能找到它。</value>
+  </data>
+  <data name="Startup_AnotherCopy" xml:space="preserve">
+    <value>已有另一份 Desktop Icon Grid 会随 Windows 启动（{0}），因此未加入这一份。请先在那一份中关闭此选项。</value>
+  </data>
 </root>

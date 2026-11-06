@@ -34,18 +34,18 @@ public class StartupRegistrationTests
         var registration = new StartupRegistration(key, Exe);
         Assert.False(registration.IsRegistered);
 
-        Assert.True(registration.Apply(startWithWindows: true, startHidden: false));
+        Assert.Equal(StartupChange.Written, registration.Apply(startWithWindows: true, startHidden: false));
         Assert.Equal($"\"{Exe}\"", key.Values[StartupRegistration.ValueName]);
         Assert.True(registration.IsRegistered);
-        Assert.False(registration.Apply(startWithWindows: true, startHidden: false)); // already right: no write
+        Assert.Equal(StartupChange.None, registration.Apply(startWithWindows: true, startHidden: false)); // already right: no write
         Assert.Equal(1, key.Writes);
 
-        Assert.True(registration.Apply(startWithWindows: true, startHidden: true));
+        Assert.Equal(StartupChange.Written, registration.Apply(startWithWindows: true, startHidden: true));
         Assert.Equal($"\"{Exe}\" --hidden", key.Values[StartupRegistration.ValueName]);
 
-        Assert.True(registration.Apply(startWithWindows: false, startHidden: true));
+        Assert.Equal(StartupChange.Removed, registration.Apply(startWithWindows: false, startHidden: true));
         Assert.Empty(key.Values);
-        Assert.False(registration.Apply(startWithWindows: false, startHidden: false));
+        Assert.Equal(StartupChange.None, registration.Apply(startWithWindows: false, startHidden: false));
     }
 
     [Fact]
@@ -54,10 +54,55 @@ public class StartupRegistrationTests
         var key = new FakeRunKey();
         key.Values[StartupRegistration.ValueName] = "\"D:\\old place\\DesktopIconGrid.exe\" --hidden";
 
-        var changed = new StartupRegistration(key, Exe).Apply(startWithWindows: true, startHidden: true);
+        var changed = new StartupRegistration(key, Exe, fileExists: _ => false).Apply(startWithWindows: true, startHidden: true);
 
-        Assert.True(changed);
+        Assert.Equal(StartupChange.Written, changed); // the program it named is gone
         Assert.Equal($"\"{Exe}\" --hidden", key.Values[StartupRegistration.ValueName]);
+    }
+
+    [Fact]
+    public void A_portable_copy_never_removes_or_replaces_the_installed_bars_entry()
+    {
+        // The review's R5: starting a portable copy with the option off deleted the installed bar's autostart.
+        const string installed = @"C:\Program Files\Desktop Icon Grid\DesktopIconGrid.exe";
+        var key = new FakeRunKey();
+        key.Values[StartupRegistration.ValueName] = $"\"{installed}\" --hidden";
+        var portable = new StartupRegistration(key, @"E:\Tools\DesktopIconGrid\DesktopIconGrid.exe", fileExists: path => path == installed);
+
+        Assert.Equal(StartupChange.None, portable.Apply(startWithWindows: false, startHidden: false));
+        Assert.Equal(StartupChange.LeftToAnotherCopy, portable.Apply(startWithWindows: true, startHidden: false));
+
+        Assert.Equal($"\"{installed}\" --hidden", key.Values[StartupRegistration.ValueName]);
+        Assert.Equal(0, key.Writes);
+        Assert.Equal(installed, portable.RegisteredExecutable);
+    }
+
+    [Fact]
+    public void An_entry_this_app_did_not_write_is_left_alone()
+    {
+        var key = new FakeRunKey();
+        key.Values[StartupRegistration.ValueName] = @"C:\Tools\launcher.exe /tray";
+        var registration = new StartupRegistration(key, Exe, fileExists: _ => false);
+
+        Assert.Equal(StartupChange.None, registration.Apply(startWithWindows: false, startHidden: false));
+        Assert.Equal(StartupChange.LeftToAnotherCopy, registration.Apply(startWithWindows: true, startHidden: false));
+        Assert.Equal(0, key.Writes);
+    }
+
+    [Fact]
+    public void Without_leave_to_add_an_entry_only_this_programs_own_is_kept_in_step()
+    {
+        // A portable copy at start: it removes or updates its own entry, and adds one only when the user asks.
+        var key = new FakeRunKey();
+        var registration = new StartupRegistration(key, Exe);
+
+        Assert.Equal(StartupChange.NotAdded, registration.Apply(startWithWindows: true, startHidden: false, mayAdd: false));
+        Assert.Empty(key.Values);
+
+        Assert.Equal(StartupChange.Written, registration.Apply(startWithWindows: true, startHidden: false, mayAdd: true));
+        Assert.Equal(StartupChange.Written, registration.Apply(startWithWindows: true, startHidden: true, mayAdd: false)); // its own: updated
+        Assert.Equal($"\"{Exe}\" --hidden", key.Values[StartupRegistration.ValueName]);
+        Assert.Equal(StartupChange.Removed, registration.Apply(startWithWindows: false, startHidden: true, mayAdd: false));
     }
 
     [Theory]

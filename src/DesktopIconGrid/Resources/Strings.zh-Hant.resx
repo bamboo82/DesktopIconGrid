@@ -1736,4 +1736,10 @@
   <data name="Sync_LoadedConflictCopy" xml:space="preserve">
     <value>已載入「{0}」，這是同步程式保留的「{1}」副本。這部裝置仍連結到「{1}」，下次上傳若會取代其他電腦的儲存內容，會先詢問。</value>
   </data>
+  <data name="Startup_PortableQuestion" xml:space="preserve">
+    <value>這是可攜式副本，位於 {0}。要在這部電腦上隨 Windows 啟動它嗎？只有在該磁碟機存在時，Windows 才找得到它。</value>
+  </data>
+  <data name="Startup_AnotherCopy" xml:space="preserve">
+    <value>已有另一份 Desktop Icon Grid 會隨 Windows 啟動（{0}），因此未加入這一份。請先在那一份中關閉此選項。</value>
+  </data>
 </root>
