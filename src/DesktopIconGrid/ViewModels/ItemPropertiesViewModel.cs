@@ -32,8 +32,8 @@ public sealed class ItemPropertiesViewModel : ObservableObject
     ];
 
     private const int PreviewSize = 32;
-    /// <summary>How long after the last edit the preview and the not-found check run; shortened by tests.</summary>
-    internal static TimeSpan PreviewDebounce { get; set; } = TimeSpan.FromMilliseconds(300);
+    /// <summary>How long after the last edit the preview and the not-found check run.</summary>
+    private static readonly TimeSpan PreviewDebounce = TimeSpan.FromMilliseconds(300);
 
     private readonly LauncherItem _target;
     private readonly IIconProvider _icons;
@@ -58,6 +58,7 @@ public sealed class ItemPropertiesViewModel : ObservableObject
     private ImageSource? _preview;
     private string? _warning;
     private int _previewRequest;
+    private Task _previewWork = Task.CompletedTask;
 
     public ItemPropertiesViewModel(LauncherItem target, bool isNew, IIconProvider icons, IReadOnlyList<BrowserChoice>? browsers = null)
     {
@@ -469,14 +470,21 @@ public sealed class ItemPropertiesViewModel : ObservableObject
     private void RefreshPreviewAndWarning(bool immediate = false)
     {
         var request = ++_previewRequest;
-        _ = RefreshAsync(request, immediate, _iconPath, _location, IsGroup, IsShortcut);
+        var refresh = RefreshAsync(request, immediate, _iconPath, _location, IsGroup, IsShortcut);
+        _previewWork = _previewWork.IsCompleted ? refresh : Task.WhenAll(_previewWork, refresh);
     }
+
+    /// <summary>The pause after an edit before the preview is worked out; a test ends each pause when it chooses.</summary>
+    internal Func<Task> PausePreview { get; set; } = () => Task.Delay(PreviewDebounce);
+
+    /// <summary>Completes when every preview refresh started so far has finished, superseded ones included.</summary>
+    internal Task PreviewSettled => _previewWork;
 
     private async Task RefreshAsync(int request, bool immediate, string? iconPath, string location, bool isGroup, bool isShortcut)
     {
         if (!immediate)
         {
-            await Task.Delay(PreviewDebounce);
+            await PausePreview();
             if (request != _previewRequest)
             {
                 return; // superseded while waiting
