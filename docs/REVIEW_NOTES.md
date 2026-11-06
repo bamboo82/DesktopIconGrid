@@ -9,6 +9,59 @@ The owner relays replies.
 
 ---
 
+## 2026-11-06 (24) — 0.8.1: sync F2–F4 in; each placeholder judged where it stands
+
+The owner's go reached me through you, and I am following your order.
+
+| Commit | Item |
+| --- | --- |
+| `510febf` | Start 0.8.1: version, changelog section, FEATURES, ROADMAP |
+| `b405112` | Sync: F2 with the clash-numbered name, F3, F4 (run 78 green) |
+| `002477a` | Placeholders judged where they stand; ssh's destination (CVE-2023-51385); `-o`; plink; wsl's options and `--shell-type none` |
+| this one | README: the tag example is annotated; this entry |
+
+- **F2.** The folder listing carries the name inside each copy (`RemoteProfile.NameInside`). A copy listed
+  under another name is a conflict copy (`IsConflictCopy`).
+  - Loading one applies its content but links the PC to the copy named inside: by file id when that copy is
+    there, by name when it is gone, so the next upload writes it again.
+  - The loaded copy's revision is remembered. If another PC saved the original, the next upload is a
+    conflict and asks.
+  - The start-up question, the "up to date" status and the "not uploaded" warning name the conflict copies
+    (`CheckLinkedCopyAsync`, `AutoUploadResult.ConflictCopies`).
+  - One choice for you to check: *Overwrite* on a conflict copy still writes its listed name inside, so it
+    becomes a copy of its own. Writing "Work" inside it would leave this PC linked to a second "Work" file,
+    which is the split F2 is about. "Keep the name from inside" holds for the clash-numbered copies, which
+    `DisplayName` now lists by their own name. It accepts " (N)", N ≥ 2, only when the name inside had to be
+    made safe. A name that needs no change never gets a number from `FreeFileName`, so `Work (2).json` stays
+    a sync program's copy (Google Drive for desktop numbers its conflict copies).
+- **F3.** One operation on the copies or the link runs at a time (`SyncService.ExclusiveAsync`, a
+  `SemaphoreSlim`), on the storage chosen at its start.
+  - `UseFolderAsync`, `UseGoogleDriveAsync` and `UnlinkAsync` wait for a running upload, so the upload can
+    neither write into the next folder nor link the PC again.
+  - The dialog says it is waiting.
+  - `DisconnectAsync` forgets the whole link; the file id and revision used to stay behind.
+- **F4.** The picker's starting folder is not looked at on the UI thread when it is on slow storage (UNC or a
+  network drive, `IconWorker.IsOnSlowStorage`), and the folder is made on a worker.
+- **Placeholders (`002477a`).** `ReaderAt` judges each placeholder where it stands; the commit message has the
+  rules.
+  - ssh's destination, `-l` and `-J` get `SshDestination`: ASCII letters and digits and `. - _ @ : [ ] /`.
+  - `-o` (and an option with its value attached) is checked as the command; `-F` and `-i` are plain.
+  - plink follows the same rules, with `-proxycmd` as a command. After an option it does not know, a value
+    is checked as the command.
+  - The values of wsl's own options are plain, and `--shell-type none` is plain.
+  - A relay named after the placeholder, or a parse that is unsure, stays on the strict side.
+- **README:** the tag example is annotated now.
+- **For your in-app check, later**, with R3–R7 and the UI items:
+  - F4: an unreachable share as the sync folder. *A folder…* should open the picker at once.
+  - F2: a `Work-<PC>.json` beside `Work.json`. Load it and check that the PC stays on Work and that the next
+    change asks.
+  - ssh with both sides: `ssh.exe {ask:Host} tail {clipboard}`. `admin@server2` passes and `server2;calc` is
+    refused.
+- **Next:** R5 first, as you asked, with a test on the fake Run key holding another exe's value. Then R3, R4,
+  R6, R7 and the smaller R items, then the UI items.
+
+---
+
 ## 2026-11-06 (23) — 0.8.0 is out; `main` follows the releases
 
 - **The release:**

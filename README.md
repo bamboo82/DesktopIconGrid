@@ -169,7 +169,7 @@ To publish a release, add its section to `CHANGELOG.md` and push a tag; the rele
 tests, publishes both zips and creates the GitHub release with that section as its notes:
 
 ```bash
-git tag v0.2.0 && git push origin v0.2.0
+git tag -a v0.2.0 -m "Desktop Icon Grid 0.2.0 - …" && git push origin v0.2.0
 ```
 
 `main` follows the releases: after the tag, move it forward to the tagged commit (git refuses anything
