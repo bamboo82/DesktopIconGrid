@@ -9,6 +9,109 @@ The owner relays replies.
 
 ---
 
+## 2026-11-06 (27) — Round 16: R4′, P2′–P5 and the recommended items
+
+CI is green on run 97 (`2e948e3`), which holds every code change of this round; locally 651 Core tests pass. Runs 98
+and 99 (`5fd4009`, docs; `8aa2f5c`, the test cleanup) were still running when this was written; check them before
+the in-app round.
+
+| Commit | Item |
+| --- | --- |
+| `83f8faf` | R4′: the 0.8.0 repair happens once, and only where the path is gone |
+| `9a6857e` | P3, P2′ (a): the template's quotes are read as the C runtime reads them |
+| `abfc49b` | P4: `cmd /c` keeps a value's quotes; P5: Windows Terminal and conhost, batch files after a relay |
+| `493491e` | P2′ (b)–(e), P6, the empty `-o` value, the two ssh messages |
+| `eb8f379` | U3′, U5, U6, U7, U1′ |
+| `2e948e3` | R8, U2′, R3′, P7, R9, R6′'s rest, Repair's *Browse*, `{files}`' second path |
+| `5fd4009` | CHANGELOG and FEATURES, your doc list |
+| `8aa2f5c` | Test cleanup: run 93's red (below) |
+| this one | these notes |
+
+- **CI.** Run 93 (`9a6857e`) was red in `LaunchServiceTests.Dispose`, not in a test. A `tool.bat` that a test
+  started through cmd.exe, with the test folder as its working folder, was still exiting after it wrote the
+  arguments the test reads. So the folder could not be deleted. Runs 94–96 passed with the same tests.
+  `8aa2f5c` retries the delete for up to five seconds and otherwise leaves the folder in temp.
+- **R4′, your "smallest" fix.** `LauncherLayout.CurrentVersion` is 2. Only a layout of version 1 is repaired, and a
+  path only when it is missing where `%APPDRIVE%` points and there on Windows' drive. The repair touches the
+  shared location, *Start in* and the icon, never `Locations`. The resolution-time fallback you preferred would
+  touch every place a location is expanded (launch, the missing check, icons, Repair, the names table). The
+  one-time repair, gated twice, is contained in `FromLayout`. A 0.8.0 copy reading a version-2 file only logs that
+  it is newer.
+- **P3.** `LaunchPlaceholders.SpotsOf` reads the template with CommandLineToArgvW's rules, passing over a
+  placeholder's own text, and sorts each placeholder into one of three kinds:
+  - Bare: outside quotes. A backslash run written right before it is doubled.
+  - QuotedAlone (`"{x}"`): that pair gives way to the value's own quotes.
+  - InsideQuotes: inside a span with other text. Refused before anything is asked or started, on a click and on a
+    drop, and noted in *Properties* under the parameters. `Fill` throws for it rather than fill it.
+
+  Your four cases are tests. Two App tests use a real `tool.bat`.
+- **P4, not a blind wrap.** `cmd /c ""C:\Program Files\x.exe" "arg""` is a common idiom that relies on cmd
+  taking that outer pair off. Wrapping it again would break it. So for cmd.exe with placeholders:
+  - such a written pair is taken off before the placeholders are read, so `""{file}""` reads as `"{file}"`;
+  - after filling, the command after `/c`, `/k` or `/r` gets one more pair when it starts with a quote;
+  - a template without placeholders is left alone.
+
+  The App test runs the real cmd.exe on a recorded batch file with a dropped `a&mkdir injected&.txt`.
+- **P5, narrower than "relays read as Cmd".** I first made every relay Cmd. That refused `|` in
+  `wt -p Ubuntu wsl -e grep {clipboard}`, where no cmd.exe reads it. Now:
+  - A relay (wt, `WindowsTerminal.exe`, conhost, runas, sudo) changes no reader by itself.
+  - A word after it that ends in `.bat`/`.cmd`, or that the PATHEXT lookup finds as one, is read as cmd.exe.
+    The lookup runs only on words after a relay.
+  - After wt or conhost, `& | < > ^ ( )` are refused in dropped paths, as you asked. Values are left to their
+    readers: cmd's and the shells' already refuse those characters, and a program without a shell gets them as
+    text.
+- **P2′.**
+  - (b) Quotes in a setting's name are taken off.
+  - (c) `-I`, `-F`, `SmartcardDevice`, plink's `-proxycmd` and `-m` refuse every value.
+  - (c) scp and sftp have `ScpReader`. Its options follow getopt with their own letters, and `-S`, `-D`, `-b`, `-o`
+    and `-F` are refused.
+  - (c) An scp or sftp operand is a host before its word's colon, a remote path after it (the remote shell's
+    for scp, whose old protocol hands it there), and one argument as a whole word or a local path. Reading it
+    as ssh's destination, as you suggested, would refuse every dropped `C:\…` file, and a drive letter is no host.
+  - (d) `TakesOptionAt` uses `Words()` and stops at the nearest program name, so only a `--` that program sees
+    counts.
+  - (e) `admin@-x` is refused.
+  - P6: PuTTY reads options after the host, and a bare word there is the port.
+  - The empty value is refused under `SshOption`.
+- **U3′, the interim rule.** `ListNumberedOriginals` lists `X (N).json` with "X" inside (a name that needs no
+  change, N ≥ 2) as the original "X" while no listed copy of "X" holds `X.json`. That covers (a)–(e).
+  - (a) and (e): it is no conflict copy any more, so the general question and status apply.
+  - (b): *Save* finds it by name and asks.
+  - (c): a sync program's copy of it links to `config (2).json`.
+  - (d): it stays the original after `config.json` is gone.
+
+  Your root fix, writing the file name into each copy, changes the copy's format. I'd rather do it in 0.9.0, with
+  a format note for 0.8.x readers; say if you want it in 0.8.1.
+- **U5, U6, U7, U1′, R8, U2′, R3′, P7, R9.** As you suggested.
+  - U7: the save throws `CopyBusyException`, and the upload turns it into `Postponed`.
+  - U1′: the link generation moves only after `sync.json` is saved.
+  - R9: a stick letter is one with no drive behind it, or a removable one.
+- **Smaller.**
+  - Repair finds versioned files, keeps architectures out of the version, stops when cancelled, and uses one
+    existence call.
+  - *Browse* starts at the nearest local folder above the old path.
+  - `{files}` is also judged where its second path lands.
+  - Your doc list is done: CHANGELOG lines, FEATURES' Parameters row, the `DisplayName` and `WithAppDrive`
+    summaries. The FolderSyncTests assertion stays: `DisplayName` alone still calls `Work (2).json` a copy, and
+    the listing decides.
+- **Untested.** R8, U2′, P7 and *Browse*'s folder sit in App startup wiring, window code and logging, which the
+  tests don't reach. They are small, and the in-app cases below cover R8 and U2′.
+- **Cases for the in-app check:**
+  - R4′: a portable copy on a second disk with `D:\Program Files (x86)\…\x.exe` added. Restart: still D:.
+  - P3: `tool.bat` with `"--in={file}"`. A drop is refused, and *Properties* shows the note.
+  - P4: `cmd.exe` with `/c type {file}`, dropping a file named `a&calc&.txt`. The file's text shows, and calc does
+    not start.
+  - P5: `wt.exe` with `cmd /c type {file}` and the same file. Refused, naming Windows Terminal.
+  - P2′: `ssh.exe -F {clipboard} server2` is refused. `putty.exe -ssh {ask:Host} -pw {ask:Password}` takes
+    `P@ss!`.
+  - U3′: another program's `config.json` in the sync folder, then save "config". It is listed as "config", and
+    *Overwrite* asks the plain question.
+  - R8: with the option on from another PC, change only *Start hidden* in a portable copy and answer *No*. The
+    option stays on.
+  - U2′: a shortcut on an offline share, then *Properties → … → File…*. The picker opens at once.
+
+---
+
 ## 2026-11-06 (26) — Round 15: the must-fix list and the recommended items
 
 CI is green on run 91 (`ae0f952`): 590 Core and 200 App tests, none skipped; the build has no warnings.
