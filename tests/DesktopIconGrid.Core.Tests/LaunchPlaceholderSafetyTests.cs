@@ -86,12 +86,53 @@ public sealed class LaunchPlaceholderSafetyTests : IDisposable
     [InlineData("ssh.exe", "-- server2 cat {file}", ArgumentReader.RemoteShell)]
     [InlineData("ssh.exe", "server2 cat {files}", ArgumentReader.RemoteShell)]
     [InlineData("wt.exe", "ssh server2 cat {clipboard}", ArgumentReader.RemoteShell)]
-    [InlineData("ssh.exe", "{clipboard}", ArgumentReader.Plain)] // the destination: an argument of ssh itself
-    [InlineData("ssh.exe", "-l {ask:User} server2 uptime", ArgumentReader.Plain)]
-    [InlineData("ssh.exe", "-o ConnectTimeout=5 {ask:Which host} uptime", ArgumentReader.Plain)] // a prompt with a space
+    [InlineData("ssh.exe", "{clipboard}", ArgumentReader.SshDestination)] // the destination: an argument of ssh itself
+    [InlineData("ssh.exe", "-l {ask:User} server2 uptime", ArgumentReader.SshDestination)] // a user name, as in the destination
+    [InlineData("ssh.exe", "-o ConnectTimeout=5 {ask:Which host} uptime", ArgumentReader.SshDestination)] // a prompt with a space
     public void Ssh_sends_the_words_after_its_destination_to_the_remote_shell(string location, string parameters, ArgumentReader reader)
     {
         Assert.Equal(reader, LaunchPlaceholders.ReaderOf(location, parameters));
+    }
+
+    [Theory]
+    [InlineData("ssh.exe", "{ask:Host} tail {clipboard}", "{ask:Host}", ArgumentReader.SshDestination)] // the review: both sides
+    [InlineData("ssh.exe", "{ask:Host} tail {clipboard}", "{clipboard}", ArgumentReader.RemoteShell)]
+    [InlineData("ssh.exe", "-o {clipboard} server2", "{clipboard}", ArgumentReader.RemoteShell)] // ssh_config text: ProxyCommand=…
+    [InlineData("ssh.exe", "-o{clipboard} server2", "{clipboard}", ArgumentReader.RemoteShell)]
+    [InlineData("ssh.exe", "-J {clipboard} server2", "{clipboard}", ArgumentReader.SshDestination)]
+    [InlineData("ssh.exe", "-F {clipboard} server2", "{clipboard}", ArgumentReader.Plain)] // a path (the hint warns)
+    [InlineData("ssh.exe", "-- {clipboard} uptime", "{clipboard}", ArgumentReader.SshDestination)]
+    [InlineData("wt.exe", "ssh {clipboard}", "{clipboard}", ArgumentReader.SshDestination)]
+    [InlineData("plink.exe", "-batch -l {ask:User} server2 tail {clipboard}", "{ask:User}", ArgumentReader.SshDestination)]
+    [InlineData("plink.exe", "-batch -l {ask:User} server2 tail {clipboard}", "{clipboard}", ArgumentReader.RemoteShell)]
+    [InlineData("plink.exe", "-ssh {clipboard}", "{clipboard}", ArgumentReader.SshDestination)]
+    [InlineData("plink.exe", "-proxycmd {clipboard} server2", "{clipboard}", ArgumentReader.RemoteShell)]
+    [InlineData("plink.exe", "-load {ask:Session}", "{ask:Session}", ArgumentReader.Plain)]
+    [InlineData("plink.exe", "-newer-option {clipboard} server2", "{clipboard}", ArgumentReader.RemoteShell)] // its value or the host: unsure, so strict
+    [InlineData("wsl.exe", "-d {ask:Distro} grep {clipboard} notes.txt", "{ask:Distro}", ArgumentReader.Plain)] // wsl's own
+    [InlineData("wsl.exe", "-d {ask:Distro} grep {clipboard} notes.txt", "{clipboard}", ArgumentReader.PosixShell)]
+    [InlineData("wsl.exe", "--shell-type none grep {clipboard} notes.txt", "{clipboard}", ArgumentReader.Plain)] // no shell
+    [InlineData("wsl.exe", "--shell-type login grep {clipboard} notes.txt", "{clipboard}", ArgumentReader.PosixShell)]
+    [InlineData("cmd.exe", "/c ssh {ask:Host} uptime", "{ask:Host}", ArgumentReader.SshDestination)] // which refuses what cmd.exe does
+    public void Each_placeholder_is_judged_where_it_stands(string location, string parameters, string placeholder, ArgumentReader reader)
+    {
+        Assert.Equal(reader, LaunchPlaceholders.ReaderAt(location, parameters, parameters.IndexOf(placeholder, StringComparison.Ordinal)));
+    }
+
+    [Theory]
+    [InlineData("admin@server2", null)]
+    [InlineData("[fe80::1]:2222", null)]
+    [InlineData("ssh://admin@server2.example.com:2222", null)]
+    [InlineData("server2;calc", ";")]
+    [InlineData("server2 calc", " ")]
+    [InlineData("$(id)@server2", "$")]
+    [InlineData("admin`id`@server2", "`")]
+    [InlineData("server2%h", "%")]
+    [InlineData("服务器", "服")]
+    public void Ssh_destination_takes_what_user_at_host_and_an_ssh_URI_need(string value, string? refused)
+    {
+        // CVE-2023-51385: OpenSSH before 9.6 put such names into ProxyCommand's shell through %h and %u.
+        Assert.Equal(refused, LaunchPlaceholders.Refused(value, ArgumentReader.SshDestination));
     }
 
     [Theory]

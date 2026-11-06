@@ -144,6 +144,27 @@ public sealed class LaunchServiceTests : IDisposable
     }
 
     [Fact]
+    public void The_destination_takes_user_at_host_while_the_words_after_it_stay_bare_words()
+    {
+        var ssh = Path.Combine(_directory, "ssh.exe"); // not started: the refusals come first, and it is not there
+        var fine = Create(new Prompts(clipboard: "/var/log/syslog", answer: "admin@server2"), out var tracker);
+        using (tracker)
+        {
+            var result = fine.Launch(new ShortcutItem { Name = "Tail", Location = ssh, Parameters = "{ask:Host} tail {clipboard}" });
+
+            Assert.NotEqual(string.Format(Strings.Launch_UnsafeValue, '@', "ssh"), result.ErrorMessage); // went on, and failed only to start
+        }
+
+        var bad = Create(new Prompts(clipboard: "/var/log/syslog", answer: "server2;calc"), out var tracker2);
+        using (tracker2)
+        {
+            var result = bad.Launch(new ShortcutItem { Name = "Tail", Location = ssh, Parameters = "{ask:Host} tail {clipboard}" });
+
+            Assert.Equal(string.Format(Strings.Launch_UnsafeValue, ';', "ssh"), result.ErrorMessage);
+        }
+    }
+
+    [Fact]
     public void The_clipboard_is_trimmed_and_a_value_of_several_lines_is_refused_for_any_program()
     {
         var trimmed = Create(new Prompts(clipboard: "  report.txt\r\n", answer: null), out var tracker);

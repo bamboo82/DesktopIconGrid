@@ -79,6 +79,7 @@ public static partial class LaunchPlaceholders
     /// <param name="searchPath">PATH (for tests); the process's own when <see langword="null"/>.</param>
     /// <param name="pathExtensions">PATHEXT (for tests); the process's own when <see langword="null"/>.</param>
     /// <param name="systemDirectory">System32 (for tests); Windows' own when <see langword="null"/>.</param>
+    /// <returns>The strictest reader of any placeholder in <paramref name="parameters"/> (see <see cref="ReaderAt"/>).</returns>
     public static ArgumentReader ReaderOf(
         string? location,
         string? parameters,
@@ -88,36 +89,77 @@ public static partial class LaunchPlaceholders
         string? pathExtensions = null,
         string? systemDirectory = null)
     {
-        var system = systemDirectory ?? Environment.SystemDirectory;
-        var tokens = (parameters ?? string.Empty).Split([' ', '\t'], StringSplitOptions.RemoveEmptyEntries);
-        var reader = ReaderOfLocation(location, tokens, startIn, registeredPathOf, searchPath, pathExtensions, system);
-        for (var i = 0; i < tokens.Length && reader != ArgumentReader.PowerShellCommand; i++)
+        var positions = ClipboardPositions(parameters ?? string.Empty).Concat(AskPositions(parameters ?? string.Empty)).Concat(FilePositions(parameters)).ToList();
+        if (positions.Count == 0)
         {
-            var named = FileNameOf(tokens[i]);
-            if (named is "cmd" or "cmd.exe")
+            positions.Add((parameters ?? string.Empty).Length); // a dropped file goes at the end
+        }
+
+        return positions
+            .Select(index => ReaderAt(location, parameters, index, startIn, registeredPathOf, searchPath, pathExtensions, systemDirectory))
+            .Aggregate(Stricter);
+    }
+
+    /// <summary>
+    /// Who reads the value of the placeholder that starts at <paramref name="placeholderIndex"/> in
+    /// <paramref name="parameters"/> (their length for files dropped at the end), by the rules of <see cref="ReaderOf"/>.
+    /// ssh, plink and wsl.exe tell their own options, the destination and the command apart, so a placeholder is judged
+    /// where it stands there: <c>ssh {ask:Host} tail {clipboard}</c> takes <c>admin@host</c> for the host and bare words
+    /// after it. Where the parse cannot tell, the stricter reader is taken.
+    /// </summary>
+    public static ArgumentReader ReaderAt(
+        string? location,
+        string? parameters,
+        int placeholderIndex,
+        string? startIn = null,
+        Func<string, string?>? registeredPathOf = null,
+        string? searchPath = null,
+        string? pathExtensions = null,
+        string? systemDirectory = null)
+    {
+        var system = systemDirectory ?? Environment.SystemDirectory;
+        var words = Words(parameters);
+        var at = words.FindIndex(word => word.Start <= placeholderIndex && placeholderIndex < word.End);
+        if (at < 0)
+        {
+            at = words.Count(word => word.Start < placeholderIndex); // at the end: after every word
+        }
+
+        var reader = ReaderOfLocation(location, words, at, startIn, registeredPathOf, searchPath, pathExtensions, system);
+        for (var i = 0; i < words.Count && reader != ArgumentReader.PowerShellCommand; i++)
+        {
+            var named = FileNameOf(words[i].Text);
+            var rest = words.GetRange(i + 1, words.Count - i - 1);
+            var restAt = at - i - 1; // the placeholder's place among the words after this one; negative when it comes before
+            reader = Stricter(reader, named switch
             {
-                reader = Stricter(reader, ArgumentReader.Cmd);
-            }
-            else if (named is "powershell" or "powershell.exe" or "pwsh" or "pwsh.exe")
-            {
-                reader = Stricter(reader, PowerShellReader(named, tokens[(i + 1)..]));
-            }
-            else if (named is "wsl" or "wsl.exe")
-            {
-                reader = Stricter(reader, WslReader(tokens[(i + 1)..]));
-            }
-            else if (named is "bash" or "bash.exe" && IsWslBash(tokens[i].Trim('"', '\''), system))
-            {
-                reader = Stricter(reader, ArgumentReader.PosixShell);
-            }
-            else if (named is "ssh" or "ssh.exe")
-            {
-                reader = Stricter(reader, SshReader(tokens[(i + 1)..]));
-            }
+                "cmd" or "cmd.exe" => ArgumentReader.Cmd,
+                "powershell" or "powershell.exe" or "pwsh" or "pwsh.exe" => PowerShellReader(named, rest.Select(word => word.Text)),
+                "wsl" or "wsl.exe" => restAt >= 0 ? WslReader(rest, restAt) : ArgumentReader.PosixShell,
+                "bash" or "bash.exe" when IsWslBash(words[i].Bare.Trim('\''), system) => ArgumentReader.PosixShell,
+                "ssh" or "ssh.exe" => restAt >= 0 ? SshReader(rest, restAt) : ArgumentReader.RemoteShell,
+                "plink" or "plink.exe" => restAt >= 0 ? PlinkReader(rest, restAt) : ArgumentReader.RemoteShell,
+                _ => ArgumentReader.Plain,
+            });
         }
 
         return reader;
     }
+
+    /// <summary>Where the <c>{file}</c> and <c>{files}</c> placeholders stand in <paramref name="template"/> (each with the quote written before it, if any).</summary>
+    public static IReadOnlyList<int> FilePositions(string? template) =>
+        QuotedFiles().Matches(template ?? string.Empty).Select(m => m.Index).ToList();
+
+    /// <summary>A word of the parameters and where it starts. A prompt with spaces in it (<c>{ask:Which host}</c>) is one word.</summary>
+    private readonly record struct Word(string Text, int Start)
+    {
+        public int End => Start + Text.Length;
+
+        public string Bare => Text.Trim('"');
+    }
+
+    private static List<Word> Words(string? parameters) =>
+        WordPattern().Matches(parameters ?? string.Empty).Select(m => new Word(m.Value, m.Index)).ToList();
 
     /// <summary>
     /// Whether Windows Terminal reads the command line: <c>wt.exe</c> as the location or named in the parameters. It
@@ -132,7 +174,7 @@ public static partial class LaunchPlaceholders
     }
 
     private static ArgumentReader ReaderOfLocation(
-        string? location, string[] tokens, string? startIn, Func<string, string?>? registeredPathOf, string? searchPath, string? pathExtensions, string system)
+        string? location, List<Word> words, int at, string? startIn, Func<string, string?>? registeredPathOf, string? searchPath, string? pathExtensions, string system)
     {
         var path = Environment.ExpandEnvironmentVariables(location?.Trim().Trim('"') ?? string.Empty);
         if (path.Length == 0 || LaunchPlanner.IsShellNamespace(path) || LaunchPlanner.IsSpecial(path) || LaunchPlanner.IsUri(path))
@@ -148,7 +190,7 @@ public static partial class LaunchPlaceholders
 
         if (name is "cmd" or "powershell" or "pwsh" or "wsl" || Path.GetExtension(name).Length > 0)
         {
-            return ReaderOfFile(path, tokens, system);
+            return ReaderOfFile(path, words, at, system);
         }
 
         if (Directory.Exists(path))
@@ -159,7 +201,7 @@ public static partial class LaunchPlaceholders
         var found = Candidates(path, startIn, registeredPathOf, searchPath, pathExtensions).ToList();
         return found.Count == 0
             ? ArgumentReader.Cmd // unknown here: it may be a batch file where it runs
-            : found.Select(file => ReaderOfFile(file, tokens, system)).Aggregate(Stricter);
+            : found.Select(file => ReaderOfFile(file, words, at, system)).Aggregate(Stricter);
     }
 
     /// <summary>
@@ -220,7 +262,7 @@ public static partial class LaunchPlaceholders
     }
 
     /// <summary>Who reads the command line of the file at <paramref name="path"/> (with its extension, or a name judged by itself).</summary>
-    private static ArgumentReader ReaderOfFile(string path, string[] tokens, string system)
+    private static ArgumentReader ReaderOfFile(string path, List<Word> words, int at, string system)
     {
         var name = FileNameOf(path);
         return name switch
@@ -228,88 +270,163 @@ public static partial class LaunchPlaceholders
             _ when name.EndsWith(".bat", StringComparison.Ordinal) || name.EndsWith(".cmd", StringComparison.Ordinal) => ArgumentReader.Cmd,
             _ when name.EndsWith(".lnk", StringComparison.Ordinal) || name.EndsWith(".pif", StringComparison.Ordinal) => ArgumentReader.Cmd,
             "cmd" or "cmd.exe" => ArgumentReader.Cmd,
-            "powershell" or "powershell.exe" or "pwsh" or "pwsh.exe" => PowerShellReader(name, tokens),
-            "wsl" or "wsl.exe" => WslReader(tokens),
+            "powershell" or "powershell.exe" or "pwsh" or "pwsh.exe" => PowerShellReader(name, words.Select(word => word.Text)),
+            "wsl" or "wsl.exe" => WslReader(words, at),
             "bash.exe" when IsWslBash(path, system) => ArgumentReader.PosixShell,
-            "ssh.exe" => SshReader(tokens),
+            "ssh.exe" => SshReader(words, at),
+            "plink.exe" => PlinkReader(words, at),
             _ => ArgumentReader.Plain,
         };
     }
 
     /// <summary>
     /// wsl.exe hands its command line, quotes and all, to the Linux shell: a quoted value stays one word there, but
-    /// <c>$(…)</c>, <c>`…`</c> and <c>$NAME</c> are expanded inside the quotes. Not with <c>-e</c>/<c>--exec</c> among
-    /// its own options (before the command starts): then it runs the program itself, the value one argument of it.
+    /// <c>$(…)</c>, <c>`…`</c> and <c>$NAME</c> are expanded inside the quotes. Not with <c>-e</c>/<c>--exec</c> or
+    /// <c>--shell-type none</c> among its own options (before the command starts): then it runs the program itself, the
+    /// value one argument of it. The value of one of its own options (<c>-d</c>, <c>-u</c>, <c>--cd</c>) is wsl's.
     /// </summary>
-    private static ArgumentReader WslReader(IEnumerable<string> tokens)
+    /// <param name="words">The words after <c>wsl</c>.</param>
+    /// <param name="at">Which of them the placeholder is in (their count: after all of them).</param>
+    private static ArgumentReader WslReader(IReadOnlyList<Word> words, int at)
     {
-        using var token = tokens.GetEnumerator();
-        while (token.MoveNext())
+        var noShell = false;
+        for (var j = 0; j < words.Count && j < at; j++)
         {
-            switch (token.Current.Trim('"').ToLowerInvariant())
+            switch (words[j].Bare.ToLowerInvariant())
             {
                 case "-e" or "--exec":
-                    return ArgumentReader.Plain;
-                case "-d" or "--distribution" or "--distribution-id" or "-u" or "--user" or "--cd" or "--shell-type":
-                    token.MoveNext(); // the option's value
+                    return ArgumentReader.Plain; // the program and its arguments follow
+                case "-d" or "--distribution" or "--distribution-id" or "-u" or "--user" or "--cd" or "--shell-type" when j + 1 == at:
+                    return ArgumentReader.Plain; // the placeholder is the option's value
+                case "--shell-type":
+                    noShell = words[j + 1].Bare.Equals("none", StringComparison.OrdinalIgnoreCase);
+                    j++;
+                    break;
+                case "-d" or "--distribution" or "--distribution-id" or "-u" or "--user" or "--cd":
+                    j++; // the option's value
                     break;
                 case var option when option.StartsWith('-') && option != "--":
                     break; // another option of wsl.exe itself
                 default:
-                    return ArgumentReader.PosixShell; // the command line starts here ("--" passes the rest to the shell)
+                    return noShell ? ArgumentReader.Plain : ArgumentReader.PosixShell; // the command starts before the placeholder ("--" passes the rest on)
             }
         }
 
-        return ArgumentReader.PosixShell;
+        return noShell ? ArgumentReader.Plain : ArgumentReader.PosixShell; // the placeholder starts the command
     }
+
+    /// <summary>The options of ssh that take a value (OpenSSH's option string).</summary>
+    private const string SshOptionsWithValue = "BbcDEeFIiJLlmOoPpQRSWw";
 
     /// <summary>
     /// ssh joins the words after the destination into one command for the remote shell, without the quotes, so a value
-    /// there is read as bare words, as PowerShell reads script text (<c>ssh host cat {clipboard}</c>). A value up to the
-    /// destination (the host, a login name) is an argument of ssh itself. A dropped file without <c>{file}</c> goes at the
-    /// end, after the destination.
+    /// there is read as bare words, as PowerShell reads script text (<c>ssh host cat {clipboard}</c>). The destination is
+    /// one argument of ssh, but ssh can put it into a command of its own (<see cref="ArgumentReader.SshDestination"/>),
+    /// and so for <c>-J</c> and <c>-l</c>. <c>-o</c> takes ssh_config text, which can be a command
+    /// (<c>ProxyCommand=…</c>); other values (<c>-p 22</c>, <c>-i key</c>, <c>-F file</c>) are plain.
     /// </summary>
-    private static ArgumentReader SshReader(IEnumerable<string> tokens)
+    /// <param name="words">The words after <c>ssh</c>.</param>
+    /// <param name="at">Which of them the placeholder is in (their count: after all of them).</param>
+    private static ArgumentReader SshReader(IReadOnlyList<Word> words, int at)
     {
-        const string optionsWithValue = "BbcDEeFIiJLlmOoPpQRSWw";
-        var afterDestination = false;
-        using var token = tokens.GetEnumerator();
-        while (token.MoveNext())
+        for (var j = 0; j < words.Count && j <= at; j++)
         {
-            var word = token.Current.Trim('"');
-            if (afterDestination)
+            var word = words[j].Bare;
+            if (j == at)
             {
-                if (HoldsPlaceholder(word))
-                {
-                    return ArgumentReader.RemoteShell;
-                }
+                return word.StartsWith('-') ? ArgumentReader.RemoteShell : ArgumentReader.SshDestination; // an option with the value attached, or the destination
             }
-            else if (word == "--")
+
+            if (word == "--")
             {
-                afterDestination = token.MoveNext(); // the next word is the destination
+                return at == j + 1 ? ArgumentReader.SshDestination : ArgumentReader.RemoteShell;
             }
-            else if (word.Length > 1 && word[0] == '-')
+
+            if (word.Length > 1 && word[0] == '-')
             {
-                var letter = word.IndexOfAny(optionsWithValue.ToCharArray(), 1);
+                var letter = word.IndexOfAny(SshOptionsWithValue.ToCharArray(), 1);
                 if (letter == word.Length - 1)
                 {
-                    token.MoveNext(); // -p 22, -vp 22: the value is the next word (-p22 holds its own)
+                    if (j + 1 == at)
+                    {
+                        return word[letter] switch
+                        {
+                            'o' => ArgumentReader.RemoteShell,
+                            'J' or 'l' => ArgumentReader.SshDestination,
+                            _ => ArgumentReader.Plain,
+                        };
+                    }
+
+                    j++; // -p 22, -vp 22: the value is the next word (-p22 holds its own)
                 }
+
+                continue;
             }
-            else
-            {
-                afterDestination = true; // this word is the destination
-            }
+
+            return ArgumentReader.RemoteShell; // the destination comes before the placeholder: the command
         }
 
-        return ArgumentReader.Plain;
+        return ArgumentReader.SshDestination; // a file dropped where the destination goes
     }
 
-    private static bool HoldsPlaceholder(string word) =>
-        word.Contains(ClipboardPlaceholder, StringComparison.OrdinalIgnoreCase)
-        || word.Contains("{ask:", StringComparison.OrdinalIgnoreCase)
-        || word.Contains(DropArguments.FilePlaceholder, StringComparison.OrdinalIgnoreCase)
-        || word.Contains(DropArguments.FilesPlaceholder, StringComparison.OrdinalIgnoreCase);
+    /// <summary>plink's options that take a value (PuTTY 0.8x), and its flags.</summary>
+    private static readonly HashSet<string> PlinkOptionsWithValue = new(StringComparer.Ordinal)
+    {
+        "-load", "-P", "-l", "-pw", "-pwfile", "-proxycmd", "-sercfg", "-D", "-L", "-R", "-i", "-hostkey", "-m", "-nc", "-sshlog", "-sshrawlog",
+    };
+
+    private static readonly HashSet<string> PlinkFlags = new(StringComparer.Ordinal)
+    {
+        "-V", "-pgpfp", "-v", "-ssh", "-telnet", "-rlogin", "-raw", "-serial", "-ssh-connection", "-batch", "-X", "-x", "-A", "-a", "-t", "-T",
+        "-1", "-2", "-4", "-6", "-C", "-noagent", "-agent", "-no-trivial-auth", "-noshare", "-share", "-sanitise-stderr", "-sanitise-stdout",
+        "-no-sanitise-stderr", "-no-sanitise-stdout", "-no-antispoof", "-s", "-N", "-logoverwrite", "-logappend", "-shareexists",
+    };
+
+    /// <summary>
+    /// plink, PuTTY's command-line ssh, as ssh: the words after the host are the remote command, the host and
+    /// <c>-l</c>/<c>-nc</c> are destinations, <c>-proxycmd</c> is a command line. After an option it does not know, where
+    /// the host is cannot be told, so a placeholder is read as the command.
+    /// </summary>
+    private static ArgumentReader PlinkReader(IReadOnlyList<Word> words, int at)
+    {
+        var unsure = false;
+        for (var j = 0; j < words.Count && j <= at; j++)
+        {
+            var word = words[j].Bare;
+            if (j == at)
+            {
+                return unsure || word.StartsWith('-') ? ArgumentReader.RemoteShell : ArgumentReader.SshDestination;
+            }
+
+            if (word.Length > 1 && word[0] == '-')
+            {
+                if (PlinkOptionsWithValue.Contains(word))
+                {
+                    if (j + 1 == at)
+                    {
+                        return word switch
+                        {
+                            "-proxycmd" => ArgumentReader.RemoteShell,
+                            "-l" or "-nc" => ArgumentReader.SshDestination,
+                            _ => ArgumentReader.Plain,
+                        };
+                    }
+
+                    j++;
+                }
+                else if (!PlinkFlags.Contains(word))
+                {
+                    unsure = true; // it may take a value
+                }
+
+                continue;
+            }
+
+            return ArgumentReader.RemoteShell; // the host comes before the placeholder: the command
+        }
+
+        return unsure ? ArgumentReader.RemoteShell : ArgumentReader.SshDestination;
+    }
 
     /// <summary>
     /// Whether <paramref name="path"/> is System32's bash.exe, the old WSL launcher: that folder, or no folder when
@@ -360,6 +477,7 @@ public static partial class LaunchPlaceholders
     /// <item>cmd.exe: also <c>" % ! ^ &amp; | &lt; &gt;</c>.</item>
     /// <item>A Linux shell through WSL: also <c>$</c> and <c>`</c>, which are expanded inside the quotes it keeps
     /// (<c>wsl.exe echo "$(echo hi)"</c> prints hi).</item>
+    /// <item>ssh's destination: only what <c>user@host</c>, <c>[v6]:port</c> and an <c>ssh://</c> URI need.</item>
     /// <item>PowerShell script text: everything but letters, digits, the space and <c>. _ - \ / :</c>, and a <c>-</c> that
     /// starts a word after a space. powershell.exe and pwsh take the quotes off their arguments before joining them into
     /// the script, so the value is read as bare words. There <c>(…)</c>, <c>|</c>, <c>&amp;</c>, <c>;</c>, <c>{…}</c>,
@@ -376,6 +494,7 @@ public static partial class LaunchPlaceholders
         {
             ArgumentReader.Cmd => IsAllowedForCmd,
             ArgumentReader.PosixShell => IsAllowedForPosixShell,
+            ArgumentReader.SshDestination => IsAllowedInSshDestination,
             ArgumentReader.RemoteShell or ArgumentReader.PowerShellCommand => IsAllowedInScriptText,
             _ => IsAllowedForAny,
         });
@@ -396,6 +515,7 @@ public static partial class LaunchPlaceholders
         {
             ArgumentReader.Cmd => (text, index) => text[index] is not ('%' or FullwidthQuotationMark),
             ArgumentReader.PosixShell => (text, index) => text[index] is not ('%' or '$' or '`' or FullwidthQuotationMark),
+            ArgumentReader.SshDestination => IsAllowedInSshDestination,
             ArgumentReader.RemoteShell or ArgumentReader.PowerShellCommand => IsAllowedInScriptText,
             _ => (text, index) => text[index] != FullwidthQuotationMark,
         });
@@ -431,6 +551,14 @@ public static partial class LaunchPlaceholders
 
     private static bool IsAllowedForCmd(string text, int index) => IsAllowedForAny(text, index) && "\"%!^&|<>".IndexOf(text[index]) < 0;
 
+    /// <summary>
+    /// What <c>user@host</c>, <c>[v6]:port</c> and an <c>ssh://</c> URI need: ASCII letters and digits and
+    /// <c>. - _ @ : [ ] /</c>. Nothing a shell, or ssh's own <c>%h</c>/<c>%u</c> in a <c>ProxyCommand</c>, could act on
+    /// (CVE-2023-51385, where OpenSSH before 9.6 passed such names on).
+    /// </summary>
+    private static bool IsAllowedInSshDestination(string text, int index) =>
+        char.IsAsciiLetterOrDigit(text[index]) || text[index] is '.' or '-' or '_' or '@' or ':' or '[' or ']' or '/';
+
     /// <summary>What cmd.exe takes, less <c>$</c> and <c>`</c>, so the readers stay in order of strictness (<c>cmd /c wsl …</c>).</summary>
     private static bool IsAllowedForPosixShell(string text, int index) => IsAllowedForCmd(text, index) && text[index] is not ('$' or '`');
 
@@ -457,6 +585,12 @@ public static partial class LaunchPlaceholders
 
     [GeneratedRegex("\"?\\{clipboard\\}\"?", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
     private static partial Regex QuotedClipboard();
+
+    [GeneratedRegex("\"?\\{files?\\}\"?", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
+    private static partial Regex QuotedFiles();
+
+    [GeneratedRegex("(?:\\{ask:[^}]*\\}|\\S)+", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
+    private static partial Regex WordPattern();
 }
 
 /// <summary>
@@ -477,6 +611,15 @@ public enum ArgumentReader
     /// refuses is refused too, so each reader refuses at least what the one before it does.
     /// </summary>
     PosixShell,
+
+    /// <summary>
+    /// ssh's destination, a login name or a jump host: one argument of ssh, but ssh can put it into a command of its own
+    /// (<c>%h</c> and <c>%u</c> in <c>ProxyCommand</c> and <c>Match exec</c>, CVE-2023-51385), so only what
+    /// <c>user@host</c>, <c>[v6]:port</c> and an <c>ssh://</c> URI need passes. It refuses every character a reader
+    /// before it does; the readers after it take a space or a backslash it does not, and refuse <c>@</c>, which neither
+    /// lets a value out of its argument.
+    /// </summary>
+    SshDestination,
 
     /// <summary>
     /// The remote shell ssh sends its command to: the words after the destination, joined without their quotes. A value

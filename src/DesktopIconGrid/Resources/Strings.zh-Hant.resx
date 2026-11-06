@@ -365,7 +365,7 @@
     <value>位置可以是檔案、資料夾或網址。</value>
   </data>
   <data name="Props_ParametersHint" xml:space="preserve">
-    <value>拖放到圖示上的檔案會取代 {file}（每個檔案啟動一次）或 {files}（一次全部）；沒有預留位置時則附加在參數後面。{clipboard} 插入剪貼簿文字，{ask:問題} 會詢問一個值。若程式可能把值當成命令執行（批次檔、cmd.exe、WSL、Windows 終端機；PowerShell 指令碼文字與 ssh 送出的命令，其中只接受字母、數字、空格與 . _ - \ / :），或當成選項（在引數開頭以「-」開始，且前面沒有「--」），這個值會被拒絕。在其他程式的程式碼中（python -c、node -e、bash -c），值就是程式碼：請勿在其中使用預留位置。</value>
+    <value>拖放到圖示上的檔案會取代 {file}（每個檔案啟動一次）或 {files}（一次全部）；沒有預留位置時則附加在參數後面。{clipboard} 插入剪貼簿文字，{ask:問題} 會詢問一個值。若程式可能把值當成命令執行（批次檔、cmd.exe、WSL、Windows 終端機、ssh 的主機；PowerShell 指令碼文字與 ssh 或 plink 送出的命令，其中只接受字母、數字、空格與 . _ - \ / :），或當成選項（在引數開頭以「-」開始，且前面沒有「--」），這個值會被拒絕。在其他程式的程式碼中（python -c、node -e、bash -c），或在含有命令或檔案的 ssh 選項中（-o、-F、-proxycmd、-m），值就是程式碼：請勿在其中使用預留位置。</value>
   </data>
   <data name="Props_LogHint" xml:space="preserve">
     <value>僅適用於主控台程式與批次檔：程式在沒有自己視窗的情況下執行，輸出寫入記錄檔，圖示的「顯示記錄」指令可即時顯示。</value>

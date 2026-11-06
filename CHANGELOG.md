@@ -8,7 +8,21 @@ version numbers follow [Semantic Versioning](https://semver.org/).
 The fixes the review of 0.8.0 placed after the release: folder sync with conflict copies and storage
 switches, portable mode and *Repair…* on more kinds of PC, and the smaller items.
 
+### Security
+
+- ssh's destination, login name (`-l`) and jump host (`-J`) are now checked too: only what `user@host`,
+  `[v6]:port` and an `ssh://` address need passes (letters, digits and `. - _ @ : [ ] /`). OpenSSH before 9.6
+  could pass other characters in a host or user name on to a `ProxyCommand` (CVE-2023-51385). A value for
+  `-o` is checked as a command, since `ProxyCommand=…` is one. plink, PuTTY's command-line ssh, is checked the
+  same way, with `-proxycmd` as a command; after an option of plink's that this version does not know, a
+  value is checked as the command. Covered by tests of the rules.
+
 ### Fixed
+
+- Each placeholder is now checked where it stands. In `ssh {ask:Host} tail {clipboard}`, the host takes
+  `admin@server2`, and the words after it are still checked as the remote shell reads them; 0.8.0 checked
+  both values as the command, so `admin@server2` was refused. The values of wsl's own options (`-d`, `-u`,
+  `--cd`) are wsl's, and `wsl --shell-type none` runs the program without a shell, as `-e` does.
 
 - Loading a copy that a sync program kept after a conflict (OneDrive's `Work-LAPTOP.json`, Dropbox's
   conflicted copy) linked the PC to that file while the other PCs stayed on `Work.json`. Each then uploaded

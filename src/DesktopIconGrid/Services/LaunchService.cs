@@ -68,14 +68,17 @@ public sealed class LaunchService(ProcessTracker tracker, ILaunchPrompts? prompt
                          || template.Contains(DropArguments.FilesPlaceholder, StringComparison.OrdinalIgnoreCase))
             ? template
             : $"{template} {DropArguments.FilesPlaceholder}";
-        var reader = ReaderOf(shortcut, judged);
+        var readers = LaunchPlaceholders.FilePositions(judged).Select(index => ReaderAt(shortcut, judged, index)).Distinct().ToList();
         var terminal = LaunchPlaceholders.SplitsAtSemicolons(shortcut.EffectiveLocation, template);
         foreach (var path in paths)
         {
-            if (LaunchPlaceholders.RefusedInPath(path, reader) is { } character)
+            foreach (var reader in readers)
             {
-                AppLog.Default.Warning("Launch", $"A dropped path was refused for {reader}: {path}");
-                return LaunchResult.Failure(RefusalMessage(character, reader));
+                if (LaunchPlaceholders.RefusedInPath(path, reader) is { } character)
+                {
+                    AppLog.Default.Warning("Launch", $"A dropped path was refused for {reader}: {path}");
+                    return LaunchResult.Failure(RefusalMessage(character, reader));
+                }
             }
 
             if (terminal && path.Contains(';', StringComparison.Ordinal))
@@ -180,7 +183,6 @@ public sealed class LaunchService(ProcessTracker tracker, ILaunchPrompts? prompt
     /// </summary>
     private (string Parameters, LaunchResult? Result) FillPlaceholders(ShortcutItem shortcut, string template)
     {
-        var reader = ReaderOf(shortcut, template);
         var terminal = LaunchPlaceholders.SplitsAtSemicolons(shortcut.EffectiveLocation, template);
         string? clipboard = null;
         if (LaunchPlaceholders.UsesClipboard(template))
@@ -191,10 +193,12 @@ public sealed class LaunchService(ProcessTracker tracker, ILaunchPrompts? prompt
                 return (template, LaunchResult.Failure(Strings.Launch_ClipboardEmpty));
             }
 
-            var takesOption = LaunchPlaceholders.ClipboardPositions(template).Any(index => LaunchPlaceholders.TakesOptionAt(template, index));
-            if (Refuse(clipboard, reader, takesOption, terminal) is { } refused)
+            foreach (var index in LaunchPlaceholders.ClipboardPositions(template)) // each place it goes is judged on its own
             {
-                return (template, refused);
+                if (Refuse(clipboard, ReaderAt(shortcut, template, index), LaunchPlaceholders.TakesOptionAt(template, index), terminal) is { } refused)
+                {
+                    return (template, refused);
+                }
             }
         }
 
@@ -208,7 +212,8 @@ public sealed class LaunchService(ProcessTracker tracker, ILaunchPrompts? prompt
                 return (template, LaunchResult.Cancelled);
             }
 
-            if (Refuse(answer, reader, LaunchPlaceholders.TakesOptionAt(template, askPositions[answers.Count]), terminal) is { } refused)
+            var position = askPositions[answers.Count];
+            if (Refuse(answer, ReaderAt(shortcut, template, position), LaunchPlaceholders.TakesOptionAt(template, position), terminal) is { } refused)
             {
                 return (template, refused);
             }
@@ -219,9 +224,12 @@ public sealed class LaunchService(ProcessTracker tracker, ILaunchPrompts? prompt
         return (LaunchPlaceholders.Fill(template, clipboard, answers), null);
     }
 
-    /// <summary>Who reads the shortcut's command line: its program as Windows finds it (App Paths, its start-in folder, PATH), and what its parameters hand on to.</summary>
-    private static ArgumentReader ReaderOf(ShortcutItem shortcut, string? template) =>
-        LaunchPlaceholders.ReaderOf(shortcut.EffectiveLocation, template, shortcut.StartIn, InstalledPrograms.RegisteredPath);
+    /// <summary>
+    /// Who reads the value of the placeholder at <paramref name="index"/>: the shortcut's program as Windows finds it (App
+    /// Paths, its start-in folder, PATH), what its parameters hand on to, and where the placeholder stands among them.
+    /// </summary>
+    private static ArgumentReader ReaderAt(ShortcutItem shortcut, string template, int index) =>
+        LaunchPlaceholders.ReaderAt(shortcut.EffectiveLocation, template, index, shortcut.StartIn, InstalledPrograms.RegisteredPath);
 
     /// <summary>The refusal of a <c>;</c> for Windows Terminal (<see cref="LaunchPlaceholders.SplitsAtSemicolons"/>).</summary>
     private static LaunchResult TerminalRefusal => LaunchResult.Failure(string.Format(Strings.Launch_UnsafeValue, ';', "Windows Terminal"));
@@ -258,7 +266,7 @@ public sealed class LaunchService(ProcessTracker tracker, ILaunchPrompts? prompt
         {
             ArgumentReader.Cmd => "cmd.exe",
             ArgumentReader.PosixShell => "WSL",
-            ArgumentReader.RemoteShell => "ssh",
+            ArgumentReader.SshDestination or ArgumentReader.RemoteShell => "ssh",
             _ => "PowerShell",
         }),
     };
