@@ -94,6 +94,18 @@ public sealed class LaunchPlaceholderSafetyTests : IDisposable
         Assert.Equal(reader, LaunchPlaceholders.ReaderOf(location, parameters));
     }
 
+    [Theory]
+    [InlineData("wt.exe", "ssh {clipboard}", true)]
+    [InlineData("wt", "{clipboard}", true)]
+    [InlineData(@"%LocalAppData%\Microsoft\WindowsApps\wt.exe", "-p Ubuntu {clipboard}", true)]
+    [InlineData("conhost.exe", "wt.exe cmd /k echo {clipboard}", true)]
+    [InlineData("ssh.exe", "{clipboard}", false)]
+    [InlineData("notepad.exe", "wt.txt {clipboard}", false)]
+    public void Windows_Terminal_is_found_where_it_reads_the_command_line(string location, string parameters, bool splits)
+    {
+        Assert.Equal(splits, LaunchPlaceholders.SplitsAtSemicolons(location, parameters));
+    }
+
     [Fact]
     public void A_name_without_an_extension_is_read_by_cmd_when_the_shell_finds_a_batch_file_for_it_or_nothing()
     {

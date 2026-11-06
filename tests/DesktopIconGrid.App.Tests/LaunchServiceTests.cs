@@ -113,6 +113,21 @@ public sealed class LaunchServiceTests : IDisposable
     }
 
     [Fact]
+    public void A_semicolon_is_refused_for_Windows_Terminal_in_a_value_and_in_a_dropped_file()
+    {
+        var service = Create(new Prompts(clipboard: "server2;notepad", answer: null), out var tracker);
+        using (tracker)
+        {
+            var typed = service.Launch(new ShortcutItem { Name = "Connect", Location = "wt.exe", Parameters = "ssh {clipboard}" });
+            var dropped = service.LaunchWith(new ShortcutItem { Name = "Edit", Location = "wt.exe", Parameters = "notepad {file}" }, [@"C:\t\a;calc.txt"]);
+
+            var refusal = string.Format(Strings.Launch_UnsafeValue, ';', "Windows Terminal");
+            Assert.Equal(refusal, typed.ErrorMessage);
+            Assert.Equal(refusal, dropped.ErrorMessage);
+        }
+    }
+
+    [Fact]
     public void What_ssh_sends_to_the_remote_shell_is_checked_as_bare_words_and_dropped_files_where_they_go()
     {
         var service = Create(new Prompts(clipboard: "x; rm -rf ~", answer: "x -rf"), out var tracker);

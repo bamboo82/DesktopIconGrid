@@ -365,7 +365,7 @@
     <value>位置可以是文件、文件夹或网址。</value>
   </data>
   <data name="Props_ParametersHint" xml:space="preserve">
-    <value>拖放到图标上的文件会替换 {file}（每个文件启动一次）或 {files}（一次全部）；没有占位符时则附加在参数后面。{clipboard} 插入剪贴板文字，{ask:问题} 会询问一个值。若程序可能把值当成命令执行（批处理文件、cmd.exe、PowerShell 脚本文字，其中只接受字母、数字、空格与 . _ - \ / :），或当成选项（在参数开头以“-”开始，且前面没有“--”），这个值会被拒绝。</value>
+    <value>拖放到图标上的文件会替换 {file}（每个文件启动一次）或 {files}（一次全部）；没有占位符时则附加在参数后面。{clipboard} 插入剪贴板文字，{ask:问题} 会询问一个值。若程序可能把值当成命令执行（批处理文件、cmd.exe、WSL、Windows 终端；PowerShell 脚本文字与 ssh 发送的命令，其中只接受字母、数字、空格与 . _ - \ / :），或当成选项（在参数开头以“-”开始，且前面没有“--”），这个值会被拒绝。在其他程序的代码中（python -c、node -e、bash -c），值就是代码：请勿在其中使用占位符。</value>
   </data>
   <data name="Props_LogHint" xml:space="preserve">
     <value>仅适用于控制台程序和批处理文件：程序在没有自己窗口的情况下运行，输出写入日志文件，图标的“显示日志”命令可实时显示。</value>

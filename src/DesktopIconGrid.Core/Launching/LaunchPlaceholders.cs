@@ -119,6 +119,18 @@ public static partial class LaunchPlaceholders
         return reader;
     }
 
+    /// <summary>
+    /// Whether Windows Terminal reads the command line: <c>wt.exe</c> as the location or named in the parameters. It
+    /// splits its arguments at every <c>;</c>, inside quotes too, and runs what follows as a command of its own
+    /// (<c>wt ssh "host;calc"</c> opens a second tab with calc), so no value or dropped path may hold one there.
+    /// </summary>
+    public static bool SplitsAtSemicolons(string? location, string? parameters)
+    {
+        static bool IsTerminal(string token) => FileNameOf(token) is "wt" or "wt.exe";
+        return IsTerminal(Environment.ExpandEnvironmentVariables(location ?? string.Empty))
+               || (parameters ?? string.Empty).Split([' ', '\t'], StringSplitOptions.RemoveEmptyEntries).Any(IsTerminal);
+    }
+
     private static ArgumentReader ReaderOfLocation(
         string? location, string[] tokens, string? startIn, Func<string, string?>? registeredPathOf, string? searchPath, string? pathExtensions, string system)
     {

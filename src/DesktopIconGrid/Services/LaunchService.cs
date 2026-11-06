@@ -69,12 +69,19 @@ public sealed class LaunchService(ProcessTracker tracker, ILaunchPrompts? prompt
             ? template
             : $"{template} {DropArguments.FilesPlaceholder}";
         var reader = ReaderOf(shortcut, judged);
+        var terminal = LaunchPlaceholders.SplitsAtSemicolons(shortcut.EffectiveLocation, template);
         foreach (var path in paths)
         {
             if (LaunchPlaceholders.RefusedInPath(path, reader) is { } character)
             {
                 AppLog.Default.Warning("Launch", $"A dropped path was refused for {reader}: {path}");
                 return LaunchResult.Failure(RefusalMessage(character, reader));
+            }
+
+            if (terminal && path.Contains(';', StringComparison.Ordinal))
+            {
+                AppLog.Default.Warning("Launch", $"A dropped path was refused for Windows Terminal, which starts another command at \";\": {path}");
+                return TerminalRefusal;
             }
         }
 
@@ -174,6 +181,7 @@ public sealed class LaunchService(ProcessTracker tracker, ILaunchPrompts? prompt
     private (string Parameters, LaunchResult? Result) FillPlaceholders(ShortcutItem shortcut, string template)
     {
         var reader = ReaderOf(shortcut, template);
+        var terminal = LaunchPlaceholders.SplitsAtSemicolons(shortcut.EffectiveLocation, template);
         string? clipboard = null;
         if (LaunchPlaceholders.UsesClipboard(template))
         {
@@ -184,7 +192,7 @@ public sealed class LaunchService(ProcessTracker tracker, ILaunchPrompts? prompt
             }
 
             var takesOption = LaunchPlaceholders.ClipboardPositions(template).Any(index => LaunchPlaceholders.TakesOptionAt(template, index));
-            if (Refuse(clipboard, reader, takesOption) is { } refused)
+            if (Refuse(clipboard, reader, takesOption, terminal) is { } refused)
             {
                 return (template, refused);
             }
@@ -200,7 +208,7 @@ public sealed class LaunchService(ProcessTracker tracker, ILaunchPrompts? prompt
                 return (template, LaunchResult.Cancelled);
             }
 
-            if (Refuse(answer, reader, LaunchPlaceholders.TakesOptionAt(template, askPositions[answers.Count])) is { } refused)
+            if (Refuse(answer, reader, LaunchPlaceholders.TakesOptionAt(template, askPositions[answers.Count]), terminal) is { } refused)
             {
                 return (template, refused);
             }
@@ -215,12 +223,21 @@ public sealed class LaunchService(ProcessTracker tracker, ILaunchPrompts? prompt
     private static ArgumentReader ReaderOf(ShortcutItem shortcut, string? template) =>
         LaunchPlaceholders.ReaderOf(shortcut.EffectiveLocation, template, shortcut.StartIn, InstalledPrograms.RegisteredPath);
 
-    private static LaunchResult? Refuse(string value, ArgumentReader reader, bool takesOption)
+    /// <summary>The refusal of a <c>;</c> for Windows Terminal (<see cref="LaunchPlaceholders.SplitsAtSemicolons"/>).</summary>
+    private static LaunchResult TerminalRefusal => LaunchResult.Failure(string.Format(Strings.Launch_UnsafeValue, ';', "Windows Terminal"));
+
+    private static LaunchResult? Refuse(string value, ArgumentReader reader, bool takesOption, bool terminal)
     {
         if (LaunchPlaceholders.Refused(value, reader) is { } character)
         {
             AppLog.Default.Warning("Launch", $"A placeholder value was refused: it holds U+{char.ConvertToUtf32(character, 0):X4}, which {reader} could act on");
             return LaunchResult.Failure(RefusalMessage(character, reader));
+        }
+
+        if (terminal && value.Contains(';', StringComparison.Ordinal))
+        {
+            AppLog.Default.Warning("Launch", "A placeholder value was refused: it holds \";\", where Windows Terminal starts another command");
+            return TerminalRefusal;
         }
 
         if (takesOption && value.StartsWith('-'))
