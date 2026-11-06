@@ -64,6 +64,31 @@ public partial class IconGridControl : UserControl
     /// <summary>A group was clicked while <see cref="OpensGroupsInPlace"/> is set.</summary>
     public event EventHandler<ItemViewModel>? GroupOpening;
 
+    /// <summary>The panel the items are laid out in; made from the template on the first measure.</summary>
+    internal FlowPanel? LayoutPanel
+    {
+        get
+        {
+            var queue = new Queue<DependencyObject>();
+            queue.Enqueue(ItemsHost);
+            while (queue.Count > 0)
+            {
+                var next = queue.Dequeue();
+                if (next is FlowPanel panel)
+                {
+                    return panel;
+                }
+
+                for (var i = 0; i < VisualTreeHelper.GetChildrenCount(next); i++)
+                {
+                    queue.Enqueue(VisualTreeHelper.GetChild(next, i));
+                }
+            }
+
+            return null;
+        }
+    }
+
     private enum DropAction
     {
         None,

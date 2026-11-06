@@ -81,6 +81,13 @@ layout history, and a command line with *Send to*.
   and pushed that row nine units in, so its last icon wrapped and every later row was out of line (on the
   bar, in group popups and in *Show at pointer*). It now stays at the end of its row in whatever room is
   left there, perhaps none. Covered by layout tests.
+- The *Show at pointer* window was sized once, by counting the top-level items. A group opened in it lost
+  its last row to the group's header, behind a scroll bar that also took an icon from every row; lines
+  counted as whole cells, and captions wider than a cell needed rows nobody had made room for. The window
+  is now measured from what it shows, header, lines and captions included, and resized when a group
+  opens or a search goes back to the top level. Its search box no longer shows a tooltip over the first
+  row each time it opens (the key help is still there for screen readers). Covered by tests on the real
+  window.
 
 ## [0.7.0] – 2026-11-05
 

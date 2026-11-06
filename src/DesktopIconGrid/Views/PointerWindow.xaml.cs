@@ -2,6 +2,7 @@ using System.ComponentModel;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Interop;
+using System.Windows.Media;
 using System.Windows.Threading;
 using DesktopIconGrid.Core.Diagnostics;
 using DesktopIconGrid.Core.Models;
@@ -18,7 +19,7 @@ namespace DesktopIconGrid.Views;
 /// </summary>
 public partial class PointerWindow : Window
 {
-    /// <summary>Up to this many icons side by side, and at least this many so the search box has room.</summary>
+    /// <summary>Up to this many cells side by side, and at least this many so the search box has room.</summary>
     internal const int MaxColumns = 6;
 
     internal const int MinColumns = 3;
@@ -26,11 +27,8 @@ public partial class PointerWindow : Window
     /// <summary>More rows than this scroll.</summary>
     internal const int MaxRows = 5;
 
-    /// <summary>Border and padding around the icons (see the markup), in WPF units.</summary>
-    private const double ChromeWidth = 2 + 6 + 2;
-
-    /// <summary>Border, padding, the search box and the gap below it, plus a little room so the rows never need a scroll bar.</summary>
-    private const double ChromeHeight = 2 + 6 + 24 + 3 + 2 + 2;
+    /// <summary>Room to spare under the rows, so rounding to whole pixels at another display scale never brings up a scroll bar.</summary>
+    internal const double RoundingSlack = 2;
 
     /// <summary>How far above the pointer the window's top edge goes, so the pointer rests on the search box.</summary>
     private const double GrabOffset = 14;
@@ -55,15 +53,36 @@ public partial class PointerWindow : Window
     internal ItemViewModel? OpenedGroup { get; private set; }
 
     /// <summary>
-    /// The window's size in WPF units for <paramref name="count"/> icons: up to <see cref="MaxColumns"/> columns and
-    /// <see cref="MaxRows"/> rows, with room for the scroll bar when there are more.
+    /// The window's size in WPF units for what it shows now, measured from its own markup rather than counted: the
+    /// entries as the grid lays them out (<see cref="FlowLayout"/>, so lines, gaps and captions take the room they take),
+    /// as wide as they are side by side up to <see cref="MaxColumns"/> cells (at least <see cref="MinColumns"/>, so the
+    /// search box has room) and as tall as their rows up to <see cref="MaxRows"/> (more scroll, and the scroll bar's
+    /// width is added so it takes no column), plus everything around them: the border, the search box and, in a group,
+    /// its header.
     /// </summary>
-    internal static Size SizeFor(int count, double cellWidth, double cellHeight, double scrollBarWidth)
+    internal Size MeasureSize()
     {
-        var columns = Math.Clamp(count, MinColumns, MaxColumns);
-        var rows = Math.Clamp((int)Math.Ceiling(count / (double)columns), 1, MaxRows);
-        var scrollBar = count > columns * MaxRows ? scrollBarWidth : 0;
-        return new Size(ChromeWidth + columns * cellWidth + scrollBar, ChromeHeight + rows * cellHeight);
+        var cellWidth = _viewModel.CellWidth;
+        var cellHeight = _viewModel.CellHeight;
+        var aroundWidth = Chrome.BorderThickness.Left + Chrome.BorderThickness.Right + Chrome.Padding.Left + Chrome.Padding.Right
+            + Icons.Margin.Left + Icons.Margin.Right + Icons.ItemsHost.Margin.Left + Icons.ItemsHost.Margin.Right;
+
+        // The entries side by side, as the grid lays them out in one endless row.
+        Chrome.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+        var oneRow = Icons.LayoutPanel?.DesiredSize.Width ?? 0;
+        var panelWidth = Math.Clamp(oneRow, MinColumns * cellWidth, MaxColumns * cellWidth);
+
+        // At that width: the rows, and the height of everything else (the search box, a group's header, margins).
+        Chrome.Measure(new Size(aroundWidth + panelWidth, double.PositiveInfinity));
+        var rows = Icons.LayoutPanel?.DesiredSize.Height ?? 0;
+        var aroundHeight = Chrome.DesiredSize.Height - rows;
+        var maxRows = MaxRows * cellHeight;
+        var scrollBar = rows > maxRows + 0.5 ? SystemParameters.VerticalScrollBarWidth : 0;
+
+        // Those were trial measures: the next layout pass measures the content again at the window's own size, even when
+        // that size does not change (the scroll bar is decided there).
+        InvalidateMeasure();
+        return new Size(aroundWidth + panelWidth + scrollBar, aroundHeight + Math.Min(rows, maxRows) + RoundingSlack);
     }
 
     protected override void OnSourceInitialized(EventArgs e)
@@ -89,7 +108,7 @@ public partial class PointerWindow : Window
 
         var area = ScreenGeometry.AreaAt(pointer.X, pointer.Y);
         var scale = area?.Scale ?? ScreenGeometry.PrimaryScale();
-        var size = SizeFor(_viewModel.RootItems.Items.Count, _viewModel.CellWidth, _viewModel.CellHeight, SystemParameters.VerticalScrollBarWidth);
+        var size = MeasureSize();
         var rect = PopupPlacement.AtPointer(
             pointer.X,
             pointer.Y,
@@ -228,7 +247,8 @@ public partial class PointerWindow : Window
         SearchBox.Focus();
     }
 
-    private void OpenGroup(ItemViewModel group)
+    /// <summary>Shows a group's icons in place of the top level, under a header with a way back, and fits the window to them.</summary>
+    internal void OpenGroup(ItemViewModel group)
     {
         if (group.Children is not { } children)
         {
@@ -239,6 +259,7 @@ public partial class PointerWindow : Window
         Icons.DataContext = children;
         GroupTitle.Text = group.Name;
         GroupHeader.Visibility = Visibility.Visible;
+        FitToContent();
         SearchBox.Focus();
     }
 
@@ -247,6 +268,32 @@ public partial class PointerWindow : Window
         OpenedGroup = null;
         Icons.DataContext = _viewModel.RootItems;
         GroupHeader.Visibility = Visibility.Collapsed;
+        FitToContent();
+    }
+
+    /// <summary>
+    /// Resizes the shown window to what it shows now (a group opened, or back to the top level), keeping its top edge and
+    /// its centre where they are, as far as the work area allows.
+    /// </summary>
+    private void FitToContent()
+    {
+        var handle = new WindowInteropHelper(this).Handle;
+        if (!IsVisible || handle == IntPtr.Zero || !NativeMethods.GetWindowRect(handle, out var now))
+        {
+            return; // not shown: ShowAtPointer sizes it
+        }
+
+        var scale = VisualTreeHelper.GetDpi(this).DpiScaleX;
+        var size = MeasureSize();
+        var centre = (now.Left + now.Right) / 2;
+        var area = ScreenGeometry.AreaAt(centre, now.Top);
+        var rect = PopupPlacement.AtPointer(
+            centre,
+            now.Top,
+            (int)Math.Ceiling(size.Width * scale),
+            (int)Math.Ceiling(size.Height * scale),
+            area?.WorkArea ?? default);
+        ScreenGeometry.MoveToPixels(this, rect);
     }
 
     /// <summary>Closes after a launch (or after a running program was brought forward).</summary>

@@ -13,7 +13,7 @@
         UseLayoutRounding="True"
         SnapsToDevicePixels="True"
         TextOptions.TextFormattingMode="Display">
-  <Border BorderBrush="{DynamicResource Theme.Border}" BorderThickness="1" Padding="3">
+  <Border x:Name="Chrome" BorderBrush="{DynamicResource Theme.Border}" BorderThickness="1" Padding="3">
     <DockPanel>
       <!-- Search box with its placeholder, and what Enter opens -->
       <DockPanel DockPanel.Dock="Top">
@@ -22,11 +22,12 @@
                    Style="{StaticResource SearchTargetStyle}"
                    Text="{Binding SelectedSearchResult.Name, StringFormat={}↵ {0}}" />
         <Grid>
+          <!-- No tooltip: the window opens with the pointer on this box, so it would cover the first row every time. -->
           <TextBox x:Name="SearchBox"
                    Style="{StaticResource SearchBoxStyle}"
                    Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
-                   ToolTip="{x:Static r:Strings.Main_SearchToolTip}"
-                   AutomationProperties.Name="{x:Static r:Strings.Main_SearchName}" />
+                   AutomationProperties.Name="{x:Static r:Strings.Main_SearchName}"
+                   AutomationProperties.HelpText="{x:Static r:Strings.Main_SearchToolTip}" />
           <TextBlock Text="{x:Static r:Strings.Pointer_Placeholder}"
                      Foreground="{DynamicResource Theme.Hint}"
                      FontSize="12"

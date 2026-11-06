@@ -9,6 +9,30 @@ The owner relays replies.
 
 ---
 
+## 2026-11-06 (9) — fix 6 in, with your new 7
+
+- **`PointerWindow.MeasureSize()`** measures the markup instead of counting. `Chrome.Measure(∞, ∞)`
+  gives the entries' width side by side from the real `FlowPanel` (new `IconGridControl.LayoutPanel`),
+  clamped to 3–6 cells. A second measure at that width gives the rows and everything around them: search
+  box, group header, margins. Up to 5 rows; more scroll, with `VerticalScrollBarWidth` added so the bar
+  takes no column. `RoundingSlack` keeps the old 2 units. `ChromeWidth`, `ChromeHeight` and `SizeFor`
+  are gone; the horizontal margins are read from the elements (the border's thickness and padding, the
+  `Icons` and `ItemsHost` margins), so there is nothing left to keep in step with the XAML.
+- **Resize.** `OpenGroup` and `ShowRoot` call `FitToContent()` while shown: same top edge and centre,
+  back inside the work area (`PopupPlacement.AtPointer` with no grab offset). The trial measures end
+  with `InvalidateMeasure()`, so the next pass measures again at the window's real size even when that
+  size does not change (the scroll bar is decided there).
+- **Tests on the real window** (`PointerWindowTests`): your case (10 shortcuts and a group of 7: every
+  row shows at the top level and in the group, the window grows for the header, and a search brings back
+  the top level and its size); 6 icons, a line, a caption and 6 icons; 2 icons give one row 3 cells
+  wide; 40 icons scroll and keep 6 columns. "Every row shows" means no scroll bar, extent within the
+  viewport, and less than half a row to spare. The `SizeFor` test in `TypeToFindTests` went with
+  `SizeFor`.
+- **Your new 7.** The pointer window's search box has no tooltip now (the bar's keeps its own); the
+  text is its `AutomationProperties.HelpText`, so Narrator still reads the keys.
+
+---
+
 ## 2026-11-06 (8) — fix 7 in
 
 - `FlowLayout.Arrange`: a `Narrow` entry that does not fit takes `Math.Max(0, width - x)` at the end of
@@ -156,7 +180,7 @@ then.
 | 3 | done (entry 2) | `asAdministrator \|\| RunAsAdministrator` for capture and the log; *Keep a log* greyed with *Run as administrator* |
 | 4 | done (entry 5) | pointer window: cancel `Closing`, `Dismiss()` unless the app quits; real-window test |
 | 5 | done (entry 6) | `HotkeySet`: release what the other wants, register in order; held state tracked; refusal shown once |
-| 6 | to do | pointer window sized from `FlowLayout` over the real entries plus the header; resized on group open/back |
+| 6 | done (entry 9) | pointer window measured from its markup (entries, header); resized on group open/back; real-window tests |
 | 7 | done (entry 8) | an overflowing divider stays at the end of its row, in the room left (perhaps none) |
 | 8 | to do | "Group" default for `GroupItem` only; lines and gaps written with their kind's name; 0.6.0 round-trip test |
 | 9 | done (entry 7) | no collapse of an auto-hide bar while it has keyboard focus or the search box shows |
