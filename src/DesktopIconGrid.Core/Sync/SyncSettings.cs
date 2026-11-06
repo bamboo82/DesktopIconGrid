@@ -14,6 +14,9 @@ public sealed class SyncSettings
     /// <summary>Random id of this installation; tells devices apart even when two PCs share a name.</summary>
     public string DeviceId { get; set; } = NewDeviceId();
 
+    /// <summary>The <see cref="MachineKey"/> of the PC these settings belong to (see <see cref="AdoptMachine"/>).</summary>
+    public string? MachineFingerprint { get; set; }
+
     public string? ClientId { get; set; }
 
     /// <summary>The OAuth client secret in clear, in memory. On disk it is stored as <see cref="ClientSecretProtected"/> when a protector is available.</summary>
@@ -55,6 +58,30 @@ public sealed class SyncSettings
 
     public SyncSettings Clone() => (SyncSettings)MemberwiseClone();
 
+    /// <summary>
+    /// Ties these settings to the PC they are used on. Settings made on another PC (a data folder copied over, a portable
+    /// copy on a stick, a cloned virtual machine) get a sync identity of their own here, a new device id and this PC's
+    /// name, so the two PCs never take each other's saves for their own. Settings without a fingerprint (from before
+    /// 0.8.0) are taken as this PC's. Returns whether anything changed, so they should be saved.
+    /// </summary>
+    public bool AdoptMachine(string? machineKey)
+    {
+        if (string.IsNullOrEmpty(machineKey) || string.Equals(MachineFingerprint, machineKey, StringComparison.Ordinal))
+        {
+            return false;
+        }
+
+        if (MachineFingerprint is not null)
+        {
+            AppLog.Default.Info("Sync", "These sync settings were made on another PC: this PC gets a device id and name of its own");
+            DeviceId = NewDeviceId();
+            DeviceName = DefaultDeviceName();
+        }
+
+        MachineFingerprint = machineKey;
+        return true;
+    }
+
     public static string DefaultDeviceName()
     {
         var name = Environment.MachineName;
@@ -73,6 +100,7 @@ public sealed class SyncSettings
         ClientSecret = string.IsNullOrWhiteSpace(ClientSecret) ? null : ClientSecret.Trim();
         ClientSecretProtected = string.IsNullOrWhiteSpace(ClientSecretProtected) ? null : ClientSecretProtected.Trim();
         SyncFolder = string.IsNullOrWhiteSpace(SyncFolder) ? null : SyncFolder.Trim();
+        MachineFingerprint = string.IsNullOrWhiteSpace(MachineFingerprint) ? null : MachineFingerprint.Trim();
         LinkedProfile = string.IsNullOrWhiteSpace(LinkedProfile) ? null : LinkedProfile.Trim();
         LinkedFileId = string.IsNullOrWhiteSpace(LinkedFileId) ? null : LinkedFileId.Trim();
         LastRevision = string.IsNullOrWhiteSpace(LastRevision) ? null : LastRevision.Trim();
@@ -105,19 +133,38 @@ public sealed class SyncSettingsStore
 
     public static string GetDefaultFilePath() => Path.Combine(Path.GetDirectoryName(LayoutStorage.GetDefaultFilePath())!, FileName);
 
-    /// <summary>Returns defaults when the file is missing or unreadable.</summary>
+    /// <summary>
+    /// Returns defaults when the file is missing or unreadable. A file that is locked for a moment (a virus scanner, a
+    /// sync program) is tried again; one that is not valid JSON is kept beside it as <c>sync.json.unreadable</c>, and its
+    /// device id is kept when it can still be found in it, so this PC does not become another device.
+    /// </summary>
     public SyncSettings Load()
     {
         SyncSettings? settings = null;
         if (File.Exists(FilePath))
         {
+            string? text = null;
             try
             {
-                settings = JsonSerializer.Deserialize<SyncSettings>(File.ReadAllText(FilePath), LayoutStorage.JsonOptions);
+                text = ReadWithRetry(FilePath);
+                settings = JsonSerializer.Deserialize<SyncSettings>(text, LayoutStorage.JsonOptions);
             }
-            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException)
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
             {
-                settings = null;
+                AppLog.Default.Warning("Sync", $"{FileName} could not be read; this session uses a new device id: {ex.Message}");
+            }
+            catch (JsonException ex)
+            {
+                settings = Salvage(text ?? string.Empty);
+                AppLog.Default.Warning("Sync", $"{FileName} was not readable JSON and was kept as {FileName}.unreadable; its device id was {(settings is null ? "lost" : "kept")}: {ex.Message}");
+                try
+                {
+                    File.Copy(FilePath, FilePath + ".unreadable", overwrite: true);
+                }
+                catch (Exception copyError) when (copyError is IOException or UnauthorizedAccessException)
+                {
+                    AppLog.Default.Warning("Sync", $"{FileName}.unreadable could not be written: {copyError.Message}");
+                }
             }
         }
 
@@ -168,7 +215,40 @@ public sealed class SyncSettingsStore
 
         Directory.CreateDirectory(Path.GetDirectoryName(FilePath)!);
         var tempPath = FilePath + ".tmp";
-        File.WriteAllText(tempPath, JsonSerializer.Serialize(written, LayoutStorage.JsonOptions));
+        using (var stream = new FileStream(tempPath, FileMode.Create, FileAccess.Write, FileShare.None, 4096, FileOptions.WriteThrough))
+        {
+            stream.Write(System.Text.Encoding.UTF8.GetBytes(JsonSerializer.Serialize(written, LayoutStorage.JsonOptions)));
+            stream.Flush(flushToDisk: true); // on disk before it replaces the old file: a power cut leaves one or the other
+        }
+
         File.Move(tempPath, FilePath, overwrite: true);
+    }
+
+    private static string ReadWithRetry(string path)
+    {
+        for (var attempt = 1; ; attempt++)
+        {
+            try
+            {
+                return File.ReadAllText(path);
+            }
+            catch (IOException) when (attempt < 3 && File.Exists(path))
+            {
+                Thread.Sleep(100);
+            }
+        }
+    }
+
+    /// <summary>The device id (and the PC it was made on) from a file that is no longer valid JSON, or <see langword="null"/>.</summary>
+    private static SyncSettings? Salvage(string text)
+    {
+        static string? Value(string text, string name) =>
+            System.Text.RegularExpressions.Regex.Match(text, "\"" + name + "\"\\s*:\\s*\"([^\"]{1,128})\"", System.Text.RegularExpressions.RegexOptions.IgnoreCase) is { Success: true } match
+                ? match.Groups[1].Value
+                : null;
+
+        return Value(text, "deviceId") is { } deviceId
+            ? new SyncSettings { DeviceId = deviceId, DeviceName = Value(text, "deviceName") ?? SyncSettings.DefaultDeviceName(), MachineFingerprint = Value(text, "machineFingerprint") }
+            : null;
     }
 }

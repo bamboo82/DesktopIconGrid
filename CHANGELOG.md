@@ -60,7 +60,9 @@ spike has its first answer: no, for want of the zh-TW speech pack (FEATURES §6.
   A click on it, or right-click → *Repair…*, looks for the program — a folder that differs only by its
   version (`app-1.0.9172` → `app-1.0.9203`), its registration with Windows (App Paths), the folders for
   installed programs — or lets you browse for it. The fix is for *this PC only* by default: it is stored
-  in the shortcut per PC, so it travels with sync copies and every PC finds its own path. *Properties*
+  in the shortcut per PC, so it travels with sync copies and every PC finds its own path. "This PC" means
+  the PC and Windows user, not the data folder, so it holds for a portable copy on a stick and for data
+  copied to another PC; settings copied to another PC get a sync identity of their own there. *Properties*
   has the same *Only on this PC* choice, and *Edit names…* can show the shortcuts missing on this PC.
   Only local fixed drives are checked, never network or removable ones. Each folder for installed
   programs is searched with a limit of its own, a folder of the same name first; a match on the file name

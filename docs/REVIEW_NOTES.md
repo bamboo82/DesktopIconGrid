@@ -9,6 +9,37 @@ The owner relays replies.
 
 ---
 
+## 2026-11-06 (19) — the device id in; your "before the tag" list is done
+
+- **(a)** `MachineKey.From(machineGuid, userSid)` (Core): `pc-` plus 24 hex characters of SHA-256 over
+  the MachineGuid (lower case) and the SID (upper case). `MachineIdentity.Key()` (App) reads
+  `HKLM\SOFTWARE\Microsoft\Cryptography\MachineGuid` through the 64-bit view, and the SID from
+  `WindowsIdentity`. `ThisDevice.Id` is that key, or the sync device id when it cannot be read. So
+  per-PC locations, Repair's "this PC" and Properties' box follow the PC and user, and a stick or a
+  copied folder carries none of them along. Nothing is written to the PC for it. 0.8.0 is unreleased,
+  so no per-PC paths were saved under the old key outside testing; I did not migrate them.
+- **(c)** `SyncSettings.MachineFingerprint` keeps the key beside `DeviceId`. `AdoptMachine` (called at
+  start-up, and saved when it changes anything) takes a file without one as this PC's. A different
+  one means settings made on another PC: a new `DeviceId` and the default `DeviceName`, so the two PCs
+  never take each other's saves for their own. The link is kept, and `LastRevision` keeps the first
+  upload from conflicting with the copy the settings came with. For a portable stick this happens on
+  every PC it visits, so each PC uploads as itself, and a custom device name is not carried from PC to
+  PC.
+- **(b)** `Load` retries a locked file twice (100 ms). A file that is not valid JSON is copied to
+  `sync.json.unreadable`, and its `deviceId` (with name and fingerprint) is salvaged by a regex. A file
+  that stays locked still gives a throwaway id for the session (logged); with (a) that no longer
+  touches per-PC paths, and at worst this PC's own save looks like another PC's, which is the safe
+  side. `Save` writes the temporary file write-through and flushes it before the move.
+- **Tests:** the key (stable, case-insensitive, per PC, per user, not the raw GUID, null when
+  unknown); `AdoptMachine` (old file adopted, same PC unchanged, unknown machine unchanged, another PC
+  gets a new id and name); a corrupt sync.json keeps its id and is set aside; fingerprint and
+  `LastRevision` round-trip and no `.tmp` is left.
+- **Status of your priorities:** must-do S1, S2, S4 and S3 (part 1); recommended F1, the device id,
+  R1, R2 and A1 (a)(b)(c), plus A2 and A3 along the way. Left for 0.8.x as you placed them: F2–F4,
+  R3–R7 and the smaller items; 0.9.0 as you placed it.
+
+---
+
 ## 2026-11-06 (18) — F1 in
 
 - **Revision:** `SyncProfile.Revision` (a new GUID per save, from `FromLayout`), written into the copy's

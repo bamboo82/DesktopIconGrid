@@ -95,9 +95,12 @@ icon shows its name and location in a tooltip regardless of how the icon is draw
   the program's own package. A match on the file name alone is listed last and not chosen for you: it
   may be another program's `launcher.exe`. *Browse…* picks one by hand. The fix applies to *this PC
   only* (the default) or to *every PC that shares the bar*.
-- *This PC only* is stored in the shortcut as `"locations": { "<deviceId>": "…" }` beside the common
-  `location`, so it travels with the sync copy and each PC finds its own path; the device id is the
-  sync device id, now kept from the first start. *Properties* shows the location on this PC and has the
+- *This PC only* is stored in the shortcut as `"locations": { "<this PC>": "…" }` beside the common
+  `location`, so it travels with the sync copy and each PC finds its own path. *This PC* is the PC and
+  Windows user, keyed by a hash of Windows' machine id and the user's SID that is worked out at every
+  start and never stored on the PC, so a portable copy on a stick, or data copied to another PC, does
+  not carry one PC's paths to the next. Sync settings made on another PC (copied data, a stick, a cloned
+  VM) get a device id and name of their own on this one. *Properties* shows the location on this PC and has the
   same *Only on this PC* box ("Other PCs keep …"). Launching, icons, the running badge and Open with all
   use the location on this PC.
 

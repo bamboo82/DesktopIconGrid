@@ -299,9 +299,10 @@ public partial class App : Application
     {
         var settingsStore = new SyncSettingsStore(SyncSettingsStore.GetDefaultFilePath(), new DpapiSecretProtector());
         var settings = settingsStore.Load();
-        if (!File.Exists(settingsStore.FilePath))
+        var machine = MachineIdentity.Key();
+        if (settings.AdoptMachine(machine) || !File.Exists(settingsStore.FilePath))
         {
-            // The device id names this PC's own shortcut locations, so it must be the same at every start.
+            // The device id tells this PC's saves from other PCs' saves, so it must be the same at every start.
             try
             {
                 settingsStore.Save(settings);
@@ -312,7 +313,8 @@ public partial class App : Application
             }
         }
 
-        ThisDevice.Id = settings.DeviceId;
+        // Per-PC locations belong to this PC and user, not to the data folder (portable mode, copied data).
+        ThisDevice.Id = machine ?? settings.DeviceId;
         var tokenStore = new DpapiTokenStore(Path.Combine(Path.GetDirectoryName(settingsStore.FilePath)!, "google-token.bin"));
         var auth = new GoogleAuthorization(Http, tokenStore, () => settings.Credentials);
         var drive = new GoogleDriveClient(Http, auth);
