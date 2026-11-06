@@ -79,6 +79,25 @@ icon shows its name and location in a tooltip regardless of how the icon is draw
 | Run as administrator | An ordinary UAC prompt every time it starts. |
 | Open web links in | The default browser, or a profile of Edge or Chrome (read from their `Local State`), started with `--profile-directory`; *Open as an app window* adds `--app=<url>`. |
 
+**On other PCs** (0.8.0). A synced bar can point at a program that sits elsewhere on another PC
+(`U:\E\WinSCP\WinSCP.exe` here, `C:\Program Files (x86)\WinSCP\WinSCP.exe` there):
+
+- *Missing here*: a shortcut whose location is a path on a local fixed drive that names neither a file
+  nor a folder is drawn faded with a small "?" and says so in its tooltip. The check is a quick
+  existence test on the icon worker; links, `shell:`/`special:` locations, bare program names, UNC paths
+  and network or removable drives are never checked.
+- *Repair…* (the context menu of a missing shortcut, or a click on it) looks for the program: the same
+  file in a sibling folder that differs only by its version number, newest first
+  (`app-1.0.9172` → `app-1.0.9203`, also a level or two up the path); the program's `App Paths` entry;
+  and the same file name in Program Files, Program Files (x86) and `%LocalAppData%\Programs`, up to three
+  folders deep, with a cap on how many folders are looked at. *Browse…* picks one by hand. The fix
+  applies to *this PC only* (the default) or to *every PC that shares the bar*.
+- *This PC only* is stored in the shortcut as `"locations": { "<deviceId>": "…" }` beside the common
+  `location`, so it travels with the sync copy and each PC finds its own path; the device id is the
+  sync device id, now kept from the first start. *Properties* shows the location on this PC and has the
+  same *Only on this PC* box ("Other PCs keep …"). Launching, icons, the running badge and Open with all
+  use the location on this PC.
+
 Extra flags kept out of the dialog's main layout but supported:
 
 - **Multi Launch member** (toggled from the context menu, see §5).
@@ -199,6 +218,7 @@ version does not know is kept but not drawn.
 | Drop files/folders/URLs from Explorer or a browser | Creates one shortcut per dropped path at the drop position. |
 | Drop files onto a special icon that accepts them (e.g. a Google Drive Bucket) | Handled by the icon: the bucket uploads them. |
 | Press on empty background | Moves the bar, like the grip. |
+| Click a shortcut missing on this PC (0.8.0) | Checks again, and if it is still not there opens *Repair…* (§2.1) instead of failing. |
 | After a launch (0.7.0) | The icon (or the group it was in) is framed and pulses until the bar loses the foreground — usually when the program's window appears — or for five seconds at most. Without Windows animations it is only framed. |
 | Type a name (0.7.0) | Opens the search box under the icons. Shortcuts and special icons that match, also inside groups, stay lit with the groups that hold them; everything else fades. Ranking: the name on the bar whole, at its start, at the start of a word, by word initials (`vsc` → Visual Studio Code), anywhere in it; then the original name (from the location) and the file name. Case and width are ignored, and Chinese is typed through the IME (no pinyin table). The best match is framed, and the group holding it with it; its name shows beside the box. `↓`/`↑` move the frame round the matches, `Enter` opens it (Shift and Ctrl+Shift as for a click), `Esc` clears and then closes. Only the bar's own items are searched: no web, calculator or file index. |
 | Mouse wheel | Scrolls when the bar is shorter than its content. |
@@ -217,6 +237,7 @@ Add separator           ▸   Line / Gap / Label…   (0.7.0)
 Remove                (Undo for ten seconds in a banner under the icons)
 Add to Multi Launch group    (becomes "Remove from Multi Launch group" when it is a member; hidden for groups)
 Open file location
+Repair…                 (only for a shortcut missing on this PC, 0.8.0)
 Colour tag              ▸   seven colours / None  (0.7.0)
 ────────────────────────
 Properties
@@ -271,7 +292,8 @@ Options menu (▸) or tray → *Edit names…* lists every item on the bar in on
 name* (editable), *Original name* (what the item would be called automatically: the file name
 of a shortcut, the kind of a special icon), *Kind*, *In group*, *Colour tag* (0.7.0), *Modified*
 (when the item was added or last edited) and *Location*. *Show:* above the grid narrows it to the
-items with one colour tag, or those without (0.7.0); separators are not listed. Click a column header
+items with one colour tag, or those without (0.7.0), or to the shortcuts missing on this PC (0.8.0);
+separators are not listed. Click a column header
 to sort; *Use original name*
 resets the selected rows, *Use original names for all* resets everything; *Save* applies all
 changes at once. The given names are the captions on the bar and will be the phrases for

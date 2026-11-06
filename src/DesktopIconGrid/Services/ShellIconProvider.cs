@@ -59,7 +59,7 @@ public sealed class ShellIconProvider : IIconProvider
         return item switch
         {
             GroupItem => GetFolderIcon(requested),
-            ShortcutItem shortcut => GetIcon(shortcut.Location, requested),
+            ShortcutItem shortcut => GetIcon(shortcut.EffectiveLocation, requested),
             _ => null,
         };
     }

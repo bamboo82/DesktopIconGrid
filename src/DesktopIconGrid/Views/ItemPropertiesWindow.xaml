@@ -54,10 +54,16 @@
       </Button.ContextMenu>
     </Button>
 
-    <TextBlock Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2"
-               Style="{StaticResource DialogHint}"
-               Text="{Binding LocationHint}"
-               IsEnabled="{Binding IsShortcut}" />
+    <StackPanel Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2">
+      <TextBlock Style="{StaticResource DialogHint}"
+                 Text="{Binding LocationHint}"
+                 IsEnabled="{Binding IsShortcut}" />
+      <CheckBox Content="{x:Static r:Strings.Props_OnlyThisPc}" IsChecked="{Binding OnlyThisPc}" Margin="0,6,0,0"
+                ToolTip="{x:Static r:Strings.Props_OnlyThisPcToolTip}"
+                Visibility="{Binding CanBeOnlyThisPc, Converter={StaticResource BoolToVisibility}}" />
+      <TextBlock Style="{StaticResource DialogHint}" Margin="20,2,0,0" Text="{Binding OtherPcsText}"
+                 Visibility="{Binding ShowsOtherPcs, Converter={StaticResource BoolToVisibility}}" />
+    </StackPanel>
 
     <!-- Parameters -->
     <TextBlock Grid.Row="3" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Props_Parameters}" Margin="0,0,12,8"

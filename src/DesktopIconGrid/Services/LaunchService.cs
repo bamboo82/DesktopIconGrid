@@ -26,7 +26,7 @@ public sealed class LaunchService(ProcessTracker tracker, ILaunchPrompts? prompt
 
     private static void Log(ShortcutItem shortcut, LaunchResult result, bool asAdministrator = false)
     {
-        var what = string.IsNullOrEmpty(shortcut.Parameters) ? shortcut.Location : $"{shortcut.Location} {shortcut.Parameters}";
+        var what = string.IsNullOrEmpty(shortcut.Parameters) ? shortcut.EffectiveLocation : $"{shortcut.EffectiveLocation} {shortcut.Parameters}";
         switch (result.Outcome)
         {
             case LaunchOutcome.Started:
@@ -124,7 +124,7 @@ public sealed class LaunchService(ProcessTracker tracker, ILaunchPrompts? prompt
 
         var startInfo = plan.StartInfo!;
         // Capturing needs the process started directly, which cannot ask for elevation: an elevated start runs uncaptured.
-        if (shortcut.CaptureLog && !asAdministrator && !LaunchPlanner.IsShellNamespace(shortcut.Location) && OutputCapture.CanCapture(startInfo))
+        if (shortcut.CaptureLog && !asAdministrator && !LaunchPlanner.IsShellNamespace(shortcut.EffectiveLocation) && OutputCapture.CanCapture(startInfo))
         {
             return StartWithLog(shortcut, OutputCapture.WithCapture(startInfo));
         }

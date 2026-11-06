@@ -1,5 +1,6 @@
 using System.Windows;
 using DesktopIconGrid.Core.Diagnostics;
+using DesktopIconGrid.Core.Launching;
 using DesktopIconGrid.Core.Models;
 using DesktopIconGrid.Resources;
 using DesktopIconGrid.ViewModels;
@@ -107,6 +108,18 @@ public sealed class DialogService(IIconProvider icons) : IDialogService, ILaunch
     public string? Ask(string title, string prompt) => InputWindow.Show(Owner, title, prompt);
 
     public string? AskText(string title, string prompt, string? initialValue) => InputWindow.Show(Owner, title, prompt, initialValue);
+
+    public RepairResult? ShowRepair(ShortcutItem shortcut)
+    {
+        ArgumentNullException.ThrowIfNull(shortcut);
+        var location = shortcut.EffectiveLocation;
+        var viewModel = new RepairViewModel(
+            shortcut,
+            cancellationToken => LocationRepair.Candidates(location, InstalledPrograms.Folders(), InstalledPrograms.RegisteredPath, cancellationToken),
+            canBeOnlyThisPc: ThisDevice.Id is not null);
+        var window = new RepairWindow { DataContext = viewModel, Owner = Owner };
+        return window.ShowDialog() == true ? viewModel.Result : null;
+    }
 
     public string? PickFolder(string title, string? initialFolder)
     {

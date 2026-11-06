@@ -39,6 +39,8 @@ public sealed class ItemPropertiesViewModel : ObservableObject
     private readonly IIconProvider _icons;
     private string _name;
     private string _location;
+    private bool _onlyThisPc;
+    private readonly string _sharedLocation;
     private string _parameters;
     private bool _captureLog;
     private readonly string? _originalWhenRunning;
@@ -65,7 +67,9 @@ public sealed class ItemPropertiesViewModel : ObservableObject
         IsNew = isNew;
 
         _name = target.Name;
-        _location = (target as ShortcutItem)?.Location ?? string.Empty;
+        _location = (target as ShortcutItem)?.EffectiveLocation ?? string.Empty;
+        _onlyThisPc = target is ShortcutItem { HasOwnLocation: true };
+        _sharedLocation = (target as ShortcutItem)?.Location ?? string.Empty;
         _parameters = (target as ShortcutItem)?.Parameters ?? string.Empty;
         _captureLog = (target as ShortcutItem)?.CaptureLog ?? false;
         _originalWhenRunning = (target as ShortcutItem)?.WhenRunning;
@@ -104,6 +108,28 @@ public sealed class ItemPropertiesViewModel : ObservableObject
     public string Title => IsGroup ? Strings.Props_GroupTitle : Strings.Props_ShortcutTitle;
 
     public string LocationHint => Strings.Props_LocationHint;
+
+    /// <summary>
+    /// The location applies to this PC only (<see cref="ShortcutItem.Locations"/>), for a program installed elsewhere
+    /// here; other PCs sharing the bar keep the common one. Offered for existing shortcuts once the device is known.
+    /// </summary>
+    public bool OnlyThisPc
+    {
+        get => _onlyThisPc;
+        set
+        {
+            if (SetProperty(ref _onlyThisPc, value))
+            {
+                OnPropertyChanged(nameof(ShowsOtherPcs));
+            }
+        }
+    }
+
+    public bool CanBeOnlyThisPc => IsShortcut && !IsNew && ThisDevice.Id is not null;
+
+    public bool ShowsOtherPcs => _onlyThisPc && _sharedLocation.Length > 0;
+
+    public string OtherPcsText => string.Format(Strings.Props_OtherPcsKeep, _sharedLocation);
 
     public string ParametersHint => Strings.Props_ParametersHint;
 
@@ -382,12 +408,24 @@ public sealed class ItemPropertiesViewModel : ObservableObject
         _target.TextIcon = _textIcon;
         if (_target is ShortcutItem shortcut)
         {
-            shortcut.Location = _location.Trim();
+            if (_onlyThisPc && CanBeOnlyThisPc && _sharedLocation.Length > 0)
+            {
+                shortcut.SetLocationFor(ThisDevice.Id!, _location.Trim()); // the common location stays for the other PCs
+            }
+            else
+            {
+                shortcut.Location = _location.Trim();
+                if (ThisDevice.Id is { } device)
+                {
+                    shortcut.SetLocationFor(device, null);
+                }
+            }
+
             shortcut.Parameters = string.IsNullOrWhiteSpace(_parameters) ? null : _parameters.Trim();
             shortcut.CaptureLog = _captureLog;
             shortcut.WhenRunning = !_whenRunningChosen
                 ? _originalWhenRunning
-                : _switchesWhenRunning == LaunchPlanner.IsProgramLocation(shortcut.Location)
+                : _switchesWhenRunning == LaunchPlanner.IsProgramLocation(shortcut.EffectiveLocation)
                     ? null // the location's own default: stored as nothing, so it keeps following the location
                     : _switchesWhenRunning ? ShortcutItem.WhenRunningSwitch : ShortcutItem.WhenRunningStart;
             shortcut.StartIn = string.IsNullOrWhiteSpace(_startIn) ? null : _startIn.Trim();

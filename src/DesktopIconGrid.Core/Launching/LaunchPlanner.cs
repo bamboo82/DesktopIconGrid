@@ -42,7 +42,7 @@ public static class LaunchPlanner
     {
         ArgumentNullException.ThrowIfNull(shortcut);
 
-        var location = Environment.ExpandEnvironmentVariables(shortcut.Location?.Trim() ?? string.Empty);
+        var location = Environment.ExpandEnvironmentVariables(shortcut.EffectiveLocation?.Trim() ?? string.Empty);
         if (location.Length == 0)
         {
             throw new ArgumentException("The shortcut has no location to open.", nameof(shortcut));
@@ -156,7 +156,7 @@ public static class LaunchPlanner
         {
             ShortcutItem.WhenRunningSwitch => true,
             ShortcutItem.WhenRunningStart => false,
-            _ => IsProgramLocation(shortcut.Location),
+            _ => IsProgramLocation(shortcut.EffectiveLocation),
         };
     }
 

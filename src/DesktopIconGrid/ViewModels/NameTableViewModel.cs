@@ -3,6 +3,7 @@ using System.ComponentModel;
 using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
+using DesktopIconGrid.Core.Launching;
 using DesktopIconGrid.Core.Models;
 using DesktopIconGrid.Infrastructure;
 using DesktopIconGrid.Resources;
@@ -25,10 +26,14 @@ public sealed class NameRowViewModel : ObservableObject
         ModifiedAt = item.ModifiedAt?.LocalDateTime;
         InitialName = item.Name;
         _givenName = item.Name;
+        IsMissing = item is ShortcutItem shortcut && LocationProbe.IsMissing(shortcut, IconWorker.IsOnSlowStorage);
         ColorTag = ColorTags.Find(item.ColorTag)?.Name;
         ColorTagName = ColorTagNames.Of(item.ColorTag);
         ColorTagBrush = ColorTags.Find(item.ColorTag) is { } tag ? ThemeManager.ToBrush(tag.Color) : null;
     }
+
+    /// <summary>A shortcut whose target is not on this PC (see <see cref="LocationProbe"/>).</summary>
+    public bool IsMissing { get; }
 
     /// <summary>The item's known colour tag (<see cref="ColorTags"/>), or <see langword="null"/>.</summary>
     public string? ColorTag { get; }
@@ -87,6 +92,9 @@ public sealed class NameTableViewModel : ObservableObject
     /// <summary>The filter that shows the rows without a colour tag.</summary>
     public const string NoTag = "";
 
+    /// <summary>The filter that shows the shortcuts whose target is not on this PC.</summary>
+    public const string MissingHere = "?";
+
     private readonly LauncherViewModel _root;
     private TagFilterOption _selectedTagFilter;
 
@@ -114,6 +122,7 @@ public sealed class NameTableViewModel : ObservableObject
             new TagFilterOption(AllTags, Strings.Names_AllItems, null),
             .. ColorTags.All.Select(t => new TagFilterOption(t.Name, ColorTagNames.Of(t.Name), ThemeManager.ToBrush(t.Color))),
             new TagFilterOption(NoTag, Strings.Names_Untagged, null),
+            new TagFilterOption(MissingHere, Strings.Names_MissingHere, null),
         ];
         _selectedTagFilter = TagFilters[0];
         RowsView = CollectionViewSource.GetDefaultView(Rows);
@@ -156,6 +165,7 @@ public sealed class NameTableViewModel : ObservableObject
         {
             AllTags => true,
             NoTag => row.ColorTag is null,
+            MissingHere => row.IsMissing,
             _ => string.Equals(row.ColorTag, tag, StringComparison.Ordinal),
         };
     }
@@ -192,7 +202,7 @@ public sealed class NameTableViewModel : ObservableObject
     {
         return item switch
         {
-            ShortcutItem shortcut => new NameRowViewModel(item, ShortcutItem.SuggestName(shortcut.Location), Strings.Names_KindShortcut, groupName, shortcut.Location),
+            ShortcutItem shortcut => new NameRowViewModel(item, ShortcutItem.SuggestName(shortcut.EffectiveLocation), Strings.Names_KindShortcut, groupName, shortcut.EffectiveLocation),
             GroupItem group => new NameRowViewModel(item, Strings.Common_Group, Strings.Common_Group, groupName, string.Format(Strings.Names_GroupItems, group.Items.Count(i => i is not SeparatorItem))),
             SpecialIconItem special => new NameRowViewModel(item, _root.SpecialIcons.Resolve(special.Kind).DisplayName, _root.SpecialIcons.Resolve(special.Kind).DisplayName, groupName, special.GetSetting("folderName") ?? special.GetSetting("drive") ?? string.Empty),
             _ => new NameRowViewModel(item, item.Name, Strings.Names_KindItem, groupName, string.Empty),

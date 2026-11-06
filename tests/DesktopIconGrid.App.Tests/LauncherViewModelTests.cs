@@ -67,6 +67,16 @@ public sealed class LauncherViewModelTests : IDisposable
         public string? AskText(string title, string prompt, string? initialValue) => TextAnswer;
 
         public string? PickFolder(string title, string? initialFolder) => null;
+
+        public List<string> RepairRequests { get; } = [];
+
+        public RepairResult? RepairAnswer { get; set; }
+
+        public RepairResult? ShowRepair(ShortcutItem shortcut)
+        {
+            RepairRequests.Add(shortcut.Name);
+            return RepairAnswer;
+        }
     }
 
     /// <summary>Records every launch and answers with <see cref="Result"/> (a failure unless a test says otherwise).</summary>
@@ -471,6 +481,61 @@ public sealed class LauncherViewModelTests : IDisposable
         Assert.Equal(["B"], table.RowsView.Cast<NameRowViewModel>().Select(r => r.GivenName));
         table.SelectedTagFilter = table.TagFilters[0];
         Assert.Equal(3, table.RowsView.Cast<object>().Count());
+    }
+
+    [Fact]
+    public void Repair_points_the_shortcut_at_the_chosen_path_for_this_PC_only_or_for_every_PC()
+    {
+        var previous = ThisDevice.Id;
+        ThisDevice.Id = "this-pc";
+        try
+        {
+            var (viewModel, model, dialogs) = Create();
+            var item = viewModel.RootItems.Items[0];
+            var shortcut = (ShortcutItem)model.Items[0];
+            dialogs.RepairAnswer = new RepairResult(@"D:\Apps\a.exe", OnlyThisPc: true);
+
+            viewModel.RepairItem(item);
+
+            Assert.Equal(@"C:\a.exe", shortcut.Location); // other PCs keep theirs
+            Assert.Equal(@"D:\Apps\a.exe", shortcut.EffectiveLocation);
+            Assert.Equal(@"D:\Apps\a.exe", item.Location);
+
+            dialogs.RepairAnswer = new RepairResult(@"E:\a.exe", OnlyThisPc: false);
+            viewModel.RepairItem(item);
+
+            Assert.Equal(@"E:\a.exe", shortcut.Location);
+            Assert.Null(shortcut.Locations);
+
+            dialogs.RepairAnswer = null; // Cancel
+            viewModel.RepairItem(item);
+
+            Assert.Equal(@"E:\a.exe", shortcut.Location);
+            Assert.Equal(3, dialogs.RepairRequests.Count);
+        }
+        finally
+        {
+            ThisDevice.Id = previous;
+        }
+    }
+
+    [Fact]
+    public void A_click_on_a_shortcut_that_is_still_missing_opens_Repair_instead_of_launching()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return; // only a drive-letter path is ever missing
+        }
+
+        var (viewModel, model, dialogs) = Create();
+        ((ShortcutItem)model.Items[0]).Location = @"C:\Nowhere-0f1e\gone.exe";
+        var item = viewModel.RootItems.Items[0];
+        item.IsMissing = true;
+
+        viewModel.Activate(item, null, ActivationModifiers.None);
+
+        Assert.Equal(["A"], dialogs.RepairRequests);
+        Assert.Empty(_launcher.Launches);
     }
 }
 

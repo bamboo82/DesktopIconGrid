@@ -83,7 +83,7 @@ public sealed class ProcessTracker : IDisposable
     public void Watch(ShortcutItem shortcut)
     {
         ArgumentNullException.ThrowIfNull(shortcut);
-        var target = WatchTargetOf(shortcut.Location);
+        var target = WatchTargetOf(shortcut.EffectiveLocation);
         if (target is null)
         {
             _watchedPaths.Remove(shortcut.Id);

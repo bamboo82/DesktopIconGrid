@@ -21,6 +21,7 @@ public sealed class ItemViewModel : ObservableObject
     private bool _isSearchDimmed;
     private bool _isSearchSelected;
     private bool _isLaunching;
+    private bool _isMissing;
 
     public ItemViewModel(LauncherViewModel root, LauncherItem model)
     {
@@ -35,6 +36,7 @@ public sealed class ItemViewModel : ObservableObject
         NewShortcutAfterCommand = new RelayCommand(() => Root.NewShortcutAfter(this));
         NewGroupAfterCommand = new RelayCommand(() => Root.NewGroupAfter(this), () => IsAtRoot);
         ShowLogCommand = new RelayCommand(() => Root.ShowLog(this), () => CapturesLog);
+        RepairCommand = new RelayCommand(() => Root.RepairItem(this), () => IsShortcut);
         RebuildGauge();
     }
 
@@ -88,6 +90,19 @@ public sealed class ItemViewModel : ObservableObject
     /// <summary>The tag's name in the UI language; empty without a (known) tag.</summary>
     public string ColorTagName => ColorTagNames.Of(Model.ColorTag);
 
+    /// <summary>The shortcut's target is not on this PC (a local path that names nothing): drawn faded with a "?".</summary>
+    public bool IsMissing
+    {
+        get => _isMissing;
+        internal set
+        {
+            if (SetProperty(ref _isMissing, value))
+            {
+                OnPropertyChanged(nameof(ToolTipText));
+            }
+        }
+    }
+
     /// <summary>Set for a few seconds after the item was started from the bar, while the program comes up: the icon pulses.</summary>
     public bool IsLaunching
     {
@@ -122,7 +137,8 @@ public sealed class ItemViewModel : ObservableObject
         internal set => SetProperty(ref _isSearchSelected, value);
     }
 
-    public string? Location => (Model as ShortcutItem)?.Location;
+    /// <summary>The shortcut's location on this PC.</summary>
+    public string? Location => (Model as ShortcutItem)?.EffectiveLocation;
 
     public string? Parameters => (Model as ShortcutItem)?.Parameters;
 
@@ -200,7 +216,8 @@ public sealed class ItemViewModel : ObservableObject
             var location = string.IsNullOrEmpty(Parameters) ? Location : $"{Location} {Parameters}";
             var multi = IsMultiLaunch ? "\n" + Strings.Item_MultiLaunchMember : string.Empty;
             var running = IsRunning ? "\n" + Strings.Grid_Running : string.Empty;
-            return $"{Name}\n{location}{multi}{running}";
+            var missing = IsMissing ? "\n" + Strings.Item_MissingHere : string.Empty;
+            return $"{Name}\n{location}{multi}{running}{missing}";
         }
     }
 
@@ -224,6 +241,9 @@ public sealed class ItemViewModel : ObservableObject
     public ICommand ActivateCommand { get; }
 
     public ICommand PropertiesCommand { get; }
+
+    /// <summary>Looks for a missing program on this PC and points the shortcut at it.</summary>
+    public ICommand RepairCommand { get; }
 
     public ICommand RemoveCommand { get; }
 

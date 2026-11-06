@@ -269,6 +269,10 @@
               <Setter TargetName="Root" Property="Background" Value="{DynamicResource Theme.DropTarget}" />
               <Setter TargetName="Root" Property="BorderBrush" Value="{DynamicResource Theme.Accent}" />
             </DataTrigger>
+            <!-- Not found on this PC -->
+            <DataTrigger Binding="{Binding IsMissing}" Value="True">
+              <Setter TargetName="Root" Property="Opacity" Value="0.55" />
+            </DataTrigger>
             <!-- Type to find: the rest fades, and the match Enter opens gets a frame -->
             <DataTrigger Binding="{Binding IsSearchDimmed}" Value="True">
               <Setter TargetName="Root" Property="Opacity" Value="0.3" />

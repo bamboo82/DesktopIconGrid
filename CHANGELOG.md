@@ -18,6 +18,14 @@ layout history, and a command line with *Send to*.
   under their own names, with their device and time, so they can be loaded or deleted. The Google account
   stays for Google Drive Buckets. The folder backend is covered by tests on real files, including two PCs
   sharing one folder; it has not yet been tried with OneDrive or Dropbox themselves.
+- Shortcuts that survive other PCs: a shortcut whose program is not on this PC is drawn faded with a "?".
+  A click on it, or right-click → *Repair…*, looks for the program — a folder that differs only by its
+  version (`app-1.0.9172` → `app-1.0.9203`), its registration with Windows (App Paths), the folders for
+  installed programs — or lets you browse for it. The fix is for *this PC only* by default: it is stored
+  in the shortcut per PC, so it travels with sync copies and every PC finds its own path. *Properties*
+  has the same *Only on this PC* choice, and *Edit names…* can show the shortcuts missing on this PC.
+  Only local fixed drives are checked, never network or removable ones. The search is covered by tests
+  on real folders and the per-PC location by model and view-model tests; not yet seen on a screen.
 
 ## [0.7.0] – 2026-11-05
 

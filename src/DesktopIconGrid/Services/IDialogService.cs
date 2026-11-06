@@ -37,4 +37,7 @@ public interface IDialogService
 
     /// <summary>Asks for a folder, starting in <paramref name="initialFolder"/> when it exists; <see langword="null"/> on Cancel.</summary>
     string? PickFolder(string title, string? initialFolder);
+
+    /// <summary>The Repair dialog for a shortcut whose program is not on this PC; <see langword="null"/> on Cancel.</summary>
+    RepairResult? ShowRepair(ShortcutItem shortcut);
 }

@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace DesktopIconGrid.Core.Models;
 
 /// <summary>A launchable entry: a program, document, folder or URL.</summary>
@@ -20,6 +22,46 @@ public sealed class ShortcutItem : LauncherItem
     /// <c>special:</c> locations are handled by the app. Environment variables are expanded at launch.
     /// </summary>
     public string Location { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Where the shortcut points on particular PCs, by device id (<see cref="ThisDevice"/>), where that differs from
+    /// <see cref="Location"/>: set by Repair… or by Properties with "only on this PC". It travels with a sync copy, so
+    /// every PC finds its own path; <see langword="null"/> when there are none.
+    /// </summary>
+    public Dictionary<string, string>? Locations { get; set; }
+
+    /// <summary>The location on this PC: its own (<see cref="Locations"/>) when it has one, otherwise <see cref="Location"/>.</summary>
+    [JsonIgnore]
+    public string EffectiveLocation => LocationFor(ThisDevice.Id);
+
+    /// <summary>True when this PC has a location of its own.</summary>
+    [JsonIgnore]
+    public bool HasOwnLocation => ThisDevice.Id is { } id && Locations?.ContainsKey(id) == true;
+
+    /// <summary>The location on the PC with <paramref name="deviceId"/>.</summary>
+    public string LocationFor(string? deviceId) =>
+        deviceId is not null && Locations is { } own && own.TryGetValue(deviceId, out var here) && !string.IsNullOrWhiteSpace(here)
+            ? here
+            : Location;
+
+    /// <summary>Gives the PC <paramref name="deviceId"/> a location of its own, or takes it away with a blank one.</summary>
+    public void SetLocationFor(string deviceId, string? location)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(deviceId);
+        if (string.IsNullOrWhiteSpace(location))
+        {
+            Locations?.Remove(deviceId);
+        }
+        else
+        {
+            (Locations ??= new Dictionary<string, string>(StringComparer.Ordinal))[deviceId] = location.Trim();
+        }
+
+        if (Locations is { Count: 0 })
+        {
+            Locations = null;
+        }
+    }
 
     /// <summary>Command-line arguments passed to the program.</summary>
     public string? Parameters { get; set; }
@@ -57,7 +99,20 @@ public sealed class ShortcutItem : LauncherItem
     /// <summary>With <see cref="Browser"/>: open the link as an app window, without tabs and address bar.</summary>
     public bool AppWindow { get; set; }
 
-    protected override LauncherItem CloneCore() => (ShortcutItem)MemberwiseClone();
+    protected override LauncherItem CloneCore()
+    {
+        var copy = (ShortcutItem)MemberwiseClone();
+        copy.Locations = CopyLocations(Locations);
+        return copy;
+    }
+
+    private static Dictionary<string, string>? CopyLocations(Dictionary<string, string>? locations)
+    {
+        var kept = locations?
+            .Where(pair => !string.IsNullOrWhiteSpace(pair.Key) && !string.IsNullOrWhiteSpace(pair.Value))
+            .ToDictionary(pair => pair.Key, pair => pair.Value.Trim(), StringComparer.Ordinal);
+        return kept is { Count: > 0 } ? kept : null;
+    }
 
     public override void CopyContentFrom(LauncherItem source)
     {
@@ -65,6 +120,7 @@ public sealed class ShortcutItem : LauncherItem
         if (source is ShortcutItem shortcut)
         {
             Location = shortcut.Location.Trim();
+            Locations = CopyLocations(shortcut.Locations);
             Parameters = string.IsNullOrWhiteSpace(shortcut.Parameters) ? null : shortcut.Parameters.Trim();
             MultiLaunch = shortcut.MultiLaunch;
             CaptureLog = shortcut.CaptureLog;

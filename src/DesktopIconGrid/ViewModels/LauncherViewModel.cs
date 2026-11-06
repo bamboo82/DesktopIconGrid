@@ -224,6 +224,11 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
     /// </summary>
     public void LoadImageAsync(ItemViewModel viewModel)
     {
+        if (viewModel.Model is ShortcutItem shortcut)
+        {
+            CheckMissing(viewModel, shortcut);
+        }
+
         var request = viewModel.BeginImageRequest();
         if (!viewModel.NeedsImage)
         {
@@ -239,7 +244,7 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
 
         var model = viewModel.Model;
         var size = IconSize;
-        var slow = IconWorker.IsOnSlowStorage(model.IconPath) || IconWorker.IsOnSlowStorage((model as ShortcutItem)?.Location);
+        var slow = IconWorker.IsOnSlowStorage(model.IconPath) || IconWorker.IsOnSlowStorage((model as ShortcutItem)?.EffectiveLocation);
         IconWorker.Shared.RunAsync(() => Icons.GetItemIcon(model, size), IconWorker.LookupTimeout, model.Name, slow)
             .ContinueWith(
                 task =>
@@ -249,6 +254,20 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
                         viewModel.SetImage(task.IsCompletedSuccessfully ? task.Result : null);
                     }
                 },
+                CancellationToken.None,
+                TaskContinuationOptions.None,
+                _uiScheduler);
+    }
+
+    /// <summary>
+    /// Checks on the icon worker whether the shortcut's target is on this PC (<see cref="LocationProbe"/>: local paths
+    /// only, so a network or removable drive never stalls the bar).
+    /// </summary>
+    private void CheckMissing(ItemViewModel viewModel, ShortcutItem shortcut)
+    {
+        IconWorker.Shared.RunAsync(() => LocationProbe.IsMissing(shortcut, IconWorker.IsOnSlowStorage))
+            .ContinueWith(
+                task => viewModel.IsMissing = task.IsCompletedSuccessfully && task.Result,
                 CancellationToken.None,
                 TaskContinuationOptions.None,
                 _uiScheduler);
@@ -394,7 +413,7 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
             return new SearchCandidate(item.Id, item.Name, SpecialIcons.Resolve(special.Kind).DisplayName);
         }
 
-        var location = (item as ShortcutItem)?.Location ?? string.Empty;
+        var location = (item as ShortcutItem)?.EffectiveLocation ?? string.Empty;
         var trimmed = location.Trim().TrimEnd('\\', '/');
         var cut = trimmed.LastIndexOfAny(['\\', '/']);
         var fileName = Path.GetFileNameWithoutExtension(cut >= 0 ? trimmed[(cut + 1)..] : trimmed);
@@ -486,6 +505,17 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
         if (item.Model is not ShortcutItem shortcutToLaunch)
         {
             return;
+        }
+
+        if (item.IsMissing)
+        {
+            // Checked again now (a fixed local drive: quick): it may have come back since.
+            item.IsMissing = LocationProbe.IsMissing(shortcutToLaunch, IconWorker.IsOnSlowStorage);
+            if (item.IsMissing)
+            {
+                RepairItem(item);
+                return;
+            }
         }
 
         // The taskbar's keys: Shift or a middle click starts another instance, Ctrl+Shift starts one as administrator.
@@ -654,7 +684,7 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
         var result = _launcher.LaunchWith(shortcut, paths);
         if (result.Outcome == LaunchOutcome.Failed)
         {
-            _dialogs.Notify(string.Format(Strings.Launch_CantOpenWith, target.Name), $"{result.ErrorMessage}\n{shortcut.Location}");
+            _dialogs.Notify(string.Format(Strings.Launch_CantOpenWith, target.Name), $"{result.ErrorMessage}\n{shortcut.EffectiveLocation}");
             return;
         }
 
@@ -857,6 +887,39 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
         }
 
         OnPropertyChanged(nameof(HasMultiLaunchMembers));
+        Save();
+    }
+
+    /// <summary>
+    /// The Repair dialog for a shortcut: the chosen path becomes this PC's own location (other PCs that share the bar
+    /// keep theirs) or, if the user says so, the location on every PC.
+    /// </summary>
+    public void RepairItem(ItemViewModel item)
+    {
+        if (item.Model is not ShortcutItem shortcut || _dialogs.ShowRepair(shortcut) is not { } repair)
+        {
+            return;
+        }
+
+        var draft = (ShortcutItem)shortcut.Clone();
+        if (repair.OnlyThisPc && ThisDevice.Id is { } device)
+        {
+            draft.SetLocationFor(device, repair.Path);
+        }
+        else
+        {
+            draft.Location = repair.Path;
+            if (ThisDevice.Id is { } here)
+            {
+                draft.SetLocationFor(here, null);
+            }
+        }
+
+        Model.Update(draft);
+        AppLog.Default.Info("Layout", $"Repaired \"{shortcut.Name}\": {repair.Path}{(repair.OnlyThisPc ? " (this PC only)" : string.Empty)}");
+        item.RefreshFromModel();
+        item.LoadImage();
+        Tracker.Watch(shortcut);
         Save();
     }
 

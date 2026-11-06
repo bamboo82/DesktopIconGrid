@@ -93,6 +93,16 @@ public sealed class SyncViewModelTests : IDisposable
         public string? AskText(string title, string prompt, string? initialValue) => null;
 
         public string? PickFolder(string title, string? initialFolder) => Folder;
+
+        public List<string> RepairRequests { get; } = [];
+
+        public RepairResult? RepairAnswer { get; set; }
+
+        public RepairResult? ShowRepair(ShortcutItem shortcut)
+        {
+            RepairRequests.Add(shortcut.Name);
+            return RepairAnswer;
+        }
     }
 
     [Fact]

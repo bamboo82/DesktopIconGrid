@@ -1535,4 +1535,70 @@ Details are in {1}.</value>
   <data name="Sync_AccountForBuckets" xml:space="preserve">
     <value>Google account (for copies on Google Drive and for Google Drive Buckets)</value>
   </data>
+  <data name="Item_MissingHere" xml:space="preserve">
+    <value>Not found on this PC: click to look for it</value>
+  </data>
+  <data name="Grid_Missing" xml:space="preserve">
+    <value>Not found on this PC</value>
+  </data>
+  <data name="Names_MissingHere" xml:space="preserve">
+    <value>Missing on this PC</value>
+  </data>
+  <data name="Props_OnlyThisPc" xml:space="preserve">
+    <value>Only on this PC</value>
+  </data>
+  <data name="Props_OtherPcsKeep" xml:space="preserve">
+    <value>Other PCs keep {0}</value>
+  </data>
+  <data name="Props_OnlyThisPcToolTip" xml:space="preserve">
+    <value>Keep this location for this PC only, for example where a program is installed in another folder. Other PCs that share the bar through sync keep theirs.</value>
+  </data>
+  <data name="Menu_Repair" xml:space="preserve">
+    <value>Repair…</value>
+  </data>
+  <data name="Repair_Title" xml:space="preserve">
+    <value>Repair shortcut</value>
+  </data>
+  <data name="Repair_Intro" xml:space="preserve">
+    <value>"{0}" points to {1}, which is not on this PC. Choose where it is now.</value>
+  </data>
+  <data name="Repair_Searching" xml:space="preserve">
+    <value>Looking for {0}…</value>
+  </data>
+  <data name="Repair_NothingFound" xml:space="preserve">
+    <value>Nothing found. Use Browse… to pick the program.</value>
+  </data>
+  <data name="Repair_FoundOne" xml:space="preserve">
+    <value>Found one place.</value>
+  </data>
+  <data name="Repair_FoundMany" xml:space="preserve">
+    <value>Found {0} places.</value>
+  </data>
+  <data name="Repair_ReasonOtherVersion" xml:space="preserve">
+    <value>Another version of the same program</value>
+  </data>
+  <data name="Repair_ReasonRegistered" xml:space="preserve">
+    <value>Registered with Windows (App Paths)</value>
+  </data>
+  <data name="Repair_ReasonInstalled" xml:space="preserve">
+    <value>In a folder for installed programs</value>
+  </data>
+  <data name="Repair_ReasonChosen" xml:space="preserve">
+    <value>Chosen by you</value>
+  </data>
+  <data name="Repair_Browse" xml:space="preserve">
+    <value>Browse…</value>
+  </data>
+  <data name="Repair_ThisPcOnly" xml:space="preserve">
+    <value>Only on this PC (other PCs keep their own location)</value>
+  </data>
+  <data name="Repair_EveryPc" xml:space="preserve">
+    <value>On every PC that shares this bar</value>
+  </data>
+  <data name="Repair_Repair" xml:space="preserve">
+    <value>Repair</value>
+  </data>
+  <data name="Repair_ListName" xml:space="preserve">
+    <value>Places where the program was found</value>
+  </data>
 </root>

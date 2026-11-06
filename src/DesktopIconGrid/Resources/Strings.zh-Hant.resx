@@ -1535,4 +1535,70 @@
   <data name="Sync_AccountForBuckets" xml:space="preserve">
     <value>Google 帳戶（用於 Google 雲端硬碟上的副本與 Google 雲端硬碟投遞箱）</value>
   </data>
+  <data name="Item_MissingHere" xml:space="preserve">
+    <value>在這部電腦上找不到：按一下即可尋找</value>
+  </data>
+  <data name="Grid_Missing" xml:space="preserve">
+    <value>在這部電腦上找不到</value>
+  </data>
+  <data name="Names_MissingHere" xml:space="preserve">
+    <value>這部電腦上找不到的項目</value>
+  </data>
+  <data name="Props_OnlyThisPc" xml:space="preserve">
+    <value>僅限這部電腦</value>
+  </data>
+  <data name="Props_OtherPcsKeep" xml:space="preserve">
+    <value>其他電腦仍使用 {0}</value>
+  </data>
+  <data name="Props_OnlyThisPcToolTip" xml:space="preserve">
+    <value>只在這部電腦使用此位置，例如程式安裝在其他資料夾時。透過同步共用工具列的其他電腦保留各自的位置。</value>
+  </data>
+  <data name="Menu_Repair" xml:space="preserve">
+    <value>修復…</value>
+  </data>
+  <data name="Repair_Title" xml:space="preserve">
+    <value>修復捷徑</value>
+  </data>
+  <data name="Repair_Intro" xml:space="preserve">
+    <value>「{0}」指向 {1}，但這部電腦上沒有。請選擇它現在的位置。</value>
+  </data>
+  <data name="Repair_Searching" xml:space="preserve">
+    <value>正在尋找 {0}…</value>
+  </data>
+  <data name="Repair_NothingFound" xml:space="preserve">
+    <value>找不到。請用「瀏覽…」選擇程式。</value>
+  </data>
+  <data name="Repair_FoundOne" xml:space="preserve">
+    <value>找到 1 個位置。</value>
+  </data>
+  <data name="Repair_FoundMany" xml:space="preserve">
+    <value>找到 {0} 個位置。</value>
+  </data>
+  <data name="Repair_ReasonOtherVersion" xml:space="preserve">
+    <value>同一程式的另一個版本</value>
+  </data>
+  <data name="Repair_ReasonRegistered" xml:space="preserve">
+    <value>已向 Windows 註冊 (App Paths)</value>
+  </data>
+  <data name="Repair_ReasonInstalled" xml:space="preserve">
+    <value>在已安裝程式的資料夾中</value>
+  </data>
+  <data name="Repair_ReasonChosen" xml:space="preserve">
+    <value>您選擇的</value>
+  </data>
+  <data name="Repair_Browse" xml:space="preserve">
+    <value>瀏覽…</value>
+  </data>
+  <data name="Repair_ThisPcOnly" xml:space="preserve">
+    <value>僅限這部電腦（其他電腦保留各自的位置）</value>
+  </data>
+  <data name="Repair_EveryPc" xml:space="preserve">
+    <value>所有共用此工具列的電腦</value>
+  </data>
+  <data name="Repair_Repair" xml:space="preserve">
+    <value>修復</value>
+  </data>
+  <data name="Repair_ListName" xml:space="preserve">
+    <value>找到程式的位置</value>
+  </data>
 </root>

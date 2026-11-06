@@ -63,6 +63,7 @@ Google Drive Bucket, and [docs/THEMES.md](docs/THEMES.md) for the themes.
 | Start a program elevated, minimised or in another folder; open a link in a browser profile | *Properties → Advanced*: run as administrator, window state, start folder, Edge or Chrome profile (or an app window) |
 | Pass the clipboard or a typed value to a program | Put `{clipboard}` or `{ask:Question}` in its *Parameters* |
 | Go to a program that is already running | Click its icon: its window comes forward, a second click minimises it. Shift+click or middle-click starts another; Ctrl+Shift+click starts one as administrator |
+| Fix a shortcut whose program is somewhere else on this PC | Icons with a "?" are missing here: click one (or right-click → *Repair…*) and pick where the program is now, for this PC only or for every PC |
 | Rearrange | Drag an icon to a new position; the blue line shows where it lands |
 | Divide the bar into sections | Right-click → *Add separator ▸ Line*, *Gap* or *Label…*; right-click the separator to change or remove it |
 | Mark items with a colour | Right-click → *Colour tag ▸*; *Edit names…* can then show one colour at a time |

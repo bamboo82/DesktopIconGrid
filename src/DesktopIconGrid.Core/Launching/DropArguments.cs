@@ -17,7 +17,7 @@ public static class DropArguments
     /// <summary>Programs, scripts and documents can open dropped files; links, shell folders and special actions cannot.</summary>
     public static bool SupportsOpenWith(ShortcutItem shortcut)
     {
-        var location = shortcut?.Location?.Trim();
+        var location = shortcut?.EffectiveLocation?.Trim();
         return !string.IsNullOrEmpty(location)
             && !LaunchPlanner.IsSpecial(location)
             && !LaunchPlanner.IsShellNamespace(location)

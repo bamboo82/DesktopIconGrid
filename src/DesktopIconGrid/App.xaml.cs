@@ -294,6 +294,20 @@ public partial class App : Application
     {
         var settingsStore = new SyncSettingsStore(SyncSettingsStore.GetDefaultFilePath(), new DpapiSecretProtector());
         var settings = settingsStore.Load();
+        if (!File.Exists(settingsStore.FilePath))
+        {
+            // The device id names this PC's own shortcut locations, so it must be the same at every start.
+            try
+            {
+                settingsStore.Save(settings);
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                AppLog.Default.Warning("Sync", $"The device id could not be saved yet: {ex.Message}");
+            }
+        }
+
+        ThisDevice.Id = settings.DeviceId;
         var tokenStore = new DpapiTokenStore(Path.Combine(Path.GetDirectoryName(settingsStore.FilePath)!, "google-token.bin"));
         var auth = new GoogleAuthorization(Http, tokenStore, () => settings.Credentials);
         var drive = new GoogleDriveClient(Http, auth);

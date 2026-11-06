@@ -807,6 +807,15 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Not found on this PC.
+        /// </summary>
+        public static string Grid_Missing {
+            get {
+                return ResourceManager.GetString("Grid_Missing", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Running.
         /// </summary>
         public static string Grid_Running {
@@ -839,6 +848,15 @@ namespace DesktopIconGrid.Resources {
         public static string Item_ItemsToolTip {
             get {
                 return ResourceManager.GetString("Item_ItemsToolTip", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Not found on this PC: click to look for it.
+        /// </summary>
+        public static string Item_MissingHere {
+            get {
+                return ResourceManager.GetString("Item_MissingHere", resourceCulture);
             }
         }
 
@@ -1680,6 +1698,15 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Repair….
+        /// </summary>
+        public static string Menu_Repair {
+            get {
+                return ResourceManager.GetString("Menu_Repair", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Reset bar position.
         /// </summary>
         public static string Menu_ResetBarPosition {
@@ -2058,6 +2085,15 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Missing on this PC.
+        /// </summary>
+        public static string Names_MissingHere {
+            get {
+                return ResourceManager.GetString("Names_MissingHere", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Original name.
         /// </summary>
         public static string Names_Original {
@@ -2400,6 +2436,33 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Only on this PC.
+        /// </summary>
+        public static string Props_OnlyThisPc {
+            get {
+                return ResourceManager.GetString("Props_OnlyThisPc", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Keep this location for this PC only, for example where a program is installed in [rest of string was truncated]";.
+        /// </summary>
+        public static string Props_OnlyThisPcToolTip {
+            get {
+                return ResourceManager.GetString("Props_OnlyThisPcToolTip", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Other PCs keep {0}.
+        /// </summary>
+        public static string Props_OtherPcsKeep {
+            get {
+                return ResourceManager.GetString("Props_OtherPcsKeep", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Parameters:.
         /// </summary>
         public static string Props_Parameters {
@@ -2612,6 +2675,141 @@ namespace DesktopIconGrid.Resources {
         public static string Props_WhenRunningSwitch {
             get {
                 return ResourceManager.GetString("Props_WhenRunningSwitch", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Browse….
+        /// </summary>
+        public static string Repair_Browse {
+            get {
+                return ResourceManager.GetString("Repair_Browse", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to On every PC that shares this bar.
+        /// </summary>
+        public static string Repair_EveryPc {
+            get {
+                return ResourceManager.GetString("Repair_EveryPc", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Found {0} places..
+        /// </summary>
+        public static string Repair_FoundMany {
+            get {
+                return ResourceManager.GetString("Repair_FoundMany", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Found one place..
+        /// </summary>
+        public static string Repair_FoundOne {
+            get {
+                return ResourceManager.GetString("Repair_FoundOne", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to "{0}" points to {1}, which is not on this PC. Choose where it is now..
+        /// </summary>
+        public static string Repair_Intro {
+            get {
+                return ResourceManager.GetString("Repair_Intro", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Places where the program was found.
+        /// </summary>
+        public static string Repair_ListName {
+            get {
+                return ResourceManager.GetString("Repair_ListName", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Nothing found. Use Browse… to pick the program..
+        /// </summary>
+        public static string Repair_NothingFound {
+            get {
+                return ResourceManager.GetString("Repair_NothingFound", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Chosen by you.
+        /// </summary>
+        public static string Repair_ReasonChosen {
+            get {
+                return ResourceManager.GetString("Repair_ReasonChosen", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to In a folder for installed programs.
+        /// </summary>
+        public static string Repair_ReasonInstalled {
+            get {
+                return ResourceManager.GetString("Repair_ReasonInstalled", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Another version of the same program.
+        /// </summary>
+        public static string Repair_ReasonOtherVersion {
+            get {
+                return ResourceManager.GetString("Repair_ReasonOtherVersion", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Registered with Windows (App Paths).
+        /// </summary>
+        public static string Repair_ReasonRegistered {
+            get {
+                return ResourceManager.GetString("Repair_ReasonRegistered", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Repair.
+        /// </summary>
+        public static string Repair_Repair {
+            get {
+                return ResourceManager.GetString("Repair_Repair", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Looking for {0}….
+        /// </summary>
+        public static string Repair_Searching {
+            get {
+                return ResourceManager.GetString("Repair_Searching", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Only on this PC (other PCs keep their own location).
+        /// </summary>
+        public static string Repair_ThisPcOnly {
+            get {
+                return ResourceManager.GetString("Repair_ThisPcOnly", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Repair shortcut.
+        /// </summary>
+        public static string Repair_Title {
+            get {
+                return ResourceManager.GetString("Repair_Title", resourceCulture);
             }
         }
 
