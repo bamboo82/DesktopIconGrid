@@ -71,6 +71,10 @@ public partial class MainWindow : Window
             ApplyHotkeys(reportErrors: true);
         }
 
+        // Made ahead, while nothing waits for it: a new window's bindings come alive only once the dispatcher has run,
+        // and the pointer window is measured from them the moment its hotkey shows it.
+        Dispatcher.BeginInvoke(DispatcherPriority.ApplicationIdle, () => EnsurePointerWindow());
+
         ApplyAppearance();
         ApplyDocking();
         CreateTrayIcon();
@@ -524,7 +528,26 @@ public partial class MainWindow : Window
     /// <summary>The Show-at-pointer hotkey: the icons in a small window under the mouse, or away again on a second press.</summary>
     private void TogglePointerWindow()
     {
-        if (_pointerWindow is null)
+        if (EnsurePointerWindow() is not { } window)
+        {
+            return;
+        }
+
+        if (window.IsVisible)
+        {
+            window.Dismiss();
+            return;
+        }
+
+        _viewModel.IsGroupPopupOpen = false;
+        CloseSearch();
+        window.ShowAtPointer();
+    }
+
+    /// <summary>The Show-at-pointer window, made the first time it is needed; none once the bar is closing.</summary>
+    private PointerWindow? EnsurePointerWindow()
+    {
+        if (_pointerWindow is null && !_closing)
         {
             _pointerWindow = new PointerWindow(_viewModel);
             _pointerWindow.Closed += (sender, _) =>
@@ -536,15 +559,7 @@ public partial class MainWindow : Window
             };
         }
 
-        if (_pointerWindow.IsVisible)
-        {
-            _pointerWindow.Dismiss();
-            return;
-        }
-
-        _viewModel.IsGroupPopupOpen = false;
-        CloseSearch();
-        _pointerWindow.ShowAtPointer();
+        return _pointerWindow;
     }
 
     protected override void OnClosing(CancelEventArgs e)

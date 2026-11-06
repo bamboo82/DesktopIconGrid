@@ -38,34 +38,64 @@ public sealed class PointerWindowTests(WpfThread wpf) : IDisposable
 
     private TestBar CreateBar(int shortcuts) => new(_directory, Shortcuts(shortcuts));
 
-    /// <summary>Shows the bar's icons at the pointer, runs <paramref name="check"/> on the shown window, then closes it.</summary>
-    private void WithWindow(LauncherModel model, Action<PointerWindow, LauncherViewModel> check)
+    /// <summary>
+    /// Shows the bar's icons at the pointer, lets the WPF thread settle, runs <paramref name="check"/> on the shown
+    /// window and closes it. Made <paramref name="ahead"/>, as the bar does, its bindings are alive before it is shown;
+    /// otherwise it is shown in the turn it is made, as when the hotkey comes first.
+    /// </summary>
+    private void WithWindow(LauncherModel model, Action<PointerWindow, LauncherViewModel> check, bool ahead = true)
     {
-        wpf.Invoke(() =>
+        TestBar? bar = null;
+        PointerWindow? window = null;
+        try
         {
-            using var bar = new TestBar(_directory, model);
-            var window = new PointerWindow(bar.ViewModel);
-            try
+            wpf.Invoke(() =>
             {
-                window.ShowAtPointer();
-                window.UpdateLayout();
-                check(window, bar.ViewModel);
-            }
-            finally
+                bar = new TestBar(_directory, model);
+                window = new PointerWindow(bar.ViewModel);
+                if (!ahead)
+                {
+                    window.ShowAtPointer();
+                }
+            });
+            if (ahead)
             {
-                window.CloseForGood();
+                wpf.Settle();
+                wpf.Invoke(() => window!.ShowAtPointer());
             }
-        });
+
+            wpf.Settle();
+            wpf.Invoke(() =>
+            {
+                window!.UpdateLayout();
+                check(window, bar!.ViewModel);
+            });
+        }
+        finally
+        {
+            wpf.Invoke(() =>
+            {
+                window?.CloseForGood();
+                bar?.Dispose();
+            });
+        }
+    }
+
+    private static string Describe(PointerWindow window)
+    {
+        var scroller = window.Icons.Scroller;
+        return $"window {window.ActualWidth}×{window.ActualHeight}, {window.Icons.ItemsHost.Items.Count} items, "
+            + $"rows {scroller.ExtentHeight} high in a view {scroller.ViewportWidth}×{scroller.ViewportHeight}";
     }
 
     /// <summary>Every row shows in full: no scroll bar, nothing below the bottom edge, and no empty row under the last.</summary>
     private static void EveryRowShows(PointerWindow window, double cellHeight)
     {
         var scroller = window.Icons.Scroller;
-        var rows = $"rows {scroller.ExtentHeight} high in a view {scroller.ViewportHeight} high";
-        Assert.Equal(Visibility.Collapsed, scroller.ComputedVerticalScrollBarVisibility);
-        Assert.True(scroller.ExtentHeight <= scroller.ViewportHeight + 0.5, rows);
-        Assert.True(scroller.ViewportHeight - scroller.ExtentHeight < cellHeight / 2, $"an empty row: {rows}");
+        Assert.True(window.Icons.ItemsHost.Items.Count > 0, $"no items: {Describe(window)}");
+        Assert.True(scroller.ComputedVerticalScrollBarVisibility == Visibility.Collapsed, $"a scroll bar: {Describe(window)}");
+        Assert.True(scroller.ExtentHeight <= scroller.ViewportHeight + 0.5, $"rows cut off: {Describe(window)}");
+        Assert.True(scroller.ViewportHeight - scroller.ExtentHeight < cellHeight / 2, $"an empty row: {Describe(window)}");
     }
 
     [Fact]
@@ -145,6 +175,13 @@ public sealed class PointerWindowTests(WpfThread wpf) : IDisposable
     }
 
     [Fact]
+    public void A_window_shown_in_the_turn_it_is_made_fits_itself_once_its_bindings_are_alive()
+    {
+        // Its first measure sees an empty grid; the fit after showing it puts that right.
+        WithWindow(Shortcuts(12), (window, bar) => EveryRowShows(window, bar.CellHeight), ahead: false);
+    }
+
+    [Fact]
     public void A_few_icons_make_one_row_at_least_three_cells_wide()
     {
         WithWindow(Shortcuts(2), (window, bar) =>
@@ -160,8 +197,10 @@ public sealed class PointerWindowTests(WpfThread wpf) : IDisposable
         WithWindow(Shortcuts(40), (window, bar) =>
         {
             var scroller = window.Icons.Scroller;
-            Assert.Equal(Visibility.Visible, scroller.ComputedVerticalScrollBarVisibility);
-            Assert.InRange(scroller.ViewportHeight, PointerWindow.MaxRows * bar.CellHeight, (PointerWindow.MaxRows + 0.5) * bar.CellHeight);
+            Assert.True(scroller.ComputedVerticalScrollBarVisibility == Visibility.Visible, $"no scroll bar: {Describe(window)}");
+            Assert.True(
+                scroller.ViewportHeight >= PointerWindow.MaxRows * bar.CellHeight && scroller.ViewportHeight < (PointerWindow.MaxRows + 0.5) * bar.CellHeight,
+                $"not five rows: {Describe(window)}");
             Assert.True(window.Icons.LayoutPanel!.ActualWidth >= PointerWindow.MaxColumns * bar.CellWidth - 0.5, "the scroll bar took a column");
         });
     }

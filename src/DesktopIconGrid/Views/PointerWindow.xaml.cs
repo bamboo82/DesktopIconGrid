@@ -94,7 +94,10 @@ public partial class PointerWindow : Window
 
     /// <summary>
     /// Opens under the mouse pointer on whichever monitor it is, sized in that monitor's pixels before it is shown,
-    /// with the search box focused. The hotkey press gives the app the right to take the foreground.
+    /// with the search box focused. The hotkey press gives the app the right to take the foreground. A window made in
+    /// the same turn of the dispatcher is measured before its bindings are alive (WPF attaches a binding made without a
+    /// data context later, at DataBind priority), so its grid looks empty then: the bar makes it ahead
+    /// (<see cref="MainWindow"/>), and it is fitted once more after it is shown.
     /// </summary>
     public void ShowAtPointer()
     {
@@ -129,6 +132,8 @@ public partial class PointerWindow : Window
         {
             Dispatcher.BeginInvoke(DispatcherPriority.Loaded, () => SearchBox.Focus()); // once the box is laid out
         }
+
+        Dispatcher.BeginInvoke(DispatcherPriority.Loaded, FitToContent); // the same size unless it was measured too early
 
         AppLog.Default.Debug("App", $"Icons shown at the pointer ({rect.Left},{rect.Top}, {rect.Width}×{rect.Height} px)");
     }

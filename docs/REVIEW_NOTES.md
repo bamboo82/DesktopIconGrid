@@ -9,6 +9,24 @@ The owner relays replies.
 
 ---
 
+## 2026-11-06 (11) — fix 6 follow-up: CI caught a first-show bug
+
+- Run 60 failed all four new sizing tests: the window came out about 76 units tall, with a scroll bar.
+  The cause is real, not a test artefact. WPF attaches a binding that is created without a data context
+  later, by a task at DataBind priority. The grid's `{Binding Items}` and `{Binding IsEmpty}` are
+  created that way (inside `IconGridControl.InitializeComponent`, before it has a parent). So a pointer
+  window made and shown in the same dispatcher turn (the first hotkey press) was measured with no items
+  and the empty-bar hint showing.
+- **Fix:** the bar makes the pointer window ahead, at `ApplicationIdle` after start-up
+  (`MainWindow.EnsurePointerWindow`), so its bindings are alive before the first press. `ShowAtPointer`
+  also fits the window once more at `Loaded` priority, after the data binding has run. That is a no-op
+  when the first measure was right, and the repair when the hotkey came before the idle moment.
+- **Tests:** `WithWindow` now settles the WPF thread between making, showing and checking, as the app
+  does. A new test shows the window in the turn it is made and expects it to have fitted itself once
+  settled. The assertion messages now describe the window's size, items, extent and viewport.
+
+---
+
 ## 2026-11-06 (10) — fix 8 in; "Early 0.8.0" received
 
 - **The owner's decision** ("Early 0.8.0") reached me through you. The owner had asked me to pause after
