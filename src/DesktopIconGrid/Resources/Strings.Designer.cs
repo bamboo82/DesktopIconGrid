@@ -1356,6 +1356,24 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Not started: the host or user name begins with “-”, so a program that ssh starts [rest of string was truncated]";.
+        /// </summary>
+        public static string Launch_SshNameIsOption {
+            get {
+                return ResourceManager.GetString("Launch_SshNameIsOption", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Not started: ssh would read the text as its own settings (in -o, or as more opti [rest of string was truncated]";.
+        /// </summary>
+        public static string Launch_SshOptionValue {
+            get {
+                return ResourceManager.GetString("Launch_SshOptionValue", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Not started: the text contains “{0}”, which {1} could run as a command..
         /// </summary>
         public static string Launch_UnsafeValue {

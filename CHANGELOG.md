@@ -11,11 +11,20 @@ switches, portable mode and *Repair…* on more kinds of PC, and the smaller ite
 ### Security
 
 - ssh's destination, login name (`-l`) and jump host (`-J`) are now checked too: only what `user@host`,
-  `[v6]:port` and an `ssh://` address need passes (letters, digits and `. - _ @ : [ ] /`). OpenSSH before 9.6
-  could pass other characters in a host or user name on to a `ProxyCommand` (CVE-2023-51385). A value for
-  `-o` is checked as a command, since `ProxyCommand=…` is one. plink, PuTTY's command-line ssh, is checked the
-  same way, with `-proxycmd` as a command; after an option of plink's that this version does not know, a
-  value is checked as the command. Covered by tests of the rules.
+  `[v6]:port` and an `ssh://` address need passes (letters, digits and `. - _ @ : [ ] /`, not a `-` to start
+  with). OpenSSH before 9.6 could pass other characters in a host or user name on to a `ProxyCommand`
+  (CVE-2023-51385), and a name that starts with `-` reaches the proxy program as an option.
+- ssh's `-o` takes a line of its settings, with a space or `=` after the setting's name, and some settings run
+  a program on this PC (`ProxyCommand calc`). A placeholder that starts `-o`'s value, or stands in the
+  setting's name, is therefore refused, and so is one after a setting that runs or loads something
+  (`ProxyCommand`, `LocalCommand`, `KnownHostsCommand`, `PKCS11Provider`, `SecurityKeyProvider`, `Include`,
+  `XAuthLocation`). After another name written in the template, the value is checked as the command ssh
+  sends (`-o ConnectTimeout={ask:Seconds}`), or as a host (`HostName`, `User`, `ProxyJump`). A placeholder
+  among an option's letters (`-v{clipboard}`) is refused too: its value would add options. OpenSSH reads
+  options after the host as well, unless `--` came first, and so does the check.
+- plink, PuTTY's command-line ssh, and PuTTY itself, which reads the same command line, are checked the same
+  way, with `-proxycmd` as a command. After an option of plink's that this version does not know, a value is
+  checked as the command. Covered by tests of the rules.
 
 ### Fixed
 

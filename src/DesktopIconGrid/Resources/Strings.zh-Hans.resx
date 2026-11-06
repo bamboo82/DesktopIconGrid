@@ -1748,4 +1748,10 @@
   <data name="Settings_StartupDisabledHint" xml:space="preserve">
     <value>如果在“启动应用”（任务管理器或设置）中禁用了该项目，即使勾选这里，工具栏也不会启动。请在那里重新启用。</value>
   </data>
+  <data name="Launch_SshOptionValue" xml:space="preserve">
+    <value>未启动：ssh 会把这段文字当作自己的设置（在 -o 中，或当作更多选项），而设置可以在这台电脑上运行程序。请勿把占位符放在 -o 中，或在它前面写出设置名称（-o User={ask:User}）。</value>
+  </data>
+  <data name="Launch_SshNameIsOption" xml:space="preserve">
+    <value>未启动：主机或用户名以“-”开头，ssh 用它启动的程序（ProxyCommand）可能会把它当作选项。</value>
+  </data>
 </root>

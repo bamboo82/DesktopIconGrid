@@ -146,6 +146,24 @@ public sealed class LaunchServiceTests : IDisposable
     }
 
     [Fact]
+    public void A_value_ssh_would_read_as_its_own_settings_is_refused_before_or_after_the_host()
+    {
+        // Review 15 P2: "ProxyCommand calc" passed the remote command's check (letters and a space), and ssh ran calc here.
+        var ssh = Path.Combine(_directory, "ssh.exe");
+        var service = Create(new Prompts(clipboard: "ProxyCommand calc", answer: "-oProxyCommand=calc"), out var tracker);
+        using (tracker)
+        {
+            var before = service.Launch(new ShortcutItem { Name = "Opt", Location = ssh, Parameters = "-o {clipboard} server2" });
+            var after = service.Launch(new ShortcutItem { Name = "Opt", Location = ssh, Parameters = "server2 -o {clipboard} uptime" });
+            var host = service.Launch(new ShortcutItem { Name = "Host", Location = ssh, Parameters = "-- {ask:Host} uptime" });
+
+            Assert.Equal(Strings.Launch_SshOptionValue, before.ErrorMessage);
+            Assert.Equal(Strings.Launch_SshOptionValue, after.ErrorMessage);
+            Assert.Equal(Strings.Launch_SshNameIsOption, host.ErrorMessage); // after "--", a host that %h would hand on as an option
+        }
+    }
+
+    [Fact]
     public void The_destination_takes_user_at_host_while_the_words_after_it_stay_bare_words()
     {
         var ssh = Path.Combine(_directory, "ssh.exe"); // not started: the refusals come first, and it is not there

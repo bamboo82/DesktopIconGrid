@@ -97,8 +97,30 @@ public sealed class LaunchPlaceholderSafetyTests : IDisposable
     [Theory]
     [InlineData("ssh.exe", "{ask:Host} tail {clipboard}", "{ask:Host}", ArgumentReader.SshDestination)] // the review: both sides
     [InlineData("ssh.exe", "{ask:Host} tail {clipboard}", "{clipboard}", ArgumentReader.RemoteShell)]
-    [InlineData("ssh.exe", "-o {clipboard} server2", "{clipboard}", ArgumentReader.RemoteShell)] // ssh_config text: ProxyCommand=…
-    [InlineData("ssh.exe", "-o{clipboard} server2", "{clipboard}", ArgumentReader.RemoteShell)]
+    [InlineData("ssh.exe", "-o {clipboard} server2", "{clipboard}", ArgumentReader.SshOption)] // review 15 P2: "ProxyCommand calc" is ssh_config too
+    [InlineData("ssh.exe", "-o{clipboard} server2", "{clipboard}", ArgumentReader.SshOption)]
+    [InlineData("ssh.exe", "-o \"{clipboard}\" server2", "{clipboard}", ArgumentReader.SshOption)]
+    [InlineData("ssh.exe", "-vo {clipboard} server2", "{clipboard}", ArgumentReader.SshOption)]
+    [InlineData("ssh.exe", "-o Proxy{clipboard} server2", "{clipboard}", ArgumentReader.SshOption)] // inside the keyword
+    [InlineData("ssh.exe", "-o ProxyCommand={clipboard} server2", "{clipboard}", ArgumentReader.SshOption)] // a keyword that runs something
+    [InlineData("ssh.exe", "-o \"ProxyCommand {clipboard}\" server2", "{clipboard}", ArgumentReader.SshOption)] // one argument, quoted over two words
+    [InlineData("ssh.exe", "-oPKCS11Provider={clipboard} server2", "{clipboard}", ArgumentReader.SshOption)]
+    [InlineData("ssh.exe", "-o include={clipboard} server2", "{clipboard}", ArgumentReader.SshOption)]
+    [InlineData("ssh.exe", "server2 -o {clipboard} uptime", "{clipboard}", ArgumentReader.SshOption)] // OpenSSH reads options after the host too
+    [InlineData("ssh.exe", "server2 -oKnownHostsCommand={clipboard} uptime", "{clipboard}", ArgumentReader.SshOption)]
+    [InlineData("ssh.exe", "-v{clipboard} server2", "{clipboard}", ArgumentReader.SshOption)] // among option letters: "oProxyCommand=calc"
+    [InlineData("ssh.exe", "server2 -{clipboard}", "{clipboard}", ArgumentReader.SshOption)]
+    [InlineData("ssh.exe", "-o ConnectTimeout={clipboard} server2", "{clipboard}", ArgumentReader.RemoteShell)] // the keyword is the template's
+    [InlineData("ssh.exe", "-o \"SendEnv {clipboard}\" server2", "{clipboard}", ArgumentReader.RemoteShell)]
+    [InlineData("ssh.exe", "-o User={ask:User} server2", "{ask:User}", ArgumentReader.SshDestination)] // as -l
+    [InlineData("ssh.exe", "-o ProxyJump={clipboard} server2", "{clipboard}", ArgumentReader.SshDestination)] // as -J
+    [InlineData("ssh.exe", "-p{clipboard} server2", "{clipboard}", ArgumentReader.Plain)] // a value attached to -p
+    [InlineData("ssh.exe", "server2 -l {ask:User} uptime", "{ask:User}", ArgumentReader.SshDestination)] // -l after the host
+    [InlineData("ssh.exe", "server2 -p 22 {clipboard}", "{clipboard}", ArgumentReader.RemoteShell)] // options after the host, then the command
+    [InlineData("ssh.exe", "server2 -- -o {clipboard}", "{clipboard}", ArgumentReader.RemoteShell)] // "--" after the host: all command
+    [InlineData("ssh.exe", "-- server2 -o {clipboard}", "{clipboard}", ArgumentReader.RemoteShell)] // "--" before the host: no options after it
+    [InlineData("putty.exe", "-ssh {ask:Host}", "{ask:Host}", ArgumentReader.SshDestination)] // PuTTY reads plink's command line
+    [InlineData("putty.exe", "-load {ask:Session}", "{ask:Session}", ArgumentReader.Plain)]
     [InlineData("ssh.exe", "-J {clipboard} server2", "{clipboard}", ArgumentReader.SshDestination)]
     [InlineData("ssh.exe", "-F {clipboard} server2", "{clipboard}", ArgumentReader.Plain)] // a path (the hint warns)
     [InlineData("ssh.exe", "-- {clipboard} uptime", "{clipboard}", ArgumentReader.SshDestination)]
@@ -129,10 +151,23 @@ public sealed class LaunchPlaceholderSafetyTests : IDisposable
     [InlineData("admin`id`@server2", "`")]
     [InlineData("server2%h", "%")]
     [InlineData("服务器", "服")]
+    [InlineData("-oProxyCommand=calc", "-")] // review 15: after "--" it is the host, and %h hands it to the proxy program
+    [InlineData("server-2", null)]
     public void Ssh_destination_takes_what_user_at_host_and_an_ssh_URI_need(string value, string? refused)
     {
         // CVE-2023-51385: OpenSSH before 9.6 put such names into ProxyCommand's shell through %h and %u.
         Assert.Equal(refused, LaunchPlaceholders.Refused(value, ArgumentReader.SshDestination));
+    }
+
+    [Theory]
+    [InlineData("ProxyCommand calc")]
+    [InlineData("ConnectTimeout=5")] // harmless, but the value would choose the keyword
+    [InlineData("x")]
+    public void Ssh_settings_take_no_value(string value)
+    {
+        // Review 15 P2: ssh_config takes a space or "=" after the keyword, so the RemoteShell check let "ProxyCommand calc" through.
+        Assert.NotNull(LaunchPlaceholders.Refused(value, ArgumentReader.SshOption));
+        Assert.NotNull(LaunchPlaceholders.RefusedInPath(@"C:\Users\me\x.conf", ArgumentReader.SshOption));
     }
 
     [Theory]

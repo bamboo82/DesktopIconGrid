@@ -125,7 +125,8 @@ public static partial class LaunchPlaceholders
             at = words.Count(word => word.Start < placeholderIndex); // at the end: after every word
         }
 
-        var reader = ReaderOfLocation(location, words, at, startIn, registeredPathOf, searchPath, pathExtensions, system);
+        var offset = at < words.Count ? placeholderIndex - words[at].Start : 0;
+        var reader = ReaderOfLocation(location, words, at, offset, startIn, registeredPathOf, searchPath, pathExtensions, system);
         for (var i = 0; i < words.Count && reader != ArgumentReader.PowerShellCommand; i++)
         {
             var named = FileNameOf(words[i].Text);
@@ -137,8 +138,8 @@ public static partial class LaunchPlaceholders
                 "powershell" or "powershell.exe" or "pwsh" or "pwsh.exe" => PowerShellReader(named, rest.Select(word => word.Text)),
                 "wsl" or "wsl.exe" => restAt >= 0 ? WslReader(rest, restAt) : ArgumentReader.PosixShell,
                 "bash" or "bash.exe" when IsWslBash(words[i].Bare.Trim('\''), system) => ArgumentReader.PosixShell,
-                "ssh" or "ssh.exe" => restAt >= 0 ? SshReader(rest, restAt) : ArgumentReader.RemoteShell,
-                "plink" or "plink.exe" => restAt >= 0 ? PlinkReader(rest, restAt) : ArgumentReader.RemoteShell,
+                "ssh" or "ssh.exe" => restAt >= 0 ? SshReader(rest, restAt, offset) : ArgumentReader.RemoteShell,
+                "plink" or "plink.exe" or "putty" or "putty.exe" => restAt >= 0 ? PlinkReader(rest, restAt) : ArgumentReader.RemoteShell,
                 _ => ArgumentReader.Plain,
             });
         }
@@ -174,7 +175,7 @@ public static partial class LaunchPlaceholders
     }
 
     private static ArgumentReader ReaderOfLocation(
-        string? location, List<Word> words, int at, string? startIn, Func<string, string?>? registeredPathOf, string? searchPath, string? pathExtensions, string system)
+        string? location, List<Word> words, int at, int offset, string? startIn, Func<string, string?>? registeredPathOf, string? searchPath, string? pathExtensions, string system)
     {
         var path = Environment.ExpandEnvironmentVariables(location?.Trim().Trim('"') ?? string.Empty);
         if (path.Length == 0 || LaunchPlanner.IsShellNamespace(path) || LaunchPlanner.IsSpecial(path) || LaunchPlanner.IsUri(path))
@@ -190,7 +191,7 @@ public static partial class LaunchPlaceholders
 
         if (name is "cmd" or "powershell" or "pwsh" or "wsl" || Path.GetExtension(name).Length > 0)
         {
-            return ReaderOfFile(path, words, at, system);
+            return ReaderOfFile(path, words, at, offset, system);
         }
 
         if (Directory.Exists(path))
@@ -201,7 +202,7 @@ public static partial class LaunchPlaceholders
         var found = Candidates(path, startIn, registeredPathOf, searchPath, pathExtensions).ToList();
         return found.Count == 0
             ? ArgumentReader.Cmd // unknown here: it may be a batch file where it runs
-            : found.Select(file => ReaderOfFile(file, words, at, system)).Aggregate(Stricter);
+            : found.Select(file => ReaderOfFile(file, words, at, offset, system)).Aggregate(Stricter);
     }
 
     /// <summary>
@@ -262,7 +263,7 @@ public static partial class LaunchPlaceholders
     }
 
     /// <summary>Who reads the command line of the file at <paramref name="path"/> (with its extension, or a name judged by itself).</summary>
-    private static ArgumentReader ReaderOfFile(string path, List<Word> words, int at, string system)
+    private static ArgumentReader ReaderOfFile(string path, List<Word> words, int at, int offset, string system)
     {
         var name = FileNameOf(path);
         return name switch
@@ -273,8 +274,8 @@ public static partial class LaunchPlaceholders
             "powershell" or "powershell.exe" or "pwsh" or "pwsh.exe" => PowerShellReader(name, words.Select(word => word.Text)),
             "wsl" or "wsl.exe" => WslReader(words, at),
             "bash.exe" when IsWslBash(path, system) => ArgumentReader.PosixShell,
-            "ssh.exe" => SshReader(words, at),
-            "plink.exe" => PlinkReader(words, at),
+            "ssh.exe" => SshReader(words, at, offset),
+            "plink.exe" or "putty.exe" => PlinkReader(words, at), // PuTTY reads the same command line as plink
             _ => ArgumentReader.Plain,
         };
     }
@@ -318,55 +319,146 @@ public static partial class LaunchPlaceholders
     /// <summary>The options of ssh that take a value (OpenSSH's option string).</summary>
     private const string SshOptionsWithValue = "BbcDEeFIiJLlmOoPpQRSWw";
 
+    /// <summary>ssh_config keywords whose value runs a program or loads code or more settings: no placeholder goes there.</summary>
+    private static readonly HashSet<string> SshKeywordsThatRun = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "ProxyCommand", "LocalCommand", "PermitLocalCommand", "KnownHostsCommand", "PKCS11Provider", "SecurityKeyProvider",
+        "Include", "XAuthLocation", "Match",
+    };
+
+    /// <summary>ssh_config keywords whose value is a host or a login name, as for <c>-J</c> and <c>-l</c>.</summary>
+    private static readonly HashSet<string> SshKeywordsWithHosts = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "HostName", "User", "ProxyJump",
+    };
+
+    /// <summary>Placeholders in a word, masked so their names are not read as option letters.</summary>
+    private static string Masked(string text) => AnyPlaceholder().Replace(text, "\u0001");
+
     /// <summary>
-    /// ssh joins the words after the destination into one command for the remote shell, without the quotes, so a value
-    /// there is read as bare words, as PowerShell reads script text (<c>ssh host cat {clipboard}</c>). The destination is
-    /// one argument of ssh, but ssh can put it into a command of its own (<see cref="ArgumentReader.SshDestination"/>),
-    /// and so for <c>-J</c> and <c>-l</c>. <c>-o</c> takes ssh_config text, which can be a command
-    /// (<c>ProxyCommand=…</c>); other values (<c>-p 22</c>, <c>-i key</c>, <c>-F file</c>) are plain.
+    /// The last word of a value that starts at <paramref name="first"/>: the same word, or, for a value opened by a quote
+    /// and not closed in it (<c>-o "ProxyCommand {clipboard}"</c>), the word that closes it. Windows hands such a
+    /// span to the program as one argument.
+    /// </summary>
+    private static int ValueEnd(IReadOnlyList<Word> words, int first)
+    {
+        if (first >= words.Count || !words[first].Text.StartsWith('"') || (words[first].Text.Length > 1 && words[first].Text.EndsWith('"')))
+        {
+            return first;
+        }
+
+        for (var k = first + 1; k < words.Count; k++)
+        {
+            if (words[k].Text.EndsWith('"'))
+            {
+                return k;
+            }
+        }
+
+        return words.Count - 1;
+    }
+
+    /// <summary>
+    /// Who reads a placeholder in the value of ssh's option <paramref name="letter"/>, with <paramref name="before"/>
+    /// the part of the value the template writes before it. <c>-o</c> takes a line of ssh_config, where a space or
+    /// <c>=</c> separates the keyword from its value: a placeholder at the start of it, or inside the keyword, could
+    /// name any keyword (<c>ProxyCommand calc</c>), and so could one after a keyword that runs or loads something.
+    /// </summary>
+    private static ArgumentReader SshValueReader(char letter, string before)
+    {
+        switch (letter)
+        {
+            case 'J' or 'l':
+                return ArgumentReader.SshDestination;
+            case 'o':
+                var line = Masked(before).TrimStart('"').TrimStart();
+                var end = line.IndexOfAny(['=', ' ', '\t']);
+                if (end <= 0 || line[..end].Contains('\u0001', StringComparison.Ordinal))
+                {
+                    return ArgumentReader.SshOption; // the value starts the line, or is part of the keyword
+                }
+
+                var keyword = line[..end];
+                return SshKeywordsThatRun.Contains(keyword) ? ArgumentReader.SshOption
+                    : SshKeywordsWithHosts.Contains(keyword) ? ArgumentReader.SshDestination
+                    : ArgumentReader.RemoteShell;
+            default:
+                return ArgumentReader.Plain; // -p 22, -i key, -F file: one argument, as the option's value
+        }
+    }
+
+    /// <summary>
+    /// ssh as OpenSSH reads its command line: options (getopt), the destination, then options again unless <c>--</c>
+    /// came first, then the command. The words of the command are joined for the remote shell without their quotes, so
+    /// a value there is read as bare words, as PowerShell reads script text (<c>ssh host cat {clipboard}</c>). The
+    /// destination is one argument of ssh, but ssh can put it into a command of its own
+    /// (<see cref="ArgumentReader.SshDestination"/>), and so for <c>-J</c> and <c>-l</c>. A placeholder in <c>-o</c>'s
+    /// value is judged by its keyword (<see cref="SshValueReader"/>), and one among an option's letters would add options
+    /// (<see cref="ArgumentReader.SshOption"/>); other values (<c>-p 22</c>, <c>-i key</c>, <c>-F file</c>) are plain.
     /// </summary>
     /// <param name="words">The words after <c>ssh</c>.</param>
     /// <param name="at">Which of them the placeholder is in (their count: after all of them).</param>
-    private static ArgumentReader SshReader(IReadOnlyList<Word> words, int at)
+    /// <param name="offset">Where the placeholder starts in that word.</param>
+    private static ArgumentReader SshReader(IReadOnlyList<Word> words, int at, int offset)
     {
+        var options = true; // getopt is reading options
+        var terminated = false; // "--" came before the destination: ssh reads no options after it either
+        var destination = false;
         for (var j = 0; j < words.Count && j <= at; j++)
         {
-            var word = words[j].Bare;
-            if (j == at)
+            var word = Masked(words[j].Bare);
+            if (options && word == "--")
             {
-                return word.StartsWith('-') ? ArgumentReader.RemoteShell : ArgumentReader.SshDestination; // an option with the value attached, or the destination
+                options = false;
+                terminated |= !destination;
+                continue;
             }
 
-            if (word == "--")
+            if (options && word.Length > 1 && word[0] == '-')
             {
-                return at == j + 1 ? ArgumentReader.SshDestination : ArgumentReader.RemoteShell;
-            }
-
-            if (word.Length > 1 && word[0] == '-')
-            {
-                var letter = word.IndexOfAny(SshOptionsWithValue.ToCharArray(), 1);
-                if (letter == word.Length - 1)
+                if (j == at)
                 {
-                    if (j + 1 == at)
+                    // An option word with the placeholder in it: in a value attached to an option letter, or among the letters.
+                    var text = words[j].Text;
+                    var lead = text.StartsWith('"') ? 1 : 0;
+                    var prefix = Masked(text[lead..Math.Max(lead, offset)]);
+                    var letter = prefix.IndexOfAny(SshOptionsWithValue.ToCharArray(), 1);
+                    return letter < 0 ? ArgumentReader.SshOption : SshValueReader(prefix[letter], prefix[(letter + 1)..]);
+                }
+
+                var valueLetter = word.IndexOfAny(SshOptionsWithValue.ToCharArray(), 1);
+                if (valueLetter == word.Length - 1)
+                {
+                    var last = ValueEnd(words, j + 1);
+                    if (at > j && at <= last)
                     {
-                        return word[letter] switch
-                        {
-                            'o' => ArgumentReader.RemoteShell,
-                            'J' or 'l' => ArgumentReader.SshDestination,
-                            _ => ArgumentReader.Plain,
-                        };
+                        var before = string.Join(' ', words.Skip(j + 1).Take(at - j - 1).Select(w => w.Text));
+                        var inWord = at < words.Count ? words[at].Text[..Math.Min(offset, words[at].Text.Length)] : string.Empty;
+                        return SshValueReader(word[valueLetter], before.Length > 0 ? before + " " + inWord : inWord);
                     }
 
-                    j++; // -p 22, -vp 22: the value is the next word (-p22 holds its own)
+                    j = last; // -p 22, -vp 22: the value is the next word (-p22 holds its own)
                 }
 
                 continue;
             }
 
-            return ArgumentReader.RemoteShell; // the destination comes before the placeholder: the command
+            if (!destination)
+            {
+                if (j == at)
+                {
+                    return ArgumentReader.SshDestination;
+                }
+
+                destination = true;
+                options = !terminated; // OpenSSH reads options again after the destination
+                continue;
+            }
+
+            return ArgumentReader.RemoteShell; // the command starts here, at or before the placeholder
         }
 
-        return ArgumentReader.SshDestination; // a file dropped where the destination goes
+        return destination ? ArgumentReader.RemoteShell : ArgumentReader.SshDestination; // a file dropped at the end
     }
 
     /// <summary>plink's options that take a value (PuTTY 0.8x), and its flags.</summary>
@@ -496,6 +588,7 @@ public static partial class LaunchPlaceholders
             ArgumentReader.PosixShell => IsAllowedForPosixShell,
             ArgumentReader.SshDestination => IsAllowedInSshDestination,
             ArgumentReader.RemoteShell or ArgumentReader.PowerShellCommand => IsAllowedInScriptText,
+            ArgumentReader.SshOption => (_, _) => false,
             _ => IsAllowedForAny,
         });
     }
@@ -517,6 +610,7 @@ public static partial class LaunchPlaceholders
             ArgumentReader.PosixShell => (text, index) => text[index] is not ('%' or '$' or '`' or FullwidthQuotationMark),
             ArgumentReader.SshDestination => IsAllowedInSshDestination,
             ArgumentReader.RemoteShell or ArgumentReader.PowerShellCommand => IsAllowedInScriptText,
+            ArgumentReader.SshOption => (_, _) => false,
             _ => (text, index) => text[index] != FullwidthQuotationMark,
         });
     }
@@ -553,11 +647,13 @@ public static partial class LaunchPlaceholders
 
     /// <summary>
     /// What <c>user@host</c>, <c>[v6]:port</c> and an <c>ssh://</c> URI need: ASCII letters and digits and
-    /// <c>. - _ @ : [ ] /</c>. Nothing a shell, or ssh's own <c>%h</c>/<c>%u</c> in a <c>ProxyCommand</c>, could act on
-    /// (CVE-2023-51385, where OpenSSH before 9.6 passed such names on).
+    /// <c>. - _ @ : [ ] /</c>, but not a <c>-</c> to start with. Nothing a shell, or ssh's own <c>%h</c>/<c>%u</c> in a
+    /// <c>ProxyCommand</c>, could act on (CVE-2023-51385, where OpenSSH before 9.6 passed such names on), and no name
+    /// that the proxy program would take as an option (<c>ssh -- {clipboard}</c> holding <c>-x</c>; OpenSSH 9.6 refuses
+    /// such a host name too).
     /// </summary>
     private static bool IsAllowedInSshDestination(string text, int index) =>
-        char.IsAsciiLetterOrDigit(text[index]) || text[index] is '.' or '-' or '_' or '@' or ':' or '[' or ']' or '/';
+        char.IsAsciiLetterOrDigit(text[index]) || text[index] is '.' or '_' or '@' or ':' or '[' or ']' or '/' || (text[index] == '-' && index > 0);
 
     /// <summary>What cmd.exe takes, less <c>$</c> and <c>`</c>, so the readers stay in order of strictness (<c>cmd /c wsl …</c>).</summary>
     private static bool IsAllowedForPosixShell(string text, int index) => IsAllowedForCmd(text, index) && text[index] is not ('$' or '`');
@@ -582,6 +678,10 @@ public static partial class LaunchPlaceholders
 
     [GeneratedRegex("\"?\\{ask:(?<prompt>[^}]*)\\}\"?", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
     private static partial Regex AskPattern();
+
+    /// <summary>Any placeholder: <c>{clipboard}</c>, <c>{file}</c>, <c>{files}</c> or <c>{ask:…}</c>.</summary>
+    [GeneratedRegex(@"\{(?:clipboard|files?|ask:[^}]*)\}", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
+    private static partial Regex AnyPlaceholder();
 
     [GeneratedRegex("\"?\\{clipboard\\}\"?", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
     private static partial Regex QuotedClipboard();
@@ -629,5 +729,13 @@ public enum ArgumentReader
 
     /// <summary>PowerShell reading its arguments, without their quotes, as script text, where <c>(…)</c> and <c>$(…)</c> run.</summary>
     PowerShellCommand,
+
+    /// <summary>
+    /// ssh reading the value as its own settings: a placeholder that starts <c>-o</c>'s value or stands in its keyword
+    /// (ssh_config takes a space or <c>=</c> after the keyword, so <c>ProxyCommand calc</c> runs calc), one after a
+    /// keyword that runs or loads something (<c>ProxyCommand</c>, <c>PKCS11Provider</c>, <c>Include</c>), or one among
+    /// an option's letters. Every value is refused.
+    /// </summary>
+    SshOption,
 }
 

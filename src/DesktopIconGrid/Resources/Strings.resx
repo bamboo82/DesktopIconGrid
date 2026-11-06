@@ -1748,4 +1748,10 @@ Details are in {1}.</value>
   <data name="Settings_StartupDisabledHint" xml:space="preserve">
     <value>If the entry was turned off under Startup apps (Task Manager or Settings), the bar does not start even with this on. Turn it on there.</value>
   </data>
+  <data name="Launch_SshOptionValue" xml:space="preserve">
+    <value>Not started: ssh would read the text as its own settings (in -o, or as more options), and a setting can run a program on this PC. Keep placeholders out of -o, or write the setting's name before them (-o User={ask:User}).</value>
+  </data>
+  <data name="Launch_SshNameIsOption" xml:space="preserve">
+    <value>Not started: the host or user name begins with “-”, so a program that ssh starts with it (a ProxyCommand) could take it as an option.</value>
+  </data>
 </root>

@@ -265,9 +265,10 @@ public sealed class LaunchService(ProcessTracker tracker, ILaunchPrompts? prompt
         return null;
     }
 
-    private static string RefusalMessage(string character, ArgumentReader reader) => character switch
+    private static string RefusalMessage(string character, ArgumentReader reader) => reader == ArgumentReader.SshOption ? Strings.Launch_SshOptionValue : character switch
     {
         "\r" or "\n" => Strings.Launch_ValueHasLineBreak,
+        "-" when reader == ArgumentReader.SshDestination => Strings.Launch_SshNameIsOption,
         "-" => reader == ArgumentReader.RemoteShell ? Strings.Launch_WordIsRemoteOption : Strings.Launch_WordIsParameter, // a word of bare words
         _ when character[0] == LaunchPlaceholders.FullwidthQuotationMark => Strings.Launch_LookalikeQuote,
         _ => string.Format(Strings.Launch_UnsafeValue, character, reader switch

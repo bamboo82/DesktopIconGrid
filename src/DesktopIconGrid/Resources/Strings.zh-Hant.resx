@@ -1748,4 +1748,10 @@
   <data name="Settings_StartupDisabledHint" xml:space="preserve">
     <value>若在「啟動應用程式」（工作管理員或設定）中停用了此項目，即使勾選這裡，工具列也不會啟動。請在那裡重新啟用。</value>
   </data>
+  <data name="Launch_SshOptionValue" xml:space="preserve">
+    <value>未啟動：ssh 會把這段文字當成自己的設定（在 -o 中，或當成更多選項），而設定可以在這部電腦上執行程式。請勿把預留位置放在 -o 中，或在它前面寫出設定名稱（-o User={ask:User}）。</value>
+  </data>
+  <data name="Launch_SshNameIsOption" xml:space="preserve">
+    <value>未啟動：主機或使用者名稱以「-」開頭，ssh 用它啟動的程式（ProxyCommand）可能會把它當成選項。</value>
+  </data>
 </root>
