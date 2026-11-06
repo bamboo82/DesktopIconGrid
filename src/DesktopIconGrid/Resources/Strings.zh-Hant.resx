@@ -1344,7 +1344,7 @@
     <value>再啟動一個</value>
   </data>
   <data name="Props_WhenRunningHint" xml:space="preserve">
-    <value>Shift+按一下或按滑鼠中鍵一律再啟動一個；Ctrl+Shift+按一下以系統管理員身分啟動。</value>
+    <value>預設會把程式帶到前景，除非捷徑帶有參數：那時會另外啟動一份。Shift+按一下或按滑鼠中鍵一律另外啟動；Ctrl+Shift+按一下以系統管理員身分啟動。</value>
   </data>
   <data name="Launch_ClipboardEmpty" xml:space="preserve">
     <value>剪貼簿中沒有可傳遞的文字。</value>
@@ -1693,5 +1693,8 @@
   </data>
   <data name="Launch_ValueHasLineBreak" xml:space="preserve">
     <value>未啟動：剪貼簿文字或回答超過一行。</value>
+  </data>
+  <data name="Props_LogNotElevated" xml:space="preserve">
+    <value>無法與「以系統管理員身分執行」同時使用：Windows 無法把提升權限之程式的輸出交給工具列。</value>
   </data>
 </root>

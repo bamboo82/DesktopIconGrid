@@ -103,6 +103,17 @@ public class WindowSwitchingTests
         Assert.Equal(switches, LaunchPlanner.SwitchesWhenRunning(new ShortcutItem { Location = location }));
     }
 
+    [Theory]
+    [InlineData("mstsc.exe", "/v:server2")]
+    [InlineData(@"C:\Program Files\PuTTY\putty.exe", "-load prod")]
+    [InlineData("code", @"C:\proj2")]
+    public void A_program_with_parameters_starts_another_by_default(string location, string parameters)
+    {
+        Assert.False(LaunchPlanner.SwitchesWhenRunning(new ShortcutItem { Location = location, Parameters = parameters }));
+        Assert.True(LaunchPlanner.SwitchesWhenRunning(new ShortcutItem { Location = location, Parameters = "  " }));
+        Assert.True(LaunchPlanner.SwitchesWhenRunning(new ShortcutItem { Location = location, Parameters = parameters, WhenRunning = ShortcutItem.WhenRunningSwitch }));
+    }
+
     [Fact]
     public void An_explicit_choice_wins_over_the_default()
     {

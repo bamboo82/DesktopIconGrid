@@ -80,6 +80,36 @@ public class ItemPropertiesViewModelTests
     }
 
     [Fact]
+    public void Parameters_turn_the_default_to_starting_another_until_the_user_picks()
+    {
+        var shortcut = new ShortcutItem { Name = "Server", Location = "mstsc.exe" };
+        var viewModel = new ItemPropertiesViewModel(shortcut, isNew: false, new CountingIcons());
+
+        Assert.True(viewModel.SelectedWhenRunning.Switches);
+        viewModel.Parameters = "/v:server2";
+        Assert.False(viewModel.SelectedWhenRunning.Switches);
+        Assert.True(viewModel.Apply());
+        Assert.Null(shortcut.WhenRunning); // the default, so nothing stored
+
+        var picked = new ItemPropertiesViewModel(shortcut, isNew: false, new CountingIcons());
+        picked.SelectedWhenRunning = ItemPropertiesViewModel.WhenRunningChoices.Single(o => o.Switches);
+        Assert.True(picked.Apply());
+        Assert.Equal(ShortcutItem.WhenRunningSwitch, shortcut.WhenRunning);
+    }
+
+    [Fact]
+    public void Keep_a_log_is_off_while_Run_as_administrator_is_ticked()
+    {
+        var viewModel = new ItemPropertiesViewModel(new ShortcutItem { Name = "Tool", Location = @"C:\Tools\tool.exe" }, isNew: false, new CountingIcons());
+        Assert.True(viewModel.CanCaptureLog);
+
+        viewModel.RunAsAdministrator = true;
+
+        Assert.False(viewModel.CanCaptureLog);
+        Assert.Equal(DesktopIconGrid.Resources.Strings.Props_LogNotElevated, viewModel.CaptureLogHint);
+    }
+
+    [Fact]
     public void A_picked_choice_is_stored_only_when_it_differs_from_the_location_s_default()
     {
         var program = new ShortcutItem { Name = "App", Location = @"C:\Tools\app.exe" };

@@ -2715,6 +2715,15 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Not with Run as administrator: Windows cannot hand an elevated program's output [rest of string was truncated]";.
+        /// </summary>
+        public static string Props_LogNotElevated {
+            get {
+                return ResourceManager.GetString("Props_LogNotElevated", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Only on this PC.
         /// </summary>
         public static string Props_OnlyThisPc {
@@ -2922,7 +2931,7 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Shift+click or a middle click always starts another; Ctrl+Shift+click starts one [rest of string was truncated]";.
+        ///   Looks up a localized string similar to A program is brought forward by default, unless the shortcut passes parameters: [rest of string was truncated]";.
         /// </summary>
         public static string Props_WhenRunningHint {
             get {

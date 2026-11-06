@@ -1344,7 +1344,7 @@
     <value>再启动一个</value>
   </data>
   <data name="Props_WhenRunningHint" xml:space="preserve">
-    <value>Shift+单击或按鼠标中键总是再启动一个；Ctrl+Shift+单击以管理员身份启动。</value>
+    <value>默认会把程序带到前台，除非快捷方式带有参数：那时会另外启动一份。Shift+单击或单击鼠标中键一律另外启动；Ctrl+Shift+单击以管理员身份启动。</value>
   </data>
   <data name="Launch_ClipboardEmpty" xml:space="preserve">
     <value>剪贴板中没有可传递的文字。</value>
@@ -1693,5 +1693,8 @@
   </data>
   <data name="Launch_ValueHasLineBreak" xml:space="preserve">
     <value>未启动：剪贴板文字或回答超过一行。</value>
+  </data>
+  <data name="Props_LogNotElevated" xml:space="preserve">
+    <value>无法与“以管理员身份运行”同时使用：Windows 无法把提升权限之程序的输出交给工具栏。</value>
   </data>
 </root>

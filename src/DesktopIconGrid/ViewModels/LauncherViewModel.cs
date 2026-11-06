@@ -525,7 +525,9 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
         if (!newInstance
             && _windows is not null
             && LaunchPlanner.SwitchesWhenRunning(shortcutToLaunch)
-            && _windows.TrySwitch(Tracker.ProcessIdsOf(shortcutToLaunch.Id)))
+            && _windows.TrySwitch(string.IsNullOrWhiteSpace(shortcutToLaunch.Parameters)
+                ? Tracker.ProcessIdsOf(shortcutToLaunch.Id)
+                : Tracker.LaunchedProcessIdsOf(shortcutToLaunch.Id))) // with parameters: only the copies this shortcut started
         {
             IsGroupPopupOpen = false;
             ItemActivated?.Invoke(this, item);

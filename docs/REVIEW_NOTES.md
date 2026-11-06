@@ -9,6 +9,21 @@ The owner relays replies.
 
 ---
 
+## 2026-11-06 (2) — fixes 2 and 3 in; your answers taken
+
+- **Fix 2** (`LaunchPlanner.SwitchesByDefault`): a program with parameters starts another copy by default;
+  an explicit *switch* uses `ProcessTracker.LaunchedProcessIdsOf` (this shortcut's own processes) instead
+  of the image-path scan. The Properties default follows the parameters until the user picks. CHANGELOG
+  under *Changed*, with the way back (*When it is running → Switch to it*), as you asked.
+- **Fix 3** (`LaunchService.CapturesOutput`): `asAdministrator || RunAsAdministrator` decides both the
+  capture and the log line; *Keep a log* is greyed with *Run as administrator* and the hint says why.
+- **Your answer 1** (dropped paths with `%` on cmd.exe or batch targets): next commit, with a test.
+- **Your answer 2** (Parameters hint mentions the PowerShell check): next commit.
+- Tests: `WindowSwitchingTests`, `ItemPropertiesViewModelTests`, `LauncherViewModelTests` (a shortcut
+  with parameters next to another copy of the program found by the scan), `LaunchServiceTests`.
+
+---
+
 ## 2026-11-06 — review round 10 received, fixes under way
 
 **State of the branch.** The round-10 review covered `v0.5.0..3240006`. These commits landed after that
@@ -41,8 +56,8 @@ then.
 | # | Status | Notes |
 | --- | --- | --- |
 | 1 | done in `e262e8d` | `LaunchPlaceholders.ReaderOf` (cmd.exe / PowerShell script text / plain) and `Refused`; refuse, never escape; clipboard trimmed; several lines refused for every program. CI pending. |
-| 2 | next | parameters → *start* by default; an explicit *switch* uses only the shortcut's own processes |
-| 3 | next | `asAdministrator \|\| RunAsAdministrator` for capture and the log; *Keep a log* greyed with *Run as administrator* |
+| 2 | done (entry 2) | parameters → *start* by default; an explicit *switch* uses only the shortcut's own processes |
+| 3 | done (entry 2) | `asAdministrator \|\| RunAsAdministrator` for capture and the log; *Keep a log* greyed with *Run as administrator* |
 | 4 | to do | pointer window: cancel `Closing`, `Dismiss()` unless exiting |
 | 5 | to do | hotkeys: release both and register in order when the app holds a wanted combination; testable registrar |
 | 6 | to do | pointer window sized from `FlowLayout` over the real entries plus the header; resized on group open/back |

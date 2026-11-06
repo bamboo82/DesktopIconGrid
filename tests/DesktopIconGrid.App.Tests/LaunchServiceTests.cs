@@ -107,5 +107,18 @@ public sealed class LaunchServiceTests : IDisposable
             Assert.Equal(Strings.Launch_ValueHasLineBreak, result.ErrorMessage);
         }
     }
+
+    [Fact]
+    public void Run_as_administrator_wins_over_Keep_a_log_so_the_program_really_runs_elevated()
+    {
+        var program = new System.Diagnostics.ProcessStartInfo(Path.Combine(_directory, "tool.exe"));
+        var logged = new ShortcutItem { Name = "Tool", Location = program.FileName, CaptureLog = true };
+        var elevated = new ShortcutItem { Name = "Tool", Location = program.FileName, CaptureLog = true, RunAsAdministrator = true };
+
+        Assert.True(LaunchService.CapturesOutput(logged, asAdministrator: false, program));
+        Assert.False(LaunchService.CapturesOutput(logged, asAdministrator: true, program)); // Ctrl+Shift+click
+        Assert.False(LaunchService.CapturesOutput(elevated, asAdministrator: false, program)); // the stored option
+        Assert.Equal(LaunchPlanner.RunAsVerb, LaunchPlanner.Plan(elevated).StartInfo!.Verb);
+    }
 }
 

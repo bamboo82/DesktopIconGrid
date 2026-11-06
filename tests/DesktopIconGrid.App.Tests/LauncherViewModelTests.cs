@@ -128,9 +128,12 @@ public sealed class LauncherViewModelTests : IDisposable
 
         public int Calls { get; private set; }
 
+        public IReadOnlySet<int>? LastProcessIds { get; private set; }
+
         public bool TrySwitch(IReadOnlySet<int> processIds)
         {
             Calls++;
+            LastProcessIds = processIds;
             return Answer;
         }
     }
@@ -568,6 +571,31 @@ public sealed class LauncherViewModelTests : IDisposable
         dialogs.AddAppAnswer = []; // Cancel
         viewModel.AddApp(viewModel.RootItems, int.MaxValue);
         Assert.Equal(5, model.Items.Count);
+    }
+
+    [Fact]
+    public void A_shortcut_with_parameters_starts_another_unless_told_to_switch_and_then_only_to_its_own_copies()
+    {
+        var exe = Path.Combine(_directory, "mstsc.exe");
+        File.WriteAllBytes(exe, []);
+        var switcher = new FakeSwitcher();
+        var (viewModel, model, _) = Create(switcher);
+        var shortcut = (ShortcutItem)model.Items[0];
+        shortcut.Location = exe;
+        shortcut.Parameters = "/v:server2";
+        viewModel.Tracker.Watch(shortcut);
+        viewModel.Tracker.ApplySnapshot(new Dictionary<string, IReadOnlyList<int>>(StringComparer.OrdinalIgnoreCase) { [exe] = [4242] }); // server1, opened elsewhere
+
+        viewModel.Activate(viewModel.RootItems.Items[0], null, ActivationModifiers.None);
+
+        Assert.Equal(0, switcher.Calls); // the default with parameters: start another
+        Assert.Single(_launcher.Launches);
+
+        shortcut.WhenRunning = ShortcutItem.WhenRunningSwitch;
+        viewModel.Activate(viewModel.RootItems.Items[0], null, ActivationModifiers.None);
+
+        Assert.Equal(1, switcher.Calls);
+        Assert.Empty(switcher.LastProcessIds!); // not the server1 window: this shortcut started nothing that still runs
     }
 }
 

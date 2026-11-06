@@ -160,11 +160,7 @@ public sealed class ItemPropertiesViewModel : ObservableObject
                 return;
             }
 
-            if (!_whenRunningChosen && _originalWhenRunning is null && _switchesWhenRunning != LaunchPlanner.IsProgramLocation(_location))
-            {
-                _switchesWhenRunning = !_switchesWhenRunning;
-                OnPropertyChanged(nameof(SelectedWhenRunning));
-            }
+            FollowDefaultWhenRunning();
 
             OnPropertyChanged(nameof(IsWebLink));
             OnPropertyChanged(nameof(CanChooseAppWindow));
@@ -184,7 +180,24 @@ public sealed class ItemPropertiesViewModel : ObservableObject
     public string Parameters
     {
         get => _parameters;
-        set => SetProperty(ref _parameters, value ?? string.Empty);
+        set
+        {
+            if (SetProperty(ref _parameters, value ?? string.Empty))
+            {
+                FollowDefaultWhenRunning(); // parameters turn the default from "switch" to "start another"
+            }
+        }
+    }
+
+    /// <summary>Until the user picks <see cref="SelectedWhenRunning"/>, it shows the default for the location and parameters.</summary>
+    private void FollowDefaultWhenRunning()
+    {
+        var byDefault = LaunchPlanner.SwitchesByDefault(_location, _parameters);
+        if (!_whenRunningChosen && _originalWhenRunning is null && _switchesWhenRunning != byDefault)
+        {
+            _switchesWhenRunning = byDefault;
+            OnPropertyChanged(nameof(SelectedWhenRunning));
+        }
     }
 
     /// <summary>Capture the program's output to a log file when it is started from the bar.</summary>
@@ -194,7 +207,10 @@ public sealed class ItemPropertiesViewModel : ObservableObject
         set => SetProperty(ref _captureLog, value);
     }
 
-    public string CaptureLogHint => Strings.Props_LogHint;
+    /// <summary>An elevated program's output cannot be captured, so the option is off while Run as administrator is ticked.</summary>
+    public bool CanCaptureLog => !_runAsAdministrator;
+
+    public string CaptureLogHint => _runAsAdministrator ? Strings.Props_LogNotElevated : Strings.Props_LogHint;
 
     public IReadOnlyList<WhenRunningOption> WhenRunningOptions => WhenRunningChoices;
 
@@ -249,7 +265,14 @@ public sealed class ItemPropertiesViewModel : ObservableObject
     public bool RunAsAdministrator
     {
         get => _runAsAdministrator;
-        set => SetProperty(ref _runAsAdministrator, value);
+        set
+        {
+            if (SetProperty(ref _runAsAdministrator, value))
+            {
+                OnPropertyChanged(nameof(CanCaptureLog));
+                OnPropertyChanged(nameof(CaptureLogHint));
+            }
+        }
     }
 
     /// <summary>The default browser, then every installed browser profile (and the stored one if it is not installed here).</summary>
@@ -425,7 +448,7 @@ public sealed class ItemPropertiesViewModel : ObservableObject
             shortcut.CaptureLog = _captureLog;
             shortcut.WhenRunning = !_whenRunningChosen
                 ? _originalWhenRunning
-                : _switchesWhenRunning == LaunchPlanner.IsProgramLocation(shortcut.EffectiveLocation)
+                : _switchesWhenRunning == LaunchPlanner.SwitchesByDefault(shortcut.EffectiveLocation, shortcut.Parameters)
                     ? null // the location's own default: stored as nothing, so it keeps following the location
                     : _switchesWhenRunning ? ShortcutItem.WhenRunningSwitch : ShortcutItem.WhenRunningStart;
             shortcut.StartIn = string.IsNullOrWhiteSpace(_startIn) ? null : _startIn.Trim();

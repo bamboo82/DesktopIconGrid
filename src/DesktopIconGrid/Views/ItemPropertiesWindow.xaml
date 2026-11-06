@@ -84,7 +84,7 @@
                Visibility="{Binding IsShortcut, Converter={StaticResource BoolToVisibility}}" />
     <StackPanel Grid.Row="5" Grid.Column="1" Grid.ColumnSpan="2" Margin="0,0,0,10"
                 Visibility="{Binding IsShortcut, Converter={StaticResource BoolToVisibility}}">
-      <CheckBox Content="{x:Static r:Strings.Props_KeepLog}" IsChecked="{Binding CaptureLog}" />
+      <CheckBox Content="{x:Static r:Strings.Props_KeepLog}" IsChecked="{Binding CaptureLog}" IsEnabled="{Binding CanCaptureLog}" />
       <TextBlock Style="{StaticResource DialogHint}" Margin="0,4,0,0" Text="{Binding CaptureLogHint}" />
     </StackPanel>
 

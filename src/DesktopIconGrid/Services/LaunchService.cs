@@ -20,7 +20,7 @@ public sealed class LaunchService(ProcessTracker tracker, ILaunchPrompts? prompt
     {
         ArgumentNullException.ThrowIfNull(shortcut);
         var result = LaunchCore(shortcut, asAdministrator: asAdministrator);
-        Log(shortcut, result, asAdministrator);
+        Log(shortcut, result, asAdministrator || shortcut.RunAsAdministrator);
         return result;
     }
 
@@ -123,8 +123,7 @@ public sealed class LaunchService(ProcessTracker tracker, ILaunchPrompts? prompt
         }
 
         var startInfo = plan.StartInfo!;
-        // Capturing needs the process started directly, which cannot ask for elevation: an elevated start runs uncaptured.
-        if (shortcut.CaptureLog && !asAdministrator && !LaunchPlanner.IsShellNamespace(shortcut.EffectiveLocation) && OutputCapture.CanCapture(startInfo))
+        if (CapturesOutput(shortcut, asAdministrator, startInfo))
         {
             return StartWithLog(shortcut, OutputCapture.WithCapture(startInfo));
         }
@@ -137,6 +136,17 @@ public sealed class LaunchService(ProcessTracker tracker, ILaunchPrompts? prompt
 
         return result;
     }
+
+    /// <summary>
+    /// Whether the start captures the program's output. Capturing needs the process started directly, which cannot ask
+    /// for elevation, so an elevated start (from the click or from <see cref="ShortcutItem.RunAsAdministrator"/>) runs
+    /// through the shell with the runas verb and uncaptured.
+    /// </summary>
+    internal static bool CapturesOutput(ShortcutItem shortcut, bool asAdministrator, ProcessStartInfo startInfo) =>
+        shortcut.CaptureLog
+        && !(asAdministrator || shortcut.RunAsAdministrator)
+        && !LaunchPlanner.IsShellNamespace(shortcut.EffectiveLocation)
+        && OutputCapture.CanCapture(startInfo);
 
     /// <summary>
     /// Fills in <c>{clipboard}</c> and <c>{ask:…}</c> (see <see cref="LaunchPlaceholders"/>). Returns a result instead

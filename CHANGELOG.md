@@ -48,6 +48,21 @@ layout history, and a command line with *Send to*.
   to files on that drive use it, so a USB drive that gets another letter keeps working. Covered by
   tests of the rules; not yet run from a USB drive.
 
+### Changed
+
+- A program shortcut with parameters (`mstsc /v:server2`, `putty -load prod`, `code C:\proj2`) now starts
+  another copy when clicked, instead of bringing forward a copy of the same program that may have been
+  started with other parameters, as 0.7.0 did. If you want the 0.7.0 behaviour for one shortcut, set
+  *Properties → Advanced → When it is running → Switch to it*; it then switches only to copies that this
+  shortcut itself started.
+
+### Fixed
+
+- *Run as administrator* together with *Keep a log* started the program without elevation and without a
+  word (the log needs the program started directly, which cannot ask for elevation). It now starts
+  elevated and unlogged, and *Keep a log* is greyed out while *Run as administrator* is ticked, with the
+  reason underneath.
+
 ## [0.7.0] – 2026-11-05
 
 "Get there faster", the first release of the plan in [docs/ROADMAP.md](docs/ROADMAP.md): a click on a

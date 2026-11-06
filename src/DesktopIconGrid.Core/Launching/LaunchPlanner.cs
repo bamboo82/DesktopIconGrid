@@ -147,7 +147,7 @@ public static class LaunchPlanner
 
     /// <summary>
     /// Whether a click on the shortcut brings its running program forward instead of starting another instance:
-    /// its <see cref="ShortcutItem.WhenRunning"/> choice, else yes for programs and no for documents, folders and links.
+    /// its <see cref="ShortcutItem.WhenRunning"/> choice, else <see cref="SwitchesByDefault"/>.
     /// </summary>
     public static bool SwitchesWhenRunning(ShortcutItem shortcut)
     {
@@ -156,9 +156,17 @@ public static class LaunchPlanner
         {
             ShortcutItem.WhenRunningSwitch => true,
             ShortcutItem.WhenRunningStart => false,
-            _ => IsProgramLocation(shortcut.EffectiveLocation),
+            _ => SwitchesByDefault(shortcut.EffectiveLocation, shortcut.Parameters),
         };
     }
+
+    /// <summary>
+    /// The default when no choice is stored: a program is brought forward, unless the shortcut passes parameters
+    /// (<c>mstsc /v:server2</c>, <c>putty -load prod</c>, <c>code C:\proj2</c>), since the copy already running may have
+    /// been started with other ones. Documents, folders and links start again.
+    /// </summary>
+    public static bool SwitchesByDefault(string? location, string? parameters) =>
+        IsProgramLocation(location) && string.IsNullOrWhiteSpace(parameters);
 
     /// <summary>A program: an <c>.exe</c> or <c>.com</c> file, a bare command (<c>notepad</c>), or a Store app from the Apps folder.</summary>
     public static bool IsProgramLocation(string? location)

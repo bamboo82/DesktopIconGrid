@@ -53,6 +53,13 @@ public sealed class ProcessTracker : IDisposable
     /// The processes behind a shortcut, for switching to its windows: the ones started from the bar that still run,
     /// plus those the last scan found at its program's path (or in its Store package).
     /// </summary>
+    /// <summary>
+    /// Only the processes started from this shortcut that still run: what a shortcut with parameters switches to, since
+    /// another copy of the same program may have been started with other parameters.
+    /// </summary>
+    public IReadOnlySet<int> LaunchedProcessIdsOf(Guid id) =>
+        _launched.TryGetValue(id, out var launched) ? new HashSet<int>(launched) : [];
+
     public IReadOnlySet<int> ProcessIdsOf(Guid id)
     {
         var result = new HashSet<int>();

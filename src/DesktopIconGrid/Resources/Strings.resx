@@ -1344,7 +1344,7 @@ Details are in {1}.</value>
     <value>Start another</value>
   </data>
   <data name="Props_WhenRunningHint" xml:space="preserve">
-    <value>Shift+click or a middle click always starts another; Ctrl+Shift+click starts one as administrator.</value>
+    <value>A program is brought forward by default, unless the shortcut passes parameters: then another copy starts. Shift+click or a middle click always starts another; Ctrl+Shift+click starts one as administrator.</value>
   </data>
   <data name="Launch_ClipboardEmpty" xml:space="preserve">
     <value>The clipboard holds no text to pass on.</value>
@@ -1693,5 +1693,8 @@ Details are in {1}.</value>
   </data>
   <data name="Launch_ValueHasLineBreak" xml:space="preserve">
     <value>Not started: the clipboard text or the answer has more than one line.</value>
+  </data>
+  <data name="Props_LogNotElevated" xml:space="preserve">
+    <value>Not with Run as administrator: Windows cannot hand an elevated program's output to the bar.</value>
   </data>
 </root>
