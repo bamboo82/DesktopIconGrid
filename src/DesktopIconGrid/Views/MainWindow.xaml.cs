@@ -283,7 +283,7 @@ public partial class MainWindow : Window
         _hotkey = null;
         _pointerHotkey?.Dispose();
         _pointerHotkey = null;
-        _pointerWindow?.Close();
+        _pointerWindow?.CloseForGood();
         _pointerWindow = null;
         _tray?.Dispose();
         _tray = null;
@@ -551,7 +551,18 @@ public partial class MainWindow : Window
     /// <summary>The Show-at-pointer hotkey: the icons in a small window under the mouse, or away again on a second press.</summary>
     private void TogglePointerWindow()
     {
-        _pointerWindow ??= new PointerWindow(_viewModel);
+        if (_pointerWindow is null)
+        {
+            _pointerWindow = new PointerWindow(_viewModel);
+            _pointerWindow.Closed += (sender, _) =>
+            {
+                if (ReferenceEquals(sender, _pointerWindow))
+                {
+                    _pointerWindow = null; // closed after all (the app is quitting): the next press makes a new one
+                }
+            };
+        }
+
         if (_pointerWindow.IsVisible)
         {
             _pointerWindow.Dismiss();

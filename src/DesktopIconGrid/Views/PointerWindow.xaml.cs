@@ -13,7 +13,8 @@ namespace DesktopIconGrid.Views;
 /// <summary>
 /// The bar's icons in a small window under the mouse pointer, opened by the Show-at-pointer hotkey with the search box
 /// focused. It works whether the bar is shown, hidden in the tray or tucked away at a screen edge, and goes away after
-/// a launch, on Esc and when another window takes the focus. A group opens in place, with a way back.
+/// a launch, on Esc, on Alt+F4 and when another window takes the focus. A group opens in place, with a way back.
+/// The window is made once and only hidden after that; it closes for real when the app quits (<see cref="CloseForGood"/>).
 /// </summary>
 public partial class PointerWindow : Window
 {
@@ -36,6 +37,7 @@ public partial class PointerWindow : Window
 
     private readonly LauncherViewModel _viewModel;
     private bool _dismissing;
+    private bool _closingForGood;
 
     public PointerWindow(LauncherViewModel viewModel)
     {
@@ -131,6 +133,27 @@ public partial class PointerWindow : Window
         finally
         {
             _dismissing = false;
+        }
+    }
+
+    /// <summary>Closes the window for real, when the app quits. Anything else that asks it to close only hides it.</summary>
+    public void CloseForGood()
+    {
+        _closingForGood = true;
+        Close();
+    }
+
+    /// <summary>
+    /// Alt+F4 hides the window like Esc does: closed for real, it could not be shown again, and the next press of the
+    /// hotkey would fail. The app's own shutdown closes it all the same (WPF ignores the cancel then).
+    /// </summary>
+    protected override void OnClosing(CancelEventArgs e)
+    {
+        base.OnClosing(e);
+        if (!_closingForGood && !e.Cancel)
+        {
+            e.Cancel = true;
+            Dismiss();
         }
     }
 

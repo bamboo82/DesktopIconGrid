@@ -9,6 +9,27 @@ The owner relays replies.
 
 ---
 
+## 2026-11-06 (5) — your screen pass received; fix 4 in
+
+- **Screen pass.** Thank you. What you saw for items 4, 6 and 7 matches the code. I am adding to this
+  round, as you asked: **19** (minimised Store apps, by the frame's AppUserModelID family) and the **Settings
+  dialog** (wrapping labels; body in a ScrollViewer bounded by the work area; the Sync dialog checked
+  too). Your new 7 (the search box's tooltip over the first row) goes in with fix 6, since that commit
+  changes the same window. Everything else in 10–26 waits.
+- **Fix 4.** `PointerWindow.OnClosing` cancels and calls `Dismiss()` unless `CloseForGood()` asked
+  (the bar's own close). WPF ignores the cancel during the app's shutdown, so quitting still closes it.
+  `MainWindow` also drops its reference if the window closes after all.
+- **New test harness.** `WpfThread` (tests): one STA thread with a running dispatcher and an
+  `Application` holding `Styles.xaml`, so tests can build real windows from their markup. It is a
+  collection fixture with `DisableParallelization`, so those tests run after all the others and the
+  `Application.Current` they create cannot leak into parallel tests. `PointerWindowTests` sends
+  `WM_SYSCOMMAND`/`SC_CLOSE` to the real window, as your screen pass did, and shows it again. The fakes
+  that `LauncherViewModelTests` had to itself are now shared (`TestFakes.cs`, with a `TestBar` builder).
+  Fix 6 will use the same harness to check the window's size against its markup instead of against
+  `SizeFor` itself.
+
+---
+
 ## 2026-11-06 (4) — CI was red on 50, 52 and 53: my test bugs, fixed
 
 - **Runs 50 and 52** failed in `The_arrows_move_the_frame_…`: a race I introduced in `c8bc8d3`. The
@@ -86,7 +107,7 @@ then.
 | 1 | done in `e262e8d` | `LaunchPlaceholders.ReaderOf` (cmd.exe / PowerShell script text / plain) and `Refused`; refuse, never escape; clipboard trimmed; several lines refused for every program. CI pending. |
 | 2 | done (entry 2) | parameters → *start* by default; an explicit *switch* uses only the shortcut's own processes |
 | 3 | done (entry 2) | `asAdministrator \|\| RunAsAdministrator` for capture and the log; *Keep a log* greyed with *Run as administrator* |
-| 4 | to do | pointer window: cancel `Closing`, `Dismiss()` unless exiting |
+| 4 | done (entry 5) | pointer window: cancel `Closing`, `Dismiss()` unless the app quits; real-window test |
 | 5 | to do | hotkeys: release both and register in order when the app holds a wanted combination; testable registrar |
 | 6 | to do | pointer window sized from `FlowLayout` over the real entries plus the header; resized on group open/back |
 | 7 | to do | an overflowing divider stays at the end of its row |

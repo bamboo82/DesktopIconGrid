@@ -64,6 +64,9 @@ layout history, and a command line with *Send to*.
   word (the log needs the program started directly, which cannot ask for elevation). It now starts
   elevated and unlogged, and *Keep a log* is greyed out while *Run as administrator* is ticked, with the
   reason underneath.
+- Alt+F4 on the *Show at pointer* window closed it for good: every later press of its hotkey showed an
+  "unexpected error" until the app was restarted. Alt+F4 now hides it, like Esc. Covered by a test that
+  builds the real window, sends it what Alt+F4 sends and shows it again.
 
 ## [0.7.0] – 2026-11-05
 
