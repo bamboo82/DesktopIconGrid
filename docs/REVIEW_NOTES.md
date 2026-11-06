@@ -9,6 +9,63 @@ The owner relays replies.
 
 ---
 
+## 2026-11-06 (22) — round 13: WSL in, ssh too, and Windows Terminal's `;`
+
+CI is green on run 74 (`089469c`): 496 Core and 176 App tests, none skipped. Since `54946e4` only the three
+commits below changed `src`, `tests` and the docs.
+
+| Commit | Item |
+| --- | --- |
+| `178a02f` | WSL (wsl.exe, System32's bash.exe) and ssh: two new readers; dropped files judged where they go |
+| `88724d6` | Windows Terminal starts another command at every `;`: my find, in a commit of its own so you can judge it apart |
+| `089469c` | CHANGELOG *Security* (WSL, ssh and Windows Terminal named) and FEATURES |
+
+- **WSL.** `PosixShell` sits between `Cmd` and `PowerShellCommand` and refuses cmd.exe's characters plus `$`
+  and the backtick, in values. In dropped paths it refuses `%`, `$` and the backtick. On `-e`/`--exec` I went
+  one step past "before the placeholder": they count only among wsl's own options, that is before its first
+  non-option word. `-d`, `-u`, `--cd`, `--shell-type` and `--distribution-id` skip their value, and `--`
+  hands the rest to the shell. Otherwise `wsl grep -e {clipboard} f`, where `-e` is grep's, would have turned
+  the check off. System32's bash.exe counts when it is named by its path, and a bare `bash`/`bash.exe`
+  counts when System32 has one: Windows looks there before PATH, so a plain `bash` is WSL's even with Git
+  Bash on PATH. Git Bash named by its own path stays `Plain`. `wsl` or that `bash` named in the parameters
+  (`wt wsl …`, `cmd /c wsl …`) works as the other relays do.
+- **ssh, in 0.8.0.** `RemoteShell` has the same refusals as script text (the allow-list and the word-start
+  dash) but its own name in the messages, with `Launch_WordIsRemoteOption` for the dash. ssh's options are
+  read by getopt's rules to find the destination: `BbcDEeFIiJLlmOoPpQRSWw` take a value, `-p22` holds its
+  own, and `--` ends them. A placeholder after the destination makes it `RemoteShell`; the destination and
+  option values stay `Plain`. OpenSSH also reads options after the host (`ssh host -p 22 cmd`); such words
+  count as the command here, which is the strict side. Known limits, for 0.8.1 if you want them:
+  - A template with placeholders on both sides is `RemoteShell` for both, so `admin@host` is refused there.
+  - plink, whose options differ, is not covered.
+  - Metacharacters in the destination (CVE-2023-51385, which needs a `ProxyCommand` with `%h` and is fixed
+    in OpenSSH 9.6) are not checked: the destination stays `Plain`.
+- **Dropped files are judged where they go.** Without `{file}`/`{files}` they are appended, so their reader is
+  worked out for the template with `{files}` at the end. Only ssh's result changes by it, since that puts
+  them after the destination.
+- **Windows Terminal (`88724d6`).** I found this in WT's source, not on a PC: `BuildCommands` and
+  `_addCommandsForArg` split every argument at an unescaped `;` after the quotes are gone. So
+  `wt ssh "server2;notepad"` would open a second tab running notepad, and so would a file named `a;calc.txt`
+  dropped on `wt notepad {file}`, whatever wt itself runs. It is a check of its own
+  (`LaunchPlaceholders.SplitsAtSemicolons`) rather than another reader, because it holds for every reader.
+  If you disagree, the commit reverts cleanly.
+- **Strings:** the Parameters hint names WSL, Windows Terminal and the command ssh sends. It also says that
+  a value inside code for another program (`python -c`, `node -e`, `bash -c`) is code there.
+- **Tests:** Core 496 (32 new). App: one for WSL, one for ssh (a value, an answer with a dash, a dropped file
+  with no `{file}`), and one for Windows Terminal (a value and a dropped file). As you said, there is no real
+  WSL on the runner; the rules are the proof.
+- **For your in-app check,** please use run 74's artifact. On top of entry 20's cases and `a -NoEnumerate`:
+  - WSL, if the owner has it: Parameters `echo {clipboard}` on `wsl.exe`. `$(echo INJECTED)` is refused,
+    naming WSL; `a;echo INJECTED2` prints as written. With `-e echo {clipboard}`, `$(echo INJECTED)` goes
+    through and prints literally.
+  - ssh: Parameters `server2 cat {clipboard}` on `ssh.exe`, with `x; id`: refused, naming ssh. It is refused
+    before anything starts, so no host is needed.
+  - Windows Terminal: Parameters `cmd /k echo {clipboard}` on `wt.exe`, with `a;notepad`: refused, naming
+    Windows Terminal. To see the bug itself in a console, `wt.exe cmd /k echo "a;notepad"` should open a
+    second tab that starts notepad.
+- **The tag:** after your pass, on the commit you name.
+
+---
+
 ## 2026-11-06 (21) — round 12: T1, T2 and the S1 gap in
 
 CI is green on run 72 (`802c7cb`): 464 Core and 173 App tests, none skipped. They include the Edge test on
