@@ -7,12 +7,20 @@ public class SyncServiceTests
 {
     private static readonly DateTimeOffset Now = new(2026, 11, 4, 12, 0, 0, TimeSpan.Zero);
 
-    /// <summary>In-memory stand-in for Drive: one file per name, with the metadata the real client would return.</summary>
+    /// <summary>
+    /// In-memory stand-in for Drive: one file per name, with the metadata the real client would return. An update keeps
+    /// the app properties it does not name, as Drive's PATCH does.
+    /// </summary>
     private sealed class FakeDrive : IDriveClient
     {
         private int _nextId = 1;
 
         public Dictionary<string, (string Content, Dictionary<string, string> Properties)> Files { get; } = [];
+
+        /// <summary>Drive's own clock, given to a file as its modified time when it is written; none when <see langword="null"/>.</summary>
+        public DateTimeOffset? ServerTime { get; set; }
+
+        public Dictionary<string, DateTimeOffset> ModifiedTimes { get; } = [];
 
         public List<string> Log { get; } = [];
 
@@ -22,7 +30,7 @@ public class SyncServiceTests
         {
             Log.Add("list");
             IReadOnlyList<DriveFile> files = Files
-                .Select(f => new DriveFile(f.Key, f.Value.Properties["name"], null, f.Value.Content.Length, f.Value.Properties))
+                .Select(f => new DriveFile(f.Key, f.Value.Properties["name"], ModifiedTimes.TryGetValue(f.Key, out var modified) ? modified : null, f.Value.Content.Length, f.Value.Properties))
                 .ToList();
             return Task.FromResult(files);
         }
@@ -31,9 +39,26 @@ public class SyncServiceTests
         {
             Log.Add(existingFileId is null ? $"create {fileName}" : $"update {existingFileId}");
             var id = existingFileId ?? $"id{_nextId++}";
-            var properties = new Dictionary<string, string>(appProperties) { ["name"] = fileName };
+            var properties = existingFileId is not null && Files.TryGetValue(existingFileId, out var old)
+                ? new Dictionary<string, string>(old.Properties)
+                : [];
+            foreach (var (key, value) in appProperties)
+            {
+                properties[key] = value;
+            }
+
+            properties["name"] = fileName;
             Files[id] = (json, properties);
-            return Task.FromResult(new DriveFile(id, fileName, null, json.Length, properties));
+            if (ServerTime is { } time)
+            {
+                ModifiedTimes[id] = time;
+            }
+            else
+            {
+                ModifiedTimes.Remove(id);
+            }
+
+            return Task.FromResult(new DriveFile(id, fileName, ServerTime, json.Length, properties));
         }
 
         public Task<string> DownloadTextAsync(string fileId, CancellationToken cancellationToken)
@@ -192,6 +217,66 @@ public class SyncServiceTests
         Assert.True(SyncService.IsNewerThanLocal(new RemoteProfile("W", "id", Now.AddSeconds(5), "PC-2", null), settings));
         Assert.False(SyncService.IsNewerThanLocal(new RemoteProfile("W", "id", null, "PC-2", null), settings));
         Assert.True(SyncService.IsNewerThanLocal(new RemoteProfile("W", "id", Now, "PC-2", null), new SyncSettings { DeviceName = "PC-1", LastSyncedAt = null }));
+    }
+
+    [Fact]
+    public void With_the_same_revision_a_later_time_counts_on_Google_Drive_but_not_in_a_folder()
+    {
+        var onDrive = new SyncSettings { DeviceName = "DESK", LastSyncedAt = Now, LastRevision = "r1" };
+        var inFolder = new SyncSettings { DeviceName = "DESK", LastSyncedAt = Now, LastRevision = "r1", SyncFolder = "/sync" };
+        var later = new RemoteProfile("Work", "id", Now.AddMinutes(10), "LAPTOP", null) { SavedById = "laptop", Revision = "r1" };
+        var sameTime = later with { SavedAt = Now.AddSeconds(1) };
+
+        Assert.True(SyncService.IsNewerThanLocal(later, onDrive)); // Drive's own clock: a save from 0.7.0 kept the old revision
+        Assert.False(SyncService.IsNewerThanLocal(sameTime, onDrive));
+        Assert.False(SyncService.IsNewerThanLocal(later, inFolder)); // a sync program's file time says nothing there
+        Assert.True(SyncService.IsNewerThanLocal(sameTime with { Revision = "r2" }, onDrive));
+        Assert.True(SyncService.IsNewerThanLocal(sameTime with { Revision = "r2" }, inFolder));
+        Assert.False(SyncService.IsNewerThanLocal(later with { SavedById = onDrive.DeviceId }, onDrive)); // this PC's own save
+    }
+
+    [Fact]
+    public async Task On_Google_Drive_a_save_from_0_7_0_is_offered_although_Drive_kept_the_revision_before_it()
+    {
+        // The review's T1: an update names only the app properties it knows, Drive keeps the rest, and 0.7.0 knows no "revision".
+        var (service, drive, settings, _) = CreateService();
+        drive.ServerTime = Now;
+        await service.SaveProfileAsync("Work", SampleLayout(), CancellationToken.None); // DESK, on 0.8.0
+        var file = drive.Files.Single().Key;
+        var desksRevision = settings.LastRevision;
+        Assert.NotNull(desksRevision);
+
+        async Task SaveOnLaptopWithVersion070(DateTimeOffset driveTime)
+        {
+            drive.ServerTime = driveTime;
+            var copy = SyncProfile.FromLayout("Work", SampleLayout(), "LAPTOP", Now.AddHours(-1), "0.7.0", "laptop-install"); // its clock is an hour behind
+            copy.Revision = null;
+            await drive.UploadJsonAsync("Work.json", copy.ToJson(), new Dictionary<string, string>
+            {
+                ["app"] = "DesktopIconGrid",
+                ["profile"] = "Work",
+                ["device"] = "LAPTOP",
+                ["savedAt"] = copy.SavedAt.ToString("O"),
+                ["deviceId"] = "laptop-install",
+            }, file, CancellationToken.None);
+        }
+
+        await SaveOnLaptopWithVersion070(Now.AddMinutes(10));
+        Assert.Equal(desksRevision, drive.Files[file].Properties["revision"]);
+
+        var offered = await service.CheckForNewerCopyAsync(CancellationToken.None);
+        Assert.Equal("LAPTOP", offered?.SavedBy);
+        var upload = await service.AutoUploadAsync(SampleLayout(), CancellationToken.None);
+        Assert.Equal(AutoUploadOutcome.Conflict, upload.Outcome);
+        Assert.Equal("LAPTOP", drive.Files[file].Properties["device"]); // not overwritten
+
+        // DESK loads it, then LAPTOP saves again: the same old revision, and the same device as the copy DESK loaded.
+        await service.LoadProfileAsync(offered!, CancellationToken.None);
+        Assert.Null(await service.CheckForNewerCopyAsync(CancellationToken.None));
+        await SaveOnLaptopWithVersion070(Now.AddMinutes(20));
+
+        Assert.Equal("LAPTOP", (await service.CheckForNewerCopyAsync(CancellationToken.None))?.SavedBy);
+        Assert.Equal(AutoUploadOutcome.Conflict, (await service.AutoUploadAsync(SampleLayout(), CancellationToken.None)).Outcome);
     }
 
     [Fact]

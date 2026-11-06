@@ -321,9 +321,12 @@ public sealed class SyncService
 
     /// <summary>
     /// True when the copy was saved by a different device after this device's last sync. With revisions on both sides
-    /// that means another revision than the one this device last wrote or read: a sync program carries the writer's own
-    /// file time, a write while offline moves this device's last sync forward before the sync program has caught up, and
-    /// a clock can be wrong. Without them (copies or settings from before 0.8.0) the times decide, as before.
+    /// that means another revision than the one this device last wrote or read: in a folder, a sync program carries the
+    /// writer's own file time, a write while offline moves this device's last sync forward before the sync program has
+    /// caught up, and a clock can be wrong. On Google Drive a later time counts as well, since the time there is Drive's
+    /// own: an update from 0.7.0 names only the properties it knows, and Drive keeps the others, so the copy still
+    /// shows the revision of the save before it. Without revisions (copies or settings from before 0.8.0) the times
+    /// decide, as before.
     /// </summary>
     public static bool IsNewerThanLocal(RemoteProfile remote, SyncSettings settings)
     {
@@ -337,12 +340,14 @@ public sealed class SyncService
             return false;
         }
 
+        var savedLater = remote.SavedAt is { } savedAt && (settings.LastSyncedAt is null || savedAt > settings.LastSyncedAt.Value + ClockTolerance);
         if (remote.Revision is { } revision && settings.LastRevision is { } last)
         {
-            return !string.Equals(revision, last, StringComparison.Ordinal);
+            var onDrive = settings.SyncFolder is null;
+            return !string.Equals(revision, last, StringComparison.Ordinal) || (onDrive && savedLater);
         }
 
-        return remote.SavedAt is { } savedAt && (settings.LastSyncedAt is null || savedAt > settings.LastSyncedAt.Value + ClockTolerance);
+        return savedLater;
     }
 
     public static string NormalizeProfileName(string name)
