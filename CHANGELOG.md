@@ -11,26 +11,48 @@ switches, portable mode and *Repair…* on more kinds of PC, and the smaller ite
 ### Security
 
 - ssh's destination, login name (`-l`) and jump host (`-J`) are now checked too: only what `user@host`,
-  `[v6]:port` and an `ssh://` address need passes (letters, digits and `. - _ @ : [ ] /`, not a `-` to start
-  with). OpenSSH before 9.6 could pass other characters in a host or user name on to a `ProxyCommand`
-  (CVE-2023-51385), and a name that starts with `-` reaches the proxy program as an option.
+  `[v6]:port` and an `ssh://` address need passes (letters, digits and `. - _ @ : [ ] /`, no `-` to start the
+  name or right after `@`). OpenSSH before 9.6 could pass other characters in a host or user name on to a
+  `ProxyCommand` (CVE-2023-51385), and a name that starts with `-` reaches ssh or the proxy program as an
+  option.
 - ssh's `-o` takes a line of its settings, with a space or `=` after the setting's name, and some settings run
   a program on this PC (`ProxyCommand calc`). A placeholder that starts `-o`'s value, or stands in the
-  setting's name, is therefore refused, and so is one after a setting that runs or loads something
-  (`ProxyCommand`, `LocalCommand`, `KnownHostsCommand`, `PKCS11Provider`, `SecurityKeyProvider`, `Include`,
-  `XAuthLocation`). After another name written in the template, the value is checked as the command ssh
-  sends (`-o ConnectTimeout={ask:Seconds}`), or as a host (`HostName`, `User`, `ProxyJump`). A placeholder
-  among an option's letters (`-v{clipboard}`) is refused too: its value would add options. OpenSSH reads
-  options after the host as well, unless `--` came first, and so does the check.
+  setting's name (quotes in the name are taken off, as ssh does), is therefore refused, and so is one after a
+  setting that runs or loads something (`ProxyCommand`, `LocalCommand`, `PermitLocalCommand`,
+  `KnownHostsCommand`, `PKCS11Provider`, `SmartcardDevice`, `SecurityKeyProvider`, `Include`, `XAuthLocation`,
+  `Match`), an empty value included. So is the value of ssh's `-I` (a library to load) and `-F` (a config file).
+  After another name written in the template, the value is checked as the command ssh sends
+  (`-o ConnectTimeout={ask:Seconds}`), or as a host (`HostName`, `User`, `ProxyJump`). A placeholder among an
+  option's letters (`-v{clipboard}`) is refused too: its value would add options. OpenSSH reads options after
+  the host as well, unless `--` came first, and so does the check; only a `--` that ssh itself sees counts, not
+  one in a prompt or one of another program's. scp and sftp are read the same way, and their `-S` (a program
+  run instead of ssh), sftp's `-D` and `-b` (a batch whose `!` lines run here) are refused; a placeholder before
+  the colon of `host:path` is checked as a host.
 - A value that held `{file}` got a dropped file's path put inside it, after the value had been checked: with
   `{clipboard}` for a batch file and `x{file}` on the clipboard, a file called `Invoice&calc&.pdf` reached
   cmd.exe with its `&` outside every quote. An answer that held `{clipboard}` got the clipboard the same way.
   All placeholders now go in with one pass over the template, and nothing put in is read again. Dropped files
   are judged where the template puts them, before a value with spaces can move the words they follow
-  (`wsl -u {clipboard} cat {file}` with `root --exec`). Older than 0.8.1.
-- plink, PuTTY's command-line ssh, and PuTTY itself, which reads the same command line, are checked the same
-  way, with `-proxycmd` as a command. After an option of plink's that this version does not know, a value is
-  checked as the command. Covered by tests of the rules.
+  (`wsl -u {clipboard} cat {file}` with `root --exec`), and `{files}`'s second path where it lands. Older than
+  0.8.1.
+- A placeholder inside quotes with other text (`"--in={file}"`, `git commit -m "WIP {clipboard}"`) had its
+  value's own quotes end the template's, so the value stood outside every quote: a dropped `a&calc&.txt` ran
+  calc through a batch file. The template is now read as Windows' C runtime reads a command line, and such a
+  placeholder is refused before anything starts, with a note under the parameters in *Properties*; a
+  placeholder written alone in quotes (`"{file}"`) is fine. A backslash written right before a placeholder
+  (`%USERPROFILE%\{ask:File}`) is doubled, so the value's quote stays a quote. Older than 0.8.1.
+- `cmd.exe /c {file}`: when the command after `/c`, `/k` or `/r` starts with a quote, cmd takes off its first
+  and last quote, so a dropped `a&calc&.txt` lost its quotes and ran calc. The command now gets one more pair,
+  as Windows gives a batch file's, and a pair written around the whole command (`/c ""…" "{file}""`) keeps
+  working. Older than 0.8.1.
+- Windows Terminal and conhost hand their arguments on quoted only when they hold a space, so a dropped path
+  with `& | < > ^ ( )` in it is refused after them (`wt cmd /c type {file}`). A batch file that a relay (`wt`,
+  conhost, runas, sudo) starts, named so or found on PATH, is read as cmd.exe reads it. `WindowsTerminal.exe`
+  counts as `wt`. Older than 0.8.1.
+- plink, PuTTY's command-line ssh, is checked the same way; its `-proxycmd` (a command run here) and `-m` (a file
+  sent as the command) are refused. PuTTY reads plink's options anywhere and has no remote command, so after
+  its host the options are read as plink's and a bare word is the port. After an option of plink's that this
+  version does not know, a value is checked as the command. Covered by tests of the rules.
 
 ### Fixed
 
@@ -49,8 +71,10 @@ switches, portable mode and *Repair…* on more kinds of PC, and the smaller ite
   paths are.
 - A portable copy run from the system drive (`C:\Tools`) wrote every C: path with `%APPDRIVE%`,
   `C:\Windows\System32\cmd.exe` too, so a copy on a stick that loaded them looked for them on the stick.
-  Paths on Windows' own drive are now written as they are, and such paths that 0.8.0 wrote in Windows' own
-  folders (Windows, Program Files, ProgramData, Users) get Windows' drive back when a layout is loaded.
+  Paths on Windows' own drive are now written as they are. Such a path that 0.8.0 wrote in Windows' own folders
+  (Windows, Program Files, ProgramData, Users) gets Windows' drive back once, when a layout from before 0.8.1 is
+  loaded, and only when it is missing where `%APPDRIVE%` points and there on Windows' drive: a copy's own
+  programs on a second disk (`D:\Program Files (x86)\Steam`) stay as they are, and so does each PC's own location.
 - *Repair…* could not fix a shortcut to a missing folder: it looked for files only, and *Browse* picked a file.
   It now looks for a file or a folder of that name, whichever is there, other versions of a folder included
   (`node-v20.11.0-win-x64` finds `node-v22.1.0-win-x64`), and *Browse* offers *File…* and *Folder…*.
@@ -89,8 +113,8 @@ switches, portable mode and *Repair…* on more kinds of PC, and the smaller ite
   conflicted copy) linked the PC to that file while the other PCs stayed on `Work.json`. Each then uploaded
   to its own file, and both said "up to date". The copy is now loaded, the PC stays linked to `Work`, and
   the next upload asks before it replaces another PC's save there. The start-up question and the "not
-  uploaded" message name such copies, which nothing did before. Replacing such a copy from the dialog says
-  that the PC then stays with it and leaves `Work`.
+  uploaded" message name such copies, which nothing did before. *Overwrite* on such a copy says that the PC
+  then stays with it and leaves `Work`.
 - Moving the copies to a folder or back to Google Drive, or unlinking, while an automatic upload ran could
   write that upload into the new place, over a copy there and without the conflict check, and then link
   the PC again. These now wait for the upload, and each sync operation uses the place it started with.
@@ -101,8 +125,12 @@ switches, portable mode and *Repair…* on more kinds of PC, and the smaller ite
   same file name ("Home? desk" in `Home_ desk (2).json`), was listed under the file's name, and an upload
   renamed it to that. So did a copy whose file name another file held (another program's `config.json`):
   listed as a sync program's copy, it got a third file when another PC loaded it. Saves now keep the copy's
-  own name, a PC that loads such a copy stays with its file, and a save from the dialog waits, as uploads do,
-  while a copy cannot be read.
+  own name, such a copy is listed under its own name (it is the original while no copy of that name holds its
+  file), a PC that loads a sync program's copy of it links to it, and a save from the dialog refuses a copy that
+  cannot be read just then; an upload waits and tries again.
+- A load whose `sync.json` could not be saved (held by a scan, a full or pulled stick) left the PC linked to the
+  loaded copy in memory with the old bar, which the next upload then wrote into it. The link now moves only
+  once it is saved.
 - An automatic upload that came due while a copy loaded (its timer runs on under the sync dialog) wrote the
   bar the load replaced into the copy just loaded, and every other PC on it was offered that bar. Loading the
   linked copy again to undo a change went the same way. Such an upload now writes nothing; a change made
