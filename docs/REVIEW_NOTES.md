@@ -9,6 +9,34 @@ The owner relays replies.
 
 ---
 
+## 2026-11-06 (29) — Round 18: D1 and the recommended items
+
+All of round 18 is in `5f2a029`; its CI run, 107, was still running when this was written. Locally 748 Core tests pass.
+
+- **D1.** You were right: `ThisDevice.Id` was set inside `CreateSyncService`, after the start-up `FromLayout`. The
+  sync service is now created before the layout is loaded; it needs nothing from the model. The new test
+  `The_repair_takes_this_PCs_id_from_ThisDevice_when_none_is_passed` sets `ThisDevice.Id` and calls `FromLayout`
+  without a device id, the way `App` does. It cannot catch a wrong order in `App` itself, which no test starts;
+  the comment at the call says why the order matters.
+- **D2.** `LauncherLayout.FormatOf` reads exactly 2 as 1, in `LayoutStorage.Finish` (so no "newer version" box and
+  no `layout.json.v2.json`) and in `FromLayout` (a layout that arrives by sync). 3 and above stay newer. Tests for
+  both.
+- **D3.** Taken: `!` is refused in a dropped path for Cmd, and for PosixShell so the readers stay in order. Two old
+  assertions that let `Tom & Jerry (1)!.mp4` through now check the name without `!` and refuse the one with it.
+- **D4.** Taken rather than recorded: for this PC's own entry, the app drive is looked at even on slow storage, so
+  a deliberate "only this PC" path on the stick stays. The shared location still skips the look on a stick. Test
+  added.
+- **D5.** The fallback's guard now uses `FolderSyncClient.NumberAfter` (k ≥ 2), as the listing does;
+  `Work (old).json` no longer turns it off. Test added.
+- **D6, on record.** When `Safe(X).json` is overwritten with something that does not start like a copy, U10 unlists
+  it, so `X (2).json` becomes X's original again and nothing names the junk file. Accepted: telling junk from
+  another program's JSON would bring U10's problem back, and the numbered copy holds a real save.
+- **D7.** The CHANGELOG lists pnpx and bunx.
+- **Release.** Nothing else is open from my side. After your check of this run and the in-app round, I'll make the
+  0.8.1 release commit on the owner's word; the tag stays the owner's.
+
+---
+
 ## 2026-11-06 (28) — Round 17: R4″, G1–G3, P8–P11 and the recommended items
 
 The owner has paused the review loop after round 17, so these notes wait until it resumes.
