@@ -281,6 +281,11 @@ public partial class MainWindow
         Move(AppBar.ProposedRect(_dockedEdge, _dockThickness, _appBar.MonitorBounds()));
     }
 
+    /// <summary>
+    /// Tucks an auto-hidden bar away to its strip. Unless <paramref name="force"/>d, not while it is in use: the mouse on
+    /// it, its popup or a drag open, or the keyboard on it (the hotkey brings it out to type in its search box). Once
+    /// another window has the keyboard, the auto-hide timer tucks it away.
+    /// </summary>
     private void Collapse(bool force = false)
     {
         if (_appBar is null)
@@ -288,7 +293,8 @@ public partial class MainWindow
             return;
         }
 
-        if (!force && (IsMouseOver || _viewModel.IsGroupPopupOpen || DragState.IsDragging || !IsVisible))
+        if (!force && (IsMouseOver || _viewModel.IsGroupPopupOpen || DragState.IsDragging || !IsVisible
+            || IsKeyboardFocusWithin || SearchPanel.Visibility == Visibility.Visible))
         {
             return;
         }

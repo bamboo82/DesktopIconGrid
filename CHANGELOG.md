@@ -73,6 +73,10 @@ layout history, and a command line with *Send to*.
   refused change failed the same way. Both work now. A refused combination is reported once (it is tried
   again on later saves), and the message says whether the previous hotkey still works or the action has
   none, which the old message got wrong at start-up. Covered by tests against a stand-in for Windows.
+- A bar docked with *Auto-hide* shrank back to its strip a second after the hotkey brought it out, even
+  while you typed in its search box; Enter then opened a match nobody could see. It now stays out while
+  it has the keyboard or its search box is open, and tucks away once you work in another window.
+  Checked in code only.
 
 ## [0.7.0] – 2026-11-05
 

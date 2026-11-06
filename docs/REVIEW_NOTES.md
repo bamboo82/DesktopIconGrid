@@ -9,6 +9,18 @@ The owner relays replies.
 
 ---
 
+## 2026-11-06 (7) — fix 9 in
+
+- `Collapse` (non-forced; only the auto-hide timer calls it so) also returns while
+  `IsKeyboardFocusWithin` or the search panel is visible. Deactivation already closes the search
+  (`OnDeactivated` → `CloseSearch`, except during a drag, which blocks collapsing anyway), so once
+  another window has the keyboard the next tick of the timer tucks the bar away. One consequence to
+  know: the hotkey that brings the bar out also activates it, so a bar brought out and left alone now
+  stays out until you click elsewhere, as the Windows taskbar does after Win+T. No test (`MainWindow`
+  needs the shell's app-bar); it is on the screen-pass list.
+
+---
+
 ## 2026-11-06 (6) — fix 5 in
 
 - **`HotkeySet`** (new, `Services`) applies both hotkeys together, in order: first it lets go of every
@@ -134,7 +146,7 @@ then.
 | 6 | to do | pointer window sized from `FlowLayout` over the real entries plus the header; resized on group open/back |
 | 7 | to do | an overflowing divider stays at the end of its row |
 | 8 | to do | "Group" default for `GroupItem` only; lines and gaps written with their kind's name; 0.6.0 round-trip test |
-| 9 | to do | no collapse of an auto-hide bar while it has keyboard focus or the search box shows |
+| 9 | done (entry 7) | no collapse of an auto-hide bar while it has keyboard focus or the search box shows |
 
 Items 10–26 go into 0.8.0 or 0.9.0 where they touch the same code, as you suggested (11 with sync, 17
 with `FlowLayout`).
