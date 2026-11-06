@@ -1757,4 +1757,10 @@ Details are in {1}.</value>
   <data name="Sync_ReplaceConflictCopy" xml:space="preserve">
     <value>Replace "{0}" with this PC's bar? It is a copy a sync program kept of "{1}". This PC then stays linked to "{0}" and leaves "{1}", which the other PCs keep using. To bring this bar to them, save over "{1}" instead.</value>
   </data>
+  <data name="Launch_PlaceholderInQuotes" xml:space="preserve">
+    <value>Not started: a placeholder stands inside quotes with other text, where its value would end the quotes. Write the placeholder as an argument of its own, or alone in quotes ("{file}").</value>
+  </data>
+  <data name="Props_PlaceholderInQuotes" xml:space="preserve">
+    <value>A placeholder inside quotes with other text cannot be filled: write it as an argument of its own, or alone in quotes ("{file}").</value>
+  </data>
 </root>

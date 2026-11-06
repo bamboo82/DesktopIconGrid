@@ -187,9 +187,13 @@ public sealed class ItemPropertiesViewModel : ObservableObject
             if (SetProperty(ref _parameters, value ?? string.Empty))
             {
                 FollowDefaultWhenRunning(); // parameters turn the default from "switch" to "start another"
+                OnPropertyChanged(nameof(ParametersWarning));
             }
         }
     }
+
+    /// <summary>Said under the parameters when a placeholder stands inside quotes with other text, which a launch refuses.</summary>
+    public string? ParametersWarning => LaunchPlaceholders.InsideQuotes(_parameters) ? Strings.Props_PlaceholderInQuotes : null;
 
     /// <summary>Until the user picks <see cref="SelectedWhenRunning"/>, it shows the default for the location and parameters.</summary>
     private void FollowDefaultWhenRunning()

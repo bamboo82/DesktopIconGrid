@@ -145,6 +145,70 @@ public sealed class LaunchServiceTests : IDisposable
         }
     }
 
+    /// <summary>A batch file that writes the arguments it gets to args.txt next to it; what it wrote, once it has.</summary>
+    private (string Tool, Func<string?> Written) ArgumentRecorder()
+    {
+        var tool = Path.Combine(_directory, "tool.bat");
+        var args = Path.Combine(_directory, "args.txt");
+        File.WriteAllText(tool, "@echo off\r\necho %*> \"%~dp0args.txt\"\r\n");
+        string? Written()
+        {
+            for (var i = 0; i < 200; i++)
+            {
+                try
+                {
+                    if (File.Exists(args) && File.ReadAllText(args).Trim() is { Length: > 0 } text)
+                    {
+                        return text;
+                    }
+                }
+                catch (IOException)
+                {
+                    // still being written
+                }
+
+                Thread.Sleep(50);
+            }
+
+            return null;
+        }
+
+        return (tool, Written);
+    }
+
+    [Fact]
+    public void A_placeholder_inside_quotes_with_other_text_is_refused_before_anything_starts()
+    {
+        // Review 16 P3: "--in={file}" became "--in="C:\…\a&calc&.txt"", with &calc& outside every quote.
+        var (tool, written) = ArgumentRecorder();
+        var dropped = Path.Combine(_directory, "a&mkdir injected&.txt");
+        var service = Create(new Prompts(clipboard: "x", answer: "y"), out var tracker);
+        using (tracker)
+        {
+            var result = service.LaunchWith(new ShortcutItem { Name = "Tool", Location = tool, Parameters = "\"--in={file}\"" }, [dropped]);
+            var clicked = service.Launch(new ShortcutItem { Name = "Tool", Location = tool, Parameters = "\"--message=WIP {clipboard}\"" });
+
+            Assert.Equal(Strings.Launch_PlaceholderInQuotes, result.ErrorMessage);
+            Assert.Equal(Strings.Launch_PlaceholderInQuotes, clicked.ErrorMessage);
+            Assert.False(Directory.Exists(Path.Combine(_directory, "injected")));
+        }
+    }
+
+    [Fact]
+    public void A_backslash_written_before_a_placeholder_stays_a_backslash()
+    {
+        // Review 16 P3: C:\dir\{ask:File} became C:\dir\"a b", where the C runtime reads \" as a quote character.
+        var (tool, written) = ArgumentRecorder();
+        var service = Create(new Prompts(clipboard: null, answer: "a b"), out var tracker);
+        using (tracker)
+        {
+            var result = service.Launch(new ShortcutItem { Name = "Tool", Location = tool, Parameters = @"C:\dir\{ask:File}" });
+
+            Assert.Equal(LaunchOutcome.Started, result.Outcome);
+            Assert.Equal(@"C:\dir\\""a b""", written()); // C:\dir\a b to a program that reads its arguments as the C runtime does
+        }
+    }
+
     [Fact]
     public void A_dropped_file_never_goes_into_a_value_that_holds_the_file_placeholder()
     {

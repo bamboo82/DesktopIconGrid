@@ -1757,4 +1757,10 @@
   <data name="Sync_ReplaceConflictCopy" xml:space="preserve">
     <value>要以這部電腦的工具列取代「{0}」嗎？它是同步程式為「{1}」保留的副本。之後這部電腦會連結到「{0}」並離開「{1}」，其他電腦則繼續使用原本的副本。若要把這個工具列帶給它們，請改為覆寫「{1}」。</value>
   </data>
+  <data name="Launch_PlaceholderInQuotes" xml:space="preserve">
+    <value>未啟動：預留位置與其他文字一起放在引號內，它的值會結束這組引號。請把預留位置寫成單獨的引數，或單獨放在引號內（"{file}"）。</value>
+  </data>
+  <data name="Props_PlaceholderInQuotes" xml:space="preserve">
+    <value>與其他文字一起放在引號內的預留位置無法填入：請把它寫成單獨的引數，或單獨放在引號內（"{file}"）。</value>
+  </data>
 </root>

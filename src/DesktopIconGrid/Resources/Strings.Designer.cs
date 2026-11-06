@@ -1293,6 +1293,15 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Not started: a placeholder stands inside quotes with other text, where its value [rest of string was truncated]";.
+        /// </summary>
+        public static string Launch_PlaceholderInQuotes {
+            get {
+                return ResourceManager.GetString("Launch_PlaceholderInQuotes", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Remove the group "{0}"?.
         /// </summary>
         public static string Launch_RemoveGroupQuestion {
@@ -2846,6 +2855,15 @@ namespace DesktopIconGrid.Resources {
         public static string Props_ParametersHint {
             get {
                 return ResourceManager.GetString("Props_ParametersHint", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to A placeholder inside quotes with other text cannot be filled: write it as an arg [rest of string was truncated]";.
+        /// </summary>
+        public static string Props_PlaceholderInQuotes {
+            get {
+                return ResourceManager.GetString("Props_PlaceholderInQuotes", resourceCulture);
             }
         }
 

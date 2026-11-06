@@ -82,11 +82,17 @@
                  Text="{Binding Parameters, UpdateSourceTrigger=PropertyChanged}"
                  IsEnabled="{Binding IsShortcut}" />
 
-        <TextBlock Grid.Row="4" Grid.Column="1" Grid.ColumnSpan="2"
-                   Style="{StaticResource DialogHint}"
-                   Text="{Binding ParametersHint}"
-                   IsEnabled="{Binding IsShortcut}"
-                   Visibility="{Binding IsShortcut, Converter={StaticResource BoolToVisibility}}" />
+        <StackPanel Grid.Row="4" Grid.Column="1" Grid.ColumnSpan="2"
+                    Visibility="{Binding IsShortcut, Converter={StaticResource BoolToVisibility}}">
+          <TextBlock Style="{StaticResource DialogHint}"
+                     Text="{Binding ParametersHint}"
+                     IsEnabled="{Binding IsShortcut}" />
+          <TextBlock Text="{Binding ParametersWarning}"
+                     Foreground="{DynamicResource WarningBrush}"
+                     TextWrapping="Wrap"
+                     Margin="0,0,0,8"
+                     Visibility="{Binding ParametersWarning, Converter={StaticResource NullToCollapsed}}" />
+        </StackPanel>
 
         <!-- Output log -->
         <TextBlock Grid.Row="5" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Props_Log}" VerticalAlignment="Top" Margin="0,2,12,0"

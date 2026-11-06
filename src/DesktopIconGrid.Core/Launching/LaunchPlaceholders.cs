@@ -28,42 +28,164 @@ public static partial class LaunchPlaceholders
     /// <summary>
     /// Fills in the placeholders in one pass over <paramref name="parameters"/>: <paramref name="clipboard"/> for every
     /// <c>{clipboard}</c>, the answers for the <c>{ask:…}</c> placeholders in order, and, when files were dropped,
-    /// <paramref name="file"/> for <c>{file}</c> and <paramref name="files"/> for <c>{files}</c> (each already quoted;
-    /// left as written when <see langword="null"/>). Nothing put in is read again: a value that holds <c>{file}</c> or
-    /// <c>{clipboard}</c> keeps it as text, where it was checked. Quotes written around a placeholder are dropped,
-    /// since the value is quoted here. <paramref name="parameters"/> should already have its environment variables
-    /// expanded, so a <c>%</c> in a value is never expanded.
+    /// <paramref name="file"/> for <c>{file}</c> and <paramref name="files"/> for <c>{files}</c> (left as written when
+    /// <see langword="null"/>). Each value is quoted as one argument (<see cref="DropArguments.Quote"/>). Nothing put in is
+    /// read again: a value that holds <c>{file}</c> or <c>{clipboard}</c> keeps it as text, where it was checked. Where a
+    /// placeholder stands is read as the C runtime reads a command line (<see cref="SpotsOf"/>): quotes written as a pair
+    /// around the placeholder alone (<c>"{x}"</c>) give way to the value's own, and a run of backslashes right before a
+    /// placeholder is doubled, since the value's quote now follows it. A placeholder inside quotes with other text
+    /// (<c>"--in={file}"</c>) cannot be filled: its value's quotes would end the span (see <see cref="InsideQuotes"/>).
+    /// <paramref name="parameters"/> should already have its environment variables expanded, so a <c>%</c> in a value
+    /// is never expanded.
     /// </summary>
-    public static string Fill(string parameters, string? clipboard, IReadOnlyList<string> answers, string? file = null, string? files = null)
+    public static string Fill(string parameters, string? clipboard, IReadOnlyList<string> answers, string? file = null, IReadOnlyList<string>? files = null)
     {
         ArgumentNullException.ThrowIfNull(parameters);
         ArgumentNullException.ThrowIfNull(answers);
         var next = 0;
-        return EveryPlaceholder().Replace(parameters, match =>
+        var builder = new System.Text.StringBuilder(parameters.Length + 64);
+        var last = 0;
+        foreach (var spot in SpotsOf(parameters))
         {
-            if (match.Groups["clipboard"].Success)
+            var (start, end) = spot.Kind == PlaceholderSpot.QuotedAlone ? (spot.Start - 1, spot.End + 1) : (spot.Start, spot.End);
+            builder.Append(parameters, last, start - last);
+            last = end;
+            var name = parameters[spot.Start..spot.End];
+            string? value;
+            if (name.Equals(ClipboardPlaceholder, StringComparison.OrdinalIgnoreCase))
             {
-                return DropArguments.Quote(clipboard ?? string.Empty);
+                value = DropArguments.Quote(clipboard ?? string.Empty);
+            }
+            else if (name.Equals(DropArguments.FilesPlaceholder, StringComparison.OrdinalIgnoreCase))
+            {
+                value = files is null ? null : string.Join(' ', files.Select(DropArguments.Quote));
+            }
+            else if (name.Equals(DropArguments.FilePlaceholder, StringComparison.OrdinalIgnoreCase))
+            {
+                value = file is null ? null : DropArguments.Quote(file);
+            }
+            else
+            {
+                if (next >= answers.Count)
+                {
+                    throw new ArgumentException("Fewer answers than {ask:…} placeholders.", nameof(answers));
+                }
+
+                value = DropArguments.Quote(answers[next++]);
             }
 
-            if (match.Groups["files"].Success)
+            if (value is null)
             {
-                return files ?? match.Value;
+                builder.Append(parameters, start, end - start); // no files: as written
+                continue;
             }
 
-            if (match.Groups["file"].Success)
+            if (spot.Kind == PlaceholderSpot.InsideQuotes)
             {
-                return file ?? match.Value;
+                throw new ArgumentException("A placeholder inside quotes with other text cannot be filled; such a template is refused first.", nameof(parameters));
             }
 
-            if (next >= answers.Count)
-            {
-                throw new ArgumentException("Fewer answers than {ask:…} placeholders.", nameof(answers));
-            }
+            builder.Append('\\', spot.Backslashes).Append(value);
+        }
 
-            return DropArguments.Quote(answers[next++]);
-        });
+        return builder.Append(parameters, last, parameters.Length - last).ToString();
     }
+
+    /// <summary>Where a placeholder stands among the template's quotes (see <see cref="SpotsOf"/>).</summary>
+    public enum PlaceholderSpot
+    {
+        /// <summary>Outside quotes, an argument of its own or part of one (<c>--name={x}</c>): the value goes in quoted.</summary>
+        Bare,
+
+        /// <summary>Written <c>"{x}"</c>: the pair gives way to the value's own quotes.</summary>
+        QuotedAlone,
+
+        /// <summary>Inside quotes with other text (<c>"--in={file}"</c>, <c>"WIP {clipboard}"</c>): refused.</summary>
+        InsideQuotes,
+    }
+
+    /// <summary>A placeholder of the template: where it is, how it stands, and the backslashes written right before it.</summary>
+    public readonly record struct Spot(int Start, int End, PlaceholderSpot Kind, int Backslashes);
+
+    /// <summary>
+    /// The placeholders of <paramref name="template"/> in order, read as the C runtime (CommandLineToArgvW) reads a command
+    /// line: a <c>"</c> opens or closes a quoted span, unless an odd run of backslashes comes before it, and <c>""</c>
+    /// inside a span is a quote character. A placeholder's own text (a prompt may hold quotes) is passed over.
+    /// </summary>
+    public static IReadOnlyList<Spot> SpotsOf(string template)
+    {
+        ArgumentNullException.ThrowIfNull(template);
+        var spots = new List<Spot>();
+        var placeholders = AnyPlaceholder().Matches(template).ToDictionary(m => m.Index, m => m.Index + m.Length);
+        var inQuotes = false;
+        var opened = -1; // where the quoted span we are in opened
+        var i = 0;
+        while (i < template.Length)
+        {
+            if (placeholders.TryGetValue(i, out var end))
+            {
+                var backslashes = 0;
+                while (!inQuotes && i - backslashes - 1 >= 0 && template[i - backslashes - 1] == '\\')
+                {
+                    backslashes++;
+                }
+
+                var kind = !inQuotes ? PlaceholderSpot.Bare
+                    : opened == i - 1 && end < template.Length && template[end] == '"' && (end + 1 >= template.Length || template[end + 1] != '"')
+                        ? PlaceholderSpot.QuotedAlone
+                        : PlaceholderSpot.InsideQuotes;
+                spots.Add(new Spot(i, end, kind, kind == PlaceholderSpot.Bare ? backslashes : 0));
+                if (kind == PlaceholderSpot.QuotedAlone)
+                {
+                    inQuotes = false; // the closing quote of the pair
+                    i = end + 1;
+                }
+                else
+                {
+                    i = end;
+                }
+
+                continue;
+            }
+
+            if (template[i] == '\\')
+            {
+                var run = 0;
+                while (i + run < template.Length && template[i + run] == '\\')
+                {
+                    run++;
+                }
+
+                i += run;
+                if (i < template.Length && template[i] == '"' && run % 2 == 1)
+                {
+                    i++; // an escaped quote: a character, not a quote
+                }
+
+                continue;
+            }
+
+            if (template[i] == '"')
+            {
+                if (inQuotes && i + 1 < template.Length && template[i + 1] == '"')
+                {
+                    i += 2; // "" inside a span: a quote character
+                    continue;
+                }
+
+                inQuotes = !inQuotes;
+                opened = inQuotes ? i : -1;
+            }
+
+            i++;
+        }
+
+        return spots;
+    }
+
+    /// <summary>Whether a placeholder stands inside quotes with other text, where its value's own quotes would end the span.</summary>
+    public static bool InsideQuotes(string? template) =>
+        !string.IsNullOrEmpty(template) && SpotsOf(template).Any(spot => spot.Kind == PlaceholderSpot.InsideQuotes);
 
     /// <summary>The extensions Windows tries for a name without one when <c>PATHEXT</c> is not set.</summary>
     private const string DefaultPathExtensions = ".COM;.EXE;.BAT;.CMD;.VBS;.VBE;.JS;.JSE;.WSF;.WSH;.MSC";
@@ -695,10 +817,6 @@ public static partial class LaunchPlaceholders
 
     [GeneratedRegex("\"?\\{ask:(?<prompt>[^}]*)\\}\"?", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
     private static partial Regex AskPattern();
-
-    /// <summary>Every placeholder with the quotes written around it, by kind, for <see cref="Fill"/>.</summary>
-    [GeneratedRegex("\"?\\{(?:(?<clipboard>clipboard)|(?<files>files)|(?<file>file)|ask:(?<prompt>[^}]*))\\}\"?", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
-    private static partial Regex EveryPlaceholder();
 
     /// <summary>Any placeholder: <c>{clipboard}</c>, <c>{file}</c>, <c>{files}</c> or <c>{ask:…}</c>.</summary>
     [GeneratedRegex(@"\{(?:clipboard|files?|ask:[^}]*)\}", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]

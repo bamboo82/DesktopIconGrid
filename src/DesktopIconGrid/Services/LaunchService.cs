@@ -51,6 +51,11 @@ public sealed class LaunchService(ProcessTracker tracker, ILaunchPrompts? prompt
 
         // Expand the template first so dropped paths containing '%' are never re-expanded.
         var template = string.IsNullOrWhiteSpace(shortcut.Parameters) ? null : Environment.ExpandEnvironmentVariables(shortcut.Parameters);
+        if (QuotedWithOtherText(template) is { } inQuotes)
+        {
+            return inQuotes;
+        }
+
         string? clipboard = null;
         IReadOnlyList<string> answers = [];
         if (template is not null && LaunchPlaceholders.HasAny(template))
@@ -197,6 +202,11 @@ public sealed class LaunchService(ProcessTracker tracker, ILaunchPrompts? prompt
     /// </summary>
     private (string? Clipboard, IReadOnlyList<string> Answers, LaunchResult? Result) AskForValues(ShortcutItem shortcut, string template)
     {
+        if (QuotedWithOtherText(template) is { } inQuotes)
+        {
+            return (null, [], inQuotes); // before anything is asked
+        }
+
         var terminal = LaunchPlaceholders.SplitsAtSemicolons(shortcut.EffectiveLocation, template);
         string? clipboard = null;
         if (LaunchPlaceholders.UsesClipboard(template))
@@ -244,6 +254,22 @@ public sealed class LaunchService(ProcessTracker tracker, ILaunchPrompts? prompt
     /// </summary>
     private static ArgumentReader ReaderAt(ShortcutItem shortcut, string template, int index) =>
         LaunchPlaceholders.ReaderAt(shortcut.EffectiveLocation, template, index, shortcut.StartIn, InstalledPrograms.RegisteredPath);
+
+    /// <summary>
+    /// The refusal of a template with a placeholder inside quotes with other text (<c>"--in={file}"</c>): the value's own
+    /// quotes would end the span, and what follows in it would stand outside every quote (see
+    /// <see cref="LaunchPlaceholders.InsideQuotes"/>).
+    /// </summary>
+    private static LaunchResult? QuotedWithOtherText(string? template)
+    {
+        if (!LaunchPlaceholders.InsideQuotes(template))
+        {
+            return null;
+        }
+
+        AppLog.Default.Warning("Launch", "Not started: a placeholder stands inside quotes with other text");
+        return LaunchResult.Failure(Strings.Launch_PlaceholderInQuotes);
+    }
 
     /// <summary>The refusal of a <c>;</c> for Windows Terminal (<see cref="LaunchPlaceholders.SplitsAtSemicolons"/>).</summary>
     private static LaunchResult TerminalRefusal => LaunchResult.Failure(string.Format(Strings.Launch_UnsafeValue, ';', "Windows Terminal"));

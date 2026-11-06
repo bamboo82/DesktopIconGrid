@@ -62,12 +62,12 @@ public static partial class DropArguments
 
         if (template.Contains(FilesPlaceholder, StringComparison.OrdinalIgnoreCase))
         {
-            return [LaunchPlaceholders.Fill(template, clipboard, answers, files: all)];
+            return [LaunchPlaceholders.Fill(template, clipboard, answers, files: cleaned)];
         }
 
         if (template.Contains(FilePlaceholder, StringComparison.OrdinalIgnoreCase))
         {
-            return cleaned.Select(path => LaunchPlaceholders.Fill(template, clipboard, answers, file: Quote(path))).ToList();
+            return cleaned.Select(path => LaunchPlaceholders.Fill(template, clipboard, answers, file: path)).ToList();
         }
 
         var filled = LaunchPlaceholders.Fill(template, clipboard, answers);

@@ -122,6 +122,42 @@ public class LaunchOptionsTests
         Assert.Equal(["--from \"{files}\" \"C:\\a.txt\"", "--from \"{files}\" \"C:\\b.txt\""], each);
     }
 
+    [Theory]
+    [InlineData("\"--in={file}\"")] // review 16 P3: a batch file's &calc& stood outside every quote
+    [InlineData("git commit -m \"WIP {clipboard}\"")] // bash got "WIP "x;calc.exe #"
+    [InlineData("\"--message=WIP {clipboard}\"")] // a value with a space split into two arguments
+    [InlineData("\"-oProxyCommand {clipboard} %h %p\" server2")] // review 16 P2′ a: a quote opened before the option
+    [InlineData("\"-o ProxyCommand {clipboard}\" server2")]
+    [InlineData("-o\"ProxyCommand {clipboard}\" server2")]
+    [InlineData("\"{clipboard} more\"")]
+    [InlineData("\"C:\\Program Files\\app.exe {ask:File}")] // a quote never closed
+    public void A_placeholder_inside_quotes_with_other_text_is_found(string template)
+    {
+        Assert.True(LaunchPlaceholders.InsideQuotes(template));
+        Assert.Throws<ArgumentException>(() => LaunchPlaceholders.Fill(template, "x", ["y"], file: "z"));
+    }
+
+    [Theory]
+    [InlineData("--title \"{ask:Title}\" {clipboard}")] // alone in quotes, and bare
+    [InlineData("--in={file} \"{files}\"x")]
+    [InlineData("\"a b\" {clipboard} \"c d\"")] // quoted spans around it, closed
+    [InlineData("{ask:Say \"hi\"} {clipboard}")] // quotes in a prompt are the prompt's
+    [InlineData("\\\"{clipboard}")] // an escaped quote is a character
+    [InlineData("\"say \"\"hi\"\"\" {clipboard}")] // "" inside a span is a quote character
+    public void A_placeholder_alone_or_outside_quotes_is_fine(string template)
+    {
+        Assert.False(LaunchPlaceholders.InsideQuotes(template));
+    }
+
+    [Fact]
+    public void A_backslash_run_before_a_placeholder_is_doubled_and_a_quoted_pair_gives_way()
+    {
+        // Review 16 P3: %USERPROFILE%\{ask:File} became C:\Users\me\"a b", where \" is a quote character.
+        Assert.Equal("C:\\Users\\me\\\\\"a b\"", LaunchPlaceholders.Fill("C:\\Users\\me\\{ask:File}", null, ["a b"]));
+        Assert.Equal("--in=\"a b\" \"c\"", LaunchPlaceholders.Fill("--in=\"{ask:A}\" {clipboard}", "c", ["a b"]));
+        Assert.Equal("\"C:\\t\\a&calc&.txt\"", Assert.Single(DropArguments.BuildArgumentSets("\"{file}\"", [@"C:\t\a&calc&.txt"])));
+    }
+
     [Fact]
     public void Browser_profiles_are_read_from_Local_State()
     {
