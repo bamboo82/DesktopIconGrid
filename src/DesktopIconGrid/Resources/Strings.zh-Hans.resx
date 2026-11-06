@@ -1727,4 +1727,13 @@
   <data name="Launch_WordIsRemoteOption" xml:space="preserve">
     <value>未启动：文字中有一个词以“-”开头，ssh 在另一台电脑上运行的命令会把它当成选项。</value>
   </data>
+  <data name="Sync_ConflictCopies" xml:space="preserve">
+    <value>同步程序另外保留了电脑彼此无法连接时保存的“{1}”副本：{0}。请打开“跨电脑同步”加载或删除它们。</value>
+  </data>
+  <data name="Sync_WaitingForUpload" xml:space="preserve">
+    <value>正在等待进行中的上传…</value>
+  </data>
+  <data name="Sync_LoadedConflictCopy" xml:space="preserve">
+    <value>已加载“{0}”，这是同步程序保留的“{1}”副本。这台设备仍链接到“{1}”，下次上传若会替换其他电脑保存的内容，会先询问。</value>
+  </data>
 </root>

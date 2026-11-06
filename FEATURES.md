@@ -474,8 +474,12 @@ Keeps named copies of the settings and icons where several PCs can share them: o
   saved as `Home_ desk.json` and listed as *Home: desk*). The copies OneDrive or Dropbox make after a
   conflict (`Work-LAPTOP.json`, `Work (1).json`) are listed under their own file names with their device
   and time, so they can be loaded or deleted; a file that cannot be read yet (still arriving) is listed
-  without a device and is never overwritten as this PC's own copy. Choosing another place unlinks the
-  device (after asking) and moves nothing. The Google account stays available for Google Drive Buckets.
+  without a device and is never overwritten as this PC's own copy. Loading such a copy applies it but keeps
+  the PC linked to the copy it was made from, the file every PC uploads to; the next upload then asks before
+  it replaces another PC's save there (0.8.1). The start-up question and the "not uploaded" message name
+  the linked copy's conflict copies. Choosing another place unlinks the device (after asking) and moves
+  nothing; it waits for an upload that is running, and every sync operation uses the place it started
+  with (0.8.1). The Google account stays available for Google Drive Buckets.
 - **Device name**: each PC has a name (defaults to the computer name) shown to other devices
   as the one that saved a copy.
 - **Dialog** (options menu ▸ *Sync across PCs…*, called *Sync with Google Drive…* before 0.8.0):

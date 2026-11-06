@@ -44,7 +44,7 @@ public sealed class SyncViewModel : ObservableObject
         OverwriteCommand = new RelayCommand(() => _ = OverwriteAsync(), () => IsConnected && !IsBusy && SelectedProfile is not null);
         LoadCommand = new RelayCommand(() => _ = LoadAsync(), () => IsConnected && !IsBusy && SelectedProfile is not null);
         DeleteCommand = new RelayCommand(() => _ = DeleteAsync(), () => IsConnected && !IsBusy && SelectedProfile is not null);
-        UnlinkCommand = new RelayCommand(Unlink, () => !IsBusy && Settings.LinkedProfile is not null);
+        UnlinkCommand = new RelayCommand(() => _ = UnlinkAsync(), () => !IsBusy && Settings.LinkedProfile is not null);
         OpenConsoleCommand = new RelayCommand(OpenCloudConsole);
     }
 
@@ -157,15 +157,18 @@ public sealed class SyncViewModel : ObservableObject
             return;
         }
 
-        try
+        await RunAsync(WaitingStatus(), async ct =>
         {
-            Service.UseFolder(folder);
-            StatusText = string.Format(Strings.Sync_UsingFolder, Settings.SyncFolder);
-        }
-        catch (Exception ex) when (SyncCoordinator.IsSyncError(ex) || ex is ArgumentException)
-        {
-            StatusText = ex.Message;
-        }
+            try
+            {
+                await Service.UseFolderAsync(folder, ct); // after an upload that is running; the folder is made on a worker
+                StatusText = string.Format(Strings.Sync_UsingFolder, Settings.SyncFolder);
+            }
+            catch (ArgumentException ex)
+            {
+                StatusText = ex.Message;
+            }
+        });
 
         Profiles.Clear();
         NotifyStateChanged();
@@ -183,8 +186,12 @@ public sealed class SyncViewModel : ObservableObject
             return;
         }
 
-        Service.UseGoogleDrive();
-        StatusText = Strings.Sync_UsingGoogle;
+        await RunAsync(WaitingStatus(), async ct =>
+        {
+            await Service.UseGoogleDriveAsync(ct);
+            StatusText = Strings.Sync_UsingGoogle;
+        });
+
         Profiles.Clear();
         NotifyStateChanged();
         if (IsConnected)
@@ -439,7 +446,9 @@ public sealed class SyncViewModel : ObservableObject
         return RunAsync(string.Format(Strings.Viewer_Loading, selected.Name), async ct =>
         {
             await _sync.LoadAndApplyAsync(selected, ct);
-            StatusText = string.Format(Strings.Sync_LoadedLinked, selected.Name);
+            StatusText = selected.IsConflictCopy
+                ? string.Format(Strings.Sync_LoadedConflictCopy, selected.Name, Settings.LinkedProfile)
+                : string.Format(Strings.Sync_LoadedLinked, selected.Name);
         });
     }
 
@@ -463,12 +472,14 @@ public sealed class SyncViewModel : ObservableObject
         });
     }
 
-    private void Unlink()
+    private Task UnlinkAsync() => RunAsync(WaitingStatus(), async ct =>
     {
-        Service.Unlink();
+        await Service.UnlinkAsync(ct); // after an upload that is running, which would link this device again
         StatusText = Strings.Sync_Unlinked;
-        NotifyStateChanged();
-    }
+    });
+
+    /// <summary>What the dialog says while it waits for the sync service: an automatic upload may be running.</summary>
+    private string WaitingStatus() => _sync.IsUploading ? Strings.Sync_WaitingForUpload : string.Empty;
 
     private static void OpenCloudConsole()
     {

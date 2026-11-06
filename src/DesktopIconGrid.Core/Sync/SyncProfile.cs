@@ -128,6 +128,18 @@ public sealed record RemoteProfile(string Name, string FileId, DateTimeOffset? S
     /// <summary>The copy could not be read when it was listed (a sync program may be writing it), so who saved it is not known.</summary>
     public bool Unreadable { get; init; }
 
+    /// <summary>
+    /// The name saved inside a copy in a folder, when it says one. A sync program's conflict copy (<c>Work-LAPTOP.json</c>,
+    /// which says "Work" inside) is listed under its file name, so the two differ (<see cref="IsConflictCopy"/>).
+    /// </summary>
+    public string? NameInside { get; init; }
+
+    /// <summary>
+    /// A copy a sync program kept of another one, or one renamed by hand: listed under its file name because the name
+    /// inside it is another copy's (<see cref="FolderSyncClient.DisplayName"/>).
+    /// </summary>
+    public bool IsConflictCopy => NameInside is { Length: > 0 } inside && !string.Equals(inside, Name, StringComparison.OrdinalIgnoreCase);
+
     public const string FileExtension = ".json";
 
     public string FileName => Name + FileExtension;
@@ -161,10 +173,12 @@ public sealed record RemoteProfile(string Name, string FileId, DateTimeOffset? S
         file.AppProperties.TryGetValue("device", out var device);
         file.AppProperties.TryGetValue("deviceId", out var deviceId);
         file.AppProperties.TryGetValue("revision", out var revision);
+        file.AppProperties.TryGetValue(FolderSyncClient.NameInsideProperty, out var nameInside);
         return new RemoteProfile(name, file.Id, savedAt, string.IsNullOrWhiteSpace(device) ? null : device, file.Size)
         {
             SavedById = string.IsNullOrWhiteSpace(deviceId) ? null : deviceId,
             Revision = string.IsNullOrWhiteSpace(revision) ? null : revision,
+            NameInside = string.IsNullOrWhiteSpace(nameInside) ? null : nameInside.Trim(),
             Unreadable = file.AppProperties.TryGetValue(FolderSyncClient.UnreadableProperty, out var unreadable) && unreadable == "true",
         };
     }

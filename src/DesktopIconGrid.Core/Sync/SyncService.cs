@@ -17,13 +17,25 @@ public enum AutoUploadOutcome
     Postponed,
 }
 
-public sealed record AutoUploadResult(AutoUploadOutcome Outcome, RemoteProfile? Remote = null);
+public sealed record AutoUploadResult(AutoUploadOutcome Outcome, RemoteProfile? Remote = null)
+{
+    /// <summary>The copies a sync program kept of the linked copy (<see cref="RemoteProfile.IsConflictCopy"/>), to point out.</summary>
+    public IReadOnlyList<RemoteProfile> ConflictCopies { get; init; } = [];
+}
+
+/// <summary>
+/// The linked copy when another device saved it since this device last synced (<see langword="null"/> otherwise), and the
+/// copies a sync program kept of it (<see cref="RemoteProfile.IsConflictCopy"/>).
+/// </summary>
+public sealed record LinkedCopyCheck(RemoteProfile? Newer, IReadOnlyList<RemoteProfile> ConflictCopies);
 
 /// <summary>
 /// Orchestrates the sync: listing the named settings copies, saving the current layout as a copy, loading one, and
 /// keeping track of the copy this device is linked to. The copies live on Google Drive (after connecting an account)
 /// or, when <see cref="SyncSettings.SyncFolder"/> is set, as files in that folder with no sign-in
 /// (<see cref="FolderSyncClient"/>). The Google account also serves Google Drive Buckets, whichever is used for copies.
+/// One operation on the copies or the link runs at a time, with the storage chosen at its start (see
+/// <see cref="ExclusiveAsync{T}"/>).
 /// </summary>
 public sealed class SyncService
 {
@@ -31,6 +43,7 @@ public sealed class SyncService
 
     private readonly GoogleAuthorization _auth;
     private readonly IDriveClient _drive;
+    private readonly SemaphoreSlim _gate = new(1, 1);
     private FolderSyncClient? _folder;
     private readonly Action _saveSettings;
     private readonly Func<DateTimeOffset> _clock;
@@ -116,38 +129,67 @@ public sealed class SyncService
     private string StorageName => Settings.SyncFolder ?? "Google Drive";
 
     /// <summary>
-    /// Keeps the copies in <paramref name="folder"/> from now on, creating it when needed. The device is unlinked:
-    /// the copy it was linked to is elsewhere. The copies themselves are not moved.
+    /// Runs <paramref name="operation"/> alone, on the storage in use when it starts. An upload that listed one folder so
+    /// finishes there before the copies move elsewhere, instead of writing that folder's file name into the next one,
+    /// and nothing links this device again to a copy it was unlinked from while the operation waited for the network.
     /// </summary>
-    public void UseFolder(string folder)
+    private async Task<T> ExclusiveAsync<T>(Func<IDriveClient, Task<T>> operation, CancellationToken cancellationToken)
+    {
+        await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            return await operation(Copies).ConfigureAwait(false);
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
+
+    private Task ExclusiveAsync(Func<IDriveClient, Task> operation, CancellationToken cancellationToken) =>
+        ExclusiveAsync(async copies =>
+        {
+            await operation(copies).ConfigureAwait(false);
+            return true;
+        }, cancellationToken);
+
+    /// <summary>
+    /// Keeps the copies in <paramref name="folder"/> from now on, creating it when needed, on a worker: a network share
+    /// that is off can take a minute to answer. The device is unlinked: the copy it was linked to is elsewhere. The
+    /// copies themselves are not moved. An operation that is running (an upload) finishes first.
+    /// </summary>
+    public async Task UseFolderAsync(string folder, CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(folder);
         var full = Path.GetFullPath(folder.Trim());
-        Directory.CreateDirectory(full);
-        if (string.Equals(Settings.SyncFolder, full, StringComparison.OrdinalIgnoreCase))
+        await ExclusiveAsync(async _ =>
         {
-            return;
-        }
+            await Task.Run(() => Directory.CreateDirectory(full), cancellationToken).ConfigureAwait(false);
+            if (string.Equals(Settings.SyncFolder, full, StringComparison.OrdinalIgnoreCase))
+            {
+                return;
+            }
 
-        Settings.SyncFolder = full;
-        ForgetLink();
-        SaveSettings();
-        AppLog.Default.Info("Sync", $"Settings copies are kept in the folder {full}");
+            Settings.SyncFolder = full;
+            ForgetLink();
+            SaveSettings();
+            AppLog.Default.Info("Sync", $"Settings copies are kept in the folder {full}");
+        }, cancellationToken).ConfigureAwait(false);
     }
 
-    /// <summary>Keeps the copies on Google Drive again; the device is unlinked from the folder's copy.</summary>
-    public void UseGoogleDrive()
+    /// <summary>Keeps the copies on Google Drive again; the device is unlinked from the folder's copy. A running upload finishes first.</summary>
+    public Task UseGoogleDriveAsync(CancellationToken cancellationToken = default) => ExclusiveAsync(_ =>
     {
-        if (Settings.SyncFolder is null)
+        if (Settings.SyncFolder is not null)
         {
-            return;
+            Settings.SyncFolder = null;
+            ForgetLink();
+            SaveSettings();
+            AppLog.Default.Info("Sync", "Settings copies are kept on Google Drive");
         }
 
-        Settings.SyncFolder = null;
-        ForgetLink();
-        SaveSettings();
-        AppLog.Default.Info("Sync", "Settings copies are kept on Google Drive");
-    }
+        return Task.CompletedTask;
+    }, cancellationToken);
 
     /// <summary>Connected and linked to a named copy.</summary>
     public bool IsLinked => IsConnected && !string.IsNullOrWhiteSpace(Settings.LinkedProfile);
@@ -166,20 +208,26 @@ public sealed class SyncService
     public async Task DisconnectAsync(CancellationToken cancellationToken)
     {
         await _auth.RevokeAsync(cancellationToken).ConfigureAwait(false);
-        Settings.AccountEmail = null;
-        if (!UsesFolder)
+        await ExclusiveAsync(_ =>
         {
-            Settings.LinkedProfile = null;
-            Settings.LastSyncedAt = null;
-        }
+            Settings.AccountEmail = null;
+            if (!UsesFolder)
+            {
+                ForgetLink();
+            }
 
-        SaveSettings();
+            SaveSettings();
+            return Task.CompletedTask;
+        }, cancellationToken).ConfigureAwait(false);
         AppLog.Default.Info("Sync", "Disconnected from Google Drive");
     }
 
-    public async Task<IReadOnlyList<RemoteProfile>> ListProfilesAsync(CancellationToken cancellationToken)
+    public Task<IReadOnlyList<RemoteProfile>> ListProfilesAsync(CancellationToken cancellationToken) =>
+        ExclusiveAsync(copies => ListAsync(copies, cancellationToken), cancellationToken);
+
+    private static async Task<IReadOnlyList<RemoteProfile>> ListAsync(IDriveClient copies, CancellationToken cancellationToken)
     {
-        var files = await Copies.ListFilesAsync(cancellationToken).ConfigureAwait(false);
+        var files = await copies.ListFilesAsync(cancellationToken).ConfigureAwait(false);
         return files
             .Select(RemoteProfile.FromFile)
             .OfType<RemoteProfile>()
@@ -200,15 +248,19 @@ public sealed class SyncService
     {
         name = NormalizeProfileName(name);
         ArgumentNullException.ThrowIfNull(layout);
+        return await ExclusiveAsync(copies => SaveAsync(copies, name, layout, fileId, cancellationToken), cancellationToken).ConfigureAwait(false);
+    }
 
-        var profiles = await ListProfilesAsync(cancellationToken).ConfigureAwait(false);
+    private async Task<RemoteProfile> SaveAsync(IDriveClient copies, string name, LauncherLayout layout, string? fileId, CancellationToken cancellationToken)
+    {
+        var profiles = await ListAsync(copies, cancellationToken).ConfigureAwait(false);
         fileId ??= string.Equals(Settings.LinkedProfile, name, StringComparison.OrdinalIgnoreCase) ? Settings.LinkedFileId : null;
         var existing = (fileId is null ? null : profiles.FirstOrDefault(p => string.Equals(p.FileId, fileId, StringComparison.Ordinal)))
                        ?? profiles.FirstOrDefault(p => string.Equals(p.Name, name, StringComparison.OrdinalIgnoreCase));
 
         var now = _clock();
         var profile = SyncProfile.FromLayout(existing?.Name ?? name, layout, Settings.DeviceName, now, _appVersion, Settings.DeviceId);
-        var file = await Copies.UploadJsonAsync(
+        var file = await copies.UploadJsonAsync(
             profile.Name + RemoteProfile.FileExtension,
             profile.ToJson(),
             profile.ToAppProperties(),
@@ -225,19 +277,39 @@ public sealed class SyncService
         return RemoteProfile.FromFile(file) ?? new RemoteProfile(profile.Name, file.Id, now, Settings.DeviceName, file.Size);
     }
 
-    /// <summary>Downloads a copy and links this device to it. The caller applies the returned layout.</summary>
+    /// <summary>
+    /// Downloads a copy and links this device to it. The caller applies the returned layout. A sync program's conflict
+    /// copy (<see cref="RemoteProfile.IsConflictCopy"/>) is loaded, but the device stays linked to the copy it is a copy
+    /// of, the one the other PCs upload to; with the conflict copy's revision remembered, the next upload asks before it
+    /// replaces another PC's save there.
+    /// </summary>
     public async Task<SyncProfile> LoadProfileAsync(RemoteProfile remote, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(remote);
-        var json = await Copies.DownloadTextAsync(remote.FileId, cancellationToken).ConfigureAwait(false);
+        return await ExclusiveAsync(copies => LoadAsync(copies, remote, cancellationToken), cancellationToken).ConfigureAwait(false);
+    }
+
+    private async Task<SyncProfile> LoadAsync(IDriveClient copies, RemoteProfile remote, CancellationToken cancellationToken)
+    {
+        var json = await copies.DownloadTextAsync(remote.FileId, cancellationToken).ConfigureAwait(false);
         var profile = SyncProfile.FromJson(json);
         if (string.IsNullOrWhiteSpace(profile.Name))
         {
             profile.Name = remote.Name;
         }
 
-        Settings.LinkedProfile = remote.Name;
-        Settings.LinkedFileId = remote.FileId;
+        var linkedName = remote.Name;
+        var linkedFileId = remote.FileId;
+        if (remote.IsConflictCopy)
+        {
+            var original = (await ListAsync(copies, cancellationToken).ConfigureAwait(false))
+                .FirstOrDefault(p => !p.IsConflictCopy && string.Equals(p.Name, profile.Name, StringComparison.OrdinalIgnoreCase));
+            linkedName = profile.Name;
+            linkedFileId = original?.FileId; // none left: the next upload writes it again
+        }
+
+        Settings.LinkedProfile = linkedName;
+        Settings.LinkedFileId = linkedFileId;
         Settings.LastSyncedAt = remote.SavedAt ?? profile.SavedAt;
         Settings.LastRevision = profile.Revision ?? remote.Revision;
         SaveSettings();
@@ -248,20 +320,26 @@ public sealed class SyncService
     public async Task DeleteProfileAsync(RemoteProfile remote, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(remote);
-        await Copies.DeleteAsync(remote.FileId, cancellationToken).ConfigureAwait(false);
-        AppLog.Default.Info("Sync", $"Deleted settings copy \"{remote.Name}\" from {StorageName}");
-        if (string.Equals(Settings.LinkedFileId, remote.FileId, StringComparison.Ordinal)
-            || (Settings.LinkedFileId is null && string.Equals(Settings.LinkedProfile, remote.Name, StringComparison.OrdinalIgnoreCase)))
+        await ExclusiveAsync(async copies =>
         {
-            Unlink();
-        }
+            await copies.DeleteAsync(remote.FileId, cancellationToken).ConfigureAwait(false);
+            AppLog.Default.Info("Sync", $"Deleted settings copy \"{remote.Name}\" from {StorageName}");
+            if (string.Equals(Settings.LinkedFileId, remote.FileId, StringComparison.Ordinal)
+                || (Settings.LinkedFileId is null && string.Equals(Settings.LinkedProfile, remote.Name, StringComparison.OrdinalIgnoreCase)))
+            {
+                ForgetLink();
+                SaveSettings();
+            }
+        }, cancellationToken).ConfigureAwait(false);
     }
 
-    public void Unlink()
+    /// <summary>Unlinks this device from its copy, after an upload that is running.</summary>
+    public Task UnlinkAsync(CancellationToken cancellationToken = default) => ExclusiveAsync(_ =>
     {
         ForgetLink();
         SaveSettings();
-    }
+        return Task.CompletedTask;
+    }, cancellationToken);
 
     private void ForgetLink()
     {
@@ -272,52 +350,64 @@ public sealed class SyncService
     }
 
     /// <summary>The Drive entry for the linked copy, or <see langword="null"/> when not linked or the copy was deleted.</summary>
-    public async Task<RemoteProfile?> FindLinkedProfileAsync(CancellationToken cancellationToken)
+    public async Task<RemoteProfile?> FindLinkedProfileAsync(CancellationToken cancellationToken) =>
+        (await ExclusiveAsync(copies => FindLinkedAsync(copies, cancellationToken), cancellationToken).ConfigureAwait(false)).Linked;
+
+    /// <summary>The linked copy and the copies a sync program kept of it, read while the link cannot change.</summary>
+    private async Task<(RemoteProfile? Linked, IReadOnlyList<RemoteProfile> ConflictCopies)> FindLinkedAsync(IDriveClient copies, CancellationToken cancellationToken)
     {
         if (!IsLinked)
         {
-            return null;
+            return (null, []);
         }
 
-        var profiles = await ListProfilesAsync(cancellationToken).ConfigureAwait(false);
-        return profiles.FirstOrDefault(p => Settings.LinkedFileId is not null && string.Equals(p.FileId, Settings.LinkedFileId, StringComparison.Ordinal))
-               ?? profiles.FirstOrDefault(p => string.Equals(p.Name, Settings.LinkedProfile, StringComparison.OrdinalIgnoreCase));
+        var profiles = await ListAsync(copies, cancellationToken).ConfigureAwait(false);
+        var linked = profiles.FirstOrDefault(p => Settings.LinkedFileId is not null && string.Equals(p.FileId, Settings.LinkedFileId, StringComparison.Ordinal))
+                     ?? profiles.FirstOrDefault(p => !p.IsConflictCopy && string.Equals(p.Name, Settings.LinkedProfile, StringComparison.OrdinalIgnoreCase));
+        var conflictCopies = profiles
+            .Where(p => p.IsConflictCopy && p != linked && string.Equals(p.NameInside, Settings.LinkedProfile, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+        return (linked, conflictCopies);
     }
 
     /// <summary>The linked copy, when another device saved it after this device last synced (one that cannot be read is asked about later).</summary>
-    public async Task<RemoteProfile?> CheckForNewerCopyAsync(CancellationToken cancellationToken)
+    public async Task<RemoteProfile?> CheckForNewerCopyAsync(CancellationToken cancellationToken) =>
+        (await CheckLinkedCopyAsync(cancellationToken).ConfigureAwait(false)).Newer;
+
+    /// <summary>What the startup check reports: the newer linked copy, if any, and the copies a sync program kept of it.</summary>
+    public Task<LinkedCopyCheck> CheckLinkedCopyAsync(CancellationToken cancellationToken) => ExclusiveAsync(async copies =>
     {
-        var remote = await FindLinkedProfileAsync(cancellationToken).ConfigureAwait(false);
-        return remote is { Unreadable: false } && IsNewerThanLocal(remote, Settings) ? remote : null;
-    }
+        var (remote, conflictCopies) = await FindLinkedAsync(copies, cancellationToken).ConfigureAwait(false);
+        return new LinkedCopyCheck(remote is { Unreadable: false } && IsNewerThanLocal(remote, Settings) ? remote : null, conflictCopies);
+    }, cancellationToken);
 
     /// <summary>
     /// Uploads the layout to the linked copy unless another device saved a newer version in the meantime,
     /// in which case nothing is written and the conflict is reported.
     /// </summary>
-    public async Task<AutoUploadResult> AutoUploadAsync(LauncherLayout layout, CancellationToken cancellationToken)
+    public Task<AutoUploadResult> AutoUploadAsync(LauncherLayout layout, CancellationToken cancellationToken) => ExclusiveAsync(async copies =>
     {
         if (!IsLinked || !Settings.AutoUpload)
         {
             return new AutoUploadResult(AutoUploadOutcome.Skipped);
         }
 
-        var remote = await FindLinkedProfileAsync(cancellationToken).ConfigureAwait(false);
+        var (remote, conflictCopies) = await FindLinkedAsync(copies, cancellationToken).ConfigureAwait(false);
         if (remote is { Unreadable: true })
         {
             AppLog.Default.Warning("Sync", $"Auto-upload postponed: \"{remote.Name}\" cannot be read right now");
-            return new AutoUploadResult(AutoUploadOutcome.Postponed, remote);
+            return new AutoUploadResult(AutoUploadOutcome.Postponed, remote) { ConflictCopies = conflictCopies };
         }
 
         if (remote is not null && IsNewerThanLocal(remote, Settings))
         {
             AppLog.Default.Warning("Sync", $"Auto-upload skipped: \"{remote.Name}\" was saved by {remote.SavedBy ?? "another device"} after this device last synced");
-            return new AutoUploadResult(AutoUploadOutcome.Conflict, remote);
+            return new AutoUploadResult(AutoUploadOutcome.Conflict, remote) { ConflictCopies = conflictCopies };
         }
 
-        var saved = await SaveProfileAsync(Settings.LinkedProfile!, layout, remote?.FileId ?? Settings.LinkedFileId, cancellationToken).ConfigureAwait(false);
-        return new AutoUploadResult(AutoUploadOutcome.Uploaded, saved);
-    }
+        var saved = await SaveAsync(copies, NormalizeProfileName(Settings.LinkedProfile!), layout, remote?.FileId ?? Settings.LinkedFileId, cancellationToken).ConfigureAwait(false);
+        return new AutoUploadResult(AutoUploadOutcome.Uploaded, saved) { ConflictCopies = conflictCopies };
+    }, cancellationToken);
 
     /// <summary>
     /// True when the copy was saved by a different device after this device's last sync. With revisions on both sides

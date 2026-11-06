@@ -1727,4 +1727,13 @@ Details are in {1}.</value>
   <data name="Launch_WordIsRemoteOption" xml:space="preserve">
     <value>Not started: a word in the text begins with “-”, so the command ssh runs on the other computer would take it as an option.</value>
   </data>
+  <data name="Sync_ConflictCopies" xml:space="preserve">
+    <value>The sync program also kept copies of "{1}" saved while the PCs could not reach each other: {0}. Open Sync across PCs to load or delete them.</value>
+  </data>
+  <data name="Sync_WaitingForUpload" xml:space="preserve">
+    <value>Waiting for the upload in progress…</value>
+  </data>
+  <data name="Sync_LoadedConflictCopy" xml:space="preserve">
+    <value>Loaded "{0}", a copy the sync program kept of "{1}". This device stays linked to "{1}", and the next upload asks before it replaces another PC's save there.</value>
+  </data>
 </root>

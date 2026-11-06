@@ -100,7 +100,65 @@ public sealed class FolderSyncTests : IDisposable
         var copies = await pc.ListProfilesAsync(CancellationToken.None);
         Assert.Equal(2, copies.Count);
         Assert.Contains(copies, c => c.Name == "Home: desk" && c.FileId == "Home_ desk.json");
-        Assert.Equal("Home? desk", (await pc.LoadProfileAsync(copies.Single(c => c.FileId == "Home_ desk (2).json"), CancellationToken.None)).Name);
+        var second = copies.Single(c => c.FileId == "Home_ desk (2).json");
+        Assert.Equal("Home? desk", second.Name); // its own name, with the number its file got
+        Assert.False(second.IsConflictCopy);
+        Assert.Equal("Home? desk", (await pc.LoadProfileAsync(second, CancellationToken.None)).Name);
+
+        // The review: an upload took the file's name for the copy's and renamed it "Home_ desk (2)".
+        Assert.Equal(AutoUploadOutcome.Uploaded, (await pc.AutoUploadAsync(Layout("B", "C"), CancellationToken.None)).Outcome);
+        Assert.Equal("Home? desk", SyncProfile.FromJson(File.ReadAllText(PathOf("Home_ desk (2).json"))).Name);
+        Assert.Equal(2, (await pc.ListProfilesAsync(CancellationToken.None)).Count);
+    }
+
+    [Fact]
+    public async Task Loading_a_conflict_copy_keeps_this_PC_on_the_copy_every_PC_uploads_to()
+    {
+        // The review's F2: LAPTOP loaded "Work-LAPTOP" and was linked to that file from then on, while DESK stayed on
+        // Work.json. Each uploaded to its own file, and both said "up to date".
+        var desk = Device("DESK");
+        var laptop = Device("LAPTOP");
+        await laptop.LoadProfileAsync(await desk.SaveProfileAsync("Work", Layout("Editor"), CancellationToken.None), CancellationToken.None);
+        Assert.Equal(AutoUploadOutcome.Uploaded, (await laptop.AutoUploadAsync(Layout("Editor", "Laptop"), CancellationToken.None)).Outcome);
+        File.Copy(PathOf("Work.json"), PathOf("Work-LAPTOP.json")); // OneDrive keeps LAPTOP's offline save aside ...
+        await desk.SaveProfileAsync("Work", Layout("Editor", "Desk"), CancellationToken.None); // ... and DESK's as Work.json
+
+        var listed = await laptop.ListProfilesAsync(CancellationToken.None);
+        var conflictCopy = listed.Single(c => c.FileId == "Work-LAPTOP.json");
+        Assert.True(conflictCopy.IsConflictCopy);
+        Assert.Equal(("Work-LAPTOP", "Work"), (conflictCopy.Name, conflictCopy.NameInside));
+        Assert.False(listed.Single(c => c.FileId == "Work.json").IsConflictCopy);
+
+        var check = await laptop.CheckLinkedCopyAsync(CancellationToken.None);
+        Assert.Equal("DESK", check.Newer?.SavedBy);
+        Assert.Equal("Work-LAPTOP", Assert.Single(check.ConflictCopies).Name); // the start-up question points it out
+
+        var loaded = await laptop.LoadProfileAsync(conflictCopy, CancellationToken.None);
+
+        Assert.Equal(["Editor", "Laptop"], loaded.Layout.Items.Select(i => i.Name));
+        Assert.Equal(("Work", "Work.json"), (laptop.Settings.LinkedProfile, laptop.Settings.LinkedFileId));
+        var upload = await laptop.AutoUploadAsync(loaded.Layout, CancellationToken.None);
+        Assert.Equal(AutoUploadOutcome.Conflict, upload.Outcome); // DESK's save is not replaced without a question
+        Assert.Equal("Work-LAPTOP", Assert.Single(upload.ConflictCopies).Name);
+        Assert.Contains("Desk", File.ReadAllText(PathOf("Work.json")), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task A_conflict_copy_whose_original_is_gone_links_by_name_and_the_next_upload_writes_the_original_again()
+    {
+        var pc = Device("PC-1");
+        await pc.SaveProfileAsync("Work", Layout("Editor"), CancellationToken.None);
+        File.Move(PathOf("Work.json"), PathOf("Work (1).json")); // only the sync program's copy is left
+        var copy = Assert.Single(await pc.ListProfilesAsync(CancellationToken.None));
+        Assert.True(copy.IsConflictCopy);
+
+        await pc.LoadProfileAsync(copy, CancellationToken.None);
+
+        Assert.Equal("Work", pc.Settings.LinkedProfile);
+        Assert.Null(pc.Settings.LinkedFileId);
+        Assert.Equal(AutoUploadOutcome.Uploaded, (await pc.AutoUploadAsync(Layout("Editor", "Mail"), CancellationToken.None)).Outcome);
+        Assert.True(File.Exists(PathOf("Work.json")));
+        Assert.True(File.Exists(PathOf("Work (1).json"))); // left as it was
     }
 
     [Fact]
@@ -184,14 +242,14 @@ public sealed class FolderSyncTests : IDisposable
     public async Task Switching_between_Google_Drive_and_a_folder_unlinks_and_signing_out_of_Google_keeps_a_folder_link()
     {
         var pc = Device("PC-1", folder: null);
-        pc.UseGoogleDrive();
+        await pc.UseGoogleDriveAsync();
         pc.Settings.LinkedProfile = "On Drive";
         pc.Settings.LinkedFileId = "drive-id";
         Assert.False(pc.UsesFolder);
         Assert.False(pc.IsConnected); // Google Drive without a sign-in
 
         var folder = Path.Combine(_folder, "Sync");
-        pc.UseFolder(folder);
+        await pc.UseFolderAsync(folder);
 
         Assert.True(Directory.Exists(folder));
         Assert.Equal(Path.GetFullPath(folder), pc.Settings.SyncFolder);
@@ -202,7 +260,7 @@ public sealed class FolderSyncTests : IDisposable
         await pc.DisconnectAsync(CancellationToken.None);
         Assert.Equal("Work", pc.Settings.LinkedProfile);
 
-        pc.UseGoogleDrive();
+        await pc.UseGoogleDriveAsync();
         Assert.Null(pc.Settings.SyncFolder);
         Assert.Null(pc.Settings.LinkedProfile);
     }
@@ -222,6 +280,10 @@ public sealed class FolderSyncTests : IDisposable
     [InlineData("Work.json", "Work", "Work")]
     [InlineData("Work (1).json", "Work", "Work (1)")]
     [InlineData("Home_ desk.json", "Home: desk", "Home: desk")]
+    [InlineData("Home_ desk (2).json", "Home? desk", "Home? desk")] // the number a name made safe gets when it clashes
+    [InlineData("Home_ desk (1).json", "Home? desk", "Home_ desk (1)")] // that numbering starts at 2
+    [InlineData("Home_ desk (x).json", "Home? desk", "Home_ desk (x)")]
+    [InlineData("Work (2).json", "Work", "Work (2)")] // a name that needs no change never gets one: a sync program's copy
     [InlineData("Work.json", null, "Work")]
     [InlineData("work.json", "WORK", "WORK")]
     public void A_copy_shows_its_own_name_when_the_file_is_named_after_it(string fileName, string? inside, string shown)

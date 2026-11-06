@@ -26,6 +26,9 @@ public sealed class FolderSyncClient : IDriveClient
     /// <summary>Set ("true") on a listed copy that could not be read (see <see cref="RemoteProfile.Unreadable"/>).</summary>
     public const string UnreadableProperty = "unreadable";
 
+    /// <summary>The name saved inside a listed copy (see <see cref="RemoteProfile.NameInside"/>).</summary>
+    public const string NameInsideProperty = "nameInside";
+
     private static readonly UTF8Encoding Utf8 = new(encoderShouldEmitUTF8Identifier: false);
 
     public FolderSyncClient(string folder)
@@ -53,7 +56,10 @@ public sealed class FolderSyncClient : IDriveClient
 
     /// <summary>
     /// The name a copy is listed under: the name inside it when the file is named after it, otherwise the file name
-    /// (a conflict copy such as <c>Work (1).json</c> says "Work" inside).
+    /// (a conflict copy such as <c>Work (1).json</c> says "Work" inside). A name Windows does not allow in a file name
+    /// counts with the number <see cref="FreeFileName"/> gives it when another copy's name became the same file name:
+    /// "Home? desk" in <c>Home_ desk (2).json</c>. A name that needs no change never gets a number that way, so
+    /// <c>Work (2).json</c> stays a sync program's conflict copy.
     /// </summary>
     public static string DisplayName(string fileName, string? nameInside)
     {
@@ -61,9 +67,23 @@ public sealed class FolderSyncClient : IDriveClient
         var stem = fileName.EndsWith(RemoteProfile.FileExtension, StringComparison.OrdinalIgnoreCase)
             ? fileName[..^RemoteProfile.FileExtension.Length]
             : fileName;
-        return !string.IsNullOrWhiteSpace(nameInside) && string.Equals(FileNames.Safe(nameInside), stem, StringComparison.OrdinalIgnoreCase)
-            ? nameInside.Trim()
-            : stem;
+        if (string.IsNullOrWhiteSpace(nameInside))
+        {
+            return stem;
+        }
+
+        var safe = FileNames.Safe(nameInside);
+        if (string.Equals(safe, stem, StringComparison.OrdinalIgnoreCase))
+        {
+            return nameInside.Trim();
+        }
+
+        var numbered = !string.Equals(safe, nameInside.Trim(), StringComparison.Ordinal)
+                       && stem.StartsWith(safe + " (", StringComparison.OrdinalIgnoreCase)
+                       && stem.EndsWith(')')
+                       && int.TryParse(stem.AsSpan(safe.Length + 2, stem.Length - safe.Length - 3), System.Globalization.NumberStyles.None, CultureInfo.InvariantCulture, out var number)
+                       && number >= 2;
+        return numbered ? nameInside.Trim() : stem;
     }
 
     private List<DriveFile> List(CancellationToken cancellationToken)
@@ -119,6 +139,7 @@ public sealed class FolderSyncClient : IDriveClient
 
             string? Text(string name) => root.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.String ? value.GetString() : null;
             properties["profile"] = DisplayName(info.Name, Text("name"));
+            Add(properties, NameInsideProperty, Text("name"));
             Add(properties, "device", Text("savedBy"));
             Add(properties, "deviceId", Text("savedById"));
             Add(properties, "savedAt", Text("savedAt"));
@@ -167,6 +188,7 @@ public sealed class FolderSyncClient : IDriveClient
         var info = new FileInfo(path);
         var properties = new Dictionary<string, string>(appProperties);
         properties["profile"] = DisplayName(name, appProperties.TryGetValue("profile", out var inside) ? inside : null);
+        Add(properties, NameInsideProperty, inside);
         return new DriveFile(name, name, new DateTimeOffset(info.LastWriteTimeUtc, TimeSpan.Zero), info.Length, properties);
     }
 

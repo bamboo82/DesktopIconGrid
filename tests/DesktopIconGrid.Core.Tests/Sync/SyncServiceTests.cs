@@ -75,6 +75,94 @@ public class SyncServiceTests
         }
     }
 
+    /// <summary>Drive whose uploads wait, once <see cref="Hold"/> is set, until the test lets them go.</summary>
+    private sealed class HeldDrive : IDriveClient
+    {
+        public FakeDrive Inner { get; } = new();
+
+        public TaskCompletionSource? Hold { get; set; }
+
+        public TaskCompletionSource UploadStarted { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        public Task<DriveUser> GetUserAsync(CancellationToken cancellationToken) => Inner.GetUserAsync(cancellationToken);
+
+        public Task<IReadOnlyList<DriveFile>> ListFilesAsync(CancellationToken cancellationToken) => Inner.ListFilesAsync(cancellationToken);
+
+        public async Task<DriveFile> UploadJsonAsync(string fileName, string json, IReadOnlyDictionary<string, string> appProperties, string? existingFileId, CancellationToken cancellationToken)
+        {
+            if (Hold is { } hold)
+            {
+                UploadStarted.TrySetResult();
+                await hold.Task;
+            }
+
+            return await Inner.UploadJsonAsync(fileName, json, appProperties, existingFileId, cancellationToken);
+        }
+
+        public Task<string> DownloadTextAsync(string fileId, CancellationToken cancellationToken) => Inner.DownloadTextAsync(fileId, cancellationToken);
+
+        public Task DeleteAsync(string fileId, CancellationToken cancellationToken) => Inner.DeleteAsync(fileId, cancellationToken);
+    }
+
+    /// <summary>A PC linked to "Work" on Google Drive, with an upload of it waiting to be let go.</summary>
+    private static async Task<(SyncService Service, HeldDrive Drive, Task<AutoUploadResult> Upload)> UploadingService()
+    {
+        var store = new InMemoryTokenStore { Token = new OAuthToken("at", "rt", Now.AddHours(1), null) };
+        var auth = new GoogleAuthorization(new HttpClient(new FakeHttpHandler()), store, () => new OAuthClientCredentials("id", "secret"), clock: () => Now);
+        var drive = new HeldDrive();
+        var service = new SyncService(auth, drive, new SyncSettings { DeviceName = "PC-1" }, () => { }, "0.8.1", () => Now);
+        await service.SaveProfileAsync("Work", SampleLayout(), CancellationToken.None);
+        drive.Hold = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var upload = service.AutoUploadAsync(SampleLayout(), CancellationToken.None);
+        await drive.UploadStarted.Task; // it has listed Drive and is writing
+        return (service, drive, upload);
+    }
+
+    [Fact]
+    public async Task The_copies_move_to_a_folder_only_after_a_running_upload_has_finished_where_it_started()
+    {
+        // The review's F3: an upload that listed one place could write into the next one, and then link this PC again.
+        var folder = Directory.CreateTempSubdirectory("dig-sync-switch-").FullName;
+        try
+        {
+            var (service, drive, upload) = await UploadingService();
+
+            var switching = service.UseFolderAsync(folder);
+            await Task.Delay(50);
+            Assert.False(switching.IsCompleted); // waits for the upload
+
+            drive.Hold!.SetResult();
+            Assert.Equal(AutoUploadOutcome.Uploaded, (await upload).Outcome);
+            await switching;
+
+            Assert.Single(drive.Inner.Files); // the upload went to Drive ...
+            Assert.Empty(Directory.GetFiles(folder)); // ... and nothing of it into the folder
+            Assert.Equal(Path.GetFullPath(folder), service.Settings.SyncFolder);
+            Assert.Null(service.Settings.LinkedProfile); // unlinked by the move, not linked again by the upload
+        }
+        finally
+        {
+            Directory.Delete(folder, recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task Unlinking_waits_for_a_running_upload_which_then_cannot_link_this_PC_again()
+    {
+        var (service, drive, upload) = await UploadingService();
+
+        var unlinking = service.UnlinkAsync();
+        await Task.Delay(50);
+        Assert.False(unlinking.IsCompleted);
+
+        drive.Hold!.SetResult();
+        await upload;
+        await unlinking;
+
+        Assert.Null(service.Settings.LinkedProfile);
+        Assert.Null(service.Settings.LastRevision);
+    }
+
     private static (SyncService Service, FakeDrive Drive, SyncSettings Settings, List<int> Saves) CreateService(bool connected = true, DateTimeOffset? now = null, FakeHttpHandler? http = null)
     {
         var store = new InMemoryTokenStore

@@ -141,7 +141,8 @@ public sealed class DialogService(IIconProvider icons) : IDialogService, ILaunch
     public string? PickFolder(string title, string? initialFolder)
     {
         var dialog = new Microsoft.Win32.OpenFolderDialog { Title = title, Multiselect = false };
-        if (!string.IsNullOrWhiteSpace(initialFolder) && System.IO.Directory.Exists(initialFolder))
+        // A network share that is off takes up to a minute to say so: such a folder is not looked at on the UI thread.
+        if (!string.IsNullOrWhiteSpace(initialFolder) && !IconWorker.IsOnSlowStorage(initialFolder) && System.IO.Directory.Exists(initialFolder))
         {
             dialog.InitialDirectory = initialFolder;
         }

@@ -174,7 +174,8 @@ public sealed class SyncCoordinator : ObservableObject
                     break;
                 case AutoUploadOutcome.Conflict:
                     Report(
-                        string.Format(Strings.Sync_NotUploaded, result.Remote?.Name, result.Remote?.SavedBy ?? Strings.Common_AnotherDevice, Describe(result.Remote?.SavedAt)),
+                        string.Format(Strings.Sync_NotUploaded, result.Remote?.Name, result.Remote?.SavedBy ?? Strings.Common_AnotherDevice, Describe(result.Remote?.SavedAt))
+                        + WithConflictCopies(" ", result.ConflictCopies),
                         LogLevel.Warning);
                     break;
                 case AutoUploadOutcome.Postponed:
@@ -208,16 +209,17 @@ public sealed class SyncCoordinator : ObservableObject
 
         try
         {
-            var newer = await Service.CheckForNewerCopyAsync(CancellationToken.None);
-            if (newer is null)
+            var check = await Service.CheckLinkedCopyAsync(CancellationToken.None);
+            if (check.Newer is not { } newer)
             {
-                Status = string.Format(Strings.Sync_UpToDate, Service.Settings.LinkedProfile);
+                Status = string.Format(Strings.Sync_UpToDate, Service.Settings.LinkedProfile) + WithConflictCopies(" ", check.ConflictCopies);
                 return;
             }
 
             var load = _confirm(
                 Strings.Sync_NewerTitle,
-                string.Format(Strings.Sync_NewerQuestion, newer.Name, newer.SavedBy ?? Strings.Common_AnotherDevice, Describe(newer.SavedAt)));
+                string.Format(Strings.Sync_NewerQuestion, newer.Name, newer.SavedBy ?? Strings.Common_AnotherDevice, Describe(newer.SavedAt))
+                + WithConflictCopies("\n\n", check.ConflictCopies));
             if (load)
             {
                 await LoadAndApplyAsync(newer, CancellationToken.None);
@@ -239,6 +241,17 @@ public sealed class SyncCoordinator : ObservableObject
         _host.ReplaceLayout(profile.Layout);
         Status = string.Format(Strings.Sync_LoadedFrom, remote.Name, profile.SavedBy, Describe(profile.SavedAt));
     }
+
+    /// <summary>
+    /// The sentence that points out the copies a sync program kept of the linked copy (OneDrive's <c>Work-LAPTOP.json</c>,
+    /// Dropbox's conflicted copy), after <paramref name="separator"/>; empty when there are none.
+    /// </summary>
+    private string WithConflictCopies(string separator, IReadOnlyList<RemoteProfile> conflictCopies) => conflictCopies.Count == 0
+        ? string.Empty
+        : separator + string.Format(
+            Strings.Sync_ConflictCopies,
+            string.Join(", ", conflictCopies.Select(copy => $"\"{copy.Name}\"")),
+            Service.Settings.LinkedProfile);
 
     public static string Describe(DateTimeOffset? time) =>
         time is { } t ? t.LocalDateTime.ToString("g", CultureInfo.CurrentCulture) : Strings.Common_UnknownDate;

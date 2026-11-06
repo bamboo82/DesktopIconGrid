@@ -1,6 +1,8 @@
 using DesktopIconGrid.Core.Models;
+using System.IO;
 using System.Net.Http;
 using DesktopIconGrid.Core.Sync;
+using DesktopIconGrid.Resources;
 using DesktopIconGrid.Services;
 
 namespace DesktopIconGrid.App.Tests;
@@ -128,6 +130,42 @@ public class SyncCoordinatorTests
         Assert.Equal(["create Work.json", "update id1"], drive.Log);
         Assert.False(coordinator.IsUploadScheduled);
         Assert.False(coordinator.IsUploading);
+    }
+
+    [Fact]
+    public async Task The_startup_question_points_out_the_copies_a_sync_program_kept_of_the_linked_copy()
+    {
+        // The review's F2: nothing told the user that OneDrive had kept "Work-LAPTOP" beside "Work".
+        var folder = Directory.CreateTempSubdirectory("dig-coordinator-").FullName;
+        try
+        {
+            SyncService Pc(string name) => new(
+                new GoogleAuthorization(new HttpClient(), new InMemoryTokenStore(), () => new OAuthClientCredentials("id", "secret")),
+                new FakeDrive(),
+                new SyncSettings { DeviceName = name, SyncFolder = folder },
+                () => { },
+                "0.8.1");
+            var desk = Pc("DESK");
+            var laptop = Pc("LAPTOP");
+            await laptop.LoadProfileAsync(await desk.SaveProfileAsync("Work", new LauncherLayout(), CancellationToken.None), CancellationToken.None);
+            File.Copy(Path.Combine(folder, "Work.json"), Path.Combine(folder, "Work-LAPTOP.json"));
+            await desk.SaveProfileAsync("Work", new LauncherLayout { Items = [new ShortcutItem { Name = "Desk", Location = "x" }] }, CancellationToken.None);
+            string? asked = null;
+            var coordinator = new SyncCoordinator(laptop, new FakeHost(), (_, message) =>
+            {
+                asked = message;
+                return false;
+            });
+
+            await coordinator.RunStartupCheckAsync();
+
+            Assert.NotNull(asked);
+            Assert.Contains(string.Format(Strings.Sync_ConflictCopies, "\"Work-LAPTOP\"", "Work"), asked, StringComparison.Ordinal);
+        }
+        finally
+        {
+            Directory.Delete(folder, recursive: true);
+        }
     }
 
     [Fact]

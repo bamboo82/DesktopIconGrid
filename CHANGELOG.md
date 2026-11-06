@@ -8,6 +8,22 @@ version numbers follow [Semantic Versioning](https://semver.org/).
 The fixes the review of 0.8.0 placed after the release: folder sync with conflict copies and storage
 switches, portable mode and *Repair…* on more kinds of PC, and the smaller items.
 
+### Fixed
+
+- Loading a copy that a sync program kept after a conflict (OneDrive's `Work-LAPTOP.json`, Dropbox's
+  conflicted copy) linked the PC to that file while the other PCs stayed on `Work.json`. Each then uploaded
+  to its own file, and both said "up to date". The copy is now loaded, the PC stays linked to `Work`, and
+  the next upload asks before it replaces another PC's save there. The start-up question and the "not
+  uploaded" message name such copies, which nothing did before.
+- Moving the copies to a folder or back to Google Drive, or unlinking, while an automatic upload ran could
+  write that upload into the new place, over a copy there and without the conflict check, and then link
+  the PC again. These now wait for the upload, and each sync operation uses the place it started with.
+- With the copies on a network share that was off, choosing a folder froze the bar for up to a minute.
+  Such a share is no longer looked at on the window's thread, and the folder is made on a worker.
+- A copy whose name Windows does not allow in a file name, numbered because another copy's name became the
+  same file name ("Home? desk" in `Home_ desk (2).json`), was listed under the file's name, and an upload
+  renamed it to that.
+
 ## [0.8.0] – 2026-11-06
 
 "One bar, every PC", released early because it carries the fixes from the review of 0.6.0 and 0.7.0,

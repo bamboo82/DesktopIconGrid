@@ -4038,6 +4038,15 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to The sync program also kept copies of "{1}" saved while the PCs could not reach e [rest of string was truncated]";.
+        /// </summary>
+        public static string Sync_ConflictCopies {
+            get {
+                return ResourceManager.GetString("Sync_ConflictCopies", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Connect….
         /// </summary>
         public static string Sync_Connect {
@@ -4304,6 +4313,15 @@ namespace DesktopIconGrid.Resources {
         public static string Sync_LoadToolTip {
             get {
                 return ResourceManager.GetString("Sync_LoadToolTip", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Loaded "{0}", a copy the sync program kept of "{1}". This device stays linked to [rest of string was truncated]";.
+        /// </summary>
+        public static string Sync_LoadedConflictCopy {
+            get {
+                return ResourceManager.GetString("Sync_LoadedConflictCopy", resourceCulture);
             }
         }
 
@@ -4700,6 +4718,15 @@ namespace DesktopIconGrid.Resources {
         public static string Sync_UsingGoogle {
             get {
                 return ResourceManager.GetString("Sync_UsingGoogle", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Waiting for the upload in progress….
+        /// </summary>
+        public static string Sync_WaitingForUpload {
+            get {
+                return ResourceManager.GetString("Sync_WaitingForUpload", resourceCulture);
             }
         }
 
