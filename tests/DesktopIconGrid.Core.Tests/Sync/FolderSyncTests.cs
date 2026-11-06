@@ -170,6 +170,20 @@ public sealed class FolderSyncTests : IDisposable
     }
 
     [Fact]
+    public async Task A_save_waits_while_the_file_of_its_own_name_cannot_be_read()
+    {
+        // Review 17 U8, for a name Windows does not allow in a file name: Home_ desk.json, being written, is listed under
+        // its file name, and a save of "Home: desk" made Home_ desk (2).json beside it, a second "Home: desk".
+        var desk = Device("DESK");
+        await desk.SaveProfileAsync("Home: desk", Layout("a"), CancellationToken.None);
+        File.WriteAllText(PathOf("Home_ desk.json"), "{\"format\": 1, \"name\": \"Home: d"); // being written
+
+        await Assert.ThrowsAsync<CopyBusyException>(() => Device("LAPTOP").SaveProfileAsync("Home: desk", Layout("b"), CancellationToken.None));
+
+        Assert.False(File.Exists(PathOf("Home_ desk (2).json")));
+    }
+
+    [Fact]
     public async Task Of_two_numbered_originals_only_the_lowest_is_one()
     {
         // Review 17 U9: DESK's "config" became config (2).json, and LAPTOP, which could not read it yet, made

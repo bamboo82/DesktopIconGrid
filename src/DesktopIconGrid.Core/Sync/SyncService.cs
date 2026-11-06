@@ -279,8 +279,12 @@ public sealed class SyncService
     {
         var profiles = await ListAsync(copies, cancellationToken).ConfigureAwait(false);
         fileId ??= string.Equals(Settings.LinkedProfile, name, StringComparison.OrdinalIgnoreCase) ? Settings.LinkedFileId : null;
+        // A file of the copy's own name that cannot be read now is taken for it ("Home: desk" in Home_ desk.json, listed
+        // under its file name meanwhile): a numbered file written beside it would be a second "Home: desk".
+        var ownFile = FileNames.Safe(name) + RemoteProfile.FileExtension;
         var existing = (fileId is null ? null : profiles.FirstOrDefault(p => string.Equals(p.FileId, fileId, StringComparison.Ordinal)))
-                       ?? profiles.FirstOrDefault(p => string.Equals(p.Name, name, StringComparison.OrdinalIgnoreCase));
+                       ?? profiles.FirstOrDefault(p => string.Equals(p.Name, name, StringComparison.OrdinalIgnoreCase))
+                       ?? (copies is FolderSyncClient ? profiles.FirstOrDefault(p => p.Unreadable && string.Equals(p.FileId, ownFile, StringComparison.OrdinalIgnoreCase)) : null);
         if (existing is { Unreadable: true })
         {
             // A sync program may be writing it: what it holds is not known, and a write now may leave a conflict copy.
