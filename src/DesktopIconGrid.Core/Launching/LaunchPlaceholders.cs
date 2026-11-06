@@ -26,18 +26,36 @@ public static partial class LaunchPlaceholders
             : AskPattern().Matches(parameters).Select(m => m.Groups["prompt"].Value.Trim()).ToList();
 
     /// <summary>
-    /// Fills in the placeholders: <paramref name="clipboard"/> for every <c>{clipboard}</c>, and the answers for the
-    /// <c>{ask:…}</c> placeholders in order. Quotes written around a placeholder are dropped, since the value is quoted
-    /// here. <paramref name="parameters"/> should already have its environment variables expanded, so a <c>%</c> in a
-    /// value is never expanded.
+    /// Fills in the placeholders in one pass over <paramref name="parameters"/>: <paramref name="clipboard"/> for every
+    /// <c>{clipboard}</c>, the answers for the <c>{ask:…}</c> placeholders in order, and, when files were dropped,
+    /// <paramref name="file"/> for <c>{file}</c> and <paramref name="files"/> for <c>{files}</c> (each already quoted;
+    /// left as written when <see langword="null"/>). Nothing put in is read again: a value that holds <c>{file}</c> or
+    /// <c>{clipboard}</c> keeps it as text, where it was checked. Quotes written around a placeholder are dropped,
+    /// since the value is quoted here. <paramref name="parameters"/> should already have its environment variables
+    /// expanded, so a <c>%</c> in a value is never expanded.
     /// </summary>
-    public static string Fill(string parameters, string? clipboard, IReadOnlyList<string> answers)
+    public static string Fill(string parameters, string? clipboard, IReadOnlyList<string> answers, string? file = null, string? files = null)
     {
         ArgumentNullException.ThrowIfNull(parameters);
         ArgumentNullException.ThrowIfNull(answers);
         var next = 0;
-        var filled = AskPattern().Replace(parameters, _ =>
+        return EveryPlaceholder().Replace(parameters, match =>
         {
+            if (match.Groups["clipboard"].Success)
+            {
+                return DropArguments.Quote(clipboard ?? string.Empty);
+            }
+
+            if (match.Groups["files"].Success)
+            {
+                return files ?? match.Value;
+            }
+
+            if (match.Groups["file"].Success)
+            {
+                return file ?? match.Value;
+            }
+
             if (next >= answers.Count)
             {
                 throw new ArgumentException("Fewer answers than {ask:…} placeholders.", nameof(answers));
@@ -45,7 +63,6 @@ public static partial class LaunchPlaceholders
 
             return DropArguments.Quote(answers[next++]);
         });
-        return QuotedClipboard().Replace(filled, _ => DropArguments.Quote(clipboard ?? string.Empty));
     }
 
     /// <summary>The extensions Windows tries for a name without one when <c>PATHEXT</c> is not set.</summary>
@@ -678,6 +695,10 @@ public static partial class LaunchPlaceholders
 
     [GeneratedRegex("\"?\\{ask:(?<prompt>[^}]*)\\}\"?", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
     private static partial Regex AskPattern();
+
+    /// <summary>Every placeholder with the quotes written around it, by kind, for <see cref="Fill"/>.</summary>
+    [GeneratedRegex("\"?\\{(?:(?<clipboard>clipboard)|(?<files>files)|(?<file>file)|ask:(?<prompt>[^}]*))\\}\"?", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
+    private static partial Regex EveryPlaceholder();
 
     /// <summary>Any placeholder: <c>{clipboard}</c>, <c>{file}</c>, <c>{files}</c> or <c>{ask:…}</c>.</summary>
     [GeneratedRegex(@"\{(?:clipboard|files?|ask:[^}]*)\}", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]

@@ -51,18 +51,21 @@ public sealed class LaunchService(ProcessTracker tracker, ILaunchPrompts? prompt
 
         // Expand the template first so dropped paths containing '%' are never re-expanded.
         var template = string.IsNullOrWhiteSpace(shortcut.Parameters) ? null : Environment.ExpandEnvironmentVariables(shortcut.Parameters);
+        string? clipboard = null;
+        IReadOnlyList<string> answers = [];
         if (template is not null && LaunchPlaceholders.HasAny(template))
         {
-            var filled = FillPlaceholders(shortcut, template);
-            if (filled.Result is { } stopped)
+            var values = AskForValues(shortcut, template);
+            if (values.Result is { } stopped)
             {
                 return stopped;
             }
 
-            template = filled.Parameters;
+            (clipboard, answers) = (values.Clipboard, values.Answers);
         }
 
-        // The files take the place of {file} or {files}, or go at the end: they are judged where they go (after ssh's destination).
+        // The files take the place of {file} or {files}, or go at the end: they are judged where they go (after ssh's
+        // destination), on the template, before any value goes in and moves the words. Then everything goes in at once.
         var judged = template is not null
                      && (template.Contains(DropArguments.FilePlaceholder, StringComparison.OrdinalIgnoreCase)
                          || template.Contains(DropArguments.FilesPlaceholder, StringComparison.OrdinalIgnoreCase))
@@ -88,7 +91,7 @@ public sealed class LaunchService(ProcessTracker tracker, ILaunchPrompts? prompt
             }
         }
 
-        var argumentSets = DropArguments.BuildArgumentSets(template, paths);
+        var argumentSets = DropArguments.BuildArgumentSets(template, paths, clipboard, answers);
         if (argumentSets.Count == 0)
         {
             return LaunchResult.Failure(Strings.Launch_NothingToOpen);
@@ -125,15 +128,17 @@ public sealed class LaunchService(ProcessTracker tracker, ILaunchPrompts? prompt
 
         if (expandParameters && !string.IsNullOrWhiteSpace(shortcut.Parameters) && LaunchPlaceholders.HasAny(shortcut.Parameters))
         {
-            // Expand the template first, then fill in the values: a '%' in the clipboard text or an answer stays as typed.
-            var filled = FillPlaceholders(shortcut, Environment.ExpandEnvironmentVariables(shortcut.Parameters));
-            if (filled.Result is { } stopped)
+            // Expand the template first, then fill in the values: a '%' in the clipboard text or an answer stays as typed,
+            // and so does a placeholder in them (one pass).
+            var template = Environment.ExpandEnvironmentVariables(shortcut.Parameters);
+            var values = AskForValues(shortcut, template);
+            if (values.Result is { } stopped)
             {
                 return stopped;
             }
 
             shortcut = (ShortcutItem)shortcut.Clone();
-            shortcut.Parameters = filled.Parameters;
+            shortcut.Parameters = LaunchPlaceholders.Fill(template, values.Clipboard, values.Answers);
             expandParameters = false;
         }
 
@@ -183,13 +188,14 @@ public sealed class LaunchService(ProcessTracker tracker, ILaunchPrompts? prompt
         && OutputCapture.CanCapture(startInfo);
 
     /// <summary>
-    /// Fills in <c>{clipboard}</c> and <c>{ask:…}</c> (see <see cref="LaunchPlaceholders"/>). Returns a result instead
-    /// when the launch stops: the clipboard holds no text, the user cancelled a question, a value holds something the
+    /// The values for <c>{clipboard}</c> and <c>{ask:…}</c> (see <see cref="LaunchPlaceholders"/>), each checked where it
+    /// goes in <paramref name="template"/>; the caller puts them in with one pass. Returns a result instead when the launch
+    /// stops: the clipboard holds no text, the user cancelled a question, a value holds something the
     /// program that reads the command line could act on (see <see cref="LaunchPlaceholders.Refused"/>), or a value would
     /// reach the program as an option (see <see cref="LaunchPlaceholders.TakesOptionAt"/>). The clipboard text is trimmed
     /// first: a copied line often ends in a line break.
     /// </summary>
-    private (string Parameters, LaunchResult? Result) FillPlaceholders(ShortcutItem shortcut, string template)
+    private (string? Clipboard, IReadOnlyList<string> Answers, LaunchResult? Result) AskForValues(ShortcutItem shortcut, string template)
     {
         var terminal = LaunchPlaceholders.SplitsAtSemicolons(shortcut.EffectiveLocation, template);
         string? clipboard = null;
@@ -198,14 +204,14 @@ public sealed class LaunchService(ProcessTracker tracker, ILaunchPrompts? prompt
             clipboard = prompts?.ClipboardText()?.Trim();
             if (string.IsNullOrEmpty(clipboard))
             {
-                return (template, LaunchResult.Failure(Strings.Launch_ClipboardEmpty));
+                return (null, [], LaunchResult.Failure(Strings.Launch_ClipboardEmpty));
             }
 
             foreach (var index in LaunchPlaceholders.ClipboardPositions(template)) // each place it goes is judged on its own
             {
                 if (Refuse(clipboard, ReaderAt(shortcut, template, index), LaunchPlaceholders.TakesOptionAt(template, index), terminal) is { } refused)
                 {
-                    return (template, refused);
+                    return (null, [], refused);
                 }
             }
         }
@@ -217,19 +223,19 @@ public sealed class LaunchService(ProcessTracker tracker, ILaunchPrompts? prompt
             var answer = prompts?.Ask(shortcut.Name, prompt.Length == 0 ? Strings.Launch_AskValue : prompt);
             if (answer is null)
             {
-                return (template, LaunchResult.Cancelled);
+                return (null, [], LaunchResult.Cancelled);
             }
 
             var position = askPositions[answers.Count];
             if (Refuse(answer, ReaderAt(shortcut, template, position), LaunchPlaceholders.TakesOptionAt(template, position), terminal) is { } refused)
             {
-                return (template, refused);
+                return (null, [], refused);
             }
 
             answers.Add(answer);
         }
 
-        return (LaunchPlaceholders.Fill(template, clipboard, answers), null);
+        return (clipboard, answers, null);
     }
 
     /// <summary>

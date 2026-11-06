@@ -109,6 +109,20 @@ public class LaunchOptionsTests
     }
 
     [Fact]
+    public void Every_placeholder_goes_in_with_one_pass_so_a_value_keeps_a_placeholder_as_text()
+    {
+        // Review 15 P1: an answer that held {clipboard} got the clipboard put inside it, and a value that held {file}
+        // got a dropped path inside it, outside its quotes and after the check.
+        Assert.Equal("\"{clipboard}\" \"text\"", LaunchPlaceholders.Fill("{ask:A} {clipboard}", "text", ["{clipboard}"]));
+
+        var sets = DropArguments.BuildArgumentSets("{clipboard}", [@"C:\t\Invoice&calc&.pdf"], clipboard: "x{file}");
+        Assert.Equal("\"x{file}\" \"C:\\t\\Invoice&calc&.pdf\"", Assert.Single(sets)); // the file goes at the end, as without {file}
+
+        var each = DropArguments.BuildArgumentSets("--from {clipboard} \"{file}\"", [@"C:\a.txt", @"C:\b.txt"], clipboard: "{files}");
+        Assert.Equal(["--from \"{files}\" \"C:\\a.txt\"", "--from \"{files}\" \"C:\\b.txt\""], each);
+    }
+
+    [Fact]
     public void Browser_profiles_are_read_from_Local_State()
     {
         const string localState = """

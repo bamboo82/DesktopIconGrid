@@ -146,6 +146,58 @@ public sealed class LaunchServiceTests : IDisposable
     }
 
     [Fact]
+    public void A_dropped_file_never_goes_into_a_value_that_holds_the_file_placeholder()
+    {
+        // Review 15 P1: "x{file}" passed cmd.exe's check (letters and braces); the drop then put the path inside it, so
+        // the path's "&" stood outside every quote and cmd.exe ran what followed.
+        var tool = Path.Combine(_directory, "tool.bat");
+        var args = Path.Combine(_directory, "args.txt");
+        File.WriteAllText(tool, "@echo off\r\necho %*> \"%~dp0args.txt\"\r\n");
+        var dropped = Path.Combine(_directory, "Invoice&mkdir injected&.pdf");
+        var service = Create(new Prompts(clipboard: "x{file}", answer: null), out var tracker);
+        using (tracker)
+        {
+            var result = service.LaunchWith(new ShortcutItem { Name = "Tool", Location = tool, Parameters = "{clipboard}" }, [dropped]);
+
+            Assert.Equal(LaunchOutcome.Started, result.Outcome);
+            string? written = null;
+            for (var i = 0; i < 200 && written is null; i++)
+            {
+                try
+                {
+                    written = File.Exists(args) ? File.ReadAllText(args).Trim() : null;
+                }
+                catch (IOException)
+                {
+                    // still being written
+                }
+
+                if (written is null or "")
+                {
+                    written = null;
+                    Thread.Sleep(50);
+                }
+            }
+
+            Assert.Equal($"\"x{{file}}\" \"{dropped}\"", written); // the value as text, the file as an argument of its own
+            Assert.False(Directory.Exists(Path.Combine(_directory, "injected")));
+        }
+    }
+
+    [Fact]
+    public void Dropped_files_are_judged_on_the_template_before_a_value_moves_its_words()
+    {
+        // Review 15 P1: judged on the filled text, "root --exec" for -u made the file look like it followed --exec (Plain).
+        var service = Create(new Prompts(clipboard: "root --exec", answer: null), out var tracker);
+        using (tracker)
+        {
+            var result = service.LaunchWith(new ShortcutItem { Name = "Cat", Location = "wsl.exe", Parameters = "-u {clipboard} cat {file}" }, [@"C:\t\$(id).txt"]);
+
+            Assert.Equal(string.Format(Strings.Launch_UnsafeValue, '$', "WSL"), result.ErrorMessage); // a shell reads it, as the template says
+        }
+    }
+
+    [Fact]
     public void A_value_ssh_would_read_as_its_own_settings_is_refused_before_or_after_the_host()
     {
         // Review 15 P2: "ProxyCommand calc" passed the remote command's check (letters and a space), and ssh ran calc here.

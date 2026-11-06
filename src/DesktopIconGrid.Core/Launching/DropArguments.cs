@@ -40,8 +40,13 @@ public static partial class DropArguments
             && !LaunchPlanner.IsUri(location);
     }
 
-    /// <summary>One argument string per launch. <paramref name="parameters"/> should already have environment variables expanded.</summary>
-    public static IReadOnlyList<string> BuildArgumentSets(string? parameters, IReadOnlyList<string> paths)
+    /// <summary>
+    /// One argument string per launch, with the files and, when given, <paramref name="clipboard"/> and
+    /// <paramref name="answers"/> put into <paramref name="parameters"/> in one pass (<see cref="LaunchPlaceholders.Fill"/>):
+    /// a dropped path goes only where the template has <c>{file}</c> or <c>{files}</c>, never inside a value that holds
+    /// one. <paramref name="parameters"/> should already have environment variables expanded.
+    /// </summary>
+    public static IReadOnlyList<string> BuildArgumentSets(string? parameters, IReadOnlyList<string> paths, string? clipboard = null, IReadOnlyList<string>? answers = null)
     {
         ArgumentNullException.ThrowIfNull(paths);
         var cleaned = paths.Where(p => !string.IsNullOrWhiteSpace(p)).Select(p => p.Trim()).ToList();
@@ -50,23 +55,23 @@ public static partial class DropArguments
             return [];
         }
 
-        // Users often write "{file}" with quotes; we add the quoting ourselves.
-        var template = (parameters?.Trim() ?? string.Empty)
-            .Replace("\"" + FilesPlaceholder + "\"", FilesPlaceholder, StringComparison.OrdinalIgnoreCase)
-            .Replace("\"" + FilePlaceholder + "\"", FilePlaceholder, StringComparison.OrdinalIgnoreCase);
+        // Users often write "{file}" with quotes; Fill drops them and the path brings its own.
+        var template = parameters?.Trim() ?? string.Empty;
         var all = string.Join(' ', cleaned.Select(Quote));
+        answers ??= [];
 
         if (template.Contains(FilesPlaceholder, StringComparison.OrdinalIgnoreCase))
         {
-            return [template.Replace(FilesPlaceholder, all, StringComparison.OrdinalIgnoreCase)];
+            return [LaunchPlaceholders.Fill(template, clipboard, answers, files: all)];
         }
 
         if (template.Contains(FilePlaceholder, StringComparison.OrdinalIgnoreCase))
         {
-            return cleaned.Select(path => template.Replace(FilePlaceholder, Quote(path), StringComparison.OrdinalIgnoreCase)).ToList();
+            return cleaned.Select(path => LaunchPlaceholders.Fill(template, clipboard, answers, file: Quote(path))).ToList();
         }
 
-        return [template.Length == 0 ? all : $"{template} {all}"];
+        var filled = LaunchPlaceholders.Fill(template, clipboard, answers);
+        return [filled.Length == 0 ? all : $"{filled} {all}"];
     }
 
     /// <summary>Quotes one argument following the rules of the Windows C runtime parser (backslashes before quotes are doubled).</summary>

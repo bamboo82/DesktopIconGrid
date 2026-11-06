@@ -22,6 +22,12 @@ switches, portable mode and *Repair…* on more kinds of PC, and the smaller ite
   sends (`-o ConnectTimeout={ask:Seconds}`), or as a host (`HostName`, `User`, `ProxyJump`). A placeholder
   among an option's letters (`-v{clipboard}`) is refused too: its value would add options. OpenSSH reads
   options after the host as well, unless `--` came first, and so does the check.
+- A value that held `{file}` got a dropped file's path put inside it, after the value had been checked: with
+  `{clipboard}` for a batch file and `x{file}` on the clipboard, a file called `Invoice&calc&.pdf` reached
+  cmd.exe with its `&` outside every quote. An answer that held `{clipboard}` got the clipboard the same way.
+  All placeholders now go in with one pass over the template, and nothing put in is read again. Dropped files
+  are judged where the template puts them, before a value with spaces can move the words they follow
+  (`wsl -u {clipboard} cat {file}` with `root --exec`). Older than 0.8.1.
 - plink, PuTTY's command-line ssh, and PuTTY itself, which reads the same command line, are checked the same
   way, with `-proxycmd` as a command. After an option of plink's that this version does not know, a value is
   checked as the command. Covered by tests of the rules.
