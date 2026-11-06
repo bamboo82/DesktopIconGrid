@@ -1637,4 +1637,55 @@
   <data name="AddApp_Hint" xml:space="preserve">
     <value>“开始”菜单列出的所有应用，包括 Microsoft Store 应用。勾选要添加的项目。</value>
   </data>
+  <data name="Menu_Import" xml:space="preserve">
+    <value>导入…</value>
+  </data>
+  <data name="Import_Title" xml:space="preserve">
+    <value>导入</value>
+  </data>
+  <data name="Import_Hint" xml:space="preserve">
+    <value>在这台电脑上找到的快捷方式与已保存的会话。勾选要添加到工具栏的项目。</value>
+  </data>
+  <data name="Import_Loading" xml:space="preserve">
+    <value>正在查找快捷方式与会话…</value>
+  </data>
+  <data name="Import_None" xml:space="preserve">
+    <value>找不到可导入的项目。</value>
+  </data>
+  <data name="Import_GroupPerSource" xml:space="preserve">
+    <value>每一类各放在自己的组中（任务栏固定、桌面…）</value>
+  </data>
+  <data name="Import_SelectAll" xml:space="preserve">
+    <value>全选</value>
+  </data>
+  <data name="Import_SelectNone" xml:space="preserve">
+    <value>全部不选</value>
+  </data>
+  <data name="Import_Import" xml:space="preserve">
+    <value>导入</value>
+  </data>
+  <data name="Import_ImportCount" xml:space="preserve">
+    <value>导入 {0} 个</value>
+  </data>
+  <data name="Import_ListName" xml:space="preserve">
+    <value>要导入的快捷方式</value>
+  </data>
+  <data name="Import_SourceTaskbar" xml:space="preserve">
+    <value>任务栏固定</value>
+  </data>
+  <data name="Import_SourceDesktop" xml:space="preserve">
+    <value>桌面</value>
+  </data>
+  <data name="Import_SourceTerminal" xml:space="preserve">
+    <value>Windows 终端</value>
+  </data>
+  <data name="Import_SourceWinScp" xml:space="preserve">
+    <value>WinSCP 会话</value>
+  </data>
+  <data name="Import_SourcePutty" xml:space="preserve">
+    <value>PuTTY 会话</value>
+  </data>
+  <data name="Import_SourceSsh" xml:space="preserve">
+    <value>SSH 主机</value>
+  </data>
 </root>

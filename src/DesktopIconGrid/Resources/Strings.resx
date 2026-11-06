@@ -1637,4 +1637,55 @@ Details are in {1}.</value>
   <data name="AddApp_Hint" xml:space="preserve">
     <value>Every app the Start menu lists, Microsoft Store apps included. Tick the ones to add.</value>
   </data>
+  <data name="Menu_Import" xml:space="preserve">
+    <value>Import…</value>
+  </data>
+  <data name="Import_Title" xml:space="preserve">
+    <value>Import</value>
+  </data>
+  <data name="Import_Hint" xml:space="preserve">
+    <value>Shortcuts and saved sessions found on this PC. Tick the ones to bring onto the bar.</value>
+  </data>
+  <data name="Import_Loading" xml:space="preserve">
+    <value>Looking for shortcuts and sessions…</value>
+  </data>
+  <data name="Import_None" xml:space="preserve">
+    <value>Nothing to import was found.</value>
+  </data>
+  <data name="Import_GroupPerSource" xml:space="preserve">
+    <value>Put each kind in a group of its own (Taskbar pins, Desktop, …)</value>
+  </data>
+  <data name="Import_SelectAll" xml:space="preserve">
+    <value>Select all</value>
+  </data>
+  <data name="Import_SelectNone" xml:space="preserve">
+    <value>Select none</value>
+  </data>
+  <data name="Import_Import" xml:space="preserve">
+    <value>Import</value>
+  </data>
+  <data name="Import_ImportCount" xml:space="preserve">
+    <value>Import {0}</value>
+  </data>
+  <data name="Import_ListName" xml:space="preserve">
+    <value>Shortcuts to import</value>
+  </data>
+  <data name="Import_SourceTaskbar" xml:space="preserve">
+    <value>Taskbar pins</value>
+  </data>
+  <data name="Import_SourceDesktop" xml:space="preserve">
+    <value>Desktop</value>
+  </data>
+  <data name="Import_SourceTerminal" xml:space="preserve">
+    <value>Windows Terminal</value>
+  </data>
+  <data name="Import_SourceWinScp" xml:space="preserve">
+    <value>WinSCP sessions</value>
+  </data>
+  <data name="Import_SourcePutty" xml:space="preserve">
+    <value>PuTTY sessions</value>
+  </data>
+  <data name="Import_SourceSsh" xml:space="preserve">
+    <value>SSH hosts</value>
+  </data>
 </root>

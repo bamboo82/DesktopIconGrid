@@ -1637,4 +1637,55 @@
   <data name="AddApp_Hint" xml:space="preserve">
     <value>「開始」功能表列出的所有應用程式，包括 Microsoft Store 應用程式。勾選要加入的項目。</value>
   </data>
+  <data name="Menu_Import" xml:space="preserve">
+    <value>匯入…</value>
+  </data>
+  <data name="Import_Title" xml:space="preserve">
+    <value>匯入</value>
+  </data>
+  <data name="Import_Hint" xml:space="preserve">
+    <value>在這部電腦上找到的捷徑與已儲存的工作階段。勾選要加到工具列的項目。</value>
+  </data>
+  <data name="Import_Loading" xml:space="preserve">
+    <value>正在尋找捷徑與工作階段…</value>
+  </data>
+  <data name="Import_None" xml:space="preserve">
+    <value>找不到可匯入的項目。</value>
+  </data>
+  <data name="Import_GroupPerSource" xml:space="preserve">
+    <value>每一類各放在自己的群組中（工作列釘選、桌面…）</value>
+  </data>
+  <data name="Import_SelectAll" xml:space="preserve">
+    <value>全選</value>
+  </data>
+  <data name="Import_SelectNone" xml:space="preserve">
+    <value>全部不選</value>
+  </data>
+  <data name="Import_Import" xml:space="preserve">
+    <value>匯入</value>
+  </data>
+  <data name="Import_ImportCount" xml:space="preserve">
+    <value>匯入 {0} 個</value>
+  </data>
+  <data name="Import_ListName" xml:space="preserve">
+    <value>要匯入的捷徑</value>
+  </data>
+  <data name="Import_SourceTaskbar" xml:space="preserve">
+    <value>工作列釘選</value>
+  </data>
+  <data name="Import_SourceDesktop" xml:space="preserve">
+    <value>桌面</value>
+  </data>
+  <data name="Import_SourceTerminal" xml:space="preserve">
+    <value>Windows 終端機</value>
+  </data>
+  <data name="Import_SourceWinScp" xml:space="preserve">
+    <value>WinSCP 工作階段</value>
+  </data>
+  <data name="Import_SourcePutty" xml:space="preserve">
+    <value>PuTTY 工作階段</value>
+  </data>
+  <data name="Import_SourceSsh" xml:space="preserve">
+    <value>SSH 主機</value>
+  </data>
 </root>

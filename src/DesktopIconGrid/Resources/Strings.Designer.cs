@@ -942,6 +942,150 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Put each kind in a group of its own (Taskbar pins, Desktop, …).
+        /// </summary>
+        public static string Import_GroupPerSource {
+            get {
+                return ResourceManager.GetString("Import_GroupPerSource", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Shortcuts and saved sessions found on this PC. Tick the ones to bring onto the b [rest of string was truncated]";.
+        /// </summary>
+        public static string Import_Hint {
+            get {
+                return ResourceManager.GetString("Import_Hint", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Import.
+        /// </summary>
+        public static string Import_Import {
+            get {
+                return ResourceManager.GetString("Import_Import", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Import {0}.
+        /// </summary>
+        public static string Import_ImportCount {
+            get {
+                return ResourceManager.GetString("Import_ImportCount", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Shortcuts to import.
+        /// </summary>
+        public static string Import_ListName {
+            get {
+                return ResourceManager.GetString("Import_ListName", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Looking for shortcuts and sessions….
+        /// </summary>
+        public static string Import_Loading {
+            get {
+                return ResourceManager.GetString("Import_Loading", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Nothing to import was found..
+        /// </summary>
+        public static string Import_None {
+            get {
+                return ResourceManager.GetString("Import_None", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Select all.
+        /// </summary>
+        public static string Import_SelectAll {
+            get {
+                return ResourceManager.GetString("Import_SelectAll", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Select none.
+        /// </summary>
+        public static string Import_SelectNone {
+            get {
+                return ResourceManager.GetString("Import_SelectNone", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Desktop.
+        /// </summary>
+        public static string Import_SourceDesktop {
+            get {
+                return ResourceManager.GetString("Import_SourceDesktop", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to PuTTY sessions.
+        /// </summary>
+        public static string Import_SourcePutty {
+            get {
+                return ResourceManager.GetString("Import_SourcePutty", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to SSH hosts.
+        /// </summary>
+        public static string Import_SourceSsh {
+            get {
+                return ResourceManager.GetString("Import_SourceSsh", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Taskbar pins.
+        /// </summary>
+        public static string Import_SourceTaskbar {
+            get {
+                return ResourceManager.GetString("Import_SourceTaskbar", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Windows Terminal.
+        /// </summary>
+        public static string Import_SourceTerminal {
+            get {
+                return ResourceManager.GetString("Import_SourceTerminal", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to WinSCP sessions.
+        /// </summary>
+        public static string Import_SourceWinScp {
+            get {
+                return ResourceManager.GetString("Import_SourceWinScp", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Import.
+        /// </summary>
+        public static string Import_Title {
+            get {
+                return ResourceManager.GetString("Import_Title", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to {0} [rest of string was truncated]";.
         /// </summary>
         public static string Item_ItemsToolTip {
@@ -1739,6 +1883,15 @@ namespace DesktopIconGrid.Resources {
         public static string Menu_HideBar {
             get {
                 return ResourceManager.GetString("Menu_HideBar", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Import….
+        /// </summary>
+        public static string Menu_Import {
+            get {
+                return ResourceManager.GetString("Menu_Import", resourceCulture);
             }
         }
 
