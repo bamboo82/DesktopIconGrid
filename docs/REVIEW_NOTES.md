@@ -9,6 +9,154 @@ The owner relays replies.
 
 ---
 
+## 2026-11-06 (28) — Round 17: R4″, G1–G3, P8–P11 and the recommended items
+
+The owner has paused the review loop after round 17, so these notes wait until it resumes.
+
+CI is green on runs 101–104. Run 102 (`a190875`) ran 731 Core and 217 App tests, the new Windows-only ones among them
+(the real cmd.exe with `/d/c` and `/V:ON/C`, a quoted PowerShell command, the output log). Run 104 (`38fcd66`) holds
+every code change of this round; locally 740 Core tests pass.
+
+| Commit | Item |
+| --- | --- |
+| `f5fd593` | R4″: this PC's own location for 0.8.0's Windows-drive paths; the format stays 1 |
+| `a190875` | G1–G6, P8–P14, P16, P17, the UNC copy's `%APPDRIVE%`, the notes in *Properties* |
+| `57fcc2a` | U8, U9, U10, U3′ and U7 left over, the saved names, the two doubled summaries |
+| `2f302de` | U8 for a name Windows does not allow in a file name (below) |
+| `38fcd66` | CHANGELOG and FEATURES, your doc list |
+| this one | these notes |
+
+- **R4″.** As you described it. `LauncherModel.RepairForThisPc` runs at every load and sets this PC's own entry
+  (`SetLocationFor(ThisDevice.Id, …)`), or rewrites that entry when it holds such a path. It does so when a
+  `%APPDRIVE%` path in Windows' own folders is there on Windows' drive (looked at first) and missing where
+  `%APPDRIVE%` points (a slow app drive counts as missing without a look). The shared location, *Start in* and the
+  icon stay. `LauncherLayout.CurrentVersion` is 1 again. Your four tests are in `LauncherModelTests`.
+- **The approach note.** I followed it. A placement that a reader could lose is refused, and the rule names what
+  it refuses, without modelling one more parser.
+  - `PlacementProblem` and `LaunchPlaceholders.PlacementAt(location, template, index, reader)` decide per placeholder.
+  - `LaunchService` asks before anything is asked or started: on a click, on a drop (with the files at the end, P14),
+    and in *Properties*, which now judges the parameters as a launch does (expanded, cmd's pair taken off,
+    `{files}` split). So `cmd.exe /c ""{file} x""` shows its note there now.
+- **P10, P9, G5: the readings must agree.** `SpotsOf` stays the UCRT reading that `Fill` fills for, plus your
+  touching rule. `SpotAt` holds a placeholder to the other readings that apply:
+  - CommandLineToArgvW (Wine's algorithm), always.
+  - cmd.exe's (every `"` toggles, `^` escapes outside quotes) for any reader from Cmd up. `Stricter` hides the
+    chain (`cmd /c wsl …` reads as PosixShell), so cmd's reading applies to all of them.
+  - bash's (`'…'`, `$'…'`, backslashes) for any reader from PosixShell up.
+
+  Where they disagree, the placement counts as inside quotes. So `"a""" {x}` is refused, while `"say ""hi""" {x}`
+  passes, since both readers leave the span before it; no blanket rule after `""` is needed.
+
+  **G5, kept refused.** `"D:\Backup\" {file}` is still refused for a batch file. cmd.exe reads the span closed
+  there, but a batch file often hands `%*` to a C runtime program, which reads `\"` as a quote character; npm's
+  shims run node that way. Taking cmd's reading alone would split a path at its space for that program, and a
+  folder named `a --inspect` gives node an option. Adding cmd's reading as a further check closed two holes the
+  UCRT reading let through for a batch file:
+  - `\" {file}`: cmd opens a span at `\"`, and the value's quote closes it.
+  - `x^{file}`: cmd takes the value's opening quote as a character.
+
+  `"D:\Backup" {file}` works.
+- **G3.** RemoteShell and PowerShellCommand take a placeholder inside quotes. `Fill(…, fillInsideQuotes: true)` puts
+  the value in as it is; the caller passes it only after `PlacementAt`. That value holds no quote (`Fill` throws
+  if it does; both readers refuse one first). A backslash run at its end is doubled when a quote of the template
+  follows, after any backslashes of its own, and the empty value is covered. An App test runs the real
+  `powershell -Command "Set-Content … -Value '{ask:Text}'"`.
+- **P8 and G2, by the approach note rather than the bare-word model.** wt, conhost, sudo and gsudo are relays
+  that drop quotes (`DropsQuotes`). gsudo reads as cmd, since it hands anything but a program to
+  `%COMSPEC% /s /c`.
+  - After one of them, a placeholder whose reader is Cmd or PosixShell is refused, for values and paths alike, with
+    a message to start cmd.exe or WSL directly (`Launch_RelayDropsQuotes`). Modelling it instead would need wt's
+    re-quoting, cmd's `/c` stripping ("whatever the spaces") and gsudo's `/s /c`. The cost: `wt cmd /k cd /d {file}`
+    and `wt build.cmd {ask:Target}` are refused now.
+  - For the other readers, `SplitByRelay` refuses a quote, a tab, and a backslash at the end of a value with a space
+    or tab, in values and paths (`Launch_RelaySplitsValue`). Dropped paths can hold only the last of these.
+  - `wt -d {file}`, `wt notepad {file}` and `wt -p Ubuntu wsl --cd {file}` take `C:\Program Files (x86)\R&D`.
+- **G1.** `SplitFiles` writes `{files}` as `{file} {file}`, and `"{files}"` as `"{file}" "{file}"`. Readers and
+  placements are judged on that. `FilePositions` no longer adds the end of `{files}`, and `ReaderOf` splits too.
+- **P11.** A `--` belongs to the nearest program named before it, or else to the shortcut's program.
+  - A wrapper's `--` (wsl, wt, conhost, sudo, gsudo, runas, npx, pnpx, bunx) counts only when no word stands
+    between it and the placeholder.
+  - dotnet's never counts, so `dotnet run -- {x}` is caught too.
+  - `TakesOptionAt` takes the location.
+- **P12.** `CommandStart` looks for `/c`, `/k` or `/r` within a word too. When cmd.exe is the location, a value
+  before that switch, or with none, is refused (`CmdSwitches`); a dropped path holds no `/`. The real cmd.exe ran
+  `/d/c` and `/V:ON/C` on CI. Not checked on a real cmd: whether it finds `/c` inside a quoted argument. The
+  refusal covers both answers.
+- **P13.** `TakesSwitch`: a value that starts with `/` is refused where one that starts with `-` would be, except for
+  PosixShell, RemoteShell and PowerShellCommand. That includes Cmd, whose built-ins read `/` switches, and ssh's
+  destination.
+- **G4, not as suggested.** scp's remote path stays the remote shell's unless `-s` asks for SFTP; a later `-O`
+  switches it back. Windows 10's own OpenSSH is 8.1, whose scp uses the old protocol by default and has no `-O`,
+  so "RemoteShell only with `-O`" would let `$(…)` through there. `scp -s server2:{ask:Path} .` takes
+  `notes (old).txt`.
+- **G6.** `Candidates` passes over a share and a network, removable, optical or unknown drive (GetDriveType does
+  no I/O). A word after a relay that is found nowhere else while a folder was passed over counts as a batch file;
+  the location, found nowhere, counted as cmd's already.
+
+  The cost: on a PC with such a folder in PATH, a bare option value after a relay (`Ubuntu` in
+  `wt -p Ubuntu notepad {file}`) is such a word. P8's rule then refuses the placeholder.
+- **P16, P14, P17, the UNC copy.**
+  - P16: a `-` after `@ / [ :` is refused in a destination, and sftp's `-s` is RemoteShell.
+  - P14: as above.
+  - P17: the output log's first line is the location and the template whenever placeholders were filled.
+  - UNC copy: `PublishProgramDrive` clears `%APPDRIVE%` when the program has no drive letter.
+- **P15, for 0.9.0.** A whole-word scp or sftp operand still counts as a local path, and `scp://`/`sftp://`
+  authorities are not read as hosts. CHANGELOG and FEATURES now claim only what is checked: a host written before
+  the colon. Your fix, judging a filled value by its own colon, needs a reader that depends on the value. I'd rather
+  build that with the other operand work than add it now.
+- **U8, U9, U3′ (a): one rule for numbered files.** `ListNumberedOriginals` decides per name inside, "N":
+  - The original is `Safe(N).json` saying "N", or one that cannot be read now.
+  - Only without it, the original is the lowest-numbered `Safe(N) (k).json` saying "N".
+  - Any other numbered file saying "N" is listed under its file name, as a sync program's copy, which the start-up
+    check names. That covers names that need no change and names that do (`Home_ desk (2).json` next to a
+    readable "Home: desk").
+
+  `2f302de` finishes U8 for a name Windows does not allow in a file name. While its own file cannot be read, that
+  file is listed under its file name, so a save did not find it and wrote a second "Home: desk" beside it. A save
+  now takes it for the copy and gets `CopyBusy`, and an upload waits.
+- **U10.** A parse failure is an unreadable copy only when the file is locked or starts like a copy.
+  - "Starts like a copy" means `{` and then one of a copy's own property names, or a prefix of one when the file
+    was cut short. Every version writes `"format"` first; the tests' half-written fixtures start with `"name"` or
+    `"layout"`.
+  - VS Code's settings with comments, and an empty file, are not listed.
+  - `Sync_CopyBusy` no longer says to delete anything.
+- **U3′ (b), (c).**
+  - (b) The fallback to an unreadable file of the copy's own name applies only while no `Safe(name) (N).json` is
+    listed, the loaded copy itself included. Otherwise the PC links by name, and its next upload finds the copy or
+    waits (above).
+  - (c) A load links under the name the copy holds.
+- **U7.**
+  - When the new file takes the copy's place and the copy is open in another program, `CopyBusy` follows: a
+    sharing or lock violation, or access denied on a copy that is there and not read-only (Windows refuses to
+    replace an open file, sometimes with access denied). The folder took the temp file a moment before, so that
+    is not its permissions. The test holds the copy open on Windows; elsewhere nothing locks it.
+  - `FlushPendingAsync` gives a postponed upload one more try.
+  - The postponed message falls back to the linked name.
+  - *Saved* and *Uploaded* name a numbered copy by the name inside.
+- **Nits and docs.** Both doubled summaries are merged. The CHANGELOG lines you listed are rewritten: the readings
+  instead of "the C runtime", P8, P12, P15's claim, the `--` walk, *Properties*, and R4″ without "once".
+  `SpotsOf`'s summary names the UCRT and points to `SpotAt`.
+- **Untested.**
+  - G6's drive-type skip: only the UNC case is tested, since a CI runner has no network drive letter.
+  - The P17 log line has an App test; the drop's log line follows the same path.
+- **Cases for the in-app check, when the loop resumes:**
+  - R4″: on a stick, a layout that 0.8.0's portable copy on C: saved, with `%APPDRIVE%\Program Files\…\x.exe`.
+    The shortcut starts on a PC that has the program on C:, and the layout's shared path is unchanged.
+  - G1: `scp.exe` with `{files} server2:/tmp/`, dropping two files. Both paths are accepted.
+  - G2: `wt.exe` with `-d {file}`, dropping `C:\Program Files (x86)`. Windows Terminal opens there.
+  - G3: `powershell.exe` with `-NoExit -Command "Get-Content '{file}'"`. The file is shown.
+  - P8: `wt.exe` with `git clone {clipboard}`, and `x" --upload-pack=calc "y` copied. Refused.
+  - P9: `wsl.exe` with `git commit -m 'WIP {clipboard}'`. Refused, with the note in *Properties*.
+  - P10: `msedge.exe` with `"https://www.bing.com/search?q="{clipboard}`. Refused, with the note.
+  - P11: `wsl.exe` with `-- python3 {clipboard}`, and `-cprint(1)` copied. Refused.
+  - P12: `cmd.exe` with `/d/c {file}`, dropping `a&calc&.txt`. The file opens, and calc does not start.
+  - P13: `msedge.exe` with `{clipboard}`, and `/user-data-dir=C:\x` copied. Refused.
+  - U3′ (a): save "Home: desk", then copy `Home_ desk.json` out of the sync folder and back with *Keep both*. The
+    new `Home_ desk (2).json` is listed as a copy of "Home: desk", not as a second "Home: desk".
+  - U10: VS Code's `settings.json` in the sync folder. Not listed.
+
+---
+
 ## 2026-11-06 (27) — Round 16: R4′, P2′–P5 and the recommended items
 
 CI is green on run 97 (`2e948e3`), which holds every code change of this round; locally 651 Core tests pass. Runs 98
