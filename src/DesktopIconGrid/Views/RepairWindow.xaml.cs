@@ -43,6 +43,17 @@ public partial class RepairWindow : Window
             return;
         }
 
+        if (viewModel.IsFolder)
+        {
+            var folders = new OpenFolderDialog { Title = Strings.Repair_Title, Multiselect = false };
+            if (folders.ShowDialog(this) == true && !string.IsNullOrWhiteSpace(folders.FolderName))
+            {
+                viewModel.AddChosen(folders.FolderName);
+            }
+
+            return;
+        }
+
         var dialog = new OpenFileDialog
         {
             Title = Strings.Repair_Title,

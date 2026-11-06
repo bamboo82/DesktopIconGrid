@@ -1742,4 +1742,7 @@ Details are in {1}.</value>
   <data name="Startup_AnotherCopy" xml:space="preserve">
     <value>Another copy of Desktop Icon Grid already starts with Windows ({0}), so this one was not added. Turn the option off in that copy first.</value>
   </data>
+  <data name="App_PortableReadOnly" xml:space="preserve">
+    <value>portable.txt is next to the program, but its folder cannot be written (it is under Program Files, or on a read-only drive), so the bar keeps its files in {0} for now.</value>
+  </data>
 </root>

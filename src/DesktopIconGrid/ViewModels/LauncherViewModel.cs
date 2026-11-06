@@ -950,13 +950,14 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
         }
 
         var draft = (ShortcutItem)shortcut.Clone();
+        var path = DataLocation.ForStorage(repair.Path); // %APPDRIVE% on a portable copy's own drive
         if (repair.OnlyThisPc && ThisDevice.Id is { } device)
         {
-            draft.SetLocationFor(device, repair.Path);
+            draft.SetLocationFor(device, path);
         }
         else
         {
-            draft.Location = repair.Path;
+            draft.Location = path;
             if (ThisDevice.Id is { } here)
             {
                 draft.SetLocationFor(here, null);

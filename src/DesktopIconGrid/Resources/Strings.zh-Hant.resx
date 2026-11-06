@@ -1742,4 +1742,7 @@
   <data name="Startup_AnotherCopy" xml:space="preserve">
     <value>已有另一份 Desktop Icon Grid 會隨 Windows 啟動（{0}），因此未加入這一份。請先在那一份中關閉此選項。</value>
   </data>
+  <data name="App_PortableReadOnly" xml:space="preserve">
+    <value>portable.txt 位於程式旁，但其資料夾無法寫入（位於 Program Files 下，或在唯讀磁碟機上），因此工具列目前將檔案保存在 {0}。</value>
+  </data>
 </root>

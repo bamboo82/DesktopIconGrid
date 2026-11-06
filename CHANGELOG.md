@@ -25,6 +25,18 @@ switches, portable mode and *Repair…* on more kinds of PC, and the smaller ite
   turning the option on says so; one for a program that is gone is taken over, as before. A portable copy
   adds an entry on a PC only after asking, so a stick no longer leaves entries behind on every PC it visits.
   Covered by tests against a stand-in for the registry.
+- Portable mode wrote some paths with their drive letter: a program chosen in *Repair…*, and an icon picked or
+  downloaded in *Properties*, which lands in the portable folder itself. They broke when the drive got another
+  letter. They are now written with `%APPDRIVE%`, as other paths are.
+- A portable copy run from the system drive (`C:\Tools`) wrote every C: path with `%APPDRIVE%`,
+  `C:\Windows\System32\cmd.exe` too, so a copy on a stick that loaded them looked for them on the stick.
+  Paths on Windows' own drive are now written as they are.
+- *Repair…* could not fix a shortcut to a missing folder: it looked for files only, and *Browse* picked a file.
+  A location without a letter extension (`Notes`, `app-1.0.9172`) is now looked for as a folder, other
+  versions of it included, and *Browse* picks a folder.
+- `portable.txt` next to a program whose folder cannot be written (under Program Files without elevation, on a
+  read-only drive) stopped the app with "Startup failed". It now keeps its files in `%LocalAppData%`, as without
+  `portable.txt`, and says so once at start.
 - Each placeholder is now checked where it stands. In `ssh {ask:Host} tail {clipboard}`, the host takes
   `admin@server2`, and the words after it are still checked as the remote shell reads them; 0.8.0 checked
   both values as the command, so `admin@server2` was refused. The values of wsl's own options (`-d`, `-u`,

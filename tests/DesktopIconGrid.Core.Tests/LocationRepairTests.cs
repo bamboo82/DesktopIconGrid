@@ -34,6 +34,31 @@ public sealed class LocationRepairTests : IDisposable
     }
 
     [Fact]
+    public void A_missing_folder_is_looked_for_as_a_folder_its_other_versions_too()
+    {
+        // The review's R6: only files were accepted, so a missing folder had nothing to repair it with.
+        var newer = Folder("tools", "app-1.0.9203");
+        Directory.CreateDirectory(newer);
+        Make("tools", "app-1.0.9300"); // a file of that name: not the folder
+
+        var found = LocationRepair.Candidates(Folder("tools", "app-1.0.9172"), []);
+
+        Assert.Equal([new RepairCandidate(newer, RepairReason.OtherVersion)], found);
+    }
+
+    [Theory]
+    [InlineData(@"C:\Tools\app-1.0.9172", true)]
+    [InlineData(@"C:\Tools\Notes", true)]
+    [InlineData(@"C:\Tools\Notes\", true)]
+    [InlineData(@"%USERPROFILE%\.config", true)]
+    [InlineData(@"C:\Tools\app.exe", false)]
+    [InlineData(@"C:\Tools\read.me.txt", false)]
+    public void A_location_with_no_letter_extension_is_taken_for_a_folder(string location, bool folder)
+    {
+        Assert.Equal(folder, LocationRepair.LooksLikeFolder(location));
+    }
+
+    [Fact]
     public void A_version_further_up_the_path_is_found_too()
     {
         var moved = Make("tools", "tool-2.3", "bin", "tool.exe");

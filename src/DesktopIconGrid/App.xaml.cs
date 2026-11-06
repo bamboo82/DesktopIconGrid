@@ -85,6 +85,10 @@ public partial class App : Application
         {
             AppLog.Default.Info("App", $"Portable mode ({DataLocation.PortableMarker} found): data in {DataLocation.Directory}, %{DataLocation.AppDriveVariable}% = {Environment.GetEnvironmentVariable(DataLocation.AppDriveVariable)}");
         }
+        else if (DataLocation.PortableFolderIsReadOnly)
+        {
+            AppLog.Default.Warning("App", $"{DataLocation.PortableMarker} found, but the program's folder cannot be written; data in {DataLocation.Directory}");
+        }
 
         var storage = new LayoutStorage(LayoutStorage.GetDefaultFilePath());
         var load = storage.Load();
@@ -168,7 +172,14 @@ public partial class App : Application
 
         var window = new MainWindow(viewModel);
         MainWindow = window;
-        window.TrayReady += (_, _) => dialogs.Notifier = window.TryNotify;
+        window.TrayReady += (_, _) =>
+        {
+            dialogs.Notifier = window.TryNotify;
+            if (DataLocation.PortableFolderIsReadOnly)
+            {
+                dialogs.Notify(Strings.App_Name, string.Format(Strings.App_PortableReadOnly, DataLocation.Directory)); // once, at start
+            }
+        };
         if (startHidden)
         {
             // The handle is enough: SourceInitialized creates the tray icon and registers the hotkey, and the bar

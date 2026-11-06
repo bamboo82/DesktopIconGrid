@@ -240,6 +240,15 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to portable.txt is next to the program, but its folder cannot be written (it is und [rest of string was truncated]";.
+        /// </summary>
+        public static string App_PortableReadOnly {
+            get {
+                return ResourceManager.GetString("App_PortableReadOnly", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Desktop Icon Grid could not start. [rest of string was truncated]";.
         /// </summary>
         public static string App_StartFailed {

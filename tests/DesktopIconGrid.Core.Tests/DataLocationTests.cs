@@ -11,8 +11,31 @@ public class DataLocationTests
         var program = Path.Combine("E:", "Tools", "DesktopIconGrid") + Path.DirectorySeparatorChar;
         var local = Path.Combine("C:", "Users", "me", "AppData", "Local");
 
-        Assert.Equal((Path.TrimEndingDirectorySeparator(program), true), DataLocation.Resolve(program, local, path => path.EndsWith(DataLocation.PortableMarker, StringComparison.Ordinal)));
-        Assert.Equal((Path.Combine(local, LayoutStorage.ApplicationFolderName), false), DataLocation.Resolve(program, local, _ => false));
+        Assert.Equal((Path.TrimEndingDirectorySeparator(program), true, false), DataLocation.Resolve(program, local, path => path.EndsWith(DataLocation.PortableMarker, StringComparison.Ordinal)));
+        Assert.Equal((Path.Combine(local, LayoutStorage.ApplicationFolderName), false, false), DataLocation.Resolve(program, local, _ => false));
+    }
+
+    [Fact]
+    public void A_portable_folder_that_cannot_be_written_leaves_the_data_in_LocalAppData_and_says_so()
+    {
+        // The review's R7: portable.txt under Program Files without elevation, or on a read-only drive, stopped the app.
+        var program = Path.Combine("C:", "Program Files", "DesktopIconGrid");
+        var local = Path.Combine("C:", "Users", "me", "AppData", "Local");
+
+        var resolved = DataLocation.Resolve(program, local, path => path.EndsWith(DataLocation.PortableMarker, StringComparison.Ordinal), canWrite: _ => false);
+
+        Assert.Equal((Path.Combine(local, LayoutStorage.ApplicationFolderName), false, true), resolved);
+    }
+
+    [Theory]
+    [InlineData(@"E:\Tools\DesktopIconGrid\", "C:", "E:")]
+    [InlineData(@"C:\Tools\DesktopIconGrid\", "C:", null)] // the review's R4: Windows' own drive is never written as %APPDRIVE%
+    [InlineData(@"c:\Tools\", "C:", null)]
+    [InlineData(@"\\nas\tools\", "C:", null)]
+    [InlineData(@"E:\Tools\", null, "E:")]
+    public void Paths_are_written_with_APPDRIVE_only_for_a_drive_that_is_not_Windows_own(string program, string? systemDrive, string? drive)
+    {
+        Assert.Equal(drive, DataLocation.StorageDrive(program, systemDrive));
     }
 
     [Theory]

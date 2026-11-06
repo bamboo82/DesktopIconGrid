@@ -425,7 +425,10 @@ Settings live in the same JSON file as the layout and apply immediately on *Save
   `sync.json`, the logs and the caches live in the program's folder instead, so a tools drive carries
   the bar from PC to PC. `%APPDRIVE%` is the program's drive (`E:`): new shortcuts to files on that
   drive are stored as `%APPDRIVE%\…`, so they keep working when the drive gets another letter, and any
-  location may use it. The Google sign-in and client secret are encrypted for the Windows user, so on
+  location may use it, except on Windows' own drive, whose paths are written as they are (0.8.1). A
+  `portable.txt` in a folder that cannot be written (Program Files without elevation, read-only media) is
+  set aside: the data goes to `%LocalAppData%`, and the app says so once at start (0.8.1). The Google
+  sign-in and client secret are encrypted for the Windows user, so on
   another PC Google asks for a sign-in again; a sync folder needs none. The sync settings on the drive
   belong to the PC that used them last: on each change of PC the bar takes a new sync device id and that
   PC's name (A, then B, then A again makes three ids, and a name typed by hand is not carried along).

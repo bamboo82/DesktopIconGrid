@@ -76,17 +76,19 @@ public static partial class LocationRepair
 
         var fileName = parts[^1];
         var parentName = parts[^2];
+        var isFolder = LooksLikeFolder(path);
+        Func<string, bool> exists = isFolder ? Directory.Exists : File.Exists;
         var found = new List<RepairCandidate>();
         var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { System.IO.Path.GetFullPath(path) };
         void Add(string candidate, RepairReason reason, bool likely)
         {
-            if (File.Exists(candidate) && seen.Add(System.IO.Path.GetFullPath(candidate)))
+            if (exists(candidate) && seen.Add(System.IO.Path.GetFullPath(candidate)))
             {
                 found.Add(new RepairCandidate(candidate, reason, likely));
             }
         }
 
-        foreach (var candidate in OtherVersions(path, parts))
+        foreach (var candidate in OtherVersions(path, parts, firstLevel: isFolder ? 0 : 1))
         {
             Add(candidate, RepairReason.OtherVersion, likely: true);
         }
@@ -107,7 +109,7 @@ public static partial class LocationRepair
         foreach (var root in roots)
         {
             var budget = maxFoldersPerRoot;
-            foreach (var candidate in Search(root, fileName, package, ref budget, cancellationToken))
+            foreach (var candidate in Search(root, fileName, exists, package, ref budget, cancellationToken))
             {
                 var folder = System.IO.Path.GetFileName(System.IO.Path.GetDirectoryName(candidate));
                 Add(candidate, RepairReason.InstalledProgram, likely: string.Equals(folder, parentName, StringComparison.OrdinalIgnoreCase));
@@ -117,6 +119,20 @@ public static partial class LocationRepair
         }
 
         return new RepairSearch([.. found.Where(c => c.Likely), .. found.Where(c => !c.Likely)], stoppedEarly);
+    }
+
+    /// <summary>
+    /// Whether a missing location most likely named a folder: its last part has no extension, or only a number after its
+    /// last dot (<c>app-1.0.9172</c>). Files nearly always end in a letter extension on Windows. A folder is looked for as
+    /// a folder (its other versions too), and browsed for with a folder picker.
+    /// </summary>
+    public static bool LooksLikeFolder(string location)
+    {
+        ArgumentNullException.ThrowIfNull(location);
+        var path = Environment.ExpandEnvironmentVariables(location.Trim().Trim('"')).TrimEnd('\\', '/');
+        var name = path[(path.LastIndexOfAny(['\\', '/']) + 1)..];
+        var dot = name.LastIndexOf('.');
+        return dot <= 0 || dot == name.Length - 1 || name[(dot + 1)..].All(char.IsAsciiDigit);
     }
 
     /// <summary>The Store package folder name (<c>Name_Version_Arch__Publisher</c>) a path lies in, or <see langword="null"/>.</summary>
@@ -136,13 +152,14 @@ public static partial class LocationRepair
 
     /// <summary>
     /// For each of the last few folders on the path that carries a version number, the siblings whose names differ only
-    /// in their numbers, with the rest of the path appended; the highest version first.
+    /// in their numbers, with the rest of the path appended; the highest version first. <paramref name="firstLevel"/> 0
+    /// counts the last part too, for a location that is a folder itself.
     /// </summary>
-    private static IEnumerable<string> OtherVersions(string path, string[] parts)
+    private static IEnumerable<string> OtherVersions(string path, string[] parts, int firstLevel)
     {
         var results = new List<(string Path, long[] Version)>();
         var separator = path.Contains('\\', StringComparison.Ordinal) ? '\\' : '/';
-        for (var level = 1; level <= VersionLevels && parts.Length - 1 - level >= 1; level++)
+        for (var level = firstLevel; level <= VersionLevels && parts.Length - 1 - level >= 1; level++)
         {
             var folderIndex = parts.Length - 1 - level;
             var folderName = parts[folderIndex];
@@ -196,7 +213,8 @@ public static partial class LocationRepair
     /// when they ran out). <c>WindowsApps</c> is entered only for folders of <paramref name="package"/>: it holds hundreds
     /// of packages, and only one of them can have been the program's.
     /// </summary>
-    private static List<string> Search(string root, string fileName, (string Name, string Publisher)? package, ref int budget, CancellationToken cancellationToken)
+    private static List<string> Search(
+        string root, string fileName, Func<string, bool> exists, (string Name, string Publisher)? package, ref int budget, CancellationToken cancellationToken)
     {
         var results = new List<string>();
         var level = new List<string> { root };
@@ -239,7 +257,7 @@ public static partial class LocationRepair
                     }
 
                     var candidate = System.IO.Path.Combine(child, fileName);
-                    if (File.Exists(candidate))
+                    if (exists(candidate))
                     {
                         results.Add(candidate);
                     }

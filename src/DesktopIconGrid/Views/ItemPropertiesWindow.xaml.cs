@@ -118,7 +118,7 @@ public partial class ItemPropertiesWindow : Window
         try
         {
             var path = await IconDownloader.DownloadAsync(App.SharedHttp, url, AppPaths.IconsDirectory, cancellation.Token);
-            viewModel.IconPath = path;
+            viewModel.IconPath = DataLocation.ForStorage(path); // in a portable copy's own folder: %APPDRIVE%
         }
         catch (OperationCanceledException) when (cancellation.IsCancellationRequested)
         {
@@ -156,7 +156,7 @@ public partial class ItemPropertiesWindow : Window
 
         if (dialog.ShowDialog(this) == true)
         {
-            viewModel.IconPath = dialog.FileName;
+            viewModel.IconPath = DataLocation.ForStorage(dialog.FileName);
         }
     }
 
