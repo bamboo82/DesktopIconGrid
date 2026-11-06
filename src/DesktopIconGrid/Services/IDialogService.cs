@@ -1,3 +1,4 @@
+using DesktopIconGrid.Core.Imports;
 using DesktopIconGrid.Core.Models;
 using DesktopIconGrid.ViewModels;
 
@@ -40,4 +41,7 @@ public interface IDialogService
 
     /// <summary>The Repair dialog for a shortcut whose program is not on this PC; <see langword="null"/> on Cancel.</summary>
     RepairResult? ShowRepair(ShortcutItem shortcut);
+
+    /// <summary>The Add apps dialog; the apps the user ticked (none on Cancel).</summary>
+    IReadOnlyList<InstalledApp> ShowAddApp(IReadOnlySet<string> locationsOnBar);
 }

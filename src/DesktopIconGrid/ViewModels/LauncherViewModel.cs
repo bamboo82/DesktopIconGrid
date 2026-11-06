@@ -3,6 +3,7 @@ using System.Reflection;
 using System.Windows.Input;
 using DesktopIconGrid.Core;
 using DesktopIconGrid.Core.Diagnostics;
+using DesktopIconGrid.Core.Imports;
 using DesktopIconGrid.Core.Launching;
 using DesktopIconGrid.Core.Models;
 using DesktopIconGrid.Core.SpecialItems;
@@ -789,6 +790,38 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
         var list = ListContaining(item, out var index);
         AddSpecialIcon(handler, list, index + 1);
     }
+
+    /// <summary>Add apps…: the installed apps the user ticks become shortcuts at <paramref name="index"/>.</summary>
+    public void AddApp(ItemListViewModel list, int index) => AddApps(_dialogs.ShowAddApp(LocationsOnBar()), list, index);
+
+    public void AddAppAfter(ItemViewModel item)
+    {
+        var list = ListContaining(item, out var index);
+        AddApp(list, index + 1);
+    }
+
+    /// <summary>One shortcut per app, named as the Start menu names it, inserted in order.</summary>
+    internal void AddApps(IReadOnlyList<InstalledApp> apps, ItemListViewModel list, int index)
+    {
+        if (apps.Count == 0)
+        {
+            return;
+        }
+
+        foreach (var app in apps)
+        {
+            Model.Insert(new ShortcutItem { Name = app.Name, Location = DataLocation.ForStorage(app.Location) }, list.Group, index);
+            index = index == int.MaxValue ? index : index + 1;
+        }
+
+        list.Sync();
+        Save();
+        AppLog.Default.Info("Layout", $"Added {apps.Count} installed app(s) into \"{list.Group?.Name ?? "the bar"}\"");
+    }
+
+    /// <summary>Every shortcut's location on this PC, expanded, for marking what is already on the bar.</summary>
+    private HashSet<string> LocationsOnBar() =>
+        new(Model.AllShortcuts().Select(s => Environment.ExpandEnvironmentVariables(s.EffectiveLocation.Trim())), StringComparer.OrdinalIgnoreCase);
 
     /// <summary>Creates one shortcut per dropped path, inserting them in order at <paramref name="index"/>.</summary>
     public void AddPaths(IEnumerable<string> paths, ItemListViewModel list, int index)

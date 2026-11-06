@@ -78,6 +78,105 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Add.
+        /// </summary>
+        public static string AddApp_Add {
+            get {
+                return ResourceManager.GetString("AddApp_Add", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Add {0}.
+        /// </summary>
+        public static string AddApp_AddCount {
+            get {
+                return ResourceManager.GetString("AddApp_AddCount", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Type to filter the list.
+        /// </summary>
+        public static string AddApp_Filter {
+            get {
+                return ResourceManager.GetString("AddApp_Filter", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Filter the installed apps.
+        /// </summary>
+        public static string AddApp_FilterName {
+            get {
+                return ResourceManager.GetString("AddApp_FilterName", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Every app the Start menu lists, Microsoft Store apps included. Tick the ones to [rest of string was truncated]";.
+        /// </summary>
+        public static string AddApp_Hint {
+            get {
+                return ResourceManager.GetString("AddApp_Hint", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Installed apps.
+        /// </summary>
+        public static string AddApp_ListName {
+            get {
+                return ResourceManager.GetString("AddApp_ListName", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Reading the installed apps….
+        /// </summary>
+        public static string AddApp_Loading {
+            get {
+                return ResourceManager.GetString("AddApp_Loading", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to No installed apps could be read..
+        /// </summary>
+        public static string AddApp_None {
+            get {
+                return ResourceManager.GetString("AddApp_None", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Already on the bar.
+        /// </summary>
+        public static string AddApp_OnBar {
+            get {
+                return ResourceManager.GetString("AddApp_OnBar", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Microsoft Store app.
+        /// </summary>
+        public static string AddApp_StoreApp {
+            get {
+                return ResourceManager.GetString("AddApp_StoreApp", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Add apps.
+        /// </summary>
+        public static string AddApp_Title {
+            get {
+                return ResourceManager.GetString("AddApp_Title", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to This layout was saved by a newer version of Desktop Icon Grid. Items this versio [rest of string was truncated]";.
         /// </summary>
         public static string App_LayoutNewer {
@@ -1559,6 +1658,15 @@ namespace DesktopIconGrid.Resources {
         public static string Menu_About {
             get {
                 return ResourceManager.GetString("Menu_About", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Add app….
+        /// </summary>
+        public static string Menu_AddApp {
+            get {
+                return ResourceManager.GetString("Menu_AddApp", resourceCulture);
             }
         }
 

@@ -35,6 +35,7 @@ public sealed class ItemViewModel : ObservableObject
         OpenLocationCommand = new RelayCommand(() => Root.RevealItem(this), () => IsShortcut);
         NewShortcutAfterCommand = new RelayCommand(() => Root.NewShortcutAfter(this));
         NewGroupAfterCommand = new RelayCommand(() => Root.NewGroupAfter(this), () => IsAtRoot);
+        AddAppAfterCommand = new RelayCommand(() => Root.AddAppAfter(this));
         ShowLogCommand = new RelayCommand(() => Root.ShowLog(this), () => CapturesLog);
         RepairCommand = new RelayCommand(() => Root.RepairItem(this), () => IsShortcut);
         RebuildGauge();
@@ -241,6 +242,9 @@ public sealed class ItemViewModel : ObservableObject
     public ICommand ActivateCommand { get; }
 
     public ICommand PropertiesCommand { get; }
+
+    /// <summary>Add apps… with the new shortcuts going right after this item.</summary>
+    public ICommand AddAppAfterCommand { get; }
 
     /// <summary>Looks for a missing program on this PC and points the shortcut at it.</summary>
     public ICommand RepairCommand { get; }

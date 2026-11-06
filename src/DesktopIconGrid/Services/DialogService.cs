@@ -1,5 +1,6 @@
 using System.Windows;
 using DesktopIconGrid.Core.Diagnostics;
+using DesktopIconGrid.Core.Imports;
 using DesktopIconGrid.Core.Launching;
 using DesktopIconGrid.Core.Models;
 using DesktopIconGrid.Resources;
@@ -108,6 +109,19 @@ public sealed class DialogService(IIconProvider icons) : IDialogService, ILaunch
     public string? Ask(string title, string prompt) => InputWindow.Show(Owner, title, prompt);
 
     public string? AskText(string title, string prompt, string? initialValue) => InputWindow.Show(Owner, title, prompt, initialValue);
+
+    public IReadOnlyList<InstalledApp> ShowAddApp(IReadOnlySet<string> locationsOnBar)
+    {
+        var viewModel = new AddAppViewModel(locationsOnBar);
+        var window = new AddAppWindow
+        {
+            DataContext = viewModel,
+            Owner = Owner,
+            Load = () => IconWorker.Shared.RunAsync(InstalledApps.Enumerate),
+            IconOf = location => IconWorker.Shared.RunAsync(() => icons.GetIcon(location, 32)),
+        };
+        return window.ShowDialog() == true ? viewModel.Chosen : [];
+    }
 
     public RepairResult? ShowRepair(ShortcutItem shortcut)
     {

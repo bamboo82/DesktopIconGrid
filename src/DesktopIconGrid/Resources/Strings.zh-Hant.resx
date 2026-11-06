@@ -1601,4 +1601,40 @@
   <data name="Repair_ListName" xml:space="preserve">
     <value>找到程式的位置</value>
   </data>
+  <data name="Menu_AddApp" xml:space="preserve">
+    <value>加入應用程式…</value>
+  </data>
+  <data name="AddApp_Title" xml:space="preserve">
+    <value>加入應用程式</value>
+  </data>
+  <data name="AddApp_Filter" xml:space="preserve">
+    <value>輸入文字以篩選清單</value>
+  </data>
+  <data name="AddApp_FilterName" xml:space="preserve">
+    <value>篩選已安裝的應用程式</value>
+  </data>
+  <data name="AddApp_Loading" xml:space="preserve">
+    <value>正在讀取已安裝的應用程式…</value>
+  </data>
+  <data name="AddApp_StoreApp" xml:space="preserve">
+    <value>Microsoft Store 應用程式</value>
+  </data>
+  <data name="AddApp_OnBar" xml:space="preserve">
+    <value>已在工具列上</value>
+  </data>
+  <data name="AddApp_Add" xml:space="preserve">
+    <value>加入</value>
+  </data>
+  <data name="AddApp_AddCount" xml:space="preserve">
+    <value>加入 {0} 個</value>
+  </data>
+  <data name="AddApp_None" xml:space="preserve">
+    <value>無法讀取已安裝的應用程式。</value>
+  </data>
+  <data name="AddApp_ListName" xml:space="preserve">
+    <value>已安裝的應用程式</value>
+  </data>
+  <data name="AddApp_Hint" xml:space="preserve">
+    <value>「開始」功能表列出的所有應用程式，包括 Microsoft Store 應用程式。勾選要加入的項目。</value>
+  </data>
 </root>

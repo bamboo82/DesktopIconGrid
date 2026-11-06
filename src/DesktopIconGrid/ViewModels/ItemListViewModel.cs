@@ -15,6 +15,7 @@ public sealed class ItemListViewModel : ObservableObject
         Group = group;
         NewShortcutCommand = new RelayCommand(() => Root.NewShortcut(this, int.MaxValue));
         NewGroupCommand = new RelayCommand(() => Root.NewGroup(this, int.MaxValue), () => IsRoot);
+        AddAppCommand = new RelayCommand(() => Root.AddApp(this, int.MaxValue));
         Sync(notifyRoot: false); // the owning group view model may still be constructing this list
     }
 
@@ -34,6 +35,9 @@ public sealed class ItemListViewModel : ObservableObject
     public ICommand NewShortcutCommand { get; }
 
     public ICommand NewGroupCommand { get; }
+
+    /// <summary>Add apps… at the end of this list.</summary>
+    public ICommand AddAppCommand { get; }
 
     /// <summary>Reconciles the observable list with the model, keeping existing view models and moving containers instead of recreating them.</summary>
     public void Sync() => Sync(notifyRoot: true);

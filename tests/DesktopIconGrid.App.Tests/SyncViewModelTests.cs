@@ -1,5 +1,6 @@
 using System.IO;
 using System.Net.Http;
+using DesktopIconGrid.Core.Imports;
 using DesktopIconGrid.Core.Models;
 using DesktopIconGrid.Core.Sync;
 using DesktopIconGrid.Services;
@@ -102,6 +103,16 @@ public sealed class SyncViewModelTests : IDisposable
         {
             RepairRequests.Add(shortcut.Name);
             return RepairAnswer;
+        }
+
+        public IReadOnlyList<InstalledApp> AddAppAnswer { get; set; } = [];
+
+        public IReadOnlySet<string>? OnBarSeen { get; private set; }
+
+        public IReadOnlyList<InstalledApp> ShowAddApp(IReadOnlySet<string> locationsOnBar)
+        {
+            OnBarSeen = locationsOnBar;
+            return AddAppAnswer;
         }
     }
 

@@ -156,6 +156,17 @@ shortcut for a Windows location or tool. They are ordinary shortcuts afterwards
 `shell:` locations are launched through `explorer.exe`; `special:` locations are
 handled in-app. Icons for `shell:` folders are taken from their CLSID parsing names.
 
+### 2.3a Installed apps (0.8.0)
+
+*Add app…* (icon and empty-space menus) lists every app the Start menu shows, read from
+`shell:AppsFolder`, Microsoft Store apps included, with their icons; the list filters as you type (case,
+width and Chinese handled as in search) and marks what is already on the bar. Ticked apps become
+shortcuts named as the Start menu names them, right after the clicked icon or at the end. A desktop
+program is stored as its real path (its AppsFolder entry is a path below a known folder), so the running
+badge, switching and the missing check work as for any program; a Store app is stored as
+`shell:AppsFolder\<app id>` and started through Explorer; links stay links. Before 0.8.0 the usual way
+to get a Store app onto the bar was to make a desktop shortcut first.
+
 ### 2.4 Special icons (active icons)
 
 A special icon has behaviour of its own: a click action, a live value, drops of files onto it
@@ -230,6 +241,7 @@ Icon menu (as in the screenshot):
 ```
 New shortcut…
 New group…
+Add app…                (every installed app, 0.8.0)
 Add Windows item        ▸
 Add special icon        ▸
 Add separator           ▸   Line / Gap / Label…   (0.7.0)
@@ -250,6 +262,7 @@ Empty-space menu:
 ```
 New shortcut…
 New group…
+Add app…                (0.8.0)
 Add Windows item        ▸
 Add special icon        ▸
 Add separator           ▸   (0.7.0)

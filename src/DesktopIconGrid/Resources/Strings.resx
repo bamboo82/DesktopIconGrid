@@ -1601,4 +1601,40 @@ Details are in {1}.</value>
   <data name="Repair_ListName" xml:space="preserve">
     <value>Places where the program was found</value>
   </data>
+  <data name="Menu_AddApp" xml:space="preserve">
+    <value>Add app…</value>
+  </data>
+  <data name="AddApp_Title" xml:space="preserve">
+    <value>Add apps</value>
+  </data>
+  <data name="AddApp_Filter" xml:space="preserve">
+    <value>Type to filter the list</value>
+  </data>
+  <data name="AddApp_FilterName" xml:space="preserve">
+    <value>Filter the installed apps</value>
+  </data>
+  <data name="AddApp_Loading" xml:space="preserve">
+    <value>Reading the installed apps…</value>
+  </data>
+  <data name="AddApp_StoreApp" xml:space="preserve">
+    <value>Microsoft Store app</value>
+  </data>
+  <data name="AddApp_OnBar" xml:space="preserve">
+    <value>Already on the bar</value>
+  </data>
+  <data name="AddApp_Add" xml:space="preserve">
+    <value>Add</value>
+  </data>
+  <data name="AddApp_AddCount" xml:space="preserve">
+    <value>Add {0}</value>
+  </data>
+  <data name="AddApp_None" xml:space="preserve">
+    <value>No installed apps could be read.</value>
+  </data>
+  <data name="AddApp_ListName" xml:space="preserve">
+    <value>Installed apps</value>
+  </data>
+  <data name="AddApp_Hint" xml:space="preserve">
+    <value>Every app the Start menu lists, Microsoft Store apps included. Tick the ones to add.</value>
+  </data>
 </root>

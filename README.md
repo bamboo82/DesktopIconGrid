@@ -74,6 +74,7 @@ Google Drive Bucket, and [docs/THEMES.md](docs/THEMES.md) for the themes.
 | Rename many shortcuts at once | Options menu (▸) → *Edit names…* (sort by name or modified date) |
 | Record and loop a sound | Right-click → *Add special icon ▸ Sound Replayer*; press and hold to record, release to loop, click to stop |
 | Open a file with a program on the bar | Drag the file from Explorer onto the program's icon (`{file}`/`{files}` in Parameters control where it goes) |
+| Add an installed app (Store apps too) | Right-click → *Add app…*, type part of its name, tick it, *Add* |
 | Add a shortcut by dragging | Drop a file on empty space, or right-drag it anywhere on the bar |
 | Show or hide the bar from anywhere | Set a hotkey in Settings (e.g. `Ctrl+Alt+Space`) |
 | Find an icon by typing | Click the bar (or use its hotkey) and type part of a name or its initials (`vsc`); `Enter` opens the framed match, the arrows move the frame, `Esc` clears |

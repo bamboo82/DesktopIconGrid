@@ -3,6 +3,7 @@ using System.Windows.Media;
 using System.Windows.Threading;
 using DesktopIconGrid.Core;
 using DesktopIconGrid.Core.Launching;
+using DesktopIconGrid.Core.Imports;
 using DesktopIconGrid.Core.Models;
 using DesktopIconGrid.Core.Storage;
 using DesktopIconGrid.Resources;
@@ -76,6 +77,16 @@ public sealed class LauncherViewModelTests : IDisposable
         {
             RepairRequests.Add(shortcut.Name);
             return RepairAnswer;
+        }
+
+        public IReadOnlyList<InstalledApp> AddAppAnswer { get; set; } = [];
+
+        public IReadOnlySet<string>? OnBarSeen { get; private set; }
+
+        public IReadOnlyList<InstalledApp> ShowAddApp(IReadOnlySet<string> locationsOnBar)
+        {
+            OnBarSeen = locationsOnBar;
+            return AddAppAnswer;
         }
     }
 
@@ -536,6 +547,27 @@ public sealed class LauncherViewModelTests : IDisposable
 
         Assert.Equal(["A"], dialogs.RepairRequests);
         Assert.Empty(_launcher.Launches);
+    }
+
+    [Fact]
+    public void Add_app_puts_the_ticked_apps_after_the_icon_and_tells_the_dialog_what_is_on_the_bar()
+    {
+        var (viewModel, model, dialogs) = Create();
+        dialogs.AddAppAnswer =
+        [
+            new InstalledApp("Calculator", @"shell:AppsFolder\Microsoft.WindowsCalculator_8wekyb3d8bbwe!App", IsStoreApp: true),
+            new InstalledApp("Code", @"C:\Programs\Code.exe", IsStoreApp: false),
+        ];
+
+        viewModel.AddAppAfter(viewModel.RootItems.Items[0]);
+
+        Assert.Equal(["A", "Calculator", "Code", "B", "C"], Names(model.Items));
+        Assert.Equal(@"C:\Programs\Code.exe", ((ShortcutItem)model.Items[2]).Location);
+        Assert.Contains(@"c:\A.EXE", dialogs.OnBarSeen!); // any case
+
+        dialogs.AddAppAnswer = []; // Cancel
+        viewModel.AddApp(viewModel.RootItems, int.MaxValue);
+        Assert.Equal(5, model.Items.Count);
     }
 }
 

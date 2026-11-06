@@ -1601,4 +1601,40 @@
   <data name="Repair_ListName" xml:space="preserve">
     <value>找到程序的位置</value>
   </data>
+  <data name="Menu_AddApp" xml:space="preserve">
+    <value>添加应用…</value>
+  </data>
+  <data name="AddApp_Title" xml:space="preserve">
+    <value>添加应用</value>
+  </data>
+  <data name="AddApp_Filter" xml:space="preserve">
+    <value>输入文字以筛选列表</value>
+  </data>
+  <data name="AddApp_FilterName" xml:space="preserve">
+    <value>筛选已安装的应用</value>
+  </data>
+  <data name="AddApp_Loading" xml:space="preserve">
+    <value>正在读取已安装的应用…</value>
+  </data>
+  <data name="AddApp_StoreApp" xml:space="preserve">
+    <value>Microsoft Store 应用</value>
+  </data>
+  <data name="AddApp_OnBar" xml:space="preserve">
+    <value>已在工具栏上</value>
+  </data>
+  <data name="AddApp_Add" xml:space="preserve">
+    <value>添加</value>
+  </data>
+  <data name="AddApp_AddCount" xml:space="preserve">
+    <value>添加 {0} 个</value>
+  </data>
+  <data name="AddApp_None" xml:space="preserve">
+    <value>无法读取已安装的应用。</value>
+  </data>
+  <data name="AddApp_ListName" xml:space="preserve">
+    <value>已安装的应用</value>
+  </data>
+  <data name="AddApp_Hint" xml:space="preserve">
+    <value>“开始”菜单列出的所有应用，包括 Microsoft Store 应用。勾选要添加的项目。</value>
+  </data>
 </root>
