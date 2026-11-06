@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Interop;
+using System.Windows.Threading;
 using DesktopIconGrid.Core.Models;
 using DesktopIconGrid.Services;
 
@@ -24,7 +25,10 @@ internal static class WorkAreaFit
         window.Loaded += (_, _) =>
         {
             MoveInside(window);
-            window.SizeChanged += (_, _) => MoveInside(window); // SizeToContent grows it downward
+
+            // SizeToContent grows it downward. SizeChanged comes while the content is arranged at the new size, before
+            // the window itself takes that size (HwndSource resizes it after the layout pass), so the move waits for it.
+            window.SizeChanged += (_, _) => window.Dispatcher.BeginInvoke(DispatcherPriority.Background, () => MoveInside(window));
         };
     }
 
