@@ -19,6 +19,8 @@ is the one that adds this entry; tag that commit once its CI run is green and th
   says the layout format is still version 1 (0.8.0 and 0.8.1 share copies), but every PC should update for the
   security fixes.
 - FEATURES and the ROADMAP mark 0.8.1 released.
+- Released: `v0.8.1` (annotated, on `345f4cc`) and main at the same commit. The release workflow published the
+  GitHub release on 2026-11-07 with both zips and `SHA256SUMS.txt`.
 - Not covered on screen in the in-app round: the drag cases G1, G2 and P12; the CI tests run them through the real
   cmd.exe. Open for 0.9.0: P15 (scp operands) and U3′'s root fix.
 
