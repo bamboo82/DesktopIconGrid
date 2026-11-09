@@ -584,7 +584,7 @@ program's conflict copy, switching where the copies are kept while an upload run
 share, portable mode on the system drive and on read-only media, the Run entry of several copies,
 *Repair…* for a folder, and the placeholder checks for ssh and WSL that 0.8.0 left for later.
 
-**0.9.0 "The bar tells you things"** — first what moved from 0.8.0: the import dialog (its readers for
+**0.9.0 "The bar tells you things"** *(in progress)* — first what moved from 0.8.0: the import dialog (its readers for
 Windows Terminal, SSH, WinSCP and PuTTY, the taskbar and the desktop are already in), layout history,
 command line and Send To. Then the command tile, with commands from a synced copy paused until
 approved on each PC; health light on a shortcut; folder stacks; more gauges; microphone tile; clock and

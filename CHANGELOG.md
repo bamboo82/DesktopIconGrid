@@ -3,6 +3,12 @@
 All notable changes to Desktop Icon Grid. The format follows [Keep a Changelog](https://keepachangelog.com/);
 version numbers follow [Semantic Versioning](https://semver.org/).
 
+## [0.9.0] – Unreleased
+
+"The bar tells you things": first what moved from 0.8.0 (the import dialog, layout history, a command line
+and *Send to*), then the command tile, a health light on a shortcut, folder stacks, more gauges, a
+microphone tile, a clock and timer, and paste to a bucket.
+
 ## [0.8.1] – 2026-11-06
 
 The fixes the review of 0.8.0 placed after the release: folder sync with conflict copies and storage
