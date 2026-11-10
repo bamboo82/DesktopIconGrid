@@ -586,8 +586,9 @@ public sealed class LauncherViewModelTests : IDisposable
 
         Assert.True(viewModel.LaunchByName("b"));
         Assert.Contains(_launcher.Launches, l => l.Location == @"C:\b.exe");
+        var before = dialogs.Notices.Count; // launching may report on the fake launch itself
         Assert.False(viewModel.LaunchByName("Nothing"));
-        Assert.Single(dialogs.Notices);
+        Assert.Equal(before + 1, dialogs.Notices.Count);
     }
 
     [Fact]

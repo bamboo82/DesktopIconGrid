@@ -50,6 +50,8 @@ L3: this entry covers `a95c410` and `5c0ee40`, which came without one, and the c
   with `--add`. For this, `IShellLinkW` is declared further in vtable order, up to `SetPath`. The tick only
   means the file exists; it does not check that the shortcut points at this copy. Turning it off and on again
   re-points it.
+- **Run 119 was red**: my new view-model test counted notices, and launching "B" in the test also posts the
+  fake launch's *Can't open* notice. The test now checks that the unknown name adds one. Fixed in the next commit.
 - **Tests.** Core has the parser and message tests from `a95c410`. The App tests add a pipe round trip
   (Windows only), the send-without-listener case, and adds into a named group plus launch by name.
 
