@@ -25,6 +25,9 @@ a bucket), then workspaces and sending a file to another PC.
 - Workspaces: named sets of shortcuts (*Workspaces ▸* in a shortcut's menu) that start together from the
   options or tray menu, or with `--workspace <name>`. *Remember window positions* records where each member's
   window is, and starting the workspace puts the windows back there on this PC.
+- Send a file to another PC: a **Send to PC** icon (*Add special icon*) takes dropped or pasted files and
+  sends them through the sync folder to the PC you chose; that PC puts them in its Downloads folder, marked
+  as downloaded, and tells you. Needs a sync folder on both PCs; not through Google Drive yet.
 - Every gauge's tooltip ends with a line of its last 60 samples (`▁▂▃▅▇█`).
 - **Clock** tile: the time on this PC or in another time zone. A click can start a countdown, or a Pomodoro
   (work, break, repeat, 25 and 5 minutes unless you set others), with a notification at the end of each

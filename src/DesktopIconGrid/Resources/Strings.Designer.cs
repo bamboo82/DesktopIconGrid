@@ -1914,6 +1914,24 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to “{0}” is in your Downloads folder..
+        /// </summary>
+        public static string Inbox_Received {
+            get {
+                return ResourceManager.GetString("Inbox_Received", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to File from {0}.
+        /// </summary>
+        public static string Inbox_ReceivedTitle {
+            get {
+                return ResourceManager.GetString("Inbox_ReceivedTitle", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to {0} [rest of string was truncated]";.
         /// </summary>
         public static string Item_ItemsToolTip {
@@ -4403,6 +4421,96 @@ namespace DesktopIconGrid.Resources {
         public static string Run_Title {
             get {
                 return ResourceManager.GetString("Run_Title", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Drop files on it to send them to another of your PCs through the sync folder. Th [rest of string was truncated]";.
+        /// </summary>
+        public static string SendTo_Desc {
+            get {
+                return ResourceManager.GetString("SendTo_Desc", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Send to:.
+        /// </summary>
+        public static string SendTo_Device {
+            get {
+                return ResourceManager.GetString("SendTo_Device", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Files go through the sync folder; the other PC takes them within a minute of the [rest of string was truncated]";.
+        /// </summary>
+        public static string SendTo_Hint {
+            get {
+                return ResourceManager.GetString("SendTo_Hint", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Send to PC.
+        /// </summary>
+        public static string SendTo_Name {
+            get {
+                return ResourceManager.GetString("SendTo_Name", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Send to {0}.
+        /// </summary>
+        public static string SendTo_NameFor {
+            get {
+                return ResourceManager.GetString("SendTo_NameFor", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Sending files to another PC needs a sync folder (Sync across PCs → a folder). It [rest of string was truncated]";.
+        /// </summary>
+        public static string SendTo_NeedsFolder {
+            get {
+                return ResourceManager.GetString("SendTo_NeedsFolder", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to No PC is chosen yet. Open Properties to choose one..
+        /// </summary>
+        public static string SendTo_NoDevice {
+            get {
+                return ResourceManager.GetString("SendTo_NoDevice", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to No other PC has used this sync folder with this version yet. Start Desktop Icon [rest of string was truncated]";.
+        /// </summary>
+        public static string SendTo_NoOtherPcs {
+            get {
+                return ResourceManager.GetString("SendTo_NoOtherPcs", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to {0} file(s) on the way to {1}..
+        /// </summary>
+        public static string SendTo_Sent {
+            get {
+                return ResourceManager.GetString("SendTo_Sent", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Drop files here to send them to {0}..
+        /// </summary>
+        public static string SendTo_ToolTip {
+            get {
+                return ResourceManager.GetString("SendTo_ToolTip", resourceCulture);
             }
         }
 

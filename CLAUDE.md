@@ -84,7 +84,8 @@ After removing or editing a key in the `.resx` files, run `python3 -I tools/gen_
 ## State
 
 - Released: 0.9.0 (2026-11-10, tag `v0.9.0`). In progress: 0.10.0 (see the top of `CHANGELOG.md`).
-- Open: the deferred minor list in REVIEW_NOTES entry 36; P15 (scp/sftp operands, review 17); U3′'s root fix;
-  the rest of 0.10.0 (send to another PC).
+- Open: the deferred minor list in REVIEW_NOTES entry 36; P15 (scp/sftp operands, review 17); U3′'s root fix.
+  0.10.0's features are all in; left out on purpose and listed in FEATURES: Send to PC through Google Drive,
+  the voice launch, a volume tile, drop onto a program inside a stack.
 - The owner skipped the in-app check of 0.9.0: its new UI (approval windows, paused tile and dot, gauges, Win
   as a key modifier, Send To into a group) has not been seen on a real bar.

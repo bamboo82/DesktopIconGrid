@@ -1,0 +1,47 @@
+<Window x:Class="DesktopIconGrid.Views.SendToDeviceWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:r="clr-namespace:DesktopIconGrid.Resources"
+        Title="{x:Static r:Strings.SendTo_Name}"
+        Width="460"
+        SizeToContent="Height"
+        ResizeMode="NoResize"
+        WindowStartupLocation="CenterOwner"
+        ShowInTaskbar="False"
+        Icon="{StaticResource AppIconImage}"
+        FocusManager.FocusedElement="{Binding ElementName=NameBox}">
+  <Grid Margin="14">
+    <Grid.ColumnDefinitions>
+      <ColumnDefinition Width="Auto" MinWidth="80" />
+      <ColumnDefinition Width="*" />
+    </Grid.ColumnDefinitions>
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="Auto" />
+    </Grid.RowDefinitions>
+
+    <TextBlock Grid.Row="0" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Common_NameLabel}" Margin="0,0,12,8" />
+    <TextBox x:Name="NameBox" Grid.Row="0" Grid.Column="1" Style="{StaticResource DialogTextBox}"
+             Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" />
+
+    <TextBlock Grid.Row="1" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.SendTo_Device}" Margin="0,0,12,8" />
+    <ComboBox Grid.Row="1" Grid.Column="1" Margin="0,0,0,8" VerticalContentAlignment="Center"
+              ItemsSource="{Binding Devices}" SelectedItem="{Binding SelectedDevice}" DisplayMemberPath="Name"
+              IsEnabled="{Binding HasDevices}"
+              AutomationProperties.Name="{x:Static r:Strings.SendTo_Device}" />
+
+    <TextBlock Grid.Row="2" Grid.ColumnSpan="2" TextWrapping="Wrap" Margin="0,0,0,8"
+               Foreground="{DynamicResource WarningBrush}" Text="{x:Static r:Strings.SendTo_NoOtherPcs}"
+               Visibility="{Binding HasNoDevices, Converter={StaticResource BoolToVisibility}}" />
+    <TextBlock Grid.Row="2" Grid.ColumnSpan="2" Style="{StaticResource DialogHint}" Margin="0,0,0,8"
+               Text="{x:Static r:Strings.SendTo_Hint}"
+               Visibility="{Binding HasDevices, Converter={StaticResource BoolToVisibility}}" />
+
+    <StackPanel Grid.Row="3" Grid.ColumnSpan="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,8,0,0">
+      <Button Content="{x:Static r:Strings.Common_OK}" Style="{StaticResource DialogButton}" IsDefault="True" IsEnabled="{Binding CanSave}" Click="Ok_Click" />
+      <Button Content="{x:Static r:Strings.Common_Cancel}" Style="{StaticResource DialogButton}" IsCancel="True" />
+    </StackPanel>
+  </Grid>
+</Window>

@@ -1,0 +1,111 @@
+using System.IO;
+using System.Windows;
+using DesktopIconGrid.Core.Diagnostics;
+using DesktopIconGrid.Core.Launching;
+using DesktopIconGrid.Core.Models;
+using DesktopIconGrid.Core.SpecialIcons;
+using DesktopIconGrid.Core.Sync;
+using DesktopIconGrid.Resources;
+using DesktopIconGrid.Services;
+using DesktopIconGrid.ViewModels;
+using DesktopIconGrid.Views;
+
+namespace DesktopIconGrid.SpecialIcons;
+
+/// <summary>
+/// "Send to PC": drop files on it (or paste them) and they go to another PC that shares the sync folder, which puts
+/// them in its Downloads folder (<see cref="InboxService"/>). Only with a sync folder.
+/// </summary>
+public sealed class SendToDeviceHandler(Func<FolderInbox?> inbox, IDialogService dialogs, Func<Window?> ownerProvider, string pasteDirectory) : ISpecialIconHandler
+{
+    public const string DeviceIdKey = "deviceId";
+    public const string DeviceNameKey = "deviceName";
+
+    public string Kind => SpecialIconKinds.SendToDevice;
+
+    public string DisplayName => Strings.SendTo_Name;
+
+    public string Description => Strings.SendTo_Desc;
+
+    public SpecialIconItem CreateItem() => new() { Name = Strings.SendTo_Name, Kind = Kind };
+
+    public GaugeState? CreateState(SpecialIconItem item) => null;
+
+    public string? GetToolTip(SpecialIconItem item) =>
+        item.GetSetting(DeviceNameKey) is { } name ? string.Format(Strings.SendTo_ToolTip, name) : Strings.SendTo_NoDevice;
+
+    public LaunchResult Activate(SpecialIconItem item, ActivationModifiers modifiers) =>
+        LaunchResult.Failure(item.GetSetting(DeviceIdKey) is null ? Strings.SendTo_NoDevice : string.Format(Strings.SendTo_ToolTip, item.GetSetting(DeviceNameKey)));
+
+    public bool AcceptsFileDrops(SpecialIconItem item) => item.GetSetting(DeviceIdKey) is not null;
+
+    public bool AcceptsPaste(SpecialIconItem item) => AcceptsFileDrops(item);
+
+    public Task<LaunchResult> PasteAsync(SpecialIconItem item)
+    {
+        var files = ClipboardFiles.Take(pasteDirectory, DateTime.Now);
+        return files.Count == 0 ? Task.FromResult(LaunchResult.Failure(Strings.Bucket_NothingToPaste)) : DropFilesAsync(item, files);
+    }
+
+    public async Task<LaunchResult> DropFilesAsync(SpecialIconItem item, IReadOnlyList<string> paths)
+    {
+        if (item.GetSetting(DeviceIdKey) is not { } target)
+        {
+            return LaunchResult.Failure(Strings.SendTo_NoDevice);
+        }
+
+        if (inbox() is not { } mine)
+        {
+            return LaunchResult.Failure(Strings.SendTo_NeedsFolder);
+        }
+
+        var (sent, problems) = await Task.Run(() => Send(mine, target, paths));
+        if (sent > 0)
+        {
+            dialogs.Notify(item.Name, string.Format(Strings.SendTo_Sent, sent, item.GetSetting(DeviceNameKey) ?? target[..8]));
+        }
+
+        return problems.Count == 0 ? LaunchResult.Started : LaunchResult.Failure(string.Join("\n", problems));
+    }
+
+    internal static (int Sent, List<string> Problems) Send(FolderInbox mine, string target, IReadOnlyList<string> paths)
+    {
+        var sent = 0;
+        var problems = new List<string>();
+        foreach (var path in paths)
+        {
+            try
+            {
+                mine.Send(target, path);
+                sent++;
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                problems.Add($"{Path.GetFileName(path.TrimEnd('\\'))}: {ex.Message}");
+                AppLog.Default.Warning("Inbox", $"\"{path}\" was not sent: {ex.Message}");
+            }
+        }
+
+        return (sent, problems);
+    }
+
+    public bool ShowProperties(SpecialIconItem item, bool isNew)
+    {
+        ArgumentNullException.ThrowIfNull(item);
+        if (inbox() is not { } mine)
+        {
+            dialogs.Notify(DisplayName, Strings.SendTo_NeedsFolder);
+            return false;
+        }
+
+        var viewModel = new SendToDeviceViewModel(item, mine.Devices());
+        var window = new SendToDeviceWindow { DataContext = viewModel, Owner = ownerProvider() };
+        if (window.ShowDialog() != true)
+        {
+            return false;
+        }
+
+        viewModel.Apply(item);
+        return true;
+    }
+}

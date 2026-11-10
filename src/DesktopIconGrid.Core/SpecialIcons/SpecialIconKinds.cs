@@ -22,6 +22,9 @@ public static class SpecialIconKinds
     /// <summary>The time, here or in another zone, with a countdown or Pomodoro on a click (0.10.0).</summary>
     public const string Clock = "clock";
 
+    /// <summary>Sends dropped files to another PC of the sync folder (0.10.0).</summary>
+    public const string SendToDevice = "send-to-device";
+
     public const string GoogleDriveBucket = "google-drive-bucket";
     public const string SoundReplayer = "sound-replayer";
 

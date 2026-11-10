@@ -264,6 +264,15 @@ their tooltips end with a line of the last 60 samples (`▁▂▃▅▇█`; the
   there is no microphone; it follows mutes made elsewhere within 2 seconds. As a ring or bar it shows
   the microphone's level. Not in: a volume tile that takes the mouse wheel.
 
+- **Send to PC** (0.10.0) — drop files on it (or `Ctrl+V` with it focused) to send them to another PC
+  that uses the same sync folder; its properties pick the PC. Each PC that runs 0.10.0 with a sync folder
+  has a folder `inbox\<device id>` there with its name; a sent file is copied into the target's inbox
+  (up to 2 GB; folders are not sent). The receiving PC looks once a minute while the bar runs, moves
+  what waits into its Downloads folder under a free name, marks it as downloaded from another computer
+  (so SmartScreen and Protected View apply), and shows a notification. Nothing received is opened.
+  Whoever can write to the sync folder can send, as they can change the synced bar. Not in: sending
+  through Google Drive; a click that opens the received file's folder.
+
 - **Clock** (0.10.0) — the time (`14:05`) on this PC or in a time zone you pick. *On a click* can be
   nothing, a countdown of N minutes, or a Pomodoro (N minutes of work, a break, and again until
   clicked). While it runs the tile shows what is left (green for work, amber for a break), each phase
@@ -702,7 +711,7 @@ same way.
 
 **0.10.0 "Bigger moves"** *(in progress)* — first what was planned for 0.9.0 and is not in it: more gauges
 (memory, battery, network and the sparkline: in), the clock and timer tile (in), folder
-stacks (in), paste to a bucket (in), microphone tile (in). Then: workspaces (in) (Multi Launch that puts windows back); send a file to another PC;
+stacks (in), paste to a bucket (in), microphone tile (in). Then: workspaces (in), send a file to another PC (in, through a sync folder) (Multi Launch that puts windows back); send a file to another PC;
 voice launch, if the spike says yes.
 
 **1.0.0 "Ship it"** — the existing backlog: installer (MSIX/winget), code signing, toast notifications.

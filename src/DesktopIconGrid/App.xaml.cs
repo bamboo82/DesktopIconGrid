@@ -33,6 +33,7 @@ public partial class App : Application
     private Mutex? _instanceMutex;
     private EventWaitHandle? _showEvent;
     private CommandPipe? _commandPipe;
+    private InboxService? _inbox;
     private RegisteredWaitHandle? _showWait;
     private ProcessTracker? _tracker;
     private SystemMonitor? _monitor;
@@ -137,6 +138,7 @@ public partial class App : Application
         Func<Window?> owner = () => Current?.MainWindow;
         var cacheDirectory = AppPaths.DriveCacheDirectory;
         var trust = new CommandTrust(Path.Combine(AppPaths.DataDirectory, CommandTrust.FileName)); // command tiles and health checks
+        _inbox = new InboxService(syncService, dialogs.Notify, Dispatcher);
         var specialIcons = new SpecialIconRegistry([
             new CpuUsageHandler(_monitor, owner),
             new DiskUsageHandler(_monitor, owner),
@@ -146,6 +148,7 @@ public partial class App : Application
             new MicrophoneMuteHandler(_monitor, owner),
             new DriveBucketHandler(syncService, dialogs, owner, icons, cacheDirectory, Dispatcher),
             new SoundReplayerHandler(owner, AppPaths.SoundsDirectory, Dispatcher),
+            new SendToDeviceHandler(_inbox.Current, dialogs, owner, Path.Combine(cacheDirectory, "pasted")),
             new ClockTileHandler(dialogs.Notify, owner, Dispatcher),
             new CommandTileHandler(trust, owner, Dispatcher),
         ]);
@@ -237,6 +240,7 @@ public partial class App : Application
         }
 
         ListenForShowRequests(window);
+        _inbox.Start();
         _commandPipe = new CommandPipe(received => Dispatcher.BeginInvoke(() => window.Run(received)));
         _commandPipe.Start();
         if (commands.Count > 0)
@@ -280,6 +284,7 @@ public partial class App : Application
         AppLog.Default.Info("App", "Exiting");
         SystemEvents.UserPreferenceChanged -= OnUserPreferenceChanged;
         _commandPipe?.Dispose();
+        _inbox?.Dispose();
         CommandTileRunner.StopAll(); // a command tile's run must not outlive the bar
         _showWait?.Unregister(null);
         _showEvent?.Dispose();

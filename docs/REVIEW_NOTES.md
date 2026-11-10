@@ -9,6 +9,39 @@ The owner relays replies.
 
 ---
 
+## 2026-11-10 (48) — Send a file to another PC (ROADMAP #12), sync folder only
+
+- **Core `Sync.FolderInbox`.**
+  - Layout in the sync folder: `inbox\<device id>\device.json` (`{name}`), and sent files as
+    `<sender id>~<safe name>`, copied as `.part` and then renamed.
+  - `IsDeviceId` accepts exactly 32 hex digits. Nothing else is ever used as a folder name, and `Send` refuses
+    itself, unknown targets, folders and files over 2 GB.
+  - `Pending` takes only files whose name starts with a 32-hex id and `~`. It skips `.part` and oversized
+    files and returns at most 20 per look, oldest first.
+  - `Receive` copies to a free name in the destination (never overwriting), then deletes the inbox copy. The
+    name goes through `FileNames.Safe` again, so `..\` cannot leave the folder (test).
+  - Device names shown are stripped of control and format characters and cut at 64.
+- **App.**
+  - `Services.InboxService`: a 1-minute timer that works only when `SyncService.UsesFolder`. It announces this
+    PC, takes pending files to the Downloads folder (`SHGetKnownFolderPath`), writes `Zone.Identifier` with
+    ZoneId=3, logs, and notifies. Nothing is opened.
+  - `SendToDeviceHandler` (kind `send-to-device`): stores `deviceId` / `deviceName`, accepts file drops and
+    paste, sends on a worker thread, and reports what was not sent.
+- **Trust, to look at hardest.**
+  - The sync folder is the boundary: whoever can write there can drop a file into this PC's Downloads, up to
+    20 per minute at 2 GB each, with any name and extension, including `.exe` and `.lnk`. MOTW is the only
+    guard on opening. I did not add a per-sender approval, because the same party can already replace the
+    synced layout. Tell me if received files should wait for a click instead, or go to a subfolder.
+  - The sender id in a file name is not authenticated; it is only a label.
+  - A synced `send-to-device` icon carries another PC's id. Dropping a file on it sends that file there: the
+    drop is the user's act, but the target was chosen elsewhere. The tooltip names the PC.
+- **Not done.** The Google Drive transport: the roadmap's `inbox/<deviceId>/` on Drive needs folder calls that
+  `IDriveClient` does not have, and I kept this change to what Core can test. Also not done: a notification
+  click that opens the folder.
+- **Tests.** Core `FolderInboxTests`: send, receive and unique name, strays ignored, traversal, refusals. App:
+  the handler's send and report, the dialog, MOTW on Windows. The timer and notifications are untested.
+- Run 136 (`9e505d1`, workspaces) is green.
+
 ## 2026-11-10 (47) — Workspaces (ROADMAP #4)
 
 - **Model.** `ShortcutItem.Workspaces` (names, null when none) sits beside the unchanged `MultiLaunch` flag, which

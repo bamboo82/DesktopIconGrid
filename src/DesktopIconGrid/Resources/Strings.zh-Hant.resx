@@ -2231,4 +2231,40 @@
   <data name="Workspace_None" xml:space="preserve">
     <value>沒有名為「{0}」的工作區。</value>
   </data>
+  <data name="SendTo_Name" xml:space="preserve">
+    <value>傳送到電腦</value>
+  </data>
+  <data name="SendTo_NameFor" xml:space="preserve">
+    <value>傳送到 {0}</value>
+  </data>
+  <data name="SendTo_Desc" xml:space="preserve">
+    <value>將檔案拖放到此圖示，即可透過同步資料夾傳送到您的另一台電腦，並存入該電腦的「下載」資料夾。</value>
+  </data>
+  <data name="SendTo_Device" xml:space="preserve">
+    <value>傳送到：</value>
+  </data>
+  <data name="SendTo_ToolTip" xml:space="preserve">
+    <value>將檔案拖放到這裡以傳送到 {0}。</value>
+  </data>
+  <data name="SendTo_NoDevice" xml:space="preserve">
+    <value>尚未選擇電腦。請開啟「內容」選擇。</value>
+  </data>
+  <data name="SendTo_NeedsFolder" xml:space="preserve">
+    <value>傳送檔案到另一台電腦需要同步資料夾（跨電腦同步 → 資料夾）。目前尚不支援透過 Google 雲端硬碟。</value>
+  </data>
+  <data name="SendTo_NoOtherPcs" xml:space="preserve">
+    <value>尚無其他電腦以此版本使用過這個同步資料夾。請在另一台電腦上以相同的同步資料夾啟動 Desktop Icon Grid 0.10.0 或更新版本，等待資料夾同步後再開啟此視窗。</value>
+  </data>
+  <data name="SendTo_Hint" xml:space="preserve">
+    <value>檔案會經由同步資料夾傳送；另一台電腦的列執行時，會在檔案到達後一分鐘內取走。</value>
+  </data>
+  <data name="SendTo_Sent" xml:space="preserve">
+    <value>{0} 個檔案正在傳送到 {1}。</value>
+  </data>
+  <data name="Inbox_ReceivedTitle" xml:space="preserve">
+    <value>來自 {0} 的檔案</value>
+  </data>
+  <data name="Inbox_Received" xml:space="preserve">
+    <value>「{0}」已存入「下載」資料夾。</value>
+  </data>
 </root>
