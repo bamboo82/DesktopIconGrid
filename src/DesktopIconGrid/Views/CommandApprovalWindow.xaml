@@ -1,0 +1,25 @@
+<Window x:Class="DesktopIconGrid.Views.CommandApprovalWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:r="clr-namespace:DesktopIconGrid.Resources"
+        Title="{x:Static r:Strings.Command_ApproveTitle}"
+        Width="560"
+        SizeToContent="Height"
+        ResizeMode="NoResize"
+        WindowStartupLocation="CenterOwner"
+        ShowInTaskbar="False"
+        Icon="{StaticResource AppIconImage}"
+        FocusManager.FocusedElement="{Binding ElementName=CancelButton}">
+  <StackPanel Margin="14">
+    <TextBlock x:Name="Intro" TextWrapping="Wrap" Margin="0,0,0,8" />
+    <!-- Everything that runs, wrapped and scrollable: a long field cannot hide its end past the edge. -->
+    <TextBox x:Name="Command" IsReadOnly="True" TextWrapping="Wrap" AcceptsReturn="True"
+             FontFamily="Consolas, Courier New" MaxHeight="280" MinHeight="80"
+             VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
+             AutomationProperties.Name="{x:Static r:Strings.Command_ApproveTitle}" />
+    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
+      <Button Content="{x:Static r:Strings.Command_ApproveButton}" Style="{StaticResource DialogButton}" Click="Approve_Click" />
+      <Button x:Name="CancelButton" Content="{x:Static r:Strings.Common_Cancel}" Style="{StaticResource DialogButton}" IsDefault="True" IsCancel="True" />
+    </StackPanel>
+  </StackPanel>
+</Window>

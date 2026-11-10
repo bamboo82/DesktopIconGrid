@@ -81,7 +81,7 @@
                Text="{Binding OpenTarget, UpdateSourceTrigger=PropertyChanged}" />
     </StackPanel>
 
-    <TextBlock Grid.Row="9" Grid.ColumnSpan="3" Text="{x:Static r:Strings.Command_SaveApproves}" TextWrapping="Wrap"
+    <TextBlock Grid.Row="9" Grid.ColumnSpan="3" Text="{x:Static r:Strings.Command_SaveApprovesNew}" TextWrapping="Wrap"
                Foreground="{DynamicResource DialogHintBrush}" Margin="0,4,0,8" />
 
     <StackPanel Grid.Row="10" Grid.ColumnSpan="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,8,0,0">

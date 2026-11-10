@@ -63,19 +63,64 @@ public sealed class CommandTileTests : IDisposable
     }
 
     [Fact]
-    public void The_hash_covers_what_runs_and_nothing_else()
+    public void The_hash_covers_what_runs_when_and_what_a_click_opens_and_nothing_else()
     {
-        var settings = CommandTileSettings.Default with { Program = "git.exe", Arguments = "status --short", StartIn = @"C:\src" };
+        var settings = CommandTileSettings.Default with { Program = "git.exe", Arguments = "status --short", StartIn = @"C:\src", IntervalSeconds = 0 };
 
         Assert.Equal(64, settings.Hash().Length);
-        Assert.Equal(settings.Hash(), (settings with { IntervalSeconds = 600, Display = CommandTileDisplay.Bar, Click = CommandTileClick.Open, OpenTarget = "x" }).Hash());
+        // Display and thresholds do not change what runs or when.
+        Assert.Equal(settings.Hash(), (settings with { Display = CommandTileDisplay.Bar, WarningAt = 1, CriticalAt = 2, TimeoutSeconds = 5 }).Hash());
+        Assert.Equal(settings.Hash(), (settings with { OpenTarget = "ignored while a click runs it" }).Hash());
         Assert.NotEqual(settings.Hash(), (settings with { Arguments = "status" }).Hash());
         Assert.NotEqual(settings.Hash(), (settings with { StartIn = @"C:\other" }).Hash());
         Assert.NotEqual(settings.Hash(), (settings with { Program = "git2.exe" }).Hash());
+        // A click-only command must not become an unattended one through a synced edit (review 21 T1).
+        Assert.NotEqual(settings.Hash(), (settings with { IntervalSeconds = 10 }).Hash());
+        Assert.NotEqual((settings with { IntervalSeconds = 60 }).Hash(), (settings with { IntervalSeconds = 10 }).Hash());
+        // What a click opens is part of it.
+        var opens = settings with { Click = CommandTileClick.Open, OpenTarget = @"C:\src" };
+        Assert.NotEqual(settings.Hash(), opens.Hash());
+        Assert.NotEqual(opens.Hash(), (opens with { OpenTarget = @"\\evil\share\x.exe" }).Hash());
         // A field's end must not slide into the next one.
         Assert.NotEqual(
             (settings with { Arguments = "a", StartIn = null }).Hash(),
             (settings with { Arguments = null, StartIn = "a" }).Hash());
+    }
+
+    [Theory]
+    [InlineData("echo ok\u202E")] // a right-to-left override: what is shown would not read as what runs
+    [InlineData("echo\u200Bok")] // zero width
+    [InlineData("echo ok\u2028& del x")] // line separator
+    [InlineData("echo ok\r\n")]
+    public void A_field_with_an_invisible_or_reordering_character_cannot_run(string arguments)
+    {
+        var settings = CommandTileSettings.Default with { Program = "cmd.exe", Arguments = arguments };
+
+        Assert.NotNull(settings.Problem());
+        Assert.False(CommandTileSettings.IsShowable(arguments));
+        Assert.True(CommandTileSettings.IsShowable("echo 好 ok"));
+    }
+
+    [Fact]
+    public void Values_written_by_hand_are_clamped_when_read()
+    {
+        var item = new SpecialIconItem { Kind = SpecialIconKinds.CommandTile };
+        item.SetSetting(CommandTileSettings.ProgramKey, "x.exe");
+        item.SetSetting(CommandTileSettings.IntervalKey, "3");
+        item.SetSetting(CommandTileSettings.TimeoutKey, "5000");
+
+        var read = CommandTileSettings.From(item); // not through ApplyTo, which clamps too
+
+        Assert.Equal(CommandTileSettings.MinIntervalSeconds, read.IntervalSeconds);
+        Assert.Equal(CommandTileSettings.MaxTimeoutSeconds, read.TimeoutSeconds);
+    }
+
+    [Fact]
+    public void Shown_output_lines_are_cut()
+    {
+        var reading = CommandTileOutput.Read(CommandTileSettings.Default with { Program = "x" }, new string('x', 5000), null, 0);
+
+        Assert.Equal(CommandTileOutput.MaxShownLineLength, reading.Output.Length);
     }
 
     [Theory]

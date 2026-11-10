@@ -30,6 +30,15 @@ public static class OutputCapture
         return extension.Length == 0 && ExecutableLocator.Find(file + ".exe") is not null;
     }
 
+    /// <summary>
+    /// The command processor by its full path (<c>%ComSpec%</c>, else System32's): a bare <c>cmd.exe</c> is looked for in
+    /// the app's own folder first.
+    /// </summary>
+    public static string CommandProcessor =>
+        Environment.GetEnvironmentVariable("ComSpec") is { Length: > 0 } comSpec && Path.IsPathFullyQualified(comSpec)
+            ? comSpec
+            : Path.Combine(Environment.SystemDirectory, "cmd.exe");
+
     /// <summary>A copy of <paramref name="source"/> that redirects output; batch files run through <c>cmd.exe /c</c>.</summary>
     public static ProcessStartInfo WithCapture(ProcessStartInfo source)
     {
@@ -38,7 +47,7 @@ public static class OutputCapture
         if (BatchExtensions.Contains(Path.GetExtension(source.FileName)))
         {
             var arguments = string.IsNullOrWhiteSpace(source.Arguments) ? string.Empty : " " + source.Arguments;
-            captured = new ProcessStartInfo("cmd.exe") { Arguments = $"/d /c \"\"{source.FileName}\"{arguments}\"" };
+            captured = new ProcessStartInfo(CommandProcessor) { Arguments = $"/d /c \"\"{source.FileName}\"{arguments}\"" };
         }
         else
         {

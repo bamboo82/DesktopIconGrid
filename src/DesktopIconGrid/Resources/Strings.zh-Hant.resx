@@ -1878,7 +1878,7 @@
     <value>命令圖示</value>
   </data>
   <data name="Command_Desc" xml:space="preserve">
-    <value>依時間或點按執行命令（不開視窗），並顯示其輸出或其中的數字。</value>
+    <value>依時間或按一下執行命令（不開視窗），並顯示其輸出或其中的數字。</value>
   </data>
   <data name="Command_DefaultName" xml:space="preserve">
     <value>命令</value>
@@ -1893,13 +1893,13 @@
     <value>參數：</value>
   </data>
   <data name="Command_StartIn" xml:space="preserve">
-    <value>起始位置：</value>
+    <value>開始位置：</value>
   </data>
   <data name="Command_Every" xml:space="preserve">
     <value>執行間隔（秒）：</value>
   </data>
   <data name="Command_EveryHint" xml:space="preserve">
-    <value>0 表示只在點按時執行；否則至少 10。</value>
+    <value>0 表示只在按一下時執行；否則至少 10。</value>
   </data>
   <data name="Command_Timeout" xml:space="preserve">
     <value>時間上限（秒）：</value>
@@ -1926,7 +1926,7 @@
     <value>紅色起點：</value>
   </data>
   <data name="Command_Click" xml:space="preserve">
-    <value>點按時：</value>
+    <value>按一下時：</value>
   </data>
   <data name="Command_ClickRun" xml:space="preserve">
     <value>立即執行</value>
@@ -1934,29 +1934,17 @@
   <data name="Command_ClickOpen" xml:space="preserve">
     <value>改為開啟：</value>
   </data>
-  <data name="Command_SaveApproves" xml:space="preserve">
-    <value>儲存即核准此命令在這台電腦上執行。透過同步取得此列的其他電腦，會先暫停，直到在該電腦上核准為止。結束代碼決定顏色：0 綠色、1 黃色，其他為紅色。</value>
-  </data>
   <data name="Command_NotRunYet" xml:space="preserve">
     <value>尚未執行</value>
   </data>
   <data name="Command_Paused" xml:space="preserve">
-    <value>已在這台電腦上暫停：此命令是隨列從別處而來（同步、還原或匯入）。點按以檢視並核准。</value>
+    <value>已在這台電腦上暫停：此命令是隨列從別處而來（同步、還原或匯入）。按一下以檢視並核准。</value>
   </data>
   <data name="Command_NotSet" xml:space="preserve">
     <value>尚未設定程式。請開啟「內容」設定。</value>
   </data>
   <data name="Command_ApproveTitle" xml:space="preserve">
     <value>要在這台電腦上執行此命令嗎？</value>
-  </data>
-  <data name="Command_ApproveQuestion" xml:space="preserve">
-    <value>此命令圖示是隨列而來，尚未在這台電腦上核准。
-
-程式：{0}
-參數：{1}
-起始位置：{2}
-
-要核准它在這裡執行（現在及依時間）嗎？</value>
   </data>
   <data name="Command_Ran" xml:space="preserve">
     <value>結束代碼 {0}，於 {1}，耗時 {2} 秒</value>
@@ -2017,5 +2005,32 @@
   </data>
   <data name="Settings_HotkeyUsedInBar" xml:space="preserve">
     <value>{0} 是此列視窗的按鍵（{1}）。系統全域快速鍵會在任何地方取走它；請改選其他按鍵，或先變更該按鍵。</value>
+  </data>
+  <data name="Command_ApproveIntro" xml:space="preserve">
+    <value>命令圖示「{0}」是隨列從別處而來（同步、還原或匯入），尚未在這台電腦上核准。核准後，它會完全依照下方內容在這裡執行（現在及依時間）；之後的任何變更都需要重新核准。</value>
+  </data>
+  <data name="Command_ApproveButton" xml:space="preserve">
+    <value>核准並執行</value>
+  </data>
+  <data name="Command_When" xml:space="preserve">
+    <value>執行時機：</value>
+  </data>
+  <data name="Command_RunsOnClick" xml:space="preserve">
+    <value>僅在按一下時</value>
+  </data>
+  <data name="Command_RunsEvery" xml:space="preserve">
+    <value>每 {0} 秒，不再詢問</value>
+  </data>
+  <data name="Command_ClickRuns" xml:space="preserve">
+    <value>再次執行</value>
+  </data>
+  <data name="Command_ClickOpens" xml:space="preserve">
+    <value>開啟 {0}</value>
+  </data>
+  <data name="Command_Invalid" xml:space="preserve">
+    <value>此圖示的設定無法使用。請開啟「內容」修正。</value>
+  </data>
+  <data name="Command_SaveApprovesNew" xml:space="preserve">
+    <value>儲存即核准此命令在這台電腦上執行；但若此圖示是從別處而來且仍在暫停，則只能按一下圖示來核准。在其他電腦上，它會保持暫停，直到在該電腦上核准。結束代碼決定顏色：0 綠色、1 黃色，其他為紅色。</value>
   </data>
 </root>

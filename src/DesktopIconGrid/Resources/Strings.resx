@@ -1934,9 +1934,6 @@ Details are in {1}.</value>
   <data name="Command_ClickOpen" xml:space="preserve">
     <value>Open this instead:</value>
   </data>
-  <data name="Command_SaveApproves" xml:space="preserve">
-    <value>Saving approves this command to run on this PC. On other PCs that get the bar through sync, it stays paused until it is approved there. The exit code picks the colour: 0 green, 1 amber, anything else red.</value>
-  </data>
   <data name="Command_NotRunYet" xml:space="preserve">
     <value>Not run yet</value>
   </data>
@@ -1948,15 +1945,6 @@ Details are in {1}.</value>
   </data>
   <data name="Command_ApproveTitle" xml:space="preserve">
     <value>Run this command on this PC?</value>
-  </data>
-  <data name="Command_ApproveQuestion" xml:space="preserve">
-    <value>This command tile came with the bar and has not been approved on this PC.
-
-Program: {0}
-Arguments: {1}
-Start in: {2}
-
-Approve it to run here, now and on its timer?</value>
   </data>
   <data name="Command_Ran" xml:space="preserve">
     <value>Exit code {0} at {1}, in {2} s</value>
@@ -2017,5 +2005,32 @@ Approve it to run here, now and on its timer?</value>
   </data>
   <data name="Settings_HotkeyUsedInBar" xml:space="preserve">
     <value>{0} is a key of the bar's window ({1}). A system-wide hotkey would take it from the bar everywhere; pick another, or change that key first.</value>
+  </data>
+  <data name="Command_ApproveIntro" xml:space="preserve">
+    <value>The command tile “{0}” came with the bar from elsewhere (sync, a restore or an import) and has not been approved on this PC. Approving lets it run here exactly as shown below, now and on its timer; any later change to it needs approving again.</value>
+  </data>
+  <data name="Command_ApproveButton" xml:space="preserve">
+    <value>Approve and run</value>
+  </data>
+  <data name="Command_When" xml:space="preserve">
+    <value>Runs:</value>
+  </data>
+  <data name="Command_RunsOnClick" xml:space="preserve">
+    <value>only on a click</value>
+  </data>
+  <data name="Command_RunsEvery" xml:space="preserve">
+    <value>every {0} s, without asking</value>
+  </data>
+  <data name="Command_ClickRuns" xml:space="preserve">
+    <value>runs it again</value>
+  </data>
+  <data name="Command_ClickOpens" xml:space="preserve">
+    <value>opens {0}</value>
+  </data>
+  <data name="Command_Invalid" xml:space="preserve">
+    <value>This tile's settings cannot be used. Open Properties to fix them.</value>
+  </data>
+  <data name="Command_SaveApprovesNew" xml:space="preserve">
+    <value>Saving approves this command to run on this PC, unless the tile came from elsewhere and is still paused: then only a click on the tile approves it. On other PCs it stays paused until approved there. The exit code picks the colour: 0 green, 1 amber, anything else red.</value>
   </data>
 </root>

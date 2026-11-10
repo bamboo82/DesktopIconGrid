@@ -137,7 +137,7 @@ public partial class App : Application
             new DiskUsageHandler(_monitor, owner),
             new DriveBucketHandler(syncService, dialogs, owner, icons, cacheDirectory, Dispatcher),
             new SoundReplayerHandler(owner, AppPaths.SoundsDirectory, Dispatcher),
-            new CommandTileHandler(new CommandTrust(Path.Combine(AppPaths.DataDirectory, CommandTrust.FileName)), dialogs, owner, Dispatcher),
+            new CommandTileHandler(new CommandTrust(Path.Combine(AppPaths.DataDirectory, CommandTrust.FileName)), owner, Dispatcher),
         ]);
         var launcher = new LaunchService(_tracker, dialogs);
         _windows = new WindowSwitcher();
@@ -268,6 +268,7 @@ public partial class App : Application
         AppLog.Default.Info("App", "Exiting");
         SystemEvents.UserPreferenceChanged -= OnUserPreferenceChanged;
         _commandPipe?.Dispose();
+        CommandTileRunner.StopAll(); // a command tile's run must not outlive the bar
         _showWait?.Unregister(null);
         _showEvent?.Dispose();
         _monitor?.Dispose();

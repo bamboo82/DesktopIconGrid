@@ -645,11 +645,20 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to This command tile came with the bar and has not been approved on this PC. [rest of string was truncated]";.
+        ///   Looks up a localized string similar to Approve and run.
         /// </summary>
-        public static string Command_ApproveQuestion {
+        public static string Command_ApproveButton {
             get {
-                return ResourceManager.GetString("Command_ApproveQuestion", resourceCulture);
+                return ResourceManager.GetString("Command_ApproveButton", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The command tile “{0}” came with the bar from elsewhere (sync, a restore or an i [rest of string was truncated]";.
+        /// </summary>
+        public static string Command_ApproveIntro {
+            get {
+                return ResourceManager.GetString("Command_ApproveIntro", resourceCulture);
             }
         }
 
@@ -690,11 +699,29 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to opens {0}.
+        /// </summary>
+        public static string Command_ClickOpens {
+            get {
+                return ResourceManager.GetString("Command_ClickOpens", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Run it now.
         /// </summary>
         public static string Command_ClickRun {
             get {
                 return ResourceManager.GetString("Command_ClickRun", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to runs it again.
+        /// </summary>
+        public static string Command_ClickRuns {
+            get {
+                return ResourceManager.GetString("Command_ClickRuns", resourceCulture);
             }
         }
 
@@ -749,6 +776,15 @@ namespace DesktopIconGrid.Resources {
         public static string Command_EveryHint {
             get {
                 return ResourceManager.GetString("Command_EveryHint", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to This tile's settings cannot be used. Open Properties to fix them..
+        /// </summary>
+        public static string Command_Invalid {
+            get {
+                return ResourceManager.GetString("Command_Invalid", resourceCulture);
             }
         }
 
@@ -834,11 +870,29 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Saving approves this command to run on this PC. On other PCs that get the bar th [rest of string was truncated]";.
+        ///   Looks up a localized string similar to every {0} s, without asking.
         /// </summary>
-        public static string Command_SaveApproves {
+        public static string Command_RunsEvery {
             get {
-                return ResourceManager.GetString("Command_SaveApproves", resourceCulture);
+                return ResourceManager.GetString("Command_RunsEvery", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to only on a click.
+        /// </summary>
+        public static string Command_RunsOnClick {
+            get {
+                return ResourceManager.GetString("Command_RunsOnClick", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Saving approves this command to run on this PC, unless the tile came from elsewh [rest of string was truncated]";.
+        /// </summary>
+        public static string Command_SaveApprovesNew {
+            get {
+                return ResourceManager.GetString("Command_SaveApprovesNew", resourceCulture);
             }
         }
 
@@ -929,6 +983,15 @@ namespace DesktopIconGrid.Resources {
         public static string Command_WarningAt {
             get {
                 return ResourceManager.GetString("Command_WarningAt", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Runs:.
+        /// </summary>
+        public static string Command_When {
+            get {
+                return ResourceManager.GetString("Command_When", resourceCulture);
             }
         }
 

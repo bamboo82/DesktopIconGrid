@@ -125,9 +125,9 @@ public sealed record CommandTileSettings(
             return "No program is set.";
         }
 
-        if (new[] { Program, Arguments, StartIn, OpenTarget }.Any(text => text is not null && (text.Length > MaxTextLength || text.Any(c => char.IsControl(c)))))
+        if (new[] { Program, Arguments, StartIn, OpenTarget }.Any(text => text is not null && (text.Length > MaxTextLength || !IsShowable(text))))
         {
-            return "A field is too long or holds a line break.";
+            return "A field is too long, or holds a line break or an invisible character.";
         }
 
         if (Click == CommandTileClick.Open && string.IsNullOrWhiteSpace(OpenTarget))
@@ -139,15 +139,32 @@ public sealed record CommandTileSettings(
     }
 
     /// <summary>
-    /// What is approved on a PC: the program, its arguments and its start folder, exactly as stored (an edit anywhere,
-    /// including on another PC through sync, makes a new hash that needs approving again). Timer, display and click are
-    /// not part of it: they do not change what runs.
+    /// What is approved on a PC: the program, its arguments, its start folder, its timer (a click-only command must not
+    /// become an unattended one through a synced edit) and, when a click opens something, what it opens, exactly as
+    /// stored. An edit of any of these, on any PC, makes a new hash that needs approving again. The display and the
+    /// thresholds are not part of it: they do not change what runs or when.
     /// </summary>
     public string Hash()
     {
-        var text = string.Join('\n', "command-tile/1", Program.Trim(), Arguments?.Trim() ?? string.Empty, StartIn?.Trim() ?? string.Empty);
+        var text = string.Join(
+            '\n',
+            "command-tile/2",
+            Program.Trim(),
+            Arguments?.Trim() ?? string.Empty,
+            StartIn?.Trim() ?? string.Empty,
+            NormalizeInterval(IntervalSeconds).ToString(CultureInfo.InvariantCulture),
+            Click == CommandTileClick.Open ? "open:" + (OpenTarget?.Trim() ?? string.Empty) : "run");
         return Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(text)));
     }
+
+    /// <summary>
+    /// No character that changes how the rest reads without being seen: controls (line breaks), format characters
+    /// (bidi overrides such as U+202E, zero-width characters) and the Unicode line and paragraph separators. What the
+    /// approval window shows must read as what runs.
+    /// </summary>
+    public static bool IsShowable(string text) =>
+        !text.Any(c => char.GetUnicodeCategory(c) is UnicodeCategory.Control or UnicodeCategory.Format
+            or UnicodeCategory.LineSeparator or UnicodeCategory.ParagraphSeparator);
 
     private static int? ReadInt(string? text) =>
         int.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out var value) ? value : null;
@@ -170,6 +187,9 @@ public static partial class CommandTileOutput
 
     public const int MaxOutputLines = 6;
 
+    /// <summary>The longest output line shown in the tooltip (the run's whole output can be one line of 64 K).</summary>
+    public const int MaxShownLineLength = 200;
+
     /// <summary>The reading of a run that ended with <paramref name="exitCode"/>, or did not end in time (<paramref name="exitCode"/> null).</summary>
     public static CommandTileReading Read(CommandTileSettings settings, string? output, string? errors, int? exitCode)
     {
@@ -184,11 +204,11 @@ public static partial class CommandTileOutput
             _ => CommandLevel.Failed,
         };
 
-        var shown = string.Join('\n', lines.Concat(errorLines).Take(MaxOutputLines));
+        var shown = string.Join('\n', lines.Concat(errorLines).Take(MaxOutputLines).Select(line => Shorten(line, MaxShownLineLength)));
         if (!settings.ShowsGauge)
         {
             var first = lines.FirstOrDefault() ?? errorLines.FirstOrDefault();
-            var label = first is null ? (exitCode is null ? "…" : exitCode == 0 ? "✓" : exitCode.Value.ToString(CultureInfo.InvariantCulture)) : Shorten(first);
+            var label = first is null ? (exitCode is null ? "…" : exitCode == 0 ? "✓" : exitCode.Value.ToString(CultureInfo.InvariantCulture)) : Shorten(first, MaxLabelLength);
             return new CommandTileReading(label, null, level, shown);
         }
 
@@ -214,7 +234,7 @@ public static partial class CommandTileOutput
     private static List<string> Lines(string? text) =>
         (text ?? string.Empty).Split('\n').Select(line => line.Trim()).Where(line => line.Length > 0).ToList();
 
-    private static string Shorten(string line) => line.Length > MaxLabelLength ? line[..(MaxLabelLength - 1)] + "…" : line;
+    public static string Shorten(string line, int length) => line.Length > length ? line[..(length - 1)] + "…" : line;
 
     [GeneratedRegex(@"-?\d+(\.\d+)?")]
     private static partial Regex NumberPattern();

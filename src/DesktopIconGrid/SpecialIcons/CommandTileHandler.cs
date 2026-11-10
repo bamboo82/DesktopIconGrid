@@ -15,11 +15,26 @@ namespace DesktopIconGrid.SpecialIcons;
 
 /// <summary>
 /// The command tile: runs a program on a timer or a click and shows its output. It runs only once its command is
-/// approved on this PC (<see cref="CommandTrust"/>); until then it shows a pause sign, and a click asks.
+/// approved on this PC (<see cref="CommandTrust"/>); until then it shows a pause sign, and a click asks in a window of
+/// its own (<see cref="CommandApprovalWindow"/>) that shows everything the approval covers.
 /// </summary>
-public sealed class CommandTileHandler(CommandTrust trust, IDialogService dialogs, Func<Window?> ownerProvider, Dispatcher dispatcher) : ISpecialIconHandler
+public sealed class CommandTileHandler : ISpecialIconHandler
 {
+    private readonly CommandTrust _trust;
+    private readonly Func<Window?> _ownerProvider;
+    private readonly Dispatcher _dispatcher;
+    private readonly Func<string, CommandTileSettings, bool> _askApproval;
     private readonly ConditionalWeakTable<SpecialIconItem, CommandTileSession> _sessions = [];
+    private string? _savedHere;
+
+    /// <param name="askApproval">Asks whether the tile (by name) may run as shown; the approval window when not given (tests pass their own).</param>
+    public CommandTileHandler(CommandTrust trust, Func<Window?> ownerProvider, Dispatcher dispatcher, Func<string, CommandTileSettings, bool>? askApproval = null)
+    {
+        _trust = trust;
+        _ownerProvider = ownerProvider;
+        _dispatcher = dispatcher;
+        _askApproval = askApproval ?? AskInWindow;
+    }
 
     public string Kind => SpecialIconKinds.CommandTile;
 
@@ -38,6 +53,14 @@ public sealed class CommandTileHandler(CommandTrust trust, IDialogService dialog
     {
         ArgumentNullException.ThrowIfNull(item);
         var settings = CommandTileSettings.From(item);
+        if (_savedHere is { } saved && saved == settings.Hash() && settings.Problem() is null)
+        {
+            // Saved in Properties on this PC (ShowProperties): approved now, after the edit reached the bar and the tile's
+            // old session was stopped, so the command does not start in the old session first.
+            _savedHere = null;
+            Approve(item.Name, settings);
+        }
+
         var style = settings.Display switch
         {
             CommandTileDisplay.Ring => GaugeStyle.Ring,
@@ -45,7 +68,7 @@ public sealed class CommandTileHandler(CommandTrust trust, IDialogService dialog
             _ => GaugeStyle.Number,
         };
         var state = new GaugeState(item.Name, style, settings.WarningAt, settings.CriticalAt, Strings.Command_NotRunYet);
-        var session = new CommandTileSession(item.Name, settings, state, trust, dispatcher);
+        var session = new CommandTileSession(item.Name, settings, state, _trust, _dispatcher);
         _sessions.AddOrUpdate(item, session);
         session.Start();
         return state;
@@ -57,23 +80,18 @@ public sealed class CommandTileHandler(CommandTrust trust, IDialogService dialog
         var settings = CommandTileSettings.From(item);
         if (settings.Problem() is not null)
         {
-            return LaunchResult.Failure(Strings.Command_NotSet);
+            return LaunchResult.Failure(settings.Program.Length == 0 ? Strings.Command_NotSet : Strings.Command_Invalid);
         }
 
-        if (!trust.IsApproved(settings.Hash()))
+        if (!_trust.IsApproved(settings.Hash()))
         {
-            var question = string.Format(
-                Strings.Command_ApproveQuestion,
-                settings.Program,
-                string.IsNullOrWhiteSpace(settings.Arguments) ? Strings.Command_None : settings.Arguments,
-                string.IsNullOrWhiteSpace(settings.StartIn) ? Strings.Command_None : settings.StartIn);
-            if (!dialogs.Confirm(Strings.Command_ApproveTitle, question))
+            // The snapshot shown is the one approved: a sync load while the window is open cannot change what Yes starts.
+            if (!_askApproval(item.Name, settings))
             {
                 return LaunchResult.Cancelled;
             }
 
-            AppLog.Default.Info("Commands", $"Command tile \"{item.Name}\" approved on this PC");
-            trust.Approve(settings.Hash()); // the sessions of every tile with this command start (CommandTrust.Changed)
+            Approve(item.Name, settings); // the sessions of every tile with this command start (CommandTrust.Changed)
             return LaunchResult.Started;
         }
 
@@ -90,29 +108,46 @@ public sealed class CommandTileHandler(CommandTrust trust, IDialogService dialog
     public IReadOnlyList<SpecialIconAction> GetActions(SpecialIconItem item)
     {
         var settings = CommandTileSettings.From(item);
-        var runnable = settings.Problem() is null && trust.IsApproved(settings.Hash());
+        var runnable = settings.Problem() is null && _trust.IsApproved(settings.Hash());
         return [new SpecialIconAction(Strings.Command_RunNow, () => RunNow(item), runnable)];
     }
 
     public bool ShowProperties(SpecialIconItem item, bool isNew)
     {
         ArgumentNullException.ThrowIfNull(item);
+        var before = CommandTileSettings.From(item);
+        var trustedBefore = isNew || (before.Problem() is null && _trust.IsApproved(before.Hash()));
         var viewModel = new CommandTileViewModel(item);
-        var window = new CommandTileWindow { DataContext = viewModel, Owner = ownerProvider() };
+        var window = new CommandTileWindow { DataContext = viewModel, Owner = _ownerProvider() };
         if (window.ShowDialog() != true)
         {
             return false;
         }
 
         viewModel.Apply(item);
-        var settings = CommandTileSettings.From(item);
-        if (settings.Problem() is null)
-        {
-            trust.Approve(settings.Hash()); // typed (or at least seen and saved) on this PC
-        }
-
+        NoteSaved(CommandTileSettings.From(item), trustedBefore);
         return true;
     }
+
+    /// <summary>
+    /// After a save in Properties: a new tile, or an edit of one already approved here, is approved when the edited tile
+    /// reaches the bar (<see cref="CreateState"/>). A tile that came from elsewhere and is still paused stays paused: only
+    /// the approval window, which shows all of it, lets it in.
+    /// </summary>
+    internal void NoteSaved(CommandTileSettings saved, bool trustedBefore) =>
+        _savedHere = trustedBefore && saved.Problem() is null ? saved.Hash() : null;
+
+    private void Approve(string name, CommandTileSettings settings)
+    {
+        AppLog.Default.Info("Commands", $"Command tile \"{name}\" approved on this PC");
+        if (!_trust.Approve(settings.Hash()))
+        {
+            AppLog.Default.Warning("Commands", $"The approval of \"{name}\" holds until the app ends: it could not be saved");
+        }
+    }
+
+    private bool AskInWindow(string name, CommandTileSettings settings) =>
+        new CommandApprovalWindow(name, settings) { Owner = _ownerProvider() }.ShowDialog() == true;
 
     private LaunchResult RunNow(SpecialIconItem item)
     {
@@ -160,7 +195,7 @@ internal sealed class CommandTileSession
     {
         if (_settings.Problem() is not null)
         {
-            Show("?", CommandLevel.Unknown, Strings.Command_NotSet);
+            Show("?", CommandLevel.Unknown, _settings.Program.Length == 0 ? Strings.Command_NotSet : Strings.Command_Invalid);
             return;
         }
 
@@ -171,6 +206,7 @@ internal sealed class CommandTileSession
         }
 
         _started = true;
+        Show("…", CommandLevel.Unknown, Strings.Command_Running); // not the pause sign until the first run ends
         RunNow();
         _timer?.Start();
     }
@@ -185,11 +221,6 @@ internal sealed class CommandTileSession
         _running = true;
         try
         {
-            if (_state.Detail == Strings.Command_NotRunYet)
-            {
-                Show("…", CommandLevel.Unknown, Strings.Command_Running);
-            }
-
             var run = await CommandTileRunner.RunAsync(_settings, _stop.Token);
             if (_state.IsDetached)
             {
@@ -212,11 +243,13 @@ internal sealed class CommandTileSession
 
     private void Apply(CommandRun run)
     {
-        var commandLine = string.IsNullOrWhiteSpace(_settings.Arguments) ? _settings.Program : $"{_settings.Program} {_settings.Arguments}";
+        var commandLine = CommandTileOutput.Shorten(
+            string.IsNullOrWhiteSpace(_settings.Arguments) ? _settings.Program : $"{_settings.Program} {_settings.Arguments}",
+            CommandTileOutput.MaxShownLineLength);
         var at = DateTime.Now.ToString("T", CultureInfo.CurrentCulture);
         if (run.StartError is { } error)
         {
-            Show("!", CommandLevel.Failed, $"{commandLine}\n{string.Format(Strings.Command_CouldNotStart, error)}");
+            Show("!", CommandLevel.Failed, $"{commandLine}\n{CommandTileOutput.Shorten(string.Format(Strings.Command_CouldNotStart, error), CommandTileOutput.MaxShownLineLength)}");
             Log(CommandLevel.Failed, $"could not start: {error}");
             return;
         }

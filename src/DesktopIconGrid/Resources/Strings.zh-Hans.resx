@@ -1878,7 +1878,7 @@
     <value>命令图标</value>
   </data>
   <data name="Command_Desc" xml:space="preserve">
-    <value>按时间或点击运行命令（不打开窗口），并显示其输出或其中的数字。</value>
+    <value>按时间或单击运行命令（不打开窗口），并显示其输出或其中的数字。</value>
   </data>
   <data name="Command_DefaultName" xml:space="preserve">
     <value>命令</value>
@@ -1899,7 +1899,7 @@
     <value>运行间隔（秒）：</value>
   </data>
   <data name="Command_EveryHint" xml:space="preserve">
-    <value>0 表示仅在点击时运行；否则至少 10。</value>
+    <value>0 表示仅在单击时运行；否则至少 10。</value>
   </data>
   <data name="Command_Timeout" xml:space="preserve">
     <value>时间上限（秒）：</value>
@@ -1926,7 +1926,7 @@
     <value>红色起点：</value>
   </data>
   <data name="Command_Click" xml:space="preserve">
-    <value>点击时：</value>
+    <value>单击时：</value>
   </data>
   <data name="Command_ClickRun" xml:space="preserve">
     <value>立即运行</value>
@@ -1934,29 +1934,17 @@
   <data name="Command_ClickOpen" xml:space="preserve">
     <value>改为打开：</value>
   </data>
-  <data name="Command_SaveApproves" xml:space="preserve">
-    <value>保存即批准此命令在这台电脑上运行。通过同步获得此栏的其他电脑会先暂停，直到在该电脑上批准为止。退出代码决定颜色：0 绿色、1 黄色，其他为红色。</value>
-  </data>
   <data name="Command_NotRunYet" xml:space="preserve">
     <value>尚未运行</value>
   </data>
   <data name="Command_Paused" xml:space="preserve">
-    <value>已在这台电脑上暂停：此命令是随栏从别处而来（同步、还原或导入）。点击以查看并批准。</value>
+    <value>已在这台电脑上暂停：此命令是随栏从别处而来（同步、还原或导入）。单击以查看并批准。</value>
   </data>
   <data name="Command_NotSet" xml:space="preserve">
     <value>尚未设置程序。请打开“属性”进行设置。</value>
   </data>
   <data name="Command_ApproveTitle" xml:space="preserve">
     <value>要在这台电脑上运行此命令吗？</value>
-  </data>
-  <data name="Command_ApproveQuestion" xml:space="preserve">
-    <value>此命令图标是随栏而来，尚未在这台电脑上批准。
-
-程序：{0}
-参数：{1}
-起始位置：{2}
-
-要批准它在这里运行（现在及按时间）吗？</value>
   </data>
   <data name="Command_Ran" xml:space="preserve">
     <value>退出代码 {0}，于 {1}，耗时 {2} 秒</value>
@@ -2017,5 +2005,32 @@
   </data>
   <data name="Settings_HotkeyUsedInBar" xml:space="preserve">
     <value>{0} 是此栏窗口的按键（{1}）。系统全局热键会在任何地方占用它；请改选其他按键，或先更改该按键。</value>
+  </data>
+  <data name="Command_ApproveIntro" xml:space="preserve">
+    <value>命令图标“{0}”是随栏从别处而来（同步、还原或导入），尚未在这台电脑上批准。批准后，它会完全按照下方内容在这里运行（现在及按时间）；之后的任何更改都需要重新批准。</value>
+  </data>
+  <data name="Command_ApproveButton" xml:space="preserve">
+    <value>批准并运行</value>
+  </data>
+  <data name="Command_When" xml:space="preserve">
+    <value>运行时机：</value>
+  </data>
+  <data name="Command_RunsOnClick" xml:space="preserve">
+    <value>仅在单击时</value>
+  </data>
+  <data name="Command_RunsEvery" xml:space="preserve">
+    <value>每 {0} 秒，不再询问</value>
+  </data>
+  <data name="Command_ClickRuns" xml:space="preserve">
+    <value>再次运行</value>
+  </data>
+  <data name="Command_ClickOpens" xml:space="preserve">
+    <value>打开 {0}</value>
+  </data>
+  <data name="Command_Invalid" xml:space="preserve">
+    <value>此图标的设置无法使用。请打开“属性”修正。</value>
+  </data>
+  <data name="Command_SaveApprovesNew" xml:space="preserve">
+    <value>保存即批准此命令在这台电脑上运行；但若此图标是从别处而来且仍在暂停，则只能单击图标来批准。在其他电脑上，它会保持暂停，直到在该电脑上批准。退出代码决定颜色：0 绿色、1 黄色，其他为红色。</value>
   </data>
 </root>

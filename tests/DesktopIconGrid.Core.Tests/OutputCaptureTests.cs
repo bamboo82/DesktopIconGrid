@@ -39,7 +39,7 @@ public class OutputCaptureTests
     {
         var captured = OutputCapture.WithCapture(new ProcessStartInfo("C:\\My Tools\\run.bat") { Arguments = "one two" });
 
-        Assert.Equal("cmd.exe", captured.FileName);
+        Assert.EndsWith("cmd.exe", captured.FileName, StringComparison.OrdinalIgnoreCase); // by its full path on Windows
         Assert.Equal("/d /c \"\"C:\\My Tools\\run.bat\" one two\"", captured.Arguments);
 
         var noArguments = OutputCapture.WithCapture(new ProcessStartInfo("C:\\x.cmd"));
