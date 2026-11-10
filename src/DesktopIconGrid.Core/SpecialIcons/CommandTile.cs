@@ -169,7 +169,15 @@ public sealed record CommandTileSettings(
     /// </summary>
     public static bool IsShowable(string text) =>
         !text.Any(c => char.GetUnicodeCategory(c) is UnicodeCategory.Control or UnicodeCategory.Format
-            or UnicodeCategory.LineSeparator or UnicodeCategory.ParagraphSeparator);
+            or UnicodeCategory.LineSeparator or UnicodeCategory.ParagraphSeparator
+            || (char.GetUnicodeCategory(c) is UnicodeCategory.SpaceSeparator && c != ' '))
+        && !text.Contains(new string(' ', MaxSpaceRun + 1), StringComparison.Ordinal);
+
+    /// <summary>
+    /// The longest run of spaces a field may hold: padding has to be visible ink, not a blank stretch that a drag of the
+    /// scroll bar skips (review 23). Other space characters (no-break, em, ideographic…) are refused outright.
+    /// </summary>
+    public const int MaxSpaceRun = 8;
 
     private static int? ReadInt(string? text) =>
         int.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out var value) ? value : null;

@@ -112,9 +112,13 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
     /// any edit in Properties, even of its interval (review 22 A1): its text is not one this user typed, and only
     /// <see cref="ApproveHealthCheck"/> shows all of it.
     /// </summary>
-    private void ApproveSavedHealthCheck(string? hashBefore, ShortcutItem saved)
+    /// <param name="hadCheckBefore">
+    /// The shortcut had check text before the dialog, readable or not: repairing an arrived check that did not read is
+    /// not typing one (review 23), so only a shortcut without any check text counts as "typed here".
+    /// </param>
+    private void ApproveSavedHealthCheck(string? hashBefore, bool hadCheckBefore, ShortcutItem saved)
     {
-        if (HealthCheck.HashOf(saved) is { } hash && (hashBefore is null || Trust.IsApproved(hashBefore)))
+        if (HealthCheck.HashOf(saved) is { } hash && ((hashBefore is null && !hadCheckBefore) || (hashBefore is not null && Trust.IsApproved(hashBefore))))
         {
             Trust.Approve(hash);
         }
@@ -833,7 +837,7 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
             return;
         }
 
-        ApproveSavedHealthCheck(null, draft); // typed here
+        ApproveSavedHealthCheck(null, hadCheckBefore: false, draft); // typed here
 
         Model.Insert(draft, list.Group, index);
         list.Sync();
@@ -1085,6 +1089,7 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
 
         var draft = item.Model.Clone();
         var healthBefore = item.Model is ShortcutItem shortcutBefore ? HealthCheck.HashOf(shortcutBefore) : null;
+        var hadCheckBefore = item.Model is ShortcutItem { HealthCheck: { } textBefore } && !string.IsNullOrWhiteSpace(textBefore);
         var saved = draft is SpecialIconItem specialDraft
             ? item.SpecialHandler.ShowProperties(specialDraft, isNew: false)
             : _dialogs.ShowItemProperties(draft, isNew: false);
@@ -1095,7 +1100,7 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
 
         if (draft is ShortcutItem savedShortcut)
         {
-            ApproveSavedHealthCheck(healthBefore, savedShortcut);
+            ApproveSavedHealthCheck(healthBefore, hadCheckBefore, savedShortcut);
         }
 
         Model.Update(draft);

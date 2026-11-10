@@ -92,6 +92,9 @@ public sealed class CommandTileTests : IDisposable
     [InlineData("echo\u200Bok")] // zero width
     [InlineData("echo ok\u2028& del x")] // line separator
     [InlineData("echo ok\r\n")]
+    [InlineData("/c ok\u00A0\u00A0payload")] // no-break spaces: padding without ink (review 23)
+    [InlineData("/c ok\u3000payload")] // an ideographic space
+    [InlineData("/c ok                  & payload")] // a long run of plain spaces
     public void A_field_with_an_invisible_or_reordering_character_cannot_run(string arguments)
     {
         var settings = CommandTileSettings.Default with { Program = "cmd.exe", Arguments = arguments };

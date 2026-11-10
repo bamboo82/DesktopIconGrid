@@ -248,8 +248,9 @@ Both draw the value in a design you pick (ring, bar or number) with green/amber/
   of one already approved here, approves it. A tile that comes with the bar from elsewhere (sync, a
   restored layout, an import, a hand-edited file) shows ⏸; saving its properties does not approve it,
   only a click does, which opens a window showing all of the above, wrapped, with *Cancel* as the default
-  button. Fields may not hold line breaks or invisible characters (bidi overrides, zero-width), so what
-  is shown reads as what runs. Approving a bare program name approves whatever it resolves to on this PC
+  button. Fields may not hold line breaks, invisible characters (bidi overrides, zero-width), space
+  characters other than the plain space, or more than 8 spaces in a row, so what is shown reads as what
+  runs and padding cannot hide part of it. Approving a bare program name approves whatever it resolves to on this PC
   (the app's folder first, then the system folders and `PATH`); for a batch file the arguments are cmd
   syntax. Approvals are kept per PC in `command-trust.json` in the local data folder, which is never
   synced; changing any of these on any PC needs a new approval everywhere. Runs under way are stopped

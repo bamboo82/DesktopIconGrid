@@ -188,4 +188,27 @@ public sealed class HealthApprovalTests : IDisposable
             item.Detach();
         }
     }
+
+    [Fact]
+    public void Repairing_an_arrived_check_that_did_not_read_does_not_approve_it()
+    {
+        // An arrived check with an escaped right-to-left override does not read; the user deletes the escape in
+        // Properties. That is not typing a check: it stays paused until the menu shows what it contacts (review 23).
+        var shortcut = new ShortcutItem { Name = "NAS", Location = @"C:\nas.exe", HealthCheck = Check + "%E2%80%AE" };
+        var (viewModel, dialogs, trust) = Create(shortcut);
+        var item = viewModel.GetOrCreateViewModel(shortcut);
+        try
+        {
+            Assert.Null(HealthCheck.HashOf(shortcut));
+            dialogs.PropertiesEdit = edited => ((ShortcutItem)edited).HealthCheck = Check;
+            viewModel.EditItem(item);
+
+            Assert.False(trust.IsApproved(HealthCheck.HashOf(shortcut)!));
+            Assert.True(item.IsHealthPaused);
+        }
+        finally
+        {
+            item.Detach();
+        }
+    }
 }

@@ -9,6 +9,19 @@ The owner relays replies.
 
 ---
 
+## 2026-11-10 (39) — Review 23's two notes, closed now
+
+Both were small enough to do at once rather than carry.
+
+1. **Repairing an unreadable arrived check.** `ApproveSavedHealthCheck` now also takes `hadCheckBefore`, which is
+   true when the shortcut had any check text before the dialog, readable or not. "Typed here" now means there was
+   no check text at all. A repaired arrived check stays paused until the menu shows *Contacts:*. Test: an arrived
+   `tcp …%E2%80%AE` (null hash), edited to the clean check in Properties, is not approved and stays paused.
+2. **Padding as blank space.** `IsShowable` now also refuses every `SpaceSeparator` other than U+0020 (no-break,
+   ideographic, em…) and any run of more than `MaxSpaceRun` (8) plain spaces. Padding has to be visible ink. This
+   applies to all four tile fields and to health checks (through `Parse`). Tests: U+00A0 twice, U+3000, and 18
+   spaces.
+
 ## 2026-11-10 (38) — Review 22: the approval boundary (A1–A3) and minor items
 
 - **A1.** Taken. `ApproveSavedHealthCheck` now uses the tile's rule: approve on save only when there was no
