@@ -224,7 +224,11 @@ and a kind-specific properties dialog. Available now from *Add special icon ▸*
 - **CPU usage** — the processor's busy percentage, refreshed every 2 seconds; click opens Task Manager.
 - **Disk usage** — how full a drive of your choice is, refreshed every 10 seconds; click opens the drive.
 
-Both draw the value in a design you pick (ring, bar or number) with green/amber/red levels.
+- **Memory usage** (0.10.0) — physical memory in use, refreshed every 4 seconds; click opens Task Manager.
+- **Battery** (0.10.0) — the charge, refreshed every 30 seconds; amber from 20 % and red from 10 % while
+  on battery, green while plugged in; a PC without a battery shows "…". Click opens the battery settings.
+
+All four draw the value in a design you pick (ring, bar or number) with green/amber/red levels.
 
 - **Google Drive Bucket** — a Google Drive folder. Drop files or folders on it to upload them
   (progress ring on the icon; same-name policy: keep both, replace or skip); click to open the
@@ -650,10 +654,9 @@ layout history, command line and Send To; keys of the bar's window in Settings; 
 commands from elsewhere paused until approved on each PC; a health light on a shortcut, approved the
 same way.
 
-**0.9.x / 0.10.0** — what was planned for 0.9.0 and is not in it: folder stacks; more gauges; microphone
-tile; clock and timer; paste to a bucket.
-
-**0.10.0 "Bigger moves"** — after the items above: workspaces (Multi Launch that puts windows back); send a file to another PC;
+**0.10.0 "Bigger moves"** *(in progress)* — first what was planned for 0.9.0 and is not in it: more gauges
+(memory and battery are in; network and the sparkline are not), folder stacks, microphone tile, clock and
+timer, paste to a bucket. Then: workspaces (Multi Launch that puts windows back); send a file to another PC;
 voice launch, if the spike says yes.
 
 **1.0.0 "Ship it"** — the existing backlog: installer (MSIX/winget), code signing, toast notifications.

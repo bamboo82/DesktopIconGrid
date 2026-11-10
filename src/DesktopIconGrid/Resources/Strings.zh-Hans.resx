@@ -2057,4 +2057,37 @@
   <data name="Command_ScrollToApprove" xml:space="preserve">
     <value>请滚动到文字结尾才能批准：上方所有内容就是将要运行的内容。</value>
   </data>
+  <data name="Monitor_MemoryName" xml:space="preserve">
+    <value>内存使用率</value>
+  </data>
+  <data name="Monitor_MemoryDesc" xml:space="preserve">
+    <value>显示内存的使用量。单击打开任务管理器。</value>
+  </data>
+  <data name="Monitor_MemorySummary" xml:space="preserve">
+    <value>已使用 {0}，共 {1} 内存（{2}%）</value>
+  </data>
+  <data name="Monitor_MemoryUnavailable" xml:space="preserve">
+    <value>无法获取内存使用率</value>
+  </data>
+  <data name="Monitor_BatteryName" xml:space="preserve">
+    <value>电池</value>
+  </data>
+  <data name="Monitor_BatteryDesc" xml:space="preserve">
+    <value>显示电池电量。单击打开电池设置。</value>
+  </data>
+  <data name="Monitor_BatteryCharging" xml:space="preserve">
+    <value>电池 {0}%，正在充电</value>
+  </data>
+  <data name="Monitor_BatteryOn" xml:space="preserve">
+    <value>电池 {0}%，使用电池中</value>
+  </data>
+  <data name="Monitor_BatteryPlugged" xml:space="preserve">
+    <value>电池 {0}%，已接通电源</value>
+  </data>
+  <data name="Monitor_NoBattery" xml:space="preserve">
+    <value>这台电脑没有电池</value>
+  </data>
+  <data name="Monitor_BatteryUnavailable" xml:space="preserve">
+    <value>无法获取电池状态</value>
+  </data>
 </root>

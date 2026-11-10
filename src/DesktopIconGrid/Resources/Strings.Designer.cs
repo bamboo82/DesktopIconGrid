@@ -2832,6 +2832,60 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Battery {0}%, charging.
+        /// </summary>
+        public static string Monitor_BatteryCharging {
+            get {
+                return ResourceManager.GetString("Monitor_BatteryCharging", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Shows the battery's charge. Click to open the battery settings..
+        /// </summary>
+        public static string Monitor_BatteryDesc {
+            get {
+                return ResourceManager.GetString("Monitor_BatteryDesc", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Battery.
+        /// </summary>
+        public static string Monitor_BatteryName {
+            get {
+                return ResourceManager.GetString("Monitor_BatteryName", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Battery {0}%, on battery.
+        /// </summary>
+        public static string Monitor_BatteryOn {
+            get {
+                return ResourceManager.GetString("Monitor_BatteryOn", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Battery {0}%, plugged in.
+        /// </summary>
+        public static string Monitor_BatteryPlugged {
+            get {
+                return ResourceManager.GetString("Monitor_BatteryPlugged", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The battery's state is not available.
+        /// </summary>
+        public static string Monitor_BatteryUnavailable {
+            get {
+                return ResourceManager.GetString("Monitor_BatteryUnavailable", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to CPU {0}% busy across {1} logical processors.
         /// </summary>
         public static string Monitor_CpuBusy {
@@ -2972,6 +3026,51 @@ namespace DesktopIconGrid.Resources {
         public static string Monitor_DriveSummary {
             get {
                 return ResourceManager.GetString("Monitor_DriveSummary", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Shows how much memory is in use. Click to open Task Manager..
+        /// </summary>
+        public static string Monitor_MemoryDesc {
+            get {
+                return ResourceManager.GetString("Monitor_MemoryDesc", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Memory usage.
+        /// </summary>
+        public static string Monitor_MemoryName {
+            get {
+                return ResourceManager.GetString("Monitor_MemoryName", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to {0} of {1} memory in use ({2}%).
+        /// </summary>
+        public static string Monitor_MemorySummary {
+            get {
+                return ResourceManager.GetString("Monitor_MemorySummary", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Memory usage is not available.
+        /// </summary>
+        public static string Monitor_MemoryUnavailable {
+            get {
+                return ResourceManager.GetString("Monitor_MemoryUnavailable", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to This PC has no battery.
+        /// </summary>
+        public static string Monitor_NoBattery {
+            get {
+                return ResourceManager.GetString("Monitor_NoBattery", resourceCulture);
             }
         }
 

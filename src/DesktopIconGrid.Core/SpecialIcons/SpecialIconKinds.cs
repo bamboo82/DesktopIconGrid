@@ -7,6 +7,12 @@ public static class SpecialIconKinds
 {
     public const string CpuUsage = "cpu-usage";
     public const string DiskUsage = "disk-usage";
+    /// <summary>Physical memory in use (0.10.0).</summary>
+    public const string MemoryUsage = "memory-usage";
+
+    /// <summary>Battery charge (0.10.0).</summary>
+    public const string Battery = "battery";
+
     public const string GoogleDriveBucket = "google-drive-bucket";
     public const string SoundReplayer = "sound-replayer";
 

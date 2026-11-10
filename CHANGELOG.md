@@ -3,6 +3,17 @@
 All notable changes to Desktop Icon Grid. The format follows [Keep a Changelog](https://keepachangelog.com/);
 version numbers follow [Semantic Versioning](https://semver.org/).
 
+## [0.10.0] – Unreleased
+
+What 0.9.0 planned and did not have (more gauges, folder stacks, a microphone tile, a clock and timer, paste to
+a bucket), then workspaces and sending a file to another PC.
+
+### Added
+
+- Two more gauges in *Add special icon*: **Memory usage** (physical memory in use; click opens Task Manager)
+  and **Battery** (charge, with amber from 20 % and red from 10 % while on battery; click opens the battery
+  settings). Both draw as ring, bar or number like the CPU and disk gauges.
+
 ## [0.9.0] – 2026-11-10
 
 "The bar tells you things": what moved from 0.8.0 (the import dialog, layout history, a command line and

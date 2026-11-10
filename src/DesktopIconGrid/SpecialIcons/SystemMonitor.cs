@@ -3,6 +3,7 @@ using System.Globalization;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Windows.Threading;
+using DesktopIconGrid.Core.SpecialIcons;
 using DesktopIconGrid.Resources;
 
 namespace DesktopIconGrid.SpecialIcons;
@@ -71,6 +72,42 @@ public sealed class SystemMonitor : IDisposable
         }
     }
 
+    private static class NativeMethods
+    {
+        [StructLayout(LayoutKind.Sequential)]
+        public struct MEMORYSTATUSEX
+        {
+            public uint Length;
+            public uint MemoryLoad;
+            public ulong TotalPhysical;
+            public ulong AvailablePhysical;
+            public ulong TotalPageFile;
+            public ulong AvailablePageFile;
+            public ulong TotalVirtual;
+            public ulong AvailableVirtual;
+            public ulong AvailableExtendedVirtual;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct SYSTEM_POWER_STATUS
+        {
+            public byte ACLineStatus;
+            public byte BatteryFlag;
+            public byte BatteryLifePercent;
+            public byte SystemStatusFlag;
+            public uint BatteryLifeTime;
+            public uint BatteryFullLifeTime;
+        }
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        public static extern bool GlobalMemoryStatusEx(ref MEMORYSTATUSEX buffer);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        public static extern bool GetSystemPowerStatus(out SYSTEM_POWER_STATUS status);
+    }
+
     private sealed record Registration(GaugeState State, Func<(double? Percent, string Detail)> Sample, int EveryTicks);
 
     /// <summary>Disk space of one drive.</summary>
@@ -98,6 +135,56 @@ public sealed class SystemMonitor : IDisposable
         var label = string.IsNullOrWhiteSpace(drive.VolumeLabel) ? root : $"{root} ({drive.VolumeLabel})";
         return (percent, string.Format(Strings.Monitor_DriveSummary, label, FormatBytes(drive.AvailableFreeSpace), FormatBytes(total), Math.Round(percent)));
     }
+
+    /// <summary>Physical memory in use.</summary>
+    public static (double? Percent, string Detail) SampleMemory()
+    {
+        var status = new NativeMethods.MEMORYSTATUSEX { Length = (uint)Marshal.SizeOf<NativeMethods.MEMORYSTATUSEX>() };
+        if (!NativeMethods.GlobalMemoryStatusEx(ref status) || status.TotalPhysical == 0)
+        {
+            return (null, Strings.Monitor_MemoryUnavailable);
+        }
+
+        var used = status.TotalPhysical - status.AvailablePhysical;
+        var percent = used * 100.0 / status.TotalPhysical;
+        return (percent, string.Format(Strings.Monitor_MemorySummary, FormatBytes((long)used), FormatBytes((long)status.TotalPhysical), Math.Round(percent)));
+    }
+
+    /// <summary>The battery's charge, whether it is charging, or that there is none.</summary>
+    public static (double? Percent, bool OnBattery, string Detail) SampleBattery()
+    {
+        if (!NativeMethods.GetSystemPowerStatus(out var status))
+        {
+            return (null, false, Strings.Monitor_BatteryUnavailable);
+        }
+
+        return ReadBattery(status.BatteryLifePercent, status.BatteryFlag, status.ACLineStatus);
+    }
+
+    /// <summary>
+    /// Reads the three bytes of <c>SYSTEM_POWER_STATUS</c>: a percentage of 255 or flag 128 means no battery (a desktop PC),
+    /// line status 1 is mains power, flag 8 charging.
+    /// </summary>
+    internal static (double? Percent, bool OnBattery, string Detail) ReadBattery(byte percent, byte flag, byte line)
+    {
+        if (percent > 100 || (flag & 128) != 0)
+        {
+            return (null, false, Strings.Monitor_NoBattery);
+        }
+
+        var onBattery = line == 0;
+        var text = (flag & 8) != 0 ? Strings.Monitor_BatteryCharging : onBattery ? Strings.Monitor_BatteryOn : Strings.Monitor_BatteryPlugged;
+        return (percent, onBattery, string.Format(text, percent));
+    }
+
+    /// <summary>The battery gauge's colour: a low charge is the bad end, and only while nothing charges it.</summary>
+    internal static CommandLevel BatteryLevel(double? percent, bool onBattery) => percent switch
+    {
+        null => CommandLevel.Unknown,
+        <= 10 when onBattery => CommandLevel.Failed,
+        <= 20 when onBattery => CommandLevel.Warning,
+        _ => CommandLevel.Ok,
+    };
 
     public static string FormatBytes(long bytes)
     {

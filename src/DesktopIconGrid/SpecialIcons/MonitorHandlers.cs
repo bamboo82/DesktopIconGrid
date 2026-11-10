@@ -113,3 +113,67 @@ public sealed class DiskUsageHandler(SystemMonitor monitor, Func<Window?> ownerP
         return drive is null ? LaunchResult.Failure(Strings.Monitor_NoDriveSelected) : Open(drive);
     }
 }
+
+/// <summary>Shows how much physical memory is in use; click opens Task Manager.</summary>
+public sealed class MemoryUsageHandler(SystemMonitor monitor, Func<Window?> ownerProvider) : MonitorHandlerBase(monitor, ownerProvider)
+{
+    public override string Kind => SpecialIconKinds.MemoryUsage;
+
+    public override string DisplayName => Strings.Monitor_MemoryName;
+
+    public override string Description => Strings.Monitor_MemoryDesc;
+
+    protected override bool ShowsDrive => false;
+
+    public override SpecialIconItem CreateItem()
+    {
+        var item = new SpecialIconItem { Name = "RAM", Kind = Kind };
+        new MonitorIconSettings(GaugeStyle.Ring, null).ApplyTo(item);
+        return item;
+    }
+
+    public override GaugeState CreateState(SpecialIconItem item)
+    {
+        var state = new GaugeState("RAM", MonitorIconSettings.From(item).Style, warningAt: 80, criticalAt: 92, Strings.Monitor_MemoryName);
+        Monitor.Register(state, SystemMonitor.SampleMemory, everyTicks: 2);
+        return state;
+    }
+
+    public override LaunchResult Activate(SpecialIconItem item, ActivationModifiers modifiers) => Open("taskmgr.exe");
+}
+
+/// <summary>Shows the battery's charge (low is the bad end, while on battery); click opens the battery settings.</summary>
+public sealed class BatteryHandler(SystemMonitor monitor, Func<Window?> ownerProvider) : MonitorHandlerBase(monitor, ownerProvider)
+{
+    public override string Kind => SpecialIconKinds.Battery;
+
+    public override string DisplayName => Strings.Monitor_BatteryName;
+
+    public override string Description => Strings.Monitor_BatteryDesc;
+
+    protected override bool ShowsDrive => false;
+
+    public override SpecialIconItem CreateItem()
+    {
+        var item = new SpecialIconItem { Name = Strings.Monitor_BatteryName, Kind = Kind };
+        new MonitorIconSettings(GaugeStyle.Ring, null).ApplyTo(item);
+        return item;
+    }
+
+    public override GaugeState CreateState(SpecialIconItem item)
+    {
+        var state = new GaugeState("BAT", MonitorIconSettings.From(item).Style, warningAt: 101, criticalAt: 101, Strings.Monitor_BatteryName);
+        Monitor.Register(
+            state,
+            () =>
+            {
+                var (percent, onBattery, detail) = SystemMonitor.SampleBattery();
+                state.Level = SystemMonitor.BatteryLevel(percent, onBattery); // the thresholds run the other way: the colour is set here
+                return (percent, detail);
+            },
+            everyTicks: 15);
+        return state;
+    }
+
+    public override LaunchResult Activate(SpecialIconItem item, ActivationModifiers modifiers) => Open("ms-settings:batterysaver");
+}

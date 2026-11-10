@@ -2057,4 +2057,37 @@ Details are in {1}.</value>
   <data name="Command_ScrollToApprove" xml:space="preserve">
     <value>Scroll to the end of the text to approve: everything above is what will run.</value>
   </data>
+  <data name="Monitor_MemoryName" xml:space="preserve">
+    <value>Memory usage</value>
+  </data>
+  <data name="Monitor_MemoryDesc" xml:space="preserve">
+    <value>Shows how much memory is in use. Click to open Task Manager.</value>
+  </data>
+  <data name="Monitor_MemorySummary" xml:space="preserve">
+    <value>{0} of {1} memory in use ({2}%)</value>
+  </data>
+  <data name="Monitor_MemoryUnavailable" xml:space="preserve">
+    <value>Memory usage is not available</value>
+  </data>
+  <data name="Monitor_BatteryName" xml:space="preserve">
+    <value>Battery</value>
+  </data>
+  <data name="Monitor_BatteryDesc" xml:space="preserve">
+    <value>Shows the battery's charge. Click to open the battery settings.</value>
+  </data>
+  <data name="Monitor_BatteryCharging" xml:space="preserve">
+    <value>Battery {0}%, charging</value>
+  </data>
+  <data name="Monitor_BatteryOn" xml:space="preserve">
+    <value>Battery {0}%, on battery</value>
+  </data>
+  <data name="Monitor_BatteryPlugged" xml:space="preserve">
+    <value>Battery {0}%, plugged in</value>
+  </data>
+  <data name="Monitor_NoBattery" xml:space="preserve">
+    <value>This PC has no battery</value>
+  </data>
+  <data name="Monitor_BatteryUnavailable" xml:space="preserve">
+    <value>The battery's state is not available</value>
+  </data>
 </root>

@@ -139,6 +139,8 @@ public partial class App : Application
         var specialIcons = new SpecialIconRegistry([
             new CpuUsageHandler(_monitor, owner),
             new DiskUsageHandler(_monitor, owner),
+            new MemoryUsageHandler(_monitor, owner),
+            new BatteryHandler(_monitor, owner),
             new DriveBucketHandler(syncService, dialogs, owner, icons, cacheDirectory, Dispatcher),
             new SoundReplayerHandler(owner, AppPaths.SoundsDirectory, Dispatcher),
             new CommandTileHandler(trust, owner, Dispatcher),

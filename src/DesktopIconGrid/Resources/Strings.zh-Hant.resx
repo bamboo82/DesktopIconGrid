@@ -2057,4 +2057,37 @@
   <data name="Command_ScrollToApprove" xml:space="preserve">
     <value>請捲動到文字結尾才能核准：上方所有內容就是將要執行的內容。</value>
   </data>
+  <data name="Monitor_MemoryName" xml:space="preserve">
+    <value>記憶體使用率</value>
+  </data>
+  <data name="Monitor_MemoryDesc" xml:space="preserve">
+    <value>顯示記憶體的使用量。按一下開啟工作管理員。</value>
+  </data>
+  <data name="Monitor_MemorySummary" xml:space="preserve">
+    <value>已使用 {0}，共 {1} 記憶體（{2}%）</value>
+  </data>
+  <data name="Monitor_MemoryUnavailable" xml:space="preserve">
+    <value>無法取得記憶體使用率</value>
+  </data>
+  <data name="Monitor_BatteryName" xml:space="preserve">
+    <value>電池</value>
+  </data>
+  <data name="Monitor_BatteryDesc" xml:space="preserve">
+    <value>顯示電池電量。按一下開啟電池設定。</value>
+  </data>
+  <data name="Monitor_BatteryCharging" xml:space="preserve">
+    <value>電池 {0}%，充電中</value>
+  </data>
+  <data name="Monitor_BatteryOn" xml:space="preserve">
+    <value>電池 {0}%，使用電池中</value>
+  </data>
+  <data name="Monitor_BatteryPlugged" xml:space="preserve">
+    <value>電池 {0}%，已接上電源</value>
+  </data>
+  <data name="Monitor_NoBattery" xml:space="preserve">
+    <value>這台電腦沒有電池</value>
+  </data>
+  <data name="Monitor_BatteryUnavailable" xml:space="preserve">
+    <value>無法取得電池狀態</value>
+  </data>
 </root>
