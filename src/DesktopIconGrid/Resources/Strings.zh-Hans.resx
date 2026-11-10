@@ -2015,4 +2015,7 @@
   <data name="Props_HealthInvalid" xml:space="preserve">
     <value>无法理解健康检查：{0}。</value>
   </data>
+  <data name="Settings_HotkeyUsedInBar" xml:space="preserve">
+    <value>{0} 是此栏窗口的按键（{1}）。系统全局热键会在任何地方占用它；请改选其他按键，或先更改该按键。</value>
+  </data>
 </root>

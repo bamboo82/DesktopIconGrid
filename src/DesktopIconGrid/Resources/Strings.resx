@@ -2015,4 +2015,7 @@ Approve it to run here, now and on its timer?</value>
   <data name="Props_HealthInvalid" xml:space="preserve">
     <value>The health check is not understood: {0}.</value>
   </data>
+  <data name="Settings_HotkeyUsedInBar" xml:space="preserve">
+    <value>{0} is a key of the bar's window ({1}). A system-wide hotkey would take it from the bar everywhere; pick another, or change that key first.</value>
+  </data>
 </root>

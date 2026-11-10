@@ -2015,4 +2015,7 @@
   <data name="Props_HealthInvalid" xml:space="preserve">
     <value>無法理解健康檢查：{0}。</value>
   </data>
+  <data name="Settings_HotkeyUsedInBar" xml:space="preserve">
+    <value>{0} 是此列視窗的按鍵（{1}）。系統全域快速鍵會在任何地方取走它；請改選其他按鍵，或先變更該按鍵。</value>
+  </data>
 </root>

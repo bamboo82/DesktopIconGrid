@@ -32,6 +32,14 @@ public partial class SettingsWindow : Window
             return;
         }
 
+        if (viewModel.WindowKeyUsing(text) is { } action)
+        {
+            var warning = WarningOf(box);
+            warning.Text = string.Format(Strings.Settings_HotkeyUsedInBar, text, action);
+            warning.Visibility = Visibility.Visible;
+            return; // RegisterHotKey would take it from the bar's window everywhere
+        }
+
         if (ReferenceEquals(box, PointerHotkeyBox))
         {
             viewModel.ShowAtPointerHotkey = text;
@@ -72,7 +80,7 @@ public partial class SettingsWindow : Window
         }
         else
         {
-            var gesture = new HotkeyGesture(Keyboard.Modifiers, key);
+            var gesture = new HotkeyGesture(HotkeyGesture.HeldModifiers(), key);
             refusal = gesture.IsAllowedInWindow ? viewModel.SetWindowKey(row, gesture.ToString()) : Strings.Settings_WindowKeyNotAllowed;
         }
 
@@ -116,7 +124,7 @@ public partial class SettingsWindow : Window
             return;
         }
 
-        var gesture = new HotkeyGesture(Keyboard.Modifiers, key);
+        var gesture = new HotkeyGesture(HotkeyGesture.HeldModifiers(), key);
         if (!gesture.HasUsableModifier)
         {
             var warning = WarningOf(box);

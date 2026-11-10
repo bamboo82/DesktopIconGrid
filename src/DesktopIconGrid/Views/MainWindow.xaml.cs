@@ -500,7 +500,7 @@ public partial class MainWindow : Window
         }
 
         // The settings' keys (WindowKeyMap); removing and Properties belong to the focused icon (IconGridControl).
-        switch (_viewModel.Keys.ActionFor(e.Key == Key.System ? e.SystemKey : e.Key, Keyboard.Modifiers))
+        switch (_viewModel.Keys.ActionFor(e.Key == Key.System ? e.SystemKey : e.Key, HotkeyGesture.HeldModifiers()))
         {
             case WindowKeyAction.Find:
                 OpenSearch();

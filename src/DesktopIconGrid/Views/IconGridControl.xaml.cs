@@ -200,7 +200,7 @@ public partial class IconGridControl : UserControl
         }
 
         // The settings' keys (WindowKeyMap): Delete and F2 unless changed there.
-        switch (item.Root.Keys.ActionFor(e.Key == Key.System ? e.SystemKey : e.Key, Keyboard.Modifiers))
+        switch (item.Root.Keys.ActionFor(e.Key == Key.System ? e.SystemKey : e.Key, HotkeyGesture.HeldModifiers()))
         {
             case WindowKeyAction.Remove:
                 item.RemoveCommand.Execute(null);

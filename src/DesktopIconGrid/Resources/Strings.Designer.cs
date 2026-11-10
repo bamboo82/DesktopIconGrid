@@ -4173,6 +4173,15 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to {0} is a key of the bar's window ({1}). A system-wide hotkey would take it from [rest of string was truncated]";.
+        /// </summary>
+        public static string Settings_HotkeyUsedInBar {
+            get {
+                return ResourceManager.GetString("Settings_HotkeyUsedInBar", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Icon size:.
         /// </summary>
         public static string Settings_IconSize {

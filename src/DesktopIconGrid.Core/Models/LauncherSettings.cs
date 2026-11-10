@@ -151,6 +151,13 @@ public sealed partial class LauncherSettings
     {
         var changed = false;
 
+        if (WindowKeys is { } windowKeys && windowKeys.Any(pair => pair.Key is null || pair.Value is null))
+        {
+            // Null values (or names) come only from a damaged or hand-edited file; they are no overrides.
+            WindowKeys = windowKeys.Where(pair => pair.Key is not null && pair.Value is not null).ToDictionary(pair => pair.Key, pair => pair.Value);
+            changed = true;
+        }
+
         var nearest = NearestIconSize(IconSize);
         if (nearest != IconSize)
         {

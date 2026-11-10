@@ -34,7 +34,8 @@ public static class WindowKeys
     public static string For(LauncherSettings settings, WindowKeyAction action)
     {
         ArgumentNullException.ThrowIfNull(settings);
-        return settings.WindowKeys is { } keys && keys.TryGetValue(action.ToString(), out var text) ? text.Trim() : Defaults[action];
+        // A null value (a damaged or hand-edited file: JSON reads it without complaint) is no override.
+        return settings.WindowKeys is { } keys && keys.TryGetValue(action.ToString(), out var text) && text is not null ? text.Trim() : Defaults[action];
     }
 
     /// <summary>

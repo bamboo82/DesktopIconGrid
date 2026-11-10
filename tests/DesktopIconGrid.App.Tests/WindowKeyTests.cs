@@ -58,4 +58,23 @@ public class WindowKeyTests
         Assert.Null(viewModel.SetWindowKey(remove, remove.DefaultText));
         Assert.Null(viewModel.ToSettings().WindowKeys);
     }
+
+    [Fact]
+    public void A_system_wide_hotkey_may_not_take_a_key_of_the_bar_and_unknown_overrides_survive_a_save()
+    {
+        var original = new LauncherSettings { WindowKeys = new() { ["Find"] = "Ctrl+K", ["OpenWorkspace"] = "Ctrl+W" } };
+        var viewModel = new SettingsViewModel(original);
+
+        viewModel.ToggleHotkey = "control+k"; // the find key, spelled another way
+        Assert.False(viewModel.IsHotkeyValid);
+        Assert.False(viewModel.CanSave);
+        Assert.NotNull(viewModel.WindowKeyUsing("Ctrl+K"));
+        viewModel.ToggleHotkey = "Ctrl+Alt+K";
+        Assert.True(viewModel.CanSave);
+
+        var saved = viewModel.ToSettings();
+
+        Assert.Equal("Ctrl+W", saved.WindowKeys!["OpenWorkspace"]); // a later version's action: kept
+        Assert.Equal("Ctrl+K", saved.WindowKeys["Find"]);
+    }
 }

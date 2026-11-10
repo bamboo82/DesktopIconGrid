@@ -318,7 +318,7 @@ public sealed class SettingsViewModel : ObservableObject
 
     public bool HasHotkey => _toggleHotkey.Length > 0;
 
-    public bool IsHotkeyValid => _toggleHotkey.Length == 0 || HotkeyGesture.TryParse(_toggleHotkey, out _);
+    public bool IsHotkeyValid => _toggleHotkey.Length == 0 || (HotkeyGesture.TryParse(_toggleHotkey, out _) && WindowKeyUsing(_toggleHotkey) is null);
 
     /// <summary>Text form of the Show-at-pointer hotkey; empty for none.</summary>
     public string ShowAtPointerHotkey
@@ -340,7 +340,12 @@ public sealed class SettingsViewModel : ObservableObject
     public bool IsPointerHotkeySame =>
         HotkeyGesture.TryParse(_pointerHotkey, out var pointer) && HotkeyGesture.TryParse(_toggleHotkey, out var toggle) && pointer == toggle;
 
-    public bool IsPointerHotkeyValid => (_pointerHotkey.Length == 0 || HotkeyGesture.TryParse(_pointerHotkey, out _)) && !IsPointerHotkeySame;
+    public bool IsPointerHotkeyValid =>
+        (_pointerHotkey.Length == 0 || (HotkeyGesture.TryParse(_pointerHotkey, out _) && WindowKeyUsing(_pointerHotkey) is null)) && !IsPointerHotkeySame;
+
+    /// <summary>The label of the bar's window key that has <paramref name="hotkey"/>, or <see langword="null"/>: a system-wide hotkey would take it.</summary>
+    public string? WindowKeyUsing(string hotkey) =>
+        string.IsNullOrWhiteSpace(hotkey) ? null : WindowKeyRows.FirstOrDefault(row => HotkeyGesture.SameCombination(row.Text, hotkey))?.Label;
 
     public bool CanSave => (!IsCustomTheme || IsColorValid) && IsHotkeyValid && IsPointerHotkeyValid;
 
@@ -382,7 +387,7 @@ public sealed class SettingsViewModel : ObservableObject
         return null;
     }
 
-    private static bool SameKey(string a, string b) => a.Length > 0 && string.Equals(a.Trim(), b, StringComparison.OrdinalIgnoreCase);
+    private static bool SameKey(string a, string b) => a.Length > 0 && HotkeyGesture.SameCombination(a, b);
 
     public LauncherSettings ToSettings()
     {
@@ -399,6 +404,15 @@ public sealed class SettingsViewModel : ObservableObject
         settings.ToggleHotkey = IsHotkeyValid && HasHotkey ? _toggleHotkey : null;
         settings.ShowAtPointerHotkey = IsPointerHotkeyValid && HasPointerHotkey ? _pointerHotkey : null;
         settings.WindowKeys = WindowKeys.Overrides(WindowKeyRows.ToDictionary(row => row.Action, row => row.Text));
+        if (_original.WindowKeys?.Where(pair => !Enum.TryParse<WindowKeyAction>(pair.Key, out _)).ToList() is { Count: > 0 } unknown)
+        {
+            // Overrides of actions a later version has: kept, or saving here would delete them on every PC through sync.
+            settings.WindowKeys ??= new Dictionary<string, string>();
+            foreach (var (name, text) in unknown)
+            {
+                settings.WindowKeys[name] = text;
+            }
+        }
         settings.Opacity = LauncherSettings.MaxOpacity - _transparency;
         settings.CloseToTray = _closeToTray;
         settings.StartWithWindows = _startWithWindows;

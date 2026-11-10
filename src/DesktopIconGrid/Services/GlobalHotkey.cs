@@ -25,6 +25,17 @@ public sealed record HotkeyGesture(ModifierKeys Modifiers, Key Key)
 
     public uint VirtualKey => (uint)KeyInterop.VirtualKeyFromKey(Key);
 
+    /// <summary>
+    /// The modifier keys held now, the Windows keys included: WPF's <see cref="Keyboard.Modifiers"/> only ever reports
+    /// Alt, Ctrl and Shift.
+    /// </summary>
+    public static ModifierKeys HeldModifiers() =>
+        Keyboard.Modifiers | (Keyboard.IsKeyDown(Key.LWin) || Keyboard.IsKeyDown(Key.RWin) ? ModifierKeys.Windows : ModifierKeys.None);
+
+    /// <summary>Whether two written combinations are the same keys, however they are spelled ("ctrl+f", "Control+F").</summary>
+    public static bool SameCombination(string? a, string? b) =>
+        TryParseAny(a, out var first) && TryParseAny(b, out var second) && first == second;
+
     public static bool IsModifierKey(Key key) => key is Key.LeftCtrl or Key.RightCtrl or Key.LeftAlt or Key.RightAlt
         or Key.LeftShift or Key.RightShift or Key.LWin or Key.RWin or Key.System or Key.None;
 

@@ -32,4 +32,16 @@ public class WindowKeysTests
         copy.WindowKeys!["Properties"] = "F3";
         Assert.Equal("Alt+Enter", settings.WindowKeys!["Properties"]);
     }
+
+    [Fact]
+    public void A_null_override_from_a_damaged_file_is_the_default_and_normalizing_drops_it()
+    {
+        var settings = System.Text.Json.JsonSerializer.Deserialize<LauncherSettings>(
+            """{"windowKeys":{"Find":null,"NewGroup":"Ctrl+Shift+G"}}""",
+            new System.Text.Json.JsonSerializerOptions(System.Text.Json.JsonSerializerDefaults.Web))!;
+
+        Assert.Equal("Ctrl+F", WindowKeys.For(settings, WindowKeyAction.Find)); // no exception: the app still starts
+        Assert.True(settings.Normalize());
+        Assert.Equal(["NewGroup"], settings.WindowKeys!.Keys);
+    }
 }
