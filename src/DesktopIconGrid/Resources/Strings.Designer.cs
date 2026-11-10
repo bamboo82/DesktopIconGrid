@@ -933,6 +933,69 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to {0} shortcut(s), {1} group(s).
+        /// </summary>
+        public static string History_Entry {
+            get {
+                return ResourceManager.GetString("History_Entry", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The bar is kept here before it is saved over, at most once every ten minutes, th [rest of string was truncated]";.
+        /// </summary>
+        public static string History_Hint {
+            get {
+                return ResourceManager.GetString("History_Hint", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Earlier layouts.
+        /// </summary>
+        public static string History_ListName {
+            get {
+                return ResourceManager.GetString("History_ListName", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to No earlier layout has been kept yet..
+        /// </summary>
+        public static string History_None {
+            get {
+                return ResourceManager.GetString("History_None", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Restore.
+        /// </summary>
+        public static string History_Restore {
+            get {
+                return ResourceManager.GetString("History_Restore", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Restore an earlier layout.
+        /// </summary>
+        public static string History_Title {
+            get {
+                return ResourceManager.GetString("History_Title", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to That layout can no longer be read..
+        /// </summary>
+        public static string History_Unreadable {
+            get {
+                return ResourceManager.GetString("History_Unreadable", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to The hotkey {0} could not be registered (Windows error {1}). {2}.
         /// </summary>
         public static string Hotkey_Failed {
@@ -2126,6 +2189,15 @@ namespace DesktopIconGrid.Resources {
         public static string Menu_ResetBarPosition {
             get {
                 return ResourceManager.GetString("Menu_ResetBarPosition", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Restore an earlier layout….
+        /// </summary>
+        public static string Menu_RestoreLayout {
+            get {
+                return ResourceManager.GetString("Menu_RestoreLayout", resourceCulture);
             }
         }
 

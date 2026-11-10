@@ -1784,4 +1784,28 @@
   <data name="Import_TimedOut" xml:space="preserve">
     <value>搜索时间过长，已停止：它查看的文件夹或驱动器可能没有响应。请稍后再试。</value>
   </data>
+  <data name="Menu_RestoreLayout" xml:space="preserve">
+    <value>还原较早的布局…</value>
+  </data>
+  <data name="History_Title" xml:space="preserve">
+    <value>还原较早的布局</value>
+  </data>
+  <data name="History_Hint" xml:space="preserve">
+    <value>每次保存覆盖之前，栏会先保存在这里，最多每十分钟一次，保留最近 20 次。还原会替换当前的栏，而当前的内容会先保存在这里。</value>
+  </data>
+  <data name="History_Entry" xml:space="preserve">
+    <value>{0} 个快捷方式，{1} 个分组</value>
+  </data>
+  <data name="History_None" xml:space="preserve">
+    <value>目前还没有保存任何较早的布局。</value>
+  </data>
+  <data name="History_Restore" xml:space="preserve">
+    <value>还原</value>
+  </data>
+  <data name="History_ListName" xml:space="preserve">
+    <value>较早的布局</value>
+  </data>
+  <data name="History_Unreadable" xml:space="preserve">
+    <value>已无法读取该布局。</value>
+  </data>
 </root>

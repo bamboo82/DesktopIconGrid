@@ -28,11 +28,15 @@ public sealed class LayoutStorage
     private int? _loadedNewerVersion;
     private bool _newerVersionPreserved;
 
-    public LayoutStorage(string filePath)
+    public LayoutStorage(string filePath, Func<DateTimeOffset>? clock = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(filePath);
         FilePath = Path.GetFullPath(filePath);
+        History = new LayoutHistory(Path.Combine(Path.GetDirectoryName(FilePath)!, "history"), clock);
     }
+
+    /// <summary>Earlier layouts, kept before a save overwrites the file (<see cref="LayoutHistory"/>).</summary>
+    public LayoutHistory History { get; }
 
     public string FilePath { get; }
 
@@ -80,6 +84,7 @@ public sealed class LayoutStorage
         PreserveNewerVersionOnce();
 
         var json = JsonSerializer.Serialize(layout, JsonOptions);
+        History.Record(FilePath);
         var tempPath = Path.Combine(Directory, Path.GetRandomFileName() + ".tmp");
         try
         {

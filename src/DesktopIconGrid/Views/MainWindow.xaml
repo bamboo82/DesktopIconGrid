@@ -122,6 +122,7 @@
               <MenuItem Header="{x:Static r:Strings.Menu_NewGroup}" Command="{Binding NewGroupCommand}" InputGestureText="Ctrl+G" />
               <Separator />
               <MenuItem Header="{x:Static r:Strings.Menu_AlwaysOnTop}" IsCheckable="True" IsChecked="{Binding AlwaysOnTop, Mode=TwoWay}" />
+              <MenuItem Header="{x:Static r:Strings.Menu_RestoreLayout}" Command="{Binding RestoreLayoutCommand}" />
               <MenuItem Header="{x:Static r:Strings.Menu_OpenLayoutLocation}" Command="{Binding OpenLayoutFolderCommand}" />
               <MenuItem Header="{x:Static r:Strings.Menu_About}" Command="{Binding AboutCommand}" />
               <Separator />

@@ -1,0 +1,35 @@
+<Window x:Class="DesktopIconGrid.Views.LayoutHistoryWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:r="clr-namespace:DesktopIconGrid.Resources"
+        Title="{x:Static r:Strings.History_Title}"
+        Width="480"
+        Height="460"
+        MinWidth="360"
+        MinHeight="300"
+        WindowStartupLocation="CenterOwner"
+        ShowInTaskbar="False"
+        Icon="{StaticResource AppIconImage}">
+  <DockPanel Margin="12">
+    <TextBlock DockPanel.Dock="Top" Style="{StaticResource DialogHint}" Margin="0,0,0,8" TextWrapping="Wrap" Text="{x:Static r:Strings.History_Hint}" />
+    <DockPanel DockPanel.Dock="Bottom" Margin="0,10,0,0">
+      <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+        <Button x:Name="RestoreButton" Content="{x:Static r:Strings.History_Restore}" Style="{StaticResource DialogButton}" IsDefault="True" IsEnabled="False" Click="Restore_Click" />
+        <Button Content="{x:Static r:Strings.Common_Cancel}" Style="{StaticResource DialogButton}" IsCancel="True" />
+      </StackPanel>
+      <TextBlock x:Name="EmptyText" Text="{x:Static r:Strings.History_None}" VerticalAlignment="Center" TextWrapping="Wrap" Visibility="Collapsed" />
+    </DockPanel>
+    <ListBox x:Name="List" HorizontalContentAlignment="Stretch" SelectionMode="Single"
+             SelectionChanged="List_SelectionChanged" MouseDoubleClick="List_MouseDoubleClick"
+             AutomationProperties.Name="{x:Static r:Strings.History_ListName}">
+      <ListBox.ItemTemplate>
+        <DataTemplate>
+          <StackPanel Margin="2">
+            <TextBlock Text="{Binding When}" />
+            <TextBlock Text="{Binding What}" Style="{StaticResource DialogHint}" />
+          </StackPanel>
+        </DataTemplate>
+      </ListBox.ItemTemplate>
+    </ListBox>
+  </DockPanel>
+</Window>

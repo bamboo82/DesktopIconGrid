@@ -1784,4 +1784,28 @@ Details are in {1}.</value>
   <data name="Import_TimedOut" xml:space="preserve">
     <value>The search took too long and was stopped: a folder or a drive it looks in may not be answering. Try again in a moment.</value>
   </data>
+  <data name="Menu_RestoreLayout" xml:space="preserve">
+    <value>Restore an earlier layout…</value>
+  </data>
+  <data name="History_Title" xml:space="preserve">
+    <value>Restore an earlier layout</value>
+  </data>
+  <data name="History_Hint" xml:space="preserve">
+    <value>The bar is kept here before it is saved over, at most once every ten minutes, the last 20 times. Restoring replaces the bar, and what it holds now is kept here first.</value>
+  </data>
+  <data name="History_Entry" xml:space="preserve">
+    <value>{0} shortcut(s), {1} group(s)</value>
+  </data>
+  <data name="History_None" xml:space="preserve">
+    <value>No earlier layout has been kept yet.</value>
+  </data>
+  <data name="History_Restore" xml:space="preserve">
+    <value>Restore</value>
+  </data>
+  <data name="History_ListName" xml:space="preserve">
+    <value>Earlier layouts</value>
+  </data>
+  <data name="History_Unreadable" xml:space="preserve">
+    <value>That layout can no longer be read.</value>
+  </data>
 </root>

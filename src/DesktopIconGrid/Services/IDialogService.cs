@@ -50,4 +50,7 @@ public interface IDialogService
     /// <see langword="null"/> on Cancel. <paramref name="canGroup"/> offers a group per source.
     /// </summary>
     ViewModels.ImportRequest? ShowImport(IReadOnlyList<ShortcutItem> onBar, bool canGroup);
+
+    /// <summary>Restore an earlier layout: the entry picked from <paramref name="entries"/>, or <see langword="null"/> on Cancel.</summary>
+    Core.Storage.LayoutHistoryEntry? ShowLayoutHistory(IReadOnlyList<Core.Storage.LayoutHistoryEntry> entries);
 }

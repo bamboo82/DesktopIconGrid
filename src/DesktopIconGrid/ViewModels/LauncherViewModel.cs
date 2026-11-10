@@ -85,6 +85,7 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
         OpenSettingsCommand = new RelayCommand(OpenSettings);
         LaunchMultiLaunchCommand = new RelayCommand(() => _ = LaunchMultiLaunchGroupAsync());
         OpenLayoutFolderCommand = new RelayCommand(OpenLayoutFolder);
+        RestoreLayoutCommand = new RelayCommand(RestoreLayout);
         AboutCommand = new RelayCommand(ShowAbout);
         ExitCommand = new RelayCommand(() => ExitRequested?.Invoke(this, EventArgs.Empty));
         CloseGroupPopupCommand = new RelayCommand(() => IsGroupPopupOpen = false);
@@ -198,6 +199,8 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
     public ICommand LaunchMultiLaunchCommand { get; }
 
     public ICommand OpenLayoutFolderCommand { get; }
+
+    public ICommand RestoreLayoutCommand { get; }
 
     public ICommand AboutCommand { get; }
 
@@ -1328,6 +1331,30 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
         NotifyAppearanceChanged();
         Save(contentChanged: false);
         SettingsChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>
+    /// Restore an earlier layout…: the bar as it was at a kept save (<see cref="LayoutHistory"/>). The bar as it is now
+    /// is kept first, so the restore can be undone the same way; this PC's window placement stays, and the restored bar
+    /// counts as a change (an automatic upload follows).
+    /// </summary>
+    public void RestoreLayout()
+    {
+        if (_dialogs.ShowLayoutHistory(_storage.History.List()) is not { } entry)
+        {
+            return;
+        }
+
+        if (LayoutHistory.Read(entry.FilePath) is not { } layout)
+        {
+            _dialogs.Notify(Strings.History_Title, Strings.History_Unreadable);
+            return;
+        }
+
+        _storage.History.Record(_storage.FilePath, force: true);
+        ReplaceLayout(layout);
+        AppLog.Default.Info("Layout", $"Restored the layout kept at {entry.SavedAt:u}");
+        LayoutChanged?.Invoke(this, EventArgs.Empty);
     }
 
     private void OpenLayoutFolder()

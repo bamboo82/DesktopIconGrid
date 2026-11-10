@@ -137,6 +137,7 @@ public partial class MainWindow : Window
         yield return new TrayMenuEntry(Strings.Menu_Settings, () => RunOnBar(() => _viewModel.OpenSettingsCommand.Execute(null)));
         yield return new TrayMenuEntry(Strings.Menu_Sync, () => RunOnBar(() => _viewModel.OpenSyncCommand.Execute(null)));
         yield return new TrayMenuEntry(Strings.Menu_LogViewer, () => _viewModel.OpenLogViewerCommand.Execute(null));
+        yield return new TrayMenuEntry(Strings.Menu_RestoreLayout, () => RunOnBar(() => _viewModel.RestoreLayoutCommand.Execute(null)));
         yield return new TrayMenuEntry(Strings.Menu_OpenLayoutLocation, () => _viewModel.OpenLayoutFolderCommand.Execute(null));
         yield return new TrayMenuEntry(Strings.Menu_About, () => _viewModel.AboutCommand.Execute(null));
         yield return TrayMenuEntry.Separator;

@@ -15,7 +15,10 @@ microphone tile, a clock and timer, and paste to a bucket.
   links, Windows Terminal profiles, WinSCP and PuTTY sessions, and the hosts of your SSH config, grouped by
   source, with what is on the bar already marked. Ticked items go after the clicked icon or at the end, or on
   the bar itself into a group per source. A name that could not stay one argument on the command line (a
-  quote, a line break, a leading `-`, a `;` for Windows Terminal) is left out.
+  quote, a line break, a leading `-` or `/`, a `%`, a `;` for Windows Terminal) is left out.
+- Layout history: before a save overwrites the layout, the bar as it was is kept in `history\`, at most once
+  every ten minutes, the newest 20. *Restore an earlier layout…* (options and tray menus) brings one back,
+  keeping the current bar in the history first, so a restore can be undone too. It stays on this PC.
 
 ## [0.8.1] – 2026-11-06
 

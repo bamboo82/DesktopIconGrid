@@ -441,6 +441,11 @@ Settings live in the same JSON file as the layout and apply immediately on *Save
 
 - File: `%LocalAppData%\DesktopIconGrid\layout.json`, written atomically
   (temp file + rename) after every change and on exit.
+- Layout history (0.9.0): before a save overwrites `layout.json`, the file as it was is kept in `history\`
+  next to it, at most once every ten minutes (a session of rearranging is one entry), the newest 20. *Restore
+  an earlier layout…* (options and tray menus) lists them with when each was saved and how many shortcuts and
+  groups it holds; restoring keeps the current bar there first, keeps this PC's window placement, and counts
+  as a change, so a linked copy uploads it. The history stays on this PC and is never synced.
 - Portable mode (0.8.0): with a file called `portable.txt` next to `DesktopIconGrid.exe`, `layout.json`,
   `sync.json`, the logs and the caches live in the program's folder instead, so a tools drive carries
   the bar from PC to PC. `%APPDRIVE%` is the program's drive (`E:`): new shortcuts to files on that

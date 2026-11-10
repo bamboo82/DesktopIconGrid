@@ -95,6 +95,16 @@ internal sealed class RecordingDialogs : IDialogService
         return AddAppAnswer;
     }
 
+    public DesktopIconGrid.Core.Storage.LayoutHistoryEntry? HistoryAnswer { get; set; }
+
+    public IReadOnlyList<DesktopIconGrid.Core.Storage.LayoutHistoryEntry>? HistoryOffered { get; private set; }
+
+    public DesktopIconGrid.Core.Storage.LayoutHistoryEntry? ShowLayoutHistory(IReadOnlyList<DesktopIconGrid.Core.Storage.LayoutHistoryEntry> entries)
+    {
+        HistoryOffered = entries;
+        return HistoryAnswer;
+    }
+
     public ViewModels.ImportRequest? ImportAnswer { get; set; }
 
     public bool? ImportCanGroupSeen { get; private set; }

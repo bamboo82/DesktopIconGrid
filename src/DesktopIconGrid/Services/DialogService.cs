@@ -150,6 +150,12 @@ public sealed class DialogService(IIconProvider icons) : IDialogService, ILaunch
         return window.ShowDialog() == true ? new ImportRequest(viewModel.Chosen, viewModel.GroupPerSource) : null;
     }
 
+    public Core.Storage.LayoutHistoryEntry? ShowLayoutHistory(IReadOnlyList<Core.Storage.LayoutHistoryEntry> entries)
+    {
+        var window = new LayoutHistoryWindow(entries) { Owner = Owner };
+        return window.ShowDialog() == true ? window.Chosen : null;
+    }
+
     public RepairResult? ShowRepair(ShortcutItem shortcut)
     {
         ArgumentNullException.ThrowIfNull(shortcut);

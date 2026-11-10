@@ -546,6 +546,31 @@ public sealed class LauncherViewModelTests : IDisposable
     }
 
     [Fact]
+    public void Restoring_an_earlier_layout_keeps_the_current_one_first_and_counts_as_a_change()
+    {
+        var (viewModel, _, dialogs) = Create();
+        var storage = new LayoutStorage(Path.Combine(_directory, "layout.json"));
+        viewModel.AddPaths([@"C:\d.exe"], viewModel.RootItems, int.MaxValue); // saved: A B C d
+        storage.History.Record(storage.FilePath, force: true);
+        var kept = Assert.Single(storage.History.List());
+        viewModel.RemoveItem(viewModel.RootItems.Items[0]); // B C d
+        var changes = 0;
+        viewModel.LayoutChanged += (_, _) => changes++;
+        dialogs.HistoryAnswer = kept;
+
+        viewModel.RestoreLayout();
+
+        Assert.Equal(["A", "B", "C", "d"], Names(viewModel.Model.Items));
+        Assert.Same(kept, Assert.Single(dialogs.HistoryOffered!));
+        Assert.Equal(2, storage.History.List().Count); // the bar before the restore is kept too
+        Assert.Equal(1, changes);
+
+        dialogs.HistoryAnswer = null; // Cancel
+        viewModel.RestoreLayout();
+        Assert.Equal(4, viewModel.Model.Items.Count);
+    }
+
+    [Fact]
     public void Import_puts_the_ticked_items_after_the_icon_or_one_group_per_source_on_the_bar()
     {
         var (viewModel, model, dialogs) = Create();
