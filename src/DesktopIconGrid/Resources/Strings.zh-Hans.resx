@@ -2051,4 +2051,10 @@
   <data name="Health_ApproveButton" xml:space="preserve">
     <value>批准并检查</value>
   </data>
+  <data name="Health_Contacts" xml:space="preserve">
+    <value>连接对象：</value>
+  </data>
+  <data name="Command_ScrollToApprove" xml:space="preserve">
+    <value>请滚动到文字结尾才能批准：上方所有内容就是将要运行的内容。</value>
+  </data>
 </root>

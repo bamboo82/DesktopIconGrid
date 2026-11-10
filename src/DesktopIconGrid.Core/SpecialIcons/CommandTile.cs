@@ -130,6 +130,11 @@ public sealed record CommandTileSettings(
             return "A field is too long, or holds a line break or an invisible character.";
         }
 
+        if (Program.Trim().Trim('"').Contains('"'))
+        {
+            return "The program holds a quote: arguments go in their own field.";
+        }
+
         if (Click == CommandTileClick.Open && string.IsNullOrWhiteSpace(OpenTarget))
         {
             return "A click should open something, but nothing is set.";

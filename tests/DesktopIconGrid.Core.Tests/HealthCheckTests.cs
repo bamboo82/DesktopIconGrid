@@ -73,4 +73,23 @@ public class HealthCheckTests
         Assert.Null(HealthCheck.HashOf(new Models.ShortcutItem { HealthCheck = "nonsense" }));
         Assert.Equal(check.Hash(90), HealthCheck.HashOf(new Models.ShortcutItem { HealthCheck = "tcp nas:445", HealthInterval = 90 }));
     }
+
+    [Theory]
+    [InlineData("http://h/%E2%80%AEgpj.exe")] // unescaped by Uri.ToString() into a real right-to-left override
+    [InlineData("http://h/a%E2%80%8Bb")] // a zero-width space
+    public void An_address_that_would_read_differently_is_refused(string text)
+    {
+        Assert.Null(HealthCheck.Parse(text, out var error));
+        Assert.NotNull(error);
+    }
+
+    [Fact]
+    public void The_contacted_host_is_shown_without_user_info_and_in_its_DNS_form()
+    {
+        Assert.Equal("evil.example:80", HealthCheck.Parse("http://good.example:pw@evil.example/", out _)!.ContactedHost);
+        Assert.Equal("xn--bcher-kva.example:443", HealthCheck.Parse("https://bücher.example/", out _)!.ContactedHost);
+        Assert.Equal("xn--bcher-kva.example:445", HealthCheck.Parse("tcp bücher.example:445", out _)!.ContactedHost);
+        Assert.Equal("[::1]:8080", HealthCheck.Parse("tcp [::1]:8080", out _)!.ContactedHost);
+        Assert.Equal("nas", HealthCheck.Parse("ping nas", out _)!.ContactedHost);
+    }
 }

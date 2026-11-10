@@ -343,6 +343,15 @@ public sealed class SettingsViewModel : ObservableObject
     public bool IsPointerHotkeyValid =>
         (_pointerHotkey.Length == 0 || (HotkeyGesture.TryParse(_pointerHotkey, out _) && WindowKeyUsing(_pointerHotkey) is null)) && !IsPointerHotkeySame;
 
+    /// <summary>Why the show/hide hotkey cannot be kept (a window key has it, e.g. from a file of an older version), or <see langword="null"/>.</summary>
+    public string? ToggleHotkeyClash => WindowKeyUsing(_toggleHotkey) is { } action ? string.Format(Strings.Settings_HotkeyUsedInBar, _toggleHotkey, action) : null;
+
+    public string? PointerHotkeyClash => WindowKeyUsing(_pointerHotkey) is { } action ? string.Format(Strings.Settings_HotkeyUsedInBar, _pointerHotkey, action) : null;
+
+    public bool HasToggleHotkeyClash => ToggleHotkeyClash is not null;
+
+    public bool HasPointerHotkeyClash => PointerHotkeyClash is not null;
+
     /// <summary>The label of the bar's window key that has <paramref name="hotkey"/>, or <see langword="null"/>: a system-wide hotkey would take it.</summary>
     public string? WindowKeyUsing(string hotkey) =>
         string.IsNullOrWhiteSpace(hotkey) ? null : WindowKeyRows.FirstOrDefault(row => HotkeyGesture.SameCombination(row.Text, hotkey))?.Label;
@@ -351,6 +360,11 @@ public sealed class SettingsViewModel : ObservableObject
 
     private void OnHotkeysChanged()
     {
+        OnPropertyChanged(nameof(ToggleHotkeyClash));
+        OnPropertyChanged(nameof(PointerHotkeyClash));
+        OnPropertyChanged(nameof(HasToggleHotkeyClash));
+        OnPropertyChanged(nameof(HasPointerHotkeyClash));
+        OnPropertyChanged(nameof(IsHotkeyValid));
         OnPropertyChanged(nameof(IsPointerHotkeySame));
         OnPropertyChanged(nameof(IsPointerHotkeyValid));
         OnPropertyChanged(nameof(CanSave));
@@ -384,6 +398,7 @@ public sealed class SettingsViewModel : ObservableObject
         }
 
         row.Text = text;
+        OnHotkeysChanged(); // changing the window key may settle a clash with a hotkey
         return null;
     }
 

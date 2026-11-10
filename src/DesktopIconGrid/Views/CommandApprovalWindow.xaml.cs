@@ -26,6 +26,24 @@ public partial class CommandApprovalWindow : Window
         Intro.Text = intro;
         Command.Text = details;
         ApproveButton.Content = approveText;
+        Command.AddHandler(System.Windows.Controls.ScrollViewer.ScrollChangedEvent, new System.Windows.Controls.ScrollChangedEventHandler((_, _) => UpdateApprovable()));
+        Loaded += (_, _) => UpdateApprovable();
+    }
+
+    /// <summary>
+    /// Approve is enabled only once the whole text has been in view (review 22 A3): padding cannot push the end of a
+    /// command, or the timer and click lines, below the fold of a box whose only hint is a scroll bar.
+    /// </summary>
+    private void UpdateApprovable()
+    {
+        if (ApproveButton.IsEnabled || !Command.IsLoaded)
+        {
+            return;
+        }
+
+        var seenAll = Command.VerticalOffset + Command.ViewportHeight >= Command.ExtentHeight - 1;
+        ApproveButton.IsEnabled = seenAll;
+        ScrollHint.Visibility = seenAll ? Visibility.Collapsed : Visibility.Visible;
     }
 
     /// <summary>The text shown: what runs, where, when, and what a click does.</summary>

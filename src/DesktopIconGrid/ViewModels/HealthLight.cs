@@ -48,6 +48,7 @@ public sealed class HealthLight : ObservableObject
         _notify = notify;
         _notifier = notifier;
         _timer = new DispatcherTimer(TimeSpan.FromSeconds(HealthCheck.NormalizeInterval(intervalSeconds)), DispatcherPriority.Background, (_, _) => CheckNow(), dispatcher);
+        _timer.Stop(); // this constructor starts it; it starts in Start, once approved
     }
 
     public HealthStatus Status => _status;

@@ -41,8 +41,54 @@ public sealed record HealthCheck(HealthCheckKind Kind, string Host, int Port, Ur
     public static int NormalizeInterval(int? seconds) =>
         seconds is { } value ? Math.Clamp(value, MinIntervalSeconds, MaxIntervalSeconds) : DefaultIntervalSeconds;
 
-    /// <summary>The check in <paramref name="text"/>, or <see langword="null"/> with why not (null error for an empty text: no check).</summary>
+    /// <summary>
+    /// The check in <paramref name="text"/>, or <see langword="null"/> with why not (null error for an empty text: no check).
+    /// A check that would be written back with an invisible or reordering character (an address can carry one escaped:
+    /// <c>Uri.ToString()</c> unescapes <c>%E2%80%AE</c>) is refused, so the approval window reads as what is contacted.
+    /// </summary>
     public static HealthCheck? Parse(string? text, out string? error)
+    {
+        var check = ParseCore(text, out error);
+        if (check is not null && !SpecialIcons.CommandTileSettings.IsShowable(check.ToString() + check.Host))
+        {
+            error = "holds an invisible or reordering character";
+            return null;
+        }
+
+        return check;
+    }
+
+    /// <summary>
+    /// The host that is contacted, as DNS sees it: international names in their <c>xn--</c> form, so a look-alike shows
+    /// as what it is; user info in an address (<c>http://good.example:pw@evil.example/</c>) is not part of it.
+    /// </summary>
+    public string ContactedHost
+    {
+        get
+        {
+            string host;
+            if (Kind == HealthCheckKind.Http)
+            {
+                host = Url!.IdnHost;
+            }
+            else
+            {
+                try
+                {
+                    host = Host.Contains(':') ? Host : new IdnMapping().GetAscii(Host);
+                }
+                catch (ArgumentException)
+                {
+                    host = Host;
+                }
+            }
+
+            var port = Kind == HealthCheckKind.Ping ? string.Empty : ":" + Port.ToString(CultureInfo.InvariantCulture);
+            return host.Contains(':') ? $"[{host}]{port}" : host + port;
+        }
+    }
+
+    private static HealthCheck? ParseCore(string? text, out string? error)
     {
         error = null;
         var trimmed = text?.Trim() ?? string.Empty;

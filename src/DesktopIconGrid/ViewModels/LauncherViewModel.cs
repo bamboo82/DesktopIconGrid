@@ -107,12 +107,14 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
     internal CommandTrust Trust { get; }
 
     /// <summary>
-    /// After Properties was saved: approves the shortcut's health check when it was typed or changed here, or was approved
-    /// here already. A check that came with the bar and was left as it was stays paused (review 21 H1, as T2).
+    /// After Properties was saved: approves the shortcut's health check when there was none before (it was typed here) or
+    /// the one before was approved here (the command tile's rule, T2). A check that came with the bar stays paused after
+    /// any edit in Properties, even of its interval (review 22 A1): its text is not one this user typed, and only
+    /// <see cref="ApproveHealthCheck"/> shows all of it.
     /// </summary>
     private void ApproveSavedHealthCheck(string? hashBefore, ShortcutItem saved)
     {
-        if (HealthCheck.HashOf(saved) is { } hash && (hash != hashBefore || (hashBefore is not null && Trust.IsApproved(hashBefore))))
+        if (HealthCheck.HashOf(saved) is { } hash && (hashBefore is null || Trust.IsApproved(hashBefore)))
         {
             Trust.Approve(hash);
         }
@@ -135,6 +137,7 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
         var details = string.Join(
             Environment.NewLine,
             $"{Strings.Props_HealthCheck} {check}",
+            $"{Strings.Health_Contacts} {check.ContactedHost}",
             $"{Strings.Props_HealthEvery} {HealthCheck.NormalizeInterval(shortcut.HealthInterval).ToString(System.Globalization.CultureInfo.CurrentCulture)}");
         if (_dialogs.ConfirmApproval(Strings.Health_ApproveTitle, string.Format(Strings.Health_ApproveIntro, shortcut.Name), details, Strings.Health_ApproveButton))
         {

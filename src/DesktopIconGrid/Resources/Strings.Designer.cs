@@ -897,6 +897,15 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Scroll to the end of the text to approve: everything above is what will run..
+        /// </summary>
+        public static string Command_ScrollToApprove {
+            get {
+                return ResourceManager.GetString("Command_ScrollToApprove", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Show:.
         /// </summary>
         public static string Command_Show {
@@ -1370,6 +1379,15 @@ namespace DesktopIconGrid.Resources {
         public static string Health_ApproveTitle {
             get {
                 return ResourceManager.GetString("Health_ApproveTitle", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Contacts:.
+        /// </summary>
+        public static string Health_Contacts {
+            get {
+                return ResourceManager.GetString("Health_Contacts", resourceCulture);
             }
         }
 

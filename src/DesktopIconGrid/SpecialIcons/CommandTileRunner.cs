@@ -24,6 +24,7 @@ public static class CommandTileRunner
     public const int MaxChars = 64 * 1024;
 
     private static readonly ConcurrentDictionary<int, Process> Running = new();
+    private static volatile bool _stopping;
 
     public static ProcessStartInfo StartInfo(CommandTileSettings settings)
     {
@@ -56,6 +57,11 @@ public static class CommandTileRunner
         using (process)
         {
             Running[process.Id] = process;
+            if (_stopping)
+            {
+                Kill(process); // started while the app was ending, after StopAll looked
+            }
+
             try
             {
                 var output = new StringBuilder();
@@ -90,6 +96,7 @@ public static class CommandTileRunner
     /// <summary>Stops every run under way (the app is ending), with its children.</summary>
     public static void StopAll()
     {
+        _stopping = true;
         foreach (var process in Running.Values)
         {
             Kill(process);

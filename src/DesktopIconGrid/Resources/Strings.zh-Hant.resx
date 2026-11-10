@@ -2051,4 +2051,10 @@
   <data name="Health_ApproveButton" xml:space="preserve">
     <value>核准並檢查</value>
   </data>
+  <data name="Health_Contacts" xml:space="preserve">
+    <value>連線對象：</value>
+  </data>
+  <data name="Command_ScrollToApprove" xml:space="preserve">
+    <value>請捲動到文字結尾才能核准：上方所有內容就是將要執行的內容。</value>
+  </data>
 </root>

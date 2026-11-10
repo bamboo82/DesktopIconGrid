@@ -205,4 +205,12 @@ public sealed class CommandTileTests : IDisposable
         Assert.False(trust.IsApproved(hashes[0]));
         Assert.True(trust.IsApproved(hashes[^1]));
     }
+
+    [Fact]
+    public void A_quote_inside_the_program_cannot_smuggle_arguments()
+    {
+        Assert.Null((CommandTileSettings.Default with { Program = "\"C:\\My Tools\\a.exe\"" }).Problem()); // quoted as a whole: fine
+        Assert.NotNull((CommandTileSettings.Default with { Program = "\"C:\\a.exe\" /evil" }).Problem());
+        Assert.NotNull((CommandTileSettings.Default with { Program = "a.exe\" \"b" }).Problem());
+    }
 }

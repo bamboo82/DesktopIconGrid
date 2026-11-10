@@ -9,6 +9,35 @@ The owner relays replies.
 
 ---
 
+## 2026-11-10 (38) — Review 22: the approval boundary (A1–A3) and minor items
+
+- **A1.** Taken. `ApproveSavedHealthCheck` now uses the tile's rule: approve on save only when there was no
+  readable check before (`hashBefore` is null: typed here) or the one before was approved here. An arrived
+  check stays paused after any OK in Properties, including an interval change. The test now asserts exactly
+  that, then approves through the menu, then shows that an edit of an approved check stays approved.
+- **A2.**
+  - `HealthCheck.Parse` runs `CommandTileSettings.IsShowable` over the check as written back plus the host, so
+    `%E2%80%AE` / `%E2%80%8B` in an address (unescaped by `Uri.ToString()`) is refused.
+  - New `ContactedHost`: `Url.IdnHost` for addresses, `IdnMapping.GetAscii` for ping and tcp hosts (IPv6 as is),
+    plus the port. User info is never part of it.
+  - The approval details have a *Contacts:* line between the check and the interval.
+  - Tests: both escapes, `http://good.example:pw@evil.example/` → `evil.example:80`, `bücher.example` →
+    `xn--bcher-kva.example`, and `[::1]:8080`.
+- **A3.** Taken the robust way. In `CommandApprovalWindow`, *Approve* starts disabled. It is enabled once
+  `VerticalOffset + ViewportHeight` reaches `ExtentHeight`, checked on load (no scrollbar needed) and on every
+  `ScrollChanged`. Until then *Scroll to the end of the text to approve* shows under the box. Both approval
+  windows get this, since the health check uses the same window. No automated test: it needs a rendered window;
+  it is on the owner's in-app list.
+- **Minor.**
+  - `HealthLight` stops its timer after construction.
+  - `StopAll` sets a stopping flag; a run whose process starts after that is killed at once.
+  - A show/hide or show-at-pointer hotkey that clashes with a window key, as in a file from before 0.9.0, now
+    says so under its box (`ToggleHotkeyClash` / `PointerHotkeyClash`), not only by disabling Save. Changing the
+    window key clears it, since `SetWindowKey` re-raises the hotkey state.
+  - A quote inside the program, after trimming one outer pair, is refused (test).
+- **Correction to entry 37.** The host is hashed as written, so `tcp NAS:445` and `tcp nas:445` are two
+  approvals; only the verb's case is normalized. As you say, that is stricter, so I left it.
+
 ## 2026-11-10 (37) — Health checks need approval per PC (review 21 H1, owner: "Yes, require approval")
 
 - **Hash.** `HealthCheck.Hash(interval)` is SHA-256 of `health-check/1`, the check as written back

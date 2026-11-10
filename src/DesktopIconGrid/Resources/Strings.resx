@@ -2051,4 +2051,10 @@ Details are in {1}.</value>
   <data name="Health_ApproveButton" xml:space="preserve">
     <value>Approve and check</value>
   </data>
+  <data name="Health_Contacts" xml:space="preserve">
+    <value>Contacts:</value>
+  </data>
+  <data name="Command_ScrollToApprove" xml:space="preserve">
+    <value>Scroll to the end of the text to approve: everything above is what will run.</value>
+  </data>
 </root>

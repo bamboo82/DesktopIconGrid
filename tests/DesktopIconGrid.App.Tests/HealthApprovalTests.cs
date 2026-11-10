@@ -125,7 +125,7 @@ public sealed class HealthApprovalTests : IDisposable
     }
 
     [Fact]
-    public void An_unrelated_OK_keeps_an_arrived_check_paused_and_a_change_typed_here_approves_it()
+    public void An_edit_in_Properties_never_approves_an_arrived_check_but_keeps_an_approved_one_approved()
     {
         var shortcut = new ShortcutItem { Name = "NAS", Location = @"C:\nas.exe", HealthCheck = Check };
         var (viewModel, dialogs, trust) = Create(shortcut);
@@ -138,9 +138,19 @@ public sealed class HealthApprovalTests : IDisposable
             Assert.True(item.IsHealthPaused);
             Assert.False(trust.IsApproved(HealthCheck.HashOf(shortcut)!));
 
-            dialogs.PropertiesEdit = edited => ((ShortcutItem)edited).HealthInterval = 120; // changed here: typed by this user
+            // Changing only the interval is still not typing the check (review 22 A1): it stays paused.
+            dialogs.PropertiesEdit = edited => ((ShortcutItem)edited).HealthInterval = 120;
             viewModel.EditItem(item);
+            Assert.True(item.IsHealthPaused);
+            Assert.False(trust.IsApproved(HealthCheck.HashOf(shortcut)!));
 
+            dialogs.ApprovalAnswer = true; // the menu, which shows all of it
+            viewModel.ApproveHealthCheck(item);
+            Assert.False(item.IsHealthPaused);
+
+            // Once approved here, an edit here carries the approval over to the edited check.
+            dialogs.PropertiesEdit = edited => ((ShortcutItem)edited).HealthInterval = 300;
+            viewModel.EditItem(item);
             Assert.True(trust.IsApproved(HealthCheck.HashOf(shortcut)!));
             Assert.False(item.IsHealthPaused);
         }

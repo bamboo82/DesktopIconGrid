@@ -124,10 +124,14 @@ green is up, red is down, grey is not known yet. The tooltip has the latency or 
 when; an address is shown, logged and notified by its scheme, host and port only (it may carry a token).
 Lights and command tiles inside a group start with the bar, not when the group is first opened.
 **Approval (owner's decision on review 21 H1):** a check contacts nothing until it is approved on this
-PC, as a command tile runs nothing. Typing or changing it in *Properties* here approves it; a check that
-came with the bar from elsewhere (sync, a restore, an import, a hand-edited file) shows a faint grey dot,
-stays paused after an unrelated *OK*, and is approved with *Approve health check…* in the icon's menu,
-which shows the whole check and its interval with *Cancel* as the default. The approval covers the check
+PC, as a command tile runs nothing. Typing a check where there was none, or editing one already approved
+here, approves it on saving *Properties*; a check that came with the bar from elsewhere (sync, a restore,
+an import, a hand-edited file) shows a faint grey dot, stays paused after any *OK* in *Properties* (even
+one that changes its interval), and is approved only with *Approve health check…* in the icon's menu,
+which shows the whole check, the host it contacts (in its `xn--` form for international names, without
+user info) and its interval, with *Cancel* as the default. A check whose address would read differently
+from what is contacted (an escaped bidi override or zero-width character) is refused. In both approval
+windows *Approve* is enabled only once the whole text has been scrolled into view. The approval covers the check
 as written back and the interval, so a change of either on any PC needs approving again; it is kept with
 the command tiles' in the local `command-trust.json`. A change goes to the log under *Health*, and to a notification when *Notify me* is ticked. `tcp`
 works where firewalls drop pings; no check needs administrator rights.

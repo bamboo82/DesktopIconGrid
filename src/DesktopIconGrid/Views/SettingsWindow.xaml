@@ -195,6 +195,8 @@
           <TextBlock Style="{StaticResource DialogHint}" Margin="0,6,0,0"
                      Text="{x:Static r:Strings.Settings_HotkeyHint}" />
           <TextBlock x:Name="HotkeyHint" Foreground="{DynamicResource WarningBrush}" TextWrapping="Wrap" Visibility="Collapsed" />
+          <TextBlock Foreground="{DynamicResource WarningBrush}" TextWrapping="Wrap" Text="{Binding ToggleHotkeyClash}"
+                     Visibility="{Binding HasToggleHotkeyClash, Converter={StaticResource BoolToVisibility}}" />
         </StackPanel>
 
         <!-- Show-at-pointer hotkey -->
@@ -215,6 +217,8 @@
                      Text="{x:Static r:Strings.Settings_PointerHotkeySame}"
                      Visibility="{Binding IsPointerHotkeySame, Converter={StaticResource BoolToVisibility}}" />
           <TextBlock x:Name="PointerHotkeyHint" Foreground="{DynamicResource WarningBrush}" TextWrapping="Wrap" Visibility="Collapsed" />
+          <TextBlock Foreground="{DynamicResource WarningBrush}" TextWrapping="Wrap" Text="{Binding PointerHotkeyClash}"
+                     Visibility="{Binding HasPointerHotkeyClash, Converter={StaticResource BoolToVisibility}}" />
         </StackPanel>
 
         <!-- Language -->
