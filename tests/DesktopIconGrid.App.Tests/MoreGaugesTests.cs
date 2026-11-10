@@ -1,4 +1,5 @@
 using DesktopIconGrid.Core.SpecialIcons;
+using DesktopIconGrid.Services;
 using DesktopIconGrid.SpecialIcons;
 
 namespace DesktopIconGrid.App.Tests;
@@ -70,5 +71,36 @@ public class MoreGaugesTests
         var (received, sent) = SystemMonitor.ReadNetworkCounters();
 
         Assert.True(received >= 0 && sent >= 0);
+    }
+
+    [Fact]
+    public void The_microphone_tile_is_red_while_muted_and_grey_without_a_microphone()
+    {
+        var state = new GaugeState("MIC", GaugeStyle.Number, 101, 101, string.Empty);
+
+        var muted = MicrophoneMuteHandler.Show(state, (true, 80));
+        Assert.Equal((CommandLevel.Failed, 80d), (state.Level!.Value, muted.Percent!.Value));
+        var mutedLabel = state.LabelText;
+
+        MicrophoneMuteHandler.Show(state, (false, 80));
+        Assert.Equal(CommandLevel.Ok, state.Level);
+        Assert.NotEqual(mutedLabel, state.LabelText);
+
+        var none = MicrophoneMuteHandler.Show(state, null);
+        Assert.Equal(CommandLevel.Unknown, state.Level);
+        Assert.Null(none.Percent);
+    }
+
+    [Fact]
+    public void Reading_the_microphone_never_throws_with_or_without_one()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        var reading = MicrophoneControl.Read(); // a build machine has none: null, no exception
+
+        Assert.True(reading is null || reading.Value.Volume is >= 0 and <= 100);
     }
 }

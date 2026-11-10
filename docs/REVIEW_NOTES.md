@@ -9,6 +9,24 @@ The owner relays replies.
 
 ---
 
+## 2026-11-10 (46) — Microphone mute tile
+
+- `Services.MicrophoneControl`: `MMDeviceEnumerator` → `GetDefaultAudioEndpoint(eCapture, eCommunications)`, falling
+  back to `eConsole` → `IMMDevice.Activate(IAudioEndpointVolume)` → `GetMute` / `SetMute` /
+  `GetMasterVolumeLevelScalar`. The three interfaces are declared in vtable order only as far as they are used
+  (please check the order: `IMMDeviceEnumerator` 2 methods, `IMMDevice` 1, `IAudioEndpointVolume` 13 up to
+  `GetMute`). Every COM object is released. No device, or any COM failure, reads as null.
+- `MicrophoneMuteHandler` sits on `MonitorHandlerBase` and is sampled every 2 s, which is how it follows mutes
+  made elsewhere. I did not use a change callback, which would need a COM-callable object kept alive. A click
+  toggles and redraws at once. Colour comes from `Level`; the percentage is the level, so ring and bar mean
+  something.
+- No approval step. A synced tile does nothing until this PC's user clicks it, and the click toggles this
+  PC's own microphone.
+- Tests: the tile's text and colour for muted, on and none; `Read()` on Windows does not throw. A CI machine has
+  no microphone, so the real mute path is **not** exercised anywhere. It needs the owner's PC.
+- Not done: the Volume tile with the mouse wheel.
+- Run 133 (`82c9bd6`, paste) is green.
+
 ## 2026-11-10 (45) — Folder stacks (ROADMAP #10)
 
 - **Model.** `ShortcutItem.OpenAsStack` and `StackNewestFirst` are plain layout properties; older versions keep

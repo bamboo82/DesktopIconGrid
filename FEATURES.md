@@ -259,6 +259,11 @@ their tooltips end with a line of the last 60 samples (`▁▂▃▅▇█`; the
   stopped); release to play the recording back in an endless loop; a single click stops it.
   A click while stopped replays the last recording. Shows REC / LOOP on the icon.
 
+- **Microphone** (0.10.0) — a click mutes or unmutes the default microphone (the one meetings use, else
+  the general default) for every program. `MIC` in green while on, `MUTE` in red while muted, `—` when
+  there is no microphone; it follows mutes made elsewhere within 2 seconds. As a ring or bar it shows
+  the microphone's level. Not in: a volume tile that takes the mouse wheel.
+
 - **Clock** (0.10.0) — the time (`14:05`) on this PC or in a time zone you pick. *On a click* can be
   nothing, a countdown of N minutes, or a Pomodoro (N minutes of work, a break, and again until
   clicked). While it runs the tile shows what is left (green for work, amber for a break), each phase
@@ -681,7 +686,7 @@ same way.
 
 **0.10.0 "Bigger moves"** *(in progress)* — first what was planned for 0.9.0 and is not in it: more gauges
 (memory, battery, network and the sparkline: in), the clock and timer tile (in), folder
-stacks (in), paste to a bucket (in), microphone tile. Then: workspaces (Multi Launch that puts windows back); send a file to another PC;
+stacks (in), paste to a bucket (in), microphone tile (in). Then: workspaces (Multi Launch that puts windows back); send a file to another PC;
 voice launch, if the spike says yes.
 
 **1.0.0 "Ship it"** — the existing backlog: installer (MSIX/winget), code signing, toast notifications.

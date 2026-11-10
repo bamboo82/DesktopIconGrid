@@ -2177,4 +2177,25 @@
   <data name="Props_OpenAsStackHint" xml:space="preserve">
     <value>適用於資料夾：按一下會在指標旁列出其內容，可開啟或拖出檔案。按 Shift 並按一下則在檔案總管中開啟。</value>
   </data>
+  <data name="Mic_Name" xml:space="preserve">
+    <value>麥克風</value>
+  </data>
+  <data name="Mic_Desc" xml:space="preserve">
+    <value>為所有程式將預設麥克風靜音或取消靜音。靜音時顯示紅色。</value>
+  </data>
+  <data name="Mic_LabelOn" xml:space="preserve">
+    <value>MIC</value>
+  </data>
+  <data name="Mic_LabelMuted" xml:space="preserve">
+    <value>靜音</value>
+  </data>
+  <data name="Mic_On" xml:space="preserve">
+    <value>麥克風已開啟（音量 {0}%）。按一下靜音。</value>
+  </data>
+  <data name="Mic_Muted" xml:space="preserve">
+    <value>麥克風已靜音（音量 {0}%）。按一下取消靜音。</value>
+  </data>
+  <data name="Mic_None" xml:space="preserve">
+    <value>找不到麥克風。</value>
+  </data>
 </root>

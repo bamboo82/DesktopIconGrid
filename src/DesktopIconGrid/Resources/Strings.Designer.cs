@@ -2985,6 +2985,69 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Mutes or unmutes the default microphone for every program. Red while muted..
+        /// </summary>
+        public static string Mic_Desc {
+            get {
+                return ResourceManager.GetString("Mic_Desc", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to MUTE.
+        /// </summary>
+        public static string Mic_LabelMuted {
+            get {
+                return ResourceManager.GetString("Mic_LabelMuted", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to MIC.
+        /// </summary>
+        public static string Mic_LabelOn {
+            get {
+                return ResourceManager.GetString("Mic_LabelOn", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The microphone is muted (level {0}%). Click to unmute it..
+        /// </summary>
+        public static string Mic_Muted {
+            get {
+                return ResourceManager.GetString("Mic_Muted", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Microphone.
+        /// </summary>
+        public static string Mic_Name {
+            get {
+                return ResourceManager.GetString("Mic_Name", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to No microphone was found..
+        /// </summary>
+        public static string Mic_None {
+            get {
+                return ResourceManager.GetString("Mic_None", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The microphone is on (level {0}%). Click to mute it..
+        /// </summary>
+        public static string Mic_On {
+            get {
+                return ResourceManager.GetString("Mic_On", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Bar.
         /// </summary>
         public static string Monitor_Bar {

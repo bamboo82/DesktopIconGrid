@@ -2177,4 +2177,25 @@ Details are in {1}.</value>
   <data name="Props_OpenAsStackHint" xml:space="preserve">
     <value>For a folder: a click lists its contents by the pointer, where you can open or drag out a file. Shift+click opens it in File Explorer.</value>
   </data>
+  <data name="Mic_Name" xml:space="preserve">
+    <value>Microphone</value>
+  </data>
+  <data name="Mic_Desc" xml:space="preserve">
+    <value>Mutes or unmutes the default microphone for every program. Red while muted.</value>
+  </data>
+  <data name="Mic_LabelOn" xml:space="preserve">
+    <value>MIC</value>
+  </data>
+  <data name="Mic_LabelMuted" xml:space="preserve">
+    <value>MUTE</value>
+  </data>
+  <data name="Mic_On" xml:space="preserve">
+    <value>The microphone is on (level {0}%). Click to mute it.</value>
+  </data>
+  <data name="Mic_Muted" xml:space="preserve">
+    <value>The microphone is muted (level {0}%). Click to unmute it.</value>
+  </data>
+  <data name="Mic_None" xml:space="preserve">
+    <value>No microphone was found.</value>
+  </data>
 </root>

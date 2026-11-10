@@ -20,6 +20,8 @@ a bucket), then workspaces and sending a file to another PC.
 - Folder stacks: *Properties → Advanced → Open a folder as a stack* makes a click on a folder shortcut list the
   folder's contents by the pointer (by name or newest first, up to 100). A click opens an entry, a drag takes
   the file out, *Open folder* shows it in File Explorer, and the list follows changes in the folder.
+- **Microphone** tile: a click mutes or unmutes the default microphone for every program; red while muted,
+  and it follows mutes made elsewhere.
 - Every gauge's tooltip ends with a line of its last 60 samples (`▁▂▃▅▇█`).
 - **Clock** tile: the time on this PC or in another time zone. A click can start a countdown, or a Pomodoro
   (work, break, repeat, 25 and 5 minutes unless you set others), with a notification at the end of each

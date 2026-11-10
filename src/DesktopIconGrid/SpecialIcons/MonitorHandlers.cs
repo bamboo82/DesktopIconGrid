@@ -5,6 +5,7 @@ using DesktopIconGrid.Core.Launching;
 using DesktopIconGrid.Core.Models;
 using DesktopIconGrid.Core.SpecialIcons;
 using DesktopIconGrid.Resources;
+using DesktopIconGrid.Services;
 using DesktopIconGrid.ViewModels;
 using DesktopIconGrid.Views;
 
@@ -237,4 +238,67 @@ public sealed class NetworkHandler(SystemMonitor monitor, Func<Window?> ownerPro
     }
 
     public override LaunchResult Activate(SpecialIconItem item, ActivationModifiers modifiers) => Open("ms-settings:network-status");
+}
+
+/// <summary>
+/// The default microphone's mute switch: a click mutes or unmutes it for every program, red while muted. It follows
+/// mutes made elsewhere (checked every 2 seconds); the ring or bar is the microphone's level.
+/// </summary>
+public sealed class MicrophoneMuteHandler(SystemMonitor monitor, Func<Window?> ownerProvider) : MonitorHandlerBase(monitor, ownerProvider)
+{
+    private readonly System.Runtime.CompilerServices.ConditionalWeakTable<SpecialIconItem, GaugeState> _states = [];
+
+    public override string Kind => SpecialIconKinds.MicrophoneMute;
+
+    public override string DisplayName => Strings.Mic_Name;
+
+    public override string Description => Strings.Mic_Desc;
+
+    protected override bool ShowsDrive => false;
+
+    public override SpecialIconItem CreateItem()
+    {
+        var item = new SpecialIconItem { Name = Strings.Mic_Name, Kind = Kind };
+        new MonitorIconSettings(GaugeStyle.Number, null).ApplyTo(item);
+        return item;
+    }
+
+    public override GaugeState CreateState(SpecialIconItem item)
+    {
+        var state = new GaugeState("MIC", MonitorIconSettings.From(item).Style, warningAt: 101, criticalAt: 101, Strings.Mic_Name);
+        _states.AddOrUpdate(item, state);
+        Monitor.Register(state, () => Show(state, MicrophoneControl.Read()), everyTicks: 1, recordsPercent: false);
+        return state;
+    }
+
+    public override LaunchResult Activate(SpecialIconItem item, ActivationModifiers modifiers)
+    {
+        if (MicrophoneControl.Toggle() is null)
+        {
+            return LaunchResult.Failure(Strings.Mic_None);
+        }
+
+        if (_states.TryGetValue(item, out var state))
+        {
+            var (percent, detail) = Show(state, MicrophoneControl.Read());
+            state.Update(percent, detail); // at once, not at the next sample
+        }
+
+        return LaunchResult.Started;
+    }
+
+    /// <summary>Sets the tile's text and colour for a reading and returns its level and tooltip.</summary>
+    internal static (double? Percent, string Detail) Show(GaugeState state, (bool Muted, double Volume)? reading)
+    {
+        if (reading is not { } mic)
+        {
+            state.LabelText = "—";
+            state.Level = CommandLevel.Unknown;
+            return (null, Strings.Mic_None);
+        }
+
+        state.LabelText = mic.Muted ? Strings.Mic_LabelMuted : Strings.Mic_LabelOn;
+        state.Level = mic.Muted ? CommandLevel.Failed : CommandLevel.Ok;
+        return (mic.Volume, string.Format(mic.Muted ? Strings.Mic_Muted : Strings.Mic_On, Math.Round(mic.Volume)));
+    }
 }

@@ -13,6 +13,9 @@ public static class SpecialIconKinds
     /// <summary>Network throughput, down and up (0.10.0).</summary>
     public const string Network = "network";
 
+    /// <summary>The default microphone's mute switch (0.10.0).</summary>
+    public const string MicrophoneMute = "microphone-mute";
+
     /// <summary>Battery charge (0.10.0).</summary>
     public const string Battery = "battery";
 

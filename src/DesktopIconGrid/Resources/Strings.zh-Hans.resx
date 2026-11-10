@@ -2177,4 +2177,25 @@
   <data name="Props_OpenAsStackHint" xml:space="preserve">
     <value>适用于文件夹：单击会在指针旁列出其内容，可打开或拖出文件。按 Shift 并单击则在文件资源管理器中打开。</value>
   </data>
+  <data name="Mic_Name" xml:space="preserve">
+    <value>麦克风</value>
+  </data>
+  <data name="Mic_Desc" xml:space="preserve">
+    <value>为所有程序将默认麦克风静音或取消静音。静音时显示红色。</value>
+  </data>
+  <data name="Mic_LabelOn" xml:space="preserve">
+    <value>MIC</value>
+  </data>
+  <data name="Mic_LabelMuted" xml:space="preserve">
+    <value>静音</value>
+  </data>
+  <data name="Mic_On" xml:space="preserve">
+    <value>麦克风已开启（音量 {0}%）。单击静音。</value>
+  </data>
+  <data name="Mic_Muted" xml:space="preserve">
+    <value>麦克风已静音（音量 {0}%）。单击取消静音。</value>
+  </data>
+  <data name="Mic_None" xml:space="preserve">
+    <value>找不到麦克风。</value>
+  </data>
 </root>
