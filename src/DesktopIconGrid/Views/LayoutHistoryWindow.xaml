@@ -17,7 +17,7 @@
         <Button x:Name="RestoreButton" Content="{x:Static r:Strings.History_Restore}" Style="{StaticResource DialogButton}" IsDefault="True" IsEnabled="False" Click="Restore_Click" />
         <Button Content="{x:Static r:Strings.Common_Cancel}" Style="{StaticResource DialogButton}" IsCancel="True" />
       </StackPanel>
-      <TextBlock x:Name="EmptyText" Text="{x:Static r:Strings.History_None}" VerticalAlignment="Center" TextWrapping="Wrap" Visibility="Collapsed" />
+      <TextBlock x:Name="EmptyText" VerticalAlignment="Center" TextWrapping="Wrap" Visibility="Collapsed" />
     </DockPanel>
     <ListBox x:Name="List" HorizontalContentAlignment="Stretch" SelectionMode="Single"
              SelectionChanged="List_SelectionChanged" MouseDoubleClick="List_MouseDoubleClick"

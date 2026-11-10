@@ -51,6 +51,9 @@ public interface IDialogService
     /// </summary>
     ViewModels.ImportRequest? ShowImport(IReadOnlyList<ShortcutItem> onBar, bool canGroup);
 
-    /// <summary>Restore an earlier layout: the entry picked from <paramref name="entries"/>, or <see langword="null"/> on Cancel.</summary>
-    Core.Storage.LayoutHistoryEntry? ShowLayoutHistory(IReadOnlyList<Core.Storage.LayoutHistoryEntry> entries);
+    /// <summary>
+    /// Restore an earlier layout: the entry picked from what <paramref name="list"/> reads (off the window's thread: up to
+    /// twenty files, maybe on a stick), or <see langword="null"/> on Cancel.
+    /// </summary>
+    Core.Storage.LayoutHistoryEntry? ShowLayoutHistory(Func<IReadOnlyList<Core.Storage.LayoutHistoryEntry>> list);
 }

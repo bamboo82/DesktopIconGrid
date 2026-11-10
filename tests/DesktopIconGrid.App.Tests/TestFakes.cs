@@ -99,9 +99,9 @@ internal sealed class RecordingDialogs : IDialogService
 
     public IReadOnlyList<DesktopIconGrid.Core.Storage.LayoutHistoryEntry>? HistoryOffered { get; private set; }
 
-    public DesktopIconGrid.Core.Storage.LayoutHistoryEntry? ShowLayoutHistory(IReadOnlyList<DesktopIconGrid.Core.Storage.LayoutHistoryEntry> entries)
+    public DesktopIconGrid.Core.Storage.LayoutHistoryEntry? ShowLayoutHistory(Func<IReadOnlyList<DesktopIconGrid.Core.Storage.LayoutHistoryEntry>> list)
     {
-        HistoryOffered = entries;
+        HistoryOffered = list();
         return HistoryAnswer;
     }
 

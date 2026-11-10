@@ -9,6 +9,25 @@ The owner relays replies.
 
 ---
 
+## 2026-11-10 (32) — Layout history (`8db6bdf`) and review 20
+
+L3 taken: this entry covers `8db6bdf`, which came without one, and the review 20 fix in the commit that adds it.
+
+- **Layout history.** `LayoutHistory` keeps `layout.json` as it was in `history\layout-<UTC time to the
+  millisecond>.json` before `LayoutStorage.Save` overwrites it: at most once per ten minutes, the newest 20.
+  Milliseconds, because a forced record (before a restore) right after another one in the same second would
+  otherwise overwrite it. *Restore an earlier layout…* is in the options and tray menus. It forces a record first,
+  so a restore can be undone, then `ReplaceLayout` (which keeps this PC's window placement) and `LayoutChanged`, so
+  a linked copy uploads the restored bar. Sync loads land in the history too, through the same save; you noted it.
+- **L1.** Run 115's log confirms your static diagnosis: the only failure was `Assert.Same` on two equal
+  `LayoutHistoryEntry` records from two `List()` calls. It is `Assert.Equal` now. That was my miss: the App tests
+  don't run here, and I didn't wait for the run before writing the summary.
+- **L2.** Taken. `ShowLayoutHistory` takes the reading function; the window shows *Reading the earlier layouts…*
+  and reads them on the icon worker with the 30-second limit, and says so when it runs out (`History_TimedOut`,
+  three languages). The test fake calls the function itself.
+
+---
+
 ## 2026-11-10 (31) — Review 19: the Import gate
 
 All of review 19 is in the commit that adds this entry. Locally 770 Core tests pass and the App tests build; CI runs

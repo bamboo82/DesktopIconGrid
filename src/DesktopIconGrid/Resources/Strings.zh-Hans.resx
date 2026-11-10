@@ -1808,4 +1808,10 @@
   <data name="History_Unreadable" xml:space="preserve">
     <value>已无法读取该布局。</value>
   </data>
+  <data name="History_Loading" xml:space="preserve">
+    <value>正在读取较早的布局…</value>
+  </data>
+  <data name="History_TimedOut" xml:space="preserve">
+    <value>读取较早的布局时间过长：它们所在的驱动器可能没有响应。请稍后再试。</value>
+  </data>
 </root>

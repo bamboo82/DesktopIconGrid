@@ -150,9 +150,9 @@ public sealed class DialogService(IIconProvider icons) : IDialogService, ILaunch
         return window.ShowDialog() == true ? new ImportRequest(viewModel.Chosen, viewModel.GroupPerSource) : null;
     }
 
-    public Core.Storage.LayoutHistoryEntry? ShowLayoutHistory(IReadOnlyList<Core.Storage.LayoutHistoryEntry> entries)
+    public Core.Storage.LayoutHistoryEntry? ShowLayoutHistory(Func<IReadOnlyList<Core.Storage.LayoutHistoryEntry>> list)
     {
-        var window = new LayoutHistoryWindow(entries) { Owner = Owner };
+        var window = new LayoutHistoryWindow(() => IconWorker.Shared.RunAsync(list, AddAppListTimeout, "layout history")) { Owner = Owner };
         return window.ShowDialog() == true ? window.Chosen : null;
     }
 

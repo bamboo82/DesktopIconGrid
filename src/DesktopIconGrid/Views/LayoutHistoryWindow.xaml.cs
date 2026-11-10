@@ -10,16 +10,24 @@ namespace DesktopIconGrid.Views;
 /// <summary>Restore an earlier layout: the kept layouts, newest first, one to pick.</summary>
 public partial class LayoutHistoryWindow : Window
 {
-    public LayoutHistoryWindow(IReadOnlyList<LayoutHistoryEntry> entries)
+    /// <param name="load">Reads the kept layouts off the window's thread; <see langword="null"/> when it ran out of time.</param>
+    public LayoutHistoryWindow(Func<Task<IReadOnlyList<LayoutHistoryEntry>?>> load)
     {
         InitializeComponent();
         DialogTheme.Apply(this);
-        List.ItemsSource = entries.Select(e => new Row(
-            e,
-            e.SavedAt.ToLocalTime().ToString("f", CultureInfo.CurrentCulture),
-            string.Format(CultureInfo.CurrentCulture, Strings.History_Entry, e.Shortcuts, e.Groups))).ToList();
-        EmptyText.Visibility = entries.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
-        Loaded += (_, _) => List.Focus();
+        EmptyText.Text = Strings.History_Loading;
+        EmptyText.Visibility = Visibility.Visible;
+        Loaded += async (_, _) =>
+        {
+            List.Focus();
+            var entries = await load();
+            List.ItemsSource = (entries ?? []).Select(e => new Row(
+                e,
+                e.SavedAt.ToLocalTime().ToString("f", CultureInfo.CurrentCulture),
+                string.Format(CultureInfo.CurrentCulture, Strings.History_Entry, e.Shortcuts, e.Groups))).ToList();
+            EmptyText.Text = entries is null ? Strings.History_TimedOut : Strings.History_None;
+            EmptyText.Visibility = entries is { Count: > 0 } ? Visibility.Collapsed : Visibility.Visible;
+        };
     }
 
     /// <summary>The entry picked, once the dialog returns true.</summary>

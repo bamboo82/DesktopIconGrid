@@ -1340,7 +1340,7 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
     /// </summary>
     public void RestoreLayout()
     {
-        if (_dialogs.ShowLayoutHistory(_storage.History.List()) is not { } entry)
+        if (_dialogs.ShowLayoutHistory(_storage.History.List) is not { } entry)
         {
             return;
         }

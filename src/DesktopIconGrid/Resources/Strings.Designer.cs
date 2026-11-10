@@ -960,6 +960,15 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Reading the earlier layouts….
+        /// </summary>
+        public static string History_Loading {
+            get {
+                return ResourceManager.GetString("History_Loading", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to No earlier layout has been kept yet..
         /// </summary>
         public static string History_None {
@@ -974,6 +983,15 @@ namespace DesktopIconGrid.Resources {
         public static string History_Restore {
             get {
                 return ResourceManager.GetString("History_Restore", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Reading the earlier layouts took too long: the drive they are on may not be answ [rest of string was truncated]";.
+        /// </summary>
+        public static string History_TimedOut {
+            get {
+                return ResourceManager.GetString("History_TimedOut", resourceCulture);
             }
         }
 

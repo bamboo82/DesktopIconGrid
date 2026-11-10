@@ -561,7 +561,7 @@ public sealed class LauncherViewModelTests : IDisposable
         viewModel.RestoreLayout();
 
         Assert.Equal(["A", "B", "C", "d"], Names(viewModel.Model.Items));
-        Assert.Same(kept, Assert.Single(dialogs.HistoryOffered!));
+        Assert.Equal(kept, Assert.Single(dialogs.HistoryOffered!)); // read again: an equal entry, not the same one
         Assert.Equal(2, storage.History.List().Count); // the bar before the restore is kept too
         Assert.Equal(1, changes);
 

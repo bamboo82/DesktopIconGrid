@@ -1808,4 +1808,10 @@ Details are in {1}.</value>
   <data name="History_Unreadable" xml:space="preserve">
     <value>That layout can no longer be read.</value>
   </data>
+  <data name="History_Loading" xml:space="preserve">
+    <value>Reading the earlier layouts…</value>
+  </data>
+  <data name="History_TimedOut" xml:space="preserve">
+    <value>Reading the earlier layouts took too long: the drive they are on may not be answering. Try again in a moment.</value>
+  </data>
 </root>

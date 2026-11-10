@@ -1808,4 +1808,10 @@
   <data name="History_Unreadable" xml:space="preserve">
     <value>已無法讀取該版面。</value>
   </data>
+  <data name="History_Loading" xml:space="preserve">
+    <value>正在讀取較早的版面…</value>
+  </data>
+  <data name="History_TimedOut" xml:space="preserve">
+    <value>讀取較早的版面太久：它們所在的磁碟可能沒有回應。請稍後再試。</value>
+  </data>
 </root>
