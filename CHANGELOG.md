@@ -3,10 +3,18 @@
 All notable changes to Desktop Icon Grid. The format follows [Keep a Changelog](https://keepachangelog.com/);
 version numbers follow [Semantic Versioning](https://semver.org/).
 
-## [0.10.0] – Unreleased
+## [0.10.0] – 2026-11-10
 
-What 0.9.0 planned and did not have (more gauges, folder stacks, a microphone tile, a clock and timer, paste to
-a bucket), then workspaces and sending a file to another PC.
+"Bigger moves": what 0.9.0 planned and did not have (more gauges, folder stacks, a microphone tile, a clock and
+timer, paste to a bucket), then workspaces and sending a file to another PC.
+
+Upgrading: 0.10.0 reads and writes the same layout format as 0.8.x and 0.9.0 (version 1). Older versions show
+the new tiles as unknown items and keep, without using, a shortcut's stack and workspace settings; the Multi
+Launch group works on every version. Window positions of workspaces and files sent between PCs are per PC
+and are not part of a synced copy. Sending files needs 0.10.0 and the same sync folder on both PCs.
+
+Not in this release: sending files through Google Drive, voice launch, a volume tile, and dropping a file onto
+a program inside a folder stack.
 
 ### Added
 

@@ -711,10 +711,13 @@ layout history, command line and Send To; keys of the bar's window in Settings; 
 commands from elsewhere paused until approved on each PC; a health light on a shortcut, approved the
 same way.
 
-**0.10.0 "Bigger moves"** *(in progress)* — first what was planned for 0.9.0 and is not in it: more gauges
-(memory, battery, network and the sparkline: in), the clock and timer tile (in), folder
-stacks (in), paste to a bucket (in), microphone tile (in). Then: workspaces (in), send a file to another PC (in, through a sync folder) (Multi Launch that puts windows back); send a file to another PC;
-voice launch, if the spike says yes.
+**0.10.0 "Bigger moves"** *(done, released 2026-11-10)* — what was planned for 0.9.0 and was not in it: more
+gauges (memory, battery, network) with a sparkline, the clock and timer tile, folder stacks, paste to a
+bucket, the microphone tile. Then workspaces (Multi Launch that puts windows back) and sending a file to
+another PC through a sync folder.
+
+**Next** — what 0.10.0 left out: sending files through Google Drive, voice launch (if the spike says yes),
+a volume tile, dropping a file onto a program inside a folder stack.
 
 **1.0.0 "Ship it"** — the existing backlog: installer (MSIX/winget), code signing, toast notifications.
 

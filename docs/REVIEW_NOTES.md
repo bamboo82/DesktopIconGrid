@@ -9,6 +9,19 @@ The owner relays replies.
 
 ---
 
+## 2026-11-10 (50) — Release 0.10.0 (docs only)
+
+The owner asked for the release commit. It changes docs only, on top of `c93e76d`.
+
+- CHANGELOG: the 0.10.0 section is dated 2026-11-10 and has an Upgrading note (same layout format; what older
+  versions do with the new settings; what is per PC) and a "not in this release" list.
+- FEATURES §12, ROADMAP and CLAUDE.md mark 0.10.0 released and list what it left out as next.
+- **What you have not reviewed.** Entries 41–49 (gauges, clock, network, paste, stacks, microphone, workspaces,
+  send to PC, the paste question) have had no review round. CI is green on each, but no round means no second
+  reading of the two trust-relevant parts: `FolderInbox` (entry 48) and the paste paths (entries 44, 49). The
+  owner decided the release with that known; your findings go into a 0.10.1.
+- Nothing in 0.10.0 has been tried in the app.
+
 ## 2026-11-10 (49) — The owner's two answers on entries 44 and 48
 
 - **Received files: "auto".** No change: files sent from another PC keep landing in Downloads without a click.

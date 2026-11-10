@@ -83,9 +83,10 @@ After removing or editing a key in the `.resx` files, run `python3 -I tools/gen_
 
 ## State
 
-- Released: 0.9.0 (2026-11-10, tag `v0.9.0`). In progress: 0.10.0 (see the top of `CHANGELOG.md`).
-- Open: the deferred minor list in REVIEW_NOTES entry 36; P15 (scp/sftp operands, review 17); U3′'s root fix.
-  0.10.0's features are all in; left out on purpose and listed in FEATURES: Send to PC through Google Drive,
-  the voice launch, a volume tile, drop onto a program inside a stack.
-- The owner skipped the in-app check of 0.9.0: its new UI (approval windows, paused tile and dot, gauges, Win
-  as a key modifier, Send To into a group) has not been seen on a real bar.
+- Released: 0.10.0 (2026-11-10; the release commit is on the branch, `main` and the tag `v0.10.0` are the
+  owner's to move). The next version is not started: bump `Directory.Build.props` and open a CHANGELOG section first.
+- Open: the deferred minor list in REVIEW_NOTES entry 36; P15 (scp/sftp operands, review 17); U3′'s root fix;
+  what 0.10.0 left out (Send to PC through Google Drive, voice launch, a volume tile, drop onto a program
+  inside a stack); the review session's findings on entries 41–50, when they come.
+- Nothing of 0.9.0 or 0.10.0 has been seen on a real bar: the owner skipped the in-app check of 0.9.0, and
+  0.10.0's tiles, stack window, workspaces and Send to PC were built without one.
