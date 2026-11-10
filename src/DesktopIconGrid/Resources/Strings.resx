@@ -1856,4 +1856,22 @@ Details are in {1}.</value>
   <data name="WindowKey_PointerHotkey" xml:space="preserve">
     <value>Show at the pointer (system-wide)</value>
   </data>
+  <data name="Commands_Title" xml:space="preserve">
+    <value>Desktop Icon Grid</value>
+  </data>
+  <data name="Commands_NoShortcut" xml:space="preserve">
+    <value>There is no shortcut called “{0}” on the bar.</value>
+  </data>
+  <data name="Commands_Invalid" xml:space="preserve">
+    <value>The command line could not be read: {0}</value>
+  </data>
+  <data name="Commands_NotAnswered" xml:space="preserve">
+    <value>The running bar did not answer, so the command was not carried out. Try again in a moment.</value>
+  </data>
+  <data name="Menu_SendTo" xml:space="preserve">
+    <value>In Explorer's Send To menu</value>
+  </data>
+  <data name="Commands_SendToFailed" xml:space="preserve">
+    <value>The Send To entry could not be changed: {0}</value>
+  </data>
 </root>

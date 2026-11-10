@@ -2,7 +2,7 @@ using System.Runtime.InteropServices;
 
 namespace DesktopIconGrid.Services;
 
-/// <summary>The shell's <c>.lnk</c> object, for reading a shortcut file's target, arguments and working folder.</summary>
+/// <summary>The shell's <c>.lnk</c> object, for reading a shortcut file's target, arguments and working folder, and for writing one.</summary>
 internal static partial class NativeMethods
 {
     /// <summary>GetPath: the target as stored, with environment variables left in.</summary>
@@ -43,5 +43,35 @@ internal static partial class NativeMethods
 
         [PreserveSig]
         int GetArguments(IntPtr pszArgs, int cch);
+
+        [PreserveSig]
+        int SetArguments([MarshalAs(UnmanagedType.LPWStr)] string pszArgs);
+
+        [PreserveSig]
+        int GetHotkey(out short pwHotkey);
+
+        [PreserveSig]
+        int SetHotkey(short wHotkey);
+
+        [PreserveSig]
+        int GetShowCmd(out int piShowCmd);
+
+        [PreserveSig]
+        int SetShowCmd(int iShowCmd);
+
+        [PreserveSig]
+        int GetIconLocation(IntPtr pszIconPath, int cch, out int piIcon);
+
+        [PreserveSig]
+        int SetIconLocation([MarshalAs(UnmanagedType.LPWStr)] string pszIconPath, int iIcon);
+
+        [PreserveSig]
+        int SetRelativePath([MarshalAs(UnmanagedType.LPWStr)] string pszPathRel, uint dwReserved);
+
+        [PreserveSig]
+        int Resolve(IntPtr hwnd, uint fFlags);
+
+        [PreserveSig]
+        int SetPath([MarshalAs(UnmanagedType.LPWStr)] string pszFile);
     }
 }

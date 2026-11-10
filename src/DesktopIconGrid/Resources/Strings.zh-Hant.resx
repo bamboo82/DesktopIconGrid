@@ -1856,4 +1856,22 @@
   <data name="WindowKey_PointerHotkey" xml:space="preserve">
     <value>在指標處顯示（全系統）</value>
   </data>
+  <data name="Commands_Title" xml:space="preserve">
+    <value>Desktop Icon Grid</value>
+  </data>
+  <data name="Commands_NoShortcut" xml:space="preserve">
+    <value>列中沒有名為「{0}」的捷徑。</value>
+  </data>
+  <data name="Commands_Invalid" xml:space="preserve">
+    <value>無法讀取命令列：{0}</value>
+  </data>
+  <data name="Commands_NotAnswered" xml:space="preserve">
+    <value>執行中的列沒有回應，因此未執行命令。請稍後再試。</value>
+  </data>
+  <data name="Menu_SendTo" xml:space="preserve">
+    <value>在檔案總管的「傳送到」功能表中</value>
+  </data>
+  <data name="Commands_SendToFailed" xml:space="preserve">
+    <value>無法變更「傳送到」項目：{0}</value>
+  </data>
 </root>

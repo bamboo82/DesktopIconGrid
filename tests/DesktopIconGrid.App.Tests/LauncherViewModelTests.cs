@@ -571,6 +571,26 @@ public sealed class LauncherViewModelTests : IDisposable
     }
 
     [Fact]
+    public void The_command_line_adds_into_a_named_group_once_and_launches_by_name()
+    {
+        var (viewModel, _, dialogs) = Create();
+
+        viewModel.AddPathsFromCommandLine([@"C:\d.exe", @"C:\e.exe"], " tools ");
+        viewModel.AddPathsFromCommandLine([@"C:\f.exe"], "Tools"); // the same group, any case
+        viewModel.AddPathsFromCommandLine([@"C:\g.exe"], null);
+
+        var group = Assert.Single(viewModel.Model.Items.OfType<GroupItem>());
+        Assert.Equal("tools", group.Name);
+        Assert.Equal(["d", "e", "f"], Names(group.Items));
+        Assert.Equal(["A", "B", "C", "tools", "g"], Names(viewModel.Model.Items));
+
+        Assert.True(viewModel.LaunchByName("b"));
+        Assert.Contains(_launcher.Launches, l => l.Location == @"C:\b.exe");
+        Assert.False(viewModel.LaunchByName("Nothing"));
+        Assert.Single(dialogs.Notices);
+    }
+
+    [Fact]
     public void Import_puts_the_ticked_items_after_the_icon_or_one_group_per_source_on_the_bar()
     {
         var (viewModel, model, dialogs) = Create();

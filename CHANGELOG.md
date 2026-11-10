@@ -23,6 +23,11 @@ microphone tile, a clock and timer, and paste to a bucket.
 - Layout history: before a save overwrites the layout, the bar as it was is kept in `history\`, at most once
   every ten minutes, the newest 20. *Restore an earlier layout…* (options and tray menus) brings one back,
   keeping the current bar in the history first, so a restore can be undone too. It stays on this PC.
+- A command line: `--add <path>… [--group <name>]`, `--launch <name>`, `--show`, `--hide`, `--toggle`. A second
+  start hands the commands to the running bar over a pipe only this Windows user can open. Anything that is not a
+  full path or a known option is refused with a message, and nothing is done.
+- *In Explorer's Send To menu* (options and tray menus): adds or removes a *Desktop Icon Grid* entry in Explorer's
+  *Send to*, which adds the selected files and folders to the end of the bar.
 
 ## [0.8.1] – 2026-11-06
 

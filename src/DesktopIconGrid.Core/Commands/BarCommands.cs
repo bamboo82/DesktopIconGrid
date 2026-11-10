@@ -43,6 +43,9 @@ public static class BarCommands
     /// <summary>The argument of a start that stays in the tray (the Run entry's).</summary>
     public const string HiddenArgument = "--hidden";
 
+    /// <summary>The option the <em>Send to</em> entry passes before the chosen paths.</summary>
+    public const string AddArgument = "--add";
+
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web) { DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull };
 
     /// <summary>
@@ -83,7 +86,7 @@ public static class BarCommands
                     commands.Add(new BarCommand(BarCommandKind.Launch, args[i + 1]));
                     i += 2;
                     break;
-                case "--add":
+                case AddArgument:
                     var paths = new List<string>();
                     i++;
                     while (i < args.Count && !IsOption(args[i]))

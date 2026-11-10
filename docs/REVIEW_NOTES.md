@@ -9,6 +9,52 @@ The owner relays replies.
 
 ---
 
+## 2026-11-10 (33) — Window keys (`5c0ee40`), the command line (`a95c410` and this commit) and *Send to*
+
+L3: this entry covers `a95c410` and `5c0ee40`, which came without one, and the commit that adds it.
+
+- **Window keys (`5c0ee40`).** The owner asked for the bar's window keys to be configurable. *Settings → Keys
+  in the bar* lists new shortcut, new group, Settings, find, undo remove, remove and Properties.
+  `LauncherSettings.WindowKeys` stores only overrides by action name (`""` turns one off), so a later default
+  change still reaches untouched actions. `HotkeyGesture.IsAllowedInWindow` refuses a key without Ctrl, Alt or
+  Win unless it is F1–F24, Delete or Insert (a bare letter starts the search), and never takes Esc, Tab, Enter,
+  Space, Backspace or the arrows. `SetWindowKey` refuses a key another row or a global hotkey has. The
+  `KeyBinding`s are gone except Escape: `MainWindow.OnPreviewKeyDown` looks keys up in `WindowKeyMap`, and
+  Remove/Properties stay on the focused icon (`IconGridControl.Item_KeyDown`). The menus show the keys as
+  set. Run 118 is green.
+- **Command line (`a95c410`).** `BarCommands.Parse` reads `--add <path>… [--group <name>]`, `--launch <name>`,
+  `--show`, `--hide` and `--toggle`, and passes over `--hidden`. Anything else refuses the whole line, so nothing
+  runs. `--add` takes only a drive path (`X:\`) or a share (`\\srv\share`), not relative or device paths, and
+  not `" < > | * ?`. The rule is written out by hand, because `Path.IsPathFullyQualified` follows the OS the
+  tests run on.
+- **The hand-over (this commit).**
+  - The pipe is `DesktopIconGrid.Commands.<session id>`, opened with `PipeOptions.CurrentUserOnly` on both ends.
+  - Each connection carries one message, read within 5 s and capped at 256 KB. On arrival it goes through
+    `BarCommands.Deserialize`, so it is checked by the same `Validate` as a command line.
+  - A second start with commands does not signal the show event. It calls `AllowSetForegroundWindow(ASFW_ANY)`,
+    then tries `Send` five times with a 2 s connect each, because the first bar may still be starting. It
+    warns when no bar answered.
+  - The first start runs its own commands at `ApplicationIdle` once the window is up. A bad command line shows a
+    message and exits with code 2.
+  - Adds go through `AddPaths`, so a path from `--add` meets the same checks as a drop. Consecutive adds to one
+    group become one `AddPaths` call; `--group` finds a root group by name (any case) or makes one at the end.
+  - `--launch` uses `Activate` without an anchor, with the click's checks (missing, switch to running). An
+    unknown name gives a notice.
+- **Points to look at.**
+  - `ASFW_ANY` is broader than the first bar's process id. I chose it because the second start doesn't know
+    that id without another round trip, and the right lasts only until the next input.
+  - A process of the same user could take the pipe name first. It is the same user, so I treated it as out of
+    scope, as for the show event.
+- **Send to.** *In Explorer's Send To menu* (options and tray, checkable) writes or deletes
+  `%AppData%\Microsoft\Windows\SendTo\Desktop Icon Grid.lnk`. The shortcut targets `Environment.ProcessPath`
+  with `--add`. For this, `IShellLinkW` is declared further in vtable order, up to `SetPath`. The tick only
+  means the file exists; it does not check that the shortcut points at this copy. Turning it off and on again
+  re-points it.
+- **Tests.** Core has the parser and message tests from `a95c410`. The App tests add a pipe round trip
+  (Windows only), the send-without-listener case, and adds into a named group plus launch by name.
+
+---
+
 ## 2026-11-10 (32) — Layout history (`8db6bdf`) and review 20
 
 L3 taken: this entry covers `8db6bdf`, which came without one, and the review 20 fix in the commit that adds it.

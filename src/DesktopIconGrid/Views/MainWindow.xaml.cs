@@ -10,6 +10,7 @@ using System.Windows.Media;
 using System.Windows.Media.Media3D;
 using System.Windows.Shell;
 using System.Windows.Threading;
+using DesktopIconGrid.Core.Commands;
 using DesktopIconGrid.Core.Diagnostics;
 using DesktopIconGrid.Core.Models;
 using DesktopIconGrid.Resources;
@@ -133,6 +134,7 @@ public partial class MainWindow : Window
         yield return new TrayMenuEntry(Strings.Menu_EditNames, () => RunOnBar(() => _viewModel.OpenNameTableCommand.Execute(null)));
         yield return new TrayMenuEntry(Strings.Menu_LaunchMultiLaunch, () => _viewModel.LaunchMultiLaunchCommand.Execute(null), IsEnabled: _viewModel.HasMultiLaunchMembers);
         yield return new TrayMenuEntry(Strings.Menu_AlwaysOnTop, () => _viewModel.AlwaysOnTop = !_viewModel.AlwaysOnTop, IsChecked: _viewModel.AlwaysOnTop);
+        yield return new TrayMenuEntry(Strings.Menu_SendTo, ToggleSendTo, IsChecked: SendToEntry.Exists);
         yield return TrayMenuEntry.Separator;
         yield return new TrayMenuEntry(Strings.Menu_Settings, () => RunOnBar(() => _viewModel.OpenSettingsCommand.Execute(null)));
         yield return new TrayMenuEntry(Strings.Menu_Sync, () => RunOnBar(() => _viewModel.OpenSyncCommand.Execute(null)));
@@ -311,6 +313,44 @@ public partial class MainWindow : Window
     }
 
     /// <summary>Called when a second copy of the app was started: make the bar visible and bring it forward.</summary>
+    /// <summary>
+    /// Carries out the command line of a start (this one's, or another start's, handed over by <see cref="CommandPipe"/>),
+    /// in order; consecutive <c>--add</c> paths for one group become one addition.
+    /// </summary>
+    public void Run(IReadOnlyList<BarCommand> commands)
+    {
+        ArgumentNullException.ThrowIfNull(commands);
+        for (var i = 0; i < commands.Count; i++)
+        {
+            var command = commands[i];
+            switch (command.Kind)
+            {
+                case BarCommandKind.Add:
+                    var paths = new List<string>();
+                    while (i < commands.Count && commands[i].Kind == BarCommandKind.Add && commands[i].Group == command.Group)
+                    {
+                        paths.Add(commands[i++].Value!);
+                    }
+
+                    i--;
+                    _viewModel.AddPathsFromCommandLine(paths, command.Group);
+                    break;
+                case BarCommandKind.Launch:
+                    _viewModel.LaunchByName(command.Value!);
+                    break;
+                case BarCommandKind.Show:
+                    ShowFromOtherInstance();
+                    break;
+                case BarCommandKind.Hide:
+                    HideBar();
+                    break;
+                case BarCommandKind.Toggle:
+                    ToggleVisibility();
+                    break;
+            }
+        }
+    }
+
     public void ShowFromOtherInstance()
     {
         Show();
@@ -839,9 +879,28 @@ public partial class MainWindow : Window
             return;
         }
 
+        SendToMenuItem.IsChecked = SendToEntry.Exists;
         menu.PlacementTarget = button;
         menu.Placement = PlacementMode.Top;
         menu.IsOpen = true;
+    }
+
+    private void SendTo_Click(object sender, RoutedEventArgs e) => ToggleSendTo();
+
+    /// <summary>Adds the bar to Explorer's <em>Send to</em> menu, or takes it out again.</summary>
+    private void ToggleSendTo()
+    {
+        try
+        {
+            SendToEntry.Set(!SendToEntry.Exists);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or COMException)
+        {
+            AppLog.Default.Warning("Commands", $"The Send To entry could not be changed: {ex.Message}");
+            MessageBox.Show(this, string.Format(Strings.Commands_SendToFailed, ex.Message), Strings.App_Name, MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
+
+        SendToMenuItem.IsChecked = SendToEntry.Exists;
     }
 
     private bool IsInsidePopup(DependencyObject source)

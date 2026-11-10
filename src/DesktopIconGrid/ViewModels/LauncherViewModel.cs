@@ -917,6 +917,50 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
 
     public void AddLink(string url, ItemListViewModel list, int index) => AddPaths([url], list, index);
 
+    /// <summary>
+    /// <c>--add</c> (Explorer's <em>Send to</em>): shortcuts to <paramref name="paths"/> at the end of the bar, or of the
+    /// group <paramref name="groupName"/> on the bar (any case), which is made when there is none.
+    /// </summary>
+    public void AddPathsFromCommandLine(IReadOnlyList<string> paths, string? groupName)
+    {
+        ArgumentNullException.ThrowIfNull(paths);
+        if (paths.Count == 0)
+        {
+            return;
+        }
+
+        var list = RootItems;
+        if (!string.IsNullOrWhiteSpace(groupName))
+        {
+            var group = Model.Items.OfType<GroupItem>().FirstOrDefault(g => string.Equals(g.Name, groupName.Trim(), StringComparison.OrdinalIgnoreCase));
+            if (group is null)
+            {
+                group = new GroupItem { Name = groupName.Trim() };
+                Model.Insert(group, null, int.MaxValue);
+                RootItems.Sync();
+            }
+
+            list = ListFor(group);
+        }
+
+        AddPaths(paths, list, int.MaxValue);
+    }
+
+    /// <summary><c>--launch</c>: starts the first shortcut called <paramref name="name"/> (any case) as a click does; false when there is none.</summary>
+    public bool LaunchByName(string name)
+    {
+        ArgumentNullException.ThrowIfNull(name);
+        var shortcut = Model.AllShortcuts().FirstOrDefault(s => string.Equals(s.Name, name.Trim(), StringComparison.CurrentCultureIgnoreCase));
+        if (shortcut is null)
+        {
+            _dialogs.Notify(Strings.Commands_Title, string.Format(Strings.Commands_NoShortcut, name.Trim()));
+            return false;
+        }
+
+        Activate(GetOrCreateViewModel(shortcut), anchor: null);
+        return true;
+    }
+
     /// <summary>Reorders within a list or moves between the root and a group. Returns false when the move is not allowed.</summary>
     public bool MoveItem(Guid id, ItemListViewModel targetList, int insertBeforeIndex)
     {

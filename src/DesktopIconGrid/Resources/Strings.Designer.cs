@@ -645,6 +645,51 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to The command line could not be read: {0}.
+        /// </summary>
+        public static string Commands_Invalid {
+            get {
+                return ResourceManager.GetString("Commands_Invalid", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to There is no shortcut called “{0}” on the bar..
+        /// </summary>
+        public static string Commands_NoShortcut {
+            get {
+                return ResourceManager.GetString("Commands_NoShortcut", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The running bar did not answer, so the command was not carried out. Try again in [rest of string was truncated]";.
+        /// </summary>
+        public static string Commands_NotAnswered {
+            get {
+                return ResourceManager.GetString("Commands_NotAnswered", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The Send To entry could not be changed: {0}.
+        /// </summary>
+        public static string Commands_SendToFailed {
+            get {
+                return ResourceManager.GetString("Commands_SendToFailed", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Desktop Icon Grid.
+        /// </summary>
+        public static string Commands_Title {
+            get {
+                return ResourceManager.GetString("Commands_Title", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to a Google account.
         /// </summary>
         public static string Common_AGoogleAccount {
@@ -2216,6 +2261,15 @@ namespace DesktopIconGrid.Resources {
         public static string Menu_RestoreLayout {
             get {
                 return ResourceManager.GetString("Menu_RestoreLayout", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to In Explorer's Send To menu.
+        /// </summary>
+        public static string Menu_SendTo {
+            get {
+                return ResourceManager.GetString("Menu_SendTo", resourceCulture);
             }
         }
 

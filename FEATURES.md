@@ -26,6 +26,7 @@ button at the top-right and a small options arrow at the bottom-right.
 | Show/hide hotkey | A system-wide combination set in Settings (e.g. `Ctrl+Alt+Space`) hides the bar or brings it to the front from any program. |
 | Show-at-pointer hotkey (0.7.0) | A second combination opens the icons in a small window under the mouse pointer with the search box focused, on the pointer's monitor and inside its work area. It works while the bar is hidden or auto-hidden; groups open in place with a back button (or Backspace); it closes after a launch, on Esc and when it loses the focus. |
 | Search box (0.7.0) | Typing while the bar has the focus (or `Ctrl+F`) opens a box at the bottom of the bar; see §3. |
+| Command line and *Send to* (0.9.0) | `DesktopIconGrid.exe --add <path>… [--group <name>]` adds shortcuts (into that group, made when missing), `--launch <name>` starts a shortcut as a click does, `--show`, `--hide` and `--toggle` work the bar. Paths must be full (`C:\…` or `\\server\share\…`). When the bar runs already, the second start hands the commands over through a pipe only this Windows user can open, and ends. *In Explorer's Send To menu* (options and tray menus) puts the bar in *Send to*, so selected files and folders land at its end. |
 | Background | A theme: Classic (the olive grey of the reference), Graphite, Paper, Midnight, Sand, or a Custom colour with automatically matched text and highlight colours. See [docs/THEMES.md](docs/THEMES.md). |
 
 - Icons are laid out in reading order and **wrap** to fill the width: the number of

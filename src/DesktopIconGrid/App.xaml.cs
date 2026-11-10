@@ -6,6 +6,7 @@ using System.Threading;
 using System.Windows;
 using System.Windows.Interop;
 using System.Windows.Threading;
+using DesktopIconGrid.Core.Commands;
 using DesktopIconGrid.Core;
 using DesktopIconGrid.Core.Diagnostics;
 using DesktopIconGrid.Core.Models;
@@ -29,6 +30,7 @@ public partial class App : Application
 
     private Mutex? _instanceMutex;
     private EventWaitHandle? _showEvent;
+    private CommandPipe? _commandPipe;
     private RegisteredWaitHandle? _showWait;
     private ProcessTracker? _tracker;
     private SystemMonitor? _monitor;
@@ -53,7 +55,15 @@ public partial class App : Application
 
         try
         {
-            Start(startHidden: e.Args.Any(a => string.Equals(a, StartupRegistration.HiddenArgument, StringComparison.OrdinalIgnoreCase)));
+            var (commands, error) = BarCommands.Parse(e.Args);
+            if (error is not null)
+            {
+                MessageBox.Show(string.Format(Strings.Commands_Invalid, error), Strings.App_Name, MessageBoxButton.OK, MessageBoxImage.Warning);
+                Shutdown(2);
+                return;
+            }
+
+            Start(startHidden: e.Args.Any(a => string.Equals(a, StartupRegistration.HiddenArgument, StringComparison.OrdinalIgnoreCase)), commands);
         }
         catch (Exception ex)
         {
@@ -68,12 +78,17 @@ public partial class App : Application
     }
 
     /// <param name="startHidden">From <c>--hidden</c> (the Run entry written by "start hidden"): create the bar but leave it in the tray.</param>
-    private void Start(bool startHidden)
+    /// <param name="commands">The command line's (<see cref="BarCommands"/>): carried out here once the bar is up, or handed to the bar that runs already.</param>
+    private void Start(bool startHidden, IReadOnlyList<BarCommand> commands)
     {
         // Claim the instance before touching app.log, so a second copy neither shares the file nor rotates it.
-        if (!ClaimSingleInstance())
+        if (!ClaimSingleInstance(signalShow: commands.Count == 0))
         {
-            System.Diagnostics.Debug.WriteLine("Desktop Icon Grid is already running; asked it to show the bar.");
+            if (commands.Count > 0 && !HandOver(commands))
+            {
+                MessageBox.Show(Strings.Commands_NotAnswered, Strings.App_Name, MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+
             Shutdown(0);
             return;
         }
@@ -208,6 +223,12 @@ public partial class App : Application
         }
 
         ListenForShowRequests(window);
+        _commandPipe = new CommandPipe(received => Dispatcher.BeginInvoke(() => window.Run(received)));
+        _commandPipe.Start();
+        if (commands.Count > 0)
+        {
+            Dispatcher.BeginInvoke(() => window.Run(commands), System.Windows.Threading.DispatcherPriority.ApplicationIdle);
+        }
 
         if (load.CorruptFileBackupPath is not null && !load.RecoveredFromBackup)
         {
@@ -244,6 +265,7 @@ public partial class App : Application
     {
         AppLog.Default.Info("App", "Exiting");
         SystemEvents.UserPreferenceChanged -= OnUserPreferenceChanged;
+        _commandPipe?.Dispose();
         _showWait?.Unregister(null);
         _showEvent?.Dispose();
         _monitor?.Dispose();
@@ -257,7 +279,25 @@ public partial class App : Application
     /// Takes the single-instance mutex and creates the show event; when another instance holds the mutex,
     /// signals that instance and returns false.
     /// </summary>
-    private bool ClaimSingleInstance()
+    /// <summary>
+    /// Hands the command line to the running bar (<see cref="CommandPipe"/>), trying for a few seconds: that bar may
+    /// still be starting. This start may hand it the foreground (<c>--show</c>, <c>--launch</c>).
+    /// </summary>
+    private static bool HandOver(IReadOnlyList<BarCommand> commands)
+    {
+        NativeMethods.AllowSetForegroundWindow(NativeMethods.ASFW_ANY);
+        for (var attempt = 0; attempt < 5; attempt++)
+        {
+            if (CommandPipe.Send(commands, TimeSpan.FromSeconds(2)))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private bool ClaimSingleInstance(bool signalShow)
     {
         _instanceMutex = new Mutex(initiallyOwned: true, InstanceMutexName, out var createdNew);
         if (createdNew)
@@ -269,6 +309,11 @@ public partial class App : Application
 
         try
         {
+            if (!signalShow)
+            {
+                throw new WaitHandleCannotBeOpenedException(); // the command line says what to do instead
+            }
+
             using var show = EventWaitHandle.OpenExisting(ShowEventName);
             // This process is the one the user just started, so it may hand the foreground to the running instance.
             NativeMethods.AllowSetForegroundWindow(NativeMethods.ASFW_ANY);
