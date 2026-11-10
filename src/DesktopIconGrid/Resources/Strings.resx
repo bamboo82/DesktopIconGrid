@@ -2141,4 +2141,16 @@ Details are in {1}.</value>
   <data name="Clock_WorkStarted" xml:space="preserve">
     <value>The break is over: {0} minutes of work.</value>
   </data>
+  <data name="Monitor_NetworkName" xml:space="preserve">
+    <value>Network</value>
+  </data>
+  <data name="Monitor_NetworkDesc" xml:space="preserve">
+    <value>Shows how fast the network receives and sends. Click to open the network settings.</value>
+  </data>
+  <data name="Monitor_NetworkMeasuring" xml:space="preserve">
+    <value>Measuring the network…</value>
+  </data>
+  <data name="Monitor_NetworkSummary" xml:space="preserve">
+    <value>Down {0}/s, up {1}/s</value>
+  </data>
 </root>

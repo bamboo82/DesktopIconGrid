@@ -228,7 +228,13 @@ and a kind-specific properties dialog. Available now from *Add special icon ▸*
 - **Battery** (0.10.0) — the charge, refreshed every 30 seconds; amber from 20 % and red from 10 % while
   on battery, green while plugged in; a PC without a battery shows "…". Click opens the battery settings.
 
-All four draw the value in a design you pick (ring, bar or number) with green/amber/red levels.
+- **Network** (0.10.0) — how fast all connected adapters together receive, as the tile's text (`850K`,
+  `1.2M`, bytes per second), refreshed every 2 seconds; the tooltip has down and up. As a ring or bar it
+  is the download rate against its own peak of the last two minutes. It only reads Windows' counters.
+  Click opens the network settings.
+
+All of these draw the value in a design you pick (ring, bar or number) with green/amber/red levels, and
+their tooltips end with a line of the last 60 samples (`▁▂▃▅▇█`; the network's against its own peak).
 
 - **Google Drive Bucket** — a Google Drive folder. Drop files or folders on it to upload them
   (progress ring on the icon; same-name policy: keep both, replace or skip); click to open the
@@ -662,7 +668,7 @@ commands from elsewhere paused until approved on each PC; a health light on a sh
 same way.
 
 **0.10.0 "Bigger moves"** *(in progress)* — first what was planned for 0.9.0 and is not in it: more gauges
-(memory and battery are in; network and the sparkline are not), the clock and timer tile (in), folder
+(memory, battery, network and the sparkline: in), the clock and timer tile (in), folder
 stacks, microphone tile, paste to a bucket. Then: workspaces (Multi Launch that puts windows back); send a file to another PC;
 voice launch, if the spike says yes.
 

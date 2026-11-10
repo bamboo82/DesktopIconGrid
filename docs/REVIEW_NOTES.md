@@ -9,6 +9,32 @@ The owner relays replies.
 
 ---
 
+## 2026-11-10 (43) — Network gauge and the sparkline
+
+- **Sparkline.** `Core.SpecialIcons.GaugeHistory` keeps the last 60 samples and renders them as block characters.
+  It scales to a given maximum (100 for percentages) or to the samples' own peak (rates). A missing reading is a
+  space, and fewer than two samples render nothing.
+  - `GaugeState.Record(value, max)` feeds it; `Detail` appends the line.
+  - `SystemMonitor.Register` records each percentage unless `recordsPercent: false`.
+  - CPU, disk, memory and battery get the sparkline. The command tile, the clock and the bucket never call
+    `Record`, so they don't.
+- **Network.** Kind `network`.
+  - `SystemMonitor.ReadNetworkCounters` sums `BytesReceived` / `BytesSent` of adapters that are Up and neither
+    Loopback nor Tunnel.
+  - `NetworkRate.PerSecond` gives null for the first reading, for no elapsed time, and for a counter that went
+    back.
+  - The tile's text is `NetworkRate.Short(down)`. The percentage for ring and bar is the download rate against
+    its peak of the kept window. `Level` is fixed at Ok.
+  - Click opens `ms-settings:network-status`. It reads counters only and contacts nothing, so there is no
+    approval step.
+- **To look at.**
+  - `ToolTipText` also feeds `AutomationProperties.HelpText`, so a screen reader meets the block characters. I
+    left that; say if the line should be kept out of the help text.
+  - Virtual adapters (Hyper-V, VPN) count like any other, so traffic through a VPN is counted twice.
+- **Tests.** Core `GaugeHistoryTests` (12 cases): scaling, gaps, capacity, a flat line, rates, short texts. App:
+  the tooltip line on a `GaugeState`; reading the counters on Windows.
+- Run 131 (`e311b19`, the clock tile) is green.
+
 ## 2026-11-10 (42) — Clock and timer tile
 
 - **Core.** `ClockTileSettings` (zone id or null, timer None/Countdown/Pomodoro, minutes, break minutes; minutes

@@ -177,3 +177,64 @@ public sealed class BatteryHandler(SystemMonitor monitor, Func<Window?> ownerPro
 
     public override LaunchResult Activate(SpecialIconItem item, ActivationModifiers modifiers) => Open("ms-settings:batterysaver");
 }
+
+/// <summary>
+/// Shows how fast the network receives (the tile's text) and sends; the ring or bar is the download rate against its
+/// peak of the last two minutes. Click opens the network settings. It reads counters only and contacts nothing.
+/// </summary>
+public sealed class NetworkHandler(SystemMonitor monitor, Func<Window?> ownerProvider) : MonitorHandlerBase(monitor, ownerProvider)
+{
+    public override string Kind => SpecialIconKinds.Network;
+
+    public override string DisplayName => Strings.Monitor_NetworkName;
+
+    public override string Description => Strings.Monitor_NetworkDesc;
+
+    protected override bool ShowsDrive => false;
+
+    public override SpecialIconItem CreateItem()
+    {
+        var item = new SpecialIconItem { Name = Strings.Monitor_NetworkName, Kind = Kind };
+        new MonitorIconSettings(GaugeStyle.Number, null).ApplyTo(item);
+        return item;
+    }
+
+    public override GaugeState CreateState(SpecialIconItem item)
+    {
+        var state = new GaugeState("NET", MonitorIconSettings.From(item).Style, warningAt: 101, criticalAt: 101, Strings.Monitor_NetworkMeasuring)
+        {
+            Level = CommandLevel.Ok, // a busy network is not a warning
+            LabelText = "…",
+        };
+        var peak = new GaugeHistory();
+        (long Received, long Sent)? before = null;
+        var watch = System.Diagnostics.Stopwatch.StartNew();
+        Monitor.Register(
+            state,
+            () =>
+            {
+                var now = SystemMonitor.ReadNetworkCounters();
+                var seconds = watch.Elapsed.TotalSeconds;
+                watch.Restart();
+                var down = NetworkRate.PerSecond(before?.Received, now.Received, seconds);
+                var up = NetworkRate.PerSecond(before?.Sent, now.Sent, seconds);
+                before = now;
+                state.Record(down, max: null);
+                peak.Add(down);
+                if (down is null || up is null)
+                {
+                    state.LabelText = "…";
+                    return (null, Strings.Monitor_NetworkMeasuring);
+                }
+
+                state.LabelText = NetworkRate.Short(down.Value);
+                var percent = peak.Peak > 0 ? down.Value * 100 / peak.Peak : 0;
+                return (percent, string.Format(Strings.Monitor_NetworkSummary, SystemMonitor.FormatBytes((long)down.Value), SystemMonitor.FormatBytes((long)up.Value)));
+            },
+            everyTicks: 1,
+            recordsPercent: false);
+        return state;
+    }
+
+    public override LaunchResult Activate(SpecialIconItem item, ActivationModifiers modifiers) => Open("ms-settings:network-status");
+}

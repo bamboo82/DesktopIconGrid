@@ -3219,6 +3219,42 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Shows how fast the network receives and sends. Click to open the network setting [rest of string was truncated]";.
+        /// </summary>
+        public static string Monitor_NetworkDesc {
+            get {
+                return ResourceManager.GetString("Monitor_NetworkDesc", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Measuring the network….
+        /// </summary>
+        public static string Monitor_NetworkMeasuring {
+            get {
+                return ResourceManager.GetString("Monitor_NetworkMeasuring", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Network.
+        /// </summary>
+        public static string Monitor_NetworkName {
+            get {
+                return ResourceManager.GetString("Monitor_NetworkName", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Down {0}/s, up {1}/s.
+        /// </summary>
+        public static string Monitor_NetworkSummary {
+            get {
+                return ResourceManager.GetString("Monitor_NetworkSummary", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to This PC has no battery.
         /// </summary>
         public static string Monitor_NoBattery {

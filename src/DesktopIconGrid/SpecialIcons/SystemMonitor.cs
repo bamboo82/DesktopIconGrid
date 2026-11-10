@@ -26,10 +26,24 @@ public sealed class SystemMonitor : IDisposable
 
     public CpuSampler Cpu { get; }
 
-    /// <summary>Samples immediately, then every <paramref name="everyTicks"/> ticks until the state is detached.</summary>
-    public void Register(GaugeState state, Func<(double? Percent, string Detail)> sample, int everyTicks)
+    /// <summary>
+    /// Samples immediately, then every <paramref name="everyTicks"/> ticks until the state is detached. Each percentage is
+    /// kept for the tooltip's sparkline unless <paramref name="recordsPercent"/> is false (the sample records its own value).
+    /// </summary>
+    public void Register(GaugeState state, Func<(double? Percent, string Detail)> sample, int everyTicks, bool recordsPercent = true)
     {
         ArgumentNullException.ThrowIfNull(state);
+        if (recordsPercent)
+        {
+            var inner = sample;
+            sample = () =>
+            {
+                var reading = inner();
+                state.Record(reading.Percent, 100);
+                return reading;
+            };
+        }
+
         _registrations.Add(new Registration(state, sample, Math.Max(1, everyTicks)));
         Apply(state, sample);
         if (!_timer.IsEnabled)
@@ -66,7 +80,8 @@ public sealed class SystemMonitor : IDisposable
             var (percent, detail) = sample();
             state.Update(percent, detail);
         }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or Win32Exception or InvalidOperationException)
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or Win32Exception or InvalidOperationException
+                                       or System.Net.NetworkInformation.NetworkInformationException)
         {
             state.Update(null, ex.Message);
         }
@@ -185,6 +200,26 @@ public sealed class SystemMonitor : IDisposable
         <= 20 when onBattery => CommandLevel.Warning,
         _ => CommandLevel.Ok,
     };
+
+    /// <summary>Bytes received and sent so far by every connected adapter that is not a loopback or a tunnel.</summary>
+    public static (long Received, long Sent) ReadNetworkCounters()
+    {
+        long received = 0, sent = 0;
+        foreach (var adapter in System.Net.NetworkInformation.NetworkInterface.GetAllNetworkInterfaces())
+        {
+            if (adapter.OperationalStatus != System.Net.NetworkInformation.OperationalStatus.Up
+                || adapter.NetworkInterfaceType is System.Net.NetworkInformation.NetworkInterfaceType.Loopback or System.Net.NetworkInformation.NetworkInterfaceType.Tunnel)
+            {
+                continue;
+            }
+
+            var statistics = adapter.GetIPStatistics();
+            received += statistics.BytesReceived;
+            sent += statistics.BytesSent;
+        }
+
+        return (received, sent);
+    }
 
     public static string FormatBytes(long bytes)
     {

@@ -43,4 +43,32 @@ public class MoreGaugesTests
         Assert.InRange(percent!.Value, 1, 100);
         Assert.NotEmpty(detail);
     }
+
+    [Fact]
+    public void A_gauge_keeps_its_last_samples_as_a_line_under_the_tooltip_text()
+    {
+        var state = new GaugeState("CPU", GaugeStyle.Ring, 70, 90, "starting");
+        Assert.Equal("starting", state.Detail); // nothing kept: no line
+
+        state.Record(0, 100);
+        state.Update(0, "idle");
+        Assert.Equal("idle", state.Detail); // one sample is no line
+        state.Record(100, 100);
+        state.Update(100, "busy");
+
+        Assert.Equal("busy\n▁█", state.Detail);
+    }
+
+    [Fact]
+    public void The_network_counters_can_be_read_on_Windows()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        var (received, sent) = SystemMonitor.ReadNetworkCounters();
+
+        Assert.True(received >= 0 && sent >= 0);
+    }
 }

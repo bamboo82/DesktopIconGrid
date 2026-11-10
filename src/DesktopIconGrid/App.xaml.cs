@@ -141,6 +141,7 @@ public partial class App : Application
             new DiskUsageHandler(_monitor, owner),
             new MemoryUsageHandler(_monitor, owner),
             new BatteryHandler(_monitor, owner),
+            new NetworkHandler(_monitor, owner),
             new DriveBucketHandler(syncService, dialogs, owner, icons, cacheDirectory, Dispatcher),
             new SoundReplayerHandler(owner, AppPaths.SoundsDirectory, Dispatcher),
             new ClockTileHandler(dialogs.Notify, owner, Dispatcher),

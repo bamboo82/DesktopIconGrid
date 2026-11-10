@@ -2141,4 +2141,16 @@
   <data name="Clock_WorkStarted" xml:space="preserve">
     <value>休息结束：工作 {0} 分钟。</value>
   </data>
+  <data name="Monitor_NetworkName" xml:space="preserve">
+    <value>网络</value>
+  </data>
+  <data name="Monitor_NetworkDesc" xml:space="preserve">
+    <value>显示网络的接收与发送速度。单击打开网络设置。</value>
+  </data>
+  <data name="Monitor_NetworkMeasuring" xml:space="preserve">
+    <value>正在测量网络…</value>
+  </data>
+  <data name="Monitor_NetworkSummary" xml:space="preserve">
+    <value>下载 {0}/秒，上传 {1}/秒</value>
+  </data>
 </root>

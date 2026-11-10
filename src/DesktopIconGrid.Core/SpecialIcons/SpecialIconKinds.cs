@@ -10,6 +10,9 @@ public static class SpecialIconKinds
     /// <summary>Physical memory in use (0.10.0).</summary>
     public const string MemoryUsage = "memory-usage";
 
+    /// <summary>Network throughput, down and up (0.10.0).</summary>
+    public const string Network = "network";
+
     /// <summary>Battery charge (0.10.0).</summary>
     public const string Battery = "battery";
 

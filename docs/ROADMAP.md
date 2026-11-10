@@ -256,8 +256,8 @@ folder.
   portable mode, *Repair…*, the smaller items and the placeholder follow-ups).
 - **0.9.0 "The bar tells you things"** (released 2026-11-10): what moved from 0.8.0 (the imports of 7, layout
   history, command line and Send To), keys of the bar's window, 8 with the trust rule, 9 with the same rule.
-- **0.10.0 "Bigger moves"** (in progress): first what 0.9.0 planned and does not have: more gauges (memory and
-  battery done), clock and timer (done), 10 (folder stacks), mic tile, paste to a bucket. Then 4 (workspaces), 12 (send to a device), 11 (voice, if the spike says yes).
+- **0.10.0 "Bigger moves"** (in progress): first what 0.9.0 planned and does not have: more gauges and the
+  sparkline (done), clock and timer (done), 10 (folder stacks), mic tile, paste to a bucket. Then 4 (workspaces), 12 (send to a device), 11 (voice, if the spike says yes).
 - **1.0.0 "Ship it"**: the existing backlog — installer (MSIX/winget), code signing, toast notifications.
 
 Not yet placed in a release: glyph icons, usage columns, the accent theme, spring-loaded groups and the

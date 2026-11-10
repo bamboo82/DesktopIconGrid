@@ -27,6 +27,8 @@ public sealed class GaugeState : ObservableObject
     private bool _isVisible = true;
     private string? _labelText;
     private CommandLevel? _level;
+    private GaugeHistory? _history;
+    private double? _historyMax;
 
     public GaugeState(string caption, GaugeStyle style, double warningAt, double criticalAt, string initialDetail)
     {
@@ -103,8 +105,19 @@ public sealed class GaugeState : ObservableObject
     /// <summary>Raised once, when <see cref="Detach"/> is called.</summary>
     public event EventHandler? Detached;
 
-    /// <summary>Tooltip line, e.g. "C:\ — 120 GB free of 500 GB".</summary>
-    public string Detail => _detail;
+    /// <summary>Tooltip text, e.g. "C:\ — 120 GB free of 500 GB", with a line of the last samples under it when they are kept.</summary>
+    public string Detail => _history?.Render(_historyMax) is { Length: > 0 } line ? $"{_detail}\n{line}" : _detail;
+
+    /// <summary>
+    /// Keeps a sample for the tooltip's sparkline (the last <see cref="GaugeHistory.DefaultCapacity"/>): drawn against
+    /// <paramref name="max"/> (100 for a percentage), or against the samples' own peak when it is <see langword="null"/>.
+    /// Shown from the next <see cref="Update"/>.
+    /// </summary>
+    public void Record(double? value, double? max)
+    {
+        (_history ??= new GaugeHistory()).Add(value);
+        _historyMax = max;
+    }
 
     public Brush LevelBrush => _level switch
     {
