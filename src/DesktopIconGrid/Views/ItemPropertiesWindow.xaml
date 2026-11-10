@@ -121,6 +121,9 @@
               <RowDefinition Height="Auto" />
               <RowDefinition Height="Auto" />
               <RowDefinition Height="Auto" />
+              <RowDefinition Height="Auto" />
+              <RowDefinition Height="Auto" />
+              <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
             <TextBlock Grid.Row="0" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Props_WhenRunning}" Margin="0,0,12,4" />
@@ -150,6 +153,19 @@
                       AutomationProperties.Name="{x:Static r:Strings.Props_BrowserName}" />
             <CheckBox Grid.Row="7" Grid.Column="1" Margin="0,0,0,4" Content="{x:Static r:Strings.Props_AppWindow}"
                       IsChecked="{Binding AppWindow}" IsEnabled="{Binding CanChooseAppWindow}" />
+
+            <TextBlock Grid.Row="8" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Props_HealthCheck}" Margin="0,8,12,4" />
+            <TextBox Grid.Row="8" Grid.Column="1" Style="{StaticResource DialogTextBox}" Margin="0,8,0,4"
+                     Text="{Binding HealthCheckText, UpdateSourceTrigger=PropertyChanged}"
+                     AutomationProperties.Name="{x:Static r:Strings.Props_HealthCheck}" />
+            <TextBlock Grid.Row="9" Grid.Column="1" Style="{StaticResource DialogHint}" Margin="0,0,0,4" Text="{x:Static r:Strings.Props_HealthCheckHint}" />
+            <StackPanel Grid.Row="10" Grid.Column="1" Orientation="Horizontal" Margin="0,0,0,4" IsEnabled="{Binding HasHealthCheck}">
+              <TextBlock Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Props_HealthEvery}" Margin="0,0,6,0" />
+              <TextBox Style="{StaticResource DialogTextBox}" Width="60" Margin="0,0,16,0"
+                       Text="{Binding HealthInterval, UpdateSourceTrigger=PropertyChanged}"
+                       AutomationProperties.Name="{x:Static r:Strings.Props_HealthEvery}" />
+              <CheckBox VerticalAlignment="Center" Content="{x:Static r:Strings.Props_HealthNotify}" IsChecked="{Binding HealthNotify}" />
+            </StackPanel>
           </Grid>
         </Expander>
 
@@ -192,6 +208,12 @@
         </StackPanel>
 
         <!-- Warning -->
+        <TextBlock Grid.Row="8" Grid.Column="0" Grid.ColumnSpan="3"
+                   Text="{Binding HealthCheckError}"
+                   Foreground="{DynamicResource WarningBrush}"
+                   TextWrapping="Wrap"
+                   Margin="0,0,0,8"
+                   Visibility="{Binding HasHealthCheckError, Converter={StaticResource BoolToVisibility}}" />
         <TextBlock Grid.Row="8" Grid.Column="0" Grid.ColumnSpan="3"
                    Text="{Binding Warning}"
                    Foreground="{DynamicResource WarningBrush}"

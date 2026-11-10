@@ -329,6 +329,9 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
         }
     }
 
+    /// <summary>A notification (a health light that changed), as the app shows them.</summary>
+    internal void Notify(string title, string message) => _dialogs.Notify(title, message);
+
     public ItemViewModel GetOrCreateViewModel(LauncherItem item)
     {
         if (!_viewModels.TryGetValue(item.Id, out var viewModel))

@@ -63,6 +63,18 @@ public sealed class ShortcutItem : LauncherItem
         }
     }
 
+    /// <summary>
+    /// A health check shown as a light on the icon (0.9.0): <c>ping host</c>, <c>tcp host:port</c> or an
+    /// <c>http(s)://</c> address (see <see cref="Health.HealthCheck"/>); <see langword="null"/> for none.
+    /// </summary>
+    public string? HealthCheck { get; set; }
+
+    /// <summary>Seconds between health checks (30–600); <see langword="null"/> is a minute.</summary>
+    public int? HealthInterval { get; set; }
+
+    /// <summary>A notification when the health light turns red or green again.</summary>
+    public bool HealthNotify { get; set; }
+
     /// <summary>Command-line arguments passed to the program.</summary>
     public string? Parameters { get; set; }
 
@@ -131,6 +143,9 @@ public sealed class ShortcutItem : LauncherItem
             Browser = string.IsNullOrWhiteSpace(shortcut.Browser) ? null : shortcut.Browser.Trim();
             BrowserProfile = string.IsNullOrWhiteSpace(shortcut.BrowserProfile) ? null : shortcut.BrowserProfile.Trim();
             AppWindow = shortcut.AppWindow;
+            HealthCheck = string.IsNullOrWhiteSpace(shortcut.HealthCheck) ? null : shortcut.HealthCheck.Trim();
+            HealthInterval = shortcut.HealthInterval;
+            HealthNotify = shortcut.HealthNotify;
         }
     }
 

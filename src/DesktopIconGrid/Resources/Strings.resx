@@ -1976,4 +1976,43 @@ Approve it to run here, now and on its timer?</value>
   <data name="Command_None" xml:space="preserve">
     <value>(none)</value>
   </data>
+  <data name="Health_Up" xml:space="preserve">
+    <value>up</value>
+  </data>
+  <data name="Health_UpIn" xml:space="preserve">
+    <value>up ({0} ms)</value>
+  </data>
+  <data name="Health_Down" xml:space="preserve">
+    <value>down</value>
+  </data>
+  <data name="Health_DownBecause" xml:space="preserve">
+    <value>down ({0})</value>
+  </data>
+  <data name="Health_Unknown" xml:space="preserve">
+    <value>checking…</value>
+  </data>
+  <data name="Health_Since" xml:space="preserve">
+    <value>since {0}</value>
+  </data>
+  <data name="Health_NowUp" xml:space="preserve">
+    <value>Answers again.</value>
+  </data>
+  <data name="Health_NowDown" xml:space="preserve">
+    <value>{0} does not answer: {1}</value>
+  </data>
+  <data name="Props_HealthCheck" xml:space="preserve">
+    <value>Health check:</value>
+  </data>
+  <data name="Props_HealthCheckHint" xml:space="preserve">
+    <value>A light on the icon: ping host, tcp host:port, or an http:// or https:// address that must answer 2xx or 3xx. Empty for none. tcp works where ping is blocked.</value>
+  </data>
+  <data name="Props_HealthEvery" xml:space="preserve">
+    <value>Every (seconds):</value>
+  </data>
+  <data name="Props_HealthNotify" xml:space="preserve">
+    <value>Notify me when it changes</value>
+  </data>
+  <data name="Props_HealthInvalid" xml:space="preserve">
+    <value>The health check is not understood: {0}.</value>
+  </data>
 </root>

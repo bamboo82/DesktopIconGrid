@@ -1266,6 +1266,78 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to down.
+        /// </summary>
+        public static string Health_Down {
+            get {
+                return ResourceManager.GetString("Health_Down", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to down ({0}).
+        /// </summary>
+        public static string Health_DownBecause {
+            get {
+                return ResourceManager.GetString("Health_DownBecause", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to {0} does not answer: {1}.
+        /// </summary>
+        public static string Health_NowDown {
+            get {
+                return ResourceManager.GetString("Health_NowDown", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Answers again..
+        /// </summary>
+        public static string Health_NowUp {
+            get {
+                return ResourceManager.GetString("Health_NowUp", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to since {0}.
+        /// </summary>
+        public static string Health_Since {
+            get {
+                return ResourceManager.GetString("Health_Since", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to checking….
+        /// </summary>
+        public static string Health_Unknown {
+            get {
+                return ResourceManager.GetString("Health_Unknown", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to up.
+        /// </summary>
+        public static string Health_Up {
+            get {
+                return ResourceManager.GetString("Health_Up", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to up ({0} ms).
+        /// </summary>
+        public static string Health_UpIn {
+            get {
+                return ResourceManager.GetString("Health_UpIn", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to {0} shortcut(s), {1} group(s).
         /// </summary>
         public static string History_Entry {
@@ -3206,6 +3278,51 @@ namespace DesktopIconGrid.Resources {
         public static string Props_GroupTitle {
             get {
                 return ResourceManager.GetString("Props_GroupTitle", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Health check:.
+        /// </summary>
+        public static string Props_HealthCheck {
+            get {
+                return ResourceManager.GetString("Props_HealthCheck", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to A light on the icon: ping host, tcp host:port, or an http:// or https:// address [rest of string was truncated]";.
+        /// </summary>
+        public static string Props_HealthCheckHint {
+            get {
+                return ResourceManager.GetString("Props_HealthCheckHint", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Every (seconds):.
+        /// </summary>
+        public static string Props_HealthEvery {
+            get {
+                return ResourceManager.GetString("Props_HealthEvery", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The health check is not understood: {0}..
+        /// </summary>
+        public static string Props_HealthInvalid {
+            get {
+                return ResourceManager.GetString("Props_HealthInvalid", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Notify me when it changes.
+        /// </summary>
+        public static string Props_HealthNotify {
+            get {
+                return ResourceManager.GetString("Props_HealthNotify", resourceCulture);
             }
         }
 

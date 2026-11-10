@@ -1976,4 +1976,43 @@
   <data name="Command_None" xml:space="preserve">
     <value>（無）</value>
   </data>
+  <data name="Health_Up" xml:space="preserve">
+    <value>正常</value>
+  </data>
+  <data name="Health_UpIn" xml:space="preserve">
+    <value>正常（{0} 毫秒）</value>
+  </data>
+  <data name="Health_Down" xml:space="preserve">
+    <value>無回應</value>
+  </data>
+  <data name="Health_DownBecause" xml:space="preserve">
+    <value>無回應（{0}）</value>
+  </data>
+  <data name="Health_Unknown" xml:space="preserve">
+    <value>檢查中…</value>
+  </data>
+  <data name="Health_Since" xml:space="preserve">
+    <value>自 {0} 起</value>
+  </data>
+  <data name="Health_NowUp" xml:space="preserve">
+    <value>已恢復回應。</value>
+  </data>
+  <data name="Health_NowDown" xml:space="preserve">
+    <value>{0} 沒有回應：{1}</value>
+  </data>
+  <data name="Props_HealthCheck" xml:space="preserve">
+    <value>健康檢查：</value>
+  </data>
+  <data name="Props_HealthCheckHint" xml:space="preserve">
+    <value>圖示上的燈號：ping 主機、tcp 主機:連接埠，或必須回應 2xx 或 3xx 的 http:// 或 https:// 位址。留空表示不檢查。在 ping 被封鎖時可用 tcp。</value>
+  </data>
+  <data name="Props_HealthEvery" xml:space="preserve">
+    <value>間隔（秒）：</value>
+  </data>
+  <data name="Props_HealthNotify" xml:space="preserve">
+    <value>變更時通知我</value>
+  </data>
+  <data name="Props_HealthInvalid" xml:space="preserve">
+    <value>無法理解健康檢查：{0}。</value>
+  </data>
 </root>

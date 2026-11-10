@@ -33,6 +33,37 @@ public class ItemPropertiesViewModelTests
     }
 
     [Fact]
+    public void A_health_check_that_is_not_understood_blocks_saving_and_a_good_one_is_stored_as_written_back()
+    {
+        var shortcut = new ShortcutItem { Name = "NAS", Location = @"\\nas\share" };
+        var viewModel = new ItemPropertiesViewModel(shortcut, isNew: false, new CountingIcons());
+        Assert.True(viewModel.CanSave);
+        Assert.False(viewModel.HasHealthCheck);
+
+        viewModel.HealthCheckText = "tcp nas";
+        Assert.True(viewModel.HasHealthCheckError);
+        Assert.False(viewModel.CanSave);
+
+        viewModel.HealthCheckText = "  TCP nas:445 ";
+        viewModel.HealthInterval = "5"; // the shortest is 30 s
+        viewModel.HealthNotify = true;
+        Assert.True(viewModel.CanSave);
+        Assert.True(viewModel.Apply());
+
+        Assert.Equal("tcp nas:445", shortcut.HealthCheck);
+        Assert.Equal(30, shortcut.HealthInterval);
+        Assert.True(shortcut.HealthNotify);
+
+        var again = new ItemPropertiesViewModel(shortcut, isNew: false, new CountingIcons());
+        again.HealthCheckText = string.Empty; // no light: nothing kept
+        again.HealthInterval = "60";
+        Assert.True(again.Apply());
+        Assert.Null(shortcut.HealthCheck);
+        Assert.Null(shortcut.HealthInterval);
+        Assert.False(shortcut.HealthNotify);
+    }
+
+    [Fact]
     public async Task Typing_a_location_resolves_the_preview_once_after_the_last_keystroke()
     {
         var icons = new CountingIcons();

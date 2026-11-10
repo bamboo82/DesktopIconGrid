@@ -22,6 +22,8 @@ public sealed class ItemViewModel : ObservableObject
     private bool _isSearchSelected;
     private bool _isLaunching;
     private bool _isMissing;
+    private HealthLight? _health;
+    private string? _healthKey;
 
     public ItemViewModel(LauncherViewModel root, LauncherItem model)
     {
@@ -40,6 +42,7 @@ public sealed class ItemViewModel : ObservableObject
         ShowLogCommand = new RelayCommand(() => Root.ShowLog(this), () => CapturesLog);
         RepairCommand = new RelayCommand(() => Root.RepairItem(this), () => IsShortcut);
         RebuildGauge();
+        RebuildHealth();
     }
 
     public LauncherViewModel Root { get; }
@@ -219,7 +222,8 @@ public sealed class ItemViewModel : ObservableObject
             var multi = IsMultiLaunch ? "\n" + Strings.Item_MultiLaunchMember : string.Empty;
             var running = IsRunning ? "\n" + Strings.Grid_Running : string.Empty;
             var missing = IsMissing ? "\n" + Strings.Item_MissingHere : string.Empty;
-            return $"{Name}\n{location}{multi}{running}{missing}";
+            var health = _health is null ? string.Empty : "\n" + _health.Text;
+            return $"{Name}\n{location}{multi}{running}{missing}{health}";
         }
     }
 
@@ -307,8 +311,55 @@ public sealed class ItemViewModel : ObservableObject
     }
 
     /// <summary>Stops live updates; called when the item leaves the bar.</summary>
-    public void Detach() => _gauge?.Detach();
+    public void Detach()
+    {
+        _gauge?.Detach();
+        _health?.Stop();
+        _health = null;
+        _healthKey = null;
+    }
 
     /// <summary>Re-reads every derived property after the model was edited.</summary>
-    public void RefreshFromModel() => OnAllPropertiesChanged();
+    public void RefreshFromModel()
+    {
+        RebuildHealth();
+        OnAllPropertiesChanged();
+    }
+
+    // ----- health light ---------------------------------------------------------------------
+
+    /// <summary>The shortcut's health light, or <see langword="null"/> when it has no (valid) check.</summary>
+    public HealthLight? Health => _health;
+
+    public bool ShowsHealth => _health is not null;
+
+    /// <summary>Starts, restarts or stops the health light when the shortcut's check changed (not on every refresh).</summary>
+    private void RebuildHealth()
+    {
+        var shortcut = Model as ShortcutItem;
+        var key = shortcut?.HealthCheck is { } text ? $"{text}|{shortcut.HealthInterval}|{shortcut.HealthNotify}|{shortcut.Name}" : null;
+        if (key == _healthKey)
+        {
+            return;
+        }
+
+        _health?.Stop();
+        _health = null;
+        _healthKey = key;
+        if (shortcut is not null && Core.Health.HealthCheck.Parse(shortcut.HealthCheck, out _) is { } check)
+        {
+            _health = new HealthLight(
+                shortcut.Name,
+                check,
+                Core.Health.HealthCheck.NormalizeInterval(shortcut.HealthInterval),
+                shortcut.HealthNotify,
+                Root.Notify,
+                System.Windows.Threading.Dispatcher.CurrentDispatcher);
+            _health.PropertyChanged += (_, _) => OnPropertyChanged(nameof(ToolTipText));
+            _health.Start();
+        }
+
+        OnPropertyChanged(nameof(Health));
+        OnPropertyChanged(nameof(ShowsHealth));
+    }
 }

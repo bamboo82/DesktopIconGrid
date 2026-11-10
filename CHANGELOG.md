@@ -33,6 +33,9 @@ microphone tile, a clock and timer, and paste to a bucket.
   code sets the colour. A tile runs only once its command is approved on this PC: saving its properties
   here approves it, and one that arrives through sync, a restore or an import stays paused until you
   approve it on that PC.
+- A health light on a shortcut (*Properties → Advanced → Health check*): `ping host`, `tcp host:port` or a web
+  address that must answer 2xx/3xx, every 30 s to 10 min; green, red or grey in the icon's top-left corner,
+  with latency and the last change in the tooltip, the log, and an optional notification.
 
 ## [0.8.1] – 2026-11-06
 

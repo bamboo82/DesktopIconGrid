@@ -1,3 +1,5 @@
+using DesktopIconGrid.Core.Health;
+using System.Globalization;
 using System.IO;
 using System.Windows;
 using System.Windows.Media;
@@ -74,6 +76,9 @@ public sealed class ItemPropertiesViewModel : ObservableObject
         _sharedLocation = (target as ShortcutItem)?.Location ?? string.Empty;
         _parameters = (target as ShortcutItem)?.Parameters ?? string.Empty;
         _captureLog = (target as ShortcutItem)?.CaptureLog ?? false;
+        _healthCheck = (target as ShortcutItem)?.HealthCheck ?? string.Empty;
+        _healthInterval = HealthCheck.NormalizeInterval((target as ShortcutItem)?.HealthInterval).ToString(CultureInfo.CurrentCulture);
+        _healthNotify = (target as ShortcutItem)?.HealthNotify ?? false;
         _originalWhenRunning = (target as ShortcutItem)?.WhenRunning;
         _switchesWhenRunning = target is ShortcutItem shortcut && LaunchPlanner.SwitchesWhenRunning(shortcut);
         var options = target as ShortcutItem;
@@ -241,6 +246,72 @@ public sealed class ItemPropertiesViewModel : ObservableObject
             OnPropertyChanged(nameof(SelectedWhenRunning));
         }
     }
+
+    // ----- health light (0.9.0) ----------------------------------------------------------------
+
+    private string _healthCheck;
+    private string _healthInterval;
+    private bool _healthNotify;
+
+    /// <summary><c>ping host</c>, <c>tcp host:port</c> or an http(s) address; empty for no light.</summary>
+    public string HealthCheckText
+    {
+        get => _healthCheck;
+        set
+        {
+            if (SetProperty(ref _healthCheck, value ?? string.Empty))
+            {
+                OnPropertyChanged(nameof(HealthCheckError));
+                OnPropertyChanged(nameof(HasHealthCheckError));
+                OnPropertyChanged(nameof(HasHealthCheck));
+                OnPropertyChanged(nameof(CanSave));
+            }
+        }
+    }
+
+    public bool HasHealthCheck => _healthCheck.Trim().Length > 0;
+
+    public string HealthInterval
+    {
+        get => _healthInterval;
+        set
+        {
+            if (SetProperty(ref _healthInterval, value ?? string.Empty))
+            {
+                OnPropertyChanged(nameof(HealthCheckError));
+                OnPropertyChanged(nameof(HasHealthCheckError));
+                OnPropertyChanged(nameof(CanSave));
+            }
+        }
+    }
+
+    public bool HealthNotify
+    {
+        get => _healthNotify;
+        set => SetProperty(ref _healthNotify, value);
+    }
+
+    /// <summary>Why the check cannot be used, or <see langword="null"/>.</summary>
+    public string? HealthCheckError
+    {
+        get
+        {
+            if (!HasHealthCheck)
+            {
+                return null;
+            }
+
+            HealthCheck.Parse(_healthCheck, out var error);
+            if (error is null && !int.TryParse(_healthInterval, NumberStyles.Integer, CultureInfo.CurrentCulture, out _))
+            {
+                error = Strings.Props_HealthEvery.TrimEnd(':', '：');
+            }
+
+            return error is null ? null : string.Format(Strings.Props_HealthInvalid, error);
+        }
+    }
+
+    public bool HasHealthCheckError => HealthCheckError is not null;
 
     /// <summary>Capture the program's output to a log file when it is started from the bar.</summary>
     public bool CaptureLog
@@ -442,7 +513,7 @@ public sealed class ItemPropertiesViewModel : ObservableObject
 
     public bool HasWarning => _warning is not null;
 
-    public bool CanSave => _name.Trim().Length > 0 && (IsGroup || _location.Trim().Length > 0);
+    public bool CanSave => _name.Trim().Length > 0 && (IsGroup || _location.Trim().Length > 0) && !HasHealthCheckError;
 
     public void UseDefaultIcon()
     {
@@ -505,6 +576,12 @@ public sealed class ItemPropertiesViewModel : ObservableObject
             shortcut.Browser = _browser.Browser;
             shortcut.BrowserProfile = _browser.IsDefault ? null : _browser.Profile;
             shortcut.AppWindow = !_browser.IsDefault && _appWindow;
+            var check = HealthCheck.Parse(_healthCheck, out _);
+            shortcut.HealthCheck = check?.ToString();
+            shortcut.HealthInterval = check is null || !int.TryParse(_healthInterval, NumberStyles.Integer, CultureInfo.CurrentCulture, out var every)
+                ? null
+                : HealthCheck.NormalizeInterval(every) is var seconds && seconds == HealthCheck.DefaultIntervalSeconds ? null : seconds;
+            shortcut.HealthNotify = check is not null && _healthNotify;
         }
 
         return true;

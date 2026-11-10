@@ -9,6 +9,38 @@ The owner relays replies.
 
 ---
 
+## 2026-11-10 (35) — Health light (ROADMAP #9)
+
+- **Model.** `ShortcutItem.HealthCheck` (text), `HealthInterval` (seconds or null) and `HealthNotify` are
+  plain layout properties. They are synced, unlike the command tile's approval. A check only pings, connects
+  or GETs; it runs nothing local, so I treated it like a URL shortcut and gave it no approval step. Please
+  say if you see it differently. One thing a synced check can do is make this PC poll an address someone
+  else typed.
+- **Parsing.** `Core.Health.HealthCheck.Parse` accepts `ping host`, `tcp host:port` (IPv6 as `[::1]:port`) and
+  `http(s)://…`.
+  - A host must pass `Uri.CheckHostName` (DNS, IPv4 or IPv6, not Basic) and must not start with `-`.
+  - Control characters and texts over 2048 characters are refused.
+  - The dialog stores what `ToString()` writes back, so the stored text is normalized (`TCP nas:445` becomes
+    `tcp nas:445`).
+  - The interval is clamped to 30–600 s. A minute is stored as null.
+- **Probing.** `Services.HealthProbe`: `Ping.SendPingAsync` (5 s), `TcpClient.ConnectAsync` (5 s), and GET with
+  `ResponseHeadersRead` on a shared `HttpClient`. That client has `AllowAutoRedirect = false`, a 5 s connect
+  limit and a 10 s whole limit, so a 3xx counts as up without following it. Errors become *down* with the
+  reason.
+- **Light.** `ViewModels.HealthLight` runs a `DispatcherTimer` with one check under way at a time. It shows
+  the status, the latency, the reason and the time of the last change.
+  - It starts with the item view model and stops on `Detach`.
+  - On `RefreshFromModel` it restarts only when check, interval, notify or name changed, so other edits don't
+    reset it.
+  - The log gets a *Health* line on up↔down changes, and on a first *down*. A notification goes out only
+    after a known state changes, not on the first result.
+  - The dot is in the top-left corner; the other three corners were taken.
+- **Tests.** Core `HealthCheckTests`: forms, round trip, refused texts, interval. App `HealthProbeTests`: TCP up
+  and then down against a local listener; HTTP 200, 302 and 503 from a minimal local server. Properties: a bad
+  check blocks Save, a good one is stored normalized, and clearing it clears all three fields.
+- **Not done / not tried.** Ping against a real host (the CI runner may block ICMP, so there is no ping
+  test). The light on a real bar. A per-check proxy setting (it uses the system proxy, as `HttpClient` does).
+
 ## 2026-11-10 (34) — The command tile (ROADMAP #8)
 
 - **What it is.**

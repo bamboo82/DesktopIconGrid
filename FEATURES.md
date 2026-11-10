@@ -116,6 +116,13 @@ Extra flags kept out of the dialog's main layout but supported:
 - Launch uses `ShellExecute` semantics, so `.lnk`, documents, folders, `http(s):`,
   `mailto:`, `ms-settings:` and `shell:` locations all work.
 
+**Health light (0.9.0).** *Properties → Advanced → Health check* gives a shortcut a light in its top-left
+corner: `ping host`, `tcp host:port`, or an `http://` or `https://` address that must answer 2xx or 3xx
+(redirects are not followed). Every 30 s to 10 min (a minute by default), each check limited to 5 s;
+green is up, red is down, grey is not known yet. The tooltip has the latency or the reason, and since
+when. A change goes to the log under *Health*, and to a notification when *Notify me* is ticked. `tcp`
+works where firewalls drop pings; no check needs administrator rights.
+
 ### 2.2 Group (a folder of items)
 
 A group is a folder: it holds its own ordered list of shortcuts. Its properties
