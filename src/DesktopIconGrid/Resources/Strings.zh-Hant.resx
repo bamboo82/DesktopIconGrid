@@ -2036,4 +2036,19 @@
   <data name="Commands_Refused" xml:space="preserve">
     <value>執行中的列使用不同的權限（以系統管理員身分執行，或此次啟動才是），因此不接受此次啟動的命令。請以與該列相同的方式啟動。</value>
   </data>
+  <data name="Health_Paused" xml:space="preserve">
+    <value>已在這台電腦上暫停：它是隨列從別處而來。請從圖示的功能表核准。</value>
+  </data>
+  <data name="Health_ApproveMenu" xml:space="preserve">
+    <value>核准健康檢查…</value>
+  </data>
+  <data name="Health_ApproveTitle" xml:space="preserve">
+    <value>要從這台電腦檢查此位址嗎？</value>
+  </data>
+  <data name="Health_ApproveIntro" xml:space="preserve">
+    <value>「{0}」的健康檢查是隨列從別處而來（同步、還原或匯入），尚未在這台電腦上核准。核准後，這台電腦會依下方所示的頻率自行連線到所示的目標，直到檢查變更為止。</value>
+  </data>
+  <data name="Health_ApproveButton" xml:space="preserve">
+    <value>核准並檢查</value>
+  </data>
 </root>

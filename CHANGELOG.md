@@ -35,7 +35,9 @@ microphone tile, a clock and timer, and paste to a bucket.
   approve it on that PC.
 - A health light on a shortcut (*Properties → Advanced → Health check*): `ping host`, `tcp host:port` or a web
   address that must answer 2xx/3xx, every 30 s to 10 min; green, red or grey in the icon's top-left corner,
-  with latency and the last change in the tooltip, the log, and an optional notification.
+  with latency and the last change in the tooltip, the log, and an optional notification. A check that comes
+  with the bar from another PC (sync, a restore, an import) contacts nothing until it is approved on this PC
+  from the icon's menu; one typed or changed here is approved by saving.
 
 ## [0.8.1] – 2026-11-06
 

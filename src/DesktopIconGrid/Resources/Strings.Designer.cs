@@ -1338,6 +1338,42 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Approve and check.
+        /// </summary>
+        public static string Health_ApproveButton {
+            get {
+                return ResourceManager.GetString("Health_ApproveButton", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The health check of “{0}” came with the bar from elsewhere (sync, a restore or a [rest of string was truncated]";.
+        /// </summary>
+        public static string Health_ApproveIntro {
+            get {
+                return ResourceManager.GetString("Health_ApproveIntro", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Approve health check….
+        /// </summary>
+        public static string Health_ApproveMenu {
+            get {
+                return ResourceManager.GetString("Health_ApproveMenu", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Check this address from this PC?.
+        /// </summary>
+        public static string Health_ApproveTitle {
+            get {
+                return ResourceManager.GetString("Health_ApproveTitle", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to down.
         /// </summary>
         public static string Health_Down {
@@ -1370,6 +1406,15 @@ namespace DesktopIconGrid.Resources {
         public static string Health_NowUp {
             get {
                 return ResourceManager.GetString("Health_NowUp", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to paused on this PC: it came with the bar from elsewhere. Approve it from the icon [rest of string was truncated]";.
+        /// </summary>
+        public static string Health_Paused {
+            get {
+                return ResourceManager.GetString("Health_Paused", resourceCulture);
             }
         }
 

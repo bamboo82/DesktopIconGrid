@@ -135,12 +135,13 @@ public partial class App : Application
         _monitor = new SystemMonitor(Dispatcher);
         Func<Window?> owner = () => Current?.MainWindow;
         var cacheDirectory = AppPaths.DriveCacheDirectory;
+        var trust = new CommandTrust(Path.Combine(AppPaths.DataDirectory, CommandTrust.FileName)); // command tiles and health checks
         var specialIcons = new SpecialIconRegistry([
             new CpuUsageHandler(_monitor, owner),
             new DiskUsageHandler(_monitor, owner),
             new DriveBucketHandler(syncService, dialogs, owner, icons, cacheDirectory, Dispatcher),
             new SoundReplayerHandler(owner, AppPaths.SoundsDirectory, Dispatcher),
-            new CommandTileHandler(new CommandTrust(Path.Combine(AppPaths.DataDirectory, CommandTrust.FileName)), owner, Dispatcher),
+            new CommandTileHandler(trust, owner, Dispatcher),
         ]);
         var launcher = new LaunchService(_tracker, dialogs);
         _windows = new WindowSwitcher();
@@ -153,7 +154,8 @@ public partial class App : Application
             _tracker,
             specialIcons,
             action => Dispatcher.BeginInvoke(DispatcherPriority.Background, action),
-            _windows);
+            _windows,
+            trust: trust);
 
         // First paint; the bar window refines this once it has a handle (backdrop, High Contrast, settings changes).
         ThemeManager.Apply(ThemeManager.EffectivePalette(viewModel.Palette));

@@ -122,7 +122,14 @@ corner: `ping host`, `tcp host:port`, or an `http://` or `https://` address that
 (redirects are not followed). Every 30 s to 10 min (a minute by default), each check limited to 5 s;
 green is up, red is down, grey is not known yet. The tooltip has the latency or the reason, and since
 when; an address is shown, logged and notified by its scheme, host and port only (it may carry a token).
-Lights and command tiles inside a group start with the bar, not when the group is first opened. A change goes to the log under *Health*, and to a notification when *Notify me* is ticked. `tcp`
+Lights and command tiles inside a group start with the bar, not when the group is first opened.
+**Approval (owner's decision on review 21 H1):** a check contacts nothing until it is approved on this
+PC, as a command tile runs nothing. Typing or changing it in *Properties* here approves it; a check that
+came with the bar from elsewhere (sync, a restore, an import, a hand-edited file) shows a faint grey dot,
+stays paused after an unrelated *OK*, and is approved with *Approve health check…* in the icon's menu,
+which shows the whole check and its interval with *Cancel* as the default. The approval covers the check
+as written back and the interval, so a change of either on any PC needs approving again; it is kept with
+the command tiles' in the local `command-trust.json`. A change goes to the log under *Health*, and to a notification when *Notify me* is ticked. `tcp`
 works where firewalls drop pings; no check needs administrator rights.
 
 ### 2.2 Group (a folder of items)

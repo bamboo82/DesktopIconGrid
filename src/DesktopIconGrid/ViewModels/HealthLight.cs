@@ -3,6 +3,7 @@ using System.Windows.Media;
 using System.Windows.Threading;
 using DesktopIconGrid.Core.Diagnostics;
 using DesktopIconGrid.Core.Health;
+using DesktopIconGrid.Core.SpecialIcons;
 using DesktopIconGrid.Infrastructure;
 using DesktopIconGrid.Resources;
 using DesktopIconGrid.Services;
@@ -19,6 +20,7 @@ public sealed class HealthLight : ObservableObject
     private static readonly SolidColorBrush UpBrush = Frozen(Color.FromRgb(0x34, 0xC7, 0x59));
     private static readonly SolidColorBrush DownBrush = Frozen(Color.FromRgb(0xE5, 0x48, 0x4D));
     private static readonly SolidColorBrush UnknownBrush = Frozen(Color.FromRgb(0x9A, 0x9A, 0x9A));
+    private static readonly SolidColorBrush PausedBrush = Frozen(Color.FromArgb(0x60, 0x9A, 0x9A, 0x9A));
 
     private readonly string _name;
     private readonly HealthCheck _check;
@@ -31,11 +33,18 @@ public sealed class HealthLight : ObservableObject
     private string? _detail;
     private DateTime? _changed;
     private bool _checking;
+    private readonly CommandTrust _trust;
+    private readonly string _hash;
+    private bool _paused;
+    private bool _stopped;
 
-    public HealthLight(string name, HealthCheck check, int intervalSeconds, bool notify, Action<string, string>? notifier, Dispatcher dispatcher)
+    /// <param name="trust">Where approvals are kept: the light contacts nothing until <see cref="HealthCheck.Hash"/> is approved there.</param>
+    public HealthLight(string name, HealthCheck check, int intervalSeconds, bool notify, Action<string, string>? notifier, Dispatcher dispatcher, CommandTrust trust)
     {
         _name = name;
         _check = check;
+        _trust = trust;
+        _hash = check.Hash(intervalSeconds);
         _notify = notify;
         _notifier = notifier;
         _timer = new DispatcherTimer(TimeSpan.FromSeconds(HealthCheck.NormalizeInterval(intervalSeconds)), DispatcherPriority.Background, (_, _) => CheckNow(), dispatcher);
@@ -43,7 +52,10 @@ public sealed class HealthLight : ObservableObject
 
     public HealthStatus Status => _status;
 
-    public Brush Brush => _status switch
+    /// <summary>The check came with the bar and is not approved on this PC: nothing is contacted (review 21 H1).</summary>
+    public bool IsPaused => _paused;
+
+    public Brush Brush => _paused ? PausedBrush : _status switch
     {
         HealthStatus.Up => UpBrush,
         HealthStatus.Down => DownBrush,
@@ -63,26 +75,60 @@ public sealed class HealthLight : ObservableObject
                 HealthStatus.Down => _detail is null ? Strings.Health_Down : string.Format(Strings.Health_DownBecause, _detail),
                 _ => Strings.Health_Unknown,
             };
+            if (_paused)
+            {
+                return $"{_check.Shown}: {Strings.Health_Paused}";
+            }
+
             var since = _changed is { } changed ? " " + string.Format(Strings.Health_Since, changed.ToString("g", CultureInfo.CurrentCulture)) : string.Empty;
             return $"{_check.Shown}: {state}{since}";
         }
     }
 
+    /// <summary>Checks now and on the timer when approved here; otherwise waits, paused, for an approval.</summary>
     public void Start()
     {
+        if (_stopped)
+        {
+            return;
+        }
+
+        if (!_trust.IsApproved(_hash))
+        {
+            if (!_paused)
+            {
+                _paused = true;
+                _trust.Changed += OnTrustChanged;
+                OnAllPropertiesChanged();
+            }
+
+            return;
+        }
+
+        if (_paused)
+        {
+            _paused = false;
+            _trust.Changed -= OnTrustChanged;
+            OnAllPropertiesChanged();
+        }
+
         CheckNow();
         _timer.Start();
     }
 
     public void Stop()
     {
+        _stopped = true;
+        _trust.Changed -= OnTrustChanged;
         _timer.Stop();
         _stop.Cancel();
     }
 
+    private void OnTrustChanged(object? sender, EventArgs e) => Start();
+
     private async void CheckNow()
     {
-        if (_checking || _stop.IsCancellationRequested)
+        if (_checking || _stop.IsCancellationRequested || _paused)
         {
             return;
         }

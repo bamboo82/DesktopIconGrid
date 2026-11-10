@@ -2036,4 +2036,19 @@ Details are in {1}.</value>
   <data name="Commands_Refused" xml:space="preserve">
     <value>The running bar runs with other rights (as administrator, or not while this start is), so it does not take commands from this start. Start this one the same way the bar was started.</value>
   </data>
+  <data name="Health_Paused" xml:space="preserve">
+    <value>paused on this PC: it came with the bar from elsewhere. Approve it from the icon's menu.</value>
+  </data>
+  <data name="Health_ApproveMenu" xml:space="preserve">
+    <value>Approve health check…</value>
+  </data>
+  <data name="Health_ApproveTitle" xml:space="preserve">
+    <value>Check this address from this PC?</value>
+  </data>
+  <data name="Health_ApproveIntro" xml:space="preserve">
+    <value>The health check of “{0}” came with the bar from elsewhere (sync, a restore or an import) and has not been approved on this PC. Approving lets this PC contact what is shown below on its own, as often as shown, until the check is changed.</value>
+  </data>
+  <data name="Health_ApproveButton" xml:space="preserve">
+    <value>Approve and check</value>
+  </data>
 </root>

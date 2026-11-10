@@ -2036,4 +2036,19 @@
   <data name="Commands_Refused" xml:space="preserve">
     <value>运行中的栏使用不同的权限（以管理员身份运行，或此次启动才是），因此不接受此次启动的命令。请以与该栏相同的方式启动。</value>
   </data>
+  <data name="Health_Paused" xml:space="preserve">
+    <value>已在这台电脑上暂停：它是随栏从别处而来。请从图标的菜单批准。</value>
+  </data>
+  <data name="Health_ApproveMenu" xml:space="preserve">
+    <value>批准健康检查…</value>
+  </data>
+  <data name="Health_ApproveTitle" xml:space="preserve">
+    <value>要从这台电脑检查此地址吗？</value>
+  </data>
+  <data name="Health_ApproveIntro" xml:space="preserve">
+    <value>“{0}”的健康检查是随栏从别处而来（同步、还原或导入），尚未在这台电脑上批准。批准后，这台电脑会按下方所示的频率自行连接到所示的目标，直到检查更改为止。</value>
+  </data>
+  <data name="Health_ApproveButton" xml:space="preserve">
+    <value>批准并检查</value>
+  </data>
 </root>

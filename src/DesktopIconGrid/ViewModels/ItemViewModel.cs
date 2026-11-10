@@ -41,6 +41,7 @@ public sealed class ItemViewModel : ObservableObject
         ImportAfterCommand = new RelayCommand(() => Root.ImportAfter(this));
         ShowLogCommand = new RelayCommand(() => Root.ShowLog(this), () => CapturesLog);
         RepairCommand = new RelayCommand(() => Root.RepairItem(this), () => IsShortcut);
+        ApproveHealthCheckCommand = new RelayCommand(() => Root.ApproveHealthCheck(this), () => IsHealthPaused);
         RebuildGauge();
         RebuildHealth();
     }
@@ -333,6 +334,11 @@ public sealed class ItemViewModel : ObservableObject
 
     public bool ShowsHealth => _health is not null;
 
+    /// <summary>The shortcut's health check came with the bar and waits for an approval here.</summary>
+    public bool IsHealthPaused => _health is { IsPaused: true };
+
+    public ICommand ApproveHealthCheckCommand { get; }
+
     /// <summary>Starts, restarts or stops the health light when the shortcut's check changed (not on every refresh).</summary>
     private void RebuildHealth()
     {
@@ -354,12 +360,18 @@ public sealed class ItemViewModel : ObservableObject
                 Core.Health.HealthCheck.NormalizeInterval(shortcut.HealthInterval),
                 shortcut.HealthNotify,
                 Root.Notify,
-                System.Windows.Threading.Dispatcher.CurrentDispatcher);
-            _health.PropertyChanged += (_, _) => OnPropertyChanged(nameof(ToolTipText));
+                System.Windows.Threading.Dispatcher.CurrentDispatcher,
+                Root.Trust);
+            _health.PropertyChanged += (_, _) =>
+            {
+                OnPropertyChanged(nameof(ToolTipText));
+                OnPropertyChanged(nameof(IsHealthPaused));
+            };
             _health.Start();
         }
 
         OnPropertyChanged(nameof(Health));
         OnPropertyChanged(nameof(ShowsHealth));
+        OnPropertyChanged(nameof(IsHealthPaused));
     }
 }

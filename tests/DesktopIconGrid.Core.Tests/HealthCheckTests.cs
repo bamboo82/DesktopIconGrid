@@ -60,4 +60,17 @@ public class HealthCheckTests
         Assert.DoesNotContain("secret", check.Shown);
         Assert.Equal("tcp nas:445", HealthCheck.Parse("tcp nas:445", out _)!.Shown);
     }
+
+    [Fact]
+    public void The_approval_covers_what_is_contacted_and_how_often_however_it_is_spelled()
+    {
+        var check = HealthCheck.Parse("tcp nas:445", out _)!;
+
+        Assert.Equal(check.Hash(null), HealthCheck.Parse("  TCP nas:445 ", out _)!.Hash(60)); // the same check, the default interval
+        Assert.NotEqual(check.Hash(60), check.Hash(30));
+        Assert.NotEqual(check.Hash(60), HealthCheck.Parse("tcp nas:446", out _)!.Hash(60));
+        Assert.NotEqual(check.Hash(60), HealthCheck.Parse("ping nas", out _)!.Hash(60));
+        Assert.Null(HealthCheck.HashOf(new Models.ShortcutItem { HealthCheck = "nonsense" }));
+        Assert.Equal(check.Hash(90), HealthCheck.HashOf(new Models.ShortcutItem { HealthCheck = "tcp nas:445", HealthInterval = 90 }));
+    }
 }

@@ -44,6 +44,8 @@
                       Visibility="{Binding IsShortcut, Converter={StaticResource BoolToVisibility}}" />
             <MenuItem Header="{x:Static r:Strings.Menu_ShowLog}" Command="{Binding ShowLogCommand}"
                       Visibility="{Binding CapturesLog, Converter={StaticResource BoolToVisibility}}" />
+            <MenuItem Header="{x:Static r:Strings.Health_ApproveMenu}" Command="{Binding ApproveHealthCheckCommand}"
+                      Visibility="{Binding IsHealthPaused, Converter={StaticResource BoolToVisibility}}" />
             <MenuItem Header="{x:Static r:Strings.Menu_Repair}" Command="{Binding RepairCommand}"
                       Visibility="{Binding IsMissing, Converter={StaticResource BoolToVisibility}}" />
             <MenuItem Header="{x:Static r:Strings.Menu_ColorTag}" Tag="color-tags" />

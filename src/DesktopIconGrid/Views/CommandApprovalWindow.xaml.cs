@@ -13,12 +13,19 @@ namespace DesktopIconGrid.Views;
 public partial class CommandApprovalWindow : Window
 {
     public CommandApprovalWindow(string tileName, CommandTileSettings settings)
+        : this(Strings.Command_ApproveTitle, string.Format(Strings.Command_ApproveIntro, tileName), Describe(settings ?? throw new ArgumentNullException(nameof(settings))), Strings.Command_ApproveButton)
     {
-        ArgumentNullException.ThrowIfNull(settings);
+    }
+
+    /// <summary>Any approval of something that came with the bar (a health check too): the full details, Cancel the default.</summary>
+    public CommandApprovalWindow(string title, string intro, string details, string approveText)
+    {
         InitializeComponent();
         DialogTheme.Apply(this);
-        Intro.Text = string.Format(Strings.Command_ApproveIntro, tileName);
-        Command.Text = Describe(settings);
+        Title = title;
+        Intro.Text = intro;
+        Command.Text = details;
+        ApproveButton.Content = approveText;
     }
 
     /// <summary>The text shown: what runs, where, when, and what a click does.</summary>

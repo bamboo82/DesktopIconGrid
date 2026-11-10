@@ -9,6 +9,37 @@ The owner relays replies.
 
 ---
 
+## 2026-11-10 (37) — Health checks need approval per PC (review 21 H1, owner: "Yes, require approval")
+
+- **Hash.** `HealthCheck.Hash(interval)` is SHA-256 of `health-check/1`, the check as written back
+  (`ToString()`, so spelling and case do not matter), and the normalized interval. The notification flag is left
+  out: it contacts nothing. `HashOf(shortcut)` is null when there is no check that reads.
+- **Store.** It is the same `CommandTrust` as the command tiles, now created once in `App` and shared (a new
+  optional `trust` parameter of `LauncherViewModel`, so tests use one in memory). The two kinds of hash cannot
+  meet: their prefixes differ.
+- **The gate.** `HealthLight.Start` contacts nothing unless the hash is approved. Otherwise `IsPaused`: a faint
+  grey dot and *paused on this PC… approve it from the icon's menu*. It waits on `CommandTrust.Changed` and starts
+  on approval. `CheckNow` also returns while paused, and `Stop` unsubscribes.
+- **Approving.** *Approve health check…* is in the icon's menu, shown only while paused.
+  - It calls the new `IDialogService.ConfirmApproval`. The command tile's approval window gained a general
+    constructor (title, intro, details, button text).
+  - The window shows the whole check (not the shortened `Shown`) and the interval, wrapped and scrollable, with
+    Cancel as the default.
+  - Yes approves the hash the window showed.
+- **Saving** (T2's rule).
+  - `EditItem` takes the hash before the dialog. After OK it approves only if the hash changed (typed here) or the
+    old one was approved here. An unchanged arrived check, renamed or with only *Notify* changed, stays paused.
+  - `NewShortcut` approves a typed check.
+  - The approval comes before `Model.Update` and `RefreshFromModel`, so the new light starts approved and nothing
+    starts twice (T4's lesson).
+- **Tests.** `HealthApprovalTests` (App) points the checks at a local listener that counts connections:
+  - an arrived check makes no connection in 1.5 s;
+  - Cancel keeps it paused, and the window got the full check;
+  - Yes approves and a connection follows;
+  - a rename keeps it paused, while an interval changed in Properties approves it;
+  - a check typed in a new shortcut is approved.
+  Core: the hash ignores spelling and covers interval, port and kind.
+
 ## 2026-11-10 (36) — Review 21
 
 Commits: `287e837` (keys), `d3075c6` (command tile), `4957807` (command line) and the commit that adds this entry

@@ -14,6 +14,12 @@ public interface IDialogService
 
     bool Confirm(string title, string message);
 
+    /// <summary>
+    /// Asks whether something that came with the bar may act on this PC (a health check), showing its full details in a
+    /// wrapped, scrollable box; Cancel is the default.
+    /// </summary>
+    bool ConfirmApproval(string title, string intro, string details, string approveText);
+
     void ShowError(string title, string message);
 
     void ShowInfo(string title, string message);

@@ -23,12 +23,34 @@ internal sealed class RecordingDialogs : IDialogService
 
     public List<string> Modals { get; } = [];
 
-    public bool ShowItemProperties(LauncherItem item, bool isNew) => false;
+    /// <summary>What "the user" does in Properties before OK; <see langword="null"/> cancels.</summary>
+    public Action<LauncherItem>? PropertiesEdit { get; set; }
+
+    public bool ShowItemProperties(LauncherItem item, bool isNew)
+    {
+        if (PropertiesEdit is not { } edit)
+        {
+            return false;
+        }
+
+        edit(item);
+        return true;
+    }
 
     public LauncherSettings? ShowSettings(LauncherSettings current) => null;
 
     /// <summary>The text of the last question asked.</summary>
     public string? LastMessage { get; private set; }
+
+    public bool ApprovalAnswer { get; set; }
+
+    public List<string> ApprovalsShown { get; } = [];
+
+    public bool ConfirmApproval(string title, string intro, string details, string approveText)
+    {
+        ApprovalsShown.Add(details);
+        return ApprovalAnswer;
+    }
 
     public bool Confirm(string title, string message)
     {

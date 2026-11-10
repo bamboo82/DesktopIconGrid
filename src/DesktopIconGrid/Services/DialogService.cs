@@ -88,6 +88,9 @@ public sealed class DialogService(IIconProvider icons) : IDialogService, ILaunch
         window.Activate();
     }
 
+    public bool ConfirmApproval(string title, string intro, string details, string approveText) =>
+        new CommandApprovalWindow(title, intro, details, approveText) { Owner = Owner }.ShowDialog() == true;
+
     public bool Confirm(string title, string message) =>
         Show(message, title, MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes;
 

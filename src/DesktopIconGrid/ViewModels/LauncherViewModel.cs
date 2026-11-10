@@ -1,3 +1,5 @@
+using DesktopIconGrid.Core.SpecialIcons;
+using DesktopIconGrid.Core.Health;
 using System.IO;
 using System.Reflection;
 using System.Windows.Input;
@@ -56,8 +58,10 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
         SpecialIconRegistry specialIcons,
         Action<Action>? defer = null,
         IWindowSwitcher? windows = null,
-        Func<ShortcutItem, bool>? isMissing = null)
+        Func<ShortcutItem, bool>? isMissing = null,
+        CommandTrust? trust = null)
     {
+        Trust = trust ?? new CommandTrust(null);
         _isMissing = isMissing ?? (shortcut => LocationProbe.IsMissing(shortcut, IconWorker.IsOnSlowStorage));
         Model = model;
         Keys = WindowKeyMap.From(model.Settings);
@@ -98,6 +102,46 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
     }
 
     public LauncherModel Model { get; private set; }
+
+    /// <summary>This PC's approvals of command tiles and health checks that came with the bar (local, never synced).</summary>
+    internal CommandTrust Trust { get; }
+
+    /// <summary>
+    /// After Properties was saved: approves the shortcut's health check when it was typed or changed here, or was approved
+    /// here already. A check that came with the bar and was left as it was stays paused (review 21 H1, as T2).
+    /// </summary>
+    private void ApproveSavedHealthCheck(string? hashBefore, ShortcutItem saved)
+    {
+        if (HealthCheck.HashOf(saved) is { } hash && (hash != hashBefore || (hashBefore is not null && Trust.IsApproved(hashBefore))))
+        {
+            Trust.Approve(hash);
+        }
+    }
+
+    /// <summary>Approve health check…: shows the whole check and how often, and approves it on this PC on Yes.</summary>
+    public void ApproveHealthCheck(ItemViewModel item)
+    {
+        if (item.Model is not ShortcutItem shortcut || HealthCheck.Parse(shortcut.HealthCheck, out _) is not { } check)
+        {
+            return;
+        }
+
+        var hash = check.Hash(shortcut.HealthInterval);
+        if (Trust.IsApproved(hash))
+        {
+            return;
+        }
+
+        var details = string.Join(
+            Environment.NewLine,
+            $"{Strings.Props_HealthCheck} {check}",
+            $"{Strings.Props_HealthEvery} {HealthCheck.NormalizeInterval(shortcut.HealthInterval).ToString(System.Globalization.CultureInfo.CurrentCulture)}");
+        if (_dialogs.ConfirmApproval(Strings.Health_ApproveTitle, string.Format(Strings.Health_ApproveIntro, shortcut.Name), details, Strings.Health_ApproveButton))
+        {
+            AppLog.Default.Info("Health", $"The health check of \"{shortcut.Name}\" ({check.Shown}) approved on this PC");
+            Trust.Approve(hash); // the light starts (CommandTrust.Changed), and any other with the same check
+        }
+    }
 
     /// <summary>
     /// Items inside groups that work on their own (a command tile, a shortcut with a health light) start with the bar,
@@ -786,6 +830,8 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
             return;
         }
 
+        ApproveSavedHealthCheck(null, draft); // typed here
+
         Model.Insert(draft, list.Group, index);
         list.Sync();
         Save();
@@ -1035,12 +1081,18 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
         }
 
         var draft = item.Model.Clone();
+        var healthBefore = item.Model is ShortcutItem shortcutBefore ? HealthCheck.HashOf(shortcutBefore) : null;
         var saved = draft is SpecialIconItem specialDraft
             ? item.SpecialHandler.ShowProperties(specialDraft, isNew: false)
             : _dialogs.ShowItemProperties(draft, isNew: false);
         if (!saved)
         {
             return;
+        }
+
+        if (draft is ShortcutItem savedShortcut)
+        {
+            ApproveSavedHealthCheck(healthBefore, savedShortcut);
         }
 
         Model.Update(draft);

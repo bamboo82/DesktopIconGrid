@@ -103,6 +103,23 @@ public sealed record HealthCheck(HealthCheckKind Kind, string Host, int Port, Ur
         ? $"{Url!.Scheme}://{Url.Authority[(Url.Authority.LastIndexOf('@') + 1)..]}/…"
         : ToString();
 
+    /// <summary>
+    /// What a PC approves (review 21 H1): the check as written back (what is contacted and how) and how often. A change
+    /// of either, on any PC, needs approving again; the notification setting is left out, it contacts nothing.
+    /// </summary>
+    public string Hash(int? intervalSeconds)
+    {
+        var text = string.Join('\n', "health-check/1", ToString(), NormalizeInterval(intervalSeconds).ToString(CultureInfo.InvariantCulture));
+        return Convert.ToHexStringLower(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(text)));
+    }
+
+    /// <summary>The <see cref="Hash"/> of a shortcut's check, or <see langword="null"/> when it has none (or none that reads).</summary>
+    public static string? HashOf(Models.ShortcutItem shortcut)
+    {
+        ArgumentNullException.ThrowIfNull(shortcut);
+        return Parse(shortcut.HealthCheck, out _) is { } check ? check.Hash(shortcut.HealthInterval) : null;
+    }
+
     /// <summary>The check as the user writes it.</summary>
     public override string ToString() => Kind switch
     {
