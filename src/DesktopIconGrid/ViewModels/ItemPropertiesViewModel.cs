@@ -79,6 +79,8 @@ public sealed class ItemPropertiesViewModel : ObservableObject
         _healthCheck = (target as ShortcutItem)?.HealthCheck ?? string.Empty;
         _healthInterval = HealthCheck.NormalizeInterval((target as ShortcutItem)?.HealthInterval).ToString(CultureInfo.CurrentCulture);
         _healthNotify = (target as ShortcutItem)?.HealthNotify ?? false;
+        _openAsStack = (target as ShortcutItem)?.OpenAsStack ?? false;
+        _stackNewestFirst = (target as ShortcutItem)?.StackNewestFirst ?? false;
         _originalWhenRunning = (target as ShortcutItem)?.WhenRunning;
         _switchesWhenRunning = target is ShortcutItem shortcut && LaunchPlanner.SwitchesWhenRunning(shortcut);
         var options = target as ShortcutItem;
@@ -245,6 +247,24 @@ public sealed class ItemPropertiesViewModel : ObservableObject
             _switchesWhenRunning = byDefault;
             OnPropertyChanged(nameof(SelectedWhenRunning));
         }
+    }
+
+    // ----- folder stack (0.10.0) ---------------------------------------------------------------
+
+    private bool _openAsStack;
+    private bool _stackNewestFirst;
+
+    /// <summary>A folder opens as a list by the pointer, not in Explorer.</summary>
+    public bool OpenAsStack
+    {
+        get => _openAsStack;
+        set => SetProperty(ref _openAsStack, value);
+    }
+
+    public bool StackNewestFirst
+    {
+        get => _stackNewestFirst;
+        set => SetProperty(ref _stackNewestFirst, value);
     }
 
     // ----- health light (0.9.0) ----------------------------------------------------------------
@@ -576,6 +596,8 @@ public sealed class ItemPropertiesViewModel : ObservableObject
             shortcut.Browser = _browser.Browser;
             shortcut.BrowserProfile = _browser.IsDefault ? null : _browser.Profile;
             shortcut.AppWindow = !_browser.IsDefault && _appWindow;
+            shortcut.OpenAsStack = _openAsStack;
+            shortcut.StackNewestFirst = _openAsStack && _stackNewestFirst;
             var check = HealthCheck.Parse(_healthCheck, out _);
             shortcut.HealthCheck = check?.ToString();
             shortcut.HealthInterval = check is null || !int.TryParse(_healthInterval, NumberStyles.Integer, CultureInfo.CurrentCulture, out var every)

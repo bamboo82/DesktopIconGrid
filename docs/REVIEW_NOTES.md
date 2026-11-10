@@ -9,6 +9,33 @@ The owner relays replies.
 
 ---
 
+## 2026-11-10 (45) — Folder stacks (ROADMAP #10)
+
+- **Model.** `ShortcutItem.OpenAsStack` and `StackNewestFirst` are plain layout properties; older versions keep
+  them as unknown properties and open the folder in Explorer.
+- **Core.** `Launching.FolderStack.List(folder, newestFirst, max = 100)` gives the direct children without
+  Hidden/System and dot entries, a `.lnk` shown without its extension, and the total. An unreadable folder
+  gives an empty list. Tests run here.
+- **App.**
+  - `LauncherViewModel.Activate` opens the stack through `IDialogService.ShowFolderStack`. It does so only with
+    no modifier keys and only when the expanded location is an existing directory. Otherwise the click
+    launches as before.
+  - `Views.StackWindow` is its own small topmost window, not the group popup: the popup's items are model
+    items (remove, reorder, properties), and transient file rows would need guards on every one of those
+    paths.
+  - It is placed with `PopupPlacement.AtPointer`, like the pointer window, and closes on deactivate or Esc.
+  - A click (press and release on the same row) or Enter opens through `ProcessLauncher.Start` with
+    ShellExecute. A drag is a plain `FileDrop` of the real path; the window stays open during the drag.
+  - `FileSystemWatcher` with a 400 ms debounce follows local folders; UNC paths are not watched.
+  - Icons come through `IconWorker.Shared` with the lookup timeout.
+- **To look at.**
+  - A synced stack flag makes a click list a folder instead of opening Explorer. It runs nothing by itself;
+    opening an entry is the user's click on a real file of this PC. I saw no need for an approval.
+  - A drag allows Copy, Move and Link. A Move takes the file out of the folder, as dragging from Explorer does.
+- **Not done:** drop onto a program inside the stack (roadmap). **Not tried by hand:** the window, its
+  placement, the drag.
+- Tests: Core `FolderStackTests`. App: a stack opens for a folder; a missing folder launches as usual.
+
 ## 2026-11-10 (44) — Paste to a bucket
 
 - `ISpecialIconHandler` gains `AcceptsPaste` / `PasteAsync` (default: no). The bucket implements them.

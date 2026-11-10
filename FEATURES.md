@@ -117,6 +117,15 @@ Extra flags kept out of the dialog's main layout but supported:
 - Launch uses `ShellExecute` semantics, so `.lnk`, documents, folders, `http(s):`,
   `mailto:`, `ms-settings:` and `shell:` locations all work.
 
+**Folder stack (0.10.0).** *Properties → Advanced → Open a folder as a stack*: a click on a folder
+shortcut opens a small list at the pointer with what is directly in the folder (hidden and system entries
+left out), folders first by name, or newest first; at most 100, with a count of the rest. A click or Enter
+opens an entry and closes the stack, a drag takes the real file out (to Explorer, a mail, a program),
+*Open folder* shows the folder in File Explorer, Esc or a click elsewhere closes it. The list follows
+changes in a local folder; a network share is read when the stack opens. Shift+click or a middle click
+on the icon opens the folder in File Explorer as before, as does a click when the folder is not there.
+Not in yet: dropping a file onto a program inside the stack.
+
 **Health light (0.9.0).** *Properties → Advanced → Health check* gives a shortcut a light in its top-left
 corner: `ping host`, `tcp host:port`, or an `http://` or `https://` address that must answer 2xx or 3xx
 (redirects are not followed). Every 30 s to 10 min (a minute by default), each check limited to 5 s;
@@ -672,7 +681,7 @@ same way.
 
 **0.10.0 "Bigger moves"** *(in progress)* — first what was planned for 0.9.0 and is not in it: more gauges
 (memory, battery, network and the sparkline: in), the clock and timer tile (in), folder
-stacks, microphone tile, paste to a bucket (in). Then: workspaces (Multi Launch that puts windows back); send a file to another PC;
+stacks (in), paste to a bucket (in), microphone tile. Then: workspaces (Multi Launch that puts windows back); send a file to another PC;
 voice launch, if the spike says yes.
 
 **1.0.0 "Ship it"** — the existing backlog: installer (MSIX/winget), code signing, toast notifications.

@@ -571,6 +571,26 @@ public sealed class LauncherViewModelTests : IDisposable
     }
 
     [Fact]
+    public void A_folder_marked_as_a_stack_opens_as_one_and_Shift_or_a_missing_folder_opens_it_the_usual_way()
+    {
+        var (viewModel, model, dialogs) = Create();
+        var folder = new ShortcutItem { Name = "Downloads", Location = _directory, OpenAsStack = true, StackNewestFirst = true };
+        var gone = new ShortcutItem { Name = "Gone", Location = Path.Combine(_directory, "nope"), OpenAsStack = true };
+        model.Add(folder);
+        model.Add(gone);
+        viewModel.RootItems.Sync();
+
+        viewModel.Activate(viewModel.GetOrCreateViewModel(folder), null, ActivationModifiers.None);
+
+        Assert.Equal([(_directory, true)], dialogs.Stacks);
+        Assert.Empty(_launcher.Launches);
+
+        viewModel.Activate(viewModel.GetOrCreateViewModel(gone), null, ActivationModifiers.None); // not a folder here: launched as usual
+        Assert.Single(dialogs.Stacks);
+        Assert.Single(_launcher.Launches);
+    }
+
+    [Fact]
     public void The_command_line_adds_into_a_named_group_once_and_launches_by_name()
     {
         var (viewModel, _, dialogs) = Create();

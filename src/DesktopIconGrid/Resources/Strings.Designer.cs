@@ -3876,6 +3876,24 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Open a folder as a stack.
+        /// </summary>
+        public static string Props_OpenAsStack {
+            get {
+                return ResourceManager.GetString("Props_OpenAsStack", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to For a folder: a click lists its contents by the pointer, where you can open or d [rest of string was truncated]";.
+        /// </summary>
+        public static string Props_OpenAsStackHint {
+            get {
+                return ResourceManager.GetString("Props_OpenAsStackHint", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Other PCs keep {0}.
         /// </summary>
         public static string Props_OtherPcsKeep {
@@ -3989,6 +4007,15 @@ namespace DesktopIconGrid.Resources {
         public static string Props_ShortcutTitle {
             get {
                 return ResourceManager.GetString("Props_ShortcutTitle", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Newest first.
+        /// </summary>
+        public static string Props_StackNewestFirst {
+            get {
+                return ResourceManager.GetString("Props_StackNewestFirst", resourceCulture);
             }
         }
 
@@ -5123,6 +5150,33 @@ namespace DesktopIconGrid.Resources {
         public static string Special_UnknownName {
             get {
                 return ResourceManager.GetString("Special_UnknownName", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to This folder is empty..
+        /// </summary>
+        public static string Stack_Empty {
+            get {
+                return ResourceManager.GetString("Stack_Empty", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to {0} more in the folder..
+        /// </summary>
+        public static string Stack_More {
+            get {
+                return ResourceManager.GetString("Stack_More", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Open folder.
+        /// </summary>
+        public static string Stack_OpenFolder {
+            get {
+                return ResourceManager.GetString("Stack_OpenFolder", resourceCulture);
             }
         }
 

@@ -624,6 +624,18 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
             }
         }
 
+        // A folder that opens as a stack; Shift or a middle click opens it in Explorer as before.
+        if (shortcutToLaunch.OpenAsStack
+            && modifiers == ActivationModifiers.None
+            && Environment.ExpandEnvironmentVariables(shortcutToLaunch.EffectiveLocation.Trim().Trim('"')) is var stackFolder
+            && Directory.Exists(stackFolder))
+        {
+            _dialogs.ShowFolderStack(item.Name, stackFolder, shortcutToLaunch.StackNewestFirst);
+            IsGroupPopupOpen = false;
+            ItemActivated?.Invoke(this, item);
+            return;
+        }
+
         // The taskbar's keys: Shift or a middle click starts another instance, Ctrl+Shift starts one as administrator.
         var asAdministrator = modifiers.HasFlag(ActivationModifiers.Control) && modifiers.HasFlag(ActivationModifiers.Shift);
         var newInstance = asAdministrator || modifiers.HasFlag(ActivationModifiers.Shift) || modifiers.HasFlag(ActivationModifiers.NewInstance);

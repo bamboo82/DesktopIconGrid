@@ -2159,4 +2159,22 @@ Details are in {1}.</value>
   <data name="Bucket_NothingToPaste" xml:space="preserve">
     <value>The clipboard holds no files, picture or text to upload.</value>
   </data>
+  <data name="Stack_OpenFolder" xml:space="preserve">
+    <value>Open folder</value>
+  </data>
+  <data name="Stack_Empty" xml:space="preserve">
+    <value>This folder is empty.</value>
+  </data>
+  <data name="Stack_More" xml:space="preserve">
+    <value>{0} more in the folder.</value>
+  </data>
+  <data name="Props_OpenAsStack" xml:space="preserve">
+    <value>Open a folder as a stack</value>
+  </data>
+  <data name="Props_StackNewestFirst" xml:space="preserve">
+    <value>Newest first</value>
+  </data>
+  <data name="Props_OpenAsStackHint" xml:space="preserve">
+    <value>For a folder: a click lists its contents by the pointer, where you can open or drag out a file. Shift+click opens it in File Explorer.</value>
+  </data>
 </root>

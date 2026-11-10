@@ -2159,4 +2159,22 @@
   <data name="Bucket_NothingToPaste" xml:space="preserve">
     <value>剪贴板中没有可上传的文件、图片或文字。</value>
   </data>
+  <data name="Stack_OpenFolder" xml:space="preserve">
+    <value>打开文件夹</value>
+  </data>
+  <data name="Stack_Empty" xml:space="preserve">
+    <value>此文件夹是空的。</value>
+  </data>
+  <data name="Stack_More" xml:space="preserve">
+    <value>文件夹中还有 {0} 个项目。</value>
+  </data>
+  <data name="Props_OpenAsStack" xml:space="preserve">
+    <value>以堆叠方式打开文件夹</value>
+  </data>
+  <data name="Props_StackNewestFirst" xml:space="preserve">
+    <value>最新的在前</value>
+  </data>
+  <data name="Props_OpenAsStackHint" xml:space="preserve">
+    <value>适用于文件夹：单击会在指针旁列出其内容，可打开或拖出文件。按 Shift 并单击则在文件资源管理器中打开。</value>
+  </data>
 </root>

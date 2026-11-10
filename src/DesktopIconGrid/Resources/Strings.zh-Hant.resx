@@ -2159,4 +2159,22 @@
   <data name="Bucket_NothingToPaste" xml:space="preserve">
     <value>剪貼簿中沒有可上傳的檔案、圖片或文字。</value>
   </data>
+  <data name="Stack_OpenFolder" xml:space="preserve">
+    <value>開啟資料夾</value>
+  </data>
+  <data name="Stack_Empty" xml:space="preserve">
+    <value>此資料夾是空的。</value>
+  </data>
+  <data name="Stack_More" xml:space="preserve">
+    <value>資料夾中還有 {0} 個項目。</value>
+  </data>
+  <data name="Props_OpenAsStack" xml:space="preserve">
+    <value>以堆疊方式開啟資料夾</value>
+  </data>
+  <data name="Props_StackNewestFirst" xml:space="preserve">
+    <value>最新的在前</value>
+  </data>
+  <data name="Props_OpenAsStackHint" xml:space="preserve">
+    <value>適用於資料夾：按一下會在指標旁列出其內容，可開啟或拖出檔案。按 Shift 並按一下則在檔案總管中開啟。</value>
+  </data>
 </root>

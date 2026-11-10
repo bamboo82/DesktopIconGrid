@@ -42,6 +42,10 @@ internal sealed class RecordingDialogs : IDialogService
     /// <summary>The text of the last question asked.</summary>
     public string? LastMessage { get; private set; }
 
+    public List<(string Folder, bool NewestFirst)> Stacks { get; } = [];
+
+    public void ShowFolderStack(string name, string folder, bool newestFirst) => Stacks.Add((folder, newestFirst));
+
     public bool ApprovalAnswer { get; set; }
 
     public List<string> ApprovalsShown { get; } = [];

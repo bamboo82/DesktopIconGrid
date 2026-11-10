@@ -124,6 +124,7 @@
               <RowDefinition Height="Auto" />
               <RowDefinition Height="Auto" />
               <RowDefinition Height="Auto" />
+              <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
             <TextBlock Grid.Row="0" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Props_WhenRunning}" Margin="0,0,12,4" />
@@ -165,6 +166,12 @@
                        Text="{Binding HealthInterval, UpdateSourceTrigger=PropertyChanged}"
                        AutomationProperties.Name="{x:Static r:Strings.Props_HealthEvery}" />
               <CheckBox VerticalAlignment="Center" Content="{x:Static r:Strings.Props_HealthNotify}" IsChecked="{Binding HealthNotify}" />
+            </StackPanel>
+
+            <StackPanel Grid.Row="11" Grid.Column="1" Margin="0,8,0,4">
+              <CheckBox Content="{x:Static r:Strings.Props_OpenAsStack}" IsChecked="{Binding OpenAsStack}" />
+              <CheckBox Margin="20,4,0,0" Content="{x:Static r:Strings.Props_StackNewestFirst}" IsChecked="{Binding StackNewestFirst}" IsEnabled="{Binding OpenAsStack}" />
+              <TextBlock Style="{StaticResource DialogHint}" Margin="0,4,0,0" Text="{x:Static r:Strings.Props_OpenAsStackHint}" />
             </StackPanel>
           </Grid>
         </Expander>

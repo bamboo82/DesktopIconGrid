@@ -1,0 +1,44 @@
+<Window x:Class="DesktopIconGrid.Views.StackWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:r="clr-namespace:DesktopIconGrid.Resources"
+        WindowStyle="None"
+        ResizeMode="NoResize"
+        ShowInTaskbar="False"
+        Topmost="True"
+        Width="300"
+        SizeToContent="Height"
+        MaxHeight="520"
+        Background="{DynamicResource Theme.Background}"
+        UseLayoutRounding="True"
+        SnapsToDevicePixels="True">
+  <Border BorderBrush="{DynamicResource Theme.Border}" BorderThickness="1" Padding="4">
+    <DockPanel>
+      <TextBlock x:Name="Caption" DockPanel.Dock="Top" FontWeight="SemiBold" Margin="6,4,6,6" TextTrimming="CharacterEllipsis"
+                 Foreground="{DynamicResource Theme.Foreground}" />
+      <Button DockPanel.Dock="Bottom" Content="{x:Static r:Strings.Stack_OpenFolder}" Margin="4,6,4,2" Padding="10,3" HorizontalAlignment="Left"
+              Click="OpenFolder_Click" />
+      <TextBlock x:Name="More" DockPanel.Dock="Bottom" Margin="6,4,6,0" TextWrapping="Wrap" Visibility="Collapsed"
+                 Foreground="{DynamicResource Theme.Foreground}" Opacity="0.7" />
+      <TextBlock x:Name="Empty" DockPanel.Dock="Top" Margin="6,2,6,6" Text="{x:Static r:Strings.Stack_Empty}" Visibility="Collapsed"
+                 Foreground="{DynamicResource Theme.Foreground}" Opacity="0.7" />
+      <ListBox x:Name="List" Background="Transparent" BorderThickness="0" MaxHeight="400"
+               ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+               AutomationProperties.Name="{Binding Text, ElementName=Caption}"
+               KeyDown="List_KeyDown"
+               PreviewMouseLeftButtonDown="List_PreviewMouseLeftButtonDown"
+               PreviewMouseMove="List_PreviewMouseMove"
+               PreviewMouseLeftButtonUp="List_PreviewMouseLeftButtonUp">
+        <ListBox.ItemTemplate>
+          <DataTemplate>
+            <DockPanel ToolTip="{Binding Path}">
+              <Image DockPanel.Dock="Left" Source="{Binding Image}" Width="20" Height="20" Margin="0,1,8,1" />
+              <TextBlock Text="{Binding Name}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
+                         Foreground="{DynamicResource Theme.Foreground}" />
+            </DockPanel>
+          </DataTemplate>
+        </ListBox.ItemTemplate>
+      </ListBox>
+    </DockPanel>
+  </Border>
+</Window>

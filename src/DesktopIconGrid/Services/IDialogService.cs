@@ -48,6 +48,9 @@ public interface IDialogService
     /// <summary>The Repair dialog for a shortcut whose program is not on this PC; <see langword="null"/> on Cancel.</summary>
     RepairResult? ShowRepair(ShortcutItem shortcut);
 
+    /// <summary>Opens a folder as a stack at the pointer (not modal; it closes itself when it loses the focus).</summary>
+    void ShowFolderStack(string name, string folder, bool newestFirst);
+
     /// <summary>The Add apps dialog; the apps the user ticked (none on Cancel).</summary>
     IReadOnlyList<InstalledApp> ShowAddApp(IReadOnlySet<string> locationsOnBar);
 

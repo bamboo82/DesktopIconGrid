@@ -75,6 +75,15 @@ public sealed class ShortcutItem : LauncherItem
     /// <summary>A notification when the health light turns red or green again.</summary>
     public bool HealthNotify { get; set; }
 
+    /// <summary>
+    /// A folder shortcut opens as a stack (0.10.0): its contents in a small list by the pointer, not an Explorer window.
+    /// Ignored when the location is not a folder.
+    /// </summary>
+    public bool OpenAsStack { get; set; }
+
+    /// <summary>The stack lists the newest entries first, not by name.</summary>
+    public bool StackNewestFirst { get; set; }
+
     /// <summary>Command-line arguments passed to the program.</summary>
     public string? Parameters { get; set; }
 
@@ -146,6 +155,8 @@ public sealed class ShortcutItem : LauncherItem
             HealthCheck = string.IsNullOrWhiteSpace(shortcut.HealthCheck) ? null : shortcut.HealthCheck.Trim();
             HealthInterval = shortcut.HealthInterval;
             HealthNotify = shortcut.HealthNotify;
+            OpenAsStack = shortcut.OpenAsStack;
+            StackNewestFirst = shortcut.OpenAsStack && shortcut.StackNewestFirst;
         }
     }
 
