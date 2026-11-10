@@ -118,6 +118,16 @@ public sealed class SyncViewModelTests : IDisposable
             OnBarSeen = locationsOnBar;
             return AddAppAnswer;
         }
+
+        public ViewModels.ImportRequest? ImportAnswer { get; set; }
+
+        public bool? ImportCanGroupSeen { get; private set; }
+
+        public ViewModels.ImportRequest? ShowImport(IReadOnlyList<ShortcutItem> onBar, bool canGroup)
+        {
+            ImportCanGroupSeen = canGroup;
+            return ImportAnswer;
+        }
     }
 
     [Fact]

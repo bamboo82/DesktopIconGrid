@@ -840,6 +840,35 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
         AddApp(list, index + 1);
     }
 
+    /// <summary>
+    /// Import…: the shortcuts and sessions the user ticks become shortcuts at <paramref name="index"/>, or, on the bar
+    /// itself and when asked, one group per source.
+    /// </summary>
+    public void Import(ItemListViewModel list, int index)
+    {
+        if (_dialogs.ShowImport(Model.AllShortcuts().ToList(), canGroup: list.IsRoot) is not { Chosen.Count: > 0 } request)
+        {
+            return;
+        }
+
+        var items = ImportPlan.Build(request.Chosen, request.GroupPerSource && list.IsRoot, ImportViewModel.SourceName, DataLocation.ForStorage);
+        foreach (var item in items)
+        {
+            Model.Insert(item, list.Group, index);
+            index = index == int.MaxValue ? index : index + 1;
+        }
+
+        list.Sync();
+        Save();
+        AppLog.Default.Info("Layout", $"Imported {request.Chosen.Count} shortcut(s) into \"{list.Group?.Name ?? "the bar"}\"{(request.GroupPerSource && list.IsRoot ? $", in {items.Count} group(s)" : string.Empty)}");
+    }
+
+    public void ImportAfter(ItemViewModel item)
+    {
+        var list = ListContaining(item, out var index);
+        Import(list, index + 1);
+    }
+
     /// <summary>One shortcut per app, named as the Start menu names it, inserted in order.</summary>
     internal void AddApps(IReadOnlyList<InstalledApp> apps, ItemListViewModel list, int index)
     {

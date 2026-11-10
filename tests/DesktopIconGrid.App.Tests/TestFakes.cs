@@ -87,6 +87,16 @@ internal sealed class RecordingDialogs : IDialogService
         OnBarSeen = locationsOnBar;
         return AddAppAnswer;
     }
+
+    public ViewModels.ImportRequest? ImportAnswer { get; set; }
+
+    public bool? ImportCanGroupSeen { get; private set; }
+
+    public ViewModels.ImportRequest? ShowImport(IReadOnlyList<ShortcutItem> onBar, bool canGroup)
+    {
+        ImportCanGroupSeen = canGroup;
+        return ImportAnswer;
+    }
 }
 
 /// <summary>Records every launch and answers with <see cref="Result"/> (a failure unless a test says otherwise).</summary>

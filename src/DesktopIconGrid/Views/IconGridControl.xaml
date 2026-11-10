@@ -27,6 +27,7 @@
             <MenuItem Header="{x:Static r:Strings.Menu_NewGroup}" Command="{Binding NewGroupAfterCommand}"
                       Visibility="{Binding IsAtRoot, Converter={StaticResource BoolToVisibility}}" />
             <MenuItem Header="{x:Static r:Strings.Menu_AddApp}" Command="{Binding AddAppAfterCommand}" />
+            <MenuItem Header="{x:Static r:Strings.Menu_Import}" Command="{Binding ImportAfterCommand}" />
             <MenuItem Header="{x:Static r:Strings.Menu_AddWindowsItem}" Tag="windows-items" />
             <MenuItem Header="{x:Static r:Strings.Menu_AddSpecialIcon}" Tag="special-icons" />
             <MenuItem Header="{x:Static r:Strings.Menu_AddSeparator}">
@@ -230,6 +231,7 @@
           <MenuItem Header="{x:Static r:Strings.Menu_NewGroup}" Command="{Binding NewGroupCommand}"
                     Visibility="{Binding IsRoot, Converter={StaticResource BoolToVisibility}}" />
           <MenuItem Header="{x:Static r:Strings.Menu_AddApp}" Command="{Binding AddAppCommand}" />
+          <MenuItem Header="{x:Static r:Strings.Menu_Import}" Command="{Binding ImportCommand}" />
           <MenuItem Header="{x:Static r:Strings.Menu_AddWindowsItem}" Tag="windows-items" />
           <MenuItem Header="{x:Static r:Strings.Menu_AddSpecialIcon}" Tag="special-icons" />
           <MenuItem Header="{x:Static r:Strings.Menu_AddSeparator}">

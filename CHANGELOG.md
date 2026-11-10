@@ -9,6 +9,14 @@ version numbers follow [Semantic Versioning](https://semver.org/).
 and *Send to*), then the command tile, a health light on a shortcut, folder stacks, more gauges, a
 microphone tile, a clock and timer, and paste to a bucket.
 
+### Added
+
+- *Import…* in the icon and empty-space menus: the taskbar's pinned shortcuts, the desktop's shortcuts and
+  links, Windows Terminal profiles, WinSCP and PuTTY sessions, and the hosts of your SSH config, grouped by
+  source, with what is on the bar already marked. Ticked items go after the clicked icon or at the end, or on
+  the bar itself into a group per source. A name that could not stay one argument on the command line (a
+  quote, a line break, a leading `-`, a `;` for Windows Terminal) is left out.
+
 ## [0.8.1] – 2026-11-06
 
 The fixes the review of 0.8.0 placed after the release: folder sync with conflict copies and storage

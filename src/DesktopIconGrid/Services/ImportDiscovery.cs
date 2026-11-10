@@ -40,7 +40,13 @@ public static class ImportDiscovery
             }
         }
 
-        return found;
+        var usable = found.Where(ImportPlan.IsUsable).ToList();
+        if (usable.Count < found.Count)
+        {
+            AppLog.Default.Warning("Import", $"{found.Count - usable.Count} name(s) left out: a quote, a line break, a leading \"-\" or what the program after them would act on");
+        }
+
+        return usable;
     }
 
     private static IEnumerable<ImportCandidate> TaskbarPins()

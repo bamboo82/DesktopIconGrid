@@ -182,6 +182,19 @@ switching. A Store app is stored as `shell:AppsFolder\<app id>` and started thro
 any kind (`https:`, `steam:`) stay links. Before 0.8.0 the usual way
 to get a Store app onto the bar was to make a desktop shortcut first.
 
+### 2.3b Import (0.9.0)
+
+*Import…* (icon and empty-space menus) lists what other programs keep on this PC, grouped by where it comes
+from, with icons: the taskbar's pinned shortcuts and the desktop's shortcuts and links (a `.lnk` becomes its
+target when that is a file, with its arguments and *Start in*), Windows Terminal profiles (`wt -p "<profile>"`),
+WinSCP and PuTTY sessions (from the registry, and a portable WinSCP's `WinSCP.ini` when that WinSCP is on the
+bar), and the hosts of `%UserProfile%\.ssh\config`, wildcards left out (`wt ssh <host>`, or `ssh <host>`
+without Windows Terminal). What is on the bar already, by its location and parameters, is marked and left
+unticked by *Select all*. Ticked items go right after the clicked icon or at the end; on the bar itself they
+can go into a group per source instead (*Taskbar pins*, *Desktop*, …). A source that cannot be read is skipped,
+and a name that could not stay one argument (a quote, a line break, a leading `-`, a `;` for Windows Terminal,
+what a shell would act on in a host) is not offered.
+
 ### 2.4 Special icons (active icons)
 
 A special icon has behaviour of its own: a click action, a live value, drops of files onto it
@@ -260,6 +273,7 @@ Icon menu (as in the screenshot):
 New shortcut…
 New group…
 Add app…                (every installed app, 0.8.0)
+Import…                 (taskbar, desktop, Terminal profiles, WinSCP/PuTTY sessions, SSH hosts, 0.9.0)
 Add Windows item        ▸
 Add special icon        ▸
 Add separator           ▸   Line / Gap / Label…   (0.7.0)
@@ -281,6 +295,7 @@ Empty-space menu:
 New shortcut…
 New group…
 Add app…                (0.8.0)
+Import…                 (0.9.0)
 Add Windows item        ▸
 Add special icon        ▸
 Add separator           ▸   (0.7.0)

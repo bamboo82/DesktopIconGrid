@@ -546,6 +546,65 @@ public sealed class LauncherViewModelTests : IDisposable
     }
 
     [Fact]
+    public void Import_puts_the_ticked_items_after_the_icon_or_one_group_per_source_on_the_bar()
+    {
+        var (viewModel, model, dialogs) = Create();
+        ImportCandidate ubuntu = new(ImportSource.WindowsTerminal, "Ubuntu", "wt.exe", "-p \"Ubuntu\"");
+        ImportCandidate web = new(ImportSource.Putty, "web", @"C:\PuTTY\putty.exe", "-load \"web\"");
+        dialogs.ImportAnswer = new ImportRequest([ubuntu, web], GroupPerSource: false);
+
+        viewModel.ImportAfter(viewModel.RootItems.Items[0]);
+
+        Assert.Equal(["A", "Ubuntu", "web", "B", "C"], Names(model.Items));
+        Assert.Equal("-p \"Ubuntu\"", ((ShortcutItem)model.Items[1]).Parameters);
+        Assert.True(dialogs.ImportCanGroupSeen);
+
+        dialogs.ImportAnswer = new ImportRequest([ubuntu, web], GroupPerSource: true);
+        viewModel.Import(viewModel.RootItems, int.MaxValue);
+        Assert.Equal([ImportViewModel.SourceName(ImportSource.WindowsTerminal), ImportViewModel.SourceName(ImportSource.Putty)], Names(model.Items).TakeLast(2));
+        Assert.Equal(["Ubuntu"], Names(Assert.IsType<GroupItem>(model.Items[^2]).Items));
+
+        dialogs.ImportAnswer = null; // Cancel
+        viewModel.Import(viewModel.RootItems, int.MaxValue);
+        Assert.Equal(7, model.Items.Count);
+    }
+
+    [Fact]
+    public void Import_into_a_group_never_makes_a_group_inside_it()
+    {
+        var (viewModel, model, dialogs) = Create();
+        var group = new GroupItem { Name = "G" };
+        model.Add(group);
+        viewModel.RootItems.Sync();
+        var groupList = new ItemListViewModel(viewModel, group);
+        dialogs.ImportAnswer = new ImportRequest([new ImportCandidate(ImportSource.Desktop, "Tool", @"C:\Tool\tool.exe")], GroupPerSource: true);
+
+        viewModel.Import(groupList, int.MaxValue);
+
+        Assert.False(dialogs.ImportCanGroupSeen);
+        Assert.Equal(["Tool"], Names(group.Items));
+    }
+
+    [Fact]
+    public async Task Import_marks_what_is_on_the_bar_and_ticks_none_of_it_with_select_all()
+    {
+        var choices = new ImportViewModel(new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "WT.EXE -p \"Ubuntu\"" }, canGroup: false);
+        await choices.LoadAsync(() => Task.FromResult<IReadOnlyList<ImportCandidate>>(
+        [
+            new(ImportSource.WindowsTerminal, "Ubuntu", "wt.exe", "-p \"Ubuntu\""),
+            new(ImportSource.WindowsTerminal, "PowerShell", "wt.exe", "-p \"PowerShell\""),
+            new(ImportSource.WindowsTerminal, "PowerShell", "wt.exe", "-p \"PowerShell\""), // listed twice: offered once
+        ]), icon: null, CancellationToken.None);
+
+        choices.SelectAllCommand.Execute(null);
+        choices.GroupPerSource = true;
+
+        Assert.Equal([true, false], choices.Choices.Select(c => c.IsOnBar));
+        Assert.Equal(["PowerShell"], choices.Chosen.Select(c => c.Name));
+        Assert.False(choices.GroupPerSource); // only on the bar itself
+    }
+
+    [Fact]
     public void Add_app_puts_the_ticked_apps_after_the_icon_and_tells_the_dialog_what_is_on_the_bar()
     {
         var (viewModel, model, dialogs) = Create();

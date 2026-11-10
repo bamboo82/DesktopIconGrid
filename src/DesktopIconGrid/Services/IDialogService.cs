@@ -44,4 +44,10 @@ public interface IDialogService
 
     /// <summary>The Add apps dialog; the apps the user ticked (none on Cancel).</summary>
     IReadOnlyList<InstalledApp> ShowAddApp(IReadOnlySet<string> locationsOnBar);
+
+    /// <summary>
+    /// The Import dialog: what other programs keep on this PC, against the shortcuts on the bar (<paramref name="onBar"/>);
+    /// <see langword="null"/> on Cancel. <paramref name="canGroup"/> offers a group per source.
+    /// </summary>
+    ViewModels.ImportRequest? ShowImport(IReadOnlyList<ShortcutItem> onBar, bool canGroup);
 }

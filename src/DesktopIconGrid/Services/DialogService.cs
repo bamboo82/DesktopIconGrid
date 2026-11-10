@@ -126,6 +126,19 @@ public sealed class DialogService(IIconProvider icons) : IDialogService, ILaunch
         return window.ShowDialog() == true ? viewModel.Chosen : [];
     }
 
+    public ImportRequest? ShowImport(IReadOnlyList<ShortcutItem> onBar, bool canGroup)
+    {
+        var viewModel = new ImportViewModel(new HashSet<string>(onBar.Select(ImportPlan.KeyOf), StringComparer.OrdinalIgnoreCase), canGroup);
+        var window = new ImportWindow
+        {
+            DataContext = viewModel,
+            Owner = Owner,
+            Load = async () => await IconWorker.Shared.RunAsync(() => ImportDiscovery.FindAll(onBar), AddAppListTimeout, "import sources") ?? [],
+            IconOf = location => IconWorker.Shared.RunAsync(() => icons.GetIcon(location, 32), IconWorker.LookupTimeout, location, IconWorker.IsOnSlowStorage(location)),
+        };
+        return window.ShowDialog() == true ? new ImportRequest(viewModel.Chosen, viewModel.GroupPerSource) : null;
+    }
+
     public RepairResult? ShowRepair(ShortcutItem shortcut)
     {
         ArgumentNullException.ThrowIfNull(shortcut);
