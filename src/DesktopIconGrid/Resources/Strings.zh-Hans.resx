@@ -1814,4 +1814,46 @@
   <data name="History_TimedOut" xml:space="preserve">
     <value>读取较早的布局时间过长：它们所在的驱动器可能没有响应。请稍后再试。</value>
   </data>
+  <data name="Settings_WindowKeys" xml:space="preserve">
+    <value>栏中的按键</value>
+  </data>
+  <data name="Settings_WindowKeysHint" xml:space="preserve">
+    <value>单击方框再按下按键。Backspace 可停用按键；“默认”可还原。按键需要 Ctrl、Alt 或 Win，F 键、Delete 和 Insert 除外：单独一个字母会开始栏的搜索。</value>
+  </data>
+  <data name="Settings_WindowKeyNotAllowed" xml:space="preserve">
+    <value>该按键会输入到栏的搜索中，或窗口本身需要它：请加上 Ctrl、Alt 或 Win，或改用 F 键、Delete 或 Insert。</value>
+  </data>
+  <data name="Settings_WindowKeyInUse" xml:space="preserve">
+    <value>{0} 已用于“{1}”。</value>
+  </data>
+  <data name="Settings_WindowKeyDefault" xml:space="preserve">
+    <value>默认</value>
+  </data>
+  <data name="WindowKey_NewShortcut" xml:space="preserve">
+    <value>新建快捷方式</value>
+  </data>
+  <data name="WindowKey_NewGroup" xml:space="preserve">
+    <value>新建分组</value>
+  </data>
+  <data name="WindowKey_OpenSettings" xml:space="preserve">
+    <value>设置</value>
+  </data>
+  <data name="WindowKey_Find" xml:space="preserve">
+    <value>在栏中查找</value>
+  </data>
+  <data name="WindowKey_UndoRemove" xml:space="preserve">
+    <value>撤销移除</value>
+  </data>
+  <data name="WindowKey_Remove" xml:space="preserve">
+    <value>移除选中的图标</value>
+  </data>
+  <data name="WindowKey_Properties" xml:space="preserve">
+    <value>选中图标的属性</value>
+  </data>
+  <data name="WindowKey_ToggleHotkey" xml:space="preserve">
+    <value>显示或隐藏栏（全系统）</value>
+  </data>
+  <data name="WindowKey_PointerHotkey" xml:space="preserve">
+    <value>在指针处显示（全系统）</value>
+  </data>
 </root>

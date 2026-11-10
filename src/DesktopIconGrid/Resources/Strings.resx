@@ -1814,4 +1814,46 @@ Details are in {1}.</value>
   <data name="History_TimedOut" xml:space="preserve">
     <value>Reading the earlier layouts took too long: the drive they are on may not be answering. Try again in a moment.</value>
   </data>
+  <data name="Settings_WindowKeys" xml:space="preserve">
+    <value>Keys in the bar</value>
+  </data>
+  <data name="Settings_WindowKeysHint" xml:space="preserve">
+    <value>Click a box and press the keys. Backspace turns a key off; Default puts it back. A key needs Ctrl, Alt or Win, unless it is an F-key, Delete or Insert: a letter alone starts the bar's search.</value>
+  </data>
+  <data name="Settings_WindowKeyNotAllowed" xml:space="preserve">
+    <value>That key would type into the bar's search, or the window needs it: add Ctrl, Alt or Win, or pick an F-key, Delete or Insert.</value>
+  </data>
+  <data name="Settings_WindowKeyInUse" xml:space="preserve">
+    <value>{0} is already used for “{1}”.</value>
+  </data>
+  <data name="Settings_WindowKeyDefault" xml:space="preserve">
+    <value>Default</value>
+  </data>
+  <data name="WindowKey_NewShortcut" xml:space="preserve">
+    <value>New shortcut</value>
+  </data>
+  <data name="WindowKey_NewGroup" xml:space="preserve">
+    <value>New group</value>
+  </data>
+  <data name="WindowKey_OpenSettings" xml:space="preserve">
+    <value>Settings</value>
+  </data>
+  <data name="WindowKey_Find" xml:space="preserve">
+    <value>Find on the bar</value>
+  </data>
+  <data name="WindowKey_UndoRemove" xml:space="preserve">
+    <value>Undo remove</value>
+  </data>
+  <data name="WindowKey_Remove" xml:space="preserve">
+    <value>Remove the selected icon</value>
+  </data>
+  <data name="WindowKey_Properties" xml:space="preserve">
+    <value>Properties of the selected icon</value>
+  </data>
+  <data name="WindowKey_ToggleHotkey" xml:space="preserve">
+    <value>Show or hide the bar (system-wide)</value>
+  </data>
+  <data name="WindowKey_PointerHotkey" xml:space="preserve">
+    <value>Show at the pointer (system-wide)</value>
+  </data>
 </root>

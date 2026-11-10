@@ -1814,4 +1814,46 @@
   <data name="History_TimedOut" xml:space="preserve">
     <value>讀取較早的版面太久：它們所在的磁碟可能沒有回應。請稍後再試。</value>
   </data>
+  <data name="Settings_WindowKeys" xml:space="preserve">
+    <value>列中的按鍵</value>
+  </data>
+  <data name="Settings_WindowKeysHint" xml:space="preserve">
+    <value>按一下方塊再按下按鍵。Backspace 可停用按鍵；「預設」可還原。按鍵需要 Ctrl、Alt 或 Win，F 鍵、Delete 與 Insert 除外：單獨一個字母會開始列的搜尋。</value>
+  </data>
+  <data name="Settings_WindowKeyNotAllowed" xml:space="preserve">
+    <value>該按鍵會輸入到列的搜尋中，或視窗本身需要它：請加上 Ctrl、Alt 或 Win，或改用 F 鍵、Delete 或 Insert。</value>
+  </data>
+  <data name="Settings_WindowKeyInUse" xml:space="preserve">
+    <value>{0} 已用於「{1}」。</value>
+  </data>
+  <data name="Settings_WindowKeyDefault" xml:space="preserve">
+    <value>預設</value>
+  </data>
+  <data name="WindowKey_NewShortcut" xml:space="preserve">
+    <value>新增捷徑</value>
+  </data>
+  <data name="WindowKey_NewGroup" xml:space="preserve">
+    <value>新增群組</value>
+  </data>
+  <data name="WindowKey_OpenSettings" xml:space="preserve">
+    <value>設定</value>
+  </data>
+  <data name="WindowKey_Find" xml:space="preserve">
+    <value>在列中尋找</value>
+  </data>
+  <data name="WindowKey_UndoRemove" xml:space="preserve">
+    <value>復原移除</value>
+  </data>
+  <data name="WindowKey_Remove" xml:space="preserve">
+    <value>移除選取的圖示</value>
+  </data>
+  <data name="WindowKey_Properties" xml:space="preserve">
+    <value>選取圖示的內容</value>
+  </data>
+  <data name="WindowKey_ToggleHotkey" xml:space="preserve">
+    <value>顯示或隱藏列（全系統）</value>
+  </data>
+  <data name="WindowKey_PointerHotkey" xml:space="preserve">
+    <value>在指標處顯示（全系統）</value>
+  </data>
 </root>

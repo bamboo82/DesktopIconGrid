@@ -3966,6 +3966,51 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Default.
+        /// </summary>
+        public static string Settings_WindowKeyDefault {
+            get {
+                return ResourceManager.GetString("Settings_WindowKeyDefault", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to {0} is already used for “{1}”..
+        /// </summary>
+        public static string Settings_WindowKeyInUse {
+            get {
+                return ResourceManager.GetString("Settings_WindowKeyInUse", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to That key would type into the bar's search, or the window needs it: add Ctrl, Alt [rest of string was truncated]";.
+        /// </summary>
+        public static string Settings_WindowKeyNotAllowed {
+            get {
+                return ResourceManager.GetString("Settings_WindowKeyNotAllowed", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Keys in the bar.
+        /// </summary>
+        public static string Settings_WindowKeys {
+            get {
+                return ResourceManager.GetString("Settings_WindowKeys", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Click a box and press the keys. Backspace turns a key off; Default puts it back. [rest of string was truncated]";.
+        /// </summary>
+        public static string Settings_WindowKeysHint {
+            get {
+                return ResourceManager.GetString("Settings_WindowKeysHint", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to This location is not a file or folder on this computer..
         /// </summary>
         public static string Shell_NotLocal {
@@ -5357,6 +5402,87 @@ namespace DesktopIconGrid.Resources {
         public static string Viewer_UploadsUnavailable {
             get {
                 return ResourceManager.GetString("Viewer_UploadsUnavailable", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Find on the bar.
+        /// </summary>
+        public static string WindowKey_Find {
+            get {
+                return ResourceManager.GetString("WindowKey_Find", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to New group.
+        /// </summary>
+        public static string WindowKey_NewGroup {
+            get {
+                return ResourceManager.GetString("WindowKey_NewGroup", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to New shortcut.
+        /// </summary>
+        public static string WindowKey_NewShortcut {
+            get {
+                return ResourceManager.GetString("WindowKey_NewShortcut", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Settings.
+        /// </summary>
+        public static string WindowKey_OpenSettings {
+            get {
+                return ResourceManager.GetString("WindowKey_OpenSettings", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Show at the pointer (system-wide).
+        /// </summary>
+        public static string WindowKey_PointerHotkey {
+            get {
+                return ResourceManager.GetString("WindowKey_PointerHotkey", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Properties of the selected icon.
+        /// </summary>
+        public static string WindowKey_Properties {
+            get {
+                return ResourceManager.GetString("WindowKey_Properties", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Remove the selected icon.
+        /// </summary>
+        public static string WindowKey_Remove {
+            get {
+                return ResourceManager.GetString("WindowKey_Remove", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Show or hide the bar (system-wide).
+        /// </summary>
+        public static string WindowKey_ToggleHotkey {
+            get {
+                return ResourceManager.GetString("WindowKey_ToggleHotkey", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Undo remove.
+        /// </summary>
+        public static string WindowKey_UndoRemove {
+            get {
+                return ResourceManager.GetString("WindowKey_UndoRemove", resourceCulture);
             }
         }
     }

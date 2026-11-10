@@ -99,6 +99,12 @@ public sealed partial class LauncherSettings
     /// </summary>
     public string? ShowAtPointerHotkey { get; set; }
 
+    /// <summary>
+    /// The bar window's keys that differ from their defaults (<see cref="Models.WindowKeys"/>), by action name; an empty
+    /// text turns a key off. <see langword="null"/> when every key is its default.
+    /// </summary>
+    public Dictionary<string, string>? WindowKeys { get; set; }
+
     /// <summary>UI language: <see cref="LanguageSystem"/> or a culture name from <see cref="Languages"/>. Read once at startup.</summary>
     public string Language { get; set; } = LanguageSystem;
 
@@ -110,6 +116,7 @@ public sealed partial class LauncherSettings
     {
         var copy = (LauncherSettings)MemberwiseClone();
         copy.ExtensionData = UnknownProperties.Copy(ExtensionData);
+        copy.WindowKeys = WindowKeys is null ? null : new Dictionary<string, string>(WindowKeys);
         return copy;
     }
 
@@ -127,6 +134,7 @@ public sealed partial class LauncherSettings
         FluentDialogs = source.FluentDialogs;
         ToggleHotkey = source.ToggleHotkey;
         ShowAtPointerHotkey = source.ShowAtPointerHotkey;
+        WindowKeys = source.WindowKeys is null ? null : new Dictionary<string, string>(source.WindowKeys);
         Opacity = source.Opacity;
         CloseToTray = source.CloseToTray;
         StartWithWindows = source.StartWithWindows;

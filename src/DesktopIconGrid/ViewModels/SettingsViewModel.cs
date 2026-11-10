@@ -73,6 +73,7 @@ public sealed class SettingsViewModel : ObservableObject
         _backgroundColor = current.BackgroundColor;
         _toggleHotkey = current.ToggleHotkey ?? string.Empty;
         _pointerHotkey = current.ShowAtPointerHotkey ?? string.Empty;
+        WindowKeyRows = Enum.GetValues<WindowKeyAction>().Select(action => new WindowKeyRow(action, WindowKeys.For(current, action))).ToList();
         _transparency = LauncherSettings.MaxOpacity - current.Opacity;
         _closeToTray = current.CloseToTray;
         _fluentDialogs = current.FluentDialogs;
@@ -356,6 +357,33 @@ public sealed class SettingsViewModel : ObservableObject
     /// The settings with the dialog's values applied to a copy of the original, so settings the dialog does not
     /// show (and properties written by a newer version) are kept.
     /// </summary>
+    /// <summary>The bar window's keys, one row per action (<see cref="WindowKeys"/>).</summary>
+    public IReadOnlyList<WindowKeyRow> WindowKeyRows { get; }
+
+    /// <summary>
+    /// Gives <paramref name="row"/> the combination <paramref name="text"/> (empty: none), unless another key of the window
+    /// or a system-wide hotkey already has it, which is said instead. Returns that refusal, or <see langword="null"/>.
+    /// </summary>
+    public string? SetWindowKey(WindowKeyRow row, string text)
+    {
+        ArgumentNullException.ThrowIfNull(row);
+        text = text.Trim();
+        if (text.Length > 0)
+        {
+            var taken = WindowKeyRows.FirstOrDefault(other => other != row && SameKey(other.Text, text))?.Label
+                        ?? (SameKey(_toggleHotkey, text) ? Strings.WindowKey_ToggleHotkey : SameKey(_pointerHotkey, text) ? Strings.WindowKey_PointerHotkey : null);
+            if (taken is not null)
+            {
+                return string.Format(Strings.Settings_WindowKeyInUse, text, taken);
+            }
+        }
+
+        row.Text = text;
+        return null;
+    }
+
+    private static bool SameKey(string a, string b) => a.Length > 0 && string.Equals(a.Trim(), b, StringComparison.OrdinalIgnoreCase);
+
     public LauncherSettings ToSettings()
     {
         var settings = _original.Clone();
@@ -370,6 +398,7 @@ public sealed class SettingsViewModel : ObservableObject
         settings.FluentDialogs = _fluentDialogs;
         settings.ToggleHotkey = IsHotkeyValid && HasHotkey ? _toggleHotkey : null;
         settings.ShowAtPointerHotkey = IsPointerHotkeyValid && HasPointerHotkey ? _pointerHotkey : null;
+        settings.WindowKeys = WindowKeys.Overrides(WindowKeyRows.ToDictionary(row => row.Action, row => row.Text));
         settings.Opacity = LauncherSettings.MaxOpacity - _transparency;
         settings.CloseToTray = _closeToTray;
         settings.StartWithWindows = _startWithWindows;
@@ -380,4 +409,39 @@ public sealed class SettingsViewModel : ObservableObject
         settings.Normalize();
         return settings;
     }
+}
+
+/// <summary>One key of the bar's window in Settings: the action, and the combination it has (empty: none).</summary>
+public sealed class WindowKeyRow(WindowKeyAction action, string text) : ObservableObject
+{
+    private string _text = text;
+
+    public WindowKeyAction Action { get; } = action;
+
+    public string Label => Action switch
+    {
+        WindowKeyAction.NewShortcut => Strings.WindowKey_NewShortcut,
+        WindowKeyAction.NewGroup => Strings.WindowKey_NewGroup,
+        WindowKeyAction.OpenSettings => Strings.WindowKey_OpenSettings,
+        WindowKeyAction.Find => Strings.WindowKey_Find,
+        WindowKeyAction.UndoRemove => Strings.WindowKey_UndoRemove,
+        WindowKeyAction.Remove => Strings.WindowKey_Remove,
+        _ => Strings.WindowKey_Properties,
+    };
+
+    public string DefaultText => WindowKeys.Defaults[Action];
+
+    public string Text
+    {
+        get => _text;
+        set
+        {
+            if (SetProperty(ref _text, value ?? string.Empty))
+            {
+                OnPropertyChanged(nameof(IsDefault));
+            }
+        }
+    }
+
+    public bool IsDefault => string.Equals(_text, DefaultText, StringComparison.OrdinalIgnoreCase);
 }

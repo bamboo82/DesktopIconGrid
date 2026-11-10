@@ -431,6 +431,7 @@ warnings and errors. The last 2000 entries stay in memory and all of them are ap
 | Start hidden | off (with Start with Windows: only the tray icon until shown) |
 | Show/hide hotkey | none (set in Settings; needs Ctrl, Alt or Win) |
 | Show-at-pointer hotkey | none (needs Ctrl, Alt or Win, and a combination other than the show/hide one) |
+| Keys in the bar | New shortcut Ctrl+N, New group Ctrl+G, Settings Ctrl+, , Find Ctrl+F, Undo remove Ctrl+Z, Remove (the focused icon) Delete, Properties (the focused icon) F2; each can be changed or turned off (Backspace), with Ctrl, Alt or Win unless it is an F-key, Delete or Insert, and no two actions or a system-wide hotkey may share one; menus show the current key; Escape stays fixed (0.9.0) |
 | Transparency | 0 % (opaque) |
 | Close button hides to tray | on |
 | Language | same as Windows (English, 繁體中文 or 简体中文; applies at the next start) |

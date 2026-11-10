@@ -459,11 +459,29 @@ public partial class MainWindow : Window
             return;
         }
 
-        if (e.Key == Key.F && Keyboard.Modifiers == ModifierKeys.Control)
+        // The settings' keys (WindowKeyMap); removing and Properties belong to the focused icon (IconGridControl).
+        switch (_viewModel.Keys.ActionFor(e.Key == Key.System ? e.SystemKey : e.Key, Keyboard.Modifiers))
         {
-            OpenSearch();
-            e.Handled = true;
-            return;
+            case WindowKeyAction.Find:
+                OpenSearch();
+                e.Handled = true;
+                return;
+            case WindowKeyAction.NewShortcut:
+                e.Handled = true;
+                _viewModel.NewShortcutCommand.Execute(null);
+                return;
+            case WindowKeyAction.NewGroup:
+                e.Handled = true;
+                _viewModel.NewGroupCommand.Execute(null);
+                return;
+            case WindowKeyAction.OpenSettings:
+                e.Handled = true;
+                _viewModel.OpenSettingsCommand.Execute(null);
+                return;
+            case WindowKeyAction.UndoRemove:
+                e.Handled = true;
+                _viewModel.UndoRemoveCommand.Execute(null);
+                return;
         }
 
         if (TypeToFind.IsTextKey(e.Key, Keyboard.Modifiers))

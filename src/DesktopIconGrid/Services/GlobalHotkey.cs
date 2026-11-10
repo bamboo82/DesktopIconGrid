@@ -28,8 +28,23 @@ public sealed record HotkeyGesture(ModifierKeys Modifiers, Key Key)
     public static bool IsModifierKey(Key key) => key is Key.LeftCtrl or Key.RightCtrl or Key.LeftAlt or Key.RightAlt
         or Key.LeftShift or Key.RightShift or Key.LWin or Key.RWin or Key.System or Key.None;
 
-    /// <summary>Parses "Ctrl+Alt+Space", "Win+Shift+F12", "Control+Alt+D1" and similar.</summary>
-    public static bool TryParse(string? text, out HotkeyGesture gesture)
+    /// <summary>Parses "Ctrl+Alt+Space", "Win+Shift+F12", "Control+Alt+D1" and similar; a system-wide hotkey needs Ctrl, Alt or Win.</summary>
+    public static bool TryParse(string? text, out HotkeyGesture gesture) => TryParseAny(text, out gesture) && gesture.HasUsableModifier;
+
+    /// <summary>A key of the bar's window (<see cref="Core.Models.WindowKeys"/>): as <see cref="TryParse"/>, but see <see cref="IsAllowedInWindow"/>.</summary>
+    public static bool TryParseWindowKey(string? text, out HotkeyGesture gesture) => TryParseAny(text, out gesture) && gesture.IsAllowedInWindow;
+
+    /// <summary>
+    /// Whether the combination may be a key of the bar's window: with Ctrl, Alt or Win, or an F-key, Delete or Insert
+    /// alone (a letter alone types into the bar's search). Never Escape, Tab, Enter, Space, Backspace or an arrow, which
+    /// the window and its dialogs need.
+    /// </summary>
+    public bool IsAllowedInWindow =>
+        Key is not (Key.Escape or Key.Tab or Key.Enter or Key.Space or Key.Back or Key.Left or Key.Right or Key.Up or Key.Down or Key.None)
+        && !IsModifierKey(Key)
+        && (HasUsableModifier || Key is (>= Key.F1 and <= Key.F24) or Key.Delete or Key.Insert);
+
+    private static bool TryParseAny(string? text, out HotkeyGesture gesture)
     {
         gesture = new HotkeyGesture(ModifierKeys.None, Key.None);
         if (string.IsNullOrWhiteSpace(text))
@@ -69,7 +84,7 @@ public sealed record HotkeyGesture(ModifierKeys Modifiers, Key Key)
         }
 
         gesture = new HotkeyGesture(modifiers, key);
-        return gesture.HasUsableModifier;
+        return true;
     }
 
     public override string ToString()

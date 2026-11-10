@@ -24,11 +24,8 @@
   </WindowChrome.WindowChrome>
 
   <Window.InputBindings>
-    <KeyBinding Key="N" Modifiers="Control" Command="{Binding NewShortcutCommand}" />
-    <KeyBinding Key="G" Modifiers="Control" Command="{Binding NewGroupCommand}" />
-    <KeyBinding Key="OemComma" Modifiers="Control" Command="{Binding OpenSettingsCommand}" />
+    <!-- The other keys are the settings' (WindowKeyMap), handled in OnPreviewKeyDown. -->
     <KeyBinding Key="Escape" Command="{Binding CloseGroupPopupCommand}" />
-    <KeyBinding Key="Z" Modifiers="Control" Command="{Binding UndoRemoveCommand}" />
   </Window.InputBindings>
 
   <Border BorderBrush="{DynamicResource Theme.Border}"
@@ -112,14 +109,14 @@
           <TextBlock Text="▸" FontSize="11" />
           <Button.ContextMenu>
             <ContextMenu>
-              <MenuItem Header="{x:Static r:Strings.Menu_Settings}" Command="{Binding OpenSettingsCommand}" InputGestureText="Ctrl+," />
+              <MenuItem Header="{x:Static r:Strings.Menu_Settings}" Command="{Binding OpenSettingsCommand}" InputGestureText="{Binding KeyText[OpenSettings]}" />
               <MenuItem Header="{x:Static r:Strings.Menu_Sync}" Command="{Binding OpenSyncCommand}" />
               <MenuItem Header="{x:Static r:Strings.Menu_EditNames}" Command="{Binding OpenNameTableCommand}" />
               <MenuItem Header="{x:Static r:Strings.Menu_LogViewer}" Command="{Binding OpenLogViewerCommand}" />
               <MenuItem Header="{x:Static r:Strings.Menu_LaunchMultiLaunch}" Command="{Binding LaunchMultiLaunchCommand}" />
               <Separator />
-              <MenuItem Header="{x:Static r:Strings.Menu_NewShortcut}" Command="{Binding NewShortcutCommand}" InputGestureText="Ctrl+N" />
-              <MenuItem Header="{x:Static r:Strings.Menu_NewGroup}" Command="{Binding NewGroupCommand}" InputGestureText="Ctrl+G" />
+              <MenuItem Header="{x:Static r:Strings.Menu_NewShortcut}" Command="{Binding NewShortcutCommand}" InputGestureText="{Binding KeyText[NewShortcut]}" />
+              <MenuItem Header="{x:Static r:Strings.Menu_NewGroup}" Command="{Binding NewGroupCommand}" InputGestureText="{Binding KeyText[NewGroup]}" />
               <Separator />
               <MenuItem Header="{x:Static r:Strings.Menu_AlwaysOnTop}" IsCheckable="True" IsChecked="{Binding AlwaysOnTop, Mode=TwoWay}" />
               <MenuItem Header="{x:Static r:Strings.Menu_RestoreLayout}" Command="{Binding RestoreLayoutCommand}" />

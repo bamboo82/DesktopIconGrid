@@ -60,6 +60,7 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
     {
         _isMissing = isMissing ?? (shortcut => LocationProbe.IsMissing(shortcut, IconWorker.IsOnSlowStorage));
         Model = model;
+        Keys = WindowKeyMap.From(model.Settings);
         _storage = storage;
         Icons = icons;
         _dialogs = dialogs;
@@ -1067,6 +1068,20 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
 
     public ICommand UndoRemoveCommand { get; }
 
+    /// <summary>The bar window's keys, as the settings give them (<see cref="WindowKeyMap"/>).</summary>
+    public WindowKeyMap Keys { get; private set; }
+
+    /// <summary>What the menus show next to each action, by action name (<c>KeyText[NewShortcut]</c>).</summary>
+    public IReadOnlyDictionary<string, string> KeyText => Keys.Texts;
+
+    /// <summary>Reads the window's keys again after the settings changed.</summary>
+    private void RefreshKeys()
+    {
+        Keys = WindowKeyMap.From(Model.Settings);
+        OnPropertyChanged(nameof(Keys));
+        OnPropertyChanged(nameof(KeyText));
+    }
+
     /// <summary>Completes when the current Undo offer has expired (at once when there is none); tests await it.</summary>
     internal Task UndoExpiry { get; private set; } = Task.CompletedTask;
 
@@ -1259,6 +1274,7 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
     {
         var previousIconSize = IconSize;
         Model.ApplySettings(settings);
+        RefreshKeys();
         NotifyAppearanceChanged();
         AppLog.Default.Info("Settings", $"Settings applied: theme {Model.Settings.Theme}, icons {IconSize} px, padding {CellPadding}, labels {(ShowLabels ? "on" : "off")}, {(DoubleClickToLaunch ? "double" : "single")} click, opacity {Opacity}%, hotkey {Model.Settings.ToggleHotkey ?? "none"}");
 
@@ -1328,6 +1344,7 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
         Tracker.UnwatchAll();
 
         RootItems.Sync();
+        RefreshKeys();
         NotifyAppearanceChanged();
         Save(contentChanged: false);
         SettingsChanged?.Invoke(this, EventArgs.Empty);

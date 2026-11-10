@@ -199,13 +199,14 @@ public partial class IconGridControl : UserControl
             return;
         }
 
-        switch (e.Key)
+        // The settings' keys (WindowKeyMap): Delete and F2 unless changed there.
+        switch (item.Root.Keys.ActionFor(e.Key == Key.System ? e.SystemKey : e.Key, Keyboard.Modifiers))
         {
-            case Key.Delete:
+            case WindowKeyAction.Remove:
                 item.RemoveCommand.Execute(null);
                 e.Handled = true;
                 break;
-            case Key.F2:
+            case WindowKeyAction.Properties:
                 item.PropertiesCommand.Execute(null);
                 e.Handled = true;
                 break;

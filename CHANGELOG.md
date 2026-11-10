@@ -16,6 +16,10 @@ microphone tile, a clock and timer, and paste to a bucket.
   source, with what is on the bar already marked. Ticked items go after the clicked icon or at the end, or on
   the bar itself into a group per source. A name that could not stay one argument on the command line (a
   quote, a line break, a leading `-` or `/`, a `%`, a `;` for Windows Terminal) is left out.
+- The keys of the bar's window can be changed in *Settings → Keys in the bar*: new shortcut, new group,
+  Settings, find, undo remove, and remove and Properties for the focused icon. A key can be turned off, needs
+  Ctrl, Alt or Win unless it is an F-key, Delete or Insert (a letter alone starts the search), and may not be one
+  another action or a system-wide hotkey has. The menus show the keys as set.
 - Layout history: before a save overwrites the layout, the bar as it was is kept in `history\`, at most once
   every ten minutes, the newest 20. *Restore an earlier layout…* (options and tray menus) brings one back,
   keeping the current bar in the history first, so a restore can be undone too. It stays on this PC.

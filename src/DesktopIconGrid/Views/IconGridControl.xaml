@@ -37,7 +37,7 @@
             </MenuItem>
             <Separator />
             <MenuItem Tag="special-actions-anchor" Visibility="Collapsed" />
-            <MenuItem Header="{x:Static r:Strings.Common_Remove}" Command="{Binding RemoveCommand}" InputGestureText="Del" />
+            <MenuItem Header="{x:Static r:Strings.Common_Remove}" Command="{Binding RemoveCommand}" InputGestureText="{Binding Root.KeyText[Remove]}" />
             <MenuItem Header="{Binding MultiLaunchMenuHeader}" Command="{Binding ToggleMultiLaunchCommand}"
                       Visibility="{Binding IsShortcut, Converter={StaticResource BoolToVisibility}}" />
             <MenuItem Header="{x:Static r:Strings.Menu_OpenFileLocation}" Command="{Binding OpenLocationCommand}"
@@ -48,7 +48,7 @@
                       Visibility="{Binding IsMissing, Converter={StaticResource BoolToVisibility}}" />
             <MenuItem Header="{x:Static r:Strings.Menu_ColorTag}" Tag="color-tags" />
             <Separator />
-            <MenuItem Header="{x:Static r:Strings.Common_Properties}" Command="{Binding PropertiesCommand}" />
+            <MenuItem Header="{x:Static r:Strings.Common_Properties}" Command="{Binding PropertiesCommand}" InputGestureText="{Binding Root.KeyText[Properties]}" />
           </ContextMenu>
         </Button.ContextMenu>
 
@@ -191,7 +191,7 @@
             <MenuItem Header="{x:Static r:Strings.Separator_Label}" Tag="label" IsChecked="{Binding IsLabelSeparator, Mode=OneWay}" Click="SeparatorKind_Click" />
             <Separator />
             <MenuItem Header="{x:Static r:Strings.Menu_NewShortcut}" Command="{Binding NewShortcutAfterCommand}" />
-            <MenuItem Header="{x:Static r:Strings.Common_Remove}" Command="{Binding RemoveCommand}" InputGestureText="Del" />
+            <MenuItem Header="{x:Static r:Strings.Common_Remove}" Command="{Binding RemoveCommand}" InputGestureText="{Binding Root.KeyText[Remove]}" />
           </ContextMenu>
         </Button.ContextMenu>
         <Grid>

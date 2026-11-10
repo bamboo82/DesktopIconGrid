@@ -46,6 +46,50 @@ public partial class SettingsWindow : Window
 
     private TextBlock WarningOf(TextBox box) => ReferenceEquals(box, PointerHotkeyBox) ? PointerHotkeyHint : HotkeyHint;
 
+    /// <summary>
+    /// Captures a key of the bar's window in its box: Backspace turns it off, Tab and Escape keep their usual work, and a
+    /// combination the window cannot use, or another key already has, is said under the list instead.
+    /// </summary>
+    private void WindowKeyBox_PreviewKeyDown(object sender, KeyEventArgs e)
+    {
+        if (sender is not FrameworkElement { DataContext: WindowKeyRow row } || ViewModel is not { } viewModel)
+        {
+            return;
+        }
+
+        var key = e.Key == Key.System ? e.SystemKey : e.Key;
+        if (key is Key.Tab or Key.Escape || HotkeyGesture.IsModifierKey(key))
+        {
+            e.Handled = key is not (Key.Tab or Key.Escape);
+            return; // keyboard navigation and Cancel keep working; wait for the non-modifier key
+        }
+
+        e.Handled = true;
+        string? refusal;
+        if (key == Key.Back)
+        {
+            refusal = viewModel.SetWindowKey(row, string.Empty);
+        }
+        else
+        {
+            var gesture = new HotkeyGesture(Keyboard.Modifiers, key);
+            refusal = gesture.IsAllowedInWindow ? viewModel.SetWindowKey(row, gesture.ToString()) : Strings.Settings_WindowKeyNotAllowed;
+        }
+
+        WindowKeyWarning.Text = refusal ?? string.Empty;
+        WindowKeyWarning.Visibility = refusal is null ? Visibility.Collapsed : Visibility.Visible;
+    }
+
+    private void WindowKeyDefault_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement { DataContext: WindowKeyRow row } && ViewModel is { } viewModel)
+        {
+            var refusal = viewModel.SetWindowKey(row, row.DefaultText);
+            WindowKeyWarning.Text = refusal ?? string.Empty;
+            WindowKeyWarning.Visibility = refusal is null ? Visibility.Collapsed : Visibility.Visible;
+        }
+    }
+
     /// <summary>Captures the pressed combination instead of typing into the box (either hotkey box).</summary>
     private void HotkeyBox_PreviewKeyDown(object sender, KeyEventArgs e)
     {
