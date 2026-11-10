@@ -46,97 +46,13 @@ public sealed class SyncViewModelTests : IDisposable
     }
 
     /// <summary>Answers the folder picker and the confirmation as told.</summary>
-    private sealed class Dialogs : IDialogService
-    {
-        public string? Folder { get; set; }
-
-        public bool ConfirmAnswer { get; set; }
-
-        public int Confirmations { get; private set; }
-
-        public string? LastMessage { get; private set; }
-
-        public bool ShowItemProperties(LauncherItem item, bool isNew) => false;
-
-        public LauncherSettings? ShowSettings(LauncherSettings current) => null;
-
-        public bool Confirm(string title, string message)
-        {
-            Confirmations++;
-            LastMessage = message;
-            return ConfirmAnswer;
-        }
-
-        public void ShowError(string title, string message)
-        {
-        }
-
-        public void ShowInfo(string title, string message)
-        {
-        }
-
-        public void Notify(string title, string message)
-        {
-        }
-
-        public void ShowSync()
-        {
-        }
-
-        public void ShowLog(LogViewerViewModel viewModel)
-        {
-        }
-
-        public void ShowNameTable(LauncherViewModel launcher)
-        {
-        }
-
-        public void ShowAppLog()
-        {
-        }
-
-        public string? AskText(string title, string prompt, string? initialValue) => null;
-
-        public string? PickFolder(string title, string? initialFolder) => Folder;
-
-        public List<string> RepairRequests { get; } = [];
-
-        public RepairResult? RepairAnswer { get; set; }
-
-        public RepairResult? ShowRepair(ShortcutItem shortcut)
-        {
-            RepairRequests.Add(shortcut.Name);
-            return RepairAnswer;
-        }
-
-        public IReadOnlyList<InstalledApp> AddAppAnswer { get; set; } = [];
-
-        public IReadOnlySet<string>? OnBarSeen { get; private set; }
-
-        public IReadOnlyList<InstalledApp> ShowAddApp(IReadOnlySet<string> locationsOnBar)
-        {
-            OnBarSeen = locationsOnBar;
-            return AddAppAnswer;
-        }
-
-        public ViewModels.ImportRequest? ImportAnswer { get; set; }
-
-        public bool? ImportCanGroupSeen { get; private set; }
-
-        public ViewModels.ImportRequest? ShowImport(IReadOnlyList<ShortcutItem> onBar, bool canGroup)
-        {
-            ImportCanGroupSeen = canGroup;
-            return ImportAnswer;
-        }
-    }
-
     [Fact]
     public void Replacing_a_sync_programs_copy_says_this_PC_stays_with_it_and_leaves_the_original()
     {
         // Review 15, on entry 24: the copy keeps its own name when replaced, so this PC leaves "Work" for it.
         var settings = new SyncSettings { DeviceName = "PC-1", SyncFolder = _folder };
         var auth = new GoogleAuthorization(new HttpClient(), new InMemoryTokenStore(), () => new OAuthClientCredentials("id", "secret"));
-        var dialogs = new Dialogs { ConfirmAnswer = false };
+        var dialogs = new RecordingDialogs { ConfirmAnswer = false };
         var viewModel = new SyncViewModel(new SyncCoordinator(new SyncService(auth, new NoDrive(), settings, () => { }), new Host(), (_, _) => true), dialogs);
         viewModel.SelectedProfile = new RemoteProfile("Work-LAPTOP", "Work-LAPTOP.json", null, "LAPTOP", 10) { NameInside = "Work" };
 
@@ -155,13 +71,13 @@ public sealed class SyncViewModelTests : IDisposable
         var settings = new SyncSettings { DeviceName = "PC-1", LinkedProfile = "Work", LinkedFileId = "drive-id" };
         var auth = new GoogleAuthorization(new HttpClient(), new InMemoryTokenStore(), () => new OAuthClientCredentials("id", "secret"));
         var service = new SyncService(auth, new NoDrive(), settings, () => { });
-        var dialogs = new Dialogs { Folder = _folder, ConfirmAnswer = false };
+        var dialogs = new RecordingDialogs { Folder = _folder, ConfirmAnswer = false };
         var viewModel = new SyncViewModel(new SyncCoordinator(service, new Host(), (_, _) => true), dialogs);
         Assert.False(viewModel.IsConnected);
 
         await viewModel.ChooseFolderAsync(); // "No" to unlinking
 
-        Assert.Equal(1, dialogs.Confirmations);
+        Assert.Single(dialogs.Confirmations);
         Assert.False(viewModel.UsesFolder);
         Assert.Equal("Work", settings.LinkedProfile);
 
@@ -176,7 +92,7 @@ public sealed class SyncViewModelTests : IDisposable
         Assert.Empty(viewModel.Profiles);
 
         await viewModel.UseGoogleDriveAsync(); // not linked any more: nothing to ask
-        Assert.Equal(2, dialogs.Confirmations);
+        Assert.Equal(2, dialogs.Confirmations.Count);
         Assert.True(viewModel.UsesGoogle);
         Assert.Equal(string.Empty, viewModel.SyncFolder);
     }
@@ -194,7 +110,7 @@ public sealed class SyncViewModelTests : IDisposable
 
         var auth = new GoogleAuthorization(new HttpClient(), new InMemoryTokenStore(), () => new OAuthClientCredentials("id", "secret"));
         SyncViewModel Dialog(SyncSettings settings) =>
-            new(new SyncCoordinator(new SyncService(auth, new NoDrive(), settings, () => store.Save(settings)), new Host(), (_, _) => true), new Dialogs());
+            new(new SyncCoordinator(new SyncService(auth, new NoDrive(), settings, () => store.Save(settings)), new Host(), (_, _) => true), new RecordingDialogs());
 
         Assert.True(Dialog(standIn).SettingsNotRead);
         Assert.False(Dialog(store.Load()).SettingsNotRead);
@@ -205,7 +121,7 @@ public sealed class SyncViewModelTests : IDisposable
     {
         var settings = new SyncSettings { DeviceName = "PC-1" };
         var auth = new GoogleAuthorization(new HttpClient(), new InMemoryTokenStore(), () => new OAuthClientCredentials("id", "secret"));
-        var viewModel = new SyncViewModel(new SyncCoordinator(new SyncService(auth, new NoDrive(), settings, () => { }), new Host(), (_, _) => true), new Dialogs());
+        var viewModel = new SyncViewModel(new SyncCoordinator(new SyncService(auth, new NoDrive(), settings, () => { }), new Host(), (_, _) => true), new RecordingDialogs());
 
         await viewModel.ChooseFolderAsync();
 

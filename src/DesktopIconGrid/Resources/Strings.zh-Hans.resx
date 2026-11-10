@@ -1781,4 +1781,7 @@
   <data name="Props_CmdSwitch" xml:space="preserve">
     <value>cmd.exe 会把 /c 或 /k 之前的占位符当成它自己的选项，因此会被拒绝：请把它放在它们后面。</value>
   </data>
+  <data name="Import_TimedOut" xml:space="preserve">
+    <value>搜索时间过长，已停止：它查看的文件夹或驱动器可能没有响应。请稍后再试。</value>
+  </data>
 </root>

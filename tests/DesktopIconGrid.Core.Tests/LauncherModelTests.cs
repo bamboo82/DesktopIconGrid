@@ -4,6 +4,7 @@ using DesktopIconGrid.Core.Storage;
 
 namespace DesktopIconGrid.Core.Tests;
 
+[Collection("This device")] // these set ThisDevice.Id, which is process-wide
 public class LauncherModelTests
 {
     private static ShortcutItem Shortcut(string name) => new() { Name = name, Location = $"C:\\apps\\{name}.exe" };

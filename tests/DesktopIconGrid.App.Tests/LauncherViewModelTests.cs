@@ -589,7 +589,7 @@ public sealed class LauncherViewModelTests : IDisposable
     public async Task Import_marks_what_is_on_the_bar_and_ticks_none_of_it_with_select_all()
     {
         var choices = new ImportViewModel(new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "WT.EXE -p \"Ubuntu\"" }, canGroup: false);
-        await choices.LoadAsync(() => Task.FromResult<IReadOnlyList<ImportCandidate>>(
+        await choices.LoadAsync(() => Task.FromResult<IReadOnlyList<ImportCandidate>?>(
         [
             new(ImportSource.WindowsTerminal, "Ubuntu", "wt.exe", "-p \"Ubuntu\""),
             new(ImportSource.WindowsTerminal, "PowerShell", "wt.exe", "-p \"PowerShell\""),
@@ -602,6 +602,18 @@ public sealed class LauncherViewModelTests : IDisposable
         Assert.Equal([true, false], choices.Choices.Select(c => c.IsOnBar));
         Assert.Equal(["PowerShell"], choices.Chosen.Select(c => c.Name));
         Assert.False(choices.GroupPerSource); // only on the bar itself
+    }
+
+    [Fact]
+    public async Task Import_says_so_when_the_search_ran_out_of_time()
+    {
+        // Review 19 I5: a timeout read as "Nothing to import was found".
+        var choices = new ImportViewModel(new HashSet<string>(), canGroup: true);
+
+        await choices.LoadAsync(() => Task.FromResult<IReadOnlyList<ImportCandidate>?>(null), icon: null, CancellationToken.None);
+
+        Assert.Equal(Strings.Import_TimedOut, choices.Status);
+        Assert.Empty(choices.Choices);
     }
 
     [Fact]

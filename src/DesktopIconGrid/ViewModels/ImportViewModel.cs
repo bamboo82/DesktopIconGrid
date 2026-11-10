@@ -109,13 +109,16 @@ public sealed class ImportViewModel : ObservableObject
         _ => Strings.Import_SourceSsh,
     };
 
-    /// <summary>Lists what <paramref name="load"/> finds, then fetches the icons one by one with <paramref name="icon"/>.</summary>
-    public async Task LoadAsync(Func<Task<IReadOnlyList<ImportCandidate>>> load, Func<string, Task<ImageSource?>>? icon, CancellationToken cancellationToken)
+    /// <summary>
+    /// Lists what <paramref name="load"/> finds, then fetches the icons one by one with <paramref name="icon"/>. A
+    /// <see langword="null"/> from <paramref name="load"/> means the search ran out of time, which is said as such.
+    /// </summary>
+    public async Task LoadAsync(Func<Task<IReadOnlyList<ImportCandidate>?>> load, Func<string, Task<ImageSource?>>? icon, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(load);
         IsLoading = true;
         Status = Strings.Import_Loading;
-        IReadOnlyList<ImportCandidate> found;
+        IReadOnlyList<ImportCandidate>? found;
         try
         {
             found = await load();
@@ -123,6 +126,12 @@ public sealed class ImportViewModel : ObservableObject
         finally
         {
             IsLoading = false;
+        }
+
+        if (found is null)
+        {
+            Status = Strings.Import_TimedOut;
+            return;
         }
 
         foreach (var candidate in found.DistinctBy(c => c.Key, StringComparer.OrdinalIgnoreCase))

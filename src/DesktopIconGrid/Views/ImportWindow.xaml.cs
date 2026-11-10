@@ -18,7 +18,7 @@ public partial class ImportWindow : Window
     }
 
     /// <summary>Finds what can be imported; set before the window is shown.</summary>
-    public Func<Task<IReadOnlyList<ImportCandidate>>>? Load { get; set; }
+    public Func<Task<IReadOnlyList<ImportCandidate>?>>? Load { get; set; }
 
     /// <summary>Fetches one location's icon; set before the window is shown.</summary>
     public Func<string, Task<ImageSource?>>? IconOf { get; set; }

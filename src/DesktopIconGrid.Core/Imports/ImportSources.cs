@@ -17,8 +17,18 @@ public enum ImportSource
 /// <summary>Something <c>Import ▸</c> can turn into a shortcut.</summary>
 public sealed record ImportCandidate(ImportSource Source, string Name, string Location, string? Parameters = null, string? StartIn = null)
 {
-    /// <summary>What decides whether it is already on the bar: the location with its parameters, in any case.</summary>
-    public string Key => string.IsNullOrWhiteSpace(Parameters) ? Location.Trim() : $"{Location.Trim()} {Parameters.Trim()}";
+    /// <summary>
+    /// What decides whether it is already on the bar: the location, expanded (a pin's raw target may be
+    /// <c>%windir%\system32\mstsc.exe</c>), with its parameters, in any case; as <see cref="ImportPlan.KeyOf"/> for a shortcut.
+    /// </summary>
+    public string Key
+    {
+        get
+        {
+            var location = Environment.ExpandEnvironmentVariables(Location.Trim());
+            return string.IsNullOrWhiteSpace(Parameters) ? location : $"{location} {Parameters.Trim()}";
+        }
+    }
 }
 
 /// <summary>

@@ -7,19 +7,28 @@ public static class ImportPlan
 {
     /// <summary>
     /// Whether a candidate can go on the bar as written. Its name goes into the parameters (<c>wt -p "Ubuntu"</c>,
-    /// <c>putty -load "web"</c>, <c>wt ssh web</c>), so a name that would end the quotes it is given, start an option,
-    /// hold a line break, or start another tab in Windows Terminal (<c>;</c>) is not offered. Names come from other
-    /// programs' files, and a synced or copied file may hold anything.
+    /// <c>putty -load "web"</c>, <c>WinSCP.exe "web"</c>, <c>wt ssh web</c>), and a click fills in no placeholder there,
+    /// so nothing checks it again. A name is not offered when it would:
+    /// <list type="bullet">
+    /// <item>end the quotes it is given (<c>"</c>, <c>＂</c>), or escape the closing one (a backslash at its end);</item>
+    /// <item>start an option or a switch (<c>-</c>, or <c>/</c>, which WinSCP reads as <c>/script=…</c> once the
+    /// quotes are gone);</item>
+    /// <item>hold a line break, or a <c>%</c>, which is expanded again at every click;</item>
+    /// <item>start another tab in Windows Terminal (<c>;</c>), or, as an SSH host, hold what a shell acts on.</item>
+    /// </list>
+    /// Names come from other programs' files and registry keys, which a synced or copied file may fill with anything.
     /// </summary>
     public static bool IsUsable(ImportCandidate candidate)
     {
         ArgumentNullException.ThrowIfNull(candidate);
         var name = candidate.Name;
-        if (string.IsNullOrWhiteSpace(name) || name.StartsWith('-') || name.Any(c => char.IsControl(c) || c is '"' or '＂'))
+        if (string.IsNullOrWhiteSpace(name) || name.StartsWith('-') || name.StartsWith('/') || name.EndsWith('\\')
+            || name.Any(c => char.IsControl(c) || c is '"' or '＂' or '%'))
         {
             return false;
         }
 
+        // Both Windows Terminal templates (profiles, SSH hosts) name it "wt.exe"; another spelling needs adding here.
         var program = Path.GetFileName(candidate.Location.Trim().Trim('"'));
         var terminal = program.Equals("wt.exe", StringComparison.OrdinalIgnoreCase) || program.Equals("wt", StringComparison.OrdinalIgnoreCase);
         return !(terminal && name.Contains(';', StringComparison.Ordinal))

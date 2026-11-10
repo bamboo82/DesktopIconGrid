@@ -1781,4 +1781,7 @@
   <data name="Props_CmdSwitch" xml:space="preserve">
     <value>cmd.exe 會把 /c 或 /k 之前的預留位置當成它自己的選項，因此會被拒絕：請把它放在它們後面。</value>
   </data>
+  <data name="Import_TimedOut" xml:space="preserve">
+    <value>搜尋太久，已停止：它查看的資料夾或磁碟可能沒有回應。請稍後再試。</value>
+  </data>
 </root>

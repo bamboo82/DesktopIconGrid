@@ -1104,6 +1104,15 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to The search took too long and was stopped: a folder or a drive it looks in may no [rest of string was truncated]";.
+        /// </summary>
+        public static string Import_TimedOut {
+            get {
+                return ResourceManager.GetString("Import_TimedOut", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Import.
         /// </summary>
         public static string Import_Title {

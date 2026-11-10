@@ -128,12 +128,23 @@ public sealed class DialogService(IIconProvider icons) : IDialogService, ILaunch
 
     public ImportRequest? ShowImport(IReadOnlyList<ShortcutItem> onBar, bool canGroup)
     {
-        var viewModel = new ImportViewModel(new HashSet<string>(onBar.Select(ImportPlan.KeyOf), StringComparer.OrdinalIgnoreCase), canGroup);
+        // A copy taken here, on the window's thread: the search reads it on the worker while sync may change the bar.
+        var snapshot = onBar.Select(s => (ShortcutItem)s.Clone()).ToList();
+        var viewModel = new ImportViewModel(new HashSet<string>(snapshot.Select(ImportPlan.KeyOf), StringComparer.OrdinalIgnoreCase), canGroup);
         var window = new ImportWindow
         {
             DataContext = viewModel,
             Owner = Owner,
-            Load = async () => await IconWorker.Shared.RunAsync(() => ImportDiscovery.FindAll(onBar), AddAppListTimeout, "import sources") ?? [],
+            Load = async () =>
+            {
+                var found = await IconWorker.Shared.RunAsync(() => ImportDiscovery.FindAll(snapshot), AddAppListTimeout, "import sources");
+                if (found is null)
+                {
+                    AppLog.Default.Warning("Import", $"The search for shortcuts and sessions was stopped after {AddAppListTimeout.TotalSeconds:0} s");
+                }
+
+                return found;
+            },
             IconOf = location => IconWorker.Shared.RunAsync(() => icons.GetIcon(location, 32), IconWorker.LookupTimeout, location, IconWorker.IsOnSlowStorage(location)),
         };
         return window.ShowDialog() == true ? new ImportRequest(viewModel.Chosen, viewModel.GroupPerSource) : null;

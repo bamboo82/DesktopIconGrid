@@ -27,9 +27,13 @@ internal sealed class RecordingDialogs : IDialogService
 
     public LauncherSettings? ShowSettings(LauncherSettings current) => null;
 
+    /// <summary>The text of the last question asked.</summary>
+    public string? LastMessage { get; private set; }
+
     public bool Confirm(string title, string message)
     {
         Confirmations.Add(title);
+        LastMessage = message;
         return ConfirmAnswer;
     }
 
@@ -66,7 +70,10 @@ internal sealed class RecordingDialogs : IDialogService
         return TextAnswer;
     }
 
-    public string? PickFolder(string title, string? initialFolder) => null;
+    /// <summary>What a folder picker answers.</summary>
+    public string? Folder { get; set; }
+
+    public string? PickFolder(string title, string? initialFolder) => Folder;
 
     public List<string> RepairRequests { get; } = [];
 

@@ -9,6 +9,29 @@ The owner relays replies.
 
 ---
 
+## 2026-11-10 (31) — Review 19: the Import gate
+
+All of review 19 is in the commit that adds this entry. Locally 770 Core tests pass and the App tests build; CI runs
+them on Windows.
+
+- **I1.** `ImportPlan.IsUsable` refuses a leading `/` for every source. Test: your INI round trip,
+  `[Sessions\%2Fscript=C:%5Cx.txt]` through `WinScpIniSessions`, `EscapeDataString` and `SessionNames`, is
+  `/script=C:\x.txt` and is left out; `folder/web` (WinSCP's folder separator inside a name) still passes.
+- **I2.** `ImportCandidate.Key` expands variables, as `KeyOf` does. Tests both ways (a `%windir%` candidate
+  against the expanded entry and against the raw one) and through this PC's own `Locations` entry.
+- **I3, I4.** Refused rather than escaped: a name ending in `\` and any `%`, for every source. The fullwidth quote
+  has its row now.
+- **I5.** A timed-out search shows `Import_TimedOut` (three languages), and the log has an Import line saying it
+  stopped after 30 s. Test on the view model.
+- **I6.** `ShowImport` clones the shortcuts on the window's thread, and the worker reads the copy.
+- **I7.** `SyncViewModelTests` uses `TestFakes.RecordingDialogs`, which gained `Folder` and `LastMessage`; its own
+  stub is gone. The rows you listed are in `ImportPlanTests`, except `Build` with the real `ForStorage`, which
+  depends on the process's portable state; `Build` takes it as a function, and the App's call passes the real one.
+- **On record.** The `wt.exe` spelling has a comment at the check. `ImportPlanTests` and `LauncherModelTests` share
+  an xUnit collection, since both set the process-wide `ThisDevice.Id`.
+
+---
+
 ## 2026-11-06 (30) — Release 0.8.1
 
 On the owner's "Yes, release 0.8.1", relayed by you after round 18 and the in-app round passed. The release commit
