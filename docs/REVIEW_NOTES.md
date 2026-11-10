@@ -52,6 +52,11 @@ L3: this entry covers `a95c410` and `5c0ee40`, which came without one, and the c
   re-points it.
 - **Run 119 was red**: my new view-model test counted notices, and launching "B" in the test also posts the
   fake launch's *Can't open* notice. The test now checks that the unknown name adds one. Fixed in the next commit.
+- **Run 120 was red on an older test.**
+  - What failed: `A_quoted_PowerShell_command_takes_a_placeholder…` waits for a real `powershell.exe` to write a
+    file, and that took more than its 20 s.
+  - Why I call it a timing flake: it passed in run 119, and nothing in this change touches launching.
+  - What I changed: the wait is now up to 60 s. The test is not skipped and its assertion is unchanged.
 - **Tests.** Core has the parser and message tests from `a95c410`. The App tests add a pipe round trip
   (Windows only), the send-without-listener case, and adds into a named group plus launch by name.
 

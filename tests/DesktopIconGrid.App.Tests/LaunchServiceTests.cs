@@ -288,7 +288,7 @@ public sealed class LaunchServiceTests : IDisposable
 
             Assert.Equal(LaunchOutcome.Started, result.Outcome);
             string? written = null;
-            for (var i = 0; i < 400 && written is null; i++)
+            for (var i = 0; i < 1200 && written is null; i++) // up to a minute: a cold Windows PowerShell on a busy runner took over 20 s (run 120)
             {
                 try
                 {
