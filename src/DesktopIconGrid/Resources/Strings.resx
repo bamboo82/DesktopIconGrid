@@ -2033,4 +2033,7 @@ Details are in {1}.</value>
   <data name="Command_SaveApprovesNew" xml:space="preserve">
     <value>Saving approves this command to run on this PC, unless the tile came from elsewhere and is still paused: then only a click on the tile approves it. On other PCs it stays paused until approved there. The exit code picks the colour: 0 green, 1 amber, anything else red.</value>
   </data>
+  <data name="Commands_Refused" xml:space="preserve">
+    <value>The running bar runs with other rights (as administrator, or not while this start is), so it does not take commands from this start. Start this one the same way the bar was started.</value>
+  </data>
 </root>

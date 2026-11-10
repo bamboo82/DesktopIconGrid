@@ -55,4 +55,15 @@ public class BarCommandsTests
         Assert.Null(BarCommands.Deserialize(new byte[BarCommands.MaxMessageBytes + 1]));
         Assert.Null(BarCommands.Deserialize(BarCommands.Serialize(Enumerable.Repeat(new BarCommand(BarCommandKind.Show), BarCommands.MaxCommands + 1).ToList())));
     }
+
+    [Fact]
+    public void A_group_may_come_before_the_paths_as_a_Send_to_shortcut_gives_them()
+    {
+        // The shortcut's arguments are "--add --group Tools"; Explorer appends the chosen files (review 21 C2).
+        var (commands, error) = BarCommands.Parse(["--add", "--group", "Tools", @"C:\f1.txt", @"C:\f2.txt"]);
+
+        Assert.Null(error);
+        Assert.Equal([new BarCommand(BarCommandKind.Add, @"C:\f1.txt", "Tools"), new BarCommand(BarCommandKind.Add, @"C:\f2.txt", "Tools")], commands);
+        Assert.NotNull(BarCommands.Parse(["--add", "--group", "A", @"C:\f.txt", "--group", "B"]).Error);
+    }
 }

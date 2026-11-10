@@ -2033,4 +2033,7 @@
   <data name="Command_SaveApprovesNew" xml:space="preserve">
     <value>保存即批准此命令在这台电脑上运行；但若此图标是从别处而来且仍在暂停，则只能单击图标来批准。在其他电脑上，它会保持暂停，直到在该电脑上批准。退出代码决定颜色：0 绿色、1 黄色，其他为红色。</value>
   </data>
+  <data name="Commands_Refused" xml:space="preserve">
+    <value>运行中的栏使用不同的权限（以管理员身份运行，或此次启动才是），因此不接受此次启动的命令。请以与该栏相同的方式启动。</value>
+  </data>
 </root>

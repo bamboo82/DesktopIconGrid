@@ -50,7 +50,8 @@ public static class BarCommands
 
     /// <summary>
     /// The commands in <paramref name="args"/>, or why they cannot be read (and no commands). <c>--add</c> takes every
-    /// argument up to the next one that starts with <c>--</c>; a <c>--group</c> right after its paths names their group.
+    /// argument up to the next one that starts with <c>--</c>; a <c>--group</c> right after <c>--add</c> or right after its
+    /// paths names their group (before them, so a <em>Send to</em> shortcut can name a group: Explorer appends the files).
     /// </summary>
     public static (IReadOnlyList<BarCommand> Commands, string? Error) Parse(IReadOnlyList<string> args)
     {
@@ -89,14 +90,30 @@ public static class BarCommands
                 case AddArgument:
                     var paths = new List<string>();
                     i++;
+                    string? group = null;
+                    if (i < args.Count && args[i].Equals("--group", StringComparison.OrdinalIgnoreCase))
+                    {
+                        if (i + 1 >= args.Count || IsOption(args[i + 1]))
+                        {
+                            return ([], "--group needs a name.");
+                        }
+
+                        group = args[i + 1];
+                        i += 2;
+                    }
+
                     while (i < args.Count && !IsOption(args[i]))
                     {
                         paths.Add(args[i++]);
                     }
 
-                    string? group = null;
                     if (i < args.Count && args[i].Equals("--group", StringComparison.OrdinalIgnoreCase))
                     {
+                        if (group is not null)
+                        {
+                            return ([], "--group is given twice.");
+                        }
+
                         if (i + 1 >= args.Count || IsOption(args[i + 1]))
                         {
                             return ([], "--group needs a name.");

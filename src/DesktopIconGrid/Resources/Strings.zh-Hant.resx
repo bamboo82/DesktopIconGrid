@@ -2033,4 +2033,7 @@
   <data name="Command_SaveApprovesNew" xml:space="preserve">
     <value>儲存即核准此命令在這台電腦上執行；但若此圖示是從別處而來且仍在暫停，則只能按一下圖示來核准。在其他電腦上，它會保持暫停，直到在該電腦上核准。結束代碼決定顏色：0 綠色、1 黃色，其他為紅色。</value>
   </data>
+  <data name="Commands_Refused" xml:space="preserve">
+    <value>執行中的列使用不同的權限（以系統管理員身分執行，或此次啟動才是），因此不接受此次啟動的命令。請以與該列相同的方式啟動。</value>
+  </data>
 </root>

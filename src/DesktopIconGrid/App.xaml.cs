@@ -85,12 +85,15 @@ public partial class App : Application
         // Claim the instance before touching app.log, so a second copy neither shares the file nor rotates it.
         if (!ClaimSingleInstance(signalShow: commands.Count == 0))
         {
-            if (commands.Count > 0 && !HandOver(commands))
+            var handedOver = commands.Count == 0 ? CommandPipe.SendResult.Sent : HandOver(commands);
+            if (handedOver != CommandPipe.SendResult.Sent)
             {
-                MessageBox.Show(Strings.Commands_NotAnswered, Strings.App_Name, MessageBoxButton.OK, MessageBoxImage.Warning);
+                var message = handedOver == CommandPipe.SendResult.Refused ? Strings.Commands_Refused : Strings.Commands_NotAnswered;
+                MessageBox.Show(message, Strings.App_Name, MessageBoxButton.OK, MessageBoxImage.Warning);
             }
 
-            Shutdown(0);
+            // 3: the commands did not reach the bar, so a script can tell (2 is a command line that cannot be read).
+            Shutdown(handedOver == CommandPipe.SendResult.Sent ? 0 : 3);
             return;
         }
 
@@ -286,18 +289,16 @@ public partial class App : Application
     /// Hands the command line to the running bar (<see cref="CommandPipe"/>), trying for a few seconds: that bar may
     /// still be starting. This start may hand it the foreground (<c>--show</c>, <c>--launch</c>).
     /// </summary>
-    private static bool HandOver(IReadOnlyList<BarCommand> commands)
+    private static CommandPipe.SendResult HandOver(IReadOnlyList<BarCommand> commands)
     {
         NativeMethods.AllowSetForegroundWindow(NativeMethods.ASFW_ANY);
-        for (var attempt = 0; attempt < 5; attempt++)
+        var result = CommandPipe.SendResult.NoAnswer;
+        for (var attempt = 0; attempt < 5 && result == CommandPipe.SendResult.NoAnswer; attempt++)
         {
-            if (CommandPipe.Send(commands, TimeSpan.FromSeconds(2)))
-            {
-                return true;
-            }
+            result = CommandPipe.Send(commands, TimeSpan.FromSeconds(2));
         }
 
-        return false;
+        return result; // a refusal is not tried again: the other bar runs with other rights and will not change its mind
     }
 
     private bool ClaimSingleInstance(bool signalShow)

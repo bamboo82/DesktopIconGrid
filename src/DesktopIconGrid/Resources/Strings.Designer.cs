@@ -1023,6 +1023,15 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to The running bar runs with other rights (as administrator, or not while this star [rest of string was truncated]";.
+        /// </summary>
+        public static string Commands_Refused {
+            get {
+                return ResourceManager.GetString("Commands_Refused", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to The Send To entry could not be changed: {0}.
         /// </summary>
         public static string Commands_SendToFailed {

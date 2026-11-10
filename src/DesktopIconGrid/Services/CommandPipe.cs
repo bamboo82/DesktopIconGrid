@@ -14,14 +14,35 @@ namespace DesktopIconGrid.Services;
 /// </summary>
 public sealed class CommandPipe : IDisposable
 {
+    /// <summary>How a hand-over went.</summary>
+    public enum SendResult
+    {
+        Sent,
+
+        /// <summary>No bar listened within the time (it may still be starting).</summary>
+        NoAnswer,
+
+        /// <summary>
+        /// A bar listens but would not take it: <see cref="PipeOptions.CurrentUserOnly"/> compares the processes' token
+        /// owners, which differ between an elevated start and a plain one of the same user.
+        /// </summary>
+        Refused,
+    }
+
     private static readonly TimeSpan ReadLimit = TimeSpan.FromSeconds(5);
 
     private readonly CancellationTokenSource _stop = new();
     private readonly Action<IReadOnlyList<BarCommand>> _received;
+    private readonly string _name;
     private Task? _loop;
 
     /// <param name="received">Called (on a worker thread) with each message's commands; the caller moves to the UI thread.</param>
-    public CommandPipe(Action<IReadOnlyList<BarCommand>> received) => _received = received;
+    /// <param name="name">The pipe's name; <see cref="Name"/> when not given (tests use their own).</param>
+    public CommandPipe(Action<IReadOnlyList<BarCommand>> received, string? name = null)
+    {
+        _received = received;
+        _name = name ?? Name;
+    }
 
     /// <summary>The pipe of this Windows session (the single-instance mutex is per session too).</summary>
     public static string Name => $"DesktopIconGrid.Commands.{Process.GetCurrentProcess().SessionId}";
@@ -29,26 +50,30 @@ public sealed class CommandPipe : IDisposable
     /// <summary>Starts listening for messages.</summary>
     public void Start() => _loop = Task.Run(() => ListenAsync(_stop.Token));
 
-    /// <summary>
-    /// Sends <paramref name="commands"/> to the running bar; false when no bar answered within <paramref name="timeout"/>
-    /// (it may still be starting) or the message could not be written.
-    /// </summary>
-    public static bool Send(IReadOnlyList<BarCommand> commands, TimeSpan timeout)
+    /// <summary>Sends <paramref name="commands"/> to the running bar (to the pipe <paramref name="name"/>, <see cref="Name"/> by default).</summary>
+    public static SendResult Send(IReadOnlyList<BarCommand> commands, TimeSpan timeout, string? name = null) =>
+        SendBytes(BarCommands.Serialize(commands ?? throw new ArgumentNullException(nameof(commands))), timeout, name);
+
+    /// <summary>Sends a message as it is (tests send what a hostile or broken client might).</summary>
+    internal static SendResult SendBytes(byte[] message, TimeSpan timeout, string? name = null)
     {
-        ArgumentNullException.ThrowIfNull(commands);
-        var message = BarCommands.Serialize(commands);
         try
         {
-            using var client = new NamedPipeClientStream(".", Name, PipeDirection.Out, PipeOptions.CurrentUserOnly);
+            using var client = new NamedPipeClientStream(".", name ?? Name, PipeDirection.Out, PipeOptions.CurrentUserOnly);
             client.Connect((int)timeout.TotalMilliseconds);
             client.Write(message);
             client.Flush();
-            return true;
+            return SendResult.Sent;
         }
-        catch (Exception ex) when (ex is TimeoutException or IOException or UnauthorizedAccessException)
+        catch (UnauthorizedAccessException ex)
+        {
+            AppLog.Default.Warning("Commands", $"The running bar would not take the commands: {ex.Message}");
+            return SendResult.Refused;
+        }
+        catch (Exception ex) when (ex is TimeoutException or IOException)
         {
             AppLog.Default.Warning("Commands", $"The running bar could not be reached: {ex.Message}");
-            return false;
+            return SendResult.NoAnswer;
         }
     }
 
@@ -59,7 +84,7 @@ public sealed class CommandPipe : IDisposable
             try
             {
                 await using var server = new NamedPipeServerStream(
-                    Name, PipeDirection.In, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous | PipeOptions.CurrentUserOnly);
+                    _name, PipeDirection.In, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous | PipeOptions.CurrentUserOnly);
                 await server.WaitForConnectionAsync(stop).ConfigureAwait(false);
                 var message = await ReadAsync(server, stop).ConfigureAwait(false);
                 if (message is null)
