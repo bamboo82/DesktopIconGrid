@@ -9,6 +9,9 @@ public static class SpecialIconKinds
     public const string DiskUsage = "disk-usage";
     public const string GoogleDriveBucket = "google-drive-bucket";
     public const string SoundReplayer = "sound-replayer";
+
+    /// <summary>Runs a command on a timer or a click and shows its output (0.9.0).</summary>
+    public const string CommandTile = "command-tile";
 }
 
 /// <summary>How a gauge icon draws its percentage.</summary>

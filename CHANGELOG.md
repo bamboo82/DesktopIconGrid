@@ -28,6 +28,11 @@ microphone tile, a clock and timer, and paste to a bucket.
   full path or a known option is refused with a message, and nothing is done.
 - *In Explorer's Send To menu* (options and tray menus): adds or removes a *Desktop Icon Grid* entry in Explorer's
   *Send to*, which adds the selected files and folders to the end of the bar.
+- The command tile (*Add special icon ▸ Command tile*): runs a program on a timer or a click without a
+  window and shows the first line of its output, or a number from it as a ring, bar or number; the exit
+  code sets the colour. A tile runs only once its command is approved on this PC: saving its properties
+  here approves it, and one that arrives through sync, a restore or an import stays paused until you
+  approve it on that PC.
 
 ## [0.8.1] – 2026-11-06
 

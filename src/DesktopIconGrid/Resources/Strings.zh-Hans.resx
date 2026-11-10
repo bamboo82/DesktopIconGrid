@@ -1874,4 +1874,106 @@
   <data name="Commands_SendToFailed" xml:space="preserve">
     <value>无法更改“发送到”项目：{0}</value>
   </data>
+  <data name="Command_Name" xml:space="preserve">
+    <value>命令图标</value>
+  </data>
+  <data name="Command_Desc" xml:space="preserve">
+    <value>按时间或点击运行命令（不打开窗口），并显示其输出或其中的数字。</value>
+  </data>
+  <data name="Command_DefaultName" xml:space="preserve">
+    <value>命令</value>
+  </data>
+  <data name="Command_Title" xml:space="preserve">
+    <value>命令图标</value>
+  </data>
+  <data name="Command_Program" xml:space="preserve">
+    <value>程序：</value>
+  </data>
+  <data name="Command_Arguments" xml:space="preserve">
+    <value>参数：</value>
+  </data>
+  <data name="Command_StartIn" xml:space="preserve">
+    <value>起始位置：</value>
+  </data>
+  <data name="Command_Every" xml:space="preserve">
+    <value>运行间隔（秒）：</value>
+  </data>
+  <data name="Command_EveryHint" xml:space="preserve">
+    <value>0 表示仅在点击时运行；否则至少 10。</value>
+  </data>
+  <data name="Command_Timeout" xml:space="preserve">
+    <value>时间上限（秒）：</value>
+  </data>
+  <data name="Command_Show" xml:space="preserve">
+    <value>显示：</value>
+  </data>
+  <data name="Command_ShowText" xml:space="preserve">
+    <value>输出的第一行</value>
+  </data>
+  <data name="Command_ShowRing" xml:space="preserve">
+    <value>输出中的数字，以圆环显示</value>
+  </data>
+  <data name="Command_ShowBar" xml:space="preserve">
+    <value>输出中的数字，以长条显示</value>
+  </data>
+  <data name="Command_ShowNumber" xml:space="preserve">
+    <value>输出中的数字</value>
+  </data>
+  <data name="Command_WarningAt" xml:space="preserve">
+    <value>黄色起点：</value>
+  </data>
+  <data name="Command_CriticalAt" xml:space="preserve">
+    <value>红色起点：</value>
+  </data>
+  <data name="Command_Click" xml:space="preserve">
+    <value>点击时：</value>
+  </data>
+  <data name="Command_ClickRun" xml:space="preserve">
+    <value>立即运行</value>
+  </data>
+  <data name="Command_ClickOpen" xml:space="preserve">
+    <value>改为打开：</value>
+  </data>
+  <data name="Command_SaveApproves" xml:space="preserve">
+    <value>保存即批准此命令在这台电脑上运行。通过同步获得此栏的其他电脑会先暂停，直到在该电脑上批准为止。退出代码决定颜色：0 绿色、1 黄色，其他为红色。</value>
+  </data>
+  <data name="Command_NotRunYet" xml:space="preserve">
+    <value>尚未运行</value>
+  </data>
+  <data name="Command_Paused" xml:space="preserve">
+    <value>已在这台电脑上暂停：此命令是随栏从别处而来（同步、还原或导入）。点击以查看并批准。</value>
+  </data>
+  <data name="Command_NotSet" xml:space="preserve">
+    <value>尚未设置程序。请打开“属性”进行设置。</value>
+  </data>
+  <data name="Command_ApproveTitle" xml:space="preserve">
+    <value>要在这台电脑上运行此命令吗？</value>
+  </data>
+  <data name="Command_ApproveQuestion" xml:space="preserve">
+    <value>此命令图标是随栏而来，尚未在这台电脑上批准。
+
+程序：{0}
+参数：{1}
+起始位置：{2}
+
+要批准它在这里运行（现在及按时间）吗？</value>
+  </data>
+  <data name="Command_Ran" xml:space="preserve">
+    <value>退出代码 {0}，于 {1}，耗时 {2} 秒</value>
+  </data>
+  <data name="Command_TimedOut" xml:space="preserve">
+    <value>超过 {0} 秒仍未结束，已于 {1} 停止</value>
+  </data>
+  <data name="Command_CouldNotStart" xml:space="preserve">
+    <value>无法启动：{0}</value>
+  </data>
+  <data name="Command_RunNow" xml:space="preserve">
+    <value>立即运行</value>
+  </data>
+  <data name="Command_Running" xml:space="preserve">
+    <value>运行中…</value>
+  </data>
+  <data name="Command_None" xml:space="preserve">
+    <value>（无）</value>
+  </data>
 </root>

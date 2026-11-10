@@ -26,6 +26,7 @@ public sealed class GaugeState : ObservableObject
     private string _detail;
     private bool _isVisible = true;
     private string? _labelText;
+    private CommandLevel? _level;
 
     public GaugeState(string caption, GaugeStyle style, double warningAt, double criticalAt, string initialDetail)
     {
@@ -67,16 +68,54 @@ public sealed class GaugeState : ObservableObject
             if (SetProperty(ref _labelText, value))
             {
                 OnPropertyChanged(nameof(Label));
+                OnPropertyChanged(nameof(LabelFontSize));
             }
         }
     }
 
     public string Label => _labelText ?? (_percent is { } p ? $"{Math.Round(p).ToString(CultureInfo.CurrentCulture)}%" : "…");
 
+    /// <summary>The number style's text size: smaller for a longer text (a command tile's first line), so more of it fits.</summary>
+    public double LabelFontSize => Label.Length switch
+    {
+        <= 4 => 42,
+        <= 6 => 32,
+        <= 9 => 24,
+        _ => 18,
+    };
+
+    /// <summary>
+    /// The colour from something other than the percentage (a command tile's exit code); <see langword="null"/> uses the
+    /// thresholds.
+    /// </summary>
+    public CommandLevel? Level
+    {
+        get => _level;
+        set
+        {
+            if (SetProperty(ref _level, value))
+            {
+                OnPropertyChanged(nameof(LevelBrush));
+            }
+        }
+    }
+
+    /// <summary>Raised once, when <see cref="Detach"/> is called.</summary>
+    public event EventHandler? Detached;
+
     /// <summary>Tooltip line, e.g. "C:\ — 120 GB free of 500 GB".</summary>
     public string Detail => _detail;
 
-    public Brush LevelBrush => _percent switch
+    public Brush LevelBrush => _level switch
+    {
+        CommandLevel.Ok => NormalBrush,
+        CommandLevel.Warning => WarningBrush,
+        CommandLevel.Failed => CriticalBrush,
+        CommandLevel.Unknown => UnknownBrush,
+        _ => LevelFromPercent,
+    };
+
+    private Brush LevelFromPercent => _percent switch
     {
         null => UnknownBrush,
         var p when p >= _criticalAt => CriticalBrush,
@@ -99,7 +138,16 @@ public sealed class GaugeState : ObservableObject
         OnAllPropertiesChanged();
     }
 
-    public void Detach() => IsDetached = true;
+    public void Detach()
+    {
+        if (IsDetached)
+        {
+            return;
+        }
+
+        IsDetached = true;
+        Detached?.Invoke(this, EventArgs.Empty);
+    }
 
     private static Geometry BuildArc(double percent)
     {

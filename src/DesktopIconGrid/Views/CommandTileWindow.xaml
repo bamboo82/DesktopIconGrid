@@ -1,0 +1,92 @@
+<Window x:Class="DesktopIconGrid.Views.CommandTileWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:r="clr-namespace:DesktopIconGrid.Resources"
+        Title="{x:Static r:Strings.Command_Title}"
+        Width="520"
+        SizeToContent="Height"
+        ResizeMode="NoResize"
+        WindowStartupLocation="CenterOwner"
+        ShowInTaskbar="False"
+        Icon="{StaticResource AppIconImage}"
+        FocusManager.FocusedElement="{Binding ElementName=NameBox}">
+  <Grid Margin="14">
+    <Grid.ColumnDefinitions>
+      <ColumnDefinition Width="Auto" MinWidth="100" />
+      <ColumnDefinition Width="*" />
+      <ColumnDefinition Width="Auto" />
+    </Grid.ColumnDefinitions>
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="Auto" />
+    </Grid.RowDefinitions>
+
+    <TextBlock Grid.Row="0" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Common_NameLabel}" Margin="0,0,12,8" />
+    <TextBox x:Name="NameBox" Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="2" Style="{StaticResource DialogTextBox}"
+             Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" />
+
+    <TextBlock Grid.Row="1" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Command_Program}" Margin="0,0,12,8" />
+    <TextBox x:Name="ProgramBox" Grid.Row="1" Grid.Column="1" Style="{StaticResource DialogTextBox}"
+             Text="{Binding Program, UpdateSourceTrigger=PropertyChanged}" />
+    <Button Grid.Row="1" Grid.Column="2" Content="…" MinWidth="32" Margin="6,0,0,8"
+            ToolTip="{x:Static r:Strings.Props_BrowseFile}" AutomationProperties.Name="{x:Static r:Strings.Props_BrowseFile}"
+            Click="BrowseProgram_Click" />
+
+    <TextBlock Grid.Row="2" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Command_Arguments}" Margin="0,0,12,8" />
+    <TextBox Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2" Style="{StaticResource DialogTextBox}"
+             Text="{Binding Arguments, UpdateSourceTrigger=PropertyChanged}" />
+
+    <TextBlock Grid.Row="3" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Command_StartIn}" Margin="0,0,12,8" />
+    <TextBox Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="2" Style="{StaticResource DialogTextBox}"
+             Text="{Binding StartIn, UpdateSourceTrigger=PropertyChanged}" />
+
+    <TextBlock Grid.Row="4" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Command_Every}" Margin="0,0,12,2" />
+    <StackPanel Grid.Row="4" Grid.Column="1" Grid.ColumnSpan="2" Margin="0,0,0,8">
+      <TextBox Style="{StaticResource DialogTextBox}" Width="90" HorizontalAlignment="Left" Margin="0"
+               Text="{Binding Interval, UpdateSourceTrigger=PropertyChanged}" />
+      <TextBlock Text="{x:Static r:Strings.Command_EveryHint}" Foreground="{DynamicResource DialogHintBrush}" TextWrapping="Wrap" Margin="0,2,0,0" />
+    </StackPanel>
+
+    <TextBlock Grid.Row="5" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Command_Timeout}" Margin="0,0,12,8" />
+    <TextBox Grid.Row="5" Grid.Column="1" Style="{StaticResource DialogTextBox}" Width="90" HorizontalAlignment="Left"
+             Text="{Binding Timeout, UpdateSourceTrigger=PropertyChanged}" />
+
+    <TextBlock Grid.Row="6" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Command_Show}" Margin="0,0,12,8" />
+    <ComboBox Grid.Row="6" Grid.Column="1" Grid.ColumnSpan="2" Margin="0,0,0,8" VerticalContentAlignment="Center"
+              ItemsSource="{Binding Displays}" SelectedItem="{Binding SelectedDisplay}" DisplayMemberPath="Label" />
+
+    <StackPanel Grid.Row="7" Grid.Column="1" Grid.ColumnSpan="2" Orientation="Horizontal" Margin="0,0,0,8"
+                Visibility="{Binding ShowsGauge, Converter={StaticResource BoolToVisibility}}">
+      <TextBlock Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Command_WarningAt}" Margin="0,0,6,0" />
+      <TextBox Style="{StaticResource DialogTextBox}" Width="60" Margin="0,0,16,0" Text="{Binding WarningAt, UpdateSourceTrigger=PropertyChanged}" />
+      <TextBlock Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Command_CriticalAt}" Margin="0,0,6,0" />
+      <TextBox Style="{StaticResource DialogTextBox}" Width="60" Margin="0" Text="{Binding CriticalAt, UpdateSourceTrigger=PropertyChanged}" />
+    </StackPanel>
+
+    <TextBlock Grid.Row="8" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Command_Click}" Margin="0,0,12,8" />
+    <StackPanel Grid.Row="8" Grid.Column="1" Grid.ColumnSpan="2" Margin="0,0,0,8">
+      <RadioButton Content="{x:Static r:Strings.Command_ClickRun}" IsChecked="{Binding RunsOnClick}" Margin="0,2,0,4" />
+      <RadioButton Content="{x:Static r:Strings.Command_ClickOpen}" IsChecked="{Binding OpensTarget}" Margin="0,0,0,4" />
+      <TextBox Style="{StaticResource DialogTextBox}" Margin="20,0,0,0" IsEnabled="{Binding OpensTarget}"
+               AutomationProperties.Name="{x:Static r:Strings.Command_ClickOpen}"
+               Text="{Binding OpenTarget, UpdateSourceTrigger=PropertyChanged}" />
+    </StackPanel>
+
+    <TextBlock Grid.Row="9" Grid.ColumnSpan="3" Text="{x:Static r:Strings.Command_SaveApproves}" TextWrapping="Wrap"
+               Foreground="{DynamicResource DialogHintBrush}" Margin="0,4,0,8" />
+
+    <StackPanel Grid.Row="10" Grid.ColumnSpan="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,8,0,0">
+      <Button Content="{x:Static r:Strings.Common_OK}" Style="{StaticResource DialogButton}" IsDefault="True" IsEnabled="{Binding CanSave}" Click="Ok_Click" />
+      <Button Content="{x:Static r:Strings.Common_Cancel}" Style="{StaticResource DialogButton}" IsCancel="True" />
+    </StackPanel>
+  </Grid>
+</Window>

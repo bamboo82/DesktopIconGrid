@@ -645,6 +645,294 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to This command tile came with the bar and has not been approved on this PC. [rest of string was truncated]";.
+        /// </summary>
+        public static string Command_ApproveQuestion {
+            get {
+                return ResourceManager.GetString("Command_ApproveQuestion", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Run this command on this PC?.
+        /// </summary>
+        public static string Command_ApproveTitle {
+            get {
+                return ResourceManager.GetString("Command_ApproveTitle", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Arguments:.
+        /// </summary>
+        public static string Command_Arguments {
+            get {
+                return ResourceManager.GetString("Command_Arguments", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to On a click:.
+        /// </summary>
+        public static string Command_Click {
+            get {
+                return ResourceManager.GetString("Command_Click", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Open this instead:.
+        /// </summary>
+        public static string Command_ClickOpen {
+            get {
+                return ResourceManager.GetString("Command_ClickOpen", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Run it now.
+        /// </summary>
+        public static string Command_ClickRun {
+            get {
+                return ResourceManager.GetString("Command_ClickRun", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Could not start: {0}.
+        /// </summary>
+        public static string Command_CouldNotStart {
+            get {
+                return ResourceManager.GetString("Command_CouldNotStart", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Red from:.
+        /// </summary>
+        public static string Command_CriticalAt {
+            get {
+                return ResourceManager.GetString("Command_CriticalAt", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Command.
+        /// </summary>
+        public static string Command_DefaultName {
+            get {
+                return ResourceManager.GetString("Command_DefaultName", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Runs a command on a timer or on a click, without a window, and shows its output [rest of string was truncated]";.
+        /// </summary>
+        public static string Command_Desc {
+            get {
+                return ResourceManager.GetString("Command_Desc", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Run every (seconds):.
+        /// </summary>
+        public static string Command_Every {
+            get {
+                return ResourceManager.GetString("Command_Every", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 0 runs it only on a click; otherwise at least 10..
+        /// </summary>
+        public static string Command_EveryHint {
+            get {
+                return ResourceManager.GetString("Command_EveryHint", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Command tile.
+        /// </summary>
+        public static string Command_Name {
+            get {
+                return ResourceManager.GetString("Command_Name", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to (none).
+        /// </summary>
+        public static string Command_None {
+            get {
+                return ResourceManager.GetString("Command_None", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Not run yet.
+        /// </summary>
+        public static string Command_NotRunYet {
+            get {
+                return ResourceManager.GetString("Command_NotRunYet", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to No program is set. Open Properties to set one..
+        /// </summary>
+        public static string Command_NotSet {
+            get {
+                return ResourceManager.GetString("Command_NotSet", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Paused on this PC: this command came with the bar from elsewhere (sync, a restor [rest of string was truncated]";.
+        /// </summary>
+        public static string Command_Paused {
+            get {
+                return ResourceManager.GetString("Command_Paused", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Program:.
+        /// </summary>
+        public static string Command_Program {
+            get {
+                return ResourceManager.GetString("Command_Program", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Exit code {0} at {1}, in {2} s.
+        /// </summary>
+        public static string Command_Ran {
+            get {
+                return ResourceManager.GetString("Command_Ran", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Run now.
+        /// </summary>
+        public static string Command_RunNow {
+            get {
+                return ResourceManager.GetString("Command_RunNow", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Running….
+        /// </summary>
+        public static string Command_Running {
+            get {
+                return ResourceManager.GetString("Command_Running", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Saving approves this command to run on this PC. On other PCs that get the bar th [rest of string was truncated]";.
+        /// </summary>
+        public static string Command_SaveApproves {
+            get {
+                return ResourceManager.GetString("Command_SaveApproves", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Show:.
+        /// </summary>
+        public static string Command_Show {
+            get {
+                return ResourceManager.GetString("Command_Show", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to A number from the output, as a bar.
+        /// </summary>
+        public static string Command_ShowBar {
+            get {
+                return ResourceManager.GetString("Command_ShowBar", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to A number from the output.
+        /// </summary>
+        public static string Command_ShowNumber {
+            get {
+                return ResourceManager.GetString("Command_ShowNumber", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to A number from the output, as a ring.
+        /// </summary>
+        public static string Command_ShowRing {
+            get {
+                return ResourceManager.GetString("Command_ShowRing", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The first line of output.
+        /// </summary>
+        public static string Command_ShowText {
+            get {
+                return ResourceManager.GetString("Command_ShowText", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Start in:.
+        /// </summary>
+        public static string Command_StartIn {
+            get {
+                return ResourceManager.GetString("Command_StartIn", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Stopped after {0} s without finishing, at {1}.
+        /// </summary>
+        public static string Command_TimedOut {
+            get {
+                return ResourceManager.GetString("Command_TimedOut", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Time limit (seconds):.
+        /// </summary>
+        public static string Command_Timeout {
+            get {
+                return ResourceManager.GetString("Command_Timeout", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Command tile.
+        /// </summary>
+        public static string Command_Title {
+            get {
+                return ResourceManager.GetString("Command_Title", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Amber from:.
+        /// </summary>
+        public static string Command_WarningAt {
+            get {
+                return ResourceManager.GetString("Command_WarningAt", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to The command line could not be read: {0}.
         /// </summary>
         public static string Commands_Invalid {

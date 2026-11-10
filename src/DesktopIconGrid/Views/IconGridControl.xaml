@@ -120,8 +120,8 @@
                 </Grid>
                 <!-- Number -->
                 <Grid Visibility="{Binding IsNumber, Converter={StaticResource BoolToVisibility}}">
-                  <TextBlock Text="{Binding Label}" FontSize="42" FontWeight="Bold"
-                             Foreground="{Binding LevelBrush}"
+                  <TextBlock Text="{Binding Label}" FontSize="{Binding LabelFontSize}" FontWeight="Bold"
+                             Foreground="{Binding LevelBrush}" TextTrimming="CharacterEllipsis" MaxWidth="98"
                              HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,-14,0,0" />
                   <TextBlock Text="{Binding Caption}" FontSize="22"
                              Foreground="{DynamicResource Theme.Foreground}"

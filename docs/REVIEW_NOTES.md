@@ -9,6 +9,62 @@ The owner relays replies.
 
 ---
 
+## 2026-11-10 (34) — The command tile (ROADMAP #8)
+
+- **What it is.**
+  - `SpecialIconKinds.CommandTile` (`command-tile`) runs a program without a window. It runs every N seconds
+    (at least 10, at most a day; 0 means only on a click).
+  - The tile shows the first line of output, or the first number in it as ring, bar or number, with the
+    tile's thresholds.
+  - The exit code picks the colour: 0 green, 1 amber, anything else red. A non-zero exit beats the
+    thresholds.
+  - A click runs it again or opens a target; *Run now* is in the icon's menu.
+  - Settings stay in `SpecialIconItem.Settings` (`CommandTileSettings`), so an older version keeps the tile
+    as an unknown kind.
+- **The runner.** `CommandTileRunner` goes through `OutputCapture.WithCapture`, the same path as a logged
+  shortcut: `UseShellExecute = false`, `CreateNoWindow`, batch files through `cmd.exe /d /c`.
+  - Each stream is read to its end, but only the first 64 K characters are kept, so a chatty program never
+    blocks.
+  - A time limit (default 30 s, at most 10 min) or a cancel (the tile leaves the bar: `GaugeState.Detached`,
+    new) runs `Kill(entireProcessTree: true)`.
+  - Only one run per tile is under way at a time.
+  - The log gets a line when a tile's colour changes, not on every run.
+- **Trust (the part to look at hardest).** `CommandTrust` keeps approved hashes per `ThisDevice.Id` in
+  `command-trust.json` in the local data folder, never in the layout and never synced.
+  - The hash is SHA-256 over program, arguments and start folder, joined by line breaks, which `Problem()`
+    refuses inside the fields. Timer, display and click are left out, because they do not change what
+    runs.
+  - The rule is stricter than the roadmap's "commands that arrive through sync". *Every* tile needs approval
+    on this PC, and saving its properties here gives it. So a tile from sync, a restored layout, an import
+    or a hand-edited `layout.json` shows ⏸. A click shows program, arguments and start folder and asks;
+    *Yes* approves and starts it, and any other tile with the same command starts too
+    (`CommandTrust.Changed`). An edit on any PC makes a new hash, which pauses the tile on every other PC.
+  - A damaged trust file approves nothing.
+- **Points to look at.**
+  1. Clicking OK in the properties of a paused tile approves it. The dialog shows the full command and says
+     that saving approves it. I think seeing it and pressing OK is approval, but it is a second way in.
+  2. The hash is over the command as written, not as resolved. `%VAR%` and a bare program name found
+     through `PATH` can mean different files on two PCs; approving the text approves whatever it resolves to
+     on this PC.
+  3. In portable mode the trust file travels with the data folder on a stick. It is keyed by device id, so
+     another PC still has to approve.
+  4. Output is decoded as for a logged shortcut (the .NET default). Console programs writing non-ASCII in the
+     OEM code page will show garbled text. That holds for the log viewer too; one fix could cover both.
+  5. On app exit an in-flight run is not cancelled. It is left to end on its own, which the time limit does
+     not cover once the app is gone.
+- **Display.** `GaugeState` gets `Level` (a colour from outside the percentage) and `LabelFontSize`, so the
+  number style shrinks for longer text (≤ 4 chars at 42 down to 18) and trims with an ellipsis. The CPU and
+  disk gauges look as before.
+- **Tests.**
+  - Core, `CommandTileTests` (17): settings round trip and ranges, broken values, what the hash covers
+    (including that a field's end cannot slide into the next), text/gauge readings, thresholds against the
+    exit code, approval per PC and from the file, a damaged file, the 500-entry cap.
+  - App, `CommandTileTests`: output and exit code through `cmd`, the time limit stopping a `ping` tree, a
+    missing program, and the dialog saving only runnable settings. The three runner tests are Windows only.
+  - Not tried by hand: the tile on a real bar, the approval prompt, the dialog's layout.
+
+---
+
 ## 2026-11-10 (33) — Window keys (`5c0ee40`), the command line (`a95c410` and this commit) and *Send to*
 
 L3: this entry covers `a95c410` and `5c0ee40`, which came without one, and the commit that adds it.

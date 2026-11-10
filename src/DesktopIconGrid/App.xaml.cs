@@ -7,6 +7,7 @@ using System.Windows;
 using System.Windows.Interop;
 using System.Windows.Threading;
 using DesktopIconGrid.Core.Commands;
+using DesktopIconGrid.Core.SpecialIcons;
 using DesktopIconGrid.Core;
 using DesktopIconGrid.Core.Diagnostics;
 using DesktopIconGrid.Core.Models;
@@ -136,6 +137,7 @@ public partial class App : Application
             new DiskUsageHandler(_monitor, owner),
             new DriveBucketHandler(syncService, dialogs, owner, icons, cacheDirectory, Dispatcher),
             new SoundReplayerHandler(owner, AppPaths.SoundsDirectory, Dispatcher),
+            new CommandTileHandler(new CommandTrust(Path.Combine(AppPaths.DataDirectory, CommandTrust.FileName)), dialogs, owner, Dispatcher),
         ]);
         var launcher = new LaunchService(_tracker, dialogs);
         _windows = new WindowSwitcher();

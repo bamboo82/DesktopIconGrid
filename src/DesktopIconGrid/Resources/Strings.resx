@@ -1874,4 +1874,106 @@ Details are in {1}.</value>
   <data name="Commands_SendToFailed" xml:space="preserve">
     <value>The Send To entry could not be changed: {0}</value>
   </data>
+  <data name="Command_Name" xml:space="preserve">
+    <value>Command tile</value>
+  </data>
+  <data name="Command_Desc" xml:space="preserve">
+    <value>Runs a command on a timer or on a click, without a window, and shows its output or a number from it.</value>
+  </data>
+  <data name="Command_DefaultName" xml:space="preserve">
+    <value>Command</value>
+  </data>
+  <data name="Command_Title" xml:space="preserve">
+    <value>Command tile</value>
+  </data>
+  <data name="Command_Program" xml:space="preserve">
+    <value>Program:</value>
+  </data>
+  <data name="Command_Arguments" xml:space="preserve">
+    <value>Arguments:</value>
+  </data>
+  <data name="Command_StartIn" xml:space="preserve">
+    <value>Start in:</value>
+  </data>
+  <data name="Command_Every" xml:space="preserve">
+    <value>Run every (seconds):</value>
+  </data>
+  <data name="Command_EveryHint" xml:space="preserve">
+    <value>0 runs it only on a click; otherwise at least 10.</value>
+  </data>
+  <data name="Command_Timeout" xml:space="preserve">
+    <value>Time limit (seconds):</value>
+  </data>
+  <data name="Command_Show" xml:space="preserve">
+    <value>Show:</value>
+  </data>
+  <data name="Command_ShowText" xml:space="preserve">
+    <value>The first line of output</value>
+  </data>
+  <data name="Command_ShowRing" xml:space="preserve">
+    <value>A number from the output, as a ring</value>
+  </data>
+  <data name="Command_ShowBar" xml:space="preserve">
+    <value>A number from the output, as a bar</value>
+  </data>
+  <data name="Command_ShowNumber" xml:space="preserve">
+    <value>A number from the output</value>
+  </data>
+  <data name="Command_WarningAt" xml:space="preserve">
+    <value>Amber from:</value>
+  </data>
+  <data name="Command_CriticalAt" xml:space="preserve">
+    <value>Red from:</value>
+  </data>
+  <data name="Command_Click" xml:space="preserve">
+    <value>On a click:</value>
+  </data>
+  <data name="Command_ClickRun" xml:space="preserve">
+    <value>Run it now</value>
+  </data>
+  <data name="Command_ClickOpen" xml:space="preserve">
+    <value>Open this instead:</value>
+  </data>
+  <data name="Command_SaveApproves" xml:space="preserve">
+    <value>Saving approves this command to run on this PC. On other PCs that get the bar through sync, it stays paused until it is approved there. The exit code picks the colour: 0 green, 1 amber, anything else red.</value>
+  </data>
+  <data name="Command_NotRunYet" xml:space="preserve">
+    <value>Not run yet</value>
+  </data>
+  <data name="Command_Paused" xml:space="preserve">
+    <value>Paused on this PC: this command came with the bar from elsewhere (sync, a restore or an import). Click to see it and approve it.</value>
+  </data>
+  <data name="Command_NotSet" xml:space="preserve">
+    <value>No program is set. Open Properties to set one.</value>
+  </data>
+  <data name="Command_ApproveTitle" xml:space="preserve">
+    <value>Run this command on this PC?</value>
+  </data>
+  <data name="Command_ApproveQuestion" xml:space="preserve">
+    <value>This command tile came with the bar and has not been approved on this PC.
+
+Program: {0}
+Arguments: {1}
+Start in: {2}
+
+Approve it to run here, now and on its timer?</value>
+  </data>
+  <data name="Command_Ran" xml:space="preserve">
+    <value>Exit code {0} at {1}, in {2} s</value>
+  </data>
+  <data name="Command_TimedOut" xml:space="preserve">
+    <value>Stopped after {0} s without finishing, at {1}</value>
+  </data>
+  <data name="Command_CouldNotStart" xml:space="preserve">
+    <value>Could not start: {0}</value>
+  </data>
+  <data name="Command_RunNow" xml:space="preserve">
+    <value>Run now</value>
+  </data>
+  <data name="Command_Running" xml:space="preserve">
+    <value>Running…</value>
+  </data>
+  <data name="Command_None" xml:space="preserve">
+    <value>(none)</value>
+  </data>
 </root>

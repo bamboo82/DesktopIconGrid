@@ -217,6 +217,18 @@ Both draw the value in a design you pick (ring, bar or number) with green/amber/
   stopped); release to play the recording back in an endless loop; a single click stops it.
   A click while stopped replays the last recording. Shows REC / LOOP on the icon.
 
+- **Command tile** (0.9.0) — runs a program without a window, every N seconds (at least 10) or only on a
+  click, and shows the first line of its output, or the first number in it as a ring, bar or number with
+  amber and red thresholds. The exit code picks the colour (0 green, 1 amber, anything else red); a run
+  over its time limit (default 30 s) is stopped with its child processes and shows red. The tooltip has
+  the command, the exit code, the time and the first lines of output. A click runs it again, or opens a
+  folder, file or address instead; *Run now* is in its menu. Batch files run through `cmd.exe /d /c`.
+  **Trust:** a tile runs only once its program, arguments and start folder are approved on this PC.
+  Saving its properties here approves them; a tile that comes with the bar from elsewhere (sync, a
+  restored layout, an import, a hand-edited file) shows ⏸ until a click shows the command and asks.
+  Approvals are kept per PC in `command-trust.json` in the local data folder, which is never synced;
+  changing what runs on any PC needs a new approval everywhere.
+
 The item model, handler interface, registry and the bucket are specified in
 [docs/SPECIAL_ICONS.md](docs/SPECIAL_ICONS.md).
 
