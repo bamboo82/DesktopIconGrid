@@ -663,6 +663,7 @@ public partial class IconGridControl : UserControl
             PopulateSpecialIcons(menu, handler => item.Root.AddSpecialIconAfter(handler, item));
             PopulateSpecialActions(menu, item);
             PopulateColorTags(menu, item);
+            PopulateWorkspaces(menu, item);
         }
     }
 
@@ -692,6 +693,34 @@ public partial class IconGridControl : UserControl
         {
             item.Root.SetSeparatorKind(item, kind);
         }
+    }
+
+    /// <summary>"Workspaces ▸": the bar's workspaces with this shortcut's ticked, and "New workspace…".</summary>
+    private static void PopulateWorkspaces(ContextMenu menu, ItemViewModel item)
+    {
+        var host = menu.Items.OfType<MenuItem>().FirstOrDefault(m => Equals(m.Tag, "workspaces"));
+        if (host is null || !item.IsShortcut)
+        {
+            return;
+        }
+
+        host.Items.Clear();
+        foreach (var name in item.Root.WorkspaceNames.Where(name => !Core.Launching.Workspaces.Same(name, Core.Launching.Workspaces.MultiLaunch)))
+        {
+            var entry = new MenuItem { Header = name.Replace("_", "__", StringComparison.Ordinal), IsChecked = item.Root.IsInWorkspace(item, name) };
+            var workspace = name;
+            entry.Click += (_, _) => item.Root.ToggleWorkspace(item, workspace);
+            host.Items.Add(entry);
+        }
+
+        if (host.Items.Count > 0)
+        {
+            host.Items.Add(new Separator());
+        }
+
+        var add = new MenuItem { Header = Strings.Workspace_NewMenu };
+        add.Click += (_, _) => item.Root.AddToNewWorkspace(item);
+        host.Items.Add(add);
     }
 
     /// <summary>"Colour tag ▸": one entry per colour with its swatch, the current one checked, and None.</summary>

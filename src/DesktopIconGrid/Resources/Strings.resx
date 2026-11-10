@@ -2198,4 +2198,37 @@ Details are in {1}.</value>
   <data name="Mic_None" xml:space="preserve">
     <value>No microphone was found.</value>
   </data>
+  <data name="Menu_Workspaces" xml:space="preserve">
+    <value>Workspaces</value>
+  </data>
+  <data name="Workspace_MultiLaunch" xml:space="preserve">
+    <value>Multi Launch group</value>
+  </data>
+  <data name="Workspace_NewMenu" xml:space="preserve">
+    <value>New workspace…</value>
+  </data>
+  <data name="Workspace_NewTitle" xml:space="preserve">
+    <value>New workspace</value>
+  </data>
+  <data name="Workspace_NewPrompt" xml:space="preserve">
+    <value>Name of the workspace this shortcut joins:</value>
+  </data>
+  <data name="Workspace_BadName" xml:space="preserve">
+    <value>A workspace name has 1 to 40 characters and is not the Multi Launch group's.</value>
+  </data>
+  <data name="Workspace_Start" xml:space="preserve">
+    <value>Start workspace “{0}”</value>
+  </data>
+  <data name="Workspace_Capture" xml:space="preserve">
+    <value>Remember window positions of “{0}”</value>
+  </data>
+  <data name="Workspace_Captured" xml:space="preserve">
+    <value>Remembered where {0} window(s) are. Starting the workspace puts them back there on this PC.</value>
+  </data>
+  <data name="Workspace_NothingCaptured" xml:space="preserve">
+    <value>None of its programs has a window open. Start them, arrange the windows, then try again.</value>
+  </data>
+  <data name="Workspace_None" xml:space="preserve">
+    <value>There is no workspace called “{0}”.</value>
+  </data>
 </root>

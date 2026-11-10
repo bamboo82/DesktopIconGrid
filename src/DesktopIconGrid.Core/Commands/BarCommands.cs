@@ -13,6 +13,9 @@ public enum BarCommandKind
     /// <summary><c>--launch &lt;name&gt;</c>: starts the shortcut of that name, as a click does.</summary>
     Launch,
 
+    /// <summary><c>--workspace &lt;name&gt;</c>: starts that workspace (0.10.0), as its menu entry does.</summary>
+    Workspace,
+
     Show,
 
     Hide,
@@ -87,6 +90,15 @@ public static class BarCommands
                     commands.Add(new BarCommand(BarCommandKind.Launch, args[i + 1]));
                     i += 2;
                     break;
+                case "--workspace":
+                    if (i + 1 >= args.Count || IsOption(args[i + 1]))
+                    {
+                        return ([], "--workspace needs the name of a workspace.");
+                    }
+
+                    commands.Add(new BarCommand(BarCommandKind.Workspace, args[i + 1]));
+                    i += 2;
+                    break;
                 case AddArgument:
                     var paths = new List<string>();
                     i++;
@@ -131,7 +143,7 @@ public static class BarCommands
                     commands.AddRange(paths.Select(path => new BarCommand(BarCommandKind.Add, path, group)));
                     break;
                 default:
-                    return ([], $"\"{arg}\" is not understood. Use --add <path>… [--group <name>], --launch <name>, --show, --hide or --toggle.");
+                    return ([], $"\"{arg}\" is not understood. Use --add <path>… [--group <name>], --launch <name>, --workspace <name>, --show, --hide or --toggle.");
             }
         }
 
@@ -172,6 +184,13 @@ public static class BarCommands
                     if (!IsText(command.Value, MaxTextLength) || command.Group is not null)
                     {
                         return "--launch needs the name of a shortcut.";
+                    }
+
+                    break;
+                case BarCommandKind.Workspace:
+                    if (!IsText(command.Value, MaxGroupLength) || command.Group is not null)
+                    {
+                        return "--workspace needs the name of a workspace.";
                     }
 
                     break;

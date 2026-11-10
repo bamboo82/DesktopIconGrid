@@ -12,6 +12,12 @@ public interface IWindowSwitcher
     /// False when there is no window to switch to, so the caller starts the program.
     /// </summary>
     bool TrySwitch(IReadOnlySet<int> processIds, string? packageFamily = null);
+
+    /// <summary>Where the program's first window is now (for a workspace), or <see langword="null"/> when it has none.</summary>
+    SavedWindow? Capture(IReadOnlySet<int> processIds, string? packageFamily = null) => null;
+
+    /// <summary>Moves the program's first window to <paramref name="target"/>; false when it has no window (yet).</summary>
+    bool Place(IReadOnlySet<int> processIds, string? packageFamily, SavedWindow target) => false;
 }
 
 /// <summary>
@@ -96,6 +102,69 @@ public sealed class WindowSwitcher : IWindowSwitcher, IDisposable
     /// Every top-level window, topmost first, described for <see cref="WindowSwitching"/>; <paramref name="withAppIds"/>
     /// also reads the AppUserModelID of each Store app frame.
     /// </summary>
+    public SavedWindow? Capture(IReadOnlySet<int> processIds, string? packageFamily = null)
+    {
+        if (FirstWindow(processIds, packageFamily) is not { } window)
+        {
+            return null;
+        }
+
+        var maximized = NativeMethods.IsZoomed(window);
+        NativeMethods.RECT rect;
+        if (maximized || NativeMethods.IsIconic(window))
+        {
+            // The rectangle it goes back to. (Workspace coordinates, which differ from screen pixels only by a taskbar at
+            // the top or left of the primary monitor: close enough for a window that is maximised anyway.)
+            var placement = new NativeMethods.WINDOWPLACEMENT { Length = System.Runtime.InteropServices.Marshal.SizeOf<NativeMethods.WINDOWPLACEMENT>() };
+            if (!NativeMethods.GetWindowPlacement(window, ref placement))
+            {
+                return null;
+            }
+
+            rect = placement.NormalPosition;
+        }
+        else if (!NativeMethods.GetWindowRect(window, out rect))
+        {
+            return null;
+        }
+
+        var saved = new SavedWindow(rect.Left, rect.Top, rect.Right - rect.Left, rect.Bottom - rect.Top, maximized);
+        return saved is { Width: > 0, Height: > 0 } ? saved : null;
+    }
+
+    public bool Place(IReadOnlySet<int> processIds, string? packageFamily, SavedWindow target)
+    {
+        ArgumentNullException.ThrowIfNull(target);
+        if (FirstWindow(processIds, packageFamily) is not { } window)
+        {
+            return false;
+        }
+
+        if (NativeMethods.IsIconic(window) || NativeMethods.IsZoomed(window))
+        {
+            NativeMethods.ShowWindowAsync(window, NativeMethods.SW_RESTORE);
+        }
+
+        NativeMethods.SetWindowPos(window, IntPtr.Zero, target.Left, target.Top, target.Width, target.Height, NativeMethods.SWP_NOZORDER | NativeMethods.SWP_NOACTIVATE);
+        if (target.Maximized)
+        {
+            NativeMethods.ShowWindowAsync(window, NativeMethods.SW_MAXIMIZE); // on the monitor the rectangle put it on
+        }
+
+        return true;
+    }
+
+    private static IntPtr? FirstWindow(IReadOnlySet<int> processIds, string? packageFamily)
+    {
+        if ((processIds.Count == 0 && packageFamily is null) || !OperatingSystem.IsWindows())
+        {
+            return null;
+        }
+
+        var windows = WindowSwitching.WindowsOf(Snapshot(withAppIds: packageFamily is not null), processIds, packageFamily);
+        return windows.Count > 0 ? windows[0].Handle : null;
+    }
+
     internal static List<WindowInfo> Snapshot(bool withAppIds = false)
     {
         var windows = new List<WindowInfo>();

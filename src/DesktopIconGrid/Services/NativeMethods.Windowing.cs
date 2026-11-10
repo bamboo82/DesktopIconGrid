@@ -100,6 +100,28 @@ internal static partial class NativeMethods
     public const int DWMWA_CLOAKED = 14;
     public const int SW_MINIMIZE = 6;
     public const int SW_RESTORE = 9;
+    public const int SW_MAXIMIZE = 3;
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct WINDOWPLACEMENT
+    {
+        public int Length;
+        public int Flags;
+        public int ShowCmd;
+        public int MinX;
+        public int MinY;
+        public int MaxX;
+        public int MaxY;
+        public RECT NormalPosition;
+    }
+
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static extern bool GetWindowPlacement(IntPtr hwnd, ref WINDOWPLACEMENT placement);
+
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static extern bool IsZoomed(IntPtr hwnd);
     public const uint EVENT_SYSTEM_FOREGROUND = 0x0003;
     public const uint WINEVENT_OUTOFCONTEXT = 0x0000;
     public const uint WINEVENT_SKIPOWNPROCESS = 0x0002;

@@ -191,6 +191,28 @@ internal sealed class FakeSwitcher : IWindowSwitcher
         LastPackageFamily = packageFamily;
         return Answer;
     }
+
+    /// <summary>What <see cref="Capture"/> answers (a workspace's window), or none.</summary>
+    public DesktopIconGrid.Core.Launching.SavedWindow? CaptureAnswer { get; set; }
+
+    /// <summary>How many <see cref="Place"/> calls find no window before one does (a program still starting).</summary>
+    public int PlaceMissesFirst { get; set; }
+
+    public List<DesktopIconGrid.Core.Launching.SavedWindow> Placed { get; } = [];
+
+    public DesktopIconGrid.Core.Launching.SavedWindow? Capture(IReadOnlySet<int> processIds, string? packageFamily = null) => CaptureAnswer;
+
+    public bool Place(IReadOnlySet<int> processIds, string? packageFamily, DesktopIconGrid.Core.Launching.SavedWindow target)
+    {
+        if (PlaceMissesFirst > 0)
+        {
+            PlaceMissesFirst--;
+            return false;
+        }
+
+        Placed.Add(target);
+        return true;
+    }
 }
 
 /// <summary>

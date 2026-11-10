@@ -133,6 +133,17 @@ public partial class MainWindow : Window
         yield return new TrayMenuEntry(Strings.Menu_NewGroup, () => RunOnBar(() => _viewModel.NewGroupCommand.Execute(null)));
         yield return new TrayMenuEntry(Strings.Menu_EditNames, () => RunOnBar(() => _viewModel.OpenNameTableCommand.Execute(null)));
         yield return new TrayMenuEntry(Strings.Menu_LaunchMultiLaunch, () => _viewModel.LaunchMultiLaunchCommand.Execute(null), IsEnabled: _viewModel.HasMultiLaunchMembers);
+        foreach (var workspace in _viewModel.WorkspaceNames)
+        {
+            var name = workspace;
+            if (!Core.Launching.Workspaces.Same(name, Core.Launching.Workspaces.MultiLaunch))
+            {
+                yield return new TrayMenuEntry(string.Format(Strings.Workspace_Start, name), () => _ = _viewModel.StartWorkspaceAsync(name));
+            }
+
+            yield return new TrayMenuEntry(string.Format(Strings.Workspace_Capture, LauncherViewModel.WorkspaceLabel(name)), () => _viewModel.CaptureWorkspace(name));
+        }
+
         yield return new TrayMenuEntry(Strings.Menu_AlwaysOnTop, () => _viewModel.AlwaysOnTop = !_viewModel.AlwaysOnTop, IsChecked: _viewModel.AlwaysOnTop);
         yield return new TrayMenuEntry(Strings.Menu_SendTo, ToggleSendTo, IsChecked: SendToEntry.Exists);
         yield return TrayMenuEntry.Separator;
@@ -337,6 +348,9 @@ public partial class MainWindow : Window
                     break;
                 case BarCommandKind.Launch:
                     _viewModel.LaunchByName(command.Value!);
+                    break;
+                case BarCommandKind.Workspace:
+                    _ = _viewModel.StartWorkspaceAsync(command.Value!);
                     break;
                 case BarCommandKind.Show:
                     ShowFromOtherInstance();
@@ -880,9 +894,35 @@ public partial class MainWindow : Window
         }
 
         SendToMenuItem.IsChecked = SendToEntry.Exists;
+        PopulateWorkspaceEntries(menu);
         menu.PlacementTarget = button;
         menu.Placement = PlacementMode.Top;
         menu.IsOpen = true;
+    }
+
+    /// <summary>The options menu's workspace entries (start, and remember window positions), under "Launch Multi Launch group".</summary>
+    private void PopulateWorkspaceEntries(ContextMenu menu)
+    {
+        foreach (var stale in menu.Items.OfType<MenuItem>().Where(entry => Equals(entry.Tag, "workspace")).ToList())
+        {
+            menu.Items.Remove(stale);
+        }
+
+        var index = menu.Items.IndexOf(MultiLaunchMenuItem) + 1;
+        foreach (var workspace in _viewModel.WorkspaceNames)
+        {
+            var name = workspace;
+            if (!Core.Launching.Workspaces.Same(name, Core.Launching.Workspaces.MultiLaunch))
+            {
+                var start = new MenuItem { Header = string.Format(Strings.Workspace_Start, name).Replace("_", "__", StringComparison.Ordinal), Tag = "workspace" };
+                start.Click += (_, _) => _ = _viewModel.StartWorkspaceAsync(name);
+                menu.Items.Insert(index++, start);
+            }
+
+            var capture = new MenuItem { Header = string.Format(Strings.Workspace_Capture, LauncherViewModel.WorkspaceLabel(name)).Replace("_", "__", StringComparison.Ordinal), Tag = "workspace" };
+            capture.Click += (_, _) => _viewModel.CaptureWorkspace(name);
+            menu.Items.Insert(index++, capture);
+        }
     }
 
     private void SendTo_Click(object sender, RoutedEventArgs e) => ToggleSendTo();

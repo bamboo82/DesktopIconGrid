@@ -591,6 +591,38 @@ public sealed class LauncherViewModelTests : IDisposable
     }
 
     [Fact]
+    public async Task A_workspace_starts_its_members_and_puts_their_windows_where_they_were_remembered()
+    {
+        var switcher = new FakeSwitcher { Answer = false };
+        var (viewModel, model, dialogs) = Create(switcher);
+        viewModel.WorkspaceStep = TimeSpan.FromMilliseconds(5);
+        viewModel.WorkspaceWindowWait = TimeSpan.FromSeconds(5);
+        var b = viewModel.RootItems.Items[1];
+        ((ShortcutItem)model.Items[0]).MultiLaunch = true;
+
+        dialogs.TextAnswer = " Work ";
+        viewModel.AddToNewWorkspace(b);
+        Assert.Equal([DesktopIconGrid.Core.Launching.Workspaces.MultiLaunch, "Work"], viewModel.WorkspaceNames);
+        Assert.True(viewModel.IsInWorkspace(b, "work"));
+
+        Assert.Equal(0, viewModel.CaptureWorkspace("Work")); // nothing has a window yet
+        var remembered = new DesktopIconGrid.Core.Launching.SavedWindow(100, 50, 800, 600, false);
+        switcher.CaptureAnswer = remembered;
+        Assert.Equal(1, viewModel.CaptureWorkspace("Work"));
+
+        switcher.PlaceMissesFirst = 2; // the program takes a moment to show its window
+        await viewModel.StartWorkspaceAsync("work");
+
+        Assert.Equal([(@"C:\b.exe", false)], _launcher.Launches); // only the member, not the Multi Launch one
+        Assert.Equal([remembered, remembered], switcher.Placed); // when the window showed, and once more for late movers
+
+        viewModel.ToggleWorkspace(b, "Work");
+        Assert.Equal([DesktopIconGrid.Core.Launching.Workspaces.MultiLaunch], viewModel.WorkspaceNames);
+        await viewModel.StartWorkspaceAsync("Work"); // gone: said, nothing started
+        Assert.Single(_launcher.Launches);
+    }
+
+    [Fact]
     public void The_command_line_adds_into_a_named_group_once_and_launches_by_name()
     {
         var (viewModel, _, dialogs) = Create();

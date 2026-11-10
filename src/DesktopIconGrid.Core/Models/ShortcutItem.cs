@@ -91,6 +91,12 @@ public sealed class ShortcutItem : LauncherItem
     public bool MultiLaunch { get; set; }
 
     /// <summary>
+    /// The workspaces this shortcut belongs to besides the Multi Launch group (0.10.0; see
+    /// <see cref="Launching.Workspaces"/>); <see langword="null"/> when there are none.
+    /// </summary>
+    public List<string>? Workspaces { get; set; }
+
+    /// <summary>
     /// Start the program with its output captured to a log file (console programs and batch files only;
     /// the program then runs without a console window of its own).
     /// </summary>
@@ -124,6 +130,7 @@ public sealed class ShortcutItem : LauncherItem
     {
         var copy = (ShortcutItem)MemberwiseClone();
         copy.Locations = CopyLocations(Locations);
+        copy.Workspaces = Workspaces is { Count: > 0 } ? [.. Workspaces] : null;
         return copy;
     }
 
@@ -144,6 +151,7 @@ public sealed class ShortcutItem : LauncherItem
             Locations = CopyLocations(shortcut.Locations);
             Parameters = string.IsNullOrWhiteSpace(shortcut.Parameters) ? null : shortcut.Parameters.Trim();
             MultiLaunch = shortcut.MultiLaunch;
+            Workspaces = shortcut.Workspaces is { Count: > 0 } ? [.. shortcut.Workspaces] : null;
             CaptureLog = shortcut.CaptureLog;
             WhenRunning = shortcut.WhenRunning;
             StartIn = string.IsNullOrWhiteSpace(shortcut.StartIn) ? null : shortcut.StartIn.Trim();

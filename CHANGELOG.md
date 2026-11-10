@@ -22,10 +22,18 @@ a bucket), then workspaces and sending a file to another PC.
   the file out, *Open folder* shows it in File Explorer, and the list follows changes in the folder.
 - **Microphone** tile: a click mutes or unmutes the default microphone for every program; red while muted,
   and it follows mutes made elsewhere.
+- Workspaces: named sets of shortcuts (*Workspaces ▸* in a shortcut's menu) that start together from the
+  options or tray menu, or with `--workspace <name>`. *Remember window positions* records where each member's
+  window is, and starting the workspace puts the windows back there on this PC.
 - Every gauge's tooltip ends with a line of its last 60 samples (`▁▂▃▅▇█`).
 - **Clock** tile: the time on this PC or in another time zone. A click can start a countdown, or a Pomodoro
   (work, break, repeat, 25 and 5 minutes unless you set others), with a notification at the end of each
   phase; another click stops it.
+
+### Changed
+
+- *Launch Multi Launch group* no longer starts a member that is already running; it is now the built-in
+  workspace and puts remembered windows back too.
 
 ## [0.9.0] – 2026-11-10
 

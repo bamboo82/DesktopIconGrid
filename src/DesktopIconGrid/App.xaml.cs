@@ -7,6 +7,7 @@ using System.Windows;
 using System.Windows.Interop;
 using System.Windows.Threading;
 using DesktopIconGrid.Core.Commands;
+using DesktopIconGrid.Core.Launching;
 using DesktopIconGrid.Core.SpecialIcons;
 using DesktopIconGrid.Core;
 using DesktopIconGrid.Core.Diagnostics;
@@ -160,7 +161,8 @@ public partial class App : Application
             specialIcons,
             action => Dispatcher.BeginInvoke(DispatcherPriority.Background, action),
             _windows,
-            trust: trust);
+            trust: trust,
+            workspacePositions: new WorkspacePositions(Path.Combine(AppPaths.DataDirectory, WorkspacePositions.FileName)));
 
         // First paint; the bar window refines this once it has a handle (backdrop, High Contrast, settings changes).
         ThemeManager.Apply(ThemeManager.EffectivePalette(viewModel.Palette));

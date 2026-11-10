@@ -26,7 +26,7 @@ button at the top-right and a small options arrow at the bottom-right.
 | Show/hide hotkey | A system-wide combination set in Settings (e.g. `Ctrl+Alt+Space`) hides the bar or brings it to the front from any program. |
 | Show-at-pointer hotkey (0.7.0) | A second combination opens the icons in a small window under the mouse pointer with the search box focused, on the pointer's monitor and inside its work area. It works while the bar is hidden or auto-hidden; groups open in place with a back button (or Backspace); it closes after a launch, on Esc and when it loses the focus. |
 | Search box (0.7.0) | Typing while the bar has the focus (or `Ctrl+F`) opens a box at the bottom of the bar; see §3. |
-| Command line and *Send to* (0.9.0) | `DesktopIconGrid.exe --add <path>… [--group <name>]` adds shortcuts (into that group, made when missing), `--launch <name>` starts a shortcut as a click does, `--show`, `--hide` and `--toggle` work the bar. `--group <name>` may also come right after `--add`, so a *Send to* shortcut edited to `--add --group Tools` adds into Tools. Paths must be full (`C:\…` or `\\server\share\…`). When the bar runs already, the second start hands the commands over through a pipe only this Windows user can open, and ends; it exits with 0 when they arrived, 2 for a command line it cannot read, and 3 when no bar took them (none answered, or the bar runs with other rights: elevated against plain). *In Explorer's Send To menu* (options and tray menus) puts the bar in *Send to*, so selected files and folders land at its end. |
+| Command line and *Send to* (0.9.0) | `DesktopIconGrid.exe --add <path>… [--group <name>]` adds shortcuts (into that group, made when missing), `--launch <name>` starts a shortcut as a click does, `--workspace <name>` starts a workspace (0.10.0), `--show`, `--hide` and `--toggle` work the bar. `--group <name>` may also come right after `--add`, so a *Send to* shortcut edited to `--add --group Tools` adds into Tools. Paths must be full (`C:\…` or `\\server\share\…`). When the bar runs already, the second start hands the commands over through a pipe only this Windows user can open, and ends; it exits with 0 when they arrived, 2 for a command line it cannot read, and 3 when no bar took them (none answered, or the bar runs with other rights: elevated against plain). *In Explorer's Send To menu* (options and tray menus) puts the bar in *Send to*, so selected files and folders land at its end. |
 | Background | A theme: Classic (the olive grey of the reference), Graphite, Paper, Midnight, Sand, or a Custom colour with automatically matched text and highlight colours. See [docs/THEMES.md](docs/THEMES.md). |
 
 - Icons are laid out in reading order and **wrap** to fill the width: the number of
@@ -392,6 +392,22 @@ A set of shortcuts that start together.
   bar order with a short delay between launches. Failures are reported once, together.
 - Groups cannot be members, but shortcuts inside groups can.
 
+**Workspaces (0.10.0).** Several named sets, each remembering where its windows go on this PC. The
+Multi Launch group is the built-in one (its flag is unchanged, so older versions still see it).
+
+- *Workspaces ▸* in a shortcut's menu ticks the workspaces it belongs to; *New workspace…* asks for a
+  name (1–40 characters). A workspace exists while it has members.
+- *Start workspace "X"* (options and tray menus, or `--workspace X` on the command line) starts the
+  members that are not running, 300 ms apart; members already running are not started again.
+- *Remember window positions of "X"* records each running member's first window: its rectangle in
+  screen pixels and whether it is maximised. Starting the workspace then moves each member's window
+  there: at once when it runs already, when its first window shows (up to 15 s) when it was just
+  started, and once more 2 seconds later for programs that restore their own position late.
+- Positions are kept in `workspaces.json` in the local data folder and are never synced: they belong to
+  this PC's monitors. Membership is part of the layout and syncs.
+- Limits: one window per member (the first the taskbar would show); a window of an elevated program
+  cannot be moved by the bar; a monitor that is gone leaves the window where Windows puts it.
+
 ## 6. Properties dialogs
 
 Both dialogs follow the reference layout: a labelled form, an icon preview with
@@ -686,7 +702,7 @@ same way.
 
 **0.10.0 "Bigger moves"** *(in progress)* — first what was planned for 0.9.0 and is not in it: more gauges
 (memory, battery, network and the sparkline: in), the clock and timer tile (in), folder
-stacks (in), paste to a bucket (in), microphone tile (in). Then: workspaces (Multi Launch that puts windows back); send a file to another PC;
+stacks (in), paste to a bucket (in), microphone tile (in). Then: workspaces (in) (Multi Launch that puts windows back); send a file to another PC;
 voice launch, if the spike says yes.
 
 **1.0.0 "Ship it"** — the existing backlog: installer (MSIX/winget), code signing, toast notifications.

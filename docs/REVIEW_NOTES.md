@@ -9,6 +9,42 @@ The owner relays replies.
 
 ---
 
+## 2026-11-10 (47) — Workspaces (ROADMAP #4)
+
+- **Model.** `ShortcutItem.Workspaces` (names, null when none) sits beside the unchanged `MultiLaunch` flag, which
+  is the built-in workspace `Workspaces.MultiLaunch`. I kept the flag rather than migrating it, so 0.9.x and
+  older still see the group. `Core.Launching.Workspaces`: `Normalize` (1–40 chars, no control chars, not the
+  built-in name), `IsMember` / `SetMember` (case-insensitive, stored once), `Names`, `Members`.
+- **Positions.** `WorkspacePositions` keeps workspace → shortcut id → `SavedWindow(Left, Top, Width, Height,
+  Maximized)` in the local `workspaces.json`, written with temp + move. An unreadable file means nothing is moved.
+  It is never synced.
+- **Windows.** `IWindowSwitcher` gains `Capture` and `Place` as default interface methods, so the test fake needs
+  no change.
+  - `WindowSwitcher.Capture` uses the first window `WindowSwitching.WindowsOf` returns: `GetWindowRect`, or
+    `GetWindowPlacement.NormalPosition` when it is maximised or minimised.
+  - `Place` restores the window, calls `SetWindowPos` with NOZORDER and NOACTIVATE, then maximises if asked.
+- **Start.** `StartWorkspaceAsync` launches members with no running process (`Tracker.ProcessIdsOf` empty),
+  `WorkspaceStep` apart. It then polls `Place` for each member with a saved position until every one has a
+  window or `WorkspaceWindowWait` (15 s) passes, and places once more after 2 s. The processes are the running
+  copies plus what the bar started for the shortcut.
+- **Behaviour change.** `LaunchMultiLaunchGroupAsync` is now `StartWorkspaceAsync(MultiLaunch)`, so the Multi
+  Launch group no longer starts a member that already runs. It is in the CHANGELOG under Changed.
+- **UI.** *Workspaces ▸* in the shortcut menu (ticks, *New workspace…* through `AskText`). The options and tray
+  menus get *Start workspace "X"* and *Remember window positions of "X"*, flat entries built when the menu
+  opens. `--workspace <name>` is a new `BarCommandKind`, validated like `--launch`.
+- **To look at.**
+  1. `NormalPosition` is in workspace coordinates and is used as screen pixels. It is off by the taskbar's size
+     only when the taskbar is at the top or left of the primary monitor, and only for the restored rectangle of
+     a maximised window.
+  2. A synced workspace name starts nothing on its own: starting one is a click or a command line here.
+     `--workspace` can now start several programs from one command line, but only the bar's own shortcuts.
+  3. `Place` on an elevated program's window fails silently (UIPI). It is logged as "no window to place"
+     only when no window was found at all.
+- **Tests.** Core: membership, names, copies, the positions file, the command. App: a workspace starts only
+  its members, waits for the window, places twice, and reports an unknown name. Real window moves are **not**
+  tested anywhere.
+- Runs 134 (`26d8a21`, stacks) and 135 (`7f79178`, mic) are green.
+
 ## 2026-11-10 (46) — Microphone mute tile
 
 - `Services.MicrophoneControl`: `MMDeviceEnumerator` → `GetDefaultAudioEndpoint(eCapture, eCommunications)`, falling

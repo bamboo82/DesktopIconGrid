@@ -40,6 +40,7 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
 
     /// <summary>Whether a shortcut's target is missing on this PC (<see cref="LocationProbe"/>; tests give their own answer).</summary>
     private readonly Func<ShortcutItem, bool> _isMissing;
+    private readonly WorkspacePositions _workspacePositions;
     private string _searchText = string.Empty;
     private ItemViewModel? _launching;
     private int _launchFeedbackVersion;
@@ -59,8 +60,10 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
         Action<Action>? defer = null,
         IWindowSwitcher? windows = null,
         Func<ShortcutItem, bool>? isMissing = null,
-        CommandTrust? trust = null)
+        CommandTrust? trust = null,
+        WorkspacePositions? workspacePositions = null)
     {
+        _workspacePositions = workspacePositions ?? new WorkspacePositions(null);
         Trust = trust ?? new CommandTrust(null);
         _isMissing = isMissing ?? (shortcut => LocationProbe.IsMissing(shortcut, IconWorker.IsOnSlowStorage));
         Model = model;
@@ -1390,31 +1393,184 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
         }
     }
 
-    public async Task LaunchMultiLaunchGroupAsync()
+    public Task LaunchMultiLaunchGroupAsync() => StartWorkspaceAsync(Workspaces.MultiLaunch);
+
+    // ----- workspaces (0.10.0) -------------------------------------------------------------------
+
+    /// <summary>How long a started member may take to show its first window before its position is given up.</summary>
+    internal TimeSpan WorkspaceWindowWait { get; set; } = TimeSpan.FromSeconds(15);
+
+    /// <summary>Pause between starting two members, and between looks for a window.</summary>
+    internal TimeSpan WorkspaceStep { get; set; } = TimeSpan.FromMilliseconds(300);
+
+    /// <summary>The bar's workspaces: the Multi Launch group when it has members, then the named ones.</summary>
+    public IReadOnlyList<string> WorkspaceNames => Workspaces.Names(Model.AllShortcuts());
+
+    /// <summary>The name a workspace is shown under (the built-in one in the UI's language).</summary>
+    public static string WorkspaceLabel(string workspace) =>
+        Workspaces.Same(workspace, Workspaces.MultiLaunch) ? Strings.Workspace_MultiLaunch : workspace;
+
+    /// <summary>
+    /// Starts the members of <paramref name="workspace"/> that are not running (a short pause between them), then puts
+    /// every member's window where <see cref="CaptureWorkspace"/> last found it on this PC: at once for one that runs
+    /// already, as soon as its first window shows for one just started, and once more two seconds later for programs
+    /// that restore their own position late.
+    /// </summary>
+    public async Task StartWorkspaceAsync(string workspace)
     {
-        var members = Model.MultiLaunchMembers().ToList();
-        if (members.Count == 0)
+        var name = WorkspaceNames.FirstOrDefault(existing => Workspaces.Same(existing, workspace));
+        var members = name is null ? [] : Workspaces.Members(Model.AllShortcuts(), name);
+        if (name is null || members.Count == 0)
         {
-            _dialogs.Notify(Strings.Launch_MultiEmptyTitle, Strings.Launch_MultiEmpty);
+            if (Workspaces.Same(workspace, Workspaces.MultiLaunch))
+            {
+                _dialogs.Notify(Strings.Launch_MultiEmptyTitle, Strings.Launch_MultiEmpty);
+            }
+            else
+            {
+                _dialogs.Notify(Strings.Commands_Title, string.Format(Strings.Workspace_None, workspace));
+            }
+
             return;
         }
 
         IsGroupPopupOpen = false;
+        AppLog.Default.Info("Workspaces", $"Starting \"{name}\" ({members.Count} member(s))");
         var failures = new List<string>();
+        var toPlace = new List<(ShortcutItem Member, SavedWindow Target)>();
         foreach (var member in members)
         {
+            if (_workspacePositions.Get(name, member.Id) is { } target)
+            {
+                toPlace.Add((member, target));
+            }
+
+            if (Tracker.ProcessIdsOf(member.Id).Count > 0)
+            {
+                continue; // running: only moved
+            }
+
             var result = _launcher.Launch(member);
             if (result.Outcome == LaunchOutcome.Failed)
             {
                 failures.Add($"{member.Name}: {result.ErrorMessage}");
             }
 
-            await Task.Delay(300).ConfigureAwait(true);
+            await Task.Delay(WorkspaceStep).ConfigureAwait(true);
         }
 
         if (failures.Count > 0)
         {
             _dialogs.Notify(Strings.Launch_SomeFailed, string.Join("\n", failures));
+        }
+
+        if (_windows is null || toPlace.Count == 0)
+        {
+            return;
+        }
+
+        var placed = new List<(ShortcutItem Member, SavedWindow Target)>();
+        var waited = System.Diagnostics.Stopwatch.StartNew();
+        while (toPlace.Count > 0)
+        {
+            foreach (var entry in toPlace.ToList())
+            {
+                if (_windows.Place(WorkspaceProcesses(entry.Member), Tracker.PackageFamilyOf(entry.Member.Id), entry.Target))
+                {
+                    toPlace.Remove(entry);
+                    placed.Add(entry);
+                }
+            }
+
+            if (toPlace.Count == 0 || waited.Elapsed >= WorkspaceWindowWait)
+            {
+                break;
+            }
+
+            await Task.Delay(WorkspaceStep).ConfigureAwait(true);
+        }
+
+        if (toPlace.Count > 0)
+        {
+            AppLog.Default.Warning("Workspaces", $"No window to place for: {string.Join(", ", toPlace.Select(entry => entry.Member.Name))}");
+        }
+
+        await Task.Delay(TimeSpan.FromMilliseconds(Math.Min(2000, WorkspaceStep.TotalMilliseconds * 7))).ConfigureAwait(true);
+        foreach (var entry in placed)
+        {
+            _windows.Place(WorkspaceProcesses(entry.Member), Tracker.PackageFamilyOf(entry.Member.Id), entry.Target);
+        }
+    }
+
+    /// <summary>The processes whose window is the member's: the running copies of its program, and what the bar started for it (launcher stubs).</summary>
+    private IReadOnlySet<int> WorkspaceProcesses(ShortcutItem member)
+    {
+        var ids = new HashSet<int>(Tracker.ProcessIdsOf(member.Id));
+        ids.UnionWith(Tracker.LaunchedProcessIdsOf(member.Id));
+        return ids;
+    }
+
+    /// <summary>Remembers where each running member's window is now, for this PC; how many were found.</summary>
+    public int CaptureWorkspace(string workspace)
+    {
+        var found = new Dictionary<Guid, SavedWindow>();
+        if (_windows is not null)
+        {
+            foreach (var member in Workspaces.Members(Model.AllShortcuts(), workspace))
+            {
+                if (_windows.Capture(WorkspaceProcesses(member), Tracker.PackageFamilyOf(member.Id)) is { } window)
+                {
+                    found[member.Id] = window;
+                }
+            }
+        }
+
+        if (found.Count > 0)
+        {
+            _workspacePositions.Set(workspace, found);
+        }
+
+        _dialogs.Notify(
+            WorkspaceLabel(workspace),
+            found.Count == 0 ? Strings.Workspace_NothingCaptured : string.Format(Strings.Workspace_Captured, found.Count));
+        return found.Count;
+    }
+
+    public bool IsInWorkspace(ItemViewModel item, string workspace) =>
+        item.Model is ShortcutItem shortcut && Workspaces.IsMember(shortcut, workspace);
+
+    /// <summary>Puts the shortcut into the workspace or takes it out.</summary>
+    public void ToggleWorkspace(ItemViewModel item, string workspace)
+    {
+        if (item.Model is not ShortcutItem shortcut)
+        {
+            return;
+        }
+
+        Workspaces.SetMember(shortcut, workspace, !Workspaces.IsMember(shortcut, workspace));
+        item.RefreshFromModel();
+        OnPropertyChanged(nameof(HasMultiLaunchMembers));
+        Save();
+    }
+
+    /// <summary>Asks for a name and puts the shortcut into that (new or existing) workspace.</summary>
+    public void AddToNewWorkspace(ItemViewModel item)
+    {
+        if (item.Model is not ShortcutItem shortcut || _dialogs.AskText(Strings.Workspace_NewTitle, Strings.Workspace_NewPrompt, null) is not { } typed)
+        {
+            return;
+        }
+
+        if (Workspaces.Normalize(typed) is not { } name)
+        {
+            _dialogs.Notify(Strings.Workspace_NewTitle, Strings.Workspace_BadName);
+            return;
+        }
+
+        name = WorkspaceNames.FirstOrDefault(existing => Workspaces.Same(existing, name)) ?? name;
+        if (!Workspaces.IsMember(shortcut, name))
+        {
+            ToggleWorkspace(item, name);
         }
     }
 

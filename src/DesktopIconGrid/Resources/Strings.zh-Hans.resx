@@ -2198,4 +2198,37 @@
   <data name="Mic_None" xml:space="preserve">
     <value>找不到麦克风。</value>
   </data>
+  <data name="Menu_Workspaces" xml:space="preserve">
+    <value>工作区</value>
+  </data>
+  <data name="Workspace_MultiLaunch" xml:space="preserve">
+    <value>多重启动组</value>
+  </data>
+  <data name="Workspace_NewMenu" xml:space="preserve">
+    <value>新建工作区…</value>
+  </data>
+  <data name="Workspace_NewTitle" xml:space="preserve">
+    <value>新建工作区</value>
+  </data>
+  <data name="Workspace_NewPrompt" xml:space="preserve">
+    <value>此快捷方式要加入的工作区名称：</value>
+  </data>
+  <data name="Workspace_BadName" xml:space="preserve">
+    <value>工作区名称须为 1 到 40 个字符，且不可与多重启动组同名。</value>
+  </data>
+  <data name="Workspace_Start" xml:space="preserve">
+    <value>启动工作区“{0}”</value>
+  </data>
+  <data name="Workspace_Capture" xml:space="preserve">
+    <value>记住“{0}”的窗口位置</value>
+  </data>
+  <data name="Workspace_Captured" xml:space="preserve">
+    <value>已记住 {0} 个窗口的位置。启动此工作区时会在这台电脑上还原。</value>
+  </data>
+  <data name="Workspace_NothingCaptured" xml:space="preserve">
+    <value>其中没有任何程序开着窗口。请先启动并排好窗口，再试一次。</value>
+  </data>
+  <data name="Workspace_None" xml:space="preserve">
+    <value>没有名为“{0}”的工作区。</value>
+  </data>
 </root>

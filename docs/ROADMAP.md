@@ -238,7 +238,7 @@ folder.
   `usage.json` — never in the synced layout, or every click would trigger an upload.
 - Layout history: the last 20 saves in `history\`, *Restore…* with a one-line summary per entry; linked
   Drive copies can list Drive `revisions` the same way.
-- Command line and Send To *(done in 0.9.0; `--workspace <name>` waits for workspaces)*: `--add <path> [--group Tools]`,
+- Command line and Send To *(done in 0.9.0; `--workspace <name>` in 0.10.0)*: `--add <path> [--group Tools]`,
   `--launch <name>`, `--show`, `--hide`, `--toggle`, forwarded to the running instance over a named pipe with
   `PipeOptions.CurrentUserOnly`; *Send to ▸ Desktop Icon Grid* in Explorer adds the selection.
 - Accent theme that follows the Windows accent colour live.

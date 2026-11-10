@@ -113,7 +113,7 @@
               <MenuItem Header="{x:Static r:Strings.Menu_Sync}" Command="{Binding OpenSyncCommand}" />
               <MenuItem Header="{x:Static r:Strings.Menu_EditNames}" Command="{Binding OpenNameTableCommand}" />
               <MenuItem Header="{x:Static r:Strings.Menu_LogViewer}" Command="{Binding OpenLogViewerCommand}" />
-              <MenuItem Header="{x:Static r:Strings.Menu_LaunchMultiLaunch}" Command="{Binding LaunchMultiLaunchCommand}" />
+              <MenuItem x:Name="MultiLaunchMenuItem" Header="{x:Static r:Strings.Menu_LaunchMultiLaunch}" Command="{Binding LaunchMultiLaunchCommand}" />
               <Separator />
               <MenuItem Header="{x:Static r:Strings.Menu_NewShortcut}" Command="{Binding NewShortcutCommand}" InputGestureText="{Binding KeyText[NewShortcut]}" />
               <MenuItem Header="{x:Static r:Strings.Menu_NewGroup}" Command="{Binding NewGroupCommand}" InputGestureText="{Binding KeyText[NewGroup]}" />

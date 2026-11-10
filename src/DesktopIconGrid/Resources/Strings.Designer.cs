@@ -2985,6 +2985,15 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Workspaces.
+        /// </summary>
+        public static string Menu_Workspaces {
+            get {
+                return ResourceManager.GetString("Menu_Workspaces", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Mutes or unmutes the default microphone for every program. Red while muted..
         /// </summary>
         public static string Mic_Desc {
@@ -6509,6 +6518,96 @@ namespace DesktopIconGrid.Resources {
         public static string WindowKey_UndoRemove {
             get {
                 return ResourceManager.GetString("WindowKey_UndoRemove", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to A workspace name has 1 to 40 characters and is not the Multi Launch group's..
+        /// </summary>
+        public static string Workspace_BadName {
+            get {
+                return ResourceManager.GetString("Workspace_BadName", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Remember window positions of “{0}”.
+        /// </summary>
+        public static string Workspace_Capture {
+            get {
+                return ResourceManager.GetString("Workspace_Capture", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Remembered where {0} window(s) are. Starting the workspace puts them back there [rest of string was truncated]";.
+        /// </summary>
+        public static string Workspace_Captured {
+            get {
+                return ResourceManager.GetString("Workspace_Captured", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Multi Launch group.
+        /// </summary>
+        public static string Workspace_MultiLaunch {
+            get {
+                return ResourceManager.GetString("Workspace_MultiLaunch", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to New workspace….
+        /// </summary>
+        public static string Workspace_NewMenu {
+            get {
+                return ResourceManager.GetString("Workspace_NewMenu", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Name of the workspace this shortcut joins:.
+        /// </summary>
+        public static string Workspace_NewPrompt {
+            get {
+                return ResourceManager.GetString("Workspace_NewPrompt", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to New workspace.
+        /// </summary>
+        public static string Workspace_NewTitle {
+            get {
+                return ResourceManager.GetString("Workspace_NewTitle", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to There is no workspace called “{0}”..
+        /// </summary>
+        public static string Workspace_None {
+            get {
+                return ResourceManager.GetString("Workspace_None", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to None of its programs has a window open. Start them, arrange the windows, then tr [rest of string was truncated]";.
+        /// </summary>
+        public static string Workspace_NothingCaptured {
+            get {
+                return ResourceManager.GetString("Workspace_NothingCaptured", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Start workspace “{0}”.
+        /// </summary>
+        public static string Workspace_Start {
+            get {
+                return ResourceManager.GetString("Workspace_Start", resourceCulture);
             }
         }
     }

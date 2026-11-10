@@ -48,6 +48,8 @@
                       Visibility="{Binding IsHealthPaused, Converter={StaticResource BoolToVisibility}}" />
             <MenuItem Header="{x:Static r:Strings.Menu_Repair}" Command="{Binding RepairCommand}"
                       Visibility="{Binding IsMissing, Converter={StaticResource BoolToVisibility}}" />
+            <MenuItem Header="{x:Static r:Strings.Menu_Workspaces}" Tag="workspaces"
+                      Visibility="{Binding IsShortcut, Converter={StaticResource BoolToVisibility}}" />
             <MenuItem Header="{x:Static r:Strings.Menu_ColorTag}" Tag="color-tags" />
             <Separator />
             <MenuItem Header="{x:Static r:Strings.Common_Properties}" Command="{Binding PropertiesCommand}" InputGestureText="{Binding Root.KeyText[Properties]}" />
