@@ -2267,4 +2267,13 @@
   <data name="Inbox_Received" xml:space="preserve">
     <value>「{0}」已存入「下載」資料夾。</value>
   </data>
+  <data name="Paste_TextTitle" xml:space="preserve">
+    <value>要上傳複製的文字嗎？</value>
+  </data>
+  <data name="Paste_TextQuestion" xml:space="preserve">
+    <value>剪貼簿中是文字，不是檔案。要以文字檔傳送到「{0}」嗎？
+
+共 {1} 個字元，開頭為：
+{2}</value>
+  </data>
 </root>

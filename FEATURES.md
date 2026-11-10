@@ -253,7 +253,9 @@ their tooltips end with a line of the last 60 samples (`▁▂▃▅▇█`; the
   access, which the app asks for the first time (see the sync section for the credentials setup).
   **Paste (0.10.0):** `Ctrl+V` on the focused bucket, or *Paste* in its menu, uploads what the clipboard
   holds: copied files and folders; otherwise a picture, as `Screenshot 2026-11-06 143005.png`; otherwise
-  text (up to 10 million characters), as `Pasted text … .txt` in UTF-8. The same-name policy applies.
+  text (up to 10 million characters), as `Pasted text … .txt` in UTF-8. Text is asked about first, with
+  its length and its first 200 characters, since it may just be what was copied last (a password); files
+  and pictures go without a question. The same-name policy applies.
 
 - **Sound Replayer** — press and hold the icon to record from the microphone (only while
   stopped); release to play the recording back in an endless loop; a single click stops it.

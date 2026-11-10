@@ -14,9 +14,14 @@ namespace DesktopIconGrid.Services;
 /// </summary>
 public static class ClipboardFiles
 {
-    /// <summary>The files, or an empty list when the clipboard holds nothing usable or cannot be read.</summary>
-    public static IReadOnlyList<string> Take(string directory, DateTime now)
+    /// <summary>
+    /// The files; an empty list when the clipboard holds nothing usable or cannot be read; <see langword="null"/> when it
+    /// holds text and <paramref name="confirmText"/> (shown the text) said no. Text is asked about because it is what a
+    /// copied password is: files and pictures were chosen for copying, text may just be what was copied last.
+    /// </summary>
+    public static IReadOnlyList<string>? Take(string directory, DateTime now, Func<string, bool> confirmText)
     {
+        ArgumentNullException.ThrowIfNull(confirmText);
         try
         {
             if (Clipboard.ContainsFileDropList())
@@ -36,6 +41,11 @@ public static class ClipboardFiles
 
             if (Clipboard.ContainsText() && Clipboard.GetText() is { Length: > 0 and <= PasteNames.MaxTextChars } text && !string.IsNullOrWhiteSpace(text))
             {
+                if (!confirmText(text))
+                {
+                    return null;
+                }
+
                 var path = Path.Combine(Directory.CreateDirectory(directory).FullName, PasteNames.Text(now));
                 File.WriteAllText(path, text, new UTF8Encoding(encoderShouldEmitUTF8Identifier: true)); // the mark: Notepad and the Drive preview then read non-ASCII text right
                 return [path];
@@ -48,5 +58,12 @@ public static class ClipboardFiles
         }
 
         return [];
+    }
+
+    /// <summary>The question for <see cref="Take"/>: where the text would go, how long it is, and how it starts.</summary>
+    public static string TextQuestion(string format, string destination, string text)
+    {
+        var preview = PasteNames.Preview(text);
+        return string.Format(format, destination, text.Length, preview);
     }
 }

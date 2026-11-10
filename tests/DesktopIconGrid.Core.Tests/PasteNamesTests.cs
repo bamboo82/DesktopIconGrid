@@ -14,4 +14,14 @@ public class PasteNamesTests
         Assert.Equal("Pasted text 2026-11-06 143005.txt", PasteNames.Text(at));
         Assert.Equal(PasteNames.Image(at), FileNames.Safe(PasteNames.Image(at)));
     }
+
+    [Fact]
+    public void The_preview_of_pasted_text_is_one_short_line()
+    {
+        Assert.Equal("hunter2", PasteNames.Preview("  hunter2\r\n"));
+        Assert.Equal("a b", PasteNames.Preview("a\nb"));
+        var cut = PasteNames.Preview(new string('x', 500));
+        Assert.Equal(PasteNames.PreviewChars + 1, cut.Length);
+        Assert.EndsWith("…", cut);
+    }
 }

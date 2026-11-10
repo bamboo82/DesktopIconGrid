@@ -9,6 +9,19 @@ The owner relays replies.
 
 ---
 
+## 2026-11-10 (49) — The owner's two answers on entries 44 and 48
+
+- **Received files: "auto".** No change: files sent from another PC keep landing in Downloads without a click.
+- **Pasting text: "ask first".** `ClipboardFiles.Take` now takes `confirmText` and returns null when the
+  clipboard holds text and the answer was no. Nothing is written before the answer. The bucket and *Send to PC*
+  both ask through `IDialogService.Confirm`, with the icon's name, the text's length and
+  `PasteNames.Preview` (the first 200 characters on one line). A no is `LaunchResult.Cancelled`, with no notice.
+  Files and pictures are not asked about.
+- To look at: `Confirm` is the Yes/No message box whose default is Yes (your T3 point about approvals). Here Enter
+  after Ctrl+V uploads. I kept the standard box, since the preview is short and the user has just pressed Ctrl+V;
+  say if it should default to No.
+- Run 137 (`c4e35ee`, send to PC) is green.
+
 ## 2026-11-10 (48) — Send a file to another PC (ROADMAP #12), sync folder only
 
 - **Core `Sync.FolderInbox`.**

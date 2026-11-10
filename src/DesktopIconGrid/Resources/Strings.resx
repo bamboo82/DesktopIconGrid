@@ -2267,4 +2267,13 @@ Details are in {1}.</value>
   <data name="Inbox_Received" xml:space="preserve">
     <value>“{0}” is in your Downloads folder.</value>
   </data>
+  <data name="Paste_TextTitle" xml:space="preserve">
+    <value>Upload the copied text?</value>
+  </data>
+  <data name="Paste_TextQuestion" xml:space="preserve">
+    <value>The clipboard holds text, not a file. Send it to “{0}” as a text file?
+
+{1} characters, starting:
+{2}</value>
+  </data>
 </root>

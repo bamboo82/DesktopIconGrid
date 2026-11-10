@@ -3615,6 +3615,24 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to The clipboard holds text, not a file. Send it to “{0}” as a text file? [rest of string was truncated]";.
+        /// </summary>
+        public static string Paste_TextQuestion {
+            get {
+                return ResourceManager.GetString("Paste_TextQuestion", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Upload the copied text?.
+        /// </summary>
+        public static string Paste_TextTitle {
+            get {
+                return ResourceManager.GetString("Paste_TextTitle", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Back to all icons.
         /// </summary>
         public static string Pointer_BackName {

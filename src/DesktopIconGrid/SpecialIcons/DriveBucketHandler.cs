@@ -137,7 +137,15 @@ public sealed class DriveBucketHandler : ISpecialIconHandler
             return LaunchResult.Failure(Strings.Bucket_NoFolderYet);
         }
 
-        var files = ClipboardFiles.Take(System.IO.Path.Combine(_cacheDirectory, "pasted"), DateTime.Now);
+        var files = ClipboardFiles.Take(
+            System.IO.Path.Combine(_cacheDirectory, "pasted"),
+            DateTime.Now,
+            text => _dialogs.Confirm(Strings.Paste_TextTitle, ClipboardFiles.TextQuestion(Strings.Paste_TextQuestion, item.Name, text)));
+        if (files is null)
+        {
+            return LaunchResult.Cancelled; // text, and the answer was no
+        }
+
         return files.Count == 0 ? LaunchResult.Failure(Strings.Bucket_NothingToPaste) : await DropFilesAsync(item, files);
     }
 

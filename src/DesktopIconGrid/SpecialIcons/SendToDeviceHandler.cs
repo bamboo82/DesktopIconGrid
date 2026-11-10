@@ -43,7 +43,15 @@ public sealed class SendToDeviceHandler(Func<FolderInbox?> inbox, IDialogService
 
     public Task<LaunchResult> PasteAsync(SpecialIconItem item)
     {
-        var files = ClipboardFiles.Take(pasteDirectory, DateTime.Now);
+        var files = ClipboardFiles.Take(
+            pasteDirectory,
+            DateTime.Now,
+            text => dialogs.Confirm(Strings.Paste_TextTitle, ClipboardFiles.TextQuestion(Strings.Paste_TextQuestion, item.Name, text)));
+        if (files is null)
+        {
+            return Task.FromResult(LaunchResult.Cancelled);
+        }
+
         return files.Count == 0 ? Task.FromResult(LaunchResult.Failure(Strings.Bucket_NothingToPaste)) : DropFilesAsync(item, files);
     }
 

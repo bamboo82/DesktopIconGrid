@@ -16,7 +16,7 @@ a bucket), then workspaces and sending a file to another PC.
   network settings). All draw as ring, bar or number like the CPU and disk gauges.
 - Paste to a Google Drive Bucket: with the bucket's icon focused, `Ctrl+V` (or *Paste* in its menu) uploads
   the files on the clipboard, or a copied picture as `Screenshot <date> <time>.png`, or copied text as a
-  `.txt`.
+  `.txt`. Text is shown and asked about first.
 - Folder stacks: *Properties → Advanced → Open a folder as a stack* makes a click on a folder shortcut list the
   folder's contents by the pointer (by name or newest first, up to 100). A click opens an entry, a drag takes
   the file out, *Open folder* shows it in File Explorer, and the list follows changes in the folder.
