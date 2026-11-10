@@ -64,7 +64,7 @@ public sealed class HealthLight : ObservableObject
                 _ => Strings.Health_Unknown,
             };
             var since = _changed is { } changed ? " " + string.Format(Strings.Health_Since, changed.ToString("g", CultureInfo.CurrentCulture)) : string.Empty;
-            return $"{_check}: {state}{since}";
+            return $"{_check.Shown}: {state}{since}";
         }
     }
 
@@ -124,7 +124,7 @@ public sealed class HealthLight : ObservableObject
             _changed = DateTime.Now;
             if (before != HealthStatus.Unknown || _status == HealthStatus.Down)
             {
-                var message = $"\"{_name}\" ({_check}) is {(_status == HealthStatus.Up ? "up" : "down")}{(_detail is null ? string.Empty : ": " + _detail)}";
+                var message = $"\"{_name}\" ({_check.Shown}) is {(_status == HealthStatus.Up ? "up" : "down")}{(_detail is null ? string.Empty : ": " + _detail)}";
                 if (_status == HealthStatus.Up)
                 {
                     AppLog.Default.Info("Health", message);
@@ -137,7 +137,7 @@ public sealed class HealthLight : ObservableObject
 
             if (_notify && before != HealthStatus.Unknown)
             {
-                _notifier?.Invoke(_name, _status == HealthStatus.Up ? Strings.Health_NowUp : string.Format(Strings.Health_NowDown, _check, _detail ?? Strings.Health_Down));
+                _notifier?.Invoke(_name, _status == HealthStatus.Up ? Strings.Health_NowUp : string.Format(Strings.Health_NowDown, _check.Shown, _detail ?? Strings.Health_Down));
             }
         }
 

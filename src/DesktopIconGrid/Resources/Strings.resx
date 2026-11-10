@@ -167,7 +167,7 @@
     <value>Move grip</value>
   </data>
   <data name="Main_UndoToolTip" xml:space="preserve">
-    <value>Put the removed icon back (Ctrl+Z)</value>
+    <value>Put the removed icon back</value>
   </data>
   <data name="Main_UndoName" xml:space="preserve">
     <value>Undo remove</value>

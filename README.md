@@ -50,7 +50,7 @@ Google Drive Bucket, and [docs/THEMES.md](docs/THEMES.md) for the themes.
 
 | Action | How |
 | --- | --- |
-| Add a shortcut | Right-click the bar → *New shortcut…*, drop a file onto the bar, or `Ctrl+N` |
+| Add a shortcut | Right-click the bar → *New shortcut…*, drop a file onto the bar, or `Ctrl+N` (keys can be changed in *Settings → Keys in the bar*) |
 | Add a group | Right-click → *New group…* or `Ctrl+G` |
 | Add a Windows location or tool | Right-click → *Add Windows item ▸* |
 | Add a CPU or disk gauge | Right-click → *Add special icon ▸* |

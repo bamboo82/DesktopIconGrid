@@ -167,7 +167,7 @@
     <value>移動把手</value>
   </data>
   <data name="Main_UndoToolTip" xml:space="preserve">
-    <value>將移除的圖示放回原處 (Ctrl+Z)</value>
+    <value>將移除的圖示放回原處</value>
   </data>
   <data name="Main_UndoName" xml:space="preserve">
     <value>復原移除</value>

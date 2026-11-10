@@ -95,6 +95,14 @@ public sealed record HealthCheck(HealthCheckKind Kind, string Host, int Port, Ur
         }
     }
 
+    /// <summary>
+    /// The check as the log, notifications and tooltips show it: an address by its scheme, host and port only, since
+    /// health addresses often carry a token or a user name and password.
+    /// </summary>
+    public string Shown => Kind == HealthCheckKind.Http
+        ? $"{Url!.Scheme}://{Url.Authority[(Url.Authority.LastIndexOf('@') + 1)..]}/…"
+        : ToString();
+
     /// <summary>The check as the user writes it.</summary>
     public override string ToString() => Kind switch
     {

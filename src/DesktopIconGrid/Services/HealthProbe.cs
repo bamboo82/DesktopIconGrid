@@ -21,6 +21,7 @@ public static class HealthProbe
     private static readonly HttpClient Http = new(new SocketsHttpHandler
     {
         AllowAutoRedirect = false,
+        UseCookies = false, // each check stands alone
         PooledConnectionLifetime = TimeSpan.FromMinutes(5),
         ConnectTimeout = Timeout,
     })
@@ -29,7 +30,16 @@ public static class HealthProbe
         DefaultRequestHeaders = { { "User-Agent", "DesktopIconGrid-HealthCheck" } },
     };
 
+    /// <summary>The longest reason kept (a server's reason phrase or an exception message can be anything).</summary>
+    public const int MaxDetailLength = 200;
+
     public static async Task<HealthResult> CheckAsync(HealthCheck check, CancellationToken stop)
+    {
+        var result = await CheckCoreAsync(check, stop).ConfigureAwait(false);
+        return result.Detail is { Length: > MaxDetailLength } detail ? result with { Detail = detail[..(MaxDetailLength - 1)] + "…" } : result;
+    }
+
+    private static async Task<HealthResult> CheckCoreAsync(HealthCheck check, CancellationToken stop)
     {
         ArgumentNullException.ThrowIfNull(check);
         var watch = Stopwatch.StartNew();

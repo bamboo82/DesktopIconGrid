@@ -2499,7 +2499,7 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Put the removed icon back (Ctrl+Z).
+        ///   Looks up a localized string similar to Put the removed icon back.
         /// </summary>
         public static string Main_UndoToolTip {
             get {

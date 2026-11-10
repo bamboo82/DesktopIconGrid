@@ -9,6 +9,117 @@ The owner relays replies.
 
 ---
 
+## 2026-11-10 (36) — Review 21
+
+Commits: `287e837` (keys), `d3075c6` (command tile), `4957807` (command line) and the commit that adds this entry
+(health light, groups, docs). L3 kept: this entry covers all four.
+
+### Fix before 0.9.0
+
+- **T1.** The hash is `command-tile/2`. It adds the interval (normalized, so 0 = click only) and, when a click
+  opens something, `open:<target>`; otherwise `run`. Display, thresholds and the time limit stay out. The Core
+  test is renamed and asserts the new coverage, including click-only becoming 10 s and 60 s becoming 10 s.
+  v1 approvals no longer match. That is fine: 0.9.0 is not released.
+- **T2.** Taken as you proposed. `ShowProperties` notes whether the tile was trusted before the dialog opened
+  (new, or its hash approved here), and only then approves what was saved. A tile that arrived paused stays
+  paused after OK. The dialog's note says so (`Command_SaveApprovesNew`); the old `Command_SaveApproves` and
+  `Command_ApproveQuestion` are removed.
+- **T3.** New `CommandApprovalWindow`.
+  - It shows program, arguments, start folder, *Runs:* (every N s, without asking / only on a click) and
+    *On a click:* (runs it again / opens X).
+  - The text is in a read-only, wrapped, scrolling box (max 280 px, Consolas).
+  - *Cancel* is the default and the cancel button; *Approve and run* is not default, so Enter, Enter does not
+    approve.
+  - `IsShowable` refuses Control, Format (bidi overrides, zero-width), LineSeparator and ParagraphSeparator in
+    all four fields, through `Problem()`, so such a tile can neither be saved nor run.
+  - The handler takes the asking function as a parameter (the window by default) so the gate is testable.
+- **T4.** The approval from a save is deferred. `NoteSaved` remembers the hash; `CreateState` approves it when
+  the edited tile reaches the bar. By then `RebuildGauge` has detached the old session, so nothing starts twice.
+- **K1.** `WindowKeys.For` treats a null value as no override, and `Normalize` drops null entries. Test:
+  `{"Find":null}` gives Ctrl+F, and Normalize reports a change.
+
+### Recommended (all taken)
+
+- **T5.** `Process.Start` runs in `Task.Run`.
+- **T6.** Output lines are cut at 200 (`MaxShownLineLength`), and so are the command line and a start error
+  in the tooltip.
+- **T7.**
+  - `Kill` also catches `AggregateException`.
+  - Both streams read into shared builders, so the output read so far is returned when a background child holds
+    the pipes.
+  - `CommandTileRunner.StopAll()` kills every run under way and is called from `App.OnExit`. I did not use a job
+    object: this covers your point 5 with less.
+- **T8.** App tests now cover the gate:
+  - an unapproved tile shows ⏸ and *Run now* is disabled;
+  - Cancel keeps it paused, and Yes approves exactly the settings the asker saw and starts it;
+  - an approval starts only tiles with the same hash (the same command on a timer stays paused);
+  - saving approves when trusted before, not when the tile arrived paused;
+  - the approval text shows the timer and the click target.
+  The clamp test now writes raw `"3"`/`"5000"` through `SetSetting`. The time-limit test also checks that no
+  `ping` started under it survives (to 127.0.0.9, which no other test uses).
+- **C1.** Exit codes: 3 when the commands did not reach a bar (2 stays for an unreadable line).
+- **C2.** `--group <name>` may come right after `--add`. Giving it twice is refused.
+- **C3.** `CommandPipe.Send` returns `Sent`, `NoAnswer` or `Refused` (`UnauthorizedAccessException`). A refusal
+  is not retried, and its message says the bar runs with other rights.
+- **C4.** The pipe name can be passed in. The tests use their own names and cover garbage, an invalid command,
+  an oversized message and a good message after them. Only the good one arrives.
+- **K2.** A system-wide hotkey that equals a window key is refused when captured
+  (`Settings_HotkeyUsedInBar`) and makes `IsHotkeyValid` / `IsPointerHotkeyValid` false. `SameKey` now compares
+  parsed gestures (`HotkeyGesture.SameCombination`).
+- **K3.** `ToSettings` keeps overrides whose names this version doesn't know. Test included.
+- **K4.** `HotkeyGesture.HeldModifiers()` adds Win from `Keyboard.IsKeyDown(LWin/RWin)`. It is used by the
+  window, the icon key handler and both capture boxes.
+- **H2.** `StartLiveItemsInGroups` creates the view models of command tiles and of shortcuts with a health
+  check inside groups, both at start-up and after `ReplaceLayout`. They run from the start, and the group's list
+  reuses them when it opens. FEATURES says so.
+- **H3.**
+  - The reason is capped at 200.
+  - `HealthCheck.Shown` (scheme://host:port/…, never userinfo, path or query) is what the tooltip, the log and
+    notifications use.
+  - `UseCookies = false`.
+- **H1** is waiting for the owner's answer and is not built.
+
+### Minor, taken
+
+- After *Approve*, the tile shows "…" at once, not ⏸ until the first run ends.
+- A tile with a program but bad fields says *settings cannot be used* (`Command_Invalid`) instead of *no
+  program*.
+- A failed save of an approval is logged; it holds for the session.
+- Quotes around the program and start folder are stripped, so a quoted `.bat` still goes through cmd.
+- `OutputCapture.CommandProcessor` is `%ComSpec%` when fully qualified, else System32's `cmd.exe`. This also
+  covers logged shortcuts.
+- zh-Hant 開始位置 / 按一下 and zh-Hans 单击 in the new strings.
+- `Main_UndoToolTip` no longer names Ctrl+Z.
+- ROADMAP marks `--workspace` as waiting for workspaces.
+- SPECIAL_ICONS §6a describes the command tile.
+- README and FEATURES say the keys can be changed.
+- FEATURES documents what approving a bare name means and that a .bat's arguments are cmd syntax.
+
+### Minor, not taken this round
+
+- Treating "no machine key" as session-only approvals.
+- The pipe's endless 2 s warning on a held name.
+- Commands arriving under modal dialogs.
+- The 256-file cap on `--add`.
+- `\\localhost\pipe\x` as a share.
+- Culture matching in `--launch` / `--group`.
+- Message boxes for callers without a desktop.
+- Send To from a portable copy.
+- Other HRESULT exception types in `ToggleSendTo`.
+- Ctrl+N/G/, while the search box has the focus.
+- Duplicate keys in a file.
+- An unreadable override turning the action off.
+- Shift+Delete.
+- `Settings_WindowKeys` without a colon.
+- The CPU/disk gauge at "100%" with the new `MaxWidth`, which I cannot see from here.
+
+I'll take these with the next round unless you rank any higher.
+
+### Your test notes
+
+- Agreed. If the PowerShell test flakes again, the real-process tests go into one non-parallel collection
+  rather than getting a longer wait.
+
 ## 2026-11-10 (35) — Health light (ROADMAP #9)
 
 - **Model.** `ShortcutItem.HealthCheck` (text), `HealthInterval` (seconds or null) and `HealthNotify` are

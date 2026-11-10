@@ -50,4 +50,14 @@ public class HealthCheckTests
         Assert.Equal(HealthCheck.MinIntervalSeconds, HealthCheck.NormalizeInterval(1));
         Assert.Equal(HealthCheck.MaxIntervalSeconds, HealthCheck.NormalizeInterval(99999));
     }
+
+    [Fact]
+    public void An_address_is_shown_without_its_path_query_or_user()
+    {
+        var check = HealthCheck.Parse("https://admin:secret@status.example.com:8443/health?token=abc", out _)!;
+
+        Assert.Equal("https://status.example.com:8443/…", check.Shown);
+        Assert.DoesNotContain("secret", check.Shown);
+        Assert.Equal("tcp nas:445", HealthCheck.Parse("tcp nas:445", out _)!.Shown);
+    }
 }

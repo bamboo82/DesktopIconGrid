@@ -214,6 +214,17 @@ the mouse before it fires still begins an ordinary drag, after it fires the rele
 instead of counting as a click. Playback uses `System.Media.SoundPlayer.PlayLooping`. If
 Windows blocks microphone access for desktop apps, the MCI error is shown and nothing is recorded.
 
+## 6a. Command tile (implemented, 0.9.0)
+
+Kind `command-tile`; settings in `SpecialIconItem.Settings` (`CommandTileSettings`: program, arguments,
+start folder, interval, timeout, display, thresholds, click, open target). `CommandTileHandler` creates a
+`CommandTileSession` per tile on the bar, which runs `CommandTileRunner` (redirected output, no window,
+batch files through `%ComSpec% /d /c`, the process tree stopped on a time-out, on detach and on exit) and
+writes the reading (`CommandTileOutput`) into the tile's `GaugeState` (`Level` for the exit-code colour,
+`LabelText` for the text). A tile runs only when `CommandTrust` (local `command-trust.json`, per device id)
+holds its `Hash()`, which covers program, arguments, start folder, interval and the click's target; see
+FEATURES §2.4 for when saving approves and for the approval window.
+
 ## 7. Testing
 
 - Core: `SpecialIconItem` JSON round trip including unknown kinds; settings wrapper defaults;

@@ -26,7 +26,7 @@ button at the top-right and a small options arrow at the bottom-right.
 | Show/hide hotkey | A system-wide combination set in Settings (e.g. `Ctrl+Alt+Space`) hides the bar or brings it to the front from any program. |
 | Show-at-pointer hotkey (0.7.0) | A second combination opens the icons in a small window under the mouse pointer with the search box focused, on the pointer's monitor and inside its work area. It works while the bar is hidden or auto-hidden; groups open in place with a back button (or Backspace); it closes after a launch, on Esc and when it loses the focus. |
 | Search box (0.7.0) | Typing while the bar has the focus (or `Ctrl+F`) opens a box at the bottom of the bar; see §3. |
-| Command line and *Send to* (0.9.0) | `DesktopIconGrid.exe --add <path>… [--group <name>]` adds shortcuts (into that group, made when missing), `--launch <name>` starts a shortcut as a click does, `--show`, `--hide` and `--toggle` work the bar. Paths must be full (`C:\…` or `\\server\share\…`). When the bar runs already, the second start hands the commands over through a pipe only this Windows user can open, and ends. *In Explorer's Send To menu* (options and tray menus) puts the bar in *Send to*, so selected files and folders land at its end. |
+| Command line and *Send to* (0.9.0) | `DesktopIconGrid.exe --add <path>… [--group <name>]` adds shortcuts (into that group, made when missing), `--launch <name>` starts a shortcut as a click does, `--show`, `--hide` and `--toggle` work the bar. `--group <name>` may also come right after `--add`, so a *Send to* shortcut edited to `--add --group Tools` adds into Tools. Paths must be full (`C:\…` or `\\server\share\…`). When the bar runs already, the second start hands the commands over through a pipe only this Windows user can open, and ends; it exits with 0 when they arrived, 2 for a command line it cannot read, and 3 when no bar took them (none answered, or the bar runs with other rights: elevated against plain). *In Explorer's Send To menu* (options and tray menus) puts the bar in *Send to*, so selected files and folders land at its end. |
 | Background | A theme: Classic (the olive grey of the reference), Graphite, Paper, Midnight, Sand, or a Custom colour with automatically matched text and highlight colours. See [docs/THEMES.md](docs/THEMES.md). |
 
 - Icons are laid out in reading order and **wrap** to fill the width: the number of
@@ -37,7 +37,8 @@ button at the top-right and a small options arrow at the bottom-right.
   position is off-screen (monitor removed) the bar is moved back on screen.
 - Keyboard: `Tab`/arrows move focus between icons, `Enter` launches, `Delete` removes,
   `F2` opens Properties, `Ctrl+N` new shortcut, `Ctrl+G` new group, `Ctrl+,` settings,
-  `Ctrl+F` or any letter, digit or punctuation key the search box.
+  `Ctrl+F` or any letter, digit or punctuation key the search box. All but Tab, the arrows, Enter
+  and Escape can be changed in *Settings → Keys in the bar* (0.9.0).
 
 ## 2. Items
 
@@ -120,7 +121,8 @@ Extra flags kept out of the dialog's main layout but supported:
 corner: `ping host`, `tcp host:port`, or an `http://` or `https://` address that must answer 2xx or 3xx
 (redirects are not followed). Every 30 s to 10 min (a minute by default), each check limited to 5 s;
 green is up, red is down, grey is not known yet. The tooltip has the latency or the reason, and since
-when. A change goes to the log under *Health*, and to a notification when *Notify me* is ticked. `tcp`
+when; an address is shown, logged and notified by its scheme, host and port only (it may carry a token).
+Lights and command tiles inside a group start with the bar, not when the group is first opened. A change goes to the log under *Health*, and to a notification when *Notify me* is ticked. `tcp`
 works where firewalls drop pings; no check needs administrator rights.
 
 ### 2.2 Group (a folder of items)
@@ -230,11 +232,17 @@ Both draw the value in a design you pick (ring, bar or number) with green/amber/
   over its time limit (default 30 s) is stopped with its child processes and shows red. The tooltip has
   the command, the exit code, the time and the first lines of output. A click runs it again, or opens a
   folder, file or address instead; *Run now* is in its menu. Batch files run through `cmd.exe /d /c`.
-  **Trust:** a tile runs only once its program, arguments and start folder are approved on this PC.
-  Saving its properties here approves them; a tile that comes with the bar from elsewhere (sync, a
-  restored layout, an import, a hand-edited file) shows ⏸ until a click shows the command and asks.
-  Approvals are kept per PC in `command-trust.json` in the local data folder, which is never synced;
-  changing what runs on any PC needs a new approval everywhere.
+  **Trust:** a tile runs only once what it runs is approved on this PC: its program, arguments, start
+  folder, timer and, when a click opens something, that target. Saving the properties of a new tile, or
+  of one already approved here, approves it. A tile that comes with the bar from elsewhere (sync, a
+  restored layout, an import, a hand-edited file) shows ⏸; saving its properties does not approve it,
+  only a click does, which opens a window showing all of the above, wrapped, with *Cancel* as the default
+  button. Fields may not hold line breaks or invisible characters (bidi overrides, zero-width), so what
+  is shown reads as what runs. Approving a bare program name approves whatever it resolves to on this PC
+  (the app's folder first, then the system folders and `PATH`); for a batch file the arguments are cmd
+  syntax. Approvals are kept per PC in `command-trust.json` in the local data folder, which is never
+  synced; changing any of these on any PC needs a new approval everywhere. Runs under way are stopped
+  when the app ends.
 
 The item model, handler interface, registry and the bucket are specified in
 [docs/SPECIAL_ICONS.md](docs/SPECIAL_ICONS.md).

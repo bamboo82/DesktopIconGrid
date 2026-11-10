@@ -80,6 +80,7 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
 
         SpecialItemSections = SpecialItemCatalog.GetAvailableSections();
         RootItems = new ItemListViewModel(this, null);
+        StartLiveItemsInGroups();
 
         NewShortcutCommand = new RelayCommand(() => NewShortcut(RootItems, int.MaxValue));
         NewGroupCommand = new RelayCommand(() => NewGroup(RootItems, int.MaxValue));
@@ -97,6 +98,22 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
     }
 
     public LauncherModel Model { get; private set; }
+
+    /// <summary>
+    /// Items inside groups that work on their own (a command tile, a shortcut with a health light) start with the bar,
+    /// not when their group is first opened (review 21 H2): a light with notifications in a closed group would otherwise
+    /// never notify. Their view models are the ones the group's list uses once it opens.
+    /// </summary>
+    private void StartLiveItemsInGroups()
+    {
+        foreach (var group in Model.Items.OfType<GroupItem>())
+        {
+            foreach (var item in group.Items.Where(item => item is SpecialIconItem or ShortcutItem { HealthCheck: not null }))
+            {
+                GetOrCreateViewModel(item);
+            }
+        }
+    }
 
     public IIconProvider Icons { get; }
 
@@ -1391,6 +1408,7 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
         Tracker.UnwatchAll();
 
         RootItems.Sync();
+        StartLiveItemsInGroups();
         RefreshKeys();
         NotifyAppearanceChanged();
         Save(contentChanged: false);
