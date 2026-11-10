@@ -242,6 +242,9 @@ their tooltips end with a line of the last 60 samples (`▁▂▃▅▇█`; the
   window to browse the folder, open files, *Download to…* a local folder, drag items out to the
   desktop or Explorer (they are downloaded first), and drop files in to upload. Needs full Drive
   access, which the app asks for the first time (see the sync section for the credentials setup).
+  **Paste (0.10.0):** `Ctrl+V` on the focused bucket, or *Paste* in its menu, uploads what the clipboard
+  holds: copied files and folders; otherwise a picture, as `Screenshot 2026-11-06 143005.png`; otherwise
+  text (up to 10 million characters), as `Pasted text … .txt` in UTF-8. The same-name policy applies.
 
 - **Sound Replayer** — press and hold the icon to record from the microphone (only while
   stopped); release to play the recording back in an endless loop; a single click stops it.
@@ -669,7 +672,7 @@ same way.
 
 **0.10.0 "Bigger moves"** *(in progress)* — first what was planned for 0.9.0 and is not in it: more gauges
 (memory, battery, network and the sparkline: in), the clock and timer tile (in), folder
-stacks, microphone tile, paste to a bucket. Then: workspaces (Multi Launch that puts windows back); send a file to another PC;
+stacks, microphone tile, paste to a bucket (in). Then: workspaces (Multi Launch that puts windows back); send a file to another PC;
 voice launch, if the spike says yes.
 
 **1.0.0 "Ship it"** — the existing backlog: installer (MSIX/winget), code signing, toast notifications.

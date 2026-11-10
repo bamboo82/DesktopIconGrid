@@ -2153,4 +2153,10 @@
   <data name="Monitor_NetworkSummary" xml:space="preserve">
     <value>下载 {0}/秒，上传 {1}/秒</value>
   </data>
+  <data name="Bucket_Paste" xml:space="preserve">
+    <value>粘贴（上传剪贴板内容）</value>
+  </data>
+  <data name="Bucket_NothingToPaste" xml:space="preserve">
+    <value>剪贴板中没有可上传的文件、图片或文字。</value>
+  </data>
 </root>

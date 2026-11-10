@@ -127,6 +127,29 @@ public sealed class DriveBucketHandler : ISpecialIconHandler
         return LaunchResult.Started;
     }
 
+    public bool AcceptsPaste(SpecialIconItem item) => AcceptsFileDrops(item);
+
+    /// <summary>Ctrl+V or <em>Paste</em>: uploads the clipboard's files, or its picture as a PNG, or its text as a .txt.</summary>
+    public async Task<LaunchResult> PasteAsync(SpecialIconItem item)
+    {
+        if (item.GetSetting(FolderIdKey) is null)
+        {
+            return LaunchResult.Failure(Strings.Bucket_NoFolderYet);
+        }
+
+        var files = ClipboardFiles.Take(System.IO.Path.Combine(_cacheDirectory, "pasted"), DateTime.Now);
+        return files.Count == 0 ? LaunchResult.Failure(Strings.Bucket_NothingToPaste) : await DropFilesAsync(item, files);
+    }
+
+    private async Task PasteFromMenuAsync(SpecialIconItem item)
+    {
+        var result = await PasteAsync(item);
+        if (result.Outcome == LaunchOutcome.Failed)
+        {
+            _dialogs.Notify(item.Name, result.ErrorMessage ?? Strings.Common_UnknownError);
+        }
+    }
+
     public IReadOnlyList<SpecialIconAction> GetActions(SpecialIconItem item)
     {
         var hasFolder = item.GetSetting(FolderIdKey) is not null;
@@ -135,6 +158,7 @@ public sealed class DriveBucketHandler : ISpecialIconHandler
         [
             new SpecialIconAction(Strings.Bucket_OpenInBrowser, () => Activate(item, ActivationModifiers.None), hasFolder),
             new SpecialIconAction(Strings.Bucket_Browse, () => _ = OpenViewerAsync(item), hasFolder),
+            new SpecialIconAction(Strings.Bucket_Paste, () => _ = PasteFromMenuAsync(item), hasFolder),
             new SpecialIconAction(Strings.Bucket_CancelUploads, () => uploader?.Cancel(), uploader?.IsBusy == true),
         ];
     }

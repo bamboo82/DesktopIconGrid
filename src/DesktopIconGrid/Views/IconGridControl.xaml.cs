@@ -199,6 +199,12 @@ public partial class IconGridControl : UserControl
             return;
         }
 
+        if (e.Key == Key.V && HotkeyGesture.HeldModifiers() == ModifierKeys.Control && item.Root.PasteOnto(item))
+        {
+            e.Handled = true; // a bucket uploads what the clipboard holds
+            return;
+        }
+
         // The settings' keys (WindowKeyMap): Delete and F2 unless changed there.
         switch (item.Root.Keys.ActionFor(e.Key == Key.System ? e.SystemKey : e.Key, HotkeyGesture.HeldModifiers()))
         {

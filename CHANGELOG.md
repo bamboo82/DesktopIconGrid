@@ -14,6 +14,9 @@ a bucket), then workspaces and sending a file to another PC.
   **Battery** (charge, with amber from 20 % and red from 10 % while on battery; click opens the battery
   settings) and **Network** (the download rate on the tile, down and up in the tooltip; click opens the
   network settings). All draw as ring, bar or number like the CPU and disk gauges.
+- Paste to a Google Drive Bucket: with the bucket's icon focused, `Ctrl+V` (or *Paste* in its menu) uploads
+  the files on the clipboard, or a copied picture as `Screenshot <date> <time>.png`, or copied text as a
+  `.txt`.
 - Every gauge's tooltip ends with a line of its last 60 samples (`▁▂▃▅▇█`).
 - **Clock** tile: the time on this PC or in another time zone. A click can start a countdown, or a Pomodoro
   (work, break, repeat, 25 and 5 minutes unless you set others), with a notification at the end of each

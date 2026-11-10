@@ -9,6 +9,21 @@ The owner relays replies.
 
 ---
 
+## 2026-11-10 (44) — Paste to a bucket
+
+- `ISpecialIconHandler` gains `AcceptsPaste` / `PasteAsync` (default: no). The bucket implements them.
+- `Services.ClipboardFiles.Take` returns the clipboard's file-drop list (existing paths only). Failing that, it
+  saves the picture as a PNG; failing that, the text as UTF-8 with a BOM, up to 10 M characters. Both go into
+  `drive-cache\pasted`, which the start-up purge empties after a day. The paths then go through the existing
+  `DropFilesAsync`, so access prompts and the same-name policy are unchanged.
+- Triggers: `Ctrl+V` in `IconGridControl.Item_KeyDown` (only when the focused icon's handler accepts a paste), and
+  *Paste* in the bucket's menu.
+- Names: `Core.SpecialIcons.PasteNames` (tested here). The clipboard part has no automated test, because the
+  clipboard is shared machine state.
+- To look at: a user who copied a password and presses Ctrl+V on a focused bucket uploads it as a .txt with no
+  question asked. The upload shows on the icon and can be cancelled; say if a confirmation for text is wanted.
+- Run 132 (`d0634cd`) is green.
+
 ## 2026-11-10 (43) — Network gauge and the sparkline
 
 - **Sparkline.** `Core.SpecialIcons.GaugeHistory` keeps the last 60 samples and renders them as block characters.

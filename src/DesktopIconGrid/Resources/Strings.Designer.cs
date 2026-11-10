@@ -564,11 +564,29 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to The clipboard holds no files, picture or text to upload..
+        /// </summary>
+        public static string Bucket_NothingToPaste {
+            get {
+                return ResourceManager.GetString("Bucket_NothingToPaste", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Open in browser.
         /// </summary>
         public static string Bucket_OpenInBrowser {
             get {
                 return ResourceManager.GetString("Bucket_OpenInBrowser", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Paste (upload the clipboard).
+        /// </summary>
+        public static string Bucket_Paste {
+            get {
+                return ResourceManager.GetString("Bucket_Paste", resourceCulture);
             }
         }
 

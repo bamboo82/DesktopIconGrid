@@ -807,6 +807,27 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
         IsGroupPopupOpen = false;
     }
 
+    /// <summary>Ctrl+V on a focused special icon that takes a paste (a bucket). False when the icon does not.</summary>
+    public bool PasteOnto(ItemViewModel target)
+    {
+        if (target.Model is not SpecialIconItem special || !target.SpecialHandler.AcceptsPaste(special))
+        {
+            return false;
+        }
+
+        _ = PasteOnSpecialAsync(target, special);
+        return true;
+    }
+
+    private async Task PasteOnSpecialAsync(ItemViewModel target, SpecialIconItem special)
+    {
+        var result = await target.SpecialHandler.PasteAsync(special);
+        if (result.Outcome == LaunchOutcome.Failed)
+        {
+            _dialogs.Notify(target.Name, result.ErrorMessage ?? Strings.Common_UnknownError);
+        }
+    }
+
     private async Task DropOnSpecialAsync(ItemViewModel target, SpecialIconItem special, IReadOnlyList<string> paths)
     {
         var result = await target.SpecialHandler.DropFilesAsync(special, paths);

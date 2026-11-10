@@ -2153,4 +2153,10 @@ Details are in {1}.</value>
   <data name="Monitor_NetworkSummary" xml:space="preserve">
     <value>Down {0}/s, up {1}/s</value>
   </data>
+  <data name="Bucket_Paste" xml:space="preserve">
+    <value>Paste (upload the clipboard)</value>
+  </data>
+  <data name="Bucket_NothingToPaste" xml:space="preserve">
+    <value>The clipboard holds no files, picture or text to upload.</value>
+  </data>
 </root>

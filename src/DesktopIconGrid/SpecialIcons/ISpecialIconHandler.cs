@@ -53,6 +53,12 @@ public interface ISpecialIconHandler
     Task<LaunchResult> DropFilesAsync(SpecialIconItem item, IReadOnlyList<string> paths) =>
         Task.FromResult(LaunchResult.Failure(Strings.Special_NoFiles));
 
+    /// <summary>True when Ctrl+V on the focused icon means something (a bucket uploads what the clipboard holds).</summary>
+    bool AcceptsPaste(SpecialIconItem item) => false;
+
+    Task<LaunchResult> PasteAsync(SpecialIconItem item) =>
+        Task.FromResult(LaunchResult.Failure(Strings.Special_NoFiles));
+
     IReadOnlyList<SpecialIconAction> GetActions(SpecialIconItem item) => [];
 
     /// <summary>True when pressing and holding the icon (rather than clicking) means something.</summary>
