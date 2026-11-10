@@ -3,11 +3,17 @@
 All notable changes to Desktop Icon Grid. The format follows [Keep a Changelog](https://keepachangelog.com/);
 version numbers follow [Semantic Versioning](https://semver.org/).
 
-## [0.9.0] – Unreleased
+## [0.9.0] – 2026-11-10
 
-"The bar tells you things": first what moved from 0.8.0 (the import dialog, layout history, a command line
-and *Send to*), then the command tile, a health light on a shortcut, folder stacks, more gauges, a
-microphone tile, a clock and timer, and paste to a bucket.
+"The bar tells you things": what moved from 0.8.0 (the import dialog, layout history, a command line and
+*Send to*), keys of the bar's window you can change, the command tile and a health light on a shortcut.
+Folder stacks, more gauges, the microphone tile, the clock and timer and paste to a bucket move to the next
+release.
+
+Upgrading: 0.9.0 reads and writes the same layout format as 0.8.x (version 1), so PCs on either can share a
+settings copy. A command tile shows as an unknown item on 0.8.x and a health check is kept but not shown
+there. On each PC with 0.9.0, a command tile or health check that came from another PC stays paused until it
+is approved on that PC (from a click on the tile, or *Approve health check…* in the icon's menu).
 
 ### Added
 

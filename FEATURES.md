@@ -645,13 +645,15 @@ program's conflict copy, switching where the copies are kept while an upload run
 share, portable mode on the system drive and on read-only media, the Run entry of several copies,
 *Repair…* for a folder, and the placeholder checks for ssh and WSL that 0.8.0 left for later.
 
-**0.9.0 "The bar tells you things"** *(in progress)* — first what moved from 0.8.0: the import dialog (its readers for
-Windows Terminal, SSH, WinSCP and PuTTY, the taskbar and the desktop are already in), layout history,
-command line and Send To. Then the command tile, with commands from a synced copy paused until
-approved on each PC; health light on a shortcut; folder stacks; more gauges; microphone tile; clock and
-timer; paste to a bucket.
+**0.9.0 "The bar tells you things"** *(done, released 2026-11-10)* — what moved from 0.8.0: the import dialog,
+layout history, command line and Send To; keys of the bar's window in Settings; the command tile, with
+commands from elsewhere paused until approved on each PC; a health light on a shortcut, approved the
+same way.
 
-**0.10.0 "Bigger moves"** — workspaces (Multi Launch that puts windows back); send a file to another PC;
+**0.9.x / 0.10.0** — what was planned for 0.9.0 and is not in it: folder stacks; more gauges; microphone
+tile; clock and timer; paste to a bucket.
+
+**0.10.0 "Bigger moves"** — after the items above: workspaces (Multi Launch that puts windows back); send a file to another PC;
 voice launch, if the spike says yes.
 
 **1.0.0 "Ship it"** — the existing backlog: installer (MSIX/winget), code signing, toast notifications.

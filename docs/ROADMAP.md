@@ -254,9 +254,10 @@ folder.
   and 0.7.0): 5, 6, and *Add app…* from 7.
 - **0.8.1** (released 2026-11-06): the fixes the review of 0.8.0 placed after the release (folder sync,
   portable mode, *Repair…*, the smaller items and the placeholder follow-ups).
-- **0.9.0 "The bar tells you things"** (in progress): first what moved from 0.8.0 (the imports of 7, whose readers are
-  already in; layout history; command line and Send To), then 8 with the trust rule, 9, 10, more gauges,
-  mic tile, clock and timer, paste to a bucket.
+- **0.9.0 "The bar tells you things"** (released 2026-11-10): what moved from 0.8.0 (the imports of 7, layout
+  history, command line and Send To), keys of the bar's window, 8 with the trust rule, 9 with the same rule.
+- **Next (0.9.x or 0.10.0)**: what 0.9.0 planned and does not have: 10 (folder stacks), more gauges, mic tile,
+  clock and timer, paste to a bucket.
 - **0.10.0 "Bigger moves"**: 4 (workspaces), 12 (send to a device), 11 (voice, if the spike says yes).
 - **1.0.0 "Ship it"**: the existing backlog — installer (MSIX/winget), code signing, toast notifications.
 

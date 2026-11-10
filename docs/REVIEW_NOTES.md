@@ -9,6 +9,18 @@ The owner relays replies.
 
 ---
 
+## 2026-11-10 (40) — Release 0.9.0 (docs only)
+
+The owner asked for the release commit and for steps 3–5 (main, tag, tag push) to be run from this session.
+This commit changes docs only, on top of `936c466`.
+
+- CHANGELOG: the 0.9.0 section is dated 2026-11-10. Its intro now names what is in the release and says that
+  folder stacks, gauges, mic tile, clock/timer and paste to a bucket move on. An Upgrading note says the layout
+  format is still version 1 (0.8.x and 0.9.0 share copies), says what older versions show, and says that tiles
+  and checks from elsewhere wait for an approval on each PC.
+- FEATURES §12 and ROADMAP mark 0.9.0 released and list the moved items as next.
+- The owner's in-app check of the CI build was not reported to me before this; it remains on their list.
+
 ## 2026-11-10 (39) — Review 23's two notes, closed now
 
 Both were small enough to do at once rather than carry.
