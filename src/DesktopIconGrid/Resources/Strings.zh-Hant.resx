@@ -2090,4 +2090,55 @@
   <data name="Monitor_BatteryUnavailable" xml:space="preserve">
     <value>無法取得電池狀態</value>
   </data>
+  <data name="Clock_Name" xml:space="preserve">
+    <value>時鐘</value>
+  </data>
+  <data name="Clock_Desc" xml:space="preserve">
+    <value>顯示本機或其他時區的時間。按一下可開始倒數計時或番茄鐘。</value>
+  </data>
+  <data name="Clock_Zone" xml:space="preserve">
+    <value>時區：</value>
+  </data>
+  <data name="Clock_ThisPc" xml:space="preserve">
+    <value>這台電腦的時間</value>
+  </data>
+  <data name="Clock_OnClick" xml:space="preserve">
+    <value>按一下時：</value>
+  </data>
+  <data name="Clock_TimerNone" xml:space="preserve">
+    <value>無動作</value>
+  </data>
+  <data name="Clock_TimerCountdown" xml:space="preserve">
+    <value>開始倒數計時</value>
+  </data>
+  <data name="Clock_TimerPomodoro" xml:space="preserve">
+    <value>開始番茄鐘（工作、休息、重複）</value>
+  </data>
+  <data name="Clock_Minutes" xml:space="preserve">
+    <value>分鐘：</value>
+  </data>
+  <data name="Clock_BreakMinutes" xml:space="preserve">
+    <value>休息：</value>
+  </data>
+  <data name="Clock_ClickToStart" xml:space="preserve">
+    <value>按一下開始計時；再按一下停止。</value>
+  </data>
+  <data name="Clock_Running" xml:space="preserve">
+    <value>計時中。按一下停止。</value>
+  </data>
+  <data name="Clock_OnBreak" xml:space="preserve">
+    <value>休息中。按一下停止計時。</value>
+  </data>
+  <data name="Clock_Done" xml:space="preserve">
+    <value>時間到。按一下恢復顯示時間。</value>
+  </data>
+  <data name="Clock_CountdownEnded" xml:space="preserve">
+    <value>{0} 分鐘已到。</value>
+  </data>
+  <data name="Clock_BreakStarted" xml:space="preserve">
+    <value>休息 {0} 分鐘。</value>
+  </data>
+  <data name="Clock_WorkStarted" xml:space="preserve">
+    <value>休息結束：工作 {0} 分鐘。</value>
+  </data>
 </root>

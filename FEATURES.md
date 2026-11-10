@@ -241,6 +241,13 @@ All four draw the value in a design you pick (ring, bar or number) with green/am
   stopped); release to play the recording back in an endless loop; a single click stops it.
   A click while stopped replays the last recording. Shows REC / LOOP on the icon.
 
+- **Clock** (0.10.0) — the time (`14:05`) on this PC or in a time zone you pick. *On a click* can be
+  nothing, a countdown of N minutes, or a Pomodoro (N minutes of work, a break, and again until
+  clicked). While it runs the tile shows what is left (green for work, amber for a break), each phase
+  ends with a notification, a finished countdown shows `0:00` in red until clicked, and a click while
+  it runs stops it. After the PC slept through a phase the next one starts from the wake-up. A zone id
+  another PC does not know falls back to that PC's own time.
+
 - **Command tile** (0.9.0) — runs a program without a window, every N seconds (at least 10) or only on a
   click, and shows the first line of its output, or the first number in it as a ring, bar or number with
   amber and red thresholds. The exit code picks the colour (0 green, 1 amber, anything else red); a run
@@ -655,8 +662,8 @@ commands from elsewhere paused until approved on each PC; a health light on a sh
 same way.
 
 **0.10.0 "Bigger moves"** *(in progress)* — first what was planned for 0.9.0 and is not in it: more gauges
-(memory and battery are in; network and the sparkline are not), folder stacks, microphone tile, clock and
-timer, paste to a bucket. Then: workspaces (Multi Launch that puts windows back); send a file to another PC;
+(memory and battery are in; network and the sparkline are not), the clock and timer tile (in), folder
+stacks, microphone tile, paste to a bucket. Then: workspaces (Multi Launch that puts windows back); send a file to another PC;
 voice launch, if the spike says yes.
 
 **1.0.0 "Ship it"** — the existing backlog: installer (MSIX/winget), code signing, toast notifications.

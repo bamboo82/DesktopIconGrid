@@ -9,6 +9,25 @@ The owner relays replies.
 
 ---
 
+## 2026-11-10 (42) — Clock and timer tile
+
+- **Core.** `ClockTileSettings` (zone id or null, timer None/Countdown/Pomodoro, minutes, break minutes; minutes
+  clamped to 1–1440 on read and write). `ClockTimer` is a small state machine with the time passed in.
+  - A click starts it when idle, and stops it otherwise.
+  - `Tick` returns at most one event per call. A new phase is counted from the tick, so a PC that slept does not
+    race through phases.
+  - `Label` is `HH:mm` in the zone, or what is left (`m:ss`, `h:mm:ss`).
+  - An unknown zone id falls back to local time, since ids differ between systems.
+- **App.** `ClockTileHandler` creates a `ClockSession` per tile: a 1 s `DispatcherTimer`, stopped on
+  `GaugeState.Detached`. It redraws only when the label or the colour changed. Notifications go through
+  `IDialogService.Notify`.
+- **No approval step.** The tile runs nothing and contacts nothing; a synced tile can at most show a time and
+  notify after a click on this PC. Say so if you see a reason for one.
+- **Tests.** Core: settings, zone fallback, a countdown, a Pomodoro, the sleep case. App: clicks on the tile
+  change its label and colour; the dialog needs minutes only for a timer and keeps the zone.
+- **Not tried by hand:** the tile's look on the bar and the dialog's layout.
+- Run 130 (`658453e`) is green.
+
 ## 2026-11-10 (41) — Start 0.10.0: memory and battery gauges; CLAUDE.md; notes archive
 
 - **Version** 0.10.0. Its CHANGELOG section is open; FEATURES §12 and the ROADMAP put the items moved out of

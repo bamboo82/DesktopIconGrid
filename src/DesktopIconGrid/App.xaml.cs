@@ -143,6 +143,7 @@ public partial class App : Application
             new BatteryHandler(_monitor, owner),
             new DriveBucketHandler(syncService, dialogs, owner, icons, cacheDirectory, Dispatcher),
             new SoundReplayerHandler(owner, AppPaths.SoundsDirectory, Dispatcher),
+            new ClockTileHandler(dialogs.Notify, owner, Dispatcher),
             new CommandTileHandler(trust, owner, Dispatcher),
         ]);
         var launcher = new LaunchService(_tracker, dialogs);

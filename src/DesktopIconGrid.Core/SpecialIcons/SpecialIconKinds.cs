@@ -13,6 +13,9 @@ public static class SpecialIconKinds
     /// <summary>Battery charge (0.10.0).</summary>
     public const string Battery = "battery";
 
+    /// <summary>The time, here or in another zone, with a countdown or Pomodoro on a click (0.10.0).</summary>
+    public const string Clock = "clock";
+
     public const string GoogleDriveBucket = "google-drive-bucket";
     public const string SoundReplayer = "sound-replayer";
 

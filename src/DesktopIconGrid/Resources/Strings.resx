@@ -2090,4 +2090,55 @@ Details are in {1}.</value>
   <data name="Monitor_BatteryUnavailable" xml:space="preserve">
     <value>The battery's state is not available</value>
   </data>
+  <data name="Clock_Name" xml:space="preserve">
+    <value>Clock</value>
+  </data>
+  <data name="Clock_Desc" xml:space="preserve">
+    <value>Shows the time, here or in another time zone. A click can start a countdown or a Pomodoro timer.</value>
+  </data>
+  <data name="Clock_Zone" xml:space="preserve">
+    <value>Time zone:</value>
+  </data>
+  <data name="Clock_ThisPc" xml:space="preserve">
+    <value>This PC's time</value>
+  </data>
+  <data name="Clock_OnClick" xml:space="preserve">
+    <value>On a click:</value>
+  </data>
+  <data name="Clock_TimerNone" xml:space="preserve">
+    <value>Nothing</value>
+  </data>
+  <data name="Clock_TimerCountdown" xml:space="preserve">
+    <value>Start a countdown</value>
+  </data>
+  <data name="Clock_TimerPomodoro" xml:space="preserve">
+    <value>Start a Pomodoro (work, break, repeat)</value>
+  </data>
+  <data name="Clock_Minutes" xml:space="preserve">
+    <value>Minutes:</value>
+  </data>
+  <data name="Clock_BreakMinutes" xml:space="preserve">
+    <value>Break:</value>
+  </data>
+  <data name="Clock_ClickToStart" xml:space="preserve">
+    <value>Click to start the timer; click again to stop it.</value>
+  </data>
+  <data name="Clock_Running" xml:space="preserve">
+    <value>The timer is running. Click to stop it.</value>
+  </data>
+  <data name="Clock_OnBreak" xml:space="preserve">
+    <value>Break. Click to stop the timer.</value>
+  </data>
+  <data name="Clock_Done" xml:space="preserve">
+    <value>Time is up. Click to show the time again.</value>
+  </data>
+  <data name="Clock_CountdownEnded" xml:space="preserve">
+    <value>The {0} minutes are up.</value>
+  </data>
+  <data name="Clock_BreakStarted" xml:space="preserve">
+    <value>Time for a break of {0} minutes.</value>
+  </data>
+  <data name="Clock_WorkStarted" xml:space="preserve">
+    <value>The break is over: {0} minutes of work.</value>
+  </data>
 </root>

@@ -645,6 +645,159 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Break:.
+        /// </summary>
+        public static string Clock_BreakMinutes {
+            get {
+                return ResourceManager.GetString("Clock_BreakMinutes", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Time for a break of {0} minutes..
+        /// </summary>
+        public static string Clock_BreakStarted {
+            get {
+                return ResourceManager.GetString("Clock_BreakStarted", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Click to start the timer; click again to stop it..
+        /// </summary>
+        public static string Clock_ClickToStart {
+            get {
+                return ResourceManager.GetString("Clock_ClickToStart", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The {0} minutes are up..
+        /// </summary>
+        public static string Clock_CountdownEnded {
+            get {
+                return ResourceManager.GetString("Clock_CountdownEnded", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Shows the time, here or in another time zone. A click can start a countdown or a [rest of string was truncated]";.
+        /// </summary>
+        public static string Clock_Desc {
+            get {
+                return ResourceManager.GetString("Clock_Desc", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Time is up. Click to show the time again..
+        /// </summary>
+        public static string Clock_Done {
+            get {
+                return ResourceManager.GetString("Clock_Done", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Minutes:.
+        /// </summary>
+        public static string Clock_Minutes {
+            get {
+                return ResourceManager.GetString("Clock_Minutes", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Clock.
+        /// </summary>
+        public static string Clock_Name {
+            get {
+                return ResourceManager.GetString("Clock_Name", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Break. Click to stop the timer..
+        /// </summary>
+        public static string Clock_OnBreak {
+            get {
+                return ResourceManager.GetString("Clock_OnBreak", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to On a click:.
+        /// </summary>
+        public static string Clock_OnClick {
+            get {
+                return ResourceManager.GetString("Clock_OnClick", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The timer is running. Click to stop it..
+        /// </summary>
+        public static string Clock_Running {
+            get {
+                return ResourceManager.GetString("Clock_Running", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to This PC's time.
+        /// </summary>
+        public static string Clock_ThisPc {
+            get {
+                return ResourceManager.GetString("Clock_ThisPc", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Start a countdown.
+        /// </summary>
+        public static string Clock_TimerCountdown {
+            get {
+                return ResourceManager.GetString("Clock_TimerCountdown", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Nothing.
+        /// </summary>
+        public static string Clock_TimerNone {
+            get {
+                return ResourceManager.GetString("Clock_TimerNone", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Start a Pomodoro (work, break, repeat).
+        /// </summary>
+        public static string Clock_TimerPomodoro {
+            get {
+                return ResourceManager.GetString("Clock_TimerPomodoro", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The break is over: {0} minutes of work..
+        /// </summary>
+        public static string Clock_WorkStarted {
+            get {
+                return ResourceManager.GetString("Clock_WorkStarted", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Time zone:.
+        /// </summary>
+        public static string Clock_Zone {
+            get {
+                return ResourceManager.GetString("Clock_Zone", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Approve and run.
         /// </summary>
         public static string Command_ApproveButton {
