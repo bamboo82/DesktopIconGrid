@@ -2282,4 +2282,10 @@ Details are in {1}.</value>
   <data name="Workspace_NotSaved" xml:space="preserve">
     <value>The window positions could not be saved.</value>
   </data>
+  <data name="Menu_ReceiveFiles" xml:space="preserve">
+    <value>Receive files from my other PCs</value>
+  </data>
+  <data name="Menu_ReceiveFilesToolTip" xml:space="preserve">
+    <value>Files other PCs send to this one through the sync folder are put in Downloads. A PC with a Send to PC icon receives too.</value>
+  </data>
 </root>

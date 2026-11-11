@@ -68,6 +68,12 @@ public sealed class SyncSettings
     public bool CheckAtStartup { get; set; } = true;
 
     /// <summary>
+    /// This PC takes files other PCs send it through the sync folder (0.10.0), even without a Send to PC icon of its
+    /// own. Off unless the user turns it on: a PC does not start receiving files because it was updated.
+    /// </summary>
+    public bool ReceiveFiles { get; set; }
+
+    /// <summary>
     /// These settings stand in for a <c>sync.json</c> that is there but could not be read (another program held it).
     /// They are kept in memory only: <see cref="SyncSettingsStore.Save"/> never writes them over the file, so the link,
     /// the folder, the Google client and the device id in it are all there at the next start.

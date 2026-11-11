@@ -2922,6 +2922,24 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Receive files from my other PCs.
+        /// </summary>
+        public static string Menu_ReceiveFiles {
+            get {
+                return ResourceManager.GetString("Menu_ReceiveFiles", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Files other PCs send to this one through the sync folder are put in Downloads. A [rest of string was truncated]";.
+        /// </summary>
+        public static string Menu_ReceiveFilesToolTip {
+            get {
+                return ResourceManager.GetString("Menu_ReceiveFilesToolTip", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Remove from Multi Launch group.
         /// </summary>
         public static string Menu_RemoveFromMultiLaunch {

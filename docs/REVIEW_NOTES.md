@@ -9,6 +9,28 @@ The owner relays replies.
 
 ---
 
+## 2026-11-11 (54) — I1: receiving is off until asked for (owner: "be off until you add the icon or turn on a setting")
+
+The owner answered me directly, in those words. Run 143 (`460374c`) is green.
+
+- **Rule.** `FolderInbox.TakesPart(usesSyncFolder, receiveSetting, hasSendIcon)` is true only with a sync folder
+  and either the setting or a *Send to PC* icon on this bar. `InboxService.Look` returns before `Current()`,
+  `Announce()` or `Pending()` when it is false. An updated PC therefore creates no `inbox\<id>` folder and takes
+  nothing.
+- **Setting.** `SyncSettings.ReceiveFiles`, default false, lives in the local `sync.json` and is never part of a
+  synced copy. It is toggled by *Receive files from my other PCs* in the options menu (disabled, with the reason
+  as its tooltip, when there is no sync folder) and in the tray menu (shown only with a sync folder). Turning it
+  on looks at once.
+- **Icon.** `LauncherModel.HasSpecialIcon("send-to-device")` covers the root and groups. Opening the icon's
+  properties announces this PC, so the other side can pick it without waiting a minute.
+- **To look at.** The bar is synced, so a *Send to PC* icon made on one PC arrives on the others and turns
+  receiving on there without anyone touching that PC. The owner's words were "add the icon", and I read a synced
+  icon as added. If it should count only when added on this PC, it needs a local mark like `CommandTrust`; say so
+  and I will ask the owner.
+- **Tests.** Core: the four cases of `TakesPart`, the default, the icon inside a group. The menu items and the
+  service's gate are not covered by a test.
+- Not done from I1: nothing else. The Upgrading note in the CHANGELOG now says receiving is off after an update.
+
 ## 2026-11-11 (53) — Review 26's note
 
 - Taken now. `Send` appends `_` to a name that ends in `.part` or `.taken` (any case), so a file sent under one

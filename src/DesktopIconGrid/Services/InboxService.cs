@@ -32,6 +32,37 @@ public sealed class InboxService : IDisposable
         _timer.Stop();
     }
 
+    /// <summary>Whether the bar holds a Send to PC icon; set once the bar exists.</summary>
+    public Func<bool> HasSendIcon { get; set; } = () => false;
+
+    /// <summary>Whether a sync folder is in use, so that receiving can be turned on at all.</summary>
+    public bool CanReceive => _sync.UsesFolder && FolderInbox.IsDeviceId(_sync.Settings.DeviceId);
+
+    /// <summary>The setting: take files even without a Send to PC icon. Saved in the local sync settings.</summary>
+    public bool ReceiveSetting
+    {
+        get => _sync.Settings.ReceiveFiles;
+        set
+        {
+            if (_sync.Settings.ReceiveFiles != value)
+            {
+                _sync.Settings.ReceiveFiles = value;
+                _sync.SaveSettings();
+                AppLog.Default.Info("Inbox", value ? "Receiving files from other PCs turned on" : "Receiving files from other PCs turned off");
+                if (value)
+                {
+                    Look();
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Whether this PC announces itself and takes files now (<see cref="FolderInbox.TakesPart"/>): off unless its user
+    /// turned receiving on or put a Send to PC icon on the bar.
+    /// </summary>
+    public bool IsReceiving => FolderInbox.TakesPart(CanReceive, _sync.Settings.ReceiveFiles, HasSendIcon());
+
     /// <summary>This PC's inbox in the sync folder, or <see langword="null"/> when no sync folder is used.</summary>
     public FolderInbox? Current()
     {
@@ -54,9 +85,9 @@ public sealed class InboxService : IDisposable
 
     private async void Look()
     {
-        if (_busy || Current() is not { } inbox)
+        if (_busy || !IsReceiving || Current() is not { } inbox)
         {
-            return;
+            return; // off unless the user asked for it: no folder is made in the sync folder and nothing is taken
         }
 
         _busy = true;

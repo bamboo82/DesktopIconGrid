@@ -146,6 +146,10 @@ public partial class MainWindow : Window
 
         yield return new TrayMenuEntry(Strings.Menu_AlwaysOnTop, () => _viewModel.AlwaysOnTop = !_viewModel.AlwaysOnTop, IsChecked: _viewModel.AlwaysOnTop);
         yield return new TrayMenuEntry(Strings.Menu_SendTo, ToggleSendTo, IsChecked: SendToEntry.Exists);
+        if (Inbox is { CanReceive: true } inbox)
+        {
+            yield return new TrayMenuEntry(Strings.Menu_ReceiveFiles, () => inbox.ReceiveSetting = !inbox.ReceiveSetting, IsChecked: inbox.ReceiveSetting);
+        }
         yield return TrayMenuEntry.Separator;
         yield return new TrayMenuEntry(Strings.Menu_Settings, () => RunOnBar(() => _viewModel.OpenSettingsCommand.Execute(null)));
         yield return new TrayMenuEntry(Strings.Menu_Sync, () => RunOnBar(() => _viewModel.OpenSyncCommand.Execute(null)));
@@ -894,6 +898,10 @@ public partial class MainWindow : Window
         }
 
         SendToMenuItem.IsChecked = SendToEntry.Exists;
+        ReceiveFilesMenuItem.IsChecked = Inbox?.ReceiveSetting == true;
+        ReceiveFilesMenuItem.IsEnabled = Inbox?.CanReceive == true;
+        ReceiveFilesMenuItem.ToolTip = Inbox?.CanReceive == true ? Strings.Menu_ReceiveFilesToolTip : Strings.SendTo_NeedsFolder;
+        ToolTipService.SetShowOnDisabled(ReceiveFilesMenuItem, true);
         PopulateWorkspaceEntries(menu);
         menu.PlacementTarget = button;
         menu.Placement = PlacementMode.Top;
@@ -923,6 +931,19 @@ public partial class MainWindow : Window
             capture.Click += (_, _) => _viewModel.CaptureWorkspace(name);
             menu.Items.Insert(index++, capture);
         }
+    }
+
+    /// <summary>Receiving files from the other PCs of the sync folder; set by the app once the service exists.</summary>
+    public InboxService? Inbox { get; init; }
+
+    private void ReceiveFiles_Click(object sender, RoutedEventArgs e)
+    {
+        if (Inbox is { CanReceive: true } inbox)
+        {
+            inbox.ReceiveSetting = !inbox.ReceiveSetting;
+        }
+
+        ReceiveFilesMenuItem.IsChecked = Inbox?.ReceiveSetting == true;
     }
 
     private void SendTo_Click(object sender, RoutedEventArgs e) => ToggleSendTo();

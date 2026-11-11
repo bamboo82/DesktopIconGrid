@@ -11,7 +11,8 @@ timer, paste to a bucket), then workspaces and sending a file to another PC.
 Upgrading: 0.10.0 reads and writes the same layout format as 0.8.x and 0.9.0 (version 1). Older versions show
 the new tiles as unknown items and keep, without using, a shortcut's stack and workspace settings; the Multi
 Launch group works on every version. Window positions of workspaces and files sent between PCs are per PC
-and are not part of a synced copy. Sending files needs 0.10.0 and the same sync folder on both PCs.
+and are not part of a synced copy. Sending files needs 0.10.0 and the same sync folder on both PCs, and the
+receiving PC must have a *Send to PC* icon or *Receive files from my other PCs* ticked: it is off after an update.
 
 Not in this release: sending files through Google Drive, voice launch, a volume tile, and dropping a file onto
 a program inside a folder stack.
@@ -35,7 +36,9 @@ a program inside a folder stack.
   window is, and starting the workspace puts the windows back there on this PC.
 - Send a file to another PC: a **Send to PC** icon (*Add special icon*) takes dropped or pasted files and
   sends them through the sync folder to the PC you chose; that PC puts them in its Downloads folder, marked
-  as downloaded, and tells you. Needs a sync folder on both PCs; not through Google Drive yet.
+  as downloaded, and tells you. Needs a sync folder on both PCs; not through Google Drive yet. A PC receives
+  only when it has a *Send to PC* icon itself or *Receive files from my other PCs* is ticked in its options
+  menu; updating changes nothing by itself.
 - Every gauge's tooltip ends with a line of its last 60 samples (`▁▂▃▅▇█`).
 - **Clock** tile: the time on this PC or in another time zone. A click can start a countdown, or a Pomodoro
   (work, break, repeat, 25 and 5 minutes unless you set others), with a notification at the end of each

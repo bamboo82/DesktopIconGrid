@@ -268,6 +268,12 @@ public sealed class LauncherModel
     /// <summary>The list a parent owns: the root list for <see langword="null"/>, otherwise the group's items.</summary>
     public IReadOnlyList<LauncherItem> ItemsOf(GroupItem? parent) => ListOf(parent);
 
+    /// <summary>Whether the bar or one of its groups holds a special icon of <paramref name="kind"/>.</summary>
+    public bool HasSpecialIcon(string kind) =>
+        _items.Concat(_items.OfType<GroupItem>().SelectMany(group => group.Items))
+            .OfType<SpecialIconItem>()
+            .Any(icon => string.Equals(icon.Kind?.Trim(), kind, StringComparison.OrdinalIgnoreCase));
+
     public IEnumerable<ShortcutItem> AllShortcuts()
     {
         foreach (var item in _items)

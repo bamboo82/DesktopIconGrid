@@ -129,6 +129,15 @@ public sealed class SendToDeviceHandler(Func<FolderInbox?> inbox, IDialogService
             return false;
         }
 
+        try
+        {
+            mine.Announce(); // this PC takes part from the moment it gets the icon: the other PCs can then pick it too
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            AppLog.Default.Warning("Inbox", $"This PC could not be announced in the sync folder: {ex.Message}");
+        }
+
         var viewModel = new SendToDeviceViewModel(item, mine.Devices());
         var window = new SendToDeviceWindow { DataContext = viewModel, Owner = ownerProvider() };
         if (window.ShowDialog() != true)

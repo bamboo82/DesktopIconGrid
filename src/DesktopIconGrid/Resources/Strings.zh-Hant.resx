@@ -2282,4 +2282,10 @@
   <data name="Workspace_NotSaved" xml:space="preserve">
     <value>無法儲存視窗位置。</value>
   </data>
+  <data name="Menu_ReceiveFiles" xml:space="preserve">
+    <value>接收來自我其他電腦的檔案</value>
+  </data>
+  <data name="Menu_ReceiveFilesToolTip" xml:space="preserve">
+    <value>其他電腦透過同步資料夾傳送到這台電腦的檔案會存入「下載」資料夾。有「傳送到電腦」圖示的電腦也會接收。</value>
+  </data>
 </root>

@@ -174,4 +174,25 @@ public sealed class FolderInboxTests : IDisposable
 
         Assert.Equal(name + "_", Assert.Single(desktop.Pending()).Name);
     }
+
+    [Theory]
+    [InlineData(true, false, false, false)] // updated to 0.10.0 with a sync folder: nothing changes by itself
+    [InlineData(true, true, false, true)] // the setting
+    [InlineData(true, false, true, true)] // a Send to PC icon on the bar
+    [InlineData(false, true, true, false)] // no sync folder: nowhere to receive from
+    public void A_PC_takes_part_only_when_its_user_asked(bool folder, bool setting, bool icon, bool takesPart) =>
+        Assert.Equal(takesPart, FolderInbox.TakesPart(folder, setting, icon));
+
+    [Fact]
+    public void The_receive_setting_is_off_by_default_and_the_bar_knows_its_Send_to_PC_icon()
+    {
+        Assert.False(new SyncSettings().ReceiveFiles);
+
+        var model = new LauncherModel();
+        Assert.False(model.HasSpecialIcon(DesktopIconGrid.Core.SpecialIcons.SpecialIconKinds.SendToDevice));
+        var group = new DesktopIconGrid.Core.Models.GroupItem { Name = "G" };
+        model.Add(group);
+        model.Insert(new DesktopIconGrid.Core.Models.SpecialIconItem { Kind = "send-to-device" }, group, 0);
+        Assert.True(model.HasSpecialIcon(DesktopIconGrid.Core.SpecialIcons.SpecialIconKinds.SendToDevice)); // inside a group counts
+    }
 }

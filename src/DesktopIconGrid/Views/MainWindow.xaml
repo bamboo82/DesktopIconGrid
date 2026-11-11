@@ -120,6 +120,7 @@
               <Separator />
               <MenuItem Header="{x:Static r:Strings.Menu_AlwaysOnTop}" IsCheckable="True" IsChecked="{Binding AlwaysOnTop, Mode=TwoWay}" />
               <MenuItem x:Name="SendToMenuItem" Header="{x:Static r:Strings.Menu_SendTo}" IsCheckable="True" Click="SendTo_Click" />
+              <MenuItem x:Name="ReceiveFilesMenuItem" Header="{x:Static r:Strings.Menu_ReceiveFiles}" IsCheckable="True" Click="ReceiveFiles_Click" />
               <MenuItem Header="{x:Static r:Strings.Menu_RestoreLayout}" Command="{Binding RestoreLayoutCommand}" />
               <MenuItem Header="{x:Static r:Strings.Menu_OpenLayoutLocation}" Command="{Binding OpenLayoutFolderCommand}" />
               <MenuItem Header="{x:Static r:Strings.Menu_About}" Command="{Binding AboutCommand}" />

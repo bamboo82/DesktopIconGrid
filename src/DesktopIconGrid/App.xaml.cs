@@ -217,7 +217,8 @@ public partial class App : Application
             }
         };
 
-        var window = new MainWindow(viewModel);
+        _inbox.HasSendIcon = () => viewModel.Model.HasSpecialIcon(SpecialIconKinds.SendToDevice);
+        var window = new MainWindow(viewModel) { Inbox = _inbox };
         MainWindow = window;
         window.TrayReady += (_, _) =>
         {
