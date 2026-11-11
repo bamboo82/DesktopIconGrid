@@ -1941,6 +1941,24 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to “{0}” ({1}) cannot be received yet: the drive of your Downloads folder has {2} f [rest of string was truncated]";.
+        /// </summary>
+        public static string Inbox_WaitingForSpace {
+            get {
+                return ResourceManager.GetString("Inbox_WaitingForSpace", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to File from {0} is waiting.
+        /// </summary>
+        public static string Inbox_WaitingTitle {
+            get {
+                return ResourceManager.GetString("Inbox_WaitingTitle", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to {0} [rest of string was truncated]";.
         /// </summary>
         public static string Item_ItemsToolTip {
@@ -4542,6 +4560,42 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to that PC is not receiving files. On that PC, add a Send to PC icon or tick “Recei [rest of string was truncated]";.
+        /// </summary>
+        public static string SendTo_ProblemNoInbox {
+            get {
+                return ResourceManager.GetString("SendTo_ProblemNoInbox", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to only files can be sent, not folders..
+        /// </summary>
+        public static string SendTo_ProblemNotAFile {
+            get {
+                return ResourceManager.GetString("SendTo_ProblemNotAFile", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to the PC chosen for this icon is this PC itself, or is not valid. Open Properties [rest of string was truncated]";.
+        /// </summary>
+        public static string SendTo_ProblemNotAnotherPc {
+            get {
+                return ResourceManager.GetString("SendTo_ProblemNotAnotherPc", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to it is larger than 2 GB, the most that can be sent..
+        /// </summary>
+        public static string SendTo_ProblemTooLarge {
+            get {
+                return ResourceManager.GetString("SendTo_ProblemTooLarge", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to {0} file(s) on the way to {1}..
         /// </summary>
         public static string SendTo_Sent {
@@ -5402,6 +5456,15 @@ namespace DesktopIconGrid.Resources {
         public static string Stack_OpenFolder {
             get {
                 return ResourceManager.GetString("Stack_OpenFolder", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to This folder cannot be read right now. It may be on a drive or share that is not [rest of string was truncated]";.
+        /// </summary>
+        public static string Stack_Unreadable {
+            get {
+                return ResourceManager.GetString("Stack_Unreadable", resourceCulture);
             }
         }
 

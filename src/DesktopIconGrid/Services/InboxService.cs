@@ -24,6 +24,9 @@ public sealed class InboxService : IDisposable
     /// <summary>Inbox files that were delivered but could be neither deleted nor set aside: never delivered twice by this run.</summary>
     private static readonly HashSet<string> Delivered = new(StringComparer.OrdinalIgnoreCase);
 
+    /// <summary>Inbox files the user was told are waiting for disk space: told once, not every minute.</summary>
+    private static readonly HashSet<string> ToldWaiting = new(StringComparer.OrdinalIgnoreCase);
+
     public InboxService(SyncService sync, Action<string, string> notify, Dispatcher dispatcher)
     {
         _sync = sync;
@@ -93,7 +96,19 @@ public sealed class InboxService : IDisposable
         _busy = true;
         try
         {
-            var received = await Task.Run(() => Take(inbox));
+            var (received, waiting) = await Task.Run(() => Take(inbox));
+            foreach (var (name, sender, size, free) in waiting)
+            {
+                _notify(
+                    string.Format(Strings.Inbox_WaitingTitle, sender),
+                    string.Format(
+                        Strings.Inbox_WaitingForSpace,
+                        name,
+                        SpecialIcons.SystemMonitor.FormatBytes(size),
+                        SpecialIcons.SystemMonitor.FormatBytes(free),
+                        SpecialIcons.SystemMonitor.FormatBytes(FolderInbox.FreeSpaceFloor)));
+            }
+
             foreach (var (name, sender, marked) in received)
             {
                 var message = string.Format(Strings.Inbox_Received, name);
@@ -111,9 +126,10 @@ public sealed class InboxService : IDisposable
         }
     }
 
-    private static List<(string Name, string Sender, bool Marked)> Take(FolderInbox inbox)
+    private static (List<(string Name, string Sender, bool Marked)> Received, List<(string Name, string Sender, long Size, long Free)> Waiting) Take(FolderInbox inbox)
     {
         var received = new List<(string, string, bool)>();
+        var waiting = new List<(string, string, long, long)>();
         try
         {
             inbox.Announce();
@@ -122,8 +138,21 @@ public sealed class InboxService : IDisposable
             {
                 if (FreeBytes(downloads) is { } free && !FolderInbox.HasRoom(free, file.Size))
                 {
-                    AppLog.Default.Warning("Inbox", $"\"{file.Name}\" ({file.Size} bytes) waits: the Downloads drive would be left with less than 1 GB free");
-                    break; // it stays in the inbox; a later look takes it when there is room
+                    // It stays in the inbox and is taken at a later look, when there is room. Said once per file, with
+                    // the numbers the user needs; a smaller file after it may still fit.
+                    bool firstTime;
+                    lock (Delivered)
+                    {
+                        firstTime = ToldWaiting.Add(file.Path);
+                    }
+
+                    if (firstTime)
+                    {
+                        AppLog.Default.Warning("Inbox", $"\"{file.Name}\" ({file.Size} bytes) from {file.SenderName} waits: {free} bytes free on the Downloads drive");
+                        waiting.Add((file.Name, file.SenderName, file.Size, free));
+                    }
+
+                    continue;
                 }
 
                 try
@@ -152,7 +181,7 @@ public sealed class InboxService : IDisposable
             AppLog.Default.Warning("Inbox", $"The inbox could not be used: {ex.Message}");
         }
 
-        return received;
+        return (received, waiting);
     }
 
     private static long? FreeBytes(string folder)

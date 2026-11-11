@@ -2288,4 +2288,25 @@
   <data name="Menu_ReceiveFilesToolTip" xml:space="preserve">
     <value>其他電腦透過同步資料夾傳送到這台電腦的檔案會存入「下載」資料夾。有「傳送到電腦」圖示的電腦也會接收。</value>
   </data>
+  <data name="Inbox_WaitingTitle" xml:space="preserve">
+    <value>來自 {0} 的檔案正在等待</value>
+  </data>
+  <data name="Inbox_WaitingForSpace" xml:space="preserve">
+    <value>尚無法接收「{0}」（{1}）：「下載」資料夾所在的磁碟機只剩 {2} 可用空間，而接收時一律保留 {3}。請釋出一些空間；檔案會留在同步資料夾中，有足夠空間後一分鐘內會自動接收。</value>
+  </data>
+  <data name="SendTo_ProblemNoInbox" xml:space="preserve">
+    <value>該電腦未接收檔案。請在該電腦上新增「傳送到電腦」圖示，或勾選「接收來自我其他電腦的檔案」，並等待同步資料夾同步。</value>
+  </data>
+  <data name="SendTo_ProblemNotAFile" xml:space="preserve">
+    <value>只能傳送檔案，不能傳送資料夾。</value>
+  </data>
+  <data name="SendTo_ProblemTooLarge" xml:space="preserve">
+    <value>超過可傳送的上限 2 GB。</value>
+  </data>
+  <data name="SendTo_ProblemNotAnotherPc" xml:space="preserve">
+    <value>此圖示選擇的電腦就是這台電腦，或無效。請開啟「內容」另選一台。</value>
+  </data>
+  <data name="Stack_Unreadable" xml:space="preserve">
+    <value>目前無法讀取此資料夾。它可能位於未連線的磁碟機或共用位置，或者您沒有存取權。</value>
+  </data>
 </root>

@@ -48,6 +48,9 @@ public sealed class FolderStackTests : IDisposable
 
         Assert.Equal(3, cut.Entries.Count);
         Assert.Equal(5, cut.Total);
-        Assert.Equal((0, 0), (FolderStack.List(Path.Combine(_folder, "nope"), false).Entries.Count, FolderStack.List(Path.Combine(_folder, "nope"), false).Total));
+        var missing = FolderStack.List(Path.Combine(_folder, "nope"), false);
+        Assert.Empty(missing.Entries);
+        Assert.Equal(FolderStack.Unreadable, missing.Total); // not "this folder is empty"
+        Assert.Equal(0, FolderStack.List(Directory.CreateDirectory(Path.Combine(_folder, "empty")).FullName, false).Total);
     }
 }

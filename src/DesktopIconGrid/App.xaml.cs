@@ -172,6 +172,7 @@ public partial class App : Application
         _fluentDialogsSetting = () => viewModel.Model.Settings.FluentDialogs;
         DialogTheme.Configure(_fluentDialogsSetting());
         SystemEvents.UserPreferenceChanged += OnUserPreferenceChanged;
+        SystemEvents.TimeChanged += OnTimeChanged;
 
         _sync = new SyncCoordinator(syncService, viewModel, dialogs.Confirm) { Notify = dialogs.Notify };
         dialogs.SyncViewModelFactory = () => new SyncViewModel(_sync, dialogs);
@@ -281,10 +282,17 @@ public partial class App : Application
         _ = viewModel.WarmCatalogIconsAsync();
     }
 
+    /// <summary>
+    /// Windows' time or time zone changed: .NET keeps the local zone it first read, so a clock tile on "this PC's time"
+    /// would go on showing the old zone until a restart (review 24 C1).
+    /// </summary>
+    private static void OnTimeChanged(object? sender, EventArgs e) => TimeZoneInfo.ClearCachedData();
+
     protected override void OnExit(ExitEventArgs e)
     {
         AppLog.Default.Info("App", "Exiting");
         SystemEvents.UserPreferenceChanged -= OnUserPreferenceChanged;
+        SystemEvents.TimeChanged -= OnTimeChanged;
         _commandPipe?.Dispose();
         _inbox?.Dispose();
         CommandTileRunner.StopAll(); // a command tile's run must not outlive the bar

@@ -49,6 +49,9 @@ public partial class StackWindow : Window
     private StackRow? _pressed;
     private bool _dragging;
     private bool _closing;
+    private int _fillRequest;
+    private (int X, int Y)? _anchor;
+    private bool _placedWithRows;
 
     public StackWindow(string name, string folder, bool newestFirst, IIconProvider icons)
     {
@@ -84,8 +87,27 @@ public partial class StackWindow : Window
             pointer = default;
         }
 
+        _anchor = (pointer.X, pointer.Y);
+        Place();
+        Show();
+        Activate();
+        List.Focus();
+    }
+
+    /// <summary>
+    /// Puts the window at the pointer it was opened at, inside that monitor's work area, for the size it has now: once
+    /// when it opens (still empty) and again when the rows are in, since the list arrives after the window.
+    /// </summary>
+    private void Place()
+    {
+        if (_anchor is not { } pointer)
+        {
+            return;
+        }
+
         var area = ScreenGeometry.AreaAt(pointer.X, pointer.Y);
         var scale = area?.Scale ?? ScreenGeometry.PrimaryScale();
+        UpdateLayout();
         Measure(new Size(Width, MaxHeight));
         var rect = PopupPlacement.AtPointer(
             pointer.X,
@@ -95,14 +117,33 @@ public partial class StackWindow : Window
             area?.WorkArea ?? default,
             grabOffset: (int)Math.Round(12 * scale));
         ScreenGeometry.MoveToPixels(this, rect);
-        Show();
-        Activate();
-        List.Focus();
     }
 
-    private void Fill()
+    /// <summary>
+    /// Lists the folder on a worker thread (a share that sleeps must not freeze the bar, review 24 S1) and shows the
+    /// rows when the list is there. A later call replaces an earlier one still under way.
+    /// </summary>
+    private async void Fill()
     {
-        var (entries, total) = FolderStack.List(_folder, _newestFirst);
+        var request = ++_fillRequest;
+        IReadOnlyList<StackEntry> entries;
+        int total;
+        try
+        {
+            (entries, total) = await Task.Run(() => FolderStack.List(_folder, _newestFirst));
+        }
+        catch (Exception ex) when (ex is not OutOfMemoryException)
+        {
+            // async void: nothing may escape to the dispatcher.
+            (entries, total) = ([], FolderStack.Unreadable);
+            AppLog.Default.Warning("Launch", $"The stack of {_folder} could not be listed: {ex.Message}");
+        }
+
+        if (request != _fillRequest || _closing)
+        {
+            return;
+        }
+
         _rows.Clear();
         foreach (var entry in entries)
         {
@@ -111,9 +152,15 @@ public partial class StackWindow : Window
             _ = LoadIconAsync(row);
         }
 
+        Empty.Text = total == FolderStack.Unreadable ? Strings.Stack_Unreadable : Strings.Stack_Empty;
         Empty.Visibility = entries.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
         More.Visibility = total > entries.Count ? Visibility.Visible : Visibility.Collapsed;
         More.Text = total > entries.Count ? string.Format(Strings.Stack_More, total - entries.Count) : string.Empty;
+        if (!_placedWithRows)
+        {
+            _placedWithRows = true; // the first list only: a later refresh must not move the window under the pointer
+            Place();
+        }
     }
 
     private async Task LoadIconAsync(StackRow row)
@@ -130,9 +177,9 @@ public partial class StackWindow : Window
 
     private void Watch()
     {
-        if (_folder.StartsWith(@"\\", StringComparison.Ordinal))
+        if (IconWorker.IsOnSlowStorage(_folder))
         {
-            return; // a share: read when the stack opens, not watched
+            return; // a share or a mapped network drive: read when the stack opens, not watched
         }
 
         try

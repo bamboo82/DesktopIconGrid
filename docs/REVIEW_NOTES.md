@@ -9,6 +9,30 @@ The owner relays replies.
 
 ---
 
+## 2026-11-11 (58) — Messages for received and sent files (owner's request), S1, C1
+
+Run 148 (`c95e7ca`) is green.
+
+- **Owner: the free-space wait "should have proper error message".**
+  - A file that waits for space is now a notification, once per file per run (`Inbox_WaitingForSpace`): its
+    name, its size, the free space, the floor, and that it will be taken automatically. The look goes on to
+    later files, which may fit; it used to stop.
+  - Send failures: `FolderInbox.Send` throws `InboxSendException` with a `SendProblem` (NotAnotherPc, NoInbox,
+    NotAFile, TooLarge). `SendToDeviceHandler` shows a localized reason for each. NoInbox tells the user what to
+    do on the other PC, since receiving is off by default now. Other IO errors keep Windows' own message.
+- **S1.**
+  - `StackWindow.Fill` lists on a worker thread; a newer request supersedes an older one.
+  - `LauncherViewModel.Activate` no longer calls `Directory.Exists` for a path on slow storage
+    (`IconWorker.IsOnSlowStorage`: UNC and mapped network drives); the stack opens and says when it cannot read.
+  - `FolderStack.List` reports `Unreadable` (-1) as the total, so the window shows `Stack_Unreadable`, not
+    "empty".
+  - `Watch` skips all slow storage, not only `\\`.
+  - The window is placed once when it opens and once more when the first list arrives, at the same pointer.
+- **C1.** `SystemEvents.TimeChanged` → `TimeZoneInfo.ClearCachedData()`.
+- **Tests.** Core: the `SendProblem` of each refusal; unreadable against empty. No test for the notification,
+  the async fill or the time-zone event.
+- **Left:** W1–W3, W6, W7's whole-set replace, S4, I3's subfolder, the minor list, L5.
+
 ## 2026-11-11 (57) — 0.10.0 is released; 0.10.1 starts with G1, I2 and I4
 
 - **Release.** The owner pushed `v0.10.0` on `254c55c`; release run 11 is green, and the release is published

@@ -2288,4 +2288,25 @@ Details are in {1}.</value>
   <data name="Menu_ReceiveFilesToolTip" xml:space="preserve">
     <value>Files other PCs send to this one through the sync folder are put in Downloads. A PC with a Send to PC icon receives too.</value>
   </data>
+  <data name="Inbox_WaitingTitle" xml:space="preserve">
+    <value>File from {0} is waiting</value>
+  </data>
+  <data name="Inbox_WaitingForSpace" xml:space="preserve">
+    <value>“{0}” ({1}) cannot be received yet: the drive of your Downloads folder has {2} free, and receiving always leaves {3} free. Free up some space; the file stays in the sync folder and is taken automatically within a minute of there being room.</value>
+  </data>
+  <data name="SendTo_ProblemNoInbox" xml:space="preserve">
+    <value>that PC is not receiving files. On that PC, add a Send to PC icon or tick “Receive files from my other PCs”, and wait for the sync folder to sync.</value>
+  </data>
+  <data name="SendTo_ProblemNotAFile" xml:space="preserve">
+    <value>only files can be sent, not folders.</value>
+  </data>
+  <data name="SendTo_ProblemTooLarge" xml:space="preserve">
+    <value>it is larger than 2 GB, the most that can be sent.</value>
+  </data>
+  <data name="SendTo_ProblemNotAnotherPc" xml:space="preserve">
+    <value>the PC chosen for this icon is this PC itself, or is not valid. Open Properties and choose another.</value>
+  </data>
+  <data name="Stack_Unreadable" xml:space="preserve">
+    <value>This folder cannot be read right now. It may be on a drive or share that is not connected, or you may not have access.</value>
+  </data>
 </root>

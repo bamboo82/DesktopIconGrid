@@ -2288,4 +2288,25 @@
   <data name="Menu_ReceiveFilesToolTip" xml:space="preserve">
     <value>其他电脑通过同步文件夹发送到这台电脑的文件会存入“下载”文件夹。有“发送到电脑”图标的电脑也会接收。</value>
   </data>
+  <data name="Inbox_WaitingTitle" xml:space="preserve">
+    <value>来自 {0} 的文件正在等待</value>
+  </data>
+  <data name="Inbox_WaitingForSpace" xml:space="preserve">
+    <value>尚无法接收“{0}”（{1}）：“下载”文件夹所在的驱动器只剩 {2} 可用空间，而接收时始终保留 {3}。请释放一些空间；文件会留在同步文件夹中，有足够空间后一分钟内会自动接收。</value>
+  </data>
+  <data name="SendTo_ProblemNoInbox" xml:space="preserve">
+    <value>该电脑未接收文件。请在该电脑上添加“发送到电脑”图标，或勾选“接收来自我其他电脑的文件”，并等待同步文件夹同步。</value>
+  </data>
+  <data name="SendTo_ProblemNotAFile" xml:space="preserve">
+    <value>只能发送文件，不能发送文件夹。</value>
+  </data>
+  <data name="SendTo_ProblemTooLarge" xml:space="preserve">
+    <value>超过可发送的上限 2 GB。</value>
+  </data>
+  <data name="SendTo_ProblemNotAnotherPc" xml:space="preserve">
+    <value>此图标选择的电脑就是这台电脑，或无效。请打开“属性”另选一台。</value>
+  </data>
+  <data name="Stack_Unreadable" xml:space="preserve">
+    <value>目前无法读取此文件夹。它可能位于未连接的驱动器或共享位置，或者您没有访问权限。</value>
+  </data>
 </root>

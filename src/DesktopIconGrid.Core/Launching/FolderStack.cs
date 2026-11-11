@@ -12,9 +12,13 @@ public static class FolderStack
     /// <summary>The most entries a stack shows; the rest is one click away in Explorer.</summary>
     public const int MaxEntries = 100;
 
+    /// <summary>The total <see cref="List"/> reports for a folder it could not read.</summary>
+    public const int Unreadable = -1;
+
     /// <summary>
     /// The first <paramref name="max"/> entries of <paramref name="folder"/>, by name (folders first) or newest first, and
-    /// how many there are in all. Empty when the folder cannot be read.
+    /// how many there are in all. When the folder cannot be read (gone, a share that does not answer, no access) the
+    /// list is empty and the total is <see cref="Unreadable"/>, so "empty" and "could not be read" are told apart.
     /// </summary>
     public static (IReadOnlyList<StackEntry> Entries, int Total) List(string folder, bool newestFirst, int max = MaxEntries)
     {
@@ -36,7 +40,7 @@ public static class FolderStack
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Security.SecurityException)
         {
-            return ([], 0);
+            return ([], Unreadable);
         }
 
         var sorted = newestFirst

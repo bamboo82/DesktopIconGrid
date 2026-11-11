@@ -121,7 +121,17 @@ public sealed class SendToDeviceHandler(Func<FolderInbox?> inbox, IDialogService
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
             {
-                problems.Add($"{Path.GetFileName(path.TrimEnd('\\'))}: {ex.Message}");
+                // The reasons this app knows, in the user's language; anything else as Windows says it.
+                var reason = ex is InboxSendException known
+                    ? known.Problem switch
+                    {
+                        SendProblem.NoInbox => Strings.SendTo_ProblemNoInbox,
+                        SendProblem.NotAFile => Strings.SendTo_ProblemNotAFile,
+                        SendProblem.TooLarge => Strings.SendTo_ProblemTooLarge,
+                        _ => Strings.SendTo_ProblemNotAnotherPc,
+                    }
+                    : ex.Message;
+                problems.Add($"{Path.GetFileName(path.TrimEnd('\\'))}: {reason}");
                 AppLog.Default.Warning("Inbox", $"\"{path}\" was not sent: {ex.Message}");
             }
         }

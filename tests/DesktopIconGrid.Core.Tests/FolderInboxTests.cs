@@ -75,11 +75,11 @@ public sealed class FolderInboxTests : IDisposable
         laptop.Announce();
         var file = MakeFile("a.txt");
 
-        Assert.Throws<IOException>(() => laptop.Send(Laptop, file)); // itself
-        Assert.Throws<IOException>(() => laptop.Send(Desktop, file)); // no such inbox
-        Assert.Throws<IOException>(() => laptop.Send(@"..\..\x", file));
+        Assert.Equal(SendProblem.NotAnotherPc, Assert.Throws<InboxSendException>(() => laptop.Send(Laptop, file)).Problem); // itself
+        Assert.Equal(SendProblem.NoInbox, Assert.Throws<InboxSendException>(() => laptop.Send(Desktop, file)).Problem);
+        Assert.Equal(SendProblem.NotAnotherPc, Assert.Throws<InboxSendException>(() => laptop.Send(@"..\..\x", file)).Problem);
         new FolderInbox(Sync, Desktop, "Desktop").Announce();
-        Assert.Throws<FileNotFoundException>(() => laptop.Send(Desktop, _folder)); // a folder
+        Assert.Equal(SendProblem.NotAFile, Assert.Throws<InboxSendException>(() => laptop.Send(Desktop, _folder)).Problem); // a folder
         Assert.Throws<ArgumentException>(() => new FolderInbox(Sync, "short", "x"));
 
         laptop.Send(Desktop, file);

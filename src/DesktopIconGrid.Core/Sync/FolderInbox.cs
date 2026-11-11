@@ -7,6 +7,28 @@ namespace DesktopIconGrid.Core.Sync;
 /// <summary>Another PC that shares the sync folder and can be sent files.</summary>
 public sealed record InboxDevice(string Id, string Name);
 
+/// <summary>Why a file could not be sent, for a message in the user's language.</summary>
+public enum SendProblem
+{
+    /// <summary>The target is this PC itself, or no device id.</summary>
+    NotAnotherPc,
+
+    /// <summary>The target PC has no inbox in the sync folder: it does not take part (yet).</summary>
+    NoInbox,
+
+    /// <summary>A folder, or a file that is gone.</summary>
+    NotAFile,
+
+    /// <summary>Larger than <see cref="FolderInbox.MaxFileSize"/>.</summary>
+    TooLarge,
+}
+
+/// <summary>A file was not sent, for a reason the user can act on.</summary>
+public sealed class InboxSendException(SendProblem problem, string message) : IOException(message)
+{
+    public SendProblem Problem { get; } = problem;
+}
+
 /// <summary>A file waiting in this PC's inbox.</summary>
 /// <param name="Path">Where it lies in the sync folder.</param>
 /// <param name="Name">The name it was sent under, made safe for Windows; never a path.</param>
@@ -127,24 +149,24 @@ public sealed class FolderInbox
     {
         if (!IsDeviceId(targetId) || string.Equals(targetId, _deviceId, StringComparison.OrdinalIgnoreCase))
         {
-            throw new IOException("That is no other PC of this sync folder.");
+            throw new InboxSendException(SendProblem.NotAnotherPc, "That is no other PC of this sync folder.");
         }
 
         var target = Path.Combine(_root, targetId.ToLowerInvariant());
         if (!Directory.Exists(target))
         {
-            throw new IOException("That PC has no inbox in the sync folder (yet).");
+            throw new InboxSendException(SendProblem.NoInbox, "That PC has no inbox in the sync folder (yet).");
         }
 
         var source = new FileInfo(filePath);
         if (!source.Exists)
         {
-            throw new FileNotFoundException("Only files can be sent, not folders.", filePath);
+            throw new InboxSendException(SendProblem.NotAFile, "Only files can be sent, not folders.");
         }
 
         if (source.Length > MaxFileSize)
         {
-            throw new IOException($"{source.Name} is larger than 2 GB.");
+            throw new InboxSendException(SendProblem.TooLarge, $"{source.Name} is larger than 2 GB.");
         }
 
         var name = FileNames.Safe(source.Name);

@@ -13,6 +13,11 @@ What the review of 0.10.0 placed after the release.
   network drive or an odd audio driver no longer makes the bar stutter every two seconds.
 - Send to PC: receiving stops before the Downloads drive runs low (it keeps 1 GB free) and takes at most 4 GB
   per look; the tooltip and the "sent" notice show the other PC's current name, not one stored with the icon.
+  A file that has to wait for disk space is announced once, with its size, the free space and what to do; the
+  reasons a file was not sent (the other PC is not receiving, a folder, over 2 GB) are said in your language.
+- A folder stack on a network share or mapped drive no longer freezes the bar while the share wakes up, and a
+  folder that cannot be read says so instead of "This folder is empty".
+- A clock tile on "this PC's time" follows a change of Windows' time zone without a restart.
 
 ## [0.10.0] – 2026-11-11
 

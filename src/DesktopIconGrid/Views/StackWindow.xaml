@@ -20,7 +20,7 @@
               Click="OpenFolder_Click" />
       <TextBlock x:Name="More" DockPanel.Dock="Bottom" Margin="6,4,6,0" TextWrapping="Wrap" Visibility="Collapsed"
                  Foreground="{DynamicResource Theme.Foreground}" Opacity="0.7" />
-      <TextBlock x:Name="Empty" DockPanel.Dock="Top" Margin="6,2,6,6" Text="{x:Static r:Strings.Stack_Empty}" Visibility="Collapsed"
+      <TextBlock x:Name="Empty" DockPanel.Dock="Top" Margin="6,2,6,6" Text="{x:Static r:Strings.Stack_Empty}" Visibility="Collapsed" TextWrapping="Wrap"
                  Foreground="{DynamicResource Theme.Foreground}" Opacity="0.7" />
       <ListBox x:Name="List" Background="Transparent" BorderThickness="0" MaxHeight="400"
                ScrollViewer.HorizontalScrollBarVisibility="Disabled"

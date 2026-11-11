@@ -631,7 +631,7 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
         if (shortcutToLaunch.OpenAsStack
             && modifiers == ActivationModifiers.None
             && Environment.ExpandEnvironmentVariables(shortcutToLaunch.EffectiveLocation.Trim().Trim('"')) is var stackFolder
-            && Directory.Exists(stackFolder))
+            && (IconWorker.IsOnSlowStorage(stackFolder) || Directory.Exists(stackFolder))) // a share is not asked here, on the UI thread: the stack says so when it cannot be read
         {
             _dialogs.ShowFolderStack(item.Name, stackFolder, shortcutToLaunch.StackNewestFirst);
             IsGroupPopupOpen = false;

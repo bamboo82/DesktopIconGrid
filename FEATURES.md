@@ -122,7 +122,8 @@ shortcut opens a small list at the pointer with what is directly in the folder (
 left out), folders first by name, or newest first; at most 100, with a count of the rest. A click or Enter
 opens an entry and closes the stack, a drag takes the real file out (to Explorer, a mail, a program),
 *Open folder* shows the folder in File Explorer, Esc or a click elsewhere closes it. The list follows
-changes in a local folder; a network share is read when the stack opens. Shift+click or a middle click
+changes in a local folder; a network share or mapped network drive is read when the stack opens, in the
+background, and a folder that cannot be read says so instead of looking empty. Shift+click or a middle click
 on the icon opens the folder in File Explorer as before, as does a click when the folder is not there.
 Not in yet: dropping a file onto a program inside the stack.
 
@@ -276,8 +277,9 @@ their tooltips end with a line of the last 60 samples (`▁▂▃▅▇█`; the
   synced: an icon that arrives with a synced bar can send, but does not turn receiving on there. A PC that takes part
   has a folder `inbox\<device id>` in the sync folder with its name; a sent file is copied into the target's inbox
   (up to 2 GB; folders are not sent). The receiving PC looks once a minute while the bar runs, moves
-  what waits (at most 20 files and 4 GB per look, and never leaving less than 1 GB free on that drive) into
-  its Downloads folder under a free name, marks it as downloaded from another computer
+  what waits (at most 20 files and 4 GB per look, and never leaving less than 1 GB free on that drive; a
+  file that has to wait for space is announced once, with its size and the space there is) into its
+  Downloads folder under a free name, marks it as downloaded from another computer
   (so SmartScreen and Protected View apply), and shows a notification. Nothing received is opened. A file
   arrives once, as a plain file: read-only and hidden attributes do not travel, it is marked before it
   gets its name, a `desktop.ini` arrives as `desktop.ini.received`, and when the drive keeps no such mark
