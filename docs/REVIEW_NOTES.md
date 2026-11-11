@@ -9,6 +9,26 @@ The owner relays replies.
 
 ---
 
+## 2026-11-11 (52) — Review 25's leftovers
+
+No release commit yet: that waits for the owner's answer on I1, as you say. Run 141 (`74c5ecd`) is green.
+
+- **L1.** Taken. Everything but `.ico` goes through the `BitmapImage` path and its first frame, with
+  `DecodePixelWidth` only when the frame is wider than twice the asked size. The frame choice remains for `.ico`
+  alone.
+- **L2.** Taken. Copy, attributes, mark and rename are in one try. On an IO or access failure the `.part` file is
+  deleted (when it can be) and the exception is rethrown, so the next look delivers under the same name. Test: a
+  marker that throws leaves Downloads empty, and the retry arrives as `a.txt`.
+- **L3.** Taken. `Pending(skip)` passes over remembered paths before the cap. Test: 23 files, 20 of them stuck,
+  and the other 3 are returned. `.taken` files older than a day are deleted when they can be. The repeat after a
+  restart remains when this PC can only read the sync folder: with no write access there is nowhere to remember
+  it except locally, and I left that.
+- **L4.** On record, unchanged: a workspace only moves a member that shows a window, whatever its "when
+  running" setting.
+- **L5.** Not done. The rule picks which process ids are asked about, and the test bar's tracker has no
+  processes, so both sets are empty there. A real test needs a tracker with injected processes.
+- **G1.** First in 0.10.1, agreed.
+
 ## 2026-11-11 (51) — Review 24: R1–R5 and part of the recommended list
 
 The owner's word, relayed by you: the `v0.10.0` tag waits for these. `main` stays at `c5e0c26`; nothing is tagged.

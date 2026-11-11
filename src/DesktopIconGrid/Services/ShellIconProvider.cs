@@ -252,13 +252,20 @@ public sealed class ShellIconProvider : IIconProvider
             // A photo or screenshot: decode it at the size asked, not whole (a 4K picture is 30 MB as pixels, and the
             // result is cached for as long as the bar runs; a folder stack asks for up to 100 of them). Review 24 R5.
             var probe = BitmapDecoder.Create(stream, BitmapCreateOptions.DelayCreation | BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.None);
-            if (probe.Frames.Count == 1 && probe.Frames[0].PixelWidth > pixelSize * 2)
+            // Only an .ico needs a choice among its frames; of anything else (an animated GIF, a multi-page TIFF scan) the
+            // first frame is the picture, and going through the frames would decode and keep them all (review 25 L1).
+            if (probe.Frames.Count > 0 && !string.Equals(Path.GetExtension(path), ".ico", StringComparison.OrdinalIgnoreCase))
             {
+                var wide = probe.Frames[0].PixelWidth > pixelSize * 2;
                 stream.Position = 0;
                 var small = new BitmapImage();
                 small.BeginInit();
                 small.CacheOption = BitmapCacheOption.OnLoad;
-                small.DecodePixelWidth = pixelSize * 2; // sharp on a 200 % display
+                if (wide)
+                {
+                    small.DecodePixelWidth = pixelSize * 2; // sharp on a 200 % display
+                }
+
                 small.StreamSource = stream;
                 small.EndInit();
                 return small;

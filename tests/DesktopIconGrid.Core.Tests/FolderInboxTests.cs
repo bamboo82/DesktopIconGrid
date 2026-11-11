@@ -132,4 +132,31 @@ public sealed class FolderInboxTests : IDisposable
         Assert.Equal("Desktop.INI.received", waiting.Name);
         Assert.EndsWith("Desktop.INI.received", FolderInbox.Receive(waiting, Path.Combine(_folder, "Downloads")).Path);
     }
+
+    [Fact]
+    public void A_delivery_that_fails_leaves_nothing_half_arrived_and_skipped_files_use_no_places()
+    {
+        var laptop = new FolderInbox(Sync, Laptop, "Laptop");
+        var desktop = new FolderInbox(Sync, Desktop, "Desktop");
+        laptop.Announce();
+        desktop.Announce();
+        laptop.Send(Desktop, MakeFile("a.txt"));
+        var waiting = Assert.Single(desktop.Pending());
+        var downloads = Path.Combine(_folder, "Downloads");
+
+        Assert.Throws<IOException>(() => FolderInbox.Receive(waiting, downloads, _ => throw new IOException("the scanner holds it")));
+
+        Assert.Empty(Directory.GetFiles(downloads)); // no a.txt.part left: the next look does not make "a (2).txt"
+        Assert.Equal("a.txt", Path.GetFileName(FolderInbox.Receive(Assert.Single(desktop.Pending()), downloads).Path));
+
+        // Review 25 L3: files that cannot be removed are passed over before the cap, so newer ones still arrive.
+        for (var i = 0; i < FolderInbox.MaxPerLook + 3; i++)
+        {
+            laptop.Send(Desktop, MakeFile($"f{i:00}.txt"));
+        }
+
+        var stuck = desktop.Pending().Select(file => file.Path).ToHashSet();
+        Assert.Equal(FolderInbox.MaxPerLook, stuck.Count);
+        Assert.Equal(3, desktop.Pending(stuck.Contains).Count);
+    }
 }

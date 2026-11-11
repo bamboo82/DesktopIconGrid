@@ -131,8 +131,11 @@ public sealed class FolderInbox
         return name;
     }
 
-    /// <summary>The files waiting for this PC (at most <see cref="MaxPerLook"/>), oldest first.</summary>
-    public IReadOnlyList<InboxFile> Pending()
+    /// <summary>
+    /// The files waiting for this PC (at most <see cref="MaxPerLook"/>), oldest first. <paramref name="skip"/> names
+    /// inbox paths to pass over (delivered already but not removable); they do not use up the look's places.
+    /// </summary>
+    public IReadOnlyList<InboxFile> Pending(Func<string, bool>? skip = null)
     {
         var mine = Path.Combine(_root, _deviceId);
         var files = new List<InboxFile>();
@@ -146,8 +149,14 @@ public sealed class FolderInbox
             foreach (var info in new DirectoryInfo(mine).EnumerateFiles().OrderBy(file => file.LastWriteTimeUtc))
             {
                 var separator = info.Name.IndexOf('~');
+                if (info.Name.EndsWith(TakenSuffix, StringComparison.OrdinalIgnoreCase))
+                {
+                    RemoveOldTaken(info);
+                    continue;
+                }
+
                 if (info.Name.EndsWith(PartSuffix, StringComparison.OrdinalIgnoreCase)
-                    || info.Name.EndsWith(TakenSuffix, StringComparison.OrdinalIgnoreCase)
+                    || skip?.Invoke(info.FullName) == true
                     || separator != 32
                     || !IsDeviceId(info.Name[..separator])
                     || info.Length > MaxFileSize)
@@ -184,11 +193,50 @@ public sealed class FolderInbox
         Directory.CreateDirectory(destinationFolder);
         var destination = Unique(destinationFolder, PlainName(file.Name));
         var arriving = destination + PartSuffix;
-        File.Copy(file.Path, arriving, overwrite: true);
-        File.SetAttributes(arriving, FileAttributes.Normal);
-        var marked = mark?.Invoke(arriving) ?? false;
-        File.Move(arriving, destination);
+        bool marked;
+        try
+        {
+            File.Copy(file.Path, arriving, overwrite: true);
+            File.SetAttributes(arriving, FileAttributes.Normal);
+            marked = mark?.Invoke(arriving) ?? false;
+            File.Move(arriving, destination);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            // Nothing half-arrived stays behind: the next look delivers it under the same name, not "name (2)" (review 25 L2).
+            try
+            {
+                File.SetAttributes(arriving, FileAttributes.Normal);
+                File.Delete(arriving);
+            }
+            catch (Exception again) when (again is IOException or UnauthorizedAccessException)
+            {
+                // Held by a scanner: it is a .part file, which nothing opens and Unique() steps around.
+            }
+
+            throw;
+        }
+
         return (destination, marked, Clear(file.Path));
+    }
+
+    /// <summary>A delivered file that could only be set aside is removed once it is a day old, when it can be.</summary>
+    private static void RemoveOldTaken(FileInfo taken)
+    {
+        if (DateTime.UtcNow - taken.LastWriteTimeUtc < TimeSpan.FromDays(1))
+        {
+            return;
+        }
+
+        try
+        {
+            taken.Attributes = FileAttributes.Normal;
+            taken.Delete();
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            // Still not removable: it stays set aside.
+        }
     }
 
     /// <summary>Deletes a delivered inbox file; when that fails, renames it out of the way. False when neither worked.</summary>

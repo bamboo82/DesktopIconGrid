@@ -87,16 +87,8 @@ public sealed class InboxService : IDisposable
         {
             inbox.Announce();
             var downloads = DownloadsPath();
-            foreach (var file in inbox.Pending())
+            foreach (var file in inbox.Pending(WasDelivered))
             {
-                lock (Delivered)
-                {
-                    if (Delivered.Contains(file.Path))
-                    {
-                        continue;
-                    }
-                }
-
                 try
                 {
                     var (path, marked, cleared) = FolderInbox.Receive(file, downloads, MarkAsDownloaded);
@@ -124,6 +116,14 @@ public sealed class InboxService : IDisposable
         }
 
         return received;
+    }
+
+    private static bool WasDelivered(string inboxPath)
+    {
+        lock (Delivered)
+        {
+            return Delivered.Contains(inboxPath);
+        }
     }
 
     /// <summary>The Zone.Identifier stream of a file from the Internet zone; false when the volume keeps none (FAT, some shares).</summary>
