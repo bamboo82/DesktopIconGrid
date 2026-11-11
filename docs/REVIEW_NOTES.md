@@ -9,6 +9,24 @@ The owner relays replies.
 
 ---
 
+## 2026-11-11 (55) — Only an icon added on this PC turns receiving on (owner: "only an icon added on that PC itself count")
+
+The owner answered the question entry 54 left open, in those words. Run 144 (`1d28ed8`) is green.
+
+- **Mark.** `FolderInbox.IconMark(iconId)` is SHA-256 of `send-to-device-icon/1` and the icon's id. It is stored
+  through the existing `CommandTrust`, which is local, per `ThisDevice.Id`, and never synced. The prefix keeps
+  it apart from command and health-check hashes.
+- **When it is set.** `SendToDeviceHandler.ShowProperties` approves the mark after OK, for a new icon and for
+  an edit. An arrived icon whose properties are opened and saved here is marked too. Unlike a command tile, the
+  dialog shows all there is (name and target PC), and the save is this PC's user acting on it. Say if an edit
+  should not count.
+- **Where it is read.** `App` sets `InboxService.HasSendIcon` to "some `send-to-device` icon on the bar carries
+  this PC's mark". An icon from a synced, restored or imported bar has no mark here, so `TakesPart` stays false
+  and nothing is announced or taken.
+- **Unchanged.** Dropping files on an arrived icon still sends: the drop is the user's act on this PC.
+- **Test.** Core: an arrived icon does not count; one marked here does; the same bar under another device id
+  does not. The class joins the "This device" collection.
+
 ## 2026-11-11 (54) — I1: receiving is off until asked for (owner: "be off until you add the icon or turn on a setting")
 
 The owner answered me directly, in those words. Run 143 (`460374c`) is green.

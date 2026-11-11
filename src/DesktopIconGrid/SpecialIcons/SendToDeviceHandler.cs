@@ -16,7 +16,7 @@ namespace DesktopIconGrid.SpecialIcons;
 /// "Send to PC": drop files on it (or paste them) and they go to another PC that shares the sync folder, which puts
 /// them in its Downloads folder (<see cref="InboxService"/>). Only with a sync folder.
 /// </summary>
-public sealed class SendToDeviceHandler(Func<FolderInbox?> inbox, IDialogService dialogs, Func<Window?> ownerProvider, string pasteDirectory) : ISpecialIconHandler
+public sealed class SendToDeviceHandler(Func<FolderInbox?> inbox, IDialogService dialogs, Func<Window?> ownerProvider, string pasteDirectory, CommandTrust trust) : ISpecialIconHandler
 {
     public const string DeviceIdKey = "deviceId";
     public const string DeviceNameKey = "deviceName";
@@ -146,6 +146,7 @@ public sealed class SendToDeviceHandler(Func<FolderInbox?> inbox, IDialogService
         }
 
         viewModel.Apply(item);
+        trust.Approve(FolderInbox.IconMark(item.Id)); // saved on this PC: this icon turns receiving on here, a synced copy elsewhere does not
         return true;
     }
 }

@@ -271,8 +271,9 @@ their tooltips end with a line of the last 60 samples (`▁▂▃▅▇█`; the
 
 - **Send to PC** (0.10.0) — drop files on it (or `Ctrl+V` with it focused) to send them to another PC
   that uses the same sync folder; its properties pick the PC. **Receiving is off until you ask for it:**
-  a PC takes part only when it has a *Send to PC* icon on its bar or *Receive files from my other PCs*
-  (options and tray menus) is ticked; that setting is kept on the PC and not synced. A PC that takes part
+  a PC takes part only when a *Send to PC* icon was added (or its properties saved) on that PC, or
+  *Receive files from my other PCs* (options and tray menus) is ticked. Both are kept on the PC and not
+  synced: an icon that arrives with a synced bar can send, but does not turn receiving on there. A PC that takes part
   has a folder `inbox\<device id>` in the sync folder with its name; a sent file is copied into the target's inbox
   (up to 2 GB; folders are not sent). The receiving PC looks once a minute while the bar runs, moves
   what waits into its Downloads folder under a free name, marks it as downloaded from another computer

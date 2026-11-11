@@ -148,7 +148,7 @@ public partial class App : Application
             new MicrophoneMuteHandler(_monitor, owner),
             new DriveBucketHandler(syncService, dialogs, owner, icons, cacheDirectory, Dispatcher),
             new SoundReplayerHandler(owner, AppPaths.SoundsDirectory, Dispatcher),
-            new SendToDeviceHandler(_inbox.Current, dialogs, owner, Path.Combine(cacheDirectory, "pasted")),
+            new SendToDeviceHandler(_inbox.Current, dialogs, owner, Path.Combine(cacheDirectory, "pasted"), trust),
             new ClockTileHandler(dialogs.Notify, owner, Dispatcher),
             new CommandTileHandler(trust, owner, Dispatcher),
         ]);
@@ -217,7 +217,8 @@ public partial class App : Application
             }
         };
 
-        _inbox.HasSendIcon = () => viewModel.Model.HasSpecialIcon(SpecialIconKinds.SendToDevice);
+        // Only an icon added or saved on this PC counts (its local mark); one that came with a synced bar does not.
+        _inbox.HasSendIcon = () => viewModel.Model.SpecialIconsOf(SpecialIconKinds.SendToDevice).Any(icon => trust.IsApproved(FolderInbox.IconMark(icon.Id)));
         var window = new MainWindow(viewModel) { Inbox = _inbox };
         MainWindow = window;
         window.TrayReady += (_, _) =>

@@ -56,11 +56,19 @@ public sealed class FolderInbox
 
     /// <summary>
     /// Whether a PC takes part (announces itself and takes what is sent to it): only with a sync folder, and only when
-    /// its user asked for it, by the setting or by putting a Send to PC icon on the bar (the owner's decision on
-    /// review 24 I1). Without either the sync folder is left as it is and nothing arrives.
+    /// its user asked for it, by the setting or by putting a Send to PC icon on the bar on this PC (the owner's decision
+    /// on review 24 I1; an icon that came with a synced bar does not count, see <see cref="IconMark"/>). Without either the sync folder is left as it is and nothing arrives.
     /// </summary>
     public static bool TakesPart(bool usesSyncFolder, bool receiveSetting, bool hasSendIcon) =>
         usesSyncFolder && (receiveSetting || hasSendIcon);
+
+    /// <summary>
+    /// The local mark of a Send to PC icon that was added or saved on this PC, for <see cref="SpecialIcons.CommandTrust"/>
+    /// (kept per PC, never synced). Only a marked icon turns receiving on: the bar is synced, and an icon that arrived
+    /// from another PC must not make this one take files (the owner's decision).
+    /// </summary>
+    public static string IconMark(Guid iconId) =>
+        Convert.ToHexStringLower(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes($"send-to-device-icon/1\n{iconId:N}")));
 
     /// <summary>A device id as the app makes them: 32 hex digits. Anything else is never used as a folder name.</summary>
     public static bool IsDeviceId(string? id) => id is { Length: 32 } && id.All(char.IsAsciiHexDigit);

@@ -3,6 +3,7 @@ using DesktopIconGrid.Core.Sync;
 namespace DesktopIconGrid.Core.Tests;
 
 /// <summary>Sending a file to another PC through the sync folder.</summary>
+[Collection("This device")] // one test sets ThisDevice.Id, which is process-wide
 public sealed class FolderInboxTests : IDisposable
 {
     private const string Laptop = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
@@ -194,5 +195,36 @@ public sealed class FolderInboxTests : IDisposable
         model.Add(group);
         model.Insert(new DesktopIconGrid.Core.Models.SpecialIconItem { Kind = "send-to-device" }, group, 0);
         Assert.True(model.HasSpecialIcon(DesktopIconGrid.Core.SpecialIcons.SpecialIconKinds.SendToDevice)); // inside a group counts
+    }
+
+    [Fact]
+    public void Only_a_Send_to_PC_icon_marked_on_this_PC_counts()
+    {
+        var before = DesktopIconGrid.Core.Models.ThisDevice.Id;
+        try
+        {
+            var addedHere = new DesktopIconGrid.Core.Models.SpecialIconItem { Kind = "send-to-device" };
+            var arrived = new DesktopIconGrid.Core.Models.SpecialIconItem { Kind = "send-to-device" };
+            var model = new LauncherModel();
+            model.Add(arrived);
+            var trust = new DesktopIconGrid.Core.SpecialIcons.CommandTrust(null);
+            bool HasIconOfThisPc() => model.SpecialIconsOf("send-to-device").Any(icon => trust.IsApproved(FolderInbox.IconMark(icon.Id)));
+
+            DesktopIconGrid.Core.Models.ThisDevice.Id = "pc-a";
+            Assert.False(HasIconOfThisPc()); // it came with the synced bar
+
+            model.Add(addedHere);
+            trust.Approve(FolderInbox.IconMark(addedHere.Id)); // its properties were saved here
+            Assert.True(HasIconOfThisPc());
+            Assert.Equal(64, FolderInbox.IconMark(addedHere.Id).Length);
+            Assert.NotEqual(FolderInbox.IconMark(addedHere.Id), FolderInbox.IconMark(arrived.Id));
+
+            DesktopIconGrid.Core.Models.ThisDevice.Id = "pc-b"; // the same bar on another PC
+            Assert.False(HasIconOfThisPc());
+        }
+        finally
+        {
+            DesktopIconGrid.Core.Models.ThisDevice.Id = before;
+        }
     }
 }
