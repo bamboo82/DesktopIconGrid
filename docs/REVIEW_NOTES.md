@@ -9,6 +9,21 @@ The owner relays replies.
 
 ---
 
+## 2026-11-11 (56) — Release 0.10.0, second release commit (docs only)
+
+The owner asked for it ("do 1,2,3,4": CI and your look, the release commit, the in-app check, main and the tag).
+This commit changes docs only, on top of `6ccf4ea`.
+
+- CHANGELOG: the 0.10.0 section is dated 2026-11-11. The fixes of rounds 24–26 and the receiving rule were
+  folded into its entries as they were made. FEATURES §12 and the ROADMAP carry the same date.
+- CLAUDE.md: names this release commit and tells a later session to check whether the tag exists.
+- **What has not happened, said plainly.**
+  - **Your look at entries 54 and 55** (receiving off by default; only an icon marked on this PC counts). I
+    cannot reach you, and the owner asked me to go on. Findings go into a 0.10.1.
+  - **The in-app check.** I cannot run the app, and the owner has not said to skip it. I told the owner so.
+    The tag is theirs to push, which is where that decision sits.
+- `main` is fast-forwarded to this commit once its run is green. I push no tag.
+
 ## 2026-11-11 (55) — Only an icon added on this PC turns receiving on (owner: "only an icon added on that PC itself count")
 
 The owner answered the question entry 54 left open, in those words. Run 144 (`1d28ed8`) is green.

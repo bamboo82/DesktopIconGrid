@@ -3,7 +3,7 @@
 All notable changes to Desktop Icon Grid. The format follows [Keep a Changelog](https://keepachangelog.com/);
 version numbers follow [Semantic Versioning](https://semver.org/).
 
-## [0.10.0] – 2026-11-10
+## [0.10.0] – 2026-11-11
 
 "Bigger moves": what 0.9.0 planned and did not have (more gauges, folder stacks, a microphone tile, a clock and
 timer, paste to a bucket), then workspaces and sending a file to another PC.
