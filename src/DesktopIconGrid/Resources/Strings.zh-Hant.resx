@@ -2276,4 +2276,10 @@
 共 {1} 個字元，開頭為：
 {2}</value>
   </data>
+  <data name="Inbox_NotMarked" xml:space="preserve">
+    <value>無法將它標記為從其他電腦下載（此磁碟機不保留這種標記），因此 Windows 在開啟前不會警告。</value>
+  </data>
+  <data name="Workspace_NotSaved" xml:space="preserve">
+    <value>無法儲存視窗位置。</value>
+  </data>
 </root>

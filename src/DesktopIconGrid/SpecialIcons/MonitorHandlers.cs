@@ -208,7 +208,7 @@ public sealed class NetworkHandler(SystemMonitor monitor, Func<Window?> ownerPro
             LabelText = "…",
         };
         var peak = new GaugeHistory();
-        (long Received, long Sent)? before = null;
+        IReadOnlyDictionary<string, (long Received, long Sent)>? before = null;
         var watch = System.Diagnostics.Stopwatch.StartNew();
         Monitor.Register(
             state,
@@ -217,8 +217,10 @@ public sealed class NetworkHandler(SystemMonitor monitor, Func<Window?> ownerPro
                 var now = SystemMonitor.ReadNetworkCounters();
                 var seconds = watch.Elapsed.TotalSeconds;
                 watch.Restart();
-                var down = NetworkRate.PerSecond(before?.Received, now.Received, seconds);
-                var up = NetworkRate.PerSecond(before?.Sent, now.Sent, seconds);
+                // Adapter by adapter: one that just came up does not add its lifetime counter (review 24 R4, G2).
+                var moved = before is null ? ((long Received, long Sent)?)null : NetworkRate.Delta(before, now);
+                var down = moved is { } m && seconds > 0 ? m.Received / seconds : (double?)null;
+                var up = moved is { } n && seconds > 0 ? n.Sent / seconds : (double?)null;
                 before = now;
                 state.Record(down, max: null);
                 peak.Add(down);

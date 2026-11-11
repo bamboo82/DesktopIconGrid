@@ -15,6 +15,12 @@ public interface IDialogService
     bool Confirm(string title, string message);
 
     /// <summary>
+    /// A Yes/No question whose default is No, for something that leaves this PC (pasted text): Enter right after the
+    /// key that asked must not be a yes.
+    /// </summary>
+    bool ConfirmDefaultNo(string title, string message);
+
+    /// <summary>
     /// Asks whether something that came with the bar may act on this PC (a health check), showing its full details in a
     /// wrapped, scrollable box; Cancel is the default.
     /// </summary>

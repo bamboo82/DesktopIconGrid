@@ -1434,6 +1434,23 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
             return;
         }
 
+        if (!_startingWorkspaces.Add(name))
+        {
+            return; // already being started (two clicks, or the name twice on a command line)
+        }
+
+        try
+        {
+            await StartWorkspaceMembersAsync(name, members).ConfigureAwait(true);
+        }
+        finally
+        {
+            _startingWorkspaces.Remove(name);
+        }
+    }
+
+    private async Task StartWorkspaceMembersAsync(string name, IReadOnlyList<ShortcutItem> members)
+    {
         IsGroupPopupOpen = false;
         AppLog.Default.Info("Workspaces", $"Starting \"{name}\" ({members.Count} member(s))");
         var failures = new List<string>();
@@ -1445,9 +1462,9 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
                 toPlace.Add((member, target));
             }
 
-            if (Tracker.ProcessIdsOf(member.Id).Count > 0)
+            if (HasWorkspaceWindow(member))
             {
-                continue; // running: only moved
+                continue; // it has a window: only moved
             }
 
             var result = _launcher.Launch(member);
@@ -1502,6 +1519,25 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
         }
     }
 
+    /// <summary>
+    /// Whether the member already shows a window, the click path's test (review 24 R3): a process without one (closed to
+    /// the tray, a start-up boost, a suspended Store app) does not count, so the member is started. A member with
+    /// parameters counts only what the bar started for it, so two members on one program both start.
+    /// </summary>
+    private bool HasWorkspaceWindow(ShortcutItem member)
+    {
+        if (_windows is null)
+        {
+            return false;
+        }
+
+        return string.IsNullOrWhiteSpace(member.Parameters)
+            ? _windows.Capture(WorkspaceProcesses(member), Tracker.PackageFamilyOf(member.Id)) is not null
+            : _windows.Capture(Tracker.LaunchedProcessIdsOf(member.Id), null) is not null;
+    }
+
+    private readonly HashSet<string> _startingWorkspaces = new(StringComparer.OrdinalIgnoreCase);
+
     /// <summary>The processes whose window is the member's: the running copies of its program, and what the bar started for it (launcher stubs).</summary>
     private IReadOnlySet<int> WorkspaceProcesses(ShortcutItem member)
     {
@@ -1525,14 +1561,12 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
             }
         }
 
-        if (found.Count > 0)
-        {
-            _workspacePositions.Set(workspace, found);
-        }
-
+        var saved = found.Count == 0 || _workspacePositions.Set(workspace, found);
         _dialogs.Notify(
             WorkspaceLabel(workspace),
-            found.Count == 0 ? Strings.Workspace_NothingCaptured : string.Format(Strings.Workspace_Captured, found.Count));
+            found.Count == 0 ? Strings.Workspace_NothingCaptured
+            : saved ? string.Format(Strings.Workspace_Captured, found.Count)
+            : Strings.Workspace_NotSaved);
         return found.Count;
     }
 

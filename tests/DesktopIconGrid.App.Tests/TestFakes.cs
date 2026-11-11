@@ -56,6 +56,8 @@ internal sealed class RecordingDialogs : IDialogService
         return ApprovalAnswer;
     }
 
+    public bool ConfirmDefaultNo(string title, string message) => Confirm(title, message);
+
     public bool Confirm(string title, string message)
     {
         Confirmations.Add(title);

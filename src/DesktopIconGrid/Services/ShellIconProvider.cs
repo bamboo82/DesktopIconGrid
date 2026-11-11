@@ -248,6 +248,23 @@ public sealed class ShellIconProvider : IIconProvider
         try
         {
             using var stream = File.OpenRead(path);
+
+            // A photo or screenshot: decode it at the size asked, not whole (a 4K picture is 30 MB as pixels, and the
+            // result is cached for as long as the bar runs; a folder stack asks for up to 100 of them). Review 24 R5.
+            var probe = BitmapDecoder.Create(stream, BitmapCreateOptions.DelayCreation | BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.None);
+            if (probe.Frames.Count == 1 && probe.Frames[0].PixelWidth > pixelSize * 2)
+            {
+                stream.Position = 0;
+                var small = new BitmapImage();
+                small.BeginInit();
+                small.CacheOption = BitmapCacheOption.OnLoad;
+                small.DecodePixelWidth = pixelSize * 2; // sharp on a 200 % display
+                small.StreamSource = stream;
+                small.EndInit();
+                return small;
+            }
+
+            stream.Position = 0;
             var decoder = BitmapDecoder.Create(stream, BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.OnLoad);
             if (decoder.Frames.Count == 0)
             {

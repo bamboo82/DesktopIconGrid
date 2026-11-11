@@ -610,16 +610,31 @@ public sealed class LauncherViewModelTests : IDisposable
         switcher.CaptureAnswer = remembered;
         Assert.Equal(1, viewModel.CaptureWorkspace("Work"));
 
+        switcher.CaptureAnswer = null; // closed again: no window now
         switcher.PlaceMissesFirst = 2; // the program takes a moment to show its window
         await viewModel.StartWorkspaceAsync("work");
 
         Assert.Equal([(@"C:\b.exe", false)], _launcher.Launches); // only the member, not the Multi Launch one
         Assert.Equal([remembered, remembered], switcher.Placed); // when the window showed, and once more for late movers
 
+        // Review 24 R3: a member is skipped only when it shows a window, not because some process of its program exists.
+        switcher.CaptureAnswer = remembered; // it has a window now
+        await viewModel.StartWorkspaceAsync("Work");
+        Assert.Single(_launcher.Launches); // only moved
+        Assert.Equal(4, switcher.Placed.Count);
+        switcher.CaptureAnswer = null;
+
+        // The Multi Launch group goes the same way and still starts a member without a window, as before 0.10.0.
+        await viewModel.LaunchMultiLaunchGroupAsync();
+        Assert.Contains(_launcher.Launches, l => l.Location == @"C:\a.exe");
+        var launchedSoFar = _launcher.Launches.Count;
+
         viewModel.ToggleWorkspace(b, "Work");
         Assert.Equal([DesktopIconGrid.Core.Launching.Workspaces.MultiLaunch], viewModel.WorkspaceNames);
+        var noticesBefore = dialogs.Notices.Count;
         await viewModel.StartWorkspaceAsync("Work"); // gone: said, nothing started
-        Assert.Single(_launcher.Launches);
+        Assert.Equal(launchedSoFar, _launcher.Launches.Count);
+        Assert.Equal(noticesBefore + 1, dialogs.Notices.Count);
     }
 
     [Fact]

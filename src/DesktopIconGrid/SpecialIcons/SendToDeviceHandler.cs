@@ -46,13 +46,36 @@ public sealed class SendToDeviceHandler(Func<FolderInbox?> inbox, IDialogService
         var files = ClipboardFiles.Take(
             pasteDirectory,
             DateTime.Now,
-            text => dialogs.Confirm(Strings.Paste_TextTitle, ClipboardFiles.TextQuestion(Strings.Paste_TextQuestion, item.Name, text)));
+            text => dialogs.ConfirmDefaultNo(Strings.Paste_TextTitle, ClipboardFiles.TextQuestion(Strings.Paste_TextQuestion, item.Name, text)));
         if (files is null)
         {
             return Task.FromResult(LaunchResult.Cancelled);
         }
 
-        return files.Count == 0 ? Task.FromResult(LaunchResult.Failure(Strings.Bucket_NothingToPaste)) : DropFilesAsync(item, files);
+        return files.Count == 0 ? Task.FromResult(LaunchResult.Failure(Strings.Bucket_NothingToPaste)) : SendPastedAsync(item, files);
+    }
+
+    /// <summary>Sends what was pasted, then removes the temporary picture or text file it was saved as (review 24 P2).</summary>
+    private async Task<LaunchResult> SendPastedAsync(SpecialIconItem item, IReadOnlyList<string> files)
+    {
+        try
+        {
+            return await DropFilesAsync(item, files);
+        }
+        finally
+        {
+            foreach (var file in files.Where(file => file.StartsWith(pasteDirectory, StringComparison.OrdinalIgnoreCase)))
+            {
+                try
+                {
+                    File.Delete(file);
+                }
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+                {
+                    // The start-up purge takes it.
+                }
+            }
+        }
     }
 
     public async Task<LaunchResult> DropFilesAsync(SpecialIconItem item, IReadOnlyList<string> paths)

@@ -43,8 +43,8 @@ a program inside a folder stack.
 
 ### Changed
 
-- *Launch Multi Launch group* no longer starts a member that is already running; it is now the built-in
-  workspace and puts remembered windows back too.
+- *Launch Multi Launch group* no longer starts a member that already shows a window; it is now the built-in
+  workspace and puts remembered windows back too. A member without a window is started as before.
 
 ## [0.9.0] – 2026-11-10
 

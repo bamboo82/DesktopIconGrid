@@ -32,6 +32,9 @@ public sealed class FolderInbox
 
     private const string PartSuffix = ".part";
 
+    /// <summary>What an inbox file is renamed to when it was delivered but could not be deleted, so it is not delivered again.</summary>
+    private const string TakenSuffix = ".taken";
+
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
 
     private readonly string _root;
@@ -123,6 +126,7 @@ public sealed class FolderInbox
         var final = Unique(target, $"{_deviceId}~{name}");
         var part = final + PartSuffix; // a sync program may upload it half-written; the receiver skips .part
         File.Copy(source.FullName, part, overwrite: true);
+        File.SetAttributes(part, FileAttributes.Normal); // read-only or hidden does not travel: the receiver must be able to mark, see and delete it
         File.Move(part, final);
         return name;
     }
@@ -143,6 +147,7 @@ public sealed class FolderInbox
             {
                 var separator = info.Name.IndexOf('~');
                 if (info.Name.EndsWith(PartSuffix, StringComparison.OrdinalIgnoreCase)
+                    || info.Name.EndsWith(TakenSuffix, StringComparison.OrdinalIgnoreCase)
                     || separator != 32
                     || !IsDeviceId(info.Name[..separator])
                     || info.Length > MaxFileSize)
@@ -151,7 +156,7 @@ public sealed class FolderInbox
                 }
 
                 var sender = info.Name[..separator].ToLowerInvariant();
-                files.Add(new InboxFile(info.FullName, FileNames.Safe(info.Name[(separator + 1)..]), sender, NameOf(Path.Combine(_root, sender), sender), info.Length));
+                files.Add(new InboxFile(info.FullName, PlainName(info.Name[(separator + 1)..]), sender, NameOf(Path.Combine(_root, sender), sender), info.Length));
                 if (files.Count == MaxPerLook)
                 {
                     break;
@@ -167,17 +172,57 @@ public sealed class FolderInbox
     }
 
     /// <summary>
-    /// Moves a waiting file into <paramref name="destinationFolder"/> under a name that is free there, and returns where
-    /// it is now. The caller marks it as downloaded.
+    /// Delivers a waiting file into <paramref name="destinationFolder"/> under a name that is free there, once
+    /// (review 24 R1): it is copied under a temporary name, made a plain file (a read-only or hidden one could be
+    /// neither marked nor seen), handed to <paramref name="mark"/> (the mark of a downloaded file), and only then
+    /// given its name. The inbox copy is deleted, or renamed so that it is never delivered again when it cannot be.
     /// </summary>
-    public static string Receive(InboxFile file, string destinationFolder)
+    /// <returns>Where the file is now, whether it was marked, and whether its inbox copy is gone (deleted or set aside).</returns>
+    public static (string Path, bool Marked, bool Cleared) Receive(InboxFile file, string destinationFolder, Func<string, bool>? mark = null)
     {
         ArgumentNullException.ThrowIfNull(file);
         Directory.CreateDirectory(destinationFolder);
-        var destination = Unique(destinationFolder, FileNames.Safe(file.Name));
-        File.Copy(file.Path, destination, overwrite: false);
-        File.Delete(file.Path);
-        return destination;
+        var destination = Unique(destinationFolder, PlainName(file.Name));
+        var arriving = destination + PartSuffix;
+        File.Copy(file.Path, arriving, overwrite: true);
+        File.SetAttributes(arriving, FileAttributes.Normal);
+        var marked = mark?.Invoke(arriving) ?? false;
+        File.Move(arriving, destination);
+        return (destination, marked, Clear(file.Path));
+    }
+
+    /// <summary>Deletes a delivered inbox file; when that fails, renames it out of the way. False when neither worked.</summary>
+    private static bool Clear(string path)
+    {
+        try
+        {
+            File.SetAttributes(path, FileAttributes.Normal);
+            File.Delete(path);
+            return true;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            try
+            {
+                File.Move(path, path + TakenSuffix, overwrite: true);
+                return true;
+            }
+            catch (Exception again) when (again is IOException or UnauthorizedAccessException)
+            {
+                AppLog.Default.Warning("Inbox", $"A delivered file could not be removed from the inbox: {again.Message}");
+                return false;
+            }
+        }
+    }
+
+    /// <summary>
+    /// A received file's name: safe for Windows, never a path, and never <c>desktop.ini</c>, which Explorer would read
+    /// as the Downloads folder's own settings.
+    /// </summary>
+    private static string PlainName(string name)
+    {
+        var safe = FileNames.Safe(name);
+        return string.Equals(safe, "desktop.ini", StringComparison.OrdinalIgnoreCase) ? safe + ".received" : safe;
     }
 
     private static string Unique(string folder, string name)

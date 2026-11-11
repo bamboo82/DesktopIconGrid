@@ -22,7 +22,8 @@ public static class PasteNames
     {
         ArgumentNullException.ThrowIfNull(text);
         var head = text.Length > PreviewChars ? text[..PreviewChars] : text;
-        var line = new string(head.Select(c => char.IsControl(c) ? ' ' : c).ToArray()).Trim();
+        var line = new string(head.Select(c => char.IsControl(c) || char.GetUnicodeCategory(c) is System.Globalization.UnicodeCategory.Format
+            or System.Globalization.UnicodeCategory.LineSeparator or System.Globalization.UnicodeCategory.ParagraphSeparator ? ' ' : c).ToArray()).Trim();
         return text.Length > PreviewChars ? line + "…" : line;
     }
 

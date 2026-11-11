@@ -201,24 +201,30 @@ public sealed class SystemMonitor : IDisposable
         _ => CommandLevel.Ok,
     };
 
-    /// <summary>Bytes received and sent so far by every connected adapter that is not a loopback or a tunnel.</summary>
-    public static (long Received, long Sent) ReadNetworkCounters()
+    /// <summary>
+    /// Bytes received and sent so far, by adapter id, for the connected adapters that carry this PC's traffic: not a
+    /// loopback or a tunnel, not a filter layer of another adapter (<see cref="NetworkRate.IsFilterLayer"/>), and, when
+    /// any adapter has one, only those with a gateway (a virtual switch's host adapter repeats the card's traffic).
+    /// </summary>
+    public static IReadOnlyDictionary<string, (long Received, long Sent)> ReadNetworkCounters()
     {
-        long received = 0, sent = 0;
+        var all = new List<(string Id, bool HasGateway, long Received, long Sent)>();
         foreach (var adapter in System.Net.NetworkInformation.NetworkInterface.GetAllNetworkInterfaces())
         {
             if (adapter.OperationalStatus != System.Net.NetworkInformation.OperationalStatus.Up
-                || adapter.NetworkInterfaceType is System.Net.NetworkInformation.NetworkInterfaceType.Loopback or System.Net.NetworkInformation.NetworkInterfaceType.Tunnel)
+                || adapter.NetworkInterfaceType is System.Net.NetworkInformation.NetworkInterfaceType.Loopback or System.Net.NetworkInformation.NetworkInterfaceType.Tunnel
+                || NetworkRate.IsFilterLayer(adapter.Description)
+                || NetworkRate.IsFilterLayer(adapter.Name))
             {
                 continue;
             }
 
             var statistics = adapter.GetIPStatistics();
-            received += statistics.BytesReceived;
-            sent += statistics.BytesSent;
+            all.Add((adapter.Id, adapter.GetIPProperties().GatewayAddresses.Count > 0, statistics.BytesReceived, statistics.BytesSent));
         }
 
-        return (received, sent);
+        var counted = all.Any(adapter => adapter.HasGateway) ? all.Where(adapter => adapter.HasGateway) : all;
+        return counted.GroupBy(adapter => adapter.Id).ToDictionary(group => group.Key, group => (group.First().Received, group.First().Sent));
     }
 
     public static string FormatBytes(long bytes)

@@ -20,6 +20,7 @@ public class PasteNamesTests
     {
         Assert.Equal("hunter2", PasteNames.Preview("  hunter2\r\n"));
         Assert.Equal("a b", PasteNames.Preview("a\nb"));
+        Assert.Equal("a b", PasteNames.Preview("a\u202Eb")); // a reordering character is shown as a space
         var cut = PasteNames.Preview(new string('x', 500));
         Assert.Equal(PasteNames.PreviewChars + 1, cut.Length);
         Assert.EndsWith("…", cut);

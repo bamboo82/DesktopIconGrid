@@ -239,7 +239,9 @@ and a kind-specific properties dialog. Available now from *Add special icon ▸*
 
 - **Network** (0.10.0) — how fast all connected adapters together receive, as the tile's text (`850K`,
   `1.2M`, bytes per second), refreshed every 2 seconds; the tooltip has down and up. As a ring or bar it
-  is the download rate against its own peak of the last two minutes. It only reads Windows' counters.
+  is the download rate against its own peak of the last two minutes. It only reads Windows' counters,
+  adapter by adapter: an adapter's filter layers are left out, and when an adapter has a gateway only
+  those with one count, so the same traffic is not counted several times.
   Click opens the network settings.
 
 All of these draw the value in a design you pick (ring, bar or number) with green/amber/red levels, and
@@ -254,8 +256,9 @@ their tooltips end with a line of the last 60 samples (`▁▂▃▅▇█`; the
   **Paste (0.10.0):** `Ctrl+V` on the focused bucket, or *Paste* in its menu, uploads what the clipboard
   holds: copied files and folders; otherwise a picture, as `Screenshot 2026-11-06 143005.png`; otherwise
   text (up to 10 million characters), as `Pasted text … .txt` in UTF-8. Text is asked about first, with
-  its length and its first 200 characters, since it may just be what was copied last (a password); files
-  and pictures go without a question. The same-name policy applies.
+  its length and its first 200 characters, since it may just be what was copied last (a password); the
+  question's default is *No*, so Enter right after `Ctrl+V` sends nothing. Files and pictures go without
+  a question. The same-name policy applies.
 
 - **Sound Replayer** — press and hold the icon to record from the microphone (only while
   stopped); release to play the recording back in an endless loop; a single click stops it.
@@ -271,7 +274,10 @@ their tooltips end with a line of the last 60 samples (`▁▂▃▅▇█`; the
   has a folder `inbox\<device id>` there with its name; a sent file is copied into the target's inbox
   (up to 2 GB; folders are not sent). The receiving PC looks once a minute while the bar runs, moves
   what waits into its Downloads folder under a free name, marks it as downloaded from another computer
-  (so SmartScreen and Protected View apply), and shows a notification. Nothing received is opened.
+  (so SmartScreen and Protected View apply), and shows a notification. Nothing received is opened. A file
+  arrives once, as a plain file: read-only and hidden attributes do not travel, it is marked before it
+  gets its name, a `desktop.ini` arrives as `desktop.ini.received`, and when the drive keeps no such mark
+  the notification says so.
   Whoever can write to the sync folder can send, as they can change the synced bar. Not in: sending
   through Google Drive; a click that opens the received file's folder.
 
@@ -408,8 +414,10 @@ Multi Launch group is the built-in one (its flag is unchanged, so older versions
 
 - *Workspaces ▸* in a shortcut's menu ticks the workspaces it belongs to; *New workspace…* asks for a
   name (1–40 characters). A workspace exists while it has members.
-- *Start workspace "X"* (options and tray menus, or `--workspace X` on the command line) starts the
-  members that are not running, 300 ms apart; members already running are not started again.
+- *Start workspace "X"* (options and tray menus, or `--workspace X` on the command line) starts, 300 ms
+  apart, the members that show no window; a member with a window is only moved. A process without a
+  window (closed to the tray, a start-up boost) does not count as running, and a member with parameters
+  counts only what the bar started for it, so two members on one program both start.
 - *Remember window positions of "X"* records each running member's first window: its rectangle in
   screen pixels and whether it is maximised. Starting the workspace then moves each member's window
   there: at once when it runs already, when its first window shows (up to 15 s) when it was just

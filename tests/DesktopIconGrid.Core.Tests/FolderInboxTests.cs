@@ -39,7 +39,9 @@ public sealed class FolderInboxTests : IDisposable
         var downloads = Path.Combine(_folder, "Downloads");
         Directory.CreateDirectory(downloads);
         File.WriteAllText(Path.Combine(downloads, "report.pdf"), "an older one");
-        var received = FolderInbox.Receive(waiting, downloads);
+        var (received, marked, cleared) = FolderInbox.Receive(waiting, downloads);
+        Assert.False(marked); // no marker given
+        Assert.True(cleared);
 
         Assert.Equal(Path.Combine(downloads, "report (2).pdf"), received); // nothing is overwritten
         Assert.Equal("hello", File.ReadAllText(received));
@@ -61,7 +63,7 @@ public sealed class FolderInboxTests : IDisposable
 
         Assert.Equal("CON_", waiting.Name);
         Assert.Equal(Laptop[..8], waiting.SenderName); // no device.json: the id's start
-        var received = FolderInbox.Receive(waiting with { Name = @"..\..\evil.exe" }, Path.Combine(_folder, "Downloads"));
+        var received = FolderInbox.Receive(waiting with { Name = @"..\..\evil.exe" }, Path.Combine(_folder, "Downloads")).Path;
         Assert.Equal(Path.Combine(_folder, "Downloads"), Path.GetDirectoryName(received));
     }
 
@@ -82,5 +84,52 @@ public sealed class FolderInboxTests : IDisposable
         laptop.Send(Desktop, file);
         laptop.Send(Desktop, file); // twice: both kept
         Assert.Equal(2, new FolderInbox(Sync, Desktop, "Desktop").Pending().Count);
+    }
+
+    [Fact]
+    public void A_read_only_hidden_file_arrives_once_as_a_plain_marked_file()
+    {
+        // Review 24 R1: copy-then-delete left a read-only file unmarked, unannounced, and delivered again every minute.
+        var laptop = new FolderInbox(Sync, Laptop, "Laptop");
+        var desktop = new FolderInbox(Sync, Desktop, "Desktop");
+        laptop.Announce();
+        desktop.Announce();
+        var source = MakeFile("tool.exe");
+        File.SetAttributes(source, FileAttributes.ReadOnly | FileAttributes.Hidden);
+        laptop.Send(Desktop, source);
+        var waiting = Assert.Single(desktop.Pending());
+        File.SetAttributes(waiting.Path, FileAttributes.ReadOnly | FileAttributes.Hidden); // as a hostile writer would leave it
+        var downloads = Path.Combine(_folder, "Downloads");
+        var markedWhile = new List<(string Path, FileAttributes Attributes)>();
+
+        var (path, marked, cleared) = FolderInbox.Receive(waiting, downloads, arriving =>
+        {
+            markedWhile.Add((arriving, File.GetAttributes(arriving)));
+            return true;
+        });
+
+        Assert.True(marked);
+        Assert.True(cleared);
+        var seen = Assert.Single(markedWhile);
+        Assert.NotEqual(path, seen.Path); // marked under its temporary name, before it had its real one
+        Assert.False(seen.Attributes.HasFlag(FileAttributes.ReadOnly));
+        Assert.False(File.GetAttributes(path).HasFlag(FileAttributes.ReadOnly));
+        Assert.False(File.GetAttributes(path).HasFlag(FileAttributes.Hidden));
+        Assert.Empty(desktop.Pending()); // not delivered again
+        Assert.Equal(["tool.exe"], Directory.GetFiles(downloads).Select(Path.GetFileName));
+        File.SetAttributes(source, FileAttributes.Normal);
+    }
+
+    [Fact]
+    public void A_file_called_desktop_ini_does_not_become_the_folders_own()
+    {
+        var desktop = new FolderInbox(Sync, Desktop, "Desktop");
+        desktop.Announce();
+        File.WriteAllText(Path.Combine(Sync, FolderInbox.FolderName, Desktop, $"{Laptop}~Desktop.INI"), "[.ShellClassInfo]");
+
+        var waiting = Assert.Single(desktop.Pending());
+
+        Assert.Equal("Desktop.INI.received", waiting.Name);
+        Assert.EndsWith("Desktop.INI.received", FolderInbox.Receive(waiting, Path.Combine(_folder, "Downloads")).Path);
     }
 }

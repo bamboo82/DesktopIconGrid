@@ -108,6 +108,9 @@ public sealed class GaugeState : ObservableObject
     /// <summary>Tooltip text, e.g. "C:\ — 120 GB free of 500 GB", with a line of the last samples under it when they are kept.</summary>
     public string Detail => _history?.Render(_historyMax) is { Length: > 0 } line ? $"{_detail}\n{line}" : _detail;
 
+    /// <summary>The tooltip text without the line of samples, for a screen reader.</summary>
+    public string Summary => _detail;
+
     /// <summary>
     /// Keeps a sample for the tooltip's sparkline (the last <see cref="GaugeHistory.DefaultCapacity"/>): drawn against
     /// <paramref name="max"/> (100 for a percentage), or against the samples' own peak when it is <see langword="null"/>.

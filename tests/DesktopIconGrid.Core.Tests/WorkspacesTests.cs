@@ -80,4 +80,15 @@ public sealed class WorkspacesTests : IDisposable
         Assert.NotNull(BarCommands.Parse(["--workspace"]).Error);
         Assert.NotNull(BarCommands.Parse(["--workspace", "--show"]).Error);
     }
+
+    [Fact]
+    public void A_name_with_spaces_around_it_or_an_invisible_character_is_no_second_workspace()
+    {
+        var a = new ShortcutItem { Name = "A", Workspaces = [" Work"] }; // as a hand-edited or synced layout may have it
+
+        Assert.Equal(["Work"], Workspaces.Names([a]));
+        Assert.True(Workspaces.IsMember(a, "Work")); // listed, and found under the listed name
+        Assert.Null(Workspaces.Normalize("Wo\u200Brk"));
+        Assert.Null(Workspaces.Normalize("Work\u202E"));
+    }
 }

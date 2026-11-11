@@ -73,4 +73,17 @@ public class ClockTileTests
         Assert.Equal(ClockPhase.Idle, timer.Phase);
         Assert.Null(timer.Tick(woke.AddHours(1)));
     }
+
+    [Theory]
+    [InlineData("\\")] // throws NullReferenceException inside the runtime on .NET 10 (review 24 R2)
+    [InlineData("\\\\")]
+    [InlineData("../../etc/passwd")]
+    [InlineData("\0")]
+    public void A_zone_id_the_runtime_chokes_on_is_this_PCs_time_and_never_an_exception(string id)
+    {
+        var settings = new ClockTileSettings(id, ClockTimerKind.None, 25, 5);
+
+        Assert.Equal(TimeZoneInfo.Local, settings.Zone());
+        Assert.Matches(@"^\d\d:\d\d$", new ClockTimer(settings).Label(Noon));
+    }
 }

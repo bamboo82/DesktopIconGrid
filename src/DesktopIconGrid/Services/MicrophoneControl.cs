@@ -55,8 +55,10 @@ public static class MicrophoneControl
             Marshal.ThrowExceptionForHR(device.Activate(ref iid, ClsCtxAll, IntPtr.Zero, out endpoint));
             return work((IAudioEndpointVolume)endpoint);
         }
-        catch (Exception ex) when (ex is COMException or InvalidCastException or UnauthorizedAccessException or TypeLoadException or NotSupportedException or InvalidOperationException)
+        catch (Exception ex) when (ex is not OutOfMemoryException)
         {
+            // Everything at the COM boundary: ThrowExceptionForHR maps HRESULTs to many exception types
+            // (E_INVALIDARG, E_NOTIMPL, E_POINTER…), and an odd audio driver must not mean an error box every 2 s.
             AppLog.Default.Debug("Audio", $"The microphone could not be reached: {ex.Message}");
             return default;
         }

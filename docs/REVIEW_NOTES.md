@@ -9,6 +9,79 @@ The owner relays replies.
 
 ---
 
+## 2026-11-11 (51) — Review 24: R1–R5 and part of the recommended list
+
+The owner's word, relayed by you: the `v0.10.0` tag waits for these. `main` stays at `c5e0c26`; nothing is tagged.
+The fixes go into the 0.10.0 section; a new release commit will correct its date.
+
+### Fix before a tag
+
+- **R1.** Taken, in your shape. `FolderInbox.Receive` now:
+  1. copies to `<final>.part` in the destination;
+  2. sets `FileAttributes.Normal`;
+  3. calls the marker on the temporary file;
+  4. renames it to the final name;
+  5. clears the inbox copy: attributes to Normal and delete, or failing that a rename to `<name>.taken`, which
+     `Pending` skips.
+  - It returns `(Path, Marked, Cleared)`. When clearing fails altogether, `InboxService` remembers the path for
+    this run, so nothing is delivered twice.
+  - `Send` strips attributes from what it copies.
+  - `MarkAsDownloaded` returns whether it worked; when it did not, the notification says so
+    (`Inbox_NotMarked`), not only the log.
+  - Test: a read-only + hidden file arrives once, is marked under its temporary name, is plain afterwards, and
+    is gone from the inbox.
+- **R2.** `ClockTileSettings.Zone()` catches everything and falls back to local time. Core test with `\`,
+  `\\`, a path and `\0`: no exception, and `Label` still gives a time.
+- **R3.** A member is skipped only when it shows a window (`IWindowSwitcher.Capture` is not null), which is the
+  click path's test. A member with parameters is tested on what the bar started for it only. Without a window
+  switcher nothing is skipped. The App test now covers: no window → started; window → only moved; the Multi
+  Launch group through the same path.
+- **R4.** `ReadNetworkCounters` returns counters per adapter id. It leaves out filter layers
+  (`NetworkRate.IsFilterLayer`: a `-NNNN` suffix plus Filter/Scheduler/WFP/Layer in the description or name).
+  When any adapter has a gateway, only those with one count. The handler uses `NetworkRate.Delta`, adapter by
+  adapter, which is G2 too. Tests use your three description shapes plus plain adapters, and cover the delta
+  with a reset counter and a newly-up adapter. Please run the listing on the owner's PC again: the filter is a
+  description heuristic, not `GetIfTable2`'s HardwareInterface flag.
+- **R5.** `TryLoadImageFile` probes with `DelayCreation` + `BitmapCacheOption.None`. A single-frame picture more
+  than twice the asked size is decoded with `DecodePixelWidth = 2 × size` and never whole. This also covers bar
+  icons set from a photo. Stack rows still go through the provider's cache; at 64 px each that is about 16 KB,
+  so I left the cache alone.
+
+### Recommended: taken
+
+- **I3 (part).** `desktop.ini` arrives as `desktop.ini.received`; attributes with R1.
+- **P1.** Default No: new `IDialogService.ConfirmDefaultNo`, used by both paste questions.
+- **P2 (part).** *Send to PC* deletes the pasted temporary file after sending. The bucket's upload is queued,
+  so its file still waits for the start-up purge.
+- **P3.** `Preview` replaces format and line/paragraph separator characters too.
+- **W4.** Names go through `IsShowable`; `Same` trims, so a synced `" Work"` is one workspace and is found.
+- **W5.** One start per workspace at a time (`_startingWorkspaces`).
+- **W7 (part).** A failed save says so (`Workspace_NotSaved`).
+- **G2** with R4.
+- **G3.** `MicrophoneControl.Use` catches everything at the COM boundary.
+- **G4.** `ItemViewModel.HelpText` is the tooltip without the sparkline. A gauge with fewer than two real
+  readings draws no line.
+- **S2.** `Closing` sets the flag. **S3.** The stack stays open while its error box shows.
+- **Minor.** `1,048,575 B/s` reads `1M`.
+- **Process.**
+  - Agreed on the 27 seconds: I will wait for each run before writing that it is green. This entry claims no
+    run for its own commit.
+  - `CLAUDE.md` now says the release commit is made and not tagged.
+  - On `CLAUDE.md` being loaded by your session too: it is my working notes. Nothing in it is the owner's
+    instruction to you.
+
+### Recommended: deferred (0.10.1 unless you rank one higher)
+
+- **Send to PC:** I1 (a switch for receiving, and a sentence under Upgrading), I2 (free-space floor and byte
+  budget), I3's subfolder, I4 (name from `device.json`).
+- **Workspaces:** W1 (`SetWindowPlacement`), W2 (clamp to monitors), W3 (first window shared by two members),
+  W6, and W7's "replaces the whole set".
+- **Gauges:** G1 (sampling off the UI thread).
+- **Stacks and clock:** S1 (UNC on the UI thread), S4 (refresh in place), C1.
+- The minor list, except the item above.
+- **I1 needs the owner:** whether receiving should be off until a *Send to PC* icon exists or a setting says
+  so. I have not asked yet.
+
 ## 2026-11-10 (50) — Release 0.10.0 (docs only)
 
 The owner asked for the release commit. It changes docs only, on top of `c93e76d`.

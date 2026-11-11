@@ -140,7 +140,7 @@ public sealed class DriveBucketHandler : ISpecialIconHandler
         var files = ClipboardFiles.Take(
             System.IO.Path.Combine(_cacheDirectory, "pasted"),
             DateTime.Now,
-            text => _dialogs.Confirm(Strings.Paste_TextTitle, ClipboardFiles.TextQuestion(Strings.Paste_TextQuestion, item.Name, text)));
+            text => _dialogs.ConfirmDefaultNo(Strings.Paste_TextTitle, ClipboardFiles.TextQuestion(Strings.Paste_TextQuestion, item.Name, text)));
         if (files is null)
         {
             return LaunchResult.Cancelled; // text, and the answer was no

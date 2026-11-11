@@ -36,9 +36,9 @@ public sealed class GaugeHistory(int capacity = GaugeHistory.DefaultCapacity)
     /// </summary>
     public string Render(double? max)
     {
-        if (_samples.Count < 2)
+        if (_samples.Count(sample => sample is not null) < 2)
         {
-            return string.Empty;
+            return string.Empty; // nothing to draw (a battery gauge on a desktop PC): no line of blanks
         }
 
         var top = max ?? Peak;
@@ -72,6 +72,39 @@ public static class NetworkRate
     public static double? PerSecond(long? before, long now, double seconds) =>
         before is { } earlier && seconds > 0 && now >= earlier ? (now - earlier) / seconds : null;
 
+    /// <summary>
+    /// Windows lists an adapter's filter layers as adapters of their own with the parent's counters
+    /// ("…-WFP Native MAC Layer LightWeight Filter-0000", "…-QoS Packet Scheduler-0000"); counting them counts the same
+    /// traffic several times (review 24 R4).
+    /// </summary>
+    public static bool IsFilterLayer(string? description) =>
+        description is { Length: > 5 } text
+        && text[^5] == '-'
+        && text[^4..].All(char.IsAsciiDigit)
+        && (text.Contains("Filter", StringComparison.OrdinalIgnoreCase) || text.Contains("Scheduler", StringComparison.OrdinalIgnoreCase)
+            || text.Contains("WFP", StringComparison.Ordinal) || text.Contains("Layer", StringComparison.OrdinalIgnoreCase));
+
+    /// <summary>
+    /// Bytes received and sent between two readings, adapter by adapter: only adapters in both readings whose counters
+    /// went forward count, so one that just came up does not add its whole lifetime in one interval.
+    /// </summary>
+    public static (long Received, long Sent) Delta(
+        IReadOnlyDictionary<string, (long Received, long Sent)> before,
+        IReadOnlyDictionary<string, (long Received, long Sent)> now)
+    {
+        long received = 0, sent = 0;
+        foreach (var (id, current) in now)
+        {
+            if (before.TryGetValue(id, out var earlier) && current.Received >= earlier.Received && current.Sent >= earlier.Sent)
+            {
+                received += current.Received - earlier.Received;
+                sent += current.Sent - earlier.Sent;
+            }
+        }
+
+        return (received, sent);
+    }
+
     /// <summary>A rate short enough for a tile: <c>0</c>, <c>850K</c>, <c>1.2M</c>, <c>12M</c>, <c>1.1G</c> (bytes per second).</summary>
     public static string Short(double bytesPerSecond)
     {
@@ -80,7 +113,7 @@ public static class NetworkRate
         {
             < 1 => "0",
             < k => "1K", // something moves: not "0"
-            < m => Number(bytesPerSecond / k, "K", decimals: false),
+            < m - k / 2 => Number(bytesPerSecond / k, "K", decimals: false), // up to 1023K; the half K below 1M rounds to 1M
             < g => Number(bytesPerSecond / m, "M", decimals: bytesPerSecond < 10 * m),
             _ => Number(bytesPerSecond / g, "G", decimals: bytesPerSecond < 10 * g),
         };

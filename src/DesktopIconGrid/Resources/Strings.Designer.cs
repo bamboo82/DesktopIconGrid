@@ -1914,6 +1914,15 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to It could not be marked as downloaded from another computer (this drive keeps no [rest of string was truncated]";.
+        /// </summary>
+        public static string Inbox_NotMarked {
+            get {
+                return ResourceManager.GetString("Inbox_NotMarked", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to “{0}” is in your Downloads folder..
         /// </summary>
         public static string Inbox_Received {
@@ -6716,6 +6725,15 @@ namespace DesktopIconGrid.Resources {
         public static string Workspace_None {
             get {
                 return ResourceManager.GetString("Workspace_None", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The window positions could not be saved..
+        /// </summary>
+        public static string Workspace_NotSaved {
+            get {
+                return ResourceManager.GetString("Workspace_NotSaved", resourceCulture);
             }
         }
 

@@ -24,10 +24,11 @@ public static class Workspaces
     public static string? Normalize(string? name)
     {
         var trimmed = name?.Trim() ?? string.Empty;
-        return trimmed.Length is 0 or > MaxNameLength || trimmed.Any(char.IsControl) || Same(trimmed, MultiLaunch) ? null : trimmed;
+        return trimmed.Length is 0 or > MaxNameLength || !SpecialIcons.CommandTileSettings.IsShowable(trimmed) || Same(trimmed, MultiLaunch) ? null : trimmed;
     }
 
-    public static bool Same(string a, string b) => string.Equals(a, b, StringComparison.OrdinalIgnoreCase);
+    /// <summary>The same workspace: any case, and spaces around a name (a hand-edited or synced one) do not make another.</summary>
+    public static bool Same(string a, string b) => string.Equals(a?.Trim(), b?.Trim(), StringComparison.OrdinalIgnoreCase);
 
     public static bool IsMember(ShortcutItem shortcut, string workspace)
     {

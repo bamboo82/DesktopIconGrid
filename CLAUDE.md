@@ -83,8 +83,8 @@ After removing or editing a key in the `.resx` files, run `python3 -I tools/gen_
 
 ## State
 
-- Released: 0.10.0 (2026-11-10; the release commit is on the branch, `main` and the tag `v0.10.0` are the
-  owner's to move). The next version is not started: bump `Directory.Build.props` and open a CHANGELOG section first.
+- 0.10.0: a release commit was made (`c5e0c26`, on `main`) but it is **not tagged or released**; review 24's
+  fixes follow it on the branch, still as 0.10.0. The tag `v0.10.0` is the owner's, on the commit they choose.
 - Open: the deferred minor list in REVIEW_NOTES entry 36; P15 (scp/sftp operands, review 17); U3′'s root fix;
   what 0.10.0 left out (Send to PC through Google Drive, voice launch, a volume tile, drop onto a program
   inside a stack); the review session's findings on entries 41–50, when they come.

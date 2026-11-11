@@ -68,9 +68,10 @@ public class MoreGaugesTests
             return;
         }
 
-        var (received, sent) = SystemMonitor.ReadNetworkCounters();
+        var counters = SystemMonitor.ReadNetworkCounters();
 
-        Assert.True(received >= 0 && sent >= 0);
+        Assert.All(counters, adapter => Assert.True(adapter.Value.Received >= 0 && adapter.Value.Sent >= 0));
+        Assert.DoesNotContain(counters.Keys, string.IsNullOrEmpty);
     }
 
     [Fact]

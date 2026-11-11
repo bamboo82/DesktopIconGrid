@@ -2276,4 +2276,10 @@
 共 {1} 个字符，开头为：
 {2}</value>
   </data>
+  <data name="Inbox_NotMarked" xml:space="preserve">
+    <value>无法将它标记为从其他电脑下载（此驱动器不保留这种标记），因此 Windows 在打开前不会警告。</value>
+  </data>
+  <data name="Workspace_NotSaved" xml:space="preserve">
+    <value>无法保存窗口位置。</value>
+  </data>
 </root>

@@ -2276,4 +2276,10 @@ Details are in {1}.</value>
 {1} characters, starting:
 {2}</value>
   </data>
+  <data name="Inbox_NotMarked" xml:space="preserve">
+    <value>It could not be marked as downloaded from another computer (this drive keeps no such mark), so Windows will not warn before opening it.</value>
+  </data>
+  <data name="Workspace_NotSaved" xml:space="preserve">
+    <value>The window positions could not be saved.</value>
+  </data>
 </root>

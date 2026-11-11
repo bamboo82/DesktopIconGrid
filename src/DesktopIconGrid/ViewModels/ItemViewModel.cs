@@ -197,6 +197,10 @@ public sealed class ItemViewModel : ObservableObject
         }
     }
 
+    /// <summary>What a screen reader is told: the tooltip without a gauge's line of block characters.</summary>
+    public string HelpText =>
+        Model is SpecialIconItem && _gauge is { IsVisible: true, Summary.Length: > 0 } gauge ? $"{Name}\n{gauge.Summary}" : ToolTipText;
+
     public string ToolTipText
     {
         get
@@ -298,6 +302,7 @@ public sealed class ItemViewModel : ObservableObject
             _gauge.PropertyChanged += (_, e) =>
             {
                 OnPropertyChanged(nameof(ToolTipText));
+                OnPropertyChanged(nameof(HelpText));
                 if (e.PropertyName is null or "" or nameof(GaugeState.IsVisible))
                 {
                     OnPropertyChanged(nameof(ShowsGauge));

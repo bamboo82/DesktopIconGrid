@@ -62,6 +62,7 @@ public partial class StackWindow : Window
         _refresh = new DispatcherTimer(TimeSpan.FromMilliseconds(400), DispatcherPriority.Background, (_, _) => { _refresh!.Stop(); Fill(); }, Dispatcher);
         _refresh.Stop();
         Deactivated += (_, _) => Dismiss();
+        Closing += (_, _) => _closing = true; // Alt+F4: the deactivation that follows must not close it again
         Closed += (_, _) => _watcher?.Dispose();
         PreviewKeyDown += (_, e) =>
         {
@@ -167,7 +168,16 @@ public partial class StackWindow : Window
         result.Process?.Dispose();
         if (result.Outcome == LaunchOutcome.Failed)
         {
-            MessageBox.Show(this, $"{result.ErrorMessage}\n{path}", Title, MessageBoxButton.OK, MessageBoxImage.Warning);
+            _dragging = true; // the box takes the focus: keep the stack (and with it the box) open
+            try
+            {
+                MessageBox.Show(this, $"{result.ErrorMessage}\n{path}", Title, MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+            finally
+            {
+                _dragging = false;
+            }
+
             return;
         }
 

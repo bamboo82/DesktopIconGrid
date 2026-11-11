@@ -21,6 +21,9 @@ public sealed class InboxService : IDisposable
     private readonly DispatcherTimer _timer;
     private bool _busy;
 
+    /// <summary>Inbox files that were delivered but could be neither deleted nor set aside: never delivered twice by this run.</summary>
+    private static readonly HashSet<string> Delivered = new(StringComparer.OrdinalIgnoreCase);
+
     public InboxService(SyncService sync, Action<string, string> notify, Dispatcher dispatcher)
     {
         _sync = sync;
@@ -60,9 +63,10 @@ public sealed class InboxService : IDisposable
         try
         {
             var received = await Task.Run(() => Take(inbox));
-            foreach (var (name, sender) in received)
+            foreach (var (name, sender, marked) in received)
             {
-                _notify(string.Format(Strings.Inbox_ReceivedTitle, sender), string.Format(Strings.Inbox_Received, name));
+                var message = string.Format(Strings.Inbox_Received, name);
+                _notify(string.Format(Strings.Inbox_ReceivedTitle, sender), marked ? message : $"{message}\n{Strings.Inbox_NotMarked}");
             }
         }
         catch (Exception ex) when (ex is not OutOfMemoryException)
@@ -76,21 +80,36 @@ public sealed class InboxService : IDisposable
         }
     }
 
-    private static List<(string Name, string Sender)> Take(FolderInbox inbox)
+    private static List<(string Name, string Sender, bool Marked)> Take(FolderInbox inbox)
     {
-        var received = new List<(string, string)>();
+        var received = new List<(string, string, bool)>();
         try
         {
             inbox.Announce();
             var downloads = DownloadsPath();
             foreach (var file in inbox.Pending())
             {
+                lock (Delivered)
+                {
+                    if (Delivered.Contains(file.Path))
+                    {
+                        continue;
+                    }
+                }
+
                 try
                 {
-                    var path = FolderInbox.Receive(file, downloads);
-                    MarkAsDownloaded(path);
-                    AppLog.Default.Info("Inbox", $"Received \"{Path.GetFileName(path)}\" ({file.Size} bytes) from {file.SenderName}");
-                    received.Add((Path.GetFileName(path), file.SenderName));
+                    var (path, marked, cleared) = FolderInbox.Receive(file, downloads, MarkAsDownloaded);
+                    if (!cleared)
+                    {
+                        lock (Delivered)
+                        {
+                            Delivered.Add(file.Path);
+                        }
+                    }
+
+                    AppLog.Default.Info("Inbox", $"Received \"{Path.GetFileName(path)}\" ({file.Size} bytes) from {file.SenderName}{(marked ? string.Empty : ", not marked as downloaded")}");
+                    received.Add((Path.GetFileName(path), file.SenderName, marked));
                 }
                 catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
                 {
@@ -107,16 +126,18 @@ public sealed class InboxService : IDisposable
         return received;
     }
 
-    /// <summary>The Zone.Identifier stream of a file from the Internet zone.</summary>
-    internal static void MarkAsDownloaded(string path)
+    /// <summary>The Zone.Identifier stream of a file from the Internet zone; false when the volume keeps none (FAT, some shares).</summary>
+    internal static bool MarkAsDownloaded(string path)
     {
         try
         {
             File.WriteAllText(path + ":Zone.Identifier", "[ZoneTransfer]\r\nZoneId=3\r\n");
+            return true;
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or NotSupportedException)
         {
             AppLog.Default.Warning("Inbox", $"\"{Path.GetFileName(path)}\" could not be marked as downloaded: {ex.Message}");
+            return false;
         }
     }
 

@@ -82,8 +82,10 @@ public sealed record ClockTileSettings(string? TimeZoneId, ClockTimerKind Timer,
         {
             return TimeZoneInfo.FindSystemTimeZoneById(TimeZoneId.Trim());
         }
-        catch (Exception ex) when (ex is TimeZoneNotFoundException or InvalidTimeZoneException)
+        catch (Exception)
         {
+            // Not found, damaged, or an id the runtime chokes on ("\" throws NullReferenceException on .NET 10): the id
+            // comes from a layout that may be synced, and a tile must never stop the bar from being built (review 24 R2).
             return TimeZoneInfo.Local;
         }
     }
