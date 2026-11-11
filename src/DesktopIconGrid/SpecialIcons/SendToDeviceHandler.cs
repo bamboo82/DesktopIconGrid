@@ -32,10 +32,14 @@ public sealed class SendToDeviceHandler(Func<FolderInbox?> inbox, IDialogService
     public GaugeState? CreateState(SpecialIconItem item) => null;
 
     public string? GetToolTip(SpecialIconItem item) =>
-        item.GetSetting(DeviceNameKey) is { } name ? string.Format(Strings.SendTo_ToolTip, name) : Strings.SendTo_NoDevice;
+        item.GetSetting(DeviceIdKey) is { } id ? string.Format(Strings.SendTo_ToolTip, StoredName(item, id)) : Strings.SendTo_NoDevice;
 
     public LaunchResult Activate(SpecialIconItem item, ActivationModifiers modifiers) =>
-        LaunchResult.Failure(item.GetSetting(DeviceIdKey) is null ? Strings.SendTo_NoDevice : string.Format(Strings.SendTo_ToolTip, item.GetSetting(DeviceNameKey)));
+        LaunchResult.Failure(item.GetSetting(DeviceIdKey) is { } id ? string.Format(Strings.SendTo_ToolTip, StoredName(item, id)) : Strings.SendTo_NoDevice);
+
+    /// <summary>The name kept with the icon, made fit to show: it may have come with a synced bar (review 24 I4).</summary>
+    private static string StoredName(SpecialIconItem item, string id) =>
+        FolderInbox.ShownName(item.GetSetting(DeviceNameKey), id.Length >= 8 ? id : "????????");
 
     public bool AcceptsFileDrops(SpecialIconItem item) => item.GetSetting(DeviceIdKey) is not null;
 
@@ -90,10 +94,15 @@ public sealed class SendToDeviceHandler(Func<FolderInbox?> inbox, IDialogService
             return LaunchResult.Failure(Strings.SendTo_NeedsFolder);
         }
 
-        var (sent, problems) = await Task.Run(() => Send(mine, target, paths));
+        var stored = item.GetSetting(DeviceNameKey);
+        var (sent, problems, name) = await Task.Run(() =>
+        {
+            var result = Send(mine, target, paths);
+            return (result.Sent, result.Problems, mine.NameOfDevice(target, stored)); // the PC's own name as it is now
+        });
         if (sent > 0)
         {
-            dialogs.Notify(item.Name, string.Format(Strings.SendTo_Sent, sent, item.GetSetting(DeviceNameKey) ?? target[..8]));
+            dialogs.Notify(item.Name, string.Format(Strings.SendTo_Sent, sent, name));
         }
 
         return problems.Count == 0 ? LaunchResult.Started : LaunchResult.Failure(string.Join("\n", problems));

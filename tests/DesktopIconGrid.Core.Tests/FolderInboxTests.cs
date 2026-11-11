@@ -227,4 +227,20 @@ public sealed class FolderInboxTests : IDisposable
             DesktopIconGrid.Core.Models.ThisDevice.Id = before;
         }
     }
+
+    [Fact]
+    public void Receiving_keeps_a_gigabyte_free_and_names_come_from_the_PC_itself()
+    {
+        const long gb = 1024L * 1024 * 1024;
+        Assert.True(FolderInbox.HasRoom(3 * gb, 2 * gb));
+        Assert.False(FolderInbox.HasRoom(3 * gb, 2 * gb + 1));
+        Assert.False(FolderInbox.HasRoom(gb / 2, 1));
+
+        var laptop = new FolderInbox(Sync, Laptop, "Laptop");
+        new FolderInbox(Sync, Desktop, "Den PC").Announce();
+
+        Assert.Equal("Den PC", laptop.NameOfDevice(Desktop, "an old‮ name")); // what the PC says now
+        Assert.Equal("an old name", laptop.NameOfDevice(new string('c', 32), "an old‮ name")); // no inbox: the stored one, cleaned
+        Assert.Equal("cccccccc", laptop.NameOfDevice(new string('c', 32), null));
+    }
 }

@@ -276,7 +276,8 @@ their tooltips end with a line of the last 60 samples (`▁▂▃▅▇█`; the
   synced: an icon that arrives with a synced bar can send, but does not turn receiving on there. A PC that takes part
   has a folder `inbox\<device id>` in the sync folder with its name; a sent file is copied into the target's inbox
   (up to 2 GB; folders are not sent). The receiving PC looks once a minute while the bar runs, moves
-  what waits into its Downloads folder under a free name, marks it as downloaded from another computer
+  what waits (at most 20 files and 4 GB per look, and never leaving less than 1 GB free on that drive) into
+  its Downloads folder under a free name, marks it as downloaded from another computer
   (so SmartScreen and Protected View apply), and shows a notification. Nothing received is opened. A file
   arrives once, as a plain file: read-only and hidden attributes do not travel, it is marked before it
   gets its name, a `desktop.ini` arrives as `desktop.ini.received`, and when the drive keeps no such mark
@@ -726,6 +727,9 @@ same way.
 gauges (memory, battery, network) with a sparkline, the clock and timer tile, folder stacks, paste to a
 bucket, the microphone tile. Then workspaces (Multi Launch that puts windows back) and sending a file to
 another PC through a sync folder.
+
+**0.10.1** *(in progress)* — what the review of 0.10.0 placed after the release: slow gauge readings off
+the UI thread, a free-space floor and a byte budget for received files, and the rest of that list.
 
 **Next** — what 0.10.0 left out: sending files through Google Drive, voice launch (if the spike says yes),
 a volume tile, dropping a file onto a program inside a folder stack.

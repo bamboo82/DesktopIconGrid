@@ -104,7 +104,7 @@ public sealed class DiskUsageHandler(SystemMonitor monitor, Func<Window?> ownerP
         var settings = MonitorIconSettings.From(item);
         var caption = settings.Drive?.TrimEnd('\\') ?? Strings.Monitor_Disk;
         var state = new GaugeState(caption, settings.Style, warningAt: 80, criticalAt: 90, Strings.Monitor_ReadingDrive);
-        Monitor.Register(state, () => SystemMonitor.SampleDrive(settings.Drive), everyTicks: 5);
+        Monitor.RegisterSlow(state, () => SystemMonitor.SampleDrive(settings.Drive), reading => reading, everyTicks: 5); // a network drive can take seconds
         return state;
     }
 
@@ -210,11 +210,11 @@ public sealed class NetworkHandler(SystemMonitor monitor, Func<Window?> ownerPro
         var peak = new GaugeHistory();
         IReadOnlyDictionary<string, (long Received, long Sent)>? before = null;
         var watch = System.Diagnostics.Stopwatch.StartNew();
-        Monitor.Register(
+        Monitor.RegisterSlow(
             state,
-            () =>
+            SystemMonitor.ReadNetworkCounters, // about 50 ms with many adapters: not on the UI thread
+            now =>
             {
-                var now = SystemMonitor.ReadNetworkCounters();
                 var seconds = watch.Elapsed.TotalSeconds;
                 watch.Restart();
                 // Adapter by adapter: one that just came up does not add its lifetime counter (review 24 R4, G2).
@@ -269,7 +269,7 @@ public sealed class MicrophoneMuteHandler(SystemMonitor monitor, Func<Window?> o
     {
         var state = new GaugeState("MIC", MonitorIconSettings.From(item).Style, warningAt: 101, criticalAt: 101, Strings.Mic_Name);
         _states.AddOrUpdate(item, state);
-        Monitor.Register(state, () => Show(state, MicrophoneControl.Read()), everyTicks: 1, recordsPercent: false);
+        Monitor.RegisterSlow(state, MicrophoneControl.Read, reading => Show(state, reading), everyTicks: 1, recordsPercent: false);
         return state;
     }
 

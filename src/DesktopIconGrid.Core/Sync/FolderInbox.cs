@@ -30,6 +30,15 @@ public sealed class FolderInbox
     /// <summary>The most files taken in one look, so a flooded inbox cannot fill the disk in one go.</summary>
     public const int MaxPerLook = 20;
 
+    /// <summary>The most bytes taken in one look (the first file always counts, whatever its size).</summary>
+    public const long MaxBytesPerLook = 4L * 1024 * 1024 * 1024;
+
+    /// <summary>What receiving leaves free on the destination drive.</summary>
+    public const long FreeSpaceFloor = 1L * 1024 * 1024 * 1024;
+
+    /// <summary>Whether a file of <paramref name="fileSize"/> may be taken with <paramref name="freeBytes"/> free on the destination drive.</summary>
+    public static bool HasRoom(long freeBytes, long fileSize) => freeBytes - fileSize >= FreeSpaceFloor;
+
     private const string PartSuffix = ".part";
 
     /// <summary>What an inbox file is renamed to when it was delivered but could not be deleted, so it is not delivered again.</summary>
@@ -160,6 +169,7 @@ public sealed class FolderInbox
     {
         var mine = Path.Combine(_root, _deviceId);
         var files = new List<InboxFile>();
+        long taken = 0;
         try
         {
             if (!Directory.Exists(mine))
@@ -186,6 +196,12 @@ public sealed class FolderInbox
                 }
 
                 var sender = info.Name[..separator].ToLowerInvariant();
+                if (files.Count > 0 && taken + info.Length > MaxBytesPerLook)
+                {
+                    break; // the rest waits for the next look
+                }
+
+                taken += info.Length;
                 files.Add(new InboxFile(info.FullName, PlainName(info.Name[(separator + 1)..]), sender, NameOf(Path.Combine(_root, sender), sender), info.Length));
                 if (files.Count == MaxPerLook)
                 {
@@ -325,7 +341,18 @@ public sealed class FolderInbox
         return id[..8];
     }
 
+    /// <summary>
+    /// The name of the PC <paramref name="id"/> as it says itself in its inbox now, or <paramref name="stored"/> (made
+    /// fit to show) when it has none there. A name kept with a synced icon is not trusted to be current or clean.
+    /// </summary>
+    public string NameOfDevice(string id, string? stored) =>
+        IsDeviceId(id) && File.Exists(Path.Combine(_root, id.ToLowerInvariant(), DeviceFile))
+            ? NameOf(Path.Combine(_root, id.ToLowerInvariant()), id)
+            : ShownName(stored, IsDeviceId(id) ? id : "????????");
+
     /// <summary>A device name fit to show: no control or invisible characters, at most 64, the id's start when nothing is left.</summary>
+    public static string ShownName(string? name, string id) => CleanName(name, id);
+
     private static string CleanName(string? name, string id)
     {
         var kept = new string((name ?? string.Empty).Where(c => !char.IsControl(c) && char.GetUnicodeCategory(c) != System.Globalization.UnicodeCategory.Format).ToArray()).Trim();

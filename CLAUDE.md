@@ -83,11 +83,11 @@ After removing or editing a key in the `.resx` files, run `python3 -I tools/gen_
 
 ## State
 
-- 0.10.0: the release commit is the one titled "Release 0.10.0" dated 2026-11-11 (after review rounds 24–26; an
-  earlier one, `c5e0c26`, was never tagged). Whether it is tagged: check `git ls-remote origin 'refs/tags/v0.10.0*'`.
-  The tag is the owner's. The next version is not started: bump `Directory.Build.props` and open a CHANGELOG section first.
+- Released: 0.10.0 (2026-11-11, tag `v0.10.0` on `254c55c`, release published). In progress: 0.10.1 (see the top
+  of `CHANGELOG.md`): what the review of 0.10.0 placed after the release.
 - Open: the deferred minor list in REVIEW_NOTES entry 36; P15 (scp/sftp operands, review 17); U3′'s root fix;
   what 0.10.0 left out (Send to PC through Google Drive, voice launch, a volume tile, drop onto a program
-  inside a stack); review 24's deferred list (REVIEW_NOTES entry 51: I2, I4, W1–W3, W6, G1 first, S1, S4, C1).
+  inside a stack); what is left of review 24's deferred list (REVIEW_NOTES entry 51; done in 0.10.1 so far: G1, I2, I4;
+  left: W1–W3, W6, W7, S1, S4, C1, I3's subfolder, the minor list).
 - Nothing of 0.9.0 or 0.10.0 has been seen on a real bar: the owner skipped the in-app check of 0.9.0, and
   0.10.0's tiles, stack window, workspaces and Send to PC were built without one.

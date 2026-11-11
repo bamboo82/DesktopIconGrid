@@ -120,6 +120,12 @@ public sealed class InboxService : IDisposable
             var downloads = DownloadsPath();
             foreach (var file in inbox.Pending(WasDelivered))
             {
+                if (FreeBytes(downloads) is { } free && !FolderInbox.HasRoom(free, file.Size))
+                {
+                    AppLog.Default.Warning("Inbox", $"\"{file.Name}\" ({file.Size} bytes) waits: the Downloads drive would be left with less than 1 GB free");
+                    break; // it stays in the inbox; a later look takes it when there is room
+                }
+
                 try
                 {
                     var (path, marked, cleared) = FolderInbox.Receive(file, downloads, MarkAsDownloaded);
@@ -147,6 +153,18 @@ public sealed class InboxService : IDisposable
         }
 
         return received;
+    }
+
+    private static long? FreeBytes(string folder)
+    {
+        try
+        {
+            return Path.GetPathRoot(Path.GetFullPath(folder)) is { Length: > 0 } root ? new DriveInfo(root).AvailableFreeSpace : null;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException)
+        {
+            return null; // a share: not known, not limited
+        }
     }
 
     private static bool WasDelivered(string inboxPath)

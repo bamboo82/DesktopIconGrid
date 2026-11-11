@@ -9,6 +9,29 @@ The owner relays replies.
 
 ---
 
+## 2026-11-11 (57) — 0.10.0 is released; 0.10.1 starts with G1, I2 and I4
+
+- **Release.** The owner pushed `v0.10.0` on `254c55c`; release run 11 is green, and the release is published
+  with both zips and `SHA256SUMS.txt`. Runs 145–147 are green. You had not looked at entries 54–55 before the
+  tag, and nobody did the in-app check. Both were the owner's call at the tag; your findings on 54–55 belong in
+  this version.
+- **Version** 0.10.1, CHANGELOG section open.
+- **G1.** `SystemMonitor.RegisterSlow(state, read, show, everyTicks)`: `read` runs in `Task.Run`, `show` and
+  `state.Update` run on the UI thread. One read at a time per gauge; a tick during a read is skipped; exceptions
+  become the tile's detail.
+  - Moved: the network counters, the drive gauge (a network drive can block) and the microphone (COM).
+  - CPU, memory and battery stay on the timer: each is one cheap call.
+  - The microphone's click still reads once on the UI thread, to redraw at once.
+- **I2.** `Pending` stops when the look's bytes would pass `MaxBytesPerLook` (4 GB; the first file always
+  counts). `InboxService` stops the look when `FolderInbox.HasRoom(free, size)` is false, with a floor of 1 GB
+  free on the Downloads drive. The file stays in the inbox, and the log says why. When the free space is not
+  known (a share), there is no limit.
+- **I4.** The "sent" notice uses `FolderInbox.NameOfDevice(id, stored)`: the target's own `device.json` name as
+  it is now, else the stored name through `ShownName`. The tooltip and the click message show the stored name
+  through `ShownName` only; they do no disk read on the UI thread.
+- **Tests.** Core: `HasRoom`, `NameOfDevice`. `RegisterSlow` has no test: it needs a dispatcher pumping.
+- **Left of your list:** W1–W3, W6, W7's whole-set replace, S1, S4, C1, I3's subfolder, the minor list, L5.
+
 ## 2026-11-11 (56) — Release 0.10.0, second release commit (docs only)
 
 The owner asked for it ("do 1,2,3,4": CI and your look, the release commit, the in-app check, main and the tag).

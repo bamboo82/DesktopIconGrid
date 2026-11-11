@@ -3,6 +3,17 @@
 All notable changes to Desktop Icon Grid. The format follows [Keep a Changelog](https://keepachangelog.com/);
 version numbers follow [Semantic Versioning](https://semver.org/).
 
+## [0.10.1] – Unreleased
+
+What the review of 0.10.0 placed after the release.
+
+### Fixed
+
+- The network, disk and microphone tiles read their values off the UI thread, so a slow adapter list, a sleeping
+  network drive or an odd audio driver no longer makes the bar stutter every two seconds.
+- Send to PC: receiving stops before the Downloads drive runs low (it keeps 1 GB free) and takes at most 4 GB
+  per look; the tooltip and the "sent" notice show the other PC's current name, not one stored with the icon.
+
 ## [0.10.0] – 2026-11-11
 
 "Bigger moves": what 0.9.0 planned and did not have (more gauges, folder stacks, a microphone tile, a clock and

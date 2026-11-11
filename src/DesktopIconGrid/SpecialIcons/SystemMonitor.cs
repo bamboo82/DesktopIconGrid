@@ -52,16 +52,77 @@ public sealed class SystemMonitor : IDisposable
         }
     }
 
+    /// <summary>
+    /// As <see cref="Register"/> for a value that can be slow to read (the adapters' counters, a network drive, a COM
+    /// call): <paramref name="read"/> runs on a worker thread, <paramref name="show"/> on the UI thread with what it
+    /// read. One read at a time per gauge; a tick that comes while one is under way is skipped (review 24 G1).
+    /// </summary>
+    public void RegisterSlow<T>(GaugeState state, Func<T> read, Func<T, (double? Percent, string Detail)> show, int everyTicks, bool recordsPercent = true)
+    {
+        ArgumentNullException.ThrowIfNull(state);
+        var busy = false;
+        async void Sample()
+        {
+            if (busy || state.IsDetached)
+            {
+                return;
+            }
+
+            busy = true;
+            try
+            {
+                var value = await Task.Run(read);
+                if (state.IsDetached)
+                {
+                    return;
+                }
+
+                var (percent, detail) = show(value);
+                if (recordsPercent)
+                {
+                    state.Record(percent, 100);
+                }
+
+                state.Update(percent, detail);
+            }
+            catch (Exception ex) when (ex is not OutOfMemoryException)
+            {
+                // async void: nothing may escape to the dispatcher.
+                state.Update(null, ex.Message);
+            }
+            finally
+            {
+                busy = false;
+            }
+        }
+
+        _slow.Add(new SlowRegistration(state, Sample, Math.Max(1, everyTicks)));
+        Sample();
+        if (!_timer.IsEnabled)
+        {
+            _timer.Start();
+        }
+    }
+
     public void Dispose() => _timer.Stop();
 
     private void Tick()
     {
         _tick++;
         _registrations.RemoveAll(r => r.State.IsDetached);
-        if (_registrations.Count == 0)
+        _slow.RemoveAll(r => r.State.IsDetached);
+        if (_registrations.Count == 0 && _slow.Count == 0)
         {
             _timer.Stop();
             return;
+        }
+
+        foreach (var registration in _slow)
+        {
+            if (_tick % registration.EveryTicks == 0)
+            {
+                registration.Sample();
+            }
         }
 
         foreach (var registration in _registrations)
@@ -122,6 +183,10 @@ public sealed class SystemMonitor : IDisposable
         [return: MarshalAs(UnmanagedType.Bool)]
         public static extern bool GetSystemPowerStatus(out SYSTEM_POWER_STATUS status);
     }
+
+    private readonly List<SlowRegistration> _slow = [];
+
+    private sealed record SlowRegistration(GaugeState State, Action Sample, int EveryTicks);
 
     private sealed record Registration(GaugeState State, Func<(double? Percent, string Detail)> Sample, int EveryTicks);
 
