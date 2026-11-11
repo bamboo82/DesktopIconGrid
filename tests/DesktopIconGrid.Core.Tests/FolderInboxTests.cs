@@ -159,4 +159,19 @@ public sealed class FolderInboxTests : IDisposable
         Assert.Equal(FolderInbox.MaxPerLook, stuck.Count);
         Assert.Equal(3, desktop.Pending(stuck.Contains).Count);
     }
+
+    [Theory]
+    [InlineData("movie.mkv.part")]
+    [InlineData("notes.TAKEN")]
+    public void A_file_named_like_the_inboxs_own_states_still_arrives(string name)
+    {
+        var laptop = new FolderInbox(Sync, Laptop, "Laptop");
+        var desktop = new FolderInbox(Sync, Desktop, "Desktop");
+        laptop.Announce();
+        desktop.Announce();
+
+        Assert.Equal(name + "_", laptop.Send(Desktop, MakeFile(name)));
+
+        Assert.Equal(name + "_", Assert.Single(desktop.Pending()).Name);
+    }
 }

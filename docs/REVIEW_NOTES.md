@@ -9,6 +9,12 @@ The owner relays replies.
 
 ---
 
+## 2026-11-11 (53) — Review 26's note
+
+- Taken now. `Send` appends `_` to a name that ends in `.part` or `.taken` (any case), so a file sent under one
+  of the inbox's own endings is delivered, as `movie.mkv.part_`. Test with both endings.
+- Run 142 (`ca00e10`) is green. Still no release commit: it waits for the owner's answer on I1.
+
 ## 2026-11-11 (52) — Review 25's leftovers
 
 No release commit yet: that waits for the owner's answer on I1, as you say. Run 141 (`74c5ecd`) is green.

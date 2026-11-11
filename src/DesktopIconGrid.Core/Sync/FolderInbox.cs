@@ -123,6 +123,11 @@ public sealed class FolderInbox
         }
 
         var name = FileNames.Safe(source.Name);
+        if (name.EndsWith(PartSuffix, StringComparison.OrdinalIgnoreCase) || name.EndsWith(TakenSuffix, StringComparison.OrdinalIgnoreCase))
+        {
+            name += "_"; // the inbox's own two endings (arriving, set aside): a file sent under one would never be delivered
+        }
+
         var final = Unique(target, $"{_deviceId}~{name}");
         var part = final + PartSuffix; // a sync program may upload it half-written; the receiver skips .part
         File.Copy(source.FullName, part, overwrite: true);
