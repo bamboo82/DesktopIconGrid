@@ -139,8 +139,17 @@ public sealed class LaunchPlaceholderSafetyTests : IDisposable
     [InlineData("scp.exe", "-S {clipboard} a.txt server2:/tmp/", "{clipboard}", ArgumentReader.SshOption)] // a program run instead of ssh
     [InlineData("scp.exe", "-F {clipboard} a.txt server2:/tmp/", "{clipboard}", ArgumentReader.SshOption)]
     [InlineData("scp.exe", "-o {clipboard} a.txt server2:/tmp/", "{clipboard}", ArgumentReader.SshOption)]
-    [InlineData("scp.exe", "{file} server2:/tmp/", "{file}", ArgumentReader.Plain)] // a local path
-    [InlineData("scp.exe", "C:\\out\\{file} server2:/tmp/", "{file}", ArgumentReader.Plain)] // a drive letter is no host
+    [InlineData("scp.exe", "{file} server2:/tmp/", "{file}", ArgumentReader.ScpPath)] // a local path, unless the value brings a colon
+    [InlineData("scp.exe", "C:\\out\\{file} server2:/tmp/", "{file}", ArgumentReader.ScpPathPart)] // a drive letter is no host
+    [InlineData("scp.exe", "\"{clipboard}\" server2:/tmp/", "{clipboard}", ArgumentReader.ScpPath)]
+    [InlineData("scp.exe", "server2:/tmp/a.txt {ask:Where}", "{ask:Where}", ArgumentReader.ScpPath)]
+    [InlineData("scp.exe", "scp://{ask:Host}/tmp/a.txt .", "{ask:Host}", ArgumentReader.SshDestination)] // review 17 P15: a URI's authority
+    [InlineData("scp.exe", "scp://{ask:User}@server2:2222/tmp/a.txt .", "{ask:User}", ArgumentReader.SshDestination)]
+    [InlineData("scp.exe", "scp://server2/{clipboard} .", "{clipboard}", ArgumentReader.RemoteShell)]
+    [InlineData("scp.exe", "-s scp://server2/{clipboard} .", "{clipboard}", ArgumentReader.Plain)]
+    [InlineData("scp.exe", "SCP://{clipboard} .", "{clipboard}", ArgumentReader.SshDestination)]
+    [InlineData("sftp.exe", "sftp://{ask:Host}/pub", "{ask:Host}", ArgumentReader.SshDestination)]
+    [InlineData("sftp.exe", "sftp://server2/{ask:Folder}", "{ask:Folder}", ArgumentReader.Plain)]
     [InlineData("scp.exe", "{ask:Host}:/var/log/syslog .", "{ask:Host}", ArgumentReader.SshDestination)]
     [InlineData("scp.exe", "server2:{clipboard} .", "{clipboard}", ArgumentReader.RemoteShell)] // the old protocol hands it to the remote shell
     [InlineData("sftp.exe", "-b {clipboard} server2", "{clipboard}", ArgumentReader.SshOption)] // "!" lines run here
@@ -259,8 +268,31 @@ public sealed class LaunchPlaceholderSafetyTests : IDisposable
         var positions = LaunchPlaceholders.FilePositions(template);
 
         Assert.Equal(2, positions.Count);
-        Assert.All(positions, index => Assert.Equal(ArgumentReader.Plain, LaunchPlaceholders.ReaderAt("scp.exe", template, index)));
-        Assert.Null(LaunchPlaceholders.RefusedInPath(@"C:\Users\me\report.txt", ArgumentReader.Plain));
+        Assert.All(positions, index => Assert.Equal(ArgumentReader.ScpPath, LaunchPlaceholders.ReaderAt("scp.exe", template, index)));
+        Assert.Null(LaunchPlaceholders.RefusedInPath(@"C:\Users\me\report.txt", ArgumentReader.ScpPath));
+        Assert.Null(LaunchPlaceholders.RefusedInPath(@"\\nas\share\report.txt", ArgumentReader.ScpPath));
+    }
+
+    [Theory]
+    [InlineData("evil.example:/etc/passwd")] // review 17 P15: the value would turn a local operand into host:path
+    [InlineData("scp://evil.example/x")]
+    [InlineData("me@evil.example:")]
+    [InlineData("ab:c")]
+    [InlineData(":x")]
+    [InlineData(@"C:\out\a:b")]
+    public void A_value_that_scp_would_read_as_another_computer_is_refused(string value)
+    {
+        Assert.Equal(":", LaunchPlaceholders.Refused(value, ArgumentReader.ScpPath));
+        Assert.Equal(":", LaunchPlaceholders.Refused(value, ArgumentReader.ScpPathPart));
+    }
+
+    [Fact]
+    public void A_drive_letter_passes_only_where_the_value_starts_the_word()
+    {
+        Assert.Null(LaunchPlaceholders.Refused(@"C:\out\a.txt", ArgumentReader.ScpPath));
+        Assert.Null(LaunchPlaceholders.Refused(@"out\a.txt", ArgumentReader.ScpPathPart));
+        Assert.Equal(":", LaunchPlaceholders.Refused(@"s:tmp", ArgumentReader.ScpPathPart)); // "ho{x}" filled to "hos:tmp"
+        Assert.Equal("\n", LaunchPlaceholders.Refused("a\nb", ArgumentReader.ScpPath)); // what every program refuses, too
     }
 
     [Fact]

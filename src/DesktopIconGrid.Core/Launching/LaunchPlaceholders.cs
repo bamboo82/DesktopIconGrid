@@ -903,6 +903,26 @@ public static partial class LaunchPlaceholders
         // The colon that makes the word host:path: not one inside a placeholder, and not a drive letter's (C:\).
         var text = words[at].Text;
         var inside = AnyPlaceholder().Matches(text).Select(m => (m.Index, End: m.Index + m.Length)).ToList();
+        var lead = text.StartsWith('"') ? 1 : 0;
+
+        // scp://[user@]host[:port]/path and sftp://…: up to the slash that ends the authority it is a host, after it a path.
+        foreach (var scheme in (string[])["scp://", "sftp://"])
+        {
+            if (text.AsSpan(lead).StartsWith(scheme, StringComparison.OrdinalIgnoreCase))
+            {
+                var slash = -1;
+                for (var k = lead + scheme.Length; k < text.Length && slash < 0; k++)
+                {
+                    if (text[k] == '/' && !inside.Any(range => k >= range.Index && k < range.End))
+                    {
+                        slash = k;
+                    }
+                }
+
+                return slash < 0 || offset < slash ? ArgumentReader.SshDestination : overSftp ? ArgumentReader.Plain : ArgumentReader.RemoteShell;
+            }
+        }
+
         var colon = -1;
         for (var k = 0; k < text.Length && colon < 0; k++)
         {
@@ -915,7 +935,10 @@ public static partial class LaunchPlaceholders
 
         if (colon < 0)
         {
-            return sftp && first ? ArgumentReader.SshDestination : ArgumentReader.Plain;
+            // No colon in what the shortcut says, so the filled value decides whether scp reads the word as a path here
+            // or as host:path (review 17 P15): it is judged by its own colons. sftp takes one operand, its destination.
+            return sftp ? first ? ArgumentReader.SshDestination : ArgumentReader.Plain
+                : offset <= lead ? ArgumentReader.ScpPath : ArgumentReader.ScpPathPart;
         }
 
         return offset < colon ? ArgumentReader.SshDestination : overSftp ? ArgumentReader.Plain : ArgumentReader.RemoteShell;
@@ -1064,6 +1087,8 @@ public static partial class LaunchPlaceholders
             ArgumentReader.SshDestination => IsAllowedInSshDestination,
             ArgumentReader.RemoteShell or ArgumentReader.PowerShellCommand => IsAllowedInScriptText,
             ArgumentReader.SshOption => (_, _) => false,
+            ArgumentReader.ScpPath => (text, index) => IsAllowedForAny(text, index) && !IsHostColon(text, index, wordStart: true),
+            ArgumentReader.ScpPathPart => (text, index) => IsAllowedForAny(text, index) && !IsHostColon(text, index, wordStart: false),
             _ => IsAllowedForAny,
         });
     }
@@ -1086,9 +1111,19 @@ public static partial class LaunchPlaceholders
             ArgumentReader.SshDestination => IsAllowedInSshDestination,
             ArgumentReader.RemoteShell or ArgumentReader.PowerShellCommand => IsAllowedInScriptText,
             ArgumentReader.SshOption => (_, _) => false,
+            ArgumentReader.ScpPath => (text, index) => text[index] != FullwidthQuotationMark && !IsHostColon(text, index, wordStart: true),
+            ArgumentReader.ScpPathPart => (text, index) => text[index] != FullwidthQuotationMark && !IsHostColon(text, index, wordStart: false),
             _ => (text, index) => text[index] != FullwidthQuotationMark,
         });
     }
+
+    /// <summary>
+    /// A colon that could make scp read its operand as <c>host:path</c> or a <c>scp://</c> URI: every colon but a drive
+    /// letter's (<c>C:\…</c>), and that one only when the value starts the word. scp itself lets a colon after a
+    /// <c>/</c> be; this is stricter, because what the Windows port does with a <c>\</c> before it is not relied on.
+    /// </summary>
+    private static bool IsHostColon(string text, int index, bool wordStart) =>
+        text[index] == ':' && !(wordStart && index == 1 && char.IsAsciiLetter(text[0]));
 
     /// <summary>
     /// Whether a value that starts with <c>-</c> would reach the program as an option where
@@ -1286,5 +1321,15 @@ public enum ArgumentReader
     /// an option's letters. Every value is refused.
     /// </summary>
     SshOption,
+
+    /// <summary>
+    /// An operand of scp that the shortcut writes without a colon, the placeholder at its start: a path on this PC as
+    /// long as the value brings no colon of its own that would make it <c>host:path</c> or a <c>scp://</c> URI. What
+    /// every program refuses is refused, and every colon but a drive letter's.
+    /// </summary>
+    ScpPath,
+
+    /// <summary>As <see cref="ScpPath"/> with text before the placeholder in its word: no colon at all.</summary>
+    ScpPathPart,
 }
 

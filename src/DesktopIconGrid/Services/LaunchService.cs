@@ -358,6 +358,7 @@ public sealed class LaunchService(ProcessTracker tracker, ILaunchPrompts? prompt
             ArgumentReader.Cmd => "cmd.exe",
             ArgumentReader.PosixShell => "WSL",
             ArgumentReader.SshDestination or ArgumentReader.RemoteShell => "ssh",
+            ArgumentReader.ScpPath or ArgumentReader.ScpPathPart => "scp",
             _ => "PowerShell",
         }),
     };
