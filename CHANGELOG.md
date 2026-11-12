@@ -40,6 +40,24 @@ Google Drive; voice launch is still to come), and the fixes the review of 0.10.0
 - Smaller: the microphone tile shows `ON` instead of repeating `MIC`; a battery whose state Windows does not
   report shows its charge without claiming it is plugged in; a clock tile's time zone that this PC does not
   know is kept when its properties are saved here; a click on a *Send to PC* icon gives a hint, not an error.
+- Placeholders with `scp`: a filled value (`{clipboard}`, `{ask:…}`, a dropped file) that stands where a local
+  path is expected is refused when it holds a colon that would make scp read it as `host:path` or a `scp://`
+  address on another computer (a drive letter's colon is fine). A placeholder in the host part of a `scp://` or
+  `sftp://` address is checked as a host name.
+- Sync folder: each copy now records which file it was written to, so a sync program's conflict copy is told
+  from the original for certain, whatever numbers the file names carry. Copies saved by older versions are
+  judged by their file names as before, and older versions read the new copies unchanged.
+- Command line: more than 256 files sent at once (Explorer's *Send to* with a large selection) are taken, up to
+  4096; `\\server\pipe\…` is not accepted as a share; `--launch` matches names the same way `--group` does;
+  what is wrong with a command line is said in your language, also on the error stream, and a caller without a
+  desktop (a scheduled task) is no longer left waiting on a message box. Commands that arrive while a dialog is
+  open wait until it is closed, so a file added during *Restore an earlier layout* is not lost.
+- Keys in the bar: Ctrl+N, Ctrl+G and Ctrl+, work again while the search box has the focus; Shift+Delete removes
+  an icon again; a key in the settings file that cannot be read leaves the action on its default key; a key two
+  actions share is shown in one menu only.
+- A portable copy no longer adds itself to another PC's *Send to* menu. When Windows' machine id cannot be read,
+  approvals of command tiles and health checks last until the program ends, since they could not be tied to the
+  PC.
 
 ## [0.10.0] – 2026-11-11
 

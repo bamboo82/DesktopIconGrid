@@ -24,6 +24,9 @@ public sealed class CommandTrust
     private readonly Func<DateTimeOffset> _clock;
     private List<Entry> _entries;
 
+    /// <summary>Approved while the device id is not this PC's own (<see cref="ThisDevice.IsOfThisMachine"/>): kept until the program ends.</summary>
+    private readonly HashSet<string> _session = new(StringComparer.OrdinalIgnoreCase);
+
     /// <param name="filePath">The file; <see langword="null"/> keeps approvals in memory only (tests).</param>
     public CommandTrust(string? filePath, Func<DateTimeOffset>? clock = null)
     {
@@ -41,16 +44,37 @@ public sealed class CommandTrust
         var device = Device;
         lock (_gate)
         {
+            if (!ThisDevice.IsOfThisMachine)
+            {
+                // The id travels with the data folder, so the file says nothing about this PC (review 21).
+                return _session.Contains(hash);
+            }
+
             return _entries.Any(e => e.Device == device && string.Equals(e.Hash, hash, StringComparison.OrdinalIgnoreCase));
         }
     }
 
-    /// <summary>Approves <paramref name="hash"/> on this PC and saves; false when the file could not be written (it is approved until the app ends).</summary>
+    /// <summary>
+    /// Approves <paramref name="hash"/> on this PC and saves; false when it holds only until the app ends: the file could
+    /// not be written, or this PC's own id is not known (<see cref="ThisDevice.IsOfThisMachine"/>).
+    /// </summary>
     public bool Approve(string hash)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(hash);
         var device = Device;
         bool saved;
+        if (!ThisDevice.IsOfThisMachine)
+        {
+            lock (_gate)
+            {
+                _session.Add(hash);
+            }
+
+            AppLog.Default.Info("Commands", "Approved until the program ends: this PC's own id could not be read, so nothing is saved as approved here");
+            Changed?.Invoke(this, EventArgs.Empty);
+            return false;
+        }
+
         lock (_gate)
         {
             _entries.RemoveAll(e => e.Device == device && string.Equals(e.Hash, hash, StringComparison.OrdinalIgnoreCase));

@@ -60,6 +60,105 @@ namespace DesktopIconGrid.Core.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to --add needs at least one path..
+        /// </summary>
+        public static string Commands_AddNeedsPath {
+            get {
+                return ResourceManager.GetString("Commands_AddNeedsPath", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The group's name is empty, too long, or holds a line break..
+        /// </summary>
+        public static string Commands_BadGroup {
+            get {
+                return ResourceManager.GetString("Commands_BadGroup", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to --group needs a name..
+        /// </summary>
+        public static string Commands_GroupNeedsName {
+            get {
+                return ResourceManager.GetString("Commands_GroupNeedsName", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to --group is given twice..
+        /// </summary>
+        public static string Commands_GroupTwice {
+            get {
+                return ResourceManager.GetString("Commands_GroupTwice", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to --launch needs the name of a shortcut..
+        /// </summary>
+        public static string Commands_LaunchNeedsName {
+            get {
+                return ResourceManager.GetString("Commands_LaunchNeedsName", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to "{0}" is no full path of a file or folder..
+        /// </summary>
+        public static string Commands_NoFullPath {
+            get {
+                return ResourceManager.GetString("Commands_NoFullPath", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to "{0}" is not understood. Use --add <path>… [--group <name>], --launch <name>, -- [rest of string was truncated]";.
+        /// </summary>
+        public static string Commands_NotUnderstood {
+            get {
+                return ResourceManager.GetString("Commands_NotUnderstood", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to --show, --hide and --toggle take nothing..
+        /// </summary>
+        public static string Commands_TakesNothing {
+            get {
+                return ResourceManager.GetString("Commands_TakesNothing", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to More than {0} commands at once..
+        /// </summary>
+        public static string Commands_TooMany {
+            get {
+                return ResourceManager.GetString("Commands_TooMany", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to A command is not understood..
+        /// </summary>
+        public static string Commands_UnknownCommand {
+            get {
+                return ResourceManager.GetString("Commands_UnknownCommand", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to --workspace needs the name of a workspace..
+        /// </summary>
+        public static string Commands_WorkspaceNeedsName {
+            get {
+                return ResourceManager.GetString("Commands_WorkspaceNeedsName", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Calculator.
         /// </summary>
         public static string Item_Calculator {

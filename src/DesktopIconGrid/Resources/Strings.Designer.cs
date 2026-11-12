@@ -1230,6 +1230,15 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to A portable copy does not add itself to the Send to menu: the entry would stay on [rest of string was truncated]";.
+        /// </summary>
+        public static string Commands_SendToPortable {
+            get {
+                return ResourceManager.GetString("Commands_SendToPortable", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Desktop Icon Grid.
         /// </summary>
         public static string Commands_Title {
@@ -5226,7 +5235,7 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Keys in the bar.
+        ///   Looks up a localized string similar to Keys in the bar:.
         /// </summary>
         public static string Settings_WindowKeys {
             get {

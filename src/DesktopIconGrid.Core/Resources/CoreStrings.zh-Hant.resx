@@ -109,4 +109,37 @@
   <data name="Sync_CopyBusy" xml:space="preserve">
     <value>目前無法讀取副本「{0}」，可能有同步程式正在寫入。請稍後再試，或改用其他名稱儲存。</value>
   </data>
+  <data name="Commands_LaunchNeedsName" xml:space="preserve">
+    <value>--launch 需要捷徑的名稱。</value>
+  </data>
+  <data name="Commands_WorkspaceNeedsName" xml:space="preserve">
+    <value>--workspace 需要工作區的名稱。</value>
+  </data>
+  <data name="Commands_GroupNeedsName" xml:space="preserve">
+    <value>--group 需要名稱。</value>
+  </data>
+  <data name="Commands_GroupTwice" xml:space="preserve">
+    <value>--group 出現了兩次。</value>
+  </data>
+  <data name="Commands_AddNeedsPath" xml:space="preserve">
+    <value>--add 至少需要一個路徑。</value>
+  </data>
+  <data name="Commands_NotUnderstood" xml:space="preserve">
+    <value>無法辨識「{0}」。請使用 --add &lt;路徑&gt;… [--group &lt;名稱&gt;]、--launch &lt;名稱&gt;、--workspace &lt;名稱&gt;、--show、--hide 或 --toggle。</value>
+  </data>
+  <data name="Commands_TooMany" xml:space="preserve">
+    <value>一次超過 {0} 個命令。</value>
+  </data>
+  <data name="Commands_UnknownCommand" xml:space="preserve">
+    <value>有無法辨識的命令。</value>
+  </data>
+  <data name="Commands_NoFullPath" xml:space="preserve">
+    <value>「{0}」不是檔案或資料夾的完整路徑。</value>
+  </data>
+  <data name="Commands_BadGroup" xml:space="preserve">
+    <value>群組名稱是空的、太長，或含有換行。</value>
+  </data>
+  <data name="Commands_TakesNothing" xml:space="preserve">
+    <value>--show、--hide 和 --toggle 不接受任何參數。</value>
+  </data>
 </root>

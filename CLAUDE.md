@@ -78,15 +78,16 @@ After removing or editing a key in the `.resx` files, run `python3 -I tools/gen_
   synced `command-trust.json` (`CommandTrust`, keyed by `ThisDevice.Id`). Saving Properties approves only what was
   typed here or already approved here; what arrived (sync, restore, import) is approved only in
   `CommandApprovalWindow`, which shows everything the hash covers, defaults to Cancel, and enables Approve after
-  the text was scrolled into view. Text fields pass `CommandTileSettings.IsShowable`.
+  the text was scrolled into view. Text fields pass `CommandTileSettings.IsShowable`. Without a machine key
+  (`ThisDevice.IsOfThisMachine` false) approvals last only until the program ends.
 - The command line and the pipe message go through one `BarCommands.Validate`; the pipe is `CurrentUserOnly`.
 
 ## State
 
 - Released: 0.10.0 (2026-11-11, tag `v0.10.0` on `254c55c`, release published). In progress: 0.11.0 (see the top
   of `CHANGELOG.md`). The owner skipped a 0.10.1 release; its fixes are 0.11.0's "Fixed" list.
-- Open: the deferred minor list in REVIEW_NOTES entry 36; P15 (scp/sftp operands, review 17); U3′'s root fix;
-  voice launch; what is left of review 24's list (REVIEW_NOTES entry 60: W3, L5, I3's subfolder (needs the owner), a few
+- Open: voice launch (waits for the owner's run of `tools/VoiceProbe`, FEATURES §6.1); what is left of review
+  24's list (REVIEW_NOTES entry 60: W3, L5, I3's subfolder (needs the owner), a few
   minor items).
 - Nothing of 0.9.0 or 0.10.0 has been seen on a real bar: the owner skipped the in-app check of 0.9.0, and
   0.10.0's tiles, stack window, workspaces and Send to PC were built without one.

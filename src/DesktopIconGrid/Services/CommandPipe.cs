@@ -79,6 +79,7 @@ public sealed class CommandPipe : IDisposable
 
     private async Task ListenAsync(CancellationToken stop)
     {
+        var failures = 0; // in a row: said once, then waited out with longer pauses (review 21: a held name warned every 2 s for ever)
         while (!stop.IsCancellationRequested)
         {
             try
@@ -86,6 +87,12 @@ public sealed class CommandPipe : IDisposable
                 await using var server = new NamedPipeServerStream(
                     _name, PipeDirection.In, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous | PipeOptions.CurrentUserOnly);
                 await server.WaitForConnectionAsync(stop).ConfigureAwait(false);
+                if (failures > 0)
+                {
+                    AppLog.Default.Info("Commands", "The command pipe listens again");
+                    failures = 0;
+                }
+
                 var message = await ReadAsync(server, stop).ConfigureAwait(false);
                 if (message is null)
                 {
@@ -106,13 +113,23 @@ public sealed class CommandPipe : IDisposable
             {
                 return;
             }
-            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            catch (Exception ex) when (ex is not OutOfMemoryException)
             {
-                // Another bar of this user holds the name, or a client went away mid-message: wait a little and listen again.
-                AppLog.Default.Warning("Commands", $"The command pipe failed: {ex.Message}");
+                // Another bar of this user holds the name, a client went away mid-message, or the receiver threw (the
+                // window is closing): wait and listen again, whatever it was, so one bad message never ends the listening.
+                failures++;
+                if (failures == 1)
+                {
+                    AppLog.Default.Warning("Commands", $"The command pipe failed: {ex.Message}");
+                }
+                else
+                {
+                    AppLog.Default.Debug("Commands", $"The command pipe failed again ({failures}): {ex.Message}");
+                }
+
                 try
                 {
-                    await Task.Delay(TimeSpan.FromSeconds(2), stop).ConfigureAwait(false);
+                    await Task.Delay(RetryDelay(failures), stop).ConfigureAwait(false);
                 }
                 catch (OperationCanceledException)
                 {
@@ -121,6 +138,10 @@ public sealed class CommandPipe : IDisposable
             }
         }
     }
+
+    /// <summary>The pause before listening again after <paramref name="failures"/> failures in a row: 2 s, doubling up to a minute.</summary>
+    internal static TimeSpan RetryDelay(int failures) =>
+        TimeSpan.FromSeconds(Math.Min(60, 2 * Math.Pow(2, Math.Clamp(failures - 1, 0, 10))));
 
     /// <summary>The whole message, or <see langword="null"/> when it is too large or does not end within the time limit.</summary>
     private static async Task<byte[]?> ReadAsync(Stream stream, CancellationToken stop)

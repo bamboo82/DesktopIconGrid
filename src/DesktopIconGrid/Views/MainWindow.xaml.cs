@@ -335,6 +335,57 @@ public partial class MainWindow : Window
     public void Run(IReadOnlyList<BarCommand> commands)
     {
         ArgumentNullException.ThrowIfNull(commands);
+        // Under a dialog (Restore an earlier layout, the question before a sync load, the messages of a first start) the
+        // bar may be about to be replaced, and what was added now would go with it: the commands wait until it closes.
+        if (_waitingCommands.Count > 0 || IsUnderDialog())
+        {
+            _waitingCommands.Enqueue(commands);
+            if (_waitingCommandsTimer is null)
+            {
+                AppLog.Default.Info("Commands", "A dialog is open: the commands wait until it is closed");
+                _waitingCommandsTimer = new DispatcherTimer(TimeSpan.FromMilliseconds(400), DispatcherPriority.Background, (_, _) => RunWaitingCommands(), Dispatcher);
+            }
+
+            return;
+        }
+
+        RunNow(commands);
+    }
+
+    private readonly Queue<IReadOnlyList<BarCommand>> _waitingCommands = new();
+    private DispatcherTimer? _waitingCommandsTimer;
+
+    /// <summary>A modal window of this program is open (WPF's or a message box, which disables this window).</summary>
+    private bool IsUnderDialog() =>
+        ComponentDispatcher.IsThreadModal
+        || (new WindowInteropHelper(this).Handle is var handle && handle != IntPtr.Zero && !IsWindowEnabled(handle));
+
+    private void RunWaitingCommands()
+    {
+        if (IsUnderDialog())
+        {
+            return;
+        }
+
+        _waitingCommandsTimer?.Stop();
+        _waitingCommandsTimer = null;
+        while (_waitingCommands.Count > 0 && !IsUnderDialog())
+        {
+            RunNow(_waitingCommands.Dequeue()); // a command may open a dialog itself: the rest wait again
+        }
+
+        if (_waitingCommands.Count > 0)
+        {
+            _waitingCommandsTimer = new DispatcherTimer(TimeSpan.FromMilliseconds(400), DispatcherPriority.Background, (_, _) => RunWaitingCommands(), Dispatcher);
+        }
+    }
+
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool IsWindowEnabled(IntPtr window);
+
+    private void RunNow(IReadOnlyList<BarCommand> commands)
+    {
         for (var i = 0; i < commands.Count; i++)
         {
             var command = commands[i];
@@ -512,8 +563,37 @@ public partial class MainWindow : Window
     protected override void OnPreviewKeyDown(KeyEventArgs e)
     {
         base.OnPreviewKeyDown(e);
-        if (e.Handled || SearchBox.IsKeyboardFocusWithin || Keyboard.FocusedElement is TextBoxBase)
+        if (e.Handled)
         {
+            return;
+        }
+
+        if (SearchBox.IsKeyboardFocusWithin || Keyboard.FocusedElement is TextBoxBase)
+        {
+            // In a text box the keys are the box's, but for the three that open something and that no text box uses:
+            // with Ctrl or Alt held, and not one of the editing keys (review 21: Ctrl+N, Ctrl+G and Ctrl+, stopped working
+            // while the search box had the focus).
+            var pressed = e.Key == Key.System ? e.SystemKey : e.Key;
+            var held = HotkeyGesture.HeldModifiers();
+            if (WindowKeyMap.LeavesTextBoxAlone(pressed, held))
+            {
+                switch (_viewModel.Keys.ActionFor(pressed, held))
+                {
+                    case WindowKeyAction.NewShortcut:
+                        e.Handled = true;
+                        _viewModel.NewShortcutCommand.Execute(null);
+                        break;
+                    case WindowKeyAction.NewGroup:
+                        e.Handled = true;
+                        _viewModel.NewGroupCommand.Execute(null);
+                        break;
+                    case WindowKeyAction.OpenSettings:
+                        e.Handled = true;
+                        _viewModel.OpenSettingsCommand.Execute(null);
+                        break;
+                }
+            }
+
             return;
         }
 
@@ -951,12 +1031,23 @@ public partial class MainWindow : Window
     /// <summary>Adds the bar to Explorer's <em>Send to</em> menu, or takes it out again.</summary>
     private void ToggleSendTo()
     {
+        // A portable copy leaves nothing on the PC it visits (as with the Run entry): the entry would stay in that
+        // user's Send to menu, pointing at a drive that is gone. Taking an old one out is always possible.
+        if (!SendToEntry.Exists && DesktopIconGrid.Core.Storage.DataLocation.IsPortable)
+        {
+            MessageBox.Show(this, Strings.Commands_SendToPortable, Strings.App_Name, MessageBoxButton.OK, MessageBoxImage.Information);
+            SendToMenuItem.IsChecked = false;
+            return;
+        }
+
         try
         {
             SendToEntry.Set(!SendToEntry.Exists);
         }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or COMException)
+        catch (Exception ex) when (ex is not OutOfMemoryException)
         {
+            // IOException, UnauthorizedAccessException, COMException, and whatever else an HRESULT maps to
+            // (ArgumentException, InvalidCastException, NotImplementedException…).
             AppLog.Default.Warning("Commands", $"The Send To entry could not be changed: {ex.Message}");
             MessageBox.Show(this, string.Format(Strings.Commands_SendToFailed, ex.Message), Strings.App_Name, MessageBoxButton.OK, MessageBoxImage.Warning);
         }

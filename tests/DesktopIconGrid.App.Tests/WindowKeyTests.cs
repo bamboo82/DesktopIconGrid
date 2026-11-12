@@ -25,6 +25,47 @@ public class WindowKeyTests
         Assert.Equal(string.Empty, changed.TextFor(WindowKeyAction.Remove));
     }
 
+    [Fact]
+    public void An_unreadable_key_is_the_default_a_shared_key_is_the_first_actions_and_Shift_Delete_removes()
+    {
+        // Review 21's minor list.
+        var map = WindowKeyMap.From(new LauncherSettings { WindowKeys = new() { ["NewShortcut"] = "Ctrl+Nonsense", ["NewGroup"] = "Ctrl+F" } });
+
+        Assert.Equal(WindowKeyAction.NewShortcut, map.ActionFor(Key.N, ModifierKeys.Control)); // not turned off
+        Assert.Equal("Ctrl+N", map.TextFor(WindowKeyAction.NewShortcut));
+        Assert.Equal(WindowKeyAction.NewGroup, map.ActionFor(Key.F, ModifierKeys.Control)); // NewGroup comes before Find
+        Assert.Equal("Ctrl+F", map.TextFor(WindowKeyAction.NewGroup));
+        Assert.Equal(string.Empty, map.TextFor(WindowKeyAction.Find)); // one menu shows the key, not two
+        Assert.Equal(WindowKeyAction.Remove, map.ActionFor(Key.Delete, ModifierKeys.Shift));
+
+        var moved = WindowKeyMap.From(new LauncherSettings { WindowKeys = new() { ["Remove"] = "Ctrl+D" } });
+        Assert.Null(moved.ActionFor(Key.Delete, ModifierKeys.Shift)); // only while Delete is the key
+    }
+
+    [Theory]
+    [InlineData(Key.N, ModifierKeys.Control, true)]
+    [InlineData(Key.OemComma, ModifierKeys.Control, true)]
+    [InlineData(Key.G, ModifierKeys.Alt, true)]
+    [InlineData(Key.Z, ModifierKeys.Control, false)] // the box's own undo
+    [InlineData(Key.V, ModifierKeys.Control, false)]
+    [InlineData(Key.Left, ModifierKeys.Control, false)]
+    [InlineData(Key.N, ModifierKeys.None, false)]
+    [InlineData(Key.N, ModifierKeys.Shift, false)]
+    [InlineData(Key.Q, ModifierKeys.Control | ModifierKeys.Alt, false)] // AltGr types a character
+    public void In_a_text_box_only_keys_the_box_does_not_use_are_the_bars(Key key, ModifierKeys modifiers, bool bars)
+    {
+        Assert.Equal(bars, WindowKeyMap.LeavesTextBoxAlone(key, modifiers));
+    }
+
+    [Fact]
+    public void A_failing_pipe_is_tried_again_with_longer_pauses()
+    {
+        Assert.Equal(TimeSpan.FromSeconds(2), CommandPipe.RetryDelay(1));
+        Assert.Equal(TimeSpan.FromSeconds(4), CommandPipe.RetryDelay(2));
+        Assert.Equal(TimeSpan.FromSeconds(60), CommandPipe.RetryDelay(6));
+        Assert.Equal(TimeSpan.FromSeconds(60), CommandPipe.RetryDelay(100000));
+    }
+
     [Theory]
     [InlineData(ModifierKeys.Control, Key.N, true)]
     [InlineData(ModifierKeys.None, Key.F2, true)]

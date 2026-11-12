@@ -109,4 +109,37 @@
   <data name="Sync_CopyBusy" xml:space="preserve">
     <value>The copy "{0}" cannot be read right now; a sync program may be writing it. Try again in a moment, or save under another name.</value>
   </data>
+  <data name="Commands_LaunchNeedsName" xml:space="preserve">
+    <value>--launch needs the name of a shortcut.</value>
+  </data>
+  <data name="Commands_WorkspaceNeedsName" xml:space="preserve">
+    <value>--workspace needs the name of a workspace.</value>
+  </data>
+  <data name="Commands_GroupNeedsName" xml:space="preserve">
+    <value>--group needs a name.</value>
+  </data>
+  <data name="Commands_GroupTwice" xml:space="preserve">
+    <value>--group is given twice.</value>
+  </data>
+  <data name="Commands_AddNeedsPath" xml:space="preserve">
+    <value>--add needs at least one path.</value>
+  </data>
+  <data name="Commands_NotUnderstood" xml:space="preserve">
+    <value>"{0}" is not understood. Use --add &lt;path&gt;… [--group &lt;name&gt;], --launch &lt;name&gt;, --workspace &lt;name&gt;, --show, --hide or --toggle.</value>
+  </data>
+  <data name="Commands_TooMany" xml:space="preserve">
+    <value>More than {0} commands at once.</value>
+  </data>
+  <data name="Commands_UnknownCommand" xml:space="preserve">
+    <value>A command is not understood.</value>
+  </data>
+  <data name="Commands_NoFullPath" xml:space="preserve">
+    <value>"{0}" is no full path of a file or folder.</value>
+  </data>
+  <data name="Commands_BadGroup" xml:space="preserve">
+    <value>The group's name is empty, too long, or holds a line break.</value>
+  </data>
+  <data name="Commands_TakesNothing" xml:space="preserve">
+    <value>--show, --hide and --toggle take nothing.</value>
+  </data>
 </root>

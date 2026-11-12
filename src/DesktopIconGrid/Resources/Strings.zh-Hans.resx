@@ -1815,7 +1815,7 @@
     <value>读取较早的布局时间过长：它们所在的驱动器可能没有响应。请稍后再试。</value>
   </data>
   <data name="Settings_WindowKeys" xml:space="preserve">
-    <value>栏中的按键</value>
+    <value>栏中的按键：</value>
   </data>
   <data name="Settings_WindowKeysHint" xml:space="preserve">
     <value>单击方框再按下按键。Backspace 可停用按键；“默认”可还原。按键需要 Ctrl、Alt 或 Win，F 键、Delete 和 Insert 除外：单独一个字母会开始栏的搜索。</value>
@@ -2329,5 +2329,8 @@
   </data>
   <data name="Volume_None" xml:space="preserve">
     <value>找不到扬声器或耳机。</value>
+  </data>
+  <data name="Commands_SendToPortable" xml:space="preserve">
+    <value>便携副本不会把自己添加到“发送到”菜单：驱动器移除后，该项目仍会留在这台电脑上。</value>
   </data>
 </root>

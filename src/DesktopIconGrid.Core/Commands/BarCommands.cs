@@ -1,5 +1,8 @@
+using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+
+using DesktopIconGrid.Core.Resources;
 
 namespace DesktopIconGrid.Core.Commands;
 
@@ -35,9 +38,13 @@ public sealed record BarCommand(BarCommandKind Kind, string? Value = null, strin
 /// </summary>
 public static class BarCommands
 {
-    public const int MaxCommands = 256;
+    /// <summary>
+    /// More than Windows' command line (32,767 characters) can hold as full paths in practice, so a large selection
+    /// sent from Explorer is not refused where a drop of the same files is taken (review 21: it was 256).
+    /// </summary>
+    public const int MaxCommands = 4096;
 
-    public const int MaxMessageBytes = 256 * 1024;
+    public const int MaxMessageBytes = 2 * 1024 * 1024;
 
     public const int MaxTextLength = 2048;
 
@@ -84,7 +91,7 @@ public static class BarCommands
                 case "--launch":
                     if (i + 1 >= args.Count || IsOption(args[i + 1]))
                     {
-                        return ([], "--launch needs the name of a shortcut.");
+                        return ([], CoreStrings.Commands_LaunchNeedsName);
                     }
 
                     commands.Add(new BarCommand(BarCommandKind.Launch, args[i + 1]));
@@ -93,7 +100,7 @@ public static class BarCommands
                 case "--workspace":
                     if (i + 1 >= args.Count || IsOption(args[i + 1]))
                     {
-                        return ([], "--workspace needs the name of a workspace.");
+                        return ([], CoreStrings.Commands_WorkspaceNeedsName);
                     }
 
                     commands.Add(new BarCommand(BarCommandKind.Workspace, args[i + 1]));
@@ -107,7 +114,7 @@ public static class BarCommands
                     {
                         if (i + 1 >= args.Count || IsOption(args[i + 1]))
                         {
-                            return ([], "--group needs a name.");
+                            return ([], CoreStrings.Commands_GroupNeedsName);
                         }
 
                         group = args[i + 1];
@@ -123,12 +130,12 @@ public static class BarCommands
                     {
                         if (group is not null)
                         {
-                            return ([], "--group is given twice.");
+                            return ([], CoreStrings.Commands_GroupTwice);
                         }
 
                         if (i + 1 >= args.Count || IsOption(args[i + 1]))
                         {
-                            return ([], "--group needs a name.");
+                            return ([], CoreStrings.Commands_GroupNeedsName);
                         }
 
                         group = args[i + 1];
@@ -137,13 +144,13 @@ public static class BarCommands
 
                     if (paths.Count == 0)
                     {
-                        return ([], "--add needs at least one path.");
+                        return ([], CoreStrings.Commands_AddNeedsPath);
                     }
 
                     commands.AddRange(paths.Select(path => new BarCommand(BarCommandKind.Add, path, group)));
                     break;
                 default:
-                    return ([], $"\"{arg}\" is not understood. Use --add <path>… [--group <name>], --launch <name>, --workspace <name>, --show, --hide or --toggle.");
+                    return ([], string.Format(CultureInfo.CurrentCulture, CoreStrings.Commands_NotUnderstood, Shown(arg)));
             }
         }
 
@@ -156,14 +163,14 @@ public static class BarCommands
         ArgumentNullException.ThrowIfNull(commands);
         if (commands.Count > MaxCommands)
         {
-            return $"More than {MaxCommands} commands at once.";
+            return string.Format(CultureInfo.CurrentCulture, CoreStrings.Commands_TooMany, MaxCommands);
         }
 
         foreach (var command in commands)
         {
             if (command is null || !Enum.IsDefined(command.Kind))
             {
-                return "A command is not understood.";
+                return CoreStrings.Commands_UnknownCommand;
             }
 
             switch (command.Kind)
@@ -171,33 +178,33 @@ public static class BarCommands
                 case BarCommandKind.Add:
                     if (!IsText(command.Value, MaxTextLength) || !IsPath(command.Value!))
                     {
-                        return $"\"{Shown(command.Value)}\" is no full path of a file or folder.";
+                        return string.Format(CultureInfo.CurrentCulture, CoreStrings.Commands_NoFullPath, Shown(command.Value));
                     }
 
                     if (command.Group is not null && !IsText(command.Group, MaxGroupLength))
                     {
-                        return "The group's name is empty, too long, or holds a line break.";
+                        return CoreStrings.Commands_BadGroup;
                     }
 
                     break;
                 case BarCommandKind.Launch:
                     if (!IsText(command.Value, MaxTextLength) || command.Group is not null)
                     {
-                        return "--launch needs the name of a shortcut.";
+                        return CoreStrings.Commands_LaunchNeedsName;
                     }
 
                     break;
                 case BarCommandKind.Workspace:
                     if (!IsText(command.Value, Launching.Workspaces.MaxNameLength) || command.Group is not null)
                     {
-                        return "--workspace needs the name of a workspace.";
+                        return CoreStrings.Commands_WorkspaceNeedsName;
                     }
 
                     break;
                 default:
                     if (command.Value is not null || command.Group is not null)
                     {
-                        return "--show, --hide and --toggle take nothing.";
+                        return CoreStrings.Commands_TakesNothing;
                     }
 
                     break;
@@ -235,7 +242,10 @@ public static class BarCommands
     private static bool IsText(string? text, int maxLength) =>
         !string.IsNullOrWhiteSpace(text) && text.Length <= maxLength && !text.Any(char.IsControl);
 
-    /// <summary>A full path on a drive (<c>C:\…</c>) or a share (<c>\\server\share\…</c>); nothing relative, no device path.</summary>
+    /// <summary>
+    /// A full path on a drive (<c>C:\…</c>) or a share (<c>\\server\share\…</c>); nothing relative, no device path, and
+    /// no server's pipes or mail slots (<c>\\localhost\pipe\x</c> is no share).
+    /// </summary>
     private static bool IsPath(string path)
     {
         if (path.IndexOfAny(['"', '<', '>', '|', '*', '?']) >= 0)
@@ -245,7 +255,9 @@ public static class BarCommands
 
         var onDrive = path.Length >= 3 && char.IsAsciiLetter(path[0]) && path[1] == ':' && path[2] is '\\' or '/';
         var onShare = path.StartsWith(@"\\", StringComparison.Ordinal) && path.Length > 2 && path[2] is not ('?' or '.' or '\\')
-                      && path[2..].Split('\\', StringSplitOptions.RemoveEmptyEntries).Length >= 2;
+                      && path[2..].Split('\\', StringSplitOptions.RemoveEmptyEntries) is { Length: >= 2 } parts
+                      && !parts[1].Trim().Equals("pipe", StringComparison.OrdinalIgnoreCase)
+                      && !parts[1].Trim().Equals("mailslot", StringComparison.OrdinalIgnoreCase);
         return onDrive || onShare;
     }
 

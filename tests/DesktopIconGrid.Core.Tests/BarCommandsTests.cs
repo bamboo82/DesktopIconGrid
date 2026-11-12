@@ -27,6 +27,8 @@ public class BarCommandsTests
     [InlineData("--add", "relative.txt")]
     [InlineData("--add", @"\\?\C:\x")] // a device path
     [InlineData("--add", @"C:\a?.txt")]
+    [InlineData("--add", @"\\localhost\pipe\x")] // review 21: a server's pipes are no share
+    [InlineData("--add", @"\\nas\MAILSLOT\x")]
     [InlineData("--add", @"C:\a.txt", "--group")]
     [InlineData("--launch")]
     [InlineData("--launch", "--show")]
@@ -38,6 +40,37 @@ public class BarCommandsTests
 
         Assert.Empty(commands);
         Assert.NotNull(error);
+    }
+
+    [Fact]
+    public void A_large_selection_sent_from_Explorer_is_taken()
+    {
+        // Review 21: more than 256 files were refused as a whole, where a drop of the same files has no limit.
+        var args = new[] { "--add" }.Concat(Enumerable.Range(0, 1000).Select(i => $@"C:\photos\2026\IMG_{i:0000}.jpg")).ToArray();
+
+        var (commands, error) = BarCommands.Parse(args);
+
+        Assert.Null(error);
+        Assert.Equal(1000, commands.Count);
+        Assert.Equal(1000, BarCommands.Deserialize(BarCommands.Serialize(commands))?.Count);
+    }
+
+    [Fact]
+    public void What_is_wrong_with_a_command_line_is_said_in_the_language_in_use()
+    {
+        var before = System.Globalization.CultureInfo.CurrentUICulture;
+        try
+        {
+            System.Globalization.CultureInfo.CurrentUICulture = new System.Globalization.CultureInfo("zh-Hant");
+            Assert.Contains("--launch 需要", BarCommands.Parse(["--launch"]).Error);
+            Assert.Contains("「--remove」", BarCommands.Parse(["--remove"]).Error);
+            System.Globalization.CultureInfo.CurrentUICulture = System.Globalization.CultureInfo.InvariantCulture;
+            Assert.Contains("--launch needs", BarCommands.Parse(["--launch"]).Error);
+        }
+        finally
+        {
+            System.Globalization.CultureInfo.CurrentUICulture = before;
+        }
     }
 
     [Fact]

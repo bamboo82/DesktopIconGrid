@@ -1065,7 +1065,7 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
     public bool LaunchByName(string name)
     {
         ArgumentNullException.ThrowIfNull(name);
-        var shortcut = Model.AllShortcuts().FirstOrDefault(s => string.Equals(s.Name, name.Trim(), StringComparison.CurrentCultureIgnoreCase));
+        var shortcut = Model.AllShortcuts().FirstOrDefault(s => string.Equals(s.Name, name.Trim(), StringComparison.OrdinalIgnoreCase));
         if (shortcut is null)
         {
             _dialogs.Notify(Strings.Commands_Title, string.Format(Strings.Commands_NoShortcut, name.Trim()));

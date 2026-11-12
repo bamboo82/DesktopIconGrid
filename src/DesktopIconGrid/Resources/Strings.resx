@@ -1815,7 +1815,7 @@ Details are in {1}.</value>
     <value>Reading the earlier layouts took too long: the drive they are on may not be answering. Try again in a moment.</value>
   </data>
   <data name="Settings_WindowKeys" xml:space="preserve">
-    <value>Keys in the bar</value>
+    <value>Keys in the bar:</value>
   </data>
   <data name="Settings_WindowKeysHint" xml:space="preserve">
     <value>Click a box and press the keys. Backspace turns a key off; Default puts it back. A key needs Ctrl, Alt or Win, unless it is an F-key, Delete or Insert: a letter alone starts the bar's search.</value>
@@ -2329,5 +2329,8 @@ Details are in {1}.</value>
   </data>
   <data name="Volume_None" xml:space="preserve">
     <value>No speakers or headphones were found.</value>
+  </data>
+  <data name="Commands_SendToPortable" xml:space="preserve">
+    <value>A portable copy does not add itself to the Send to menu: the entry would stay on this PC after the drive is taken out.</value>
   </data>
 </root>

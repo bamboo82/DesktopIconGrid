@@ -323,7 +323,8 @@ their tooltips end with a line of the last 60 samples (`▁▂▃▅▇█`; the
   runs and padding cannot hide part of it. Approving a bare program name approves whatever it resolves to on this PC
   (the app's folder first, then the system folders and `PATH`); for a batch file the arguments are cmd
   syntax. Approvals are kept per PC in `command-trust.json` in the local data folder, which is never
-  synced; changing any of these on any PC needs a new approval everywhere. Runs under way are stopped
+  synced (when Windows' machine id cannot be read, the PC cannot be told from another one a portable copy
+  visits, so approvals then last only until the program ends); changing any of these on any PC needs a new approval everywhere. Runs under way are stopped
   when the app ends.
 
 The item model, handler interface, registry and the bucket are specified in
@@ -634,7 +635,9 @@ Keeps named copies of the settings and icons where several PCs can share them: o
   A copy's name that Windows does not allow in a file name is kept inside the copy (`Home: desk` is
   saved as `Home_ desk.json` and listed as *Home: desk*). The copies OneDrive or Dropbox make after a
   conflict (`Work-LAPTOP.json`, `Work (1).json`) are listed under their own file names with their device
-  and time, so they can be loaded or deleted; a file that cannot be read yet (still arriving) is listed
+  and time, so they can be loaded or deleted (from 0.11.0 each copy records the file it was written to as
+  `"file"`, so a copy found in any other file is known to be a conflict copy; copies without it, saved by
+  0.8.0 to 0.10.0, are judged by file name and number, and those versions ignore the new property); a file that cannot be read yet (still arriving) is listed
   without a device and is never overwritten as this PC's own copy. Loading such a copy applies it but keeps
   the PC linked to the copy it was made from, the file every PC uploads to; the next upload then asks before
   it replaces another PC's save there (0.8.1). The start-up question and the "not uploaded" message name

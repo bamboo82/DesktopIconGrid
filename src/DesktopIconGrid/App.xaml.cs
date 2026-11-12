@@ -61,7 +61,9 @@ public partial class App : Application
             var (commands, error) = BarCommands.Parse(e.Args);
             if (error is not null)
             {
-                MessageBox.Show(string.Format(Strings.Commands_Invalid, error), Strings.App_Name, MessageBoxButton.OK, MessageBoxImage.Warning);
+                // The parser's texts are in the language in force when it ran, so read once more in the bar's own.
+                ApplySavedLanguage();
+                Tell(string.Format(Strings.Commands_Invalid, BarCommands.Parse(e.Args).Error ?? error));
                 Shutdown(2);
                 return;
             }
@@ -80,6 +82,54 @@ public partial class App : Application
         }
     }
 
+    /// <summary>
+    /// A start that ends without a bar says why: on the error stream (for a script that reads it), and in a message box
+    /// only when someone can see one. A caller without a desktop (a service, a scheduled task that runs whether the user
+    /// is logged on or not) would wait for ever on a box nobody can close; its exit code tells it (2 or 3).
+    /// </summary>
+    private static void Tell(string message)
+    {
+        try
+        {
+            Console.Error.WriteLine(message);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ObjectDisposedException)
+        {
+            // No error stream: the box or the exit code says it.
+        }
+
+        if (Environment.UserInteractive)
+        {
+            MessageBox.Show(message, Strings.App_Name, MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
+    }
+
+    /// <summary>
+    /// The language chosen in Settings, for a message shown before the bar's settings are loaded (a start that only hands
+    /// over commands never loads them). Read from the layout file as it is; anything wrong leaves Windows' language.
+    /// </summary>
+    private static void ApplySavedLanguage()
+    {
+        try
+        {
+            using var document = System.Text.Json.JsonDocument.Parse(File.ReadAllBytes(LayoutStorage.GetDefaultFilePath()));
+            if (document.RootElement.ValueKind == System.Text.Json.JsonValueKind.Object
+                && document.RootElement.TryGetProperty("settings", out var settings)
+                && settings.ValueKind == System.Text.Json.JsonValueKind.Object
+                && settings.TryGetProperty("language", out var language)
+                && language.ValueKind == System.Text.Json.JsonValueKind.String
+                && AppLanguage.CultureFor(language.GetString()) is { } culture)
+            {
+                System.Globalization.CultureInfo.DefaultThreadCurrentUICulture = culture;
+                System.Globalization.CultureInfo.CurrentUICulture = culture;
+            }
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Text.Json.JsonException or ArgumentException or NotSupportedException)
+        {
+            // No layout yet, or it cannot be read: Windows' display language.
+        }
+    }
+
     /// <param name="startHidden">From <c>--hidden</c> (the Run entry written by "start hidden"): create the bar but leave it in the tray.</param>
     /// <param name="commands">The command line's (<see cref="BarCommands"/>): carried out here once the bar is up, or handed to the bar that runs already.</param>
     private void Start(bool startHidden, IReadOnlyList<BarCommand> commands)
@@ -90,8 +140,8 @@ public partial class App : Application
             var handedOver = commands.Count == 0 ? CommandPipe.SendResult.Sent : HandOver(commands);
             if (handedOver != CommandPipe.SendResult.Sent)
             {
-                var message = handedOver == CommandPipe.SendResult.Refused ? Strings.Commands_Refused : Strings.Commands_NotAnswered;
-                MessageBox.Show(message, Strings.App_Name, MessageBoxButton.OK, MessageBoxImage.Warning);
+                ApplySavedLanguage();
+                Tell(handedOver == CommandPipe.SendResult.Refused ? Strings.Commands_Refused : Strings.Commands_NotAnswered);
             }
 
             // 3: the commands did not reach the bar, so a script can tell (2 is a command line that cannot be read).
@@ -450,6 +500,11 @@ public partial class App : Application
 
         // Per-PC locations belong to this PC and user, not to the data folder (portable mode, copied data).
         ThisDevice.Id = machine ?? settings.DeviceId;
+        ThisDevice.IsOfThisMachine = machine is not null; // otherwise the id is the data folder's: approvals last until the program ends
+        if (machine is null)
+        {
+            AppLog.Default.Warning("App", "This PC's own id could not be read; commands and checks approved here stay approved only until the program ends");
+        }
         var tokenStore = new DpapiTokenStore(DpapiTokenStore.FileForThisPc(Path.GetDirectoryName(settingsStore.FilePath)!, machine, DataLocation.IsPortable));
         var auth = new GoogleAuthorization(Http, tokenStore, () => settings.Credentials);
         var drive = new GoogleDriveClient(Http, auth);

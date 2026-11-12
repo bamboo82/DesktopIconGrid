@@ -9,6 +9,83 @@ The owner relays replies.
 
 ---
 
+## 2026-11-12 (63) — The older open items: P15, U3′'s root fix, review 21's deferred minor list
+
+The owner asked for these and for voice launch. Voice launch waits for the owner's run of `tools/VoiceProbe`
+(FEATURES §6.1); nothing is built for it. Three commits: P15, U3′, and this one (the minor list and docs).
+
+### P15 (review 17): scp operands
+
+- `ArgumentReader` has two new values at its end, `ScpPath` and `ScpPathPart`. `ScpOperand` returns them for an
+  scp operand written without a colon: `ScpPath` when the placeholder starts the word, `ScpPathPart` when text
+  comes before it. Both refuse what `Plain` refuses and every colon, except that `ScpPath` lets a drive
+  letter's colon be (index 1, after an ASCII letter). So `evil:/etc/passwd`, `scp://evil/x` and `:x` are
+  refused where `{clipboard}` or `{ask:…}` is a whole operand, and `ho{x}` cannot be filled to `hos:tmp`.
+  Dropped files go through `RefusedInPath` with the same rule; `C:\…` and `\\nas\share\…` pass.
+- It is stricter than scp's own `colon()`, which lets a colon after a `/` be: I do not rely on what the Windows
+  port does with a `\` before the colon.
+- A word that starts with `scp://` or `sftp://` (any case, after an opening quote): a placeholder before the
+  slash that ends the authority is `SshDestination`, one after it is `RemoteShell`, or `Plain` over SFTP. Before,
+  `sftp://{ask:Host}/pub` was `Plain`.
+- sftp is unchanged otherwise: its first operand is the destination, and it takes no second one.
+- The two readers are after `SshOption` in the enum, so `PlaceholderQuotes.SpotAt` also reads the line as cmd
+  and a POSIX shell would, as it does for the ssh readers. Say if you see a template this now misplaces.
+- The refusal message names scp (`Launch_UnsafeValue` with ":" and "scp"). No new string.
+- Tests: `LaunchPlaceholderSafetyTests` (reader rows for whole operands, URIs, `-s`; refused and accepted
+  values). Not tested: a real scp.
+
+### U3′ root fix: the file name inside each copy
+
+- `FolderSyncClient.Write` puts `"file": "<the file it writes>"` into the JSON, right after the first property
+  (`"format"` stays first, which `StartsLikeACopy` relies on). `SyncProfile.File` holds it; `FromLayout` never
+  carries it over, and Drive uploads have none.
+- Listing: a copy whose `file` is its own file name is the original of the name inside it, whatever number the
+  file has. One whose `file` is another name is a copy some program made (or a renamed file) and is listed under
+  its file name. `ListNumberedOriginals` leaves both alone and applies the 0.8.1 rule only to copies without
+  `file`; a copy in its own file counts as "has its own file" for those.
+- Format: still 1. 0.8.0–0.10.0 keep `file` as an unknown property while they hold the profile in memory, but
+  their saves start from a fresh profile, so a copy they rewrite loses it and falls back to the old rule. A
+  mixed set of PCs therefore behaves as before for the copies the old PCs write.
+- Known gap: an old-version PC's unnumbered `X.json` saying "X" next to a new numbered `X (2).json` that says so
+  with its own `file` would both be listed as "X". I could not construct this without deleting another
+  program's file by hand at the wrong moment; say if you want a rule for it.
+- A changed behaviour to check: `Work (2).json` that says `Work.json` inside, with `Work.json` gone, is now
+  listed as "Work (2)" (a copy of a missing original), where the number rule made it the original "Work".
+- Tests: `FolderSyncTests` (the property and its place; a lower-numbered sync copy next to the numbered
+  original; the copy of a deleted original; a copy without `file`; `WithFileName` replacing a stale value and
+  keeping unknown properties). The existing 0.8.1 tests pass unchanged.
+
+### Review 21, "Minor, not taken this round" (entry 36)
+
+- **No machine key.** `ThisDevice.IsOfThisMachine` (false when `MachineIdentity.Key()` is null). `CommandTrust`
+  then ignores the file and keeps approvals in memory; `Approve` returns false and logs once per approval. This
+  also covers the Send to PC icon mark, so such a PC needs the *Receive files* setting to keep receiving after
+  a restart.
+- **Pipe.** The listener survives any exception but out of memory. A failure is a warning once, then debug
+  lines, with the pause doubling from 2 s to 60 s; it says when it listens again.
+- **Commands under dialogs.** `MainWindow.Run` queues while `ComponentDispatcher.IsThreadModal` or the bar's
+  window is disabled (a message box owned by it), and a 400 ms timer runs the queue once neither holds. This
+  also holds a first start's own commands back until the start-up messages are closed. Not covered: a message
+  box without an owner that is not WPF-modal. Not tested (needs a real dialog).
+- **256 files.** `MaxCommands` 4096, `MaxMessageBytes` 2 MB.
+- **`\\localhost\pipe\x`.** A share whose second part is `pipe` or `mailslot` is refused.
+- **Culture.** `--launch` compares with `OrdinalIgnoreCase`, as `--group` and `--workspace` do.
+- **Message boxes.** The parser's texts are in `CoreStrings` (three languages). A start that ends without a bar
+  writes the reason to stderr and shows the box only when `Environment.UserInteractive`; before that it reads
+  `settings.language` from the layout file (`ApplySavedLanguage`) and parses again in that language.
+- **Send To, portable.** A portable copy does not add the entry (it says why) and can still remove one.
+  `ToggleSendTo` catches everything but out of memory.
+- **Keys.** In a text box, NewShortcut, NewGroup and OpenSettings still work when Ctrl or Alt (not both) is
+  held and the key is none a text box edits with (`WindowKeyMap.LeavesTextBoxAlone`). A shared key gives its
+  text only to the first action. An override that does not parse falls back to the default; an empty one still
+  turns the action off. Shift+Delete removes while Delete is the Remove key.
+- **`Settings_WindowKeys`** has its colon in the three languages.
+- **Not done:** the CPU/disk gauge at "100%" under `MaxWidth="98"`. I cannot see it from here; it is on the
+  owner's list of things to look at.
+- Tests: Core (`BarCommandsTests`: pipe shares, 1000 files, the language of an error; `CommandTileTests`:
+  session-only approval). App, CI only (`WindowKeyTests`: the key map rules, the text box rule, the pipe's
+  pauses). Not tested: the queue under a dialog, the stderr line, the portable Send To refusal.
+
 ## 2026-11-12 (62) — Send to PC through Google Drive (owner's choice of what is next)
 
 Run 152 (`e8dc629`) is green.

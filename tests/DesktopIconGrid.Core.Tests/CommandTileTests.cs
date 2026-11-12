@@ -13,6 +13,7 @@ public sealed class CommandTileTests : IDisposable
     public void Dispose()
     {
         ThisDevice.Id = _device;
+        ThisDevice.IsOfThisMachine = true;
         if (Directory.Exists(_directory))
         {
             Directory.Delete(_directory, recursive: true);
@@ -189,6 +190,27 @@ public sealed class CommandTileTests : IDisposable
 
         ThisDevice.Id = "pc-b"; // the same data folder on another PC (a portable copy on a stick)
         Assert.False(new CommandTrust(path).IsApproved(hash));
+    }
+
+    [Fact]
+    public void Without_this_PCs_own_id_an_approval_lasts_until_the_program_ends()
+    {
+        // Review 21: the id then comes from the data folder, which a portable copy carries to the next PC.
+        var path = Path.Combine(_directory, CommandTrust.FileName);
+        var hash = (CommandTileSettings.Default with { Program = "x.exe" }).Hash();
+        ThisDevice.Id = "from-the-data-folder";
+        Assert.True(new CommandTrust(path).Approve(hash)); // saved while the PC's id was known
+
+        ThisDevice.IsOfThisMachine = false;
+        var trust = new CommandTrust(path);
+        Assert.False(trust.IsApproved(hash)); // the file says nothing about this PC
+
+        Assert.False(trust.Approve(hash)); // not saved
+        Assert.True(trust.IsApproved(hash));
+        Assert.False(new CommandTrust(path).IsApproved(hash)); // gone at the next start
+
+        ThisDevice.IsOfThisMachine = true;
+        Assert.True(new CommandTrust(path).IsApproved(hash)); // what was saved before is untouched
     }
 
     [Fact]

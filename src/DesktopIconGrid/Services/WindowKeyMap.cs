@@ -23,14 +23,46 @@ public sealed class WindowKeyMap
         var map = new WindowKeyMap();
         foreach (var action in Enum.GetValues<WindowKeyAction>())
         {
-            if (HotkeyGesture.TryParseWindowKey(WindowKeys.For(settings, action), out var gesture))
+            // An override that cannot be read (hand-edited, or a key name of a newer version) is no override: the
+            // action keeps its default. Only an empty one turns it off.
+            var text = WindowKeys.For(settings, action);
+            if (!HotkeyGesture.TryParseWindowKey(text, out var gesture)
+                && (text.Length == 0 || !HotkeyGesture.TryParseWindowKey(WindowKeys.Defaults[action], out gesture)))
             {
-                map._actions.TryAdd((gesture.Modifiers, gesture.Key), action);
+                continue;
+            }
+
+            // A key two actions share starts the first; the other has none, and its menu shows none.
+            if (map._actions.TryAdd((gesture.Modifiers, gesture.Key), action))
+            {
                 map._texts[action] = gesture.ToString();
             }
         }
 
+        // Shift+Delete removes as Delete does, as it did before the keys could be changed, while Delete is the key.
+        if (map._actions.TryGetValue((ModifierKeys.None, Key.Delete), out var plain) && plain == WindowKeyAction.Remove)
+        {
+            map._actions.TryAdd((ModifierKeys.Shift, Key.Delete), WindowKeyAction.Remove);
+        }
+
         return map;
+    }
+
+    /// <summary>
+    /// Whether a combination can be the bar's while a text box has the focus: Ctrl or Alt is held (AltGr, which is
+    /// both, types a character), and the key is none a text box edits with.
+    /// </summary>
+    public static bool LeavesTextBoxAlone(Key key, ModifierKeys modifiers)
+    {
+        var control = modifiers.HasFlag(ModifierKeys.Control);
+        var alt = modifiers.HasFlag(ModifierKeys.Alt);
+        if (control == alt)
+        {
+            return false; // neither, or AltGr
+        }
+
+        return key is not (Key.A or Key.C or Key.V or Key.X or Key.Y or Key.Z or Key.Left or Key.Right or Key.Up or Key.Down
+            or Key.Home or Key.End or Key.Back or Key.Delete or Key.Insert or Key.Space or Key.Tab or Key.Enter or Key.Escape);
     }
 
     /// <summary>The action <paramref name="key"/> with <paramref name="modifiers"/> starts, or <see langword="null"/>.</summary>
