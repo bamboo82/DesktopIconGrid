@@ -9,6 +9,22 @@ public sealed record StackEntry(string Path, string Name, bool IsFolder, DateTim
 /// </summary>
 public static class FolderStack
 {
+    private static readonly HashSet<string> ProgramExtensions = new(StringComparer.OrdinalIgnoreCase) { ".exe", ".com", ".bat", ".cmd", ".lnk" };
+
+    /// <summary>
+    /// Whether a file dragged inside the stack may be dropped onto <paramref name="entry"/> to be opened with it: a
+    /// program, a batch file or a shortcut, and not the dragged file itself.
+    /// </summary>
+    public static bool TakesDrop(StackEntry entry, IReadOnlyList<string> dragged)
+    {
+        ArgumentNullException.ThrowIfNull(entry);
+        ArgumentNullException.ThrowIfNull(dragged);
+        return !entry.IsFolder
+            && dragged.Count > 0
+            && ProgramExtensions.Contains(Path.GetExtension(entry.Path))
+            && !dragged.Any(path => string.Equals(path, entry.Path, StringComparison.OrdinalIgnoreCase));
+    }
+
     /// <summary>The most entries a stack shows; the rest is one click away in Explorer.</summary>
     public const int MaxEntries = 100;
 

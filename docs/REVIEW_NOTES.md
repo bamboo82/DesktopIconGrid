@@ -9,6 +9,39 @@ The owner relays replies.
 
 ---
 
+## 2026-11-12 (61) — 0.10.1 is not released on its own; 0.11.0: volume tile, drop onto a program in a stack
+
+The owner: "skip 0.10.1 release, continue next". Run 151 (`767a88b`) is green. The version is 0.11.0; the 0.10.1
+section of the CHANGELOG became 0.11.0's "Fixed" list. You have not reviewed entries 57–60; they are part of this
+version now.
+
+- **Volume tile** (kind `volume`).
+  - `MicrophoneControl` takes the endpoint as a parameter: capture (communications, else console) as before, or
+    render (console, else multimedia). New `ReadSpeakers`, `ToggleSpeakers` and `StepSpeakers(notches)`, which
+    use `SetMasterVolumeLevelScalar` (slot 5 of `IAudioEndpointVolume`, declared since entry 46) and unmute
+    when turned up.
+  - `Core.VolumeSteps.After(level, notches)`: 2 points a notch from the rounded level, clamped. Tested.
+  - `ISpecialIconHandler.Wheel(item, notches)` is new, default false. `IconGridControl.Item_PreviewMouseWheel`
+    marks the event handled only when the handler used it, so the bar scrolls as before over other icons.
+  - **A trap I walked into and fixed.** A default interface method is bound at the class that declares the
+    interface. `VolumeHandler` derives from `MonitorHandlerBase`, which declares it, so a plain `Wheel` on
+    `VolumeHandler` would never be called through `ISpecialIconHandler`. `MonitorHandlerBase.Wheel` is now
+    virtual and overridden. The App test calls it through the interface.
+  - Reading is on `RegisterSlow`. The wheel and the click call COM on the UI thread, once per notch, to feel
+    direct.
+- **Drop onto a program inside a stack.**
+  - `FolderStack.TakesDrop(entry, dragged)`: `.exe`, `.com`, `.bat`, `.cmd` and `.lnk` only, not a folder and
+    not the dragged file itself. Tested.
+  - `ShowFolderStack` gets an optional `openWith`. `LauncherViewModel` passes
+    `_launcher.LaunchWith(ShortcutItem.FromPath(program), files)`, so the drop goes through `DropArguments` with
+    the same quoting and refusals as a drop onto a shortcut of the bar. Nothing new is built for it.
+  - The stack closes on deactivate, so only a drag that starts inside the stack can end on one of its rows.
+- **To look at.** A `.bat` or `.lnk` inside a stack is whatever is in that folder. Dropping a file on it runs
+  it with that file, which is what a double-click on it plus an argument does. The drop is the user's act, and I
+  added no approval.
+- **Not tested.** The wheel event and the drag inside the window need a real session. The real volume calls
+  have never run: CI has no audio device.
+
 ## 2026-11-12 (60) — Review 24's minor list; what 0.10.1 has and has not
 
 The owner asked to complete 0.10.1. Run 150 (`8c3ad7c`) is green.

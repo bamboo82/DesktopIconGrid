@@ -258,8 +258,8 @@ folder.
   history, command line and Send To), keys of the bar's window, 8 with the trust rule, 9 with the same rule.
 - **0.10.0 "Bigger moves"** (released 2026-11-11): more gauges and the sparkline, clock and timer, 10 (folder
   stacks), mic tile, paste to a bucket, 4 (workspaces), 12 (send to a device, through a sync folder).
-- **Next**: 12 through Google Drive, 11 (voice, if the spike says yes), a volume tile, drop onto a program
-  inside a stack.
+- **0.11.0** (in progress): the review fixes after 0.10.0, a volume tile, drop onto a program inside a stack.
+- **Next**: 12 through Google Drive, 11 (voice, if the spike says yes).
 - **1.0.0 "Ship it"**: the existing backlog — installer (MSIX/winget), code signing, toast notifications.
 
 Not yet placed in a release: glyph icons, usage columns, the accent theme, spring-loaded groups and the

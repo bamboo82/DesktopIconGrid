@@ -633,7 +633,13 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
             && Environment.ExpandEnvironmentVariables(shortcutToLaunch.EffectiveLocation.Trim().Trim('"')) is var stackFolder
             && (IconWorker.IsOnSlowStorage(stackFolder) || Directory.Exists(stackFolder))) // a share is not asked here, on the UI thread: the stack says so when it cannot be read
         {
-            _dialogs.ShowFolderStack(item.Name, stackFolder, shortcutToLaunch.StackNewestFirst);
+            // A file dropped onto a program inside the stack goes the way a drop onto a shortcut of the bar goes
+            // (DropArguments: the same quoting and the same refusals), for a shortcut made of that program's path.
+            _dialogs.ShowFolderStack(
+                item.Name,
+                stackFolder,
+                shortcutToLaunch.StackNewestFirst,
+                (program, files) => _launcher.LaunchWith(ShortcutItem.FromPath(program), files));
             IsGroupPopupOpen = false;
             ItemActivated?.Invoke(this, item);
             return;

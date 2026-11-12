@@ -146,6 +146,7 @@ public partial class App : Application
             new BatteryHandler(_monitor, owner),
             new NetworkHandler(_monitor, owner),
             new MicrophoneMuteHandler(_monitor, owner),
+            new VolumeHandler(_monitor, owner),
             new DriveBucketHandler(syncService, dialogs, owner, icons, cacheDirectory, Dispatcher),
             new SoundReplayerHandler(owner, AppPaths.SoundsDirectory, Dispatcher),
             new SendToDeviceHandler(_inbox.Current, dialogs, owner, Path.Combine(cacheDirectory, "pasted"), trust),

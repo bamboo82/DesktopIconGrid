@@ -28,7 +28,10 @@
                KeyDown="List_KeyDown"
                PreviewMouseLeftButtonDown="List_PreviewMouseLeftButtonDown"
                PreviewMouseMove="List_PreviewMouseMove"
-               PreviewMouseLeftButtonUp="List_PreviewMouseLeftButtonUp">
+               PreviewMouseLeftButtonUp="List_PreviewMouseLeftButtonUp"
+               AllowDrop="True"
+               DragOver="List_DragOver"
+               Drop="List_Drop">
         <ListBox.ItemContainerStyle>
           <Style TargetType="ListBoxItem">
             <Setter Property="AutomationProperties.Name" Value="{Binding Name}" />

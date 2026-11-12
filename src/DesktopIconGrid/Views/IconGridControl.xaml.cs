@@ -192,6 +192,17 @@ public partial class IconGridControl : UserControl
         return modifiers;
     }
 
+    /// <summary>The wheel over a special icon that uses it (the volume tile); otherwise the bar scrolls as usual.</summary>
+    private void Item_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
+    {
+        if (ItemOf(sender) is { Model: SpecialIconItem special } item
+            && e.Delta != 0
+            && item.SpecialHandler.Wheel(special, Math.Sign(e.Delta) * Math.Max(1, Math.Abs(e.Delta) / Mouse.MouseWheelDeltaForOneLine)))
+        {
+            e.Handled = true;
+        }
+    }
+
     private void Item_KeyDown(object sender, KeyEventArgs e)
     {
         if (ItemOf(sender) is not { } item)

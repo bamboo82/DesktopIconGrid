@@ -53,4 +53,20 @@ public sealed class FolderStackTests : IDisposable
         Assert.Equal(FolderStack.Unreadable, missing.Total); // not "this folder is empty"
         Assert.Equal(0, FolderStack.List(Directory.CreateDirectory(Path.Combine(_folder, "empty")).FullName, false).Total);
     }
+
+    [Fact]
+    public void A_dragged_file_can_be_dropped_on_a_program_but_not_on_a_document_a_folder_or_itself()
+    {
+        var program = new StackEntry(@"C:\S\tool.exe", "tool.exe", false, DateTime.Now);
+        var shortcut = new StackEntry(@"C:\S\Editor.lnk", "Editor", false, DateTime.Now);
+        var document = new StackEntry(@"C:\S\a.txt", "a.txt", false, DateTime.Now);
+        var folder = new StackEntry(@"C:\S\sub.exe", "sub.exe", true, DateTime.Now);
+
+        Assert.True(FolderStack.TakesDrop(program, [@"C:\S\a.txt"]));
+        Assert.True(FolderStack.TakesDrop(shortcut, [@"C:\S\a.txt", @"C:\S\b.txt"]));
+        Assert.False(FolderStack.TakesDrop(document, [@"C:\S\b.txt"]));
+        Assert.False(FolderStack.TakesDrop(folder, [@"C:\S\a.txt"]));
+        Assert.False(FolderStack.TakesDrop(program, [@"c:\s\TOOL.exe"])); // onto itself
+        Assert.False(FolderStack.TakesDrop(program, []));
+    }
 }

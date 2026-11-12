@@ -2315,4 +2315,19 @@
   <data name="Clock_UnknownZone" xml:space="preserve">
     <value>{0}（这台电脑不认识；在此显示这台电脑的时间）</value>
   </data>
+  <data name="Volume_Name" xml:space="preserve">
+    <value>音量</value>
+  </data>
+  <data name="Volume_Desc" xml:space="preserve">
+    <value>显示扬声器音量。在图标上滚动鼠标滚轮可调整音量；单击可静音或取消静音。</value>
+  </data>
+  <data name="Volume_On" xml:space="preserve">
+    <value>音量 {0}%。滚轮调整，单击静音。</value>
+  </data>
+  <data name="Volume_Muted" xml:space="preserve">
+    <value>已静音（音量 {0}%）。单击取消静音，或向上滚动滚轮。</value>
+  </data>
+  <data name="Volume_None" xml:space="preserve">
+    <value>找不到扬声器或耳机。</value>
+  </data>
 </root>

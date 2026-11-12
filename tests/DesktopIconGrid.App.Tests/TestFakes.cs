@@ -44,7 +44,14 @@ internal sealed class RecordingDialogs : IDialogService
 
     public List<(string Folder, bool NewestFirst)> Stacks { get; } = [];
 
-    public void ShowFolderStack(string name, string folder, bool newestFirst) => Stacks.Add((folder, newestFirst));
+    /// <summary>What the last stack was given to open a dropped file with a program.</summary>
+    public Func<string, IReadOnlyList<string>, DesktopIconGrid.Core.Launching.LaunchResult>? StackOpenWith { get; private set; }
+
+    public void ShowFolderStack(string name, string folder, bool newestFirst, Func<string, IReadOnlyList<string>, DesktopIconGrid.Core.Launching.LaunchResult>? openWith = null)
+    {
+        Stacks.Add((folder, newestFirst));
+        StackOpenWith = openWith;
+    }
 
     public bool ApprovalAnswer { get; set; }
 
@@ -157,7 +164,13 @@ internal sealed class RecordingLauncher : ILaunchService
         return Result;
     }
 
-    public LaunchResult LaunchWith(ShortcutItem shortcut, IReadOnlyList<string> paths) => LaunchResult.Failure("nope");
+    public List<(string Location, IReadOnlyList<string> Paths)> OpenedWith { get; } = [];
+
+    public LaunchResult LaunchWith(ShortcutItem shortcut, IReadOnlyList<string> paths)
+    {
+        OpenedWith.Add((shortcut.Location, paths));
+        return LaunchResult.Failure("nope");
+    }
 }
 
 internal sealed class NoIcons : IIconProvider

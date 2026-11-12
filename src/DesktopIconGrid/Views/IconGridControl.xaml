@@ -20,6 +20,7 @@
               Click="Item_Click"
               MouseDoubleClick="Item_MouseDoubleClick"
               MouseUp="Item_MouseUp"
+              PreviewMouseWheel="Item_PreviewMouseWheel"
               KeyDown="Item_KeyDown">
         <Button.ContextMenu>
           <ContextMenu Opened="ItemMenu_Opened">
@@ -195,6 +196,7 @@
               PreviewMouseMove="Item_PreviewMouseMove"
               PreviewMouseLeftButtonUp="Item_PreviewMouseLeftButtonUp"
               LostMouseCapture="Item_LostMouseCapture"
+              PreviewMouseWheel="Item_PreviewMouseWheel"
               KeyDown="Item_KeyDown">
         <Button.ContextMenu>
           <ContextMenu>

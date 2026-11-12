@@ -106,4 +106,39 @@ public class MoreGaugesTests
 
         Assert.True(reading is null || reading.Value.Volume is >= 0 and <= 100);
     }
+
+    [Fact]
+    public void The_volume_tile_takes_the_wheel_through_the_handler_interface_and_other_gauges_do_not()
+    {
+        var monitor = new SystemMonitor(System.Windows.Threading.Dispatcher.CurrentDispatcher);
+        try
+        {
+            ISpecialIconHandler volume = new VolumeHandler(monitor, () => null);
+            ISpecialIconHandler cpu = new CpuUsageHandler(monitor, () => null);
+            var item = volume.CreateItem();
+
+            Assert.True(volume.Wheel(item, 0)); // through the interface, as the grid calls it; 0 notches change nothing
+            Assert.False(cpu.Wheel(cpu.CreateItem(), 1));
+        }
+        finally
+        {
+            monitor.Dispose();
+        }
+    }
+
+    [Fact]
+    public void The_volume_tile_shows_the_level_and_is_red_while_muted()
+    {
+        var state = new GaugeState("VOL", GaugeStyle.Ring, 101, 101, string.Empty);
+
+        var on = VolumeHandler.Show(state, (false, 42.4));
+        Assert.Equal(("42", CommandLevel.Ok, 42.4), (state.LabelText, state.Level!.Value, on.Percent!.Value));
+
+        VolumeHandler.Show(state, (true, 42));
+        Assert.Equal(CommandLevel.Failed, state.Level);
+        Assert.NotEqual("42", state.LabelText);
+
+        Assert.Null(VolumeHandler.Show(state, null).Percent);
+        Assert.Equal(CommandLevel.Unknown, state.Level);
+    }
 }

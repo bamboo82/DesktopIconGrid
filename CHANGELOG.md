@@ -3,9 +3,17 @@
 All notable changes to Desktop Icon Grid. The format follows [Keep a Changelog](https://keepachangelog.com/);
 version numbers follow [Semantic Versioning](https://semver.org/).
 
-## [0.10.1] – Unreleased
+## [0.11.0] – Unreleased
 
-What the review of 0.10.0 placed after the release.
+What 0.10.0 left out (a volume tile, dropping a file onto a program inside a folder stack; sending files through
+Google Drive and voice launch are still to come), and the fixes the review of 0.10.0 placed after the release.
+0.10.1 was not released on its own: its fixes are the "Fixed" list below.
+
+### Added
+
+- **Volume** tile: shows the speakers' volume; the mouse wheel over it turns the volume up and down in steps
+  of 2, a click mutes or unmutes (red while muted).
+- Folder stacks: drop a file onto a program or shortcut inside a stack to open the file with it.
 
 ### Fixed
 

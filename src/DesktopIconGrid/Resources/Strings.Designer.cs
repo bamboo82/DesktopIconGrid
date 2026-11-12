@@ -6675,6 +6675,51 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Shows the speakers' volume. Turn the mouse wheel over it to change the volume; c [rest of string was truncated]";.
+        /// </summary>
+        public static string Volume_Desc {
+            get {
+                return ResourceManager.GetString("Volume_Desc", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Muted (volume {0}%). Click to unmute, or turn the wheel up..
+        /// </summary>
+        public static string Volume_Muted {
+            get {
+                return ResourceManager.GetString("Volume_Muted", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Volume.
+        /// </summary>
+        public static string Volume_Name {
+            get {
+                return ResourceManager.GetString("Volume_Name", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to No speakers or headphones were found..
+        /// </summary>
+        public static string Volume_None {
+            get {
+                return ResourceManager.GetString("Volume_None", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Volume {0}%. Wheel to change, click to mute..
+        /// </summary>
+        public static string Volume_On {
+            get {
+                return ResourceManager.GetString("Volume_On", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Find on the bar.
         /// </summary>
         public static string WindowKey_Find {

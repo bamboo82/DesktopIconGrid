@@ -16,17 +16,47 @@ public static class MicrophoneControl
     private const uint ClsCtxAll = 23;
 
     /// <summary>Whether the microphone is muted and its level (0–100), or <see langword="null"/> when there is none.</summary>
-    public static (bool Muted, double Volume)? Read() =>
-        Use(volume =>
+    public static (bool Muted, double Volume)? Read() => Read(speakers: false);
+
+    /// <summary>Mutes or unmutes the microphone; the new state, or <see langword="null"/> when there is none.</summary>
+    public static bool? Toggle() => Toggle(speakers: false);
+
+    /// <summary>The default speakers' mute state and volume (0–100), or <see langword="null"/> when there are none.</summary>
+    public static (bool Muted, double Volume)? ReadSpeakers() => Read(speakers: true);
+
+    public static bool? ToggleSpeakers() => Toggle(speakers: true);
+
+    /// <summary>
+    /// Turns the speakers up or down by wheel notches (<see cref="Core.SpecialIcons.VolumeSteps"/>); turning up also
+    /// unmutes. The new state, or <see langword="null"/> when there are no speakers.
+    /// </summary>
+    public static (bool Muted, double Volume)? StepSpeakers(int notches) =>
+        Use(speakers: true, volume =>
+        {
+            Marshal.ThrowExceptionForHR(volume.GetMute(out var muted));
+            Marshal.ThrowExceptionForHR(volume.GetMasterVolumeLevelScalar(out var level));
+            var next = Core.SpecialIcons.VolumeSteps.After(level * 100.0, notches);
+            var context = Guid.Empty;
+            Marshal.ThrowExceptionForHR(volume.SetMasterVolumeLevelScalar((float)(next / 100.0), ref context));
+            if (muted && notches > 0)
+            {
+                Marshal.ThrowExceptionForHR(volume.SetMute(false, ref context));
+                muted = false;
+            }
+
+            return ((bool, double)?)(muted, next);
+        });
+
+    private static (bool Muted, double Volume)? Read(bool speakers) =>
+        Use(speakers, volume =>
         {
             Marshal.ThrowExceptionForHR(volume.GetMute(out var muted));
             Marshal.ThrowExceptionForHR(volume.GetMasterVolumeLevelScalar(out var level));
             return ((bool, double)?)(muted, Math.Clamp(level * 100.0, 0, 100));
         });
 
-    /// <summary>Mutes or unmutes; the new state, or <see langword="null"/> when there is no microphone.</summary>
-    public static bool? Toggle() =>
-        Use(volume =>
+    private static bool? Toggle(bool speakers) =>
+        Use(speakers, volume =>
         {
             Marshal.ThrowExceptionForHR(volume.GetMute(out var muted));
             var context = Guid.Empty;
@@ -34,7 +64,10 @@ public static class MicrophoneControl
             return (bool?)!muted;
         });
 
-    private static T? Use<T>(Func<IAudioEndpointVolume, T?> work)
+    private const int ERender = 0;
+    private const int ERoleMultimedia = 1;
+
+    private static T? Use<T>(bool speakers, Func<IAudioEndpointVolume, T?> work)
     {
         object? enumerator = null;
         IMMDevice? device = null;
@@ -43,11 +76,13 @@ public static class MicrophoneControl
         {
             enumerator = Activator.CreateInstance(Type.GetTypeFromCLSID(new Guid("BCDE0395-E52F-467C-8E3D-C4579291692E"), throwOnError: true)!);
             var devices = (IMMDeviceEnumerator)enumerator!;
-            if (devices.GetDefaultAudioEndpoint(ECapture, ERoleCommunications, out device) != 0 || device is null)
+            // The microphone meetings use, else the general one; the speakers sound comes out of, else the media ones.
+            var (flow, first, second) = speakers ? (ERender, ERoleConsole, ERoleMultimedia) : (ECapture, ERoleCommunications, ERoleConsole);
+            if (devices.GetDefaultAudioEndpoint(flow, first, out device) != 0 || device is null)
             {
-                if (devices.GetDefaultAudioEndpoint(ECapture, ERoleConsole, out device) != 0 || device is null)
+                if (devices.GetDefaultAudioEndpoint(flow, second, out device) != 0 || device is null)
                 {
-                    return default; // no microphone
+                    return default; // no such device
                 }
             }
 

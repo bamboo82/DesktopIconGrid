@@ -59,6 +59,9 @@ public interface ISpecialIconHandler
     Task<LaunchResult> PasteAsync(SpecialIconItem item) =>
         Task.FromResult(LaunchResult.Failure(Strings.Special_NoFiles));
 
+    /// <summary>The mouse wheel turned over the icon (<paramref name="notches"/>: up is positive). True when the icon used it.</summary>
+    bool Wheel(SpecialIconItem item, int notches) => false;
+
     IReadOnlyList<SpecialIconAction> GetActions(SpecialIconItem item) => [];
 
     /// <summary>True when pressing and holding the icon (rather than clicking) means something.</summary>

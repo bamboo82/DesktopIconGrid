@@ -62,6 +62,17 @@ public sealed class GaugeHistory(int capacity = GaugeHistory.DefaultCapacity)
     }
 }
 
+/// <summary>The volume tile's wheel steps.</summary>
+public static class VolumeSteps
+{
+    /// <summary>Percentage points per wheel notch, as Windows' own volume keys use.</summary>
+    public const int StepSize = 2;
+
+    /// <summary>The volume (0–100) after <paramref name="notches"/> wheel notches (up is positive) from <paramref name="level"/>.</summary>
+    public static double After(double level, int notches) =>
+        Math.Clamp(Math.Round(double.IsFinite(level) ? level : 0) + (notches * StepSize), 0, 100);
+}
+
 /// <summary>Network throughput from two readings of the adapters' byte counters.</summary>
 public static class NetworkRate
 {

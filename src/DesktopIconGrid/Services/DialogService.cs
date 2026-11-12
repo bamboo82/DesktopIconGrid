@@ -88,8 +88,8 @@ public sealed class DialogService(IIconProvider icons) : IDialogService, ILaunch
         window.Activate();
     }
 
-    public void ShowFolderStack(string name, string folder, bool newestFirst) =>
-        new StackWindow(name, folder, newestFirst, icons).ShowAtPointer();
+    public void ShowFolderStack(string name, string folder, bool newestFirst, Func<string, IReadOnlyList<string>, LaunchResult>? openWith = null) =>
+        new StackWindow(name, folder, newestFirst, icons) { OpenWith = openWith }.ShowAtPointer();
 
     public bool ConfirmApproval(string title, string intro, string details, string approveText) =>
         new CommandApprovalWindow(title, intro, details, approveText) { Owner = Owner }.ShowDialog() == true;

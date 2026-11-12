@@ -1,3 +1,4 @@
+using DesktopIconGrid.Core.Launching;
 using DesktopIconGrid.Core.Imports;
 using DesktopIconGrid.Core.Models;
 using DesktopIconGrid.ViewModels;
@@ -54,8 +55,11 @@ public interface IDialogService
     /// <summary>The Repair dialog for a shortcut whose program is not on this PC; <see langword="null"/> on Cancel.</summary>
     RepairResult? ShowRepair(ShortcutItem shortcut);
 
-    /// <summary>Opens a folder as a stack at the pointer (not modal; it closes itself when it loses the focus).</summary>
-    void ShowFolderStack(string name, string folder, bool newestFirst);
+    /// <summary>
+    /// Opens a folder as a stack at the pointer (not modal; it closes itself when it loses the focus).
+    /// <paramref name="openWith"/> opens files with a program of the stack (a file dropped onto it there).
+    /// </summary>
+    void ShowFolderStack(string name, string folder, bool newestFirst, Func<string, IReadOnlyList<string>, LaunchResult>? openWith = null);
 
     /// <summary>The Add apps dialog; the apps the user ticked (none on Cancel).</summary>
     IReadOnlyList<InstalledApp> ShowAddApp(IReadOnlySet<string> locationsOnBar);

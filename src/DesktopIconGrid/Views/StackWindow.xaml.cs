@@ -19,6 +19,8 @@ namespace DesktopIconGrid.Views;
 /// <summary>One row of a folder stack; its icon arrives after the row is shown.</summary>
 public sealed class StackRow(StackEntry entry) : ObservableObject
 {
+    public StackEntry Entry => entry;
+
     private ImageSource? _image;
 
     public string Path => entry.Path;
@@ -52,6 +54,7 @@ public partial class StackWindow : Window
     private int _fillRequest;
     private (int X, int Y)? _anchor;
     private bool _placedWithRows;
+    private bool _openedByDrop;
 
     public StackWindow(string name, string folder, bool newestFirst, IIconProvider icons)
     {
@@ -299,10 +302,62 @@ public partial class StackWindow : Window
             _dragging = false;
         }
 
-        if (!IsActive)
+        if (!IsActive || _openedByDrop)
         {
-            Dismiss();
+            Dismiss(); // dragged out, or dropped onto a program here: the stack has done its work
         }
+    }
+
+    /// <summary>Opens files with a program of the stack; set by whoever shows the stack. Without it rows take no drops.</summary>
+    public Func<string, IReadOnlyList<string>, LaunchResult>? OpenWith { get; init; }
+
+    private static IReadOnlyList<string> DraggedFiles(DragEventArgs e) =>
+        e.Data.GetDataPresent(DataFormats.FileDrop) && e.Data.GetData(DataFormats.FileDrop) is string[] files ? files : [];
+
+    private StackRow? DropTarget(DragEventArgs e) =>
+        OpenWith is not null
+        && e.OriginalSource is DependencyObject element
+        && ItemsControl.ContainerFromElement(List, element) is ListBoxItem { DataContext: StackRow row }
+        && FolderStack.TakesDrop(row.Entry, DraggedFiles(e))
+            ? row
+            : null;
+
+    private void List_DragOver(object sender, DragEventArgs e)
+    {
+        e.Effects = DropTarget(e) is null ? DragDropEffects.None : DragDropEffects.Copy;
+        e.Handled = true;
+    }
+
+    /// <summary>A file dropped onto a program, batch file or shortcut of the stack: opened with it.</summary>
+    private void List_Drop(object sender, DragEventArgs e)
+    {
+        e.Handled = true;
+        if (DropTarget(e) is not { } row || OpenWith is not { } openWith)
+        {
+            return;
+        }
+
+        e.Effects = DragDropEffects.Copy; // the file stays where it is
+        var result = openWith(row.Path, DraggedFiles(e));
+        if (result.Outcome == LaunchOutcome.Failed)
+        {
+            // After the drag has ended, so the box is not shown from inside DoDragDrop.
+            Dispatcher.BeginInvoke(() =>
+            {
+                _dragging = true;
+                try
+                {
+                    MessageBox.Show(this, $"{result.ErrorMessage}\n{row.Path}", Title, MessageBoxButton.OK, MessageBoxImage.Warning);
+                }
+                finally
+                {
+                    _dragging = false;
+                }
+            });
+            return;
+        }
+
+        _openedByDrop = true;
     }
 
     private void List_PreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e)

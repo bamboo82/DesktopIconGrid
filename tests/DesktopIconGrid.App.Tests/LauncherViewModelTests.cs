@@ -585,6 +585,13 @@ public sealed class LauncherViewModelTests : IDisposable
         Assert.Equal([(_directory, true)], dialogs.Stacks);
         Assert.Empty(_launcher.Launches);
 
+        // A file dropped onto a program inside the stack goes through the launcher's open-with path.
+        Assert.NotNull(dialogs.StackOpenWith);
+        dialogs.StackOpenWith!(@"C:\Tools\edit.exe", [@"C:\a.txt"]);
+        var opened = Assert.Single(_launcher.OpenedWith);
+        Assert.Equal(@"C:\Tools\edit.exe", opened.Location);
+        Assert.Equal([@"C:\a.txt"], opened.Paths);
+
         viewModel.Activate(viewModel.GetOrCreateViewModel(gone), null, ActivationModifiers.None); // not a folder here: launched as usual
         Assert.Single(dialogs.Stacks);
         Assert.Single(_launcher.Launches);

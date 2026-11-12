@@ -30,6 +30,12 @@ public abstract class MonitorHandlerBase(SystemMonitor monitor, Func<Window?> ow
 
     public abstract LaunchResult Activate(SpecialIconItem item, ActivationModifiers modifiers);
 
+    /// <summary>
+    /// Declared here, virtual, so a gauge can use the wheel: the interface's default method is bound where the interface
+    /// is declared (this class), and a method of the same name on a subclass alone would never be called through it.
+    /// </summary>
+    public virtual bool Wheel(SpecialIconItem item, int notches) => false;
+
     public bool ShowProperties(SpecialIconItem item, bool isNew)
     {
         var viewModel = new MonitorIconViewModel(item, ShowsDrive, DisplayName);
@@ -302,5 +308,82 @@ public sealed class MicrophoneMuteHandler(SystemMonitor monitor, Func<Window?> o
         state.LabelText = mic.Muted ? Strings.Mic_LabelMuted : Strings.Mic_LabelOn;
         state.Level = mic.Muted ? CommandLevel.Failed : CommandLevel.Ok;
         return (mic.Volume, string.Format(mic.Muted ? Strings.Mic_Muted : Strings.Mic_On, Math.Round(mic.Volume)));
+    }
+}
+
+/// <summary>
+/// The speakers' volume as a gauge: the mouse wheel over the icon turns it up and down, a click mutes or unmutes
+/// (red while muted). It follows changes made elsewhere (checked every 2 seconds).
+/// </summary>
+public sealed class VolumeHandler(SystemMonitor monitor, Func<Window?> ownerProvider) : MonitorHandlerBase(monitor, ownerProvider)
+{
+    private readonly System.Runtime.CompilerServices.ConditionalWeakTable<SpecialIconItem, GaugeState> _states = [];
+
+    public override string Kind => SpecialIconKinds.Volume;
+
+    public override string DisplayName => Strings.Volume_Name;
+
+    public override string Description => Strings.Volume_Desc;
+
+    protected override bool ShowsDrive => false;
+
+    public override SpecialIconItem CreateItem()
+    {
+        var item = new SpecialIconItem { Name = Strings.Volume_Name, Kind = Kind };
+        new MonitorIconSettings(GaugeStyle.Ring, null).ApplyTo(item);
+        return item;
+    }
+
+    public override GaugeState CreateState(SpecialIconItem item)
+    {
+        var state = new GaugeState("VOL", MonitorIconSettings.From(item).Style, warningAt: 101, criticalAt: 101, Strings.Volume_Name);
+        _states.AddOrUpdate(item, state);
+        Monitor.RegisterSlow(state, MicrophoneControl.ReadSpeakers, reading => Show(state, reading), everyTicks: 1, recordsPercent: false);
+        return state;
+    }
+
+    public override LaunchResult Activate(SpecialIconItem item, ActivationModifiers modifiers)
+    {
+        if (MicrophoneControl.ToggleSpeakers() is null)
+        {
+            return LaunchResult.Failure(Strings.Volume_None);
+        }
+
+        Redraw(item, MicrophoneControl.ReadSpeakers());
+        return LaunchResult.Started;
+    }
+
+    public override bool Wheel(SpecialIconItem item, int notches)
+    {
+        if (notches != 0)
+        {
+            Redraw(item, MicrophoneControl.StepSpeakers(notches)); // at once: the wheel must feel direct
+        }
+
+        return true;
+    }
+
+    private void Redraw(SpecialIconItem item, (bool Muted, double Volume)? reading)
+    {
+        if (_states.TryGetValue(item, out var state))
+        {
+            var (percent, detail) = Show(state, reading);
+            state.Update(percent, detail);
+        }
+    }
+
+    /// <summary>Sets the tile's text and colour for a reading and returns its level and tooltip.</summary>
+    internal static (double? Percent, string Detail) Show(GaugeState state, (bool Muted, double Volume)? reading)
+    {
+        if (reading is not { } speakers)
+        {
+            state.LabelText = "—";
+            state.Level = CommandLevel.Unknown;
+            return (null, Strings.Volume_None);
+        }
+
+        state.LabelText = speakers.Muted ? Strings.Mic_LabelMuted : Math.Round(speakers.Volume).ToString(System.Globalization.CultureInfo.CurrentCulture);
+        state.Level = speakers.Muted ? CommandLevel.Failed : CommandLevel.Ok;
+        return (speakers.Volume, string.Format(speakers.Muted ? Strings.Volume_Muted : Strings.Volume_On, Math.Round(speakers.Volume)));
     }
 }

@@ -95,4 +95,14 @@ public class GaugeHistoryTests
 
         Assert.Equal(string.Empty, history.Render(100));
     }
+
+    [Theory]
+    [InlineData(50d, 1, 52d)]
+    [InlineData(50d, -3, 44d)]
+    [InlineData(99d, 1, 100d)]
+    [InlineData(1d, -2, 0d)]
+    [InlineData(41.6d, 1, 44d)] // from the rounded level, so steps land on whole numbers
+    [InlineData(double.NaN, 1, 2d)]
+    public void A_wheel_notch_moves_the_volume_two_points_within_0_and_100(double level, int notches, double expected) =>
+        Assert.Equal(expected, VolumeSteps.After(level, notches));
 }

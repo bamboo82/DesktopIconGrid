@@ -2315,4 +2315,19 @@ Details are in {1}.</value>
   <data name="Clock_UnknownZone" xml:space="preserve">
     <value>{0} (not known on this PC; shows this PC's time here)</value>
   </data>
+  <data name="Volume_Name" xml:space="preserve">
+    <value>Volume</value>
+  </data>
+  <data name="Volume_Desc" xml:space="preserve">
+    <value>Shows the speakers' volume. Turn the mouse wheel over it to change the volume; click to mute or unmute.</value>
+  </data>
+  <data name="Volume_On" xml:space="preserve">
+    <value>Volume {0}%. Wheel to change, click to mute.</value>
+  </data>
+  <data name="Volume_Muted" xml:space="preserve">
+    <value>Muted (volume {0}%). Click to unmute, or turn the wheel up.</value>
+  </data>
+  <data name="Volume_None" xml:space="preserve">
+    <value>No speakers or headphones were found.</value>
+  </data>
 </root>
