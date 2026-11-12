@@ -522,6 +522,28 @@ fallback is the candidate. The probe now also asks the desktop recogniser the sa
 `System.Speech` (a Microsoft package, the first in the app) or SAPI's COM interfaces declared by hand (no
 package, more code). Nothing is built until then.
 
+**Fifth run (2026-11-12): the desktop recogniser answers yes.**
+
+```
+Recogniser: Microsoft Speech Recognizer 8.0 for Windows (Chinese Traditional - Taiwan)
+  nothing recognised
+  "小算盤", confidence 0.96
+  "檔案總管", confidence 0.97
+ANSWER (SAPI): yes (2 of 3 heard; check above that they were the names you said)
+
+Recogniser: Microsoft Speech Recognizer 8.0 for Windows (English - US)
+  "Notepad", confidence 0.93
+  nothing recognised
+  nothing recognised
+ANSWER (SAPI): yes (1 of 3 heard; check above that they were the names you said)
+```
+
+A list of names is recognised on the device, in zh-TW and en-US, from an unpackaged process, with confidence
+above 0.9 when something is heard. Whether the misses were silence within the 8 seconds or speech not
+recognised, the run does not show. Voice launch is therefore workable through SAPI on this PC. Still the
+owner's to decide before anything is built: `System.Speech` in the app or SAPI by hand, and how listening is
+started.
+
 What was known before running it:
 
 - The recogniser is a WinRT API. An unpackaged .NET process reaches it through the Windows SDK projection of
