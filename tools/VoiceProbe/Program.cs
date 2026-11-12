@@ -88,6 +88,41 @@ catch (Exception ex)
     // (the online speech privacy consent, which an offline list constraint should not need), or an exception for the
     // language itself (no speech pack for it).
     Console.WriteLine($"Failed while {step}: 0x{ex.HResult:X8} {ex.GetType().Name}: {ex.Message}");
-    Console.WriteLine("ANSWER: no (see the error above)");
+    Console.WriteLine("ANSWER (Windows.Media.SpeechRecognition): no (see the error above)");
+}
+
+// The fallback: the desktop recognisers (SAPI), which the fourth run found for zh-TW and en-US on a PC where the
+// recogniser above could not be created for either. The same question, asked of them.
+Console.WriteLine();
+Console.WriteLine("Trying the desktop (SAPI) recogniser for the same names…");
+try
+{
+    var culture = new System.Globalization.CultureInfo(tag);
+    using var engine = new System.Speech.Recognition.SpeechRecognitionEngine(culture);
+    Console.WriteLine($"Recogniser: {engine.RecognizerInfo.Description}");
+    var builder = new System.Speech.Recognition.GrammarBuilder(new System.Speech.Recognition.Choices(phrases)) { Culture = culture };
+    engine.LoadGrammar(new System.Speech.Recognition.Grammar(builder));
+    engine.SetInputToDefaultAudioDevice();
+    var heard = 0;
+    for (var attempt = 1; attempt <= 3; attempt++)
+    {
+        Console.WriteLine($"Say one of: {string.Join(" / ", phrases)}   (try {attempt} of 3, 8 seconds)");
+        var result = engine.Recognize(TimeSpan.FromSeconds(8));
+        Console.WriteLine(result is null ? "  nothing recognised" : $"  \"{result.Text}\", confidence {result.Confidence:0.00}");
+        if (result is { Text.Length: > 0 })
+        {
+            heard++;
+        }
+    }
+
+    Console.WriteLine(heard > 0
+        ? $"ANSWER (SAPI): yes ({heard} of 3 heard; check above that they were the names you said)"
+        : "ANSWER (SAPI): no (nothing recognised; is the default recording device the microphone you spoke into?)");
+    return heard > 0 ? 0 : 3;
+}
+catch (Exception ex)
+{
+    Console.WriteLine($"Failed: 0x{ex.HResult:X8} {ex.GetType().Name}: {ex.Message}");
+    Console.WriteLine("ANSWER (SAPI): no (see the error above)");
     return 1;
 }

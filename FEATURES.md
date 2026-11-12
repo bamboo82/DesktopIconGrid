@@ -512,6 +512,16 @@ So this is a "no" for another reason than the speech pack, and which step failed
 not say. It now prints the microphones Windows lists, the step that failed, and the older desktop (SAPI)
 recognisers on the PC. The answer stays open until a run with that output; nothing is built.
 
+**Fourth run (2026-11-12, after `Language.Speech~~~zh-TW` was installed; Windows reports it as Installed).**
+The newer recogniser still lists only en-US and cannot be created for either language (`0x800455A0` for en-US,
+`0x800455BC` for zh-TW, both "while creating the recogniser"). The PC has seven recording devices, and the
+older desktop recognisers (SAPI) for both 繁體中文 - 台灣 and 英文 - 美國. So the answer for
+`Windows.Media.SpeechRecognition` on this PC is **no**, for a reason other than the speech pack, and the
+fallback is the candidate. The probe now also asks the desktop recogniser the same question (through the
+`System.Speech` package, in the probe only). What the app would use, if that answers yes, is the owner's call:
+`System.Speech` (a Microsoft package, the first in the app) or SAPI's COM interfaces declared by hand (no
+package, more code). Nothing is built until then.
+
 What was known before running it:
 
 - The recogniser is a WinRT API. An unpackaged .NET process reaches it through the Windows SDK projection of

@@ -12,4 +12,13 @@
     <IsPackable>false</IsPackable>
   </PropertyGroup>
 
+  <!--
+    Only for this trial, not for the app: Microsoft's managed wrapper over the desktop recognisers (SAPI), to see
+    whether they hear the names where the newer recogniser cannot be created. Whether the app may use it (or reach
+    SAPI without a package) is the owner's decision, after the trial.
+  -->
+  <ItemGroup>
+    <PackageReference Include="System.Speech" Version="10.0.0" />
+  </ItemGroup>
+
 </Project>
