@@ -15,6 +15,15 @@ public sealed class SyncProfile
 
     public string Name { get; set; } = string.Empty;
 
+    /// <summary>
+    /// In a sync folder, the name of the file the copy was written to (<see cref="FolderSyncClient"/> puts it in, 0.11.0
+    /// on). A sync program's conflict copy, or a file someone copied, still says the original's file name, which tells
+    /// it from a copy this app gave a numbered file (<c>config (2).json</c> beside another program's
+    /// <c>config.json</c>). Older versions do not know it and keep comparing file names.
+    /// </summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? File { get; set; }
+
     public DateTimeOffset SavedAt { get; set; }
 
     /// <summary>Device name of the machine that saved the copy.</summary>

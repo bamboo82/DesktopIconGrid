@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using DesktopIconGrid.Core.Resources;
 using DesktopIconGrid.Core.Storage;
 
@@ -28,6 +29,13 @@ public sealed class FolderSyncClient : IDriveClient
 
     /// <summary>The name saved inside a listed copy (see <see cref="RemoteProfile.NameInside"/>).</summary>
     public const string NameInsideProperty = "nameInside";
+
+    /// <summary>
+    /// Listing property: whether the file name the copy holds (<see cref="SyncProfile.File"/>) is the file's own
+    /// ("true"), or another ("false": a sync program's copy, or a renamed file). Absent for a copy that holds none
+    /// (saved by 0.10.0 or older, or through Google Drive).
+    /// </summary>
+    public const string OwnFileProperty = "ownFile";
 
     private static readonly UTF8Encoding Utf8 = new(encoderShouldEmitUTF8Identifier: false);
 
@@ -138,8 +146,12 @@ public sealed class FolderSyncClient : IDriveClient
         foreach (var copies in named.GroupBy(f => f.AppProperties[NameInsideProperty].Trim(), StringComparer.OrdinalIgnoreCase))
         {
             var safe = FileNames.Safe(copies.Key);
-            var hasOwnFile = unreadable.Contains(safe) || copies.Any(f => string.Equals(StemOf(f.Name), safe, StringComparison.OrdinalIgnoreCase));
+            // A copy that says which file it was written to is settled already (ReadProperties); one in its own file is
+            // the original, so no file that does not say is taken for it by its number.
+            var hasOwnFile = unreadable.Contains(safe)
+                             || copies.Any(f => f.AppProperties.TryGetValue(OwnFileProperty, out var own) ? own == "true" : string.Equals(StemOf(f.Name), safe, StringComparison.OrdinalIgnoreCase));
             var numbered = copies
+                .Where(file => !file.AppProperties.ContainsKey(OwnFileProperty))
                 .Select(file => (File: file, Number: NumberAfter(StemOf(file.Name), safe)))
                 .Where(entry => entry.Number >= 2)
                 .OrderBy(entry => entry.Number)
@@ -184,7 +196,20 @@ public sealed class FolderSyncClient : IDriveClient
             }
 
             string? Text(string name) => root.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.String ? value.GetString() : null;
-            properties["profile"] = DisplayName(info.Name, Text("name"));
+            // The copy says which file it was written to (0.11.0 on): in that file it is the original of its name,
+            // whatever number the file has; in any other file it is a copy some program made of it. Without it the
+            // file names are compared, and the listing as a whole decides (ListNumberedOriginals).
+            if (Text("file") is { Length: > 0 } written)
+            {
+                var own = string.Equals(written, info.Name, StringComparison.OrdinalIgnoreCase);
+                properties[OwnFileProperty] = own ? "true" : "false";
+                properties["profile"] = own && !string.IsNullOrWhiteSpace(Text("name")) ? Text("name")!.Trim() : DisplayName(info.Name, null);
+            }
+            else
+            {
+                properties["profile"] = DisplayName(info.Name, Text("name"));
+            }
+
             Add(properties, NameInsideProperty, Text("name"));
             Add(properties, "device", Text("savedBy"));
             Add(properties, "deviceId", Text("savedById"));
@@ -205,7 +230,7 @@ public sealed class FolderSyncClient : IDriveClient
     }
 
     /// <summary>The properties a copy holds (<see cref="SyncProfile"/>), one of which comes first in any copy.</summary>
-    private static readonly string[] CopyProperties = ["format", "name", "savedAt", "savedBy", "savedById", "appVersion", "revision", "layout"];
+    private static readonly string[] CopyProperties = ["format", "file", "name", "savedAt", "savedBy", "savedById", "appVersion", "revision", "layout"];
 
     /// <summary>
     /// Whether the file starts as a copy does, as far as it has been written: <c>{</c>, then one of a copy's own properties
@@ -246,6 +271,7 @@ public sealed class FolderSyncClient : IDriveClient
         Directory.CreateDirectory(Folder);
         var name = existingFileId ?? FreeFileName(fileName);
         var path = PathOf(name);
+        json = WithFileName(json, name);
         var tempPath = Path.Combine(Folder, "~" + Path.GetRandomFileName() + ".tmp");
         try
         {
@@ -288,6 +314,42 @@ public sealed class FolderSyncClient : IDriveClient
         properties["profile"] = appProperties.TryGetValue("profile", out var inside) && !string.IsNullOrWhiteSpace(inside) ? inside.Trim() : DisplayName(name, null);
         Add(properties, NameInsideProperty, inside);
         return new DriveFile(name, name, new DateTimeOffset(info.LastWriteTimeUtc, TimeSpan.Zero), info.Length, properties);
+    }
+
+    /// <summary>
+    /// The copy with the name of the file it is written to in it (<see cref="SyncProfile.File"/>), after
+    /// <c>"format"</c>, which stays first. Text that is no JSON object is written as it is.
+    /// </summary>
+    internal static string WithFileName(string json, string fileName)
+    {
+        try
+        {
+            if (JsonNode.Parse(json) is not JsonObject copy)
+            {
+                return json;
+            }
+
+            var result = new JsonObject();
+            foreach (var (key, value) in copy.ToList())
+            {
+                copy.Remove(key);
+                if (!string.Equals(key, "file", StringComparison.Ordinal))
+                {
+                    result[key] = value;
+                }
+
+                if (result.Count == 1)
+                {
+                    result["file"] = fileName;
+                }
+            }
+
+            return result.ToJsonString(LayoutStorage.JsonOptions);
+        }
+        catch (JsonException)
+        {
+            return json;
+        }
     }
 
     /// <summary>

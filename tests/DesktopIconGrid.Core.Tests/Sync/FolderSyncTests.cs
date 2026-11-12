@@ -558,4 +558,76 @@ public sealed class FolderSyncTests : IDisposable
     {
         Assert.Equal(shown, FolderSyncClient.DisplayName(fileName, inside));
     }
+
+    [Fact]
+    public async Task A_copy_says_which_file_it_was_written_to()
+    {
+        // Review 16 U3′, the root fix: the file name is in the copy, right after "format".
+        File.WriteAllText(PathOf("config.json"), "{\"theme\":\"another program's\"}");
+        await Device("DESK").SaveProfileAsync("config", Layout("a"), CancellationToken.None);
+
+        var text = File.ReadAllText(PathOf("config (2).json"));
+        using var document = System.Text.Json.JsonDocument.Parse(text);
+        Assert.Equal(["format", "file"], document.RootElement.EnumerateObject().Take(2).Select(p => p.Name).ToArray()); // "format" stays first
+        Assert.Equal("config (2).json", SyncProfile.FromJson(text).File);
+    }
+
+    [Fact]
+    public async Task The_file_a_copy_was_written_to_is_its_original_whatever_the_numbers_say()
+    {
+        // By numbers alone the lowest-numbered file was taken for the original: wrong when a sync program's copy got
+        // the lower number.
+        File.WriteAllText(PathOf("config.json"), "{\"theme\":\"another program's\"}");
+        File.WriteAllText(PathOf("config (2).json"), "{\"theme\":\"its backup\"}");
+        await Device("DESK").SaveProfileAsync("config", Layout("a"), CancellationToken.None);
+        Assert.True(File.Exists(PathOf("config (3).json")));
+        File.Delete(PathOf("config (2).json"));
+        File.Copy(PathOf("config (3).json"), PathOf("config (2).json")); // a sync program's copy, numbered lower
+
+        var copies = await Device("LAPTOP").ListProfilesAsync(CancellationToken.None);
+
+        var original = copies.Single(c => c.FileId == "config (3).json");
+        Assert.Equal("config", original.Name);
+        Assert.False(original.IsConflictCopy);
+        var copy = copies.Single(c => c.FileId == "config (2).json");
+        Assert.Equal("config (2)", copy.Name);
+        Assert.True(copy.IsConflictCopy);
+    }
+
+    [Fact]
+    public async Task A_copy_of_a_file_that_is_gone_is_still_a_copy()
+    {
+        var desk = Device("DESK");
+        await desk.SaveProfileAsync("Work", Layout("a"), CancellationToken.None);
+        File.Move(PathOf("Work.json"), PathOf("Work (2).json")); // Keep both, then the original deleted
+
+        var listed = Assert.Single(await Device("LAPTOP").ListProfilesAsync(CancellationToken.None));
+
+        Assert.Equal("Work (2)", listed.Name); // it says Work.json inside
+    }
+
+    [Fact]
+    public async Task A_copy_saved_by_an_older_version_is_judged_by_the_file_names()
+    {
+        // No "file" in it: the rule of 0.8.1 to 0.10.0 still applies.
+        File.WriteAllText(PathOf("config.json"), "{\"theme\":\"another program's\"}");
+        File.WriteAllText(PathOf("config (2).json"), "{\"format\":1,\"name\":\"config\",\"savedBy\":\"OLD\",\"layout\":{\"items\":[]}}");
+
+        var listed = Assert.Single(await Device("LAPTOP").ListProfilesAsync(CancellationToken.None));
+
+        Assert.Equal("config", listed.Name);
+        Assert.False(listed.IsConflictCopy);
+    }
+
+    [Fact]
+    public void The_file_name_replaces_an_older_one_and_keeps_what_a_newer_version_wrote()
+    {
+        var json = FolderSyncClient.WithFileName("{\"format\":1,\"name\":\"Work\",\"file\":\"Old.json\",\"future\":{\"x\":[1,2]},\"layout\":{}}", "Work.json");
+
+        using var document = System.Text.Json.JsonDocument.Parse(json);
+        Assert.Equal(["format", "file", "name", "future", "layout"], document.RootElement.EnumerateObject().Select(p => p.Name).ToArray());
+        Assert.Equal("Work.json", document.RootElement.GetProperty("file").GetString());
+        Assert.Equal(2, document.RootElement.GetProperty("future").GetProperty("x")[1].GetInt32());
+        Assert.Equal("not json", FolderSyncClient.WithFileName("not json", "Work.json"));
+    }
 }
