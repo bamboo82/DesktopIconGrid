@@ -1403,7 +1403,10 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
 
     // ----- workspaces (0.10.0) -------------------------------------------------------------------
 
-    /// <summary>How long a started member may take to show its first window before its position is given up.</summary>
+    /// <summary>
+    /// How long a started member may take to show its window before its position is given up. A window with neither a
+    /// title bar nor a sizing border (a splash screen, as a rule) is taken only when this is over.
+    /// </summary>
     internal TimeSpan WorkspaceWindowWait { get; set; } = TimeSpan.FromSeconds(15);
 
     /// <summary>Pause between starting two members, and between looks for a window.</summary>
@@ -1417,10 +1420,10 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
         Workspaces.Same(workspace, Workspaces.MultiLaunch) ? Strings.Workspace_MultiLaunch : workspace;
 
     /// <summary>
-    /// Starts the members of <paramref name="workspace"/> that are not running (a short pause between them), then puts
-    /// every member's window where <see cref="CaptureWorkspace"/> last found it on this PC: at once for one that runs
-    /// already, as soon as its first window shows for one just started, and once more two seconds later for programs
-    /// that restore their own position late.
+    /// Starts the members of <paramref name="workspace"/> that do not show a window (a short pause between them), then
+    /// puts every member's window where <see cref="CaptureWorkspace"/> last found it on this PC: at once for one that runs
+    /// already, as soon as a window of its own shows for one just started (one that was not there before, see
+    /// <see cref="WorkspaceWindows"/>), and once more two seconds later for programs that restore their own position late.
     /// </summary>
     public async Task StartWorkspaceAsync(string workspace)
     {
@@ -1459,24 +1462,28 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
     {
         IsGroupPopupOpen = false;
         AppLog.Default.Info("Workspaces", $"Starting \"{name}\" ({members.Count} member(s))");
+        var withAppIds = members.Any(member => Tracker.PackageFamilyOf(member.Id) is not null);
+        // Which window is whose (review 24 W3): one window per member, and the windows that were there before anything
+        // was started, so a member started now does not take another one's window.
+        var windows = _windows is null ? null : new WorkspaceWindows(_windows.Windows(withAppIds));
+        var running = windows?.TakeRunning(members.Select(WorkspaceMemberOf).ToList(), anyOfTheProgram: false) ?? new HashSet<Guid>();
         var failures = new List<string>();
-        var toPlace = new List<(ShortcutItem Member, SavedWindow Target)>();
+        var started = new List<ShortcutItem>();
         foreach (var member in members)
         {
-            if (_workspacePositions.Get(name, member.Id) is { } target)
+            if (running.Contains(member.Id))
             {
-                toPlace.Add((member, target));
-            }
-
-            if (HasWorkspaceWindow(member))
-            {
-                continue; // it has a window: only moved
+                continue; // it shows a window: only moved
             }
 
             var result = _launcher.Launch(member);
             if (result.Outcome == LaunchOutcome.Failed)
             {
                 failures.Add($"{member.Name}: {result.ErrorMessage}");
+            }
+            else if (result.Outcome == LaunchOutcome.Started)
+            {
+                started.Add(member); // a failed or cancelled start shows no window to wait for
             }
 
             await Task.Delay(WorkspaceStep).ConfigureAwait(true);
@@ -1487,25 +1494,46 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
             _dialogs.Notify(Strings.Launch_SomeFailed, string.Join("\n", failures));
         }
 
-        if (_windows is null || toPlace.Count == 0)
+        if (_windows is null || windows is null)
         {
             return;
         }
 
         var placed = new List<(ShortcutItem Member, SavedWindow Target)>();
-        var waited = System.Diagnostics.Stopwatch.StartNew();
-        while (toPlace.Count > 0)
+        foreach (var member in members)
         {
-            foreach (var entry in toPlace.ToList())
+            if (running.Contains(member.Id) && _workspacePositions.Get(name, member.Id) is { } target
+                && windows.WindowOf(member.Id) is { } window && _windows.Place(window, target))
             {
-                if (_windows.Place(WorkspaceProcesses(entry.Member), Tracker.PackageFamilyOf(entry.Member.Id), entry.Target))
+                placed.Add((member, target));
+            }
+        }
+
+        // The members just started: each takes a window that was not there before, as soon as one shows. Members without
+        // a remembered position take theirs too, so that a later member of the same program does not take it, but the
+        // wait is only for the ones that have a position.
+        var waiting = started.ToList();
+        var waited = System.Diagnostics.Stopwatch.StartNew();
+        while (waiting.Any(member => _workspacePositions.Get(name, member.Id) is not null))
+        {
+            var waitIsOver = waited.Elapsed >= WorkspaceWindowWait;
+            windows.Look(_windows.Windows(withAppIds));
+            windows.TakeNew(waiting.Select(WorkspaceMemberOf).ToList(), waitIsOver);
+            foreach (var member in waiting.ToList())
+            {
+                if (windows.WindowOf(member.Id) is not { } window)
                 {
-                    toPlace.Remove(entry);
-                    placed.Add(entry);
+                    continue;
+                }
+
+                waiting.Remove(member);
+                if (_workspacePositions.Get(name, member.Id) is { } target && _windows.Place(window, target))
+                {
+                    placed.Add((member, target));
                 }
             }
 
-            if (toPlace.Count == 0 || waited.Elapsed >= WorkspaceWindowWait)
+            if (waitIsOver)
             {
                 break;
             }
@@ -1513,44 +1541,40 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
             await Task.Delay(WorkspaceStep).ConfigureAwait(true);
         }
 
-        if (toPlace.Count > 0)
+        if (waiting.Where(member => _workspacePositions.Get(name, member.Id) is not null).Select(member => member.Name).ToList() is { Count: > 0 } missed)
         {
-            AppLog.Default.Warning("Workspaces", $"No window to place for: {string.Join(", ", toPlace.Select(entry => entry.Member.Name))}");
+            AppLog.Default.Warning("Workspaces", $"No window to place for: {string.Join(", ", missed)}");
         }
 
+        // Once more a little later, for programs that restore their own position late. A member whose window closed
+        // meanwhile (a splash screen that made way for the main window) takes the window that is there now.
         await Task.Delay(TimeSpan.FromMilliseconds(Math.Min(2000, WorkspaceStep.TotalMilliseconds * 7))).ConfigureAwait(true);
-        foreach (var entry in placed)
+        windows.Look(_windows.Windows(withAppIds));
+        var startedIds = started.Select(member => member.Id).ToHashSet();
+        windows.TakeNew(placed.Where(entry => startedIds.Contains(entry.Member.Id)).Select(entry => WorkspaceMemberOf(entry.Member)).ToList(), waitIsOver: true);
+        foreach (var (member, target) in placed)
         {
-            _windows.Place(WorkspaceProcesses(entry.Member), Tracker.PackageFamilyOf(entry.Member.Id), entry.Target);
+            if (windows.WindowOf(member.Id) is { } window)
+            {
+                _windows.Place(window, target);
+            }
         }
     }
 
     /// <summary>
-    /// Whether the member already shows a window, the click path's test (review 24 R3): a process without one (closed to
-    /// the tray, a start-up boost, a suspended Store app) does not count, so the member is started. A member with
-    /// parameters counts only what the bar started for it, so two members on one program both start.
+    /// What a workspace needs to find the member's window: the processes the bar started for it, its program's processes,
+    /// its Store app, and whether it has parameters (then only what the bar started for it shows that it runs, review 24
+    /// R3: two members on one program both start).
     /// </summary>
-    private bool HasWorkspaceWindow(ShortcutItem member)
-    {
-        if (_windows is null)
-        {
-            return false;
-        }
-
-        return string.IsNullOrWhiteSpace(member.Parameters)
-            ? _windows.Capture(WorkspaceProcesses(member), Tracker.PackageFamilyOf(member.Id)) is not null
-            : _windows.Capture(Tracker.LaunchedProcessIdsOf(member.Id), null) is not null;
-    }
+    private WorkspaceMember WorkspaceMemberOf(ShortcutItem member) =>
+        new(
+            member.Id,
+            Tracker.LaunchedProcessIdsOf(member.Id),
+            Tracker.ProcessIdsOf(member.Id),
+            Tracker.PackageFamilyOf(member.Id),
+            HasParameters: !string.IsNullOrWhiteSpace(member.Parameters));
 
     private readonly HashSet<string> _startingWorkspaces = new(StringComparer.OrdinalIgnoreCase);
-
-    /// <summary>The processes whose window is the member's: the running copies of its program, and what the bar started for it (launcher stubs).</summary>
-    private IReadOnlySet<int> WorkspaceProcesses(ShortcutItem member)
-    {
-        var ids = new HashSet<int>(Tracker.ProcessIdsOf(member.Id));
-        ids.UnionWith(Tracker.LaunchedProcessIdsOf(member.Id));
-        return ids;
-    }
 
     /// <summary>Remembers where each running member's window is now, for this PC; how many were found.</summary>
     public int CaptureWorkspace(string workspace)
@@ -1559,9 +1583,13 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
         var members = Workspaces.Members(Model.AllShortcuts(), workspace);
         if (_windows is not null)
         {
+            // One window per member, its own processes' first (review 24 W3); a member with parameters that the bar did
+            // not start falls back to a window of its program that no other member has.
+            var windows = new WorkspaceWindows(_windows.Windows(members.Any(member => Tracker.PackageFamilyOf(member.Id) is not null)));
+            windows.TakeRunning(members.Select(WorkspaceMemberOf).ToList(), anyOfTheProgram: true);
             foreach (var member in members)
             {
-                if (_windows.Capture(WorkspaceProcesses(member), Tracker.PackageFamilyOf(member.Id)) is { } window)
+                if (windows.WindowOf(member.Id) is { } handle && _windows.Capture(handle) is { } window)
                 {
                     found[member.Id] = window;
                 }

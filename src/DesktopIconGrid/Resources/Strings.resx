@@ -2411,4 +2411,10 @@ Details are in {1}.</value>
   <data name="Names_AlsoSay" xml:space="preserve">
     <value>Also say (voice)</value>
   </data>
+  <data name="Mic_Unreachable" xml:space="preserve">
+    <value>The microphone could not be reached; app.log says why.</value>
+  </data>
+  <data name="Volume_Unreachable" xml:space="preserve">
+    <value>The speakers could not be reached; app.log says why.</value>
+  </data>
 </root>

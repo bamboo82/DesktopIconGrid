@@ -213,8 +213,7 @@ public sealed class NetworkHandler(SystemMonitor monitor, Func<Window?> ownerPro
             Level = CommandLevel.Ok, // a busy network is not a warning
             LabelText = "…",
         };
-        var peak = new GaugeHistory();
-        IReadOnlyDictionary<string, (long Received, long Sent)>? before = null;
+        var readings = new NetworkReadings(state);
         var watch = System.Diagnostics.Stopwatch.StartNew();
         Monitor.RegisterSlow(
             state,
@@ -223,22 +222,7 @@ public sealed class NetworkHandler(SystemMonitor monitor, Func<Window?> ownerPro
             {
                 var seconds = watch.Elapsed.TotalSeconds;
                 watch.Restart();
-                // Adapter by adapter: one that just came up does not add its lifetime counter (review 24 R4, G2).
-                var moved = before is null ? ((long Received, long Sent)?)null : NetworkRate.Delta(before, now);
-                var down = moved is { } m && seconds > 0 ? m.Received / seconds : (double?)null;
-                var up = moved is { } n && seconds > 0 ? n.Sent / seconds : (double?)null;
-                before = now;
-                state.Record(down, max: null);
-                peak.Add(down);
-                if (down is null || up is null)
-                {
-                    state.LabelText = "…";
-                    return (null, Strings.Monitor_NetworkMeasuring);
-                }
-
-                state.LabelText = NetworkRate.Short(down.Value);
-                var percent = peak.Peak > 0 ? down.Value * 100 / peak.Peak : 0;
-                return (percent, string.Format(Strings.Monitor_NetworkSummary, SystemMonitor.FormatBytes((long)down.Value), SystemMonitor.FormatBytes((long)up.Value)));
+                return readings.Show(now, seconds);
             },
             everyTicks: 1,
             recordsPercent: false);
@@ -246,6 +230,37 @@ public sealed class NetworkHandler(SystemMonitor monitor, Func<Window?> ownerPro
     }
 
     public override LaunchResult Activate(SpecialIconItem item, ActivationModifiers modifiers) => Open("ms-settings:network-status");
+}
+
+/// <summary>
+/// One network tile's readings: the counters of the last read, the peak of the last two minutes, and what each new read
+/// shows. Separate from the timer so a test can feed it counters (review 24: the sample had no test).
+/// </summary>
+internal sealed class NetworkReadings(GaugeState state)
+{
+    private readonly GaugeHistory _peak = new();
+    private IReadOnlyDictionary<string, (long Received, long Sent)>? _before;
+
+    /// <summary>Sets the tile's text for counters read <paramref name="seconds"/> after the last read; its level and tooltip.</summary>
+    public (double? Percent, string Detail) Show(IReadOnlyDictionary<string, (long Received, long Sent)> now, double seconds)
+    {
+        // Adapter by adapter: one that just came up does not add its lifetime counter (review 24 R4, G2).
+        var moved = _before is null ? ((long Received, long Sent)?)null : NetworkRate.Delta(_before, now);
+        var down = moved is { } m && seconds > 0 ? m.Received / seconds : (double?)null;
+        var up = moved is { } n && seconds > 0 ? n.Sent / seconds : (double?)null;
+        _before = now;
+        state.Record(down, max: null);
+        _peak.Add(down);
+        if (down is null || up is null)
+        {
+            state.LabelText = "…";
+            return (null, Strings.Monitor_NetworkMeasuring);
+        }
+
+        state.LabelText = NetworkRate.Short(down.Value);
+        var percent = _peak.Peak > 0 ? down.Value * 100 / _peak.Peak : 0;
+        return (percent, string.Format(Strings.Monitor_NetworkSummary, SystemMonitor.FormatBytes((long)down.Value), SystemMonitor.FormatBytes((long)up.Value)));
+    }
 }
 
 /// <summary>
@@ -281,14 +296,15 @@ public sealed class MicrophoneMuteHandler(SystemMonitor monitor, Func<Window?> o
 
     public override LaunchResult Activate(SpecialIconItem item, ActivationModifiers modifiers)
     {
-        if (MicrophoneControl.Toggle() is null)
+        var reading = MicrophoneControl.Toggle();
+        if (reading.State is null)
         {
-            return LaunchResult.Failure(Strings.Mic_None);
+            return LaunchResult.Failure(reading.Failed ? Strings.Mic_Unreachable : Strings.Mic_None);
         }
 
         if (_states.TryGetValue(item, out var state))
         {
-            var (percent, detail) = Show(state, MicrophoneControl.Read());
+            var (percent, detail) = Show(state, reading);
             state.Update(percent, detail); // at once, not at the next sample
         }
 
@@ -296,13 +312,13 @@ public sealed class MicrophoneMuteHandler(SystemMonitor monitor, Func<Window?> o
     }
 
     /// <summary>Sets the tile's text and colour for a reading and returns its level and tooltip.</summary>
-    internal static (double? Percent, string Detail) Show(GaugeState state, (bool Muted, double Volume)? reading)
+    internal static (double? Percent, string Detail) Show(GaugeState state, AudioReading reading)
     {
-        if (reading is not { } mic)
+        if (reading.State is not { } mic)
         {
             state.LabelText = "—";
             state.Level = CommandLevel.Unknown;
-            return (null, Strings.Mic_None);
+            return (null, reading.Failed ? Strings.Mic_Unreachable : Strings.Mic_None); // a failure is not "no microphone" (review 24)
         }
 
         state.LabelText = mic.Muted ? Strings.Mic_LabelMuted : Strings.Mic_LabelOn;
@@ -344,12 +360,13 @@ public sealed class VolumeHandler(SystemMonitor monitor, Func<Window?> ownerProv
 
     public override LaunchResult Activate(SpecialIconItem item, ActivationModifiers modifiers)
     {
-        if (MicrophoneControl.ToggleSpeakers() is null)
+        var reading = MicrophoneControl.ToggleSpeakers();
+        if (reading.State is null)
         {
-            return LaunchResult.Failure(Strings.Volume_None);
+            return LaunchResult.Failure(reading.Failed ? Strings.Volume_Unreachable : Strings.Volume_None);
         }
 
-        Redraw(item, MicrophoneControl.ReadSpeakers());
+        Redraw(item, reading);
         return LaunchResult.Started;
     }
 
@@ -363,7 +380,7 @@ public sealed class VolumeHandler(SystemMonitor monitor, Func<Window?> ownerProv
         return true;
     }
 
-    private void Redraw(SpecialIconItem item, (bool Muted, double Volume)? reading)
+    private void Redraw(SpecialIconItem item, AudioReading reading)
     {
         if (_states.TryGetValue(item, out var state))
         {
@@ -373,13 +390,13 @@ public sealed class VolumeHandler(SystemMonitor monitor, Func<Window?> ownerProv
     }
 
     /// <summary>Sets the tile's text and colour for a reading and returns its level and tooltip.</summary>
-    internal static (double? Percent, string Detail) Show(GaugeState state, (bool Muted, double Volume)? reading)
+    internal static (double? Percent, string Detail) Show(GaugeState state, AudioReading reading)
     {
-        if (reading is not { } speakers)
+        if (reading.State is not { } speakers)
         {
             state.LabelText = "—";
             state.Level = CommandLevel.Unknown;
-            return (null, Strings.Volume_None);
+            return (null, reading.Failed ? Strings.Volume_Unreachable : Strings.Volume_None);
         }
 
         state.LabelText = speakers.Muted ? Strings.Mic_LabelMuted : Math.Round(speakers.Volume).ToString(System.Globalization.CultureInfo.CurrentCulture);

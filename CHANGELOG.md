@@ -68,6 +68,12 @@ Google Drive, voice launch), and the fixes the review of 0.10.0 placed after the
 - A portable copy no longer adds itself to another PC's *Send to* menu. When Windows' machine id cannot be read,
   approvals of command tiles and health checks last until the program ends, since they could not be tied to the
   PC.
+- Workspaces: two members on one program (two documents, two servers) get a window each instead of both moving
+  the same one; a member that was just started takes a window that opened for it, never the user's other window
+  of that program; a splash screen is no longer resized in place of the main window.
+- The microphone and volume tiles tell "no device" apart from "Windows' audio could not be reached" (and log
+  the reason once). The Sound Replayer reads `REC` over `SOUND` instead of `REC` twice. A folder stack lists
+  files whose names start with a dot, as Explorer does, so its "N more" matches the folder.
 
 ## [0.10.0] – 2026-11-11
 

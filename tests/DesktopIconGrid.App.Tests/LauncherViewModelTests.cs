@@ -592,9 +592,38 @@ public sealed class LauncherViewModelTests : IDisposable
         Assert.Equal(@"C:\Tools\edit.exe", opened.Location);
         Assert.Equal([@"C:\a.txt"], opened.Paths);
 
+        // Shift (and a middle click, which arrives as NewInstance) opens the folder itself, as before stacks.
+        viewModel.Activate(viewModel.GetOrCreateViewModel(folder), null, ActivationModifiers.Shift);
+        Assert.Single(dialogs.Stacks);
+        Assert.Equal(_directory, Assert.Single(_launcher.Launches).Location);
+        viewModel.Activate(viewModel.GetOrCreateViewModel(folder), null, ActivationModifiers.NewInstance);
+        Assert.Single(dialogs.Stacks);
+        Assert.Equal(2, _launcher.Launches.Count);
+
         viewModel.Activate(viewModel.GetOrCreateViewModel(gone), null, ActivationModifiers.None); // not a folder here: launched as usual
         Assert.Single(dialogs.Stacks);
-        Assert.Single(_launcher.Launches);
+        Assert.Equal(3, _launcher.Launches.Count);
+        Assert.Equal(gone.Location, _launcher.Launches[^1].Location);
+    }
+
+    /// <summary>What the tracker's scan would find running: program path → process ids.</summary>
+    private static Dictionary<string, IReadOnlyList<int>> Running(params (string Path, int[] Ids)[] programs)
+    {
+        var running = new Dictionary<string, IReadOnlyList<int>>(StringComparer.OrdinalIgnoreCase);
+        foreach (var (path, ids) in programs)
+        {
+            running[path] = ids;
+        }
+
+        return running;
+    }
+
+    /// <summary>An empty file to stand for a program, so the tracker watches the shortcut's path.</summary>
+    private string Program(string name)
+    {
+        var path = Path.Combine(_directory, name);
+        File.WriteAllBytes(path, []);
+        return path;
     }
 
     [Fact]
@@ -604,6 +633,11 @@ public sealed class LauncherViewModelTests : IDisposable
         var (viewModel, model, dialogs) = Create(switcher);
         viewModel.WorkspaceStep = TimeSpan.FromMilliseconds(5);
         viewModel.WorkspaceWindowWait = TimeSpan.FromSeconds(5);
+        _launcher.Result = LaunchResult.Started;
+        var exe = Program("b.exe");
+        var shortcut = (ShortcutItem)model.Items[1];
+        shortcut.Location = exe;
+        viewModel.Tracker.Watch(shortcut);
         var b = viewModel.RootItems.Items[1];
         ((ShortcutItem)model.Items[0]).MultiLaunch = true;
 
@@ -613,23 +647,25 @@ public sealed class LauncherViewModelTests : IDisposable
         Assert.True(viewModel.IsInWorkspace(b, "work"));
 
         Assert.Equal(0, viewModel.CaptureWorkspace("Work")); // nothing has a window yet
-        var remembered = new DesktopIconGrid.Core.Launching.SavedWindow(100, 50, 800, 600, false);
-        switcher.CaptureAnswer = remembered;
+        var remembered = new SavedWindow(100, 50, 800, 600, false);
+        switcher.Shown.Add(FakeSwitcher.Window(1, 500));
+        switcher.Positions[new IntPtr(1)] = remembered;
+        viewModel.Tracker.ApplySnapshot(Running((exe, [500])));
         Assert.Equal(1, viewModel.CaptureWorkspace("Work"));
 
-        switcher.CaptureAnswer = null; // closed again: no window now
-        switcher.PlaceMissesFirst = 2; // the program takes a moment to show its window
+        // Closed again. Started, it has a process at once and shows its window two looks later.
+        switcher.Shown.Clear();
+        viewModel.Tracker.ApplySnapshot(Running((exe, [501])));
+        switcher.Coming.Add((FakeSwitcher.Window(2, 501), 2));
         await viewModel.StartWorkspaceAsync("work");
 
-        Assert.Equal([(@"C:\b.exe", false)], _launcher.Launches); // only the member, not the Multi Launch one
-        Assert.Equal([remembered, remembered], switcher.Placed); // when the window showed, and once more for late movers
+        Assert.Equal([(exe, false)], _launcher.Launches); // only the member, not the Multi Launch one
+        Assert.Equal([(new IntPtr(2), remembered), (new IntPtr(2), remembered)], switcher.Placed); // when it showed, and once more for late movers
 
         // Review 24 R3: a member is skipped only when it shows a window, not because some process of its program exists.
-        switcher.CaptureAnswer = remembered; // it has a window now
         await viewModel.StartWorkspaceAsync("Work");
         Assert.Single(_launcher.Launches); // only moved
         Assert.Equal(4, switcher.Placed.Count);
-        switcher.CaptureAnswer = null;
 
         // The Multi Launch group goes the same way and still starts a member without a window, as before 0.10.0.
         await viewModel.LaunchMultiLaunchGroupAsync();
@@ -642,6 +678,57 @@ public sealed class LauncherViewModelTests : IDisposable
         await viewModel.StartWorkspaceAsync("Work"); // gone: said, nothing started
         Assert.Equal(launchedSoFar, _launcher.Launches.Count);
         Assert.Equal(noticesBefore + 1, dialogs.Notices.Count);
+    }
+
+    [Fact]
+    public async Task Members_on_one_program_get_a_window_each_and_one_with_parameters_counts_only_what_the_bar_started_for_it()
+    {
+        var switcher = new FakeSwitcher { Answer = false };
+        var (viewModel, model, _) = Create(switcher);
+        viewModel.WorkspaceStep = TimeSpan.FromMilliseconds(5);
+        viewModel.WorkspaceWindowWait = TimeSpan.FromMilliseconds(300);
+        _launcher.Result = LaunchResult.Started;
+        var editor = Program("editor.exe");
+        var other = Program("other.exe");
+        var notes = (ShortcutItem)model.Items[0];
+        var todo = (ShortcutItem)model.Items[1];
+        var tool = (ShortcutItem)model.Items[2];
+        (notes.Location, notes.Parameters) = (editor, "notes.txt");
+        (todo.Location, todo.Parameters) = (editor, "todo.txt");
+        tool.Location = other;
+        foreach (var member in new[] { notes, todo, tool })
+        {
+            viewModel.Tracker.Watch(member);
+            DesktopIconGrid.Core.Launching.Workspaces.SetMember(member, "Work", true);
+        }
+
+        // The editor runs twice: process 11 the bar started for "notes" (window 2, on top), process 10 the user opened
+        // with another file (window 1). The tool shows window 5.
+        viewModel.Tracker.ApplySnapshot(Running((editor, [10, 11]), (other, [30])));
+        viewModel.Tracker.Remember(notes.Id, 11);
+        switcher.Shown.AddRange([FakeSwitcher.Window(2, 11), FakeSwitcher.Window(1, 10), FakeSwitcher.Window(5, 30)]);
+        var notesAt = new SavedWindow(600, 0, 500, 500, false);
+        var todoAt = new SavedWindow(0, 0, 500, 500, false);
+        (switcher.Positions[new IntPtr(2)], switcher.Positions[new IntPtr(1)], switcher.Positions[new IntPtr(5)]) = (notesAt, todoAt, new SavedWindow(0, 600, 300, 300, false));
+
+        // W3: one window each; "notes" its own although window 1 is of the same program. "todo", which the bar did not
+        // start, falls back to the window no other member has.
+        Assert.Equal(3, viewModel.CaptureWorkspace("Work"));
+
+        // The tool is closed. Started, "todo" opens in the editor's running process (10) as a new window (3).
+        switcher.Shown.RemoveAt(2);
+        viewModel.Tracker.ApplySnapshot(Running((editor, [10, 11])));
+        switcher.Coming.Add((FakeSwitcher.Window(3, 10), 1));
+        var timer = System.Diagnostics.Stopwatch.StartNew();
+        await viewModel.StartWorkspaceAsync("Work");
+
+        // L5: "notes" shows a window of what the bar started for it, so it is only moved. "todo" has parameters and the
+        // bar started nothing for it: the user's window 1 does not make it run, so it is started.
+        Assert.Equal([(editor, false), (other, false)], _launcher.Launches);
+        // "notes" moved at once, "todo" onto the new window and not the user's, both once more for late movers.
+        Assert.Equal([(2, notesAt), (3, todoAt), (2, notesAt), (3, todoAt)], switcher.Placed.Select(p => ((int)p.Window, p.Target)));
+        // The tool never shows a window: its position is given up when the wait is over, and the start still ends.
+        Assert.True(timer.Elapsed >= viewModel.WorkspaceWindowWait);
     }
 
     [Fact]

@@ -9,6 +9,92 @@ The owner relays replies.
 
 ---
 
+## 2026-11-12 (66) — Review 24's leftovers: W3, L5 and the rest of the minor list
+
+What entry 60 left of review 24. Run 159 (`569202c`) is green; this entry claims no run for its own commit.
+
+### W3: which window is whose
+
+- **Core, `Launching/WorkspaceWindows.cs`.** One object per start or capture, fed `EnumWindows` snapshots. It
+  keeps the handles that were there before anything was started, the look in which each new handle was first
+  seen, and which member took which handle. `WorkspaceMember` carries `Own` (the tracker's launched ids),
+  `Program` (launched ids plus the path scan), the package family and `HasParameters`.
+  - `TakeRunning(members, anyOfTheProgram)`: two rounds, so no member takes another's own window. Round 1: every
+    member's `Own` windows. Round 2: its `Program` windows, for members without parameters, or for all with
+    `anyOfTheProgram` (capture only). Topmost first; a framed window before a bare one.
+  - `TakeNew(members, waitIsOver)`: for members started now, in start order. Only handles not in the "before"
+    set; `Own` before `Program`; oldest first (first-seen look, then lower in the z-order). A bare window
+    (`IsBare`: neither `WS_CAPTION` nor `WS_THICKFRAME`) only with `waitIsOver`.
+  - `Look(snapshot)`: a taken handle that is gone frees its member, which takes the next window.
+- **App.** `IWindowSwitcher` now offers `Windows(withAppIds)`, `Capture(IntPtr)` and `Place(IntPtr, target)`;
+  the process-set overloads and `FirstWindow` are gone. `WindowSwitcher.Describe` reads `GWL_STYLE` for
+  `IsBare` (new `NativeMethods.GetStyle`). `StartWorkspaceMembersAsync`:
+  1. one "before" snapshot, `TakeRunning(anyOfTheProgram: false)`;
+  2. start the rest; only a `Started` outcome is waited for (a failed or cancelled start was waited on for 15 s
+     before);
+  3. place the running ones at once;
+  4. poll with one snapshot per round (W6's "one full snapshot per member per poll" is gone too). Members
+     without a remembered position take windows as well, so a later member of the same program cannot take
+     theirs, but only members with a position keep the loop going;
+  5. the late pass looks once more and lets a started member whose window closed take the current one.
+  `CaptureWorkspace` uses `TakeRunning(anyOfTheProgram: true)`.
+- **Choices to look at.**
+  - In a capture, a member with parameters that the bar did not start falls back to a free window of its
+    program. Among several, which one it gets is a guess (z-order). The alternative was to remember nothing
+    for it. Say if you prefer that.
+  - A program that opens a started member's document in a window it already shows gives no new window, so
+    nothing is moved for that member. Before, the program's topmost window was moved.
+  - "Bare" is a style heuristic. Chromium and Electron windows, custom-drawn ones included, keep
+    `WS_THICKFRAME`, so they are not bare; a fixed-size main window has `WS_CAPTION`. A program whose only
+    window is bare is placed after 15 s. A splash with a title bar is still placed, then replaced by the main
+    window when it closes, if that happens before the late pass.
+  - A splash that closes after the late pass, when the main window was placed before it, is not handled. No
+    such sequence seems likely to me.
+- **Tests.** Core (`WorkspaceWindowsTests`): own window first with the member order reversed; parameters and
+  the start rule; new windows only and oldest first, within one look and across looks; splash, main window,
+  closed window; bare windows of a program that runs; owned windows; a Store frame. App, CI only:
+  - the workspace test, rewritten on a fake that shows windows after a number of looks;
+  - `Members_on_one_program_get_a_window_each_and_one_with_parameters_counts_only_what_the_bar_started_for_it`:
+    capture, start, placement by handle, and the give-up of a member that never shows a window.
+- Not tried on a real PC, like the rest of the workspace code.
+
+### L5
+
+- `ProcessTracker.Remember(id, pid)` is the bookkeeping half of `Track`; tests call it. The App test above
+  injects process 11 as started for one member and puts processes 10 and 11 at the program's path through
+  `ApplySnapshot`. The parameters rule now has a test that sees non-empty sets: the member with its own window
+  is only moved, and the one without is started although its program shows a window.
+
+### Minor list
+
+- **Tests that said more than they checked.**
+  - The workspace test's "gone: said" now counts the notice; that was done with R3.
+  - The stack test named for Shift now presses Shift and a middle click, and checks that the folder is
+    launched, not stacked.
+  - The clock dialog has a test that keeps a stored zone, and one this PC does not know. The old test is
+    renamed `…_saves_a_picked_zone`.
+- **Untested before.**
+  - Multi Launch through the new path: in the workspace test since R3.
+  - The 15 s give-up: the new App test.
+  - The `NetworkHandler` sample: moved into `NetworkReadings` and tested. The test covers the first read, the
+    rate against the peak, and an adapter that comes up with a 5 GB counter.
+- **"No microphone was found" for every failure.** `MicrophoneControl` returns an `AudioReading` (`State`,
+  `Failed`). Only `E_NOTFOUND` from `GetDefaultAudioEndpoint`, or no device, is "not found". Any other
+  HRESULT, and any exception at the COM boundary, is `Failed`: the tile and the click say "could not be
+  reached; app.log says why" (`Mic_Unreachable`, `Volume_Unreachable`). The log gets a warning when the reason
+  changes and a debug line when it repeats. A click on the microphone now redraws from the toggle's own result,
+  not from a second read.
+- **The number style's caption twice.** The Sound Replayer's caption was `REC`, and so was its label while
+  recording. The caption is `SOUND` now. The other number tiles (CPU, RAM, BAT, NET, VOL, clock, command)
+  never repeat their caption; the mic and network tests check this.
+- **Dot files in a stack.** They are listed now, as Explorer lists them: on Windows a dot is not "hidden".
+  Hidden and system entries stay out, also as in Explorer, so "N more" counts what Explorer will show.
+  .NET on Linux reports dot files as hidden, so the Core test expects the platform's answer.
+
+### Left of review 24
+
+Nothing, apart from the gauge's "100%" under `MaxWidth="98"`, which is on the owner's list to look at.
+
 ## 2026-11-12 (65) — The voice hotkey is push to talk (the owner's request)
 
 The owner asked for a hotkey that listens while it is held and cancels when it is let go.

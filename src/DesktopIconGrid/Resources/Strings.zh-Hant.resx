@@ -2411,4 +2411,10 @@
   <data name="Names_AlsoSay" xml:space="preserve">
     <value>也可以說（語音）</value>
   </data>
+  <data name="Mic_Unreachable" xml:space="preserve">
+    <value>無法存取麥克風；原因寫在 app.log。</value>
+  </data>
+  <data name="Volume_Unreachable" xml:space="preserve">
+    <value>無法存取喇叭；原因寫在 app.log。</value>
+  </data>
 </root>

@@ -3,10 +3,24 @@ using DesktopIconGrid.Core.Diagnostics;
 
 namespace DesktopIconGrid.Services;
 
+/// <summary>One look at an audio endpoint (the microphone or the speakers).</summary>
+/// <param name="State">Whether it is muted and its level (0–100); <see langword="null"/> when there is none or it could not be read.</param>
+/// <param name="Failed">
+/// Windows' audio calls failed (the audio service is stopped, an odd driver): there may well be a device, so a tile must
+/// not say there is none (review 24). app.log has the reason.
+/// </param>
+public readonly record struct AudioReading((bool Muted, double Volume)? State, bool Failed = false)
+{
+    /// <summary>No such device.</summary>
+    public static AudioReading NotFound => default;
+
+    public static AudioReading Unreadable => new(null, Failed: true);
+}
+
 /// <summary>
 /// The default microphone's mute switch and level, through Core Audio (<c>IAudioEndpointVolume</c>): the device
-/// meetings use (the communications default), else the general default. No device, or no audio service, reads as
-/// <see langword="null"/>.
+/// meetings use (the communications default), else the general default. The same for the speakers. No device reads as
+/// <see cref="AudioReading.NotFound"/>, a failure on the way as <see cref="AudioReading.Unreadable"/>.
 /// </summary>
 public static class MicrophoneControl
 {
@@ -15,22 +29,25 @@ public static class MicrophoneControl
     private const int ERoleCommunications = 2;
     private const uint ClsCtxAll = 23;
 
-    /// <summary>Whether the microphone is muted and its level (0–100), or <see langword="null"/> when there is none.</summary>
-    public static (bool Muted, double Volume)? Read() => Read(speakers: false);
+    /// <summary><c>E_NOTFOUND</c> (<c>HRESULT_FROM_WIN32(ERROR_NOT_FOUND)</c>): what <c>GetDefaultAudioEndpoint</c> answers when there is no such device.</summary>
+    private const int ENotFound = unchecked((int)0x80070490);
 
-    /// <summary>Mutes or unmutes the microphone; the new state, or <see langword="null"/> when there is none.</summary>
-    public static bool? Toggle() => Toggle(speakers: false);
+    /// <summary>Whether the microphone is muted and its level (0–100).</summary>
+    public static AudioReading Read() => Read(speakers: false);
 
-    /// <summary>The default speakers' mute state and volume (0–100), or <see langword="null"/> when there are none.</summary>
-    public static (bool Muted, double Volume)? ReadSpeakers() => Read(speakers: true);
+    /// <summary>Mutes or unmutes the microphone; its new state.</summary>
+    public static AudioReading Toggle() => Toggle(speakers: false);
 
-    public static bool? ToggleSpeakers() => Toggle(speakers: true);
+    /// <summary>The default speakers' mute state and volume (0–100).</summary>
+    public static AudioReading ReadSpeakers() => Read(speakers: true);
+
+    public static AudioReading ToggleSpeakers() => Toggle(speakers: true);
 
     /// <summary>
     /// Turns the speakers up or down by wheel notches (<see cref="Core.SpecialIcons.VolumeSteps"/>); turning up also
-    /// unmutes. The new state, or <see langword="null"/> when there are no speakers.
+    /// unmutes. Their new state.
     /// </summary>
-    public static (bool Muted, double Volume)? StepSpeakers(int notches) =>
+    public static AudioReading StepSpeakers(int notches) =>
         Use(speakers: true, volume =>
         {
             Marshal.ThrowExceptionForHR(volume.GetMute(out var muted));
@@ -44,30 +61,31 @@ public static class MicrophoneControl
                 muted = false;
             }
 
-            return ((bool, double)?)(muted, next);
+            return (muted, next);
         });
 
-    private static (bool Muted, double Volume)? Read(bool speakers) =>
+    private static AudioReading Read(bool speakers) =>
         Use(speakers, volume =>
         {
             Marshal.ThrowExceptionForHR(volume.GetMute(out var muted));
             Marshal.ThrowExceptionForHR(volume.GetMasterVolumeLevelScalar(out var level));
-            return ((bool, double)?)(muted, Math.Clamp(level * 100.0, 0, 100));
+            return (muted, Math.Clamp(level * 100.0, 0, 100));
         });
 
-    private static bool? Toggle(bool speakers) =>
+    private static AudioReading Toggle(bool speakers) =>
         Use(speakers, volume =>
         {
             Marshal.ThrowExceptionForHR(volume.GetMute(out var muted));
             var context = Guid.Empty;
             Marshal.ThrowExceptionForHR(volume.SetMute(!muted, ref context));
-            return (bool?)!muted;
+            Marshal.ThrowExceptionForHR(volume.GetMasterVolumeLevelScalar(out var level));
+            return (!muted, Math.Clamp(level * 100.0, 0, 100)); // the tile redraws from this at once
         });
 
     private const int ERender = 0;
     private const int ERoleMultimedia = 1;
 
-    private static T? Use<T>(bool speakers, Func<IAudioEndpointVolume, T?> work)
+    private static AudioReading Use(bool speakers, Func<IAudioEndpointVolume, (bool Muted, double Volume)> work)
     {
         object? enumerator = null;
         IMMDevice? device = null;
@@ -78,30 +96,62 @@ public static class MicrophoneControl
             var devices = (IMMDeviceEnumerator)enumerator!;
             // The microphone meetings use, else the general one; the speakers sound comes out of, else the media ones.
             var (flow, first, second) = speakers ? (ERender, ERoleConsole, ERoleMultimedia) : (ECapture, ERoleCommunications, ERoleConsole);
-            if (devices.GetDefaultAudioEndpoint(flow, first, out device) != 0 || device is null)
+            var answer = devices.GetDefaultAudioEndpoint(flow, first, out device);
+            if (answer != 0 || device is null)
             {
-                if (devices.GetDefaultAudioEndpoint(flow, second, out device) != 0 || device is null)
+                answer = devices.GetDefaultAudioEndpoint(flow, second, out device);
+                if (answer != 0 || device is null)
                 {
-                    return default; // no such device
+                    if (answer is 0 or ENotFound)
+                    {
+                        return AudioReading.NotFound;
+                    }
+
+                    Note(speakers, $"0x{answer:X8}");
+                    return AudioReading.Unreadable;
                 }
             }
 
             var iid = typeof(IAudioEndpointVolume).GUID;
             Marshal.ThrowExceptionForHR(device.Activate(ref iid, ClsCtxAll, IntPtr.Zero, out endpoint));
-            return work((IAudioEndpointVolume)endpoint);
+            var state = work((IAudioEndpointVolume)endpoint);
+            _ = Interlocked.Exchange(ref LastProblem(speakers), null);
+            return new AudioReading(state);
         }
         catch (Exception ex) when (ex is not OutOfMemoryException)
         {
             // Everything at the COM boundary: ThrowExceptionForHR maps HRESULTs to many exception types
             // (E_INVALIDARG, E_NOTIMPL, E_POINTER…), and an odd audio driver must not mean an error box every 2 s.
-            AppLog.Default.Debug("Audio", $"The microphone could not be reached: {ex.Message}");
-            return default;
+            Note(speakers, ex.Message);
+            return AudioReading.Unreadable;
         }
         finally
         {
             Release(endpoint);
             Release(device);
             Release(enumerator);
+        }
+    }
+
+    private static string? _microphoneProblem;
+    private static string? _speakersProblem;
+
+    private static ref string? LastProblem(bool speakers) => ref speakers ? ref _speakersProblem : ref _microphoneProblem;
+
+    /// <summary>
+    /// Logs why the device could not be reached: a warning when the reason is new, a debug line when it repeats (the
+    /// tiles read every 2 seconds).
+    /// </summary>
+    private static void Note(bool speakers, string problem)
+    {
+        var text = $"The {(speakers ? "speakers" : "microphone")} could not be reached: {problem}";
+        if (Interlocked.Exchange(ref LastProblem(speakers), text) == text)
+        {
+            AppLog.Default.Debug("Audio", text);
+        }
+        else
+        {
+            AppLog.Default.Warning("Audio", text);
         }
     }
 

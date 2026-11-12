@@ -5,7 +5,9 @@ public sealed record StackEntry(string Path, string Name, bool IsFolder, DateTim
 
 /// <summary>
 /// The contents of a folder shortcut that opens as a stack (a small list by the icon instead of an Explorer window):
-/// what is directly in the folder, without hidden and system entries, folders first when sorted by name.
+/// what is directly in the folder, folders first when sorted by name. Hidden and system entries are left out, as Explorer
+/// leaves them out by default; a name that starts with a dot is an ordinary file on Windows and is listed, as Explorer
+/// lists it, so "N more" counts what Explorer shows (review 24). (.NET on Linux and macOS reports dot files as hidden.)
 /// </summary>
 public static class FolderStack
 {
@@ -44,7 +46,7 @@ public static class FolderStack
         {
             foreach (var info in new DirectoryInfo(folder).EnumerateFileSystemInfos())
             {
-                if ((info.Attributes & (FileAttributes.Hidden | FileAttributes.System)) != 0 || info.Name.StartsWith('.'))
+                if ((info.Attributes & (FileAttributes.Hidden | FileAttributes.System)) != 0)
                 {
                     continue;
                 }

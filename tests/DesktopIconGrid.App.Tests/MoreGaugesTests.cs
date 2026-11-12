@@ -81,17 +81,58 @@ public class MoreGaugesTests
     {
         var state = new GaugeState("MIC", GaugeStyle.Number, 101, 101, string.Empty);
 
-        var muted = MicrophoneMuteHandler.Show(state, (true, 80));
+        var muted = MicrophoneMuteHandler.Show(state, new((true, 80)));
         Assert.Equal((CommandLevel.Failed, 80d), (state.Level!.Value, muted.Percent!.Value));
         var mutedLabel = state.LabelText;
 
-        MicrophoneMuteHandler.Show(state, (false, 80));
+        MicrophoneMuteHandler.Show(state, new((false, 80)));
         Assert.Equal(CommandLevel.Ok, state.Level);
         Assert.NotEqual(mutedLabel, state.LabelText);
+        Assert.NotEqual(state.Caption, state.LabelText); // the number style shows both: not "MIC" twice
 
-        var none = MicrophoneMuteHandler.Show(state, null);
+        var none = MicrophoneMuteHandler.Show(state, AudioReading.NotFound);
         Assert.Equal(CommandLevel.Unknown, state.Level);
         Assert.Null(none.Percent);
+        Assert.Equal(DesktopIconGrid.Resources.Strings.Mic_None, none.Detail);
+
+        // Review 24: a failure on the way is not "No microphone was found".
+        var failed = MicrophoneMuteHandler.Show(state, AudioReading.Unreadable);
+        Assert.Equal(CommandLevel.Unknown, state.Level);
+        Assert.Equal(DesktopIconGrid.Resources.Strings.Mic_Unreachable, failed.Detail);
+    }
+
+    [Fact]
+    public void The_network_tile_measures_from_the_second_read_against_its_peak_and_ignores_an_adapter_that_just_came_up()
+    {
+        var state = new GaugeState("NET", GaugeStyle.Number, 101, 101, string.Empty);
+        var readings = new NetworkReadings(state);
+        Dictionary<string, (long Received, long Sent)> Counters(long received, long sent, long? other = null)
+        {
+            var counters = new Dictionary<string, (long Received, long Sent)> { ["ethernet"] = (received, sent) };
+            if (other is { } value)
+            {
+                counters["wifi"] = (value, value);
+            }
+
+            return counters;
+        }
+
+        var first = readings.Show(Counters(1_000_000, 1_000), seconds: 2);
+        Assert.Null(first.Percent); // nothing to compare with yet
+        Assert.Equal(("…", DesktopIconGrid.Resources.Strings.Monitor_NetworkMeasuring), (state.LabelText, first.Detail));
+
+        var busy = readings.Show(Counters(3_000_000, 3_000), seconds: 2); // 1,000,000 B/s down, 1,000 B/s up
+        Assert.Equal(100d, busy.Percent); // the peak so far
+        Assert.Equal(NetworkRate.Short(1_000_000), state.LabelText);
+        Assert.Equal(
+            string.Format(DesktopIconGrid.Resources.Strings.Monitor_NetworkSummary, SystemMonitor.FormatBytes(1_000_000), SystemMonitor.FormatBytes(1_000)),
+            busy.Detail);
+
+        // Half the rate is half the ring; an adapter that comes up with a lifetime counter of 5 GB adds nothing.
+        var half = readings.Show(Counters(4_000_000, 4_000, other: 5_000_000_000), seconds: 2);
+        Assert.Equal(50d, half.Percent);
+        Assert.Equal(NetworkRate.Short(500_000), state.LabelText);
+        Assert.NotEqual(state.Caption, state.LabelText);
     }
 
     [Fact]
@@ -102,9 +143,10 @@ public class MoreGaugesTests
             return;
         }
 
-        var reading = MicrophoneControl.Read(); // a build machine has none: null, no exception
+        var reading = MicrophoneControl.Read(); // a build machine has none, or no audio service: no exception
 
-        Assert.True(reading is null || reading.Value.Volume is >= 0 and <= 100);
+        Assert.True(reading.State is null || reading.State.Value.Volume is >= 0 and <= 100);
+        Assert.False(reading.State is not null && reading.Failed);
     }
 
     [Fact]
@@ -131,14 +173,17 @@ public class MoreGaugesTests
     {
         var state = new GaugeState("VOL", GaugeStyle.Ring, 101, 101, string.Empty);
 
-        var on = VolumeHandler.Show(state, (false, 42.4));
+        var on = VolumeHandler.Show(state, new((false, 42.4)));
         Assert.Equal(("42", CommandLevel.Ok, 42.4), (state.LabelText, state.Level!.Value, on.Percent!.Value));
 
-        VolumeHandler.Show(state, (true, 42));
+        VolumeHandler.Show(state, new((true, 42)));
         Assert.Equal(CommandLevel.Failed, state.Level);
         Assert.NotEqual("42", state.LabelText);
 
-        Assert.Null(VolumeHandler.Show(state, null).Percent);
+        var none = VolumeHandler.Show(state, AudioReading.NotFound);
+        Assert.Null(none.Percent);
         Assert.Equal(CommandLevel.Unknown, state.Level);
+        Assert.Equal(DesktopIconGrid.Resources.Strings.Volume_None, none.Detail);
+        Assert.Equal(DesktopIconGrid.Resources.Strings.Volume_Unreachable, VolumeHandler.Show(state, AudioReading.Unreadable).Detail);
     }
 }

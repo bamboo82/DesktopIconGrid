@@ -207,27 +207,55 @@ internal sealed class FakeSwitcher : IWindowSwitcher
         return Answer;
     }
 
-    /// <summary>What <see cref="Capture"/> answers (a workspace's window), or none.</summary>
-    public DesktopIconGrid.Core.Launching.SavedWindow? CaptureAnswer { get; set; }
+    /// <summary>The windows on the screen, topmost first.</summary>
+    public List<WindowInfo> Shown { get; } = [];
 
-    /// <summary>How many <see cref="Place"/> calls find no window before one does (a program still starting).</summary>
-    public int PlaceMissesFirst { get; set; }
+    /// <summary>Windows that show after this many more looks (a program that takes a moment to start); a new one comes to the top.</summary>
+    public List<(WindowInfo Window, int Looks)> Coming { get; } = [];
 
-    public List<DesktopIconGrid.Core.Launching.SavedWindow> Placed { get; } = [];
+    /// <summary>Where each window is: what <see cref="Capture"/> answers.</summary>
+    public Dictionary<IntPtr, DesktopIconGrid.Core.Launching.SavedWindow> Positions { get; } = [];
 
-    public DesktopIconGrid.Core.Launching.SavedWindow? Capture(IReadOnlySet<int> processIds, string? packageFamily = null) => CaptureAnswer;
+    public List<(IntPtr Window, DesktopIconGrid.Core.Launching.SavedWindow Target)> Placed { get; } = [];
 
-    public bool Place(IReadOnlySet<int> processIds, string? packageFamily, DesktopIconGrid.Core.Launching.SavedWindow target)
+    public IReadOnlyList<WindowInfo> Windows(bool withAppIds = false)
     {
-        if (PlaceMissesFirst > 0)
+        var still = new List<(WindowInfo Window, int Looks)>();
+        foreach (var (window, looks) in Coming)
         {
-            PlaceMissesFirst--;
+            if (looks <= 1)
+            {
+                Shown.Insert(0, window);
+            }
+            else
+            {
+                still.Add((window, looks - 1));
+            }
+        }
+
+        Coming.Clear();
+        Coming.AddRange(still);
+        return Shown.ToList();
+    }
+
+    public DesktopIconGrid.Core.Launching.SavedWindow? Capture(IntPtr window) =>
+        Shown.Any(shown => shown.Handle == window) ? Positions.GetValueOrDefault(window) : null;
+
+    public bool Place(IntPtr window, DesktopIconGrid.Core.Launching.SavedWindow target)
+    {
+        if (!Shown.Any(shown => shown.Handle == window))
+        {
             return false;
         }
 
-        Placed.Add(target);
+        Placed.Add((window, target));
+        Positions[window] = target;
         return true;
     }
+
+    /// <summary>A program's main window (<paramref name="bare"/>: no title bar and no border, like a splash screen).</summary>
+    public static WindowInfo Window(int handle, int processId, bool bare = false) =>
+        new(new IntPtr(handle), processId, "Main", IsVisible: true, IsCloaked: false, HasOwner: false, IsToolWindow: false, IsAppWindow: false, IsMinimized: false, IsBare: bare);
 }
 
 /// <summary>

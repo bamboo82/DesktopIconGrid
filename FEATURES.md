@@ -119,7 +119,8 @@ Extra flags kept out of the dialog's main layout but supported:
 
 **Folder stack (0.10.0).** *Properties → Advanced → Open a folder as a stack*: a click on a folder
 shortcut opens a small list at the pointer with what is directly in the folder (hidden and system entries
-left out), folders first by name, or newest first; at most 100, with a count of the rest. A click or Enter
+left out, as Explorer leaves them out; a name starting with a dot is listed, as Explorer lists it), folders
+first by name, or newest first; at most 100, with a count of the rest. A click or Enter
 opens an entry and closes the stack, a drag takes the real file out (to Explorer, a mail, a program),
 *Open folder* shows the folder in File Explorer, Esc or a click elsewhere closes it. The list follows
 changes in a local folder; a network share or mapped network drive is read when the stack opens, in the
@@ -265,16 +266,17 @@ their tooltips end with a line of the last 60 samples (`▁▂▃▅▇█`; the
 
 - **Sound Replayer** — press and hold the icon to record from the microphone (only while
   stopped); release to play the recording back in an endless loop; a single click stops it.
-  A click while stopped replays the last recording. Shows REC / LOOP on the icon.
+  A click while stopped replays the last recording. Shows REC / LOOP on the icon, over SOUND.
 
 - **Microphone** (0.10.0) — a click mutes or unmutes the default microphone (the one meetings use, else
   the general default) for every program. `ON` in green while on, `MUTE` in red while muted, `—` when
-  there is no microphone; it follows mutes made elsewhere within 2 seconds. As a ring or bar it shows
-  the microphone's level.
+  there is no microphone or Windows' audio calls fail (the tooltip says which; app.log has the reason);
+  it follows mutes made elsewhere within 2 seconds. As a ring or bar it shows the microphone's level.
 
 - **Volume** (0.11.0) — the speakers' volume as a ring, bar or number. The mouse wheel over the icon
   turns it up or down 2 points a notch (turning up unmutes), a click mutes or unmutes; red with `MUTE`
-  while muted, `—` when there are no speakers. It follows changes made elsewhere within 2 seconds.
+  while muted, `—` when there are no speakers or they cannot be reached (the tooltip says which). It
+  follows changes made elsewhere within 2 seconds.
 
 - **Voice** (0.11.0) — a click makes the bar listen for one spoken name, as the voice hotkey does (see *Voice
   launch* in §6.1). Nothing to set; its tooltip shows the language it listens in.
@@ -441,16 +443,26 @@ Multi Launch group is the built-in one (its flag is unchanged, so older versions
   apart, the members that show no window; a member with a window is only moved. A process without a
   window (closed to the tray, a start-up boost) does not count as running, and a member with parameters
   counts only what the bar started for it, so two members on one program both start.
-- *Remember window positions of "X"* records each running member's first window: its rectangle in
+- *Remember window positions of "X"* records each running member's window: its rectangle in
   screen pixels and whether it is maximised. Starting the workspace then moves each member's window
-  there: at once when it runs already, when its first window shows (up to 15 s) when it was just
+  there: at once when it runs already, when a window of its own shows (up to 15 s) when it was just
   started, and once more 2 seconds later for programs that restore their own position late. A member
   that is closed when positions are remembered keeps the place it had. A window remembered on a monitor
   that is no longer there is put on the first monitor instead.
+- Which window is whose (0.11.0): a window belongs to one member at most, so two members on one program
+  (two documents, two servers) are remembered and placed as two windows. A member's own window comes
+  first: one of the processes the bar started for it. A member the bar has just started takes only a window
+  that was not there before it was started, the oldest first, so it never takes the user's other window of
+  the same program. A window with neither a title bar nor a sizing border (a splash screen, as a rule) is
+  not moved while the program starts; it is taken only when the 15 s are over and nothing else showed. A
+  member whose window closes during the start (a splash screen that made way for the main window) takes
+  the next one. When remembering, a member with parameters that the bar did not start takes a window of
+  its program that no other member has; which one, among several, is a guess.
 - Positions are kept in `workspaces.json` in the local data folder and are never synced: they belong to
   this PC's monitors. Membership is part of the layout and syncs.
-- Limits: one window per member (the first the taskbar would show); a window of an elevated program
-  cannot be moved by the bar.
+- Limits: one window per member (one the taskbar would show); a window of an elevated program cannot be
+  moved by the bar. A program that opens a member's document in a window it already shows gets no new
+  window, so it is not moved.
 
 ## 6. Properties dialogs
 

@@ -19,6 +19,10 @@ namespace DesktopIconGrid.Core.Launching;
 /// For a Store app's frame: the app's AppUserModelID (<c>Family!AppId</c>), which the frame keeps while the app is
 /// suspended. Read only when a package family is being looked for.
 /// </param>
+/// <param name="IsBare">
+/// Neither a title bar (<c>WS_CAPTION</c>) nor a sizing border (<c>WS_THICKFRAME</c>): what a splash screen looks like.
+/// A program's main window has one or the other, custom-drawn ones included (they keep the sizing border).
+/// </param>
 public sealed record WindowInfo(
     IntPtr Handle,
     int ProcessId,
@@ -30,7 +34,8 @@ public sealed record WindowInfo(
     bool IsAppWindow,
     bool IsMinimized,
     int? HostedProcessId = null,
-    string? AppUserModelId = null);
+    string? AppUserModelId = null,
+    bool IsBare = false);
 
 public enum SwitchKind
 {

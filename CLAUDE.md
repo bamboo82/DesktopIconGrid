@@ -91,8 +91,7 @@ After removing or editing a key in the `.resx` files, run `python3 -I tools/gen_
 - Released: 0.10.0 (2026-11-11, tag `v0.10.0` on `254c55c`, release published). In progress: 0.11.0 (see the top
   of `CHANGELOG.md`). The owner skipped a 0.10.1 release; its fixes are 0.11.0's "Fixed" list.
 - Voice launch is built (REVIEW_NOTES entry 64) and has never been tried with a real microphone in the app.
-- Open: what is left of review
-  24's list (REVIEW_NOTES entry 60: W3, L5, I3's subfolder (needs the owner), a few
-  minor items).
+- Review 24's list is done (REVIEW_NOTES entry 66; I3's subfolder was answered by the owner in entry 60). The
+  reviewer has not looked at entries 57–66. Open for the owner: the CPU/disk gauge at "100%".
 - Nothing of 0.9.0 or 0.10.0 has been seen on a real bar: the owner skipped the in-app check of 0.9.0, and
   0.10.0's tiles, stack window, workspaces and Send to PC were built without one.

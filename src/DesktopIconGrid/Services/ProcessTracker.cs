@@ -144,12 +144,7 @@ public sealed class ProcessTracker : IDisposable
             return;
         }
 
-        if (!_launched.TryGetValue(id, out var pids))
-        {
-            _launched[id] = pids = [];
-        }
-
-        pids.Add(pid);
+        var pids = Remember(id, pid);
         process.Exited += (_, _) =>
         {
             int? exitCode = null;
@@ -181,6 +176,21 @@ public sealed class ProcessTracker : IDisposable
         }
 
         RunningChanged?.Invoke(this, id);
+    }
+
+    /// <summary>
+    /// Counts the process as started from the shortcut; <see cref="Track"/> also forgets it when it exits. Tests call it
+    /// directly: they cannot start the programs a bar's shortcuts name (review 24 L5).
+    /// </summary>
+    internal HashSet<int> Remember(Guid id, int processId)
+    {
+        if (!_launched.TryGetValue(id, out var pids))
+        {
+            _launched[id] = pids = [];
+        }
+
+        pids.Add(processId);
+        return pids;
     }
 
     /// <summary>

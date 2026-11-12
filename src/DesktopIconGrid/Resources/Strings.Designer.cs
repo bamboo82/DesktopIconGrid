@@ -3147,6 +3147,15 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to The microphone could not be reached; app.log says why..
+        /// </summary>
+        public static string Mic_Unreachable {
+            get {
+                return ResourceManager.GetString("Mic_Unreachable", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Bar.
         /// </summary>
         public static string Monitor_Bar {
@@ -6950,6 +6959,15 @@ namespace DesktopIconGrid.Resources {
         public static string Volume_On {
             get {
                 return ResourceManager.GetString("Volume_On", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The speakers could not be reached; app.log says why..
+        /// </summary>
+        public static string Volume_Unreachable {
+            get {
+                return ResourceManager.GetString("Volume_Unreachable", resourceCulture);
             }
         }
 

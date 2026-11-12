@@ -10,6 +10,9 @@ namespace DesktopIconGrid.Services;
 internal static partial class NativeMethods
 {
     public const int GWL_EXSTYLE = -20;
+    public const int GWL_STYLE = -16;
+    public const long WS_CAPTION = 0x00C00000; // WS_BORDER | WS_DLGFRAME: a title bar
+    public const long WS_THICKFRAME = 0x00040000; // a sizing border
     public const long WS_EX_TOOLWINDOW = 0x00000080;
     public const long WS_EX_LAYERED = 0x00080000;
     public const long WS_EX_NOACTIVATE = 0x08000000;
@@ -68,6 +71,10 @@ internal static partial class NativeMethods
     /// <summary>The window's extended style. 32-bit user32 has no GetWindowLongPtr export, so it reads GetWindowLong there.</summary>
     public static long GetExStyle(IntPtr hwnd) =>
         IntPtr.Size == 8 ? GetWindowLongPtr(hwnd, GWL_EXSTYLE).ToInt64() : GetWindowLong(hwnd, GWL_EXSTYLE);
+
+    /// <summary>The window's style (<c>WS_*</c>), read the same way as <see cref="GetExStyle"/>.</summary>
+    public static long GetStyle(IntPtr hwnd) =>
+        IntPtr.Size == 8 ? GetWindowLongPtr(hwnd, GWL_STYLE).ToInt64() : GetWindowLong(hwnd, GWL_STYLE);
 
     public static void SetExStyle(IntPtr hwnd, long style)
     {

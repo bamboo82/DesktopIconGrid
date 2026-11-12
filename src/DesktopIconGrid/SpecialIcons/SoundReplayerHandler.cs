@@ -60,7 +60,9 @@ public sealed class SoundReplayerHandler : ISpecialIconHandler
     public GaugeState CreateState(SpecialIconItem item)
     {
         var state = State(item);
-        var gauge = new GaugeState("REC", GaugeStyle.Number, warningAt: 50, criticalAt: 90, string.Empty) { IsVisible = state.Mode != Mode.Stopped };
+        // The caption names the tile; the label says what it does ("REC", "LOOP"). A "REC" caption read "REC" twice while
+        // recording (review 24).
+        var gauge = new GaugeState("SOUND", GaugeStyle.Number, warningAt: 50, criticalAt: 90, string.Empty) { IsVisible = state.Mode != Mode.Stopped };
         state.Gauge = gauge;
         ShowMode(state);
         return gauge;

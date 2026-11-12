@@ -36,7 +36,37 @@ public class ClockTileTests
     }
 
     [Fact]
-    public void The_dialog_needs_minutes_only_for_a_timer_and_keeps_the_zone()
+    public void The_dialog_keeps_a_stored_zone_and_one_this_PC_does_not_know()
+    {
+        var known = TimeZoneInfo.GetSystemTimeZones()[^1].Id;
+        var item = new SpecialIconItem { Name = "Office", Kind = SpecialIconKinds.Clock };
+        (ClockTileSettings.Default with { TimeZoneId = known }).ApplyTo(item);
+
+        var viewModel = new ClockTileViewModel(item);
+        Assert.Equal(known, viewModel.SelectedZone.Id);
+        viewModel.Name = "Office 2"; // only the name changes
+        viewModel.Apply(item);
+        Assert.Equal(known, ClockTileSettings.From(item).TimeZoneId);
+
+        // Review 24: a zone another PC knows and this one does not is offered as it is and kept on OK, not replaced by
+        // "This PC".
+        const string elsewhere = "Not/A_Zone_Here";
+        (ClockTileSettings.Default with { TimeZoneId = elsewhere }).ApplyTo(item);
+        viewModel = new ClockTileViewModel(item);
+        Assert.Equal(elsewhere, viewModel.SelectedZone.Id);
+        Assert.Equal(string.Format(DesktopIconGrid.Resources.Strings.Clock_UnknownZone, elsewhere), viewModel.SelectedZone.Label);
+        Assert.Single(viewModel.Zones, zone => zone.Id == elsewhere);
+        viewModel.Apply(item);
+        Assert.Equal(elsewhere, ClockTileSettings.From(item).TimeZoneId);
+
+        // A choice made in the dialog replaces it.
+        viewModel.SelectedZone = viewModel.Zones[0];
+        viewModel.Apply(item);
+        Assert.Null(ClockTileSettings.From(item).TimeZoneId);
+    }
+
+    [Fact]
+    public void The_dialog_needs_minutes_only_for_a_timer_and_saves_a_picked_zone()
     {
         var item = new SpecialIconItem { Name = "Tokyo", Kind = SpecialIconKinds.Clock };
         ClockTileSettings.Default.ApplyTo(item);

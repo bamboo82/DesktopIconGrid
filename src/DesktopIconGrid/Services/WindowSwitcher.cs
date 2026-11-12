@@ -13,11 +13,17 @@ public interface IWindowSwitcher
     /// </summary>
     bool TrySwitch(IReadOnlySet<int> processIds, string? packageFamily = null);
 
-    /// <summary>Where the program's first window is now (for a workspace), or <see langword="null"/> when it has none.</summary>
-    SavedWindow? Capture(IReadOnlySet<int> processIds, string? packageFamily = null) => null;
+    /// <summary>
+    /// The top-level windows now, topmost first, for a workspace to tell its members' windows apart
+    /// (<see cref="WorkspaceWindows"/>); <paramref name="withAppIds"/> also reads each Store app frame's AppUserModelID.
+    /// </summary>
+    IReadOnlyList<WindowInfo> Windows(bool withAppIds = false) => [];
 
-    /// <summary>Moves the program's first window to <paramref name="target"/>; false when it has no window (yet).</summary>
-    bool Place(IReadOnlySet<int> processIds, string? packageFamily, SavedWindow target) => false;
+    /// <summary>Where <paramref name="window"/> goes back to (its normal rectangle) and whether it is maximised; <see langword="null"/> when it is gone.</summary>
+    SavedWindow? Capture(IntPtr window) => null;
+
+    /// <summary>Moves <paramref name="window"/> to <paramref name="target"/>; false when it is gone.</summary>
+    bool Place(IntPtr window, SavedWindow target) => false;
 }
 
 /// <summary>
@@ -98,10 +104,12 @@ public sealed class WindowSwitcher : IWindowSwitcher, IDisposable
         }
     }
 
-    /// <summary>Where the program's first window goes back to (its normal rectangle) and whether it is maximised.</summary>
-    public SavedWindow? Capture(IReadOnlySet<int> processIds, string? packageFamily = null)
+    public IReadOnlyList<WindowInfo> Windows(bool withAppIds = false) => OperatingSystem.IsWindows() ? Snapshot(withAppIds) : [];
+
+    /// <summary>Where the window goes back to (its normal rectangle) and whether it is maximised.</summary>
+    public SavedWindow? Capture(IntPtr window)
     {
-        if (FirstWindow(processIds, packageFamily) is not { } window)
+        if (window == IntPtr.Zero || !OperatingSystem.IsWindows())
         {
             return null;
         }
@@ -119,10 +127,10 @@ public sealed class WindowSwitcher : IWindowSwitcher, IDisposable
         return saved is { Width: > 0, Height: > 0 } ? saved : null;
     }
 
-    public bool Place(IReadOnlySet<int> processIds, string? packageFamily, SavedWindow target)
+    public bool Place(IntPtr window, SavedWindow target)
     {
         ArgumentNullException.ThrowIfNull(target);
-        if (FirstWindow(processIds, packageFamily) is not { } window)
+        if (window == IntPtr.Zero || !OperatingSystem.IsWindows())
         {
             return false;
         }
@@ -144,17 +152,6 @@ public sealed class WindowSwitcher : IWindowSwitcher, IDisposable
         placement.ShowCmd = target.Maximized ? NativeMethods.SW_MAXIMIZE : NativeMethods.SW_SHOWNORMAL;
         placement.NormalPosition = new NativeMethods.RECT { Left = target.Left, Top = target.Top, Right = target.Left + target.Width, Bottom = target.Top + target.Height };
         return NativeMethods.SetWindowPlacement(window, ref placement);
-    }
-
-    private static IntPtr? FirstWindow(IReadOnlySet<int> processIds, string? packageFamily)
-    {
-        if ((processIds.Count == 0 && packageFamily is null) || !OperatingSystem.IsWindows())
-        {
-            return null;
-        }
-
-        var windows = WindowSwitching.WindowsOf(Snapshot(withAppIds: packageFamily is not null), processIds, packageFamily);
-        return windows.Count > 0 ? windows[0].Handle : null;
     }
 
     /// <summary>
@@ -185,6 +182,7 @@ public sealed class WindowSwitcher : IWindowSwitcher, IDisposable
         var className = ClassNameOf(hwnd);
         var isFrame = className == WindowSwitching.FrameWindowClass;
         var exStyle = NativeMethods.GetExStyle(hwnd);
+        var style = NativeMethods.GetStyle(hwnd);
         var cloaked = NativeMethods.DwmGetWindowAttribute(hwnd, NativeMethods.DWMWA_CLOAKED, out var cloakedValue, sizeof(int)) == 0 && cloakedValue != 0;
         return new WindowInfo(
             hwnd,
@@ -197,7 +195,8 @@ public sealed class WindowSwitcher : IWindowSwitcher, IDisposable
             IsAppWindow: (exStyle & NativeMethods.WS_EX_APPWINDOW) != 0,
             IsMinimized: NativeMethods.IsIconic(hwnd),
             HostedProcessId: isFrame ? HostedProcess(hwnd) : null,
-            AppUserModelId: isFrame && withAppIds ? NativeMethods.AppUserModelIdOf(hwnd) : null);
+            AppUserModelId: isFrame && withAppIds ? NativeMethods.AppUserModelIdOf(hwnd) : null,
+            IsBare: (style & NativeMethods.WS_CAPTION) != NativeMethods.WS_CAPTION && (style & NativeMethods.WS_THICKFRAME) == 0);
     }
 
     /// <summary>The process of the Store app inside a frame: the owner of its <c>Windows.UI.Core.CoreWindow</c> child.</summary>
