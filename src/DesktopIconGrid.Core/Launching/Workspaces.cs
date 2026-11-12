@@ -5,7 +5,46 @@ using DesktopIconGrid.Core.Models;
 namespace DesktopIconGrid.Core.Launching;
 
 /// <summary>Where a workspace member's window goes: its rectangle in device pixels (the restored one when maximised).</summary>
-public sealed record SavedWindow(int Left, int Top, int Width, int Height, bool Maximized);
+public sealed record SavedWindow(int Left, int Top, int Width, int Height, bool Maximized)
+{
+    /// <summary>The least of a window that has to be on a monitor for it to count as visible there (enough to grab its title bar).</summary>
+    public const int MinVisibleWidth = 120;
+
+    public const int MinVisibleHeight = 40;
+
+    /// <summary>
+    /// This position if enough of it is on one of <paramref name="monitors"/>; otherwise (the monitor it was remembered on
+    /// is gone: undocked, another screen setup) moved onto the first monitor, and made to fit it. Unchanged when no
+    /// monitor is known.
+    /// </summary>
+    public SavedWindow OnScreen(IReadOnlyList<Models.PixelRect> monitors)
+    {
+        ArgumentNullException.ThrowIfNull(monitors);
+        if (monitors.Count == 0 || monitors.Any(IsVisibleOn))
+        {
+            return this;
+        }
+
+        var first = monitors[0];
+        var width = Math.Min(Width, first.Width);
+        var height = Math.Min(Height, first.Height);
+        return this with
+        {
+            Left = first.Left + Math.Min(40, first.Width - width),
+            Top = first.Top + Math.Min(40, first.Height - height),
+            Width = width,
+            Height = height,
+        };
+    }
+
+    private bool IsVisibleOn(Models.PixelRect monitor)
+    {
+        var width = Math.Min(Left + Width, monitor.Right) - Math.Max(Left, monitor.Left);
+        var height = Math.Min(Top + Height, monitor.Bottom) - Math.Max(Top, monitor.Top);
+        var topOnScreen = Top >= monitor.Top - 8 && Top < monitor.Bottom - MinVisibleHeight; // the title bar, not only a bottom strip
+        return width >= Math.Min(MinVisibleWidth, Width) && height >= Math.Min(MinVisibleHeight, Height) && topOnScreen;
+    }
+}
 
 /// <summary>
 /// Workspaces (0.10.0): named sets of shortcuts started together, each remembering where its windows go on this PC.
@@ -105,17 +144,33 @@ public sealed class WorkspacePositions
     public SavedWindow? Get(string workspace, Guid shortcut) =>
         _positions.TryGetValue(workspace, out var windows) && windows.TryGetValue(shortcut, out var saved) ? saved : null;
 
-    /// <summary>Replaces what is kept for the workspace and saves; false when the file could not be written.</summary>
-    public bool Set(string workspace, IReadOnlyDictionary<Guid, SavedWindow> windows)
+    /// <summary>
+    /// Keeps <paramref name="windows"/> for the workspace and saves; false when the file could not be written. What was
+    /// kept before for a shortcut in <paramref name="keep"/> stays when it has no window now (a member that is closed
+    /// does not lose its place); everything else of the workspace is replaced.
+    /// </summary>
+    public bool Set(string workspace, IReadOnlyDictionary<Guid, SavedWindow> windows, IReadOnlyCollection<Guid>? keep = null)
     {
         ArgumentNullException.ThrowIfNull(windows);
-        if (windows.Count == 0)
+        var merged = new Dictionary<Guid, SavedWindow>(windows);
+        if (keep is not null && _positions.TryGetValue(workspace, out var before))
+        {
+            foreach (var id in keep)
+            {
+                if (!merged.ContainsKey(id) && before.TryGetValue(id, out var earlier))
+                {
+                    merged[id] = earlier;
+                }
+            }
+        }
+
+        if (merged.Count == 0)
         {
             _positions.Remove(workspace);
         }
         else
         {
-            _positions[workspace] = new Dictionary<Guid, SavedWindow>(windows);
+            _positions[workspace] = merged;
         }
 
         return Save();

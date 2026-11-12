@@ -123,7 +123,8 @@ left out), folders first by name, or newest first; at most 100, with a count of 
 opens an entry and closes the stack, a drag takes the real file out (to Explorer, a mail, a program),
 *Open folder* shows the folder in File Explorer, Esc or a click elsewhere closes it. The list follows
 changes in a local folder; a network share or mapped network drive is read when the stack opens, in the
-background, and a folder that cannot be read says so instead of looking empty. Shift+click or a middle click
+background, and a folder that cannot be read says so instead of looking empty. The list is not
+refreshed while the pointer is over it, so rows do not move under a click. Shift+click or a middle click
 on the icon opens the folder in File Explorer as before, as does a click when the folder is not there.
 Not in yet: dropping a file onto a program inside the stack.
 
@@ -427,11 +428,13 @@ Multi Launch group is the built-in one (its flag is unchanged, so older versions
 - *Remember window positions of "X"* records each running member's first window: its rectangle in
   screen pixels and whether it is maximised. Starting the workspace then moves each member's window
   there: at once when it runs already, when its first window shows (up to 15 s) when it was just
-  started, and once more 2 seconds later for programs that restore their own position late.
+  started, and once more 2 seconds later for programs that restore their own position late. A member
+  that is closed when positions are remembered keeps the place it had. A window remembered on a monitor
+  that is no longer there is put on the first monitor instead.
 - Positions are kept in `workspaces.json` in the local data folder and are never synced: they belong to
   this PC's monitors. Membership is part of the layout and syncs.
 - Limits: one window per member (the first the taskbar would show); a window of an elevated program
-  cannot be moved by the bar; a monitor that is gone leaves the window where Windows puts it.
+  cannot be moved by the bar.
 
 ## 6. Properties dialogs
 

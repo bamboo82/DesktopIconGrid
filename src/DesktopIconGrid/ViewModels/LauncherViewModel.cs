@@ -1550,9 +1550,10 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
     public int CaptureWorkspace(string workspace)
     {
         var found = new Dictionary<Guid, SavedWindow>();
+        var members = Workspaces.Members(Model.AllShortcuts(), workspace);
         if (_windows is not null)
         {
-            foreach (var member in Workspaces.Members(Model.AllShortcuts(), workspace))
+            foreach (var member in members)
             {
                 if (_windows.Capture(WorkspaceProcesses(member), Tracker.PackageFamilyOf(member.Id)) is { } window)
                 {
@@ -1561,7 +1562,8 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
             }
         }
 
-        var saved = found.Count == 0 || _workspacePositions.Set(workspace, found);
+        // A member that is closed right now keeps the place it had (review 24 W7); one that left the workspace does not.
+        var saved = found.Count == 0 || _workspacePositions.Set(workspace, found, keep: members.Select(member => member.Id).ToList());
         _dialogs.Notify(
             WorkspaceLabel(workspace),
             found.Count == 0 ? Strings.Workspace_NothingCaptured

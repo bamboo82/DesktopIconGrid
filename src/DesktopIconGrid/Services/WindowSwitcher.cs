@@ -109,26 +109,16 @@ public sealed class WindowSwitcher : IWindowSwitcher, IDisposable
             return null;
         }
 
-        var maximized = NativeMethods.IsZoomed(window);
-        NativeMethods.RECT rect;
-        if (maximized || NativeMethods.IsIconic(window))
-        {
-            // The rectangle it goes back to. (Workspace coordinates, which differ from screen pixels only by a taskbar at
-            // the top or left of the primary monitor: close enough for a window that is maximised anyway.)
-            var placement = new NativeMethods.WINDOWPLACEMENT { Length = System.Runtime.InteropServices.Marshal.SizeOf<NativeMethods.WINDOWPLACEMENT>() };
-            if (!NativeMethods.GetWindowPlacement(window, ref placement))
-            {
-                return null;
-            }
-
-            rect = placement.NormalPosition;
-        }
-        else if (!NativeMethods.GetWindowRect(window, out rect))
+        // Always the placement's normal rectangle (workspace coordinates), whatever state the window is in: Place hands
+        // the same rectangle back to SetWindowPlacement, so nothing is converted and nothing drifts (review 24 W1).
+        var placement = new NativeMethods.WINDOWPLACEMENT { Length = System.Runtime.InteropServices.Marshal.SizeOf<NativeMethods.WINDOWPLACEMENT>() };
+        if (!NativeMethods.GetWindowPlacement(window, ref placement))
         {
             return null;
         }
 
-        var saved = new SavedWindow(rect.Left, rect.Top, rect.Right - rect.Left, rect.Bottom - rect.Top, maximized);
+        var rect = placement.NormalPosition;
+        var saved = new SavedWindow(rect.Left, rect.Top, rect.Right - rect.Left, rect.Bottom - rect.Top, NativeMethods.IsZoomed(window));
         return saved is { Width: > 0, Height: > 0 } ? saved : null;
     }
 
@@ -140,18 +130,23 @@ public sealed class WindowSwitcher : IWindowSwitcher, IDisposable
             return false;
         }
 
-        if (NativeMethods.IsIconic(window) || NativeMethods.IsZoomed(window))
+        // A monitor that is gone since the position was remembered: onto one that is there (W2).
+        var monitors = ScreenGeometry.Monitors().Select(m => new Core.Models.PixelRect(m.Left, m.Top, m.Width, m.Height)).ToList();
+        target = target.OnScreen(monitors);
+
+        // One call sets the normal rectangle and the state together, so a queued restore cannot put the old rectangle
+        // back, and a window maximised on one monitor moves to the other before it is maximised there (W1). Asynchronous:
+        // a hung program does not block the bar (W6).
+        var placement = new NativeMethods.WINDOWPLACEMENT { Length = System.Runtime.InteropServices.Marshal.SizeOf<NativeMethods.WINDOWPLACEMENT>() };
+        if (!NativeMethods.GetWindowPlacement(window, ref placement))
         {
-            NativeMethods.ShowWindowAsync(window, NativeMethods.SW_RESTORE);
+            return false;
         }
 
-        NativeMethods.SetWindowPos(window, IntPtr.Zero, target.Left, target.Top, target.Width, target.Height, NativeMethods.SWP_NOZORDER | NativeMethods.SWP_NOACTIVATE);
-        if (target.Maximized)
-        {
-            NativeMethods.ShowWindowAsync(window, NativeMethods.SW_MAXIMIZE); // on the monitor the rectangle put it on
-        }
-
-        return true;
+        placement.Flags = NativeMethods.WPF_ASYNCWINDOWPLACEMENT;
+        placement.ShowCmd = target.Maximized ? NativeMethods.SW_MAXIMIZE : NativeMethods.SW_SHOWNORMAL;
+        placement.NormalPosition = new NativeMethods.RECT { Left = target.Left, Top = target.Top, Right = target.Left + target.Width, Bottom = target.Top + target.Height };
+        return NativeMethods.SetWindowPlacement(window, ref placement);
     }
 
     private static IntPtr? FirstWindow(IReadOnlySet<int> processIds, string? packageFamily)

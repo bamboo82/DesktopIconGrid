@@ -9,6 +9,34 @@ The owner relays replies.
 
 ---
 
+## 2026-11-12 (59) — Workspaces W1, W2, W6, W7; stacks S4
+
+Run 149 (`950f482`) is green.
+
+- **W1 + W6.** `Capture` always reads `GetWindowPlacement.NormalPosition` (workspace coordinates) and
+  `IsZoomed`. `Place` hands the same rectangle back through one `SetWindowPlacement`, with
+  `WPF_ASYNCWINDOWPLACEMENT` and `ShowCmd` SW_SHOWNORMAL or SW_MAXIMIZE. No `ShowWindowAsync` + `SetWindowPos`
+  pair is left, so a queued restore cannot undo the move, and nothing is converted between coordinate spaces
+  (your point 1 of entry 47 is closed). Positions remembered by 0.10.0 for a window that was neither maximised
+  nor minimised were screen pixels; they are off by the taskbar's size only where the taskbar is at the top or
+  left. **Not tried: it needs a real PC.**
+- **W2.** `SavedWindow.OnScreen(monitors)` leaves a position alone when at least 120 × 40 of it, including its
+  top edge, is on a monitor. Otherwise it moves it onto the first monitor and shrinks it to fit. `Place` calls
+  it with `ScreenGeometry.Monitors()`. The Core test covers: an undocked monitor, a window with only its
+  bottom strip on screen, a window partly off the right edge (left alone), and no monitors known.
+- **W7.** `WorkspacePositions.Set(workspace, windows, keep)` keeps the earlier position of a member in `keep`
+  that has no window now. `CaptureWorkspace` passes the workspace's current members, so a member that left the
+  workspace loses its place and a closed one does not. Tested.
+- **S4.** A refresh is postponed while the pointer is over the list, a button is down or a drag is under way;
+  the timer keeps trying. The selected row is selected again after a refresh. I did not do an in-place diff of
+  the rows: with the refresh held while the pointer is there, the rows cannot move under a click.
+- **Not done.**
+  - W3: two members sharing a program get the same "first window", and a splash screen satisfies the poll. It
+    needs a per-member window identity, which I have not designed.
+  - I3's subfolder for received files: where files land is the owner's "auto into Downloads"; I will ask before
+    changing it.
+  - L5, and the minor list.
+
 ## 2026-11-11 (58) — Messages for received and sent files (owner's request), S1, C1
 
 Run 148 (`c95e7ca`) is green.

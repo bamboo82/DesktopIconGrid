@@ -119,6 +119,15 @@ internal static partial class NativeMethods
     [return: MarshalAs(UnmanagedType.Bool)]
     public static extern bool GetWindowPlacement(IntPtr hwnd, ref WINDOWPLACEMENT placement);
 
+    /// <summary>Does not wait for the window's thread: a hung program cannot block the bar.</summary>
+    public const int WPF_ASYNCWINDOWPLACEMENT = 0x0004;
+
+    public const int SW_SHOWNORMAL = 1;
+
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static extern bool SetWindowPlacement(IntPtr hwnd, ref WINDOWPLACEMENT placement);
+
     [DllImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
     public static extern bool IsZoomed(IntPtr hwnd);

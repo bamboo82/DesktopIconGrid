@@ -87,7 +87,7 @@ After removing or editing a key in the `.resx` files, run `python3 -I tools/gen_
   of `CHANGELOG.md`): what the review of 0.10.0 placed after the release.
 - Open: the deferred minor list in REVIEW_NOTES entry 36; P15 (scp/sftp operands, review 17); U3′'s root fix;
   what 0.10.0 left out (Send to PC through Google Drive, voice launch, a volume tile, drop onto a program
-  inside a stack); what is left of review 24's deferred list (REVIEW_NOTES entry 51; done in 0.10.1 so far: G1, I2, I4;
-  left: W1–W3, W6, W7, S1, S4, C1, I3's subfolder, the minor list).
+  inside a stack); what is left of review 24's deferred list (REVIEW_NOTES entries 51 and 59: W3, I3's subfolder (needs the
+  owner), the minor list, L5).
 - Nothing of 0.9.0 or 0.10.0 has been seen on a real bar: the owner skipped the in-app check of 0.9.0, and
   0.10.0's tiles, stack window, workspaces and Send to PC were built without one.

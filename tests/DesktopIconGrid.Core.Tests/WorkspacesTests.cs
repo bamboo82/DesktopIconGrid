@@ -62,8 +62,15 @@ public sealed class WorkspacesTests : IDisposable
         Assert.Equal(new SavedWindow(10, 20, 800, 600, true), read.Get("work", id));
         Assert.Null(read.Get("Home", id));
 
+        // A member that is closed keeps its place; one that left the workspace loses it.
+        var other = Guid.NewGuid();
+        read.Set("Work", new Dictionary<Guid, SavedWindow> { [other] = new(1, 2, 300, 200, false) }, keep: [id, other]);
+        Assert.NotNull(read.Get("Work", id));
+        read.Set("Work", new Dictionary<Guid, SavedWindow> { [other] = new(1, 2, 300, 200, false) }, keep: [other]);
+        Assert.Null(read.Get("Work", id));
+
         read.Set("Work", new Dictionary<Guid, SavedWindow>());
-        Assert.Null(new WorkspacePositions(path).Get("Work", id));
+        Assert.Null(new WorkspacePositions(path).Get("Work", other));
 
         File.WriteAllText(path, "{ broken");
         Assert.Null(new WorkspacePositions(path).Get("Work", id)); // unreadable: nothing is moved
@@ -90,5 +97,28 @@ public sealed class WorkspacesTests : IDisposable
         Assert.True(Workspaces.IsMember(a, "Work")); // listed, and found under the listed name
         Assert.Null(Workspaces.Normalize("Wo\u200Brk"));
         Assert.Null(Workspaces.Normalize("Work\u202E"));
+    }
+
+    [Fact]
+    public void A_window_remembered_on_a_monitor_that_is_gone_is_put_on_one_that_is_there()
+    {
+        var laptop = new PixelRect(0, 0, 1920, 1080);
+        var external = new PixelRect(1920, 0, 2560, 1440);
+        var onExternal = new SavedWindow(2400, 200, 2000, 1300, true);
+
+        Assert.Equal(onExternal, onExternal.OnScreen([laptop, external])); // still there: untouched
+        Assert.Equal(onExternal, onExternal.OnScreen([])); // nothing known: untouched
+
+        var moved = onExternal.OnScreen([laptop]); // undocked
+        Assert.True(moved.Left >= 0 && moved.Left + moved.Width <= 1920);
+        Assert.True(moved.Top >= 0 && moved.Top + moved.Height <= 1080);
+        Assert.True(moved.Maximized);
+
+        // Only a strip of its bottom on screen is not "visible": the title bar could not be grabbed.
+        var above = new SavedWindow(100, -900, 800, 950, false);
+        Assert.NotEqual(above, above.OnScreen([laptop]));
+        // Partly off the right edge with its title bar on screen is fine.
+        var partly = new SavedWindow(1700, 100, 800, 600, false);
+        Assert.Equal(partly, partly.OnScreen([laptop]));
     }
 }

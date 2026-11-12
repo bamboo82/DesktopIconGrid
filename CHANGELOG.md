@@ -18,6 +18,11 @@ What the review of 0.10.0 placed after the release.
 - A folder stack on a network share or mapped drive no longer freezes the bar while the share wakes up, and a
   folder that cannot be read says so instead of "This folder is empty".
 - A clock tile on "this PC's time" follows a change of Windows' time zone without a restart.
+- Workspaces: a window's place and its maximised state are set in one step, so a window maximised on one
+  monitor moves to the monitor it was remembered on; a window remembered on a monitor that is gone is put on
+  one that is there; a member that is closed when positions are remembered keeps the place it had.
+- A folder stack does not refresh while the pointer is over it, so a finished download no longer moves the
+  rows under a click.
 
 ## [0.10.0] – 2026-11-11
 

@@ -62,7 +62,7 @@ public partial class StackWindow : Window
         Title = name;
         Caption.Text = name;
         List.ItemsSource = _rows;
-        _refresh = new DispatcherTimer(TimeSpan.FromMilliseconds(400), DispatcherPriority.Background, (_, _) => { _refresh!.Stop(); Fill(); }, Dispatcher);
+        _refresh = new DispatcherTimer(TimeSpan.FromMilliseconds(400), DispatcherPriority.Background, (_, _) => RefreshWhenSafe(), Dispatcher);
         _refresh.Stop();
         Deactivated += (_, _) => Dismiss();
         Closing += (_, _) => _closing = true; // Alt+F4: the deactivation that follows must not close it again
@@ -120,6 +120,22 @@ public partial class StackWindow : Window
     }
 
     /// <summary>
+    /// A change in the folder: the list is read again, but not while the pointer is over it or a button is down. A
+    /// finished download would otherwise move the rows just before a click, which then opens another file (review 24 S4).
+    /// The timer keeps running and tries again until the pointer has left.
+    /// </summary>
+    private void RefreshWhenSafe()
+    {
+        if (List.IsMouseOver || Mouse.LeftButton == MouseButtonState.Pressed || _dragging)
+        {
+            return; // tried again at the next tick
+        }
+
+        _refresh.Stop();
+        Fill();
+    }
+
+    /// <summary>
     /// Lists the folder on a worker thread (a share that sleeps must not freeze the bar, review 24 S1) and shows the
     /// rows when the list is there. A later call replaces an earlier one still under way.
     /// </summary>
@@ -144,12 +160,18 @@ public partial class StackWindow : Window
             return;
         }
 
+        var selected = (List.SelectedItem as StackRow)?.Path;
         _rows.Clear();
         foreach (var entry in entries)
         {
             var row = new StackRow(entry);
             _rows.Add(row);
             _ = LoadIconAsync(row);
+        }
+
+        if (selected is not null && _rows.FirstOrDefault(row => string.Equals(row.Path, selected, StringComparison.OrdinalIgnoreCase)) is { } again)
+        {
+            List.SelectedItem = again; // the keyboard's place survives a refresh
         }
 
         Empty.Text = total == FolderStack.Unreadable ? Strings.Stack_Unreadable : Strings.Stack_Empty;
