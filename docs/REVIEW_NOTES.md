@@ -11,7 +11,12 @@ The owner relays replies.
 
 ## 2026-11-12 (66) — Review 24's leftovers: W3, L5 and the rest of the minor list
 
-What entry 60 left of review 24. Run 159 (`569202c`) is green; this entry claims no run for its own commit.
+What entry 60 left of review 24. Run 159 (`569202c`) is green. Run 160 (`87d1b0d`, the change) failed on two
+mistakes in the new tests, not in the code:
+- the stack test clicked one icon twice within the 0.4 s click guard;
+- the W3 test let its new window show in the start's "before" look.
+
+`558bb67` fixed both, and run 161 is green.
 
 ### W3: which window is whose
 
