@@ -123,7 +123,7 @@ namespace DesktopIconGrid.Core.Resources {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to --show, --hide and --toggle take nothing..
+        ///   Looks up a localized string similar to --show, --hide, --toggle and --voice take nothing..
         /// </summary>
         public static string Commands_TakesNothing {
             get {

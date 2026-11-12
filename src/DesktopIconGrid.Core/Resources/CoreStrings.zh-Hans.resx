@@ -125,7 +125,7 @@
     <value>--add 至少需要一个路径。</value>
   </data>
   <data name="Commands_NotUnderstood" xml:space="preserve">
-    <value>无法识别“{0}”。请使用 --add &lt;路径&gt;… [--group &lt;名称&gt;]、--launch &lt;名称&gt;、--workspace &lt;名称&gt;、--show、--hide 或 --toggle。</value>
+    <value>无法识别“{0}”。请使用 --add &lt;路径&gt;… [--group &lt;名称&gt;]、--launch &lt;名称&gt;、--workspace &lt;名称&gt;、--show、--hide、--toggle 或 --voice。</value>
   </data>
   <data name="Commands_TooMany" xml:space="preserve">
     <value>一次超过 {0} 个命令。</value>
@@ -140,6 +140,6 @@
     <value>组名称为空、过长，或包含换行。</value>
   </data>
   <data name="Commands_TakesNothing" xml:space="preserve">
-    <value>--show、--hide 和 --toggle 不接受任何参数。</value>
+    <value>--show、--hide、--toggle 和 --voice 不接受任何参数。</value>
   </data>
 </root>

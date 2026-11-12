@@ -73,6 +73,9 @@ public sealed class SettingsViewModel : ObservableObject
         _backgroundColor = current.BackgroundColor;
         _toggleHotkey = current.ToggleHotkey ?? string.Empty;
         _pointerHotkey = current.ShowAtPointerHotkey ?? string.Empty;
+        _voiceHotkey = current.VoiceHotkey ?? string.Empty;
+        VoiceLanguages = VoiceLanguageOptions(InstalledVoiceLanguages(), current.VoiceLanguage);
+        _selectedVoiceLanguage = VoiceLanguages.FirstOrDefault(l => string.Equals(l.Id, current.VoiceLanguage, StringComparison.OrdinalIgnoreCase)) ?? VoiceLanguages[0];
         WindowKeyRows = Enum.GetValues<WindowKeyAction>().Select(action => new WindowKeyRow(action, WindowKeys.For(current, action))).ToList();
         _transparency = LauncherSettings.MaxOpacity - current.Opacity;
         _closeToTray = current.CloseToTray;
@@ -336,6 +339,78 @@ public sealed class SettingsViewModel : ObservableObject
 
     public bool HasPointerHotkey => _pointerHotkey.Length > 0;
 
+    // ----- voice launch ------------------------------------------------------------------------------
+
+    private string _voiceHotkey;
+    private LanguageOption _selectedVoiceLanguage;
+
+    /// <summary>The recognisers of this PC; tests set their own list.</summary>
+    internal static Func<IReadOnlyList<string>> InstalledVoiceLanguages { get; set; } = () => new VoiceEar().InstalledLanguages();
+
+    /// <summary>Text form of the voice hotkey; empty for none.</summary>
+    public string VoiceHotkey
+    {
+        get => _voiceHotkey;
+        set
+        {
+            if (SetProperty(ref _voiceHotkey, value?.Trim() ?? string.Empty))
+            {
+                OnPropertyChanged(nameof(HasVoiceHotkey));
+                OnHotkeysChanged();
+            }
+        }
+    }
+
+    public bool HasVoiceHotkey => _voiceHotkey.Length > 0;
+
+    /// <summary>The voice hotkey is one of the other two (however it is spelled): Windows would refuse it.</summary>
+    public bool IsVoiceHotkeySame =>
+        HotkeyGesture.TryParse(_voiceHotkey, out var voice)
+        && ((HotkeyGesture.TryParse(_toggleHotkey, out var toggle) && voice == toggle) || (HotkeyGesture.TryParse(_pointerHotkey, out var pointer) && voice == pointer));
+
+    public bool IsVoiceHotkeyValid =>
+        (_voiceHotkey.Length == 0 || (HotkeyGesture.TryParse(_voiceHotkey, out _) && WindowKeyUsing(_voiceHotkey) is null)) && !IsVoiceHotkeySame;
+
+    public string? VoiceHotkeyClash => WindowKeyUsing(_voiceHotkey) is { } action ? string.Format(Strings.Settings_HotkeyUsedInBar, _voiceHotkey, action) : null;
+
+    public bool HasVoiceHotkeyClash => VoiceHotkeyClash is not null;
+
+    /// <summary>"Same as the bar", then the recognisers this PC has, then the saved one when this PC has none for it (so saving here keeps it for the PC that has).</summary>
+    public IReadOnlyList<LanguageOption> VoiceLanguages { get; }
+
+    public LanguageOption SelectedVoiceLanguage
+    {
+        get => _selectedVoiceLanguage;
+        set => SetProperty(ref _selectedVoiceLanguage, value ?? VoiceLanguages[0]);
+    }
+
+    /// <summary>Whether this PC has a recogniser at all; without one the hint says so.</summary>
+    public bool HasNoVoiceRecogniser => VoiceLanguages.Count == 1 || (VoiceLanguages.Count == 2 && VoiceLanguages[1].Name.EndsWith('?'));
+
+    internal static IReadOnlyList<LanguageOption> VoiceLanguageOptions(IReadOnlyList<string> installed, string? saved)
+    {
+        var options = new List<LanguageOption> { new(string.Empty, Strings.Settings_VoiceLanguageAuto) };
+        options.AddRange(installed.Select(name => new LanguageOption(name, NameOfCulture(name))));
+        if (!string.IsNullOrWhiteSpace(saved) && !installed.Contains(saved.Trim(), StringComparer.OrdinalIgnoreCase))
+        {
+            options.Add(new LanguageOption(saved.Trim(), saved.Trim() + " ?"));
+        }
+
+        return options;
+    }
+
+    private static string NameOfCulture(string name)
+    {
+        try
+        {
+            return $"{System.Globalization.CultureInfo.GetCultureInfo(name).NativeName} ({name})";
+        }
+        catch (System.Globalization.CultureNotFoundException)
+        {
+            return name;
+        }
+    }
+
     /// <summary>Both hotkeys are set to the same combination (however it is spelled): Windows would refuse the second.</summary>
     public bool IsPointerHotkeySame =>
         HotkeyGesture.TryParse(_pointerHotkey, out var pointer) && HotkeyGesture.TryParse(_toggleHotkey, out var toggle) && pointer == toggle;
@@ -356,7 +431,7 @@ public sealed class SettingsViewModel : ObservableObject
     public string? WindowKeyUsing(string hotkey) =>
         string.IsNullOrWhiteSpace(hotkey) ? null : WindowKeyRows.FirstOrDefault(row => HotkeyGesture.SameCombination(row.Text, hotkey))?.Label;
 
-    public bool CanSave => (!IsCustomTheme || IsColorValid) && IsHotkeyValid && IsPointerHotkeyValid;
+    public bool CanSave => (!IsCustomTheme || IsColorValid) && IsHotkeyValid && IsPointerHotkeyValid && IsVoiceHotkeyValid;
 
     private void OnHotkeysChanged()
     {
@@ -367,6 +442,10 @@ public sealed class SettingsViewModel : ObservableObject
         OnPropertyChanged(nameof(IsHotkeyValid));
         OnPropertyChanged(nameof(IsPointerHotkeySame));
         OnPropertyChanged(nameof(IsPointerHotkeyValid));
+        OnPropertyChanged(nameof(VoiceHotkeyClash));
+        OnPropertyChanged(nameof(HasVoiceHotkeyClash));
+        OnPropertyChanged(nameof(IsVoiceHotkeySame));
+        OnPropertyChanged(nameof(IsVoiceHotkeyValid));
         OnPropertyChanged(nameof(CanSave));
     }
 
@@ -390,7 +469,7 @@ public sealed class SettingsViewModel : ObservableObject
         if (text.Length > 0)
         {
             var taken = WindowKeyRows.FirstOrDefault(other => other != row && SameKey(other.Text, text))?.Label
-                        ?? (SameKey(_toggleHotkey, text) ? Strings.WindowKey_ToggleHotkey : SameKey(_pointerHotkey, text) ? Strings.WindowKey_PointerHotkey : null);
+                        ?? (SameKey(_toggleHotkey, text) ? Strings.WindowKey_ToggleHotkey : SameKey(_pointerHotkey, text) ? Strings.WindowKey_PointerHotkey : SameKey(_voiceHotkey, text) ? Strings.WindowKey_VoiceHotkey : null);
             if (taken is not null)
             {
                 return string.Format(Strings.Settings_WindowKeyInUse, text, taken);
@@ -418,6 +497,8 @@ public sealed class SettingsViewModel : ObservableObject
         settings.FluentDialogs = _fluentDialogs;
         settings.ToggleHotkey = IsHotkeyValid && HasHotkey ? _toggleHotkey : null;
         settings.ShowAtPointerHotkey = IsPointerHotkeyValid && HasPointerHotkey ? _pointerHotkey : null;
+        settings.VoiceHotkey = IsVoiceHotkeyValid && HasVoiceHotkey ? _voiceHotkey : null;
+        settings.VoiceLanguage = _selectedVoiceLanguage.Id.Length == 0 ? null : _selectedVoiceLanguage.Id;
         settings.WindowKeys = WindowKeys.Overrides(WindowKeyRows.ToDictionary(row => row.Action, row => row.Text));
         if (_original.WindowKeys?.Where(pair => !Enum.TryParse<WindowKeyAction>(pair.Key, out _)).ToList() is { Count: > 0 } unknown)
         {

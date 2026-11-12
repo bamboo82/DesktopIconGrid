@@ -221,6 +221,38 @@
                      Visibility="{Binding HasPointerHotkeyClash, Converter={StaticResource BoolToVisibility}}" />
         </StackPanel>
 
+        <!-- Voice launch: its hotkey and the recogniser's language -->
+        <TextBlock Grid.Row="14" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Settings_VoiceHotkey}" Margin="0,0,12,10" VerticalAlignment="Top" />
+        <StackPanel Grid.Row="14" Grid.Column="1" Margin="0,0,0,10">
+          <DockPanel>
+            <Button DockPanel.Dock="Right" Content="{x:Static r:Strings.Common_Clear}" Padding="10,3" Margin="8,0,0,0" Click="ClearVoiceHotkey_Click"
+                    IsEnabled="{Binding HasVoiceHotkey}" />
+            <TextBox x:Name="VoiceHotkeyBox" Padding="4,3" VerticalContentAlignment="Center" IsReadOnly="True" Cursor="Arrow"
+                     Text="{Binding VoiceHotkey, Mode=OneWay}"
+                     PreviewKeyDown="HotkeyBox_PreviewKeyDown"
+                     ToolTip="{x:Static r:Strings.Settings_HotkeyToolTip}"
+                     AutomationProperties.Name="{x:Static r:Strings.Settings_VoiceHotkeyName}" />
+          </DockPanel>
+          <TextBlock Style="{StaticResource DialogHint}" Margin="0,6,0,0" TextWrapping="Wrap"
+                     Text="{x:Static r:Strings.Settings_VoiceHotkeyHint}" />
+          <TextBlock Foreground="{DynamicResource WarningBrush}" TextWrapping="Wrap"
+                     Text="{x:Static r:Strings.Settings_VoiceHotkeySame}"
+                     Visibility="{Binding IsVoiceHotkeySame, Converter={StaticResource BoolToVisibility}}" />
+          <TextBlock x:Name="VoiceHotkeyWarning" Foreground="{DynamicResource WarningBrush}" TextWrapping="Wrap" Visibility="Collapsed" />
+          <TextBlock Foreground="{DynamicResource WarningBrush}" TextWrapping="Wrap" Text="{Binding VoiceHotkeyClash}"
+                     Visibility="{Binding HasVoiceHotkeyClash, Converter={StaticResource BoolToVisibility}}" />
+        </StackPanel>
+
+        <TextBlock Grid.Row="15" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Settings_VoiceLanguage}" Margin="0,0,12,10" VerticalAlignment="Top" />
+        <StackPanel Grid.Row="15" Grid.Column="1" Margin="0,0,0,10">
+          <ComboBox Width="260" HorizontalAlignment="Left" VerticalContentAlignment="Center"
+                    ItemsSource="{Binding VoiceLanguages}" SelectedItem="{Binding SelectedVoiceLanguage}" DisplayMemberPath="Name"
+                    AutomationProperties.Name="{x:Static r:Strings.Settings_VoiceLanguageName}" />
+          <TextBlock Style="{StaticResource DialogHint}" Margin="0,6,0,0" TextWrapping="Wrap" Text="{x:Static r:Strings.Settings_VoiceLanguageHint}" />
+          <TextBlock Foreground="{DynamicResource WarningBrush}" TextWrapping="Wrap" Text="{x:Static r:Strings.Settings_VoiceLanguageNone}"
+                     Visibility="{Binding HasNoVoiceRecogniser, Converter={StaticResource BoolToVisibility}}" />
+        </StackPanel>
+
         <!-- Language -->
         <TextBlock Grid.Row="12" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Settings_Language}" Margin="0,0,12,10" VerticalAlignment="Top" />
         <StackPanel Grid.Row="12" Grid.Column="1" Margin="0,0,0,10">

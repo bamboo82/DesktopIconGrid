@@ -202,6 +202,7 @@ public partial class App : Application
             new SendToDeviceHandler(_inbox.Current, dialogs, owner, Path.Combine(cacheDirectory, "pasted"), trust),
             new ClockTileHandler(dialogs.Notify, owner, Dispatcher),
             new CommandTileHandler(trust, owner, Dispatcher),
+            new VoiceHandler(() => (MainWindow as MainWindow)?.ListenForVoice(), () => (MainWindow as MainWindow)?.VoiceLanguageInUse),
         ]);
         var launcher = new LaunchService(_tracker, dialogs);
         _windows = new WindowSwitcher();

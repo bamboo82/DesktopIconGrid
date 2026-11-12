@@ -9,6 +9,71 @@ The owner relays replies.
 
 ---
 
+## 2026-11-12 (64) — Voice launch (ROADMAP #11), on the desktop recognisers
+
+Commits: `5f62e0f`, `6671613` and `c9656d9` (the trial, `tools/VoiceProbe` and FEATURES §6.1 only), then the
+commit that adds this entry (the feature).
+
+### The trial and the owner's two decisions
+
+- On the owner's PC `Windows.Media.SpeechRecognition.SpeechRecognizer` cannot be created: `0x800455A0` for
+  en-US, `0x800455BC` for zh-TW although `Language.Speech~~~zh-TW` is Installed. The desktop (SAPI)
+  recognisers for both languages are there, and through `System.Speech` they heard the names (confidence 0.93
+  to 0.97 on the hits; FEATURES §6.1 has the output).
+- The owner chose, in this session: **`System.Speech` as a package in the app** (the first one; CLAUDE.md and
+  README say so) and **the listening language as a setting that follows the bar's language by default**.
+
+### What was built
+
+- **Core, `Voice/VoiceVocabulary.cs`.**
+  - `Build` maps phrases to targets: names and `AlsoSay` phrases of shortcuts and special icons (inside groups
+    too), workspace names, and the built-in show/hide phrases. Groups and the Voice icon are left out.
+  - `Speakable` refuses a phrase without a letter or digit, over 60 characters, or failing
+    `CommandTileSettings.IsShowable`. At most 2000 phrases.
+  - `Decide`: best answer ≥ 0.80 with exactly one target starts it; otherwise the targets of answers ≥ 0.40 are
+    offered, three at most (a clearly heard phrase that several items share offers those items); else nothing.
+  - `VoiceLanguage.Pick(setting, barLanguage, installed)`.
+  - `LauncherItem.AlsoSay` (`alsoSay`, tidied by `NormalizeAlsoSay`, copied by `CopyContentFrom`),
+    `LauncherSettings.VoiceHotkey` and `VoiceLanguage`, `BarCommandKind.Voice` (`--voice`),
+    `SpecialIconKinds.Voice`. Older versions keep these as unknown properties and show the icon as unknown.
+- **App.**
+  - `VoiceEar` (`IVoiceEar`): `SpeechRecognitionEngine` for the culture, one `Choices` grammar (per-phrase
+    grammars when the list as a whole is refused, skipping the refused ones), default audio device,
+    `RecognizeAsync(Single)`, 6 s initial silence, cancel through the token. All of it in `Task.Run`. Every
+    exception but out of memory becomes a `Problem` text.
+  - `VoiceLaunch`: one listening at a time, 15 s limit, then `Decide`. An item is started with
+    `bar.Activate(bar.GetOrCreateViewModel(item), anchor: null)`, the click's path, so approvals and questions
+    apply unchanged.
+  - `VoiceWindow` (`IVoiceView`): topmost tool window, `ShowActivated="False"`, hidden between uses.
+  - `VoiceHandler` (the icon), a third `GlobalHotkey` (`VoiceIds`) in the `HotkeySet`, the two Settings rows,
+    the *Also say* column in the names table.
+- The log gets the number of answers and the best confidence, the target's kind, and failures. Not what was
+  said, and not the name started.
+
+### What to look at
+
+- **The trust boundary.** A synced bar brings `alsoSay` phrases and names. A phrase can therefore be made to
+  start another item than the user expects, but only an item already on the bar, by the click's path. I did
+  not add an approval for phrases; say if you want one.
+- `Activate` from a hotkey while another program is in front: the launch itself is what a click does, but
+  window-switching ("click a running program") then acts on a bar that is not in front. Not checked.
+- The confidence thresholds are from five trial utterances. They are constants in `VoiceVocabulary`.
+- `VoiceWindow` shows on the primary work area and is never activated; the choice buttons need the mouse.
+- The Voice icon is a text icon (the microphone emoji in Segoe UI Emoji). I have not seen it drawn.
+- `SettingsViewModel.InstalledVoiceLanguages` reads the registry when Settings opens (cached a minute in
+  `VoiceEar`).
+- Single-file publish with a package: `System.Speech.dll` is bundled like any managed assembly; the release
+  workflow is unchanged and I have not run a published build.
+
+### Tests
+
+- Core (`VoiceVocabularyTests`): the vocabulary, `Speakable`, `AlsoSay` through a copy and the file, `Decide`
+  for sure, unsure, shared and unheard, the language choice, `--voice`.
+- App, CI only (`VoiceLaunchTests`, with a stand-in ear and view): started as a click; offered and picked;
+  nothing heard, no recogniser, a failure; hide bar; the Settings options and the hotkey rule; the names table.
+- Not tested: `VoiceEar` (needs a recogniser and a microphone), `VoiceWindow`, the hotkey on a real PC, the icon.
+  Nothing of this has been heard by a real microphone inside the app; only the trial has.
+
 ## 2026-11-12 (63) — The older open items: P15, U3′'s root fix, review 21's deferred minor list
 
 The owner asked for these and for voice launch. Voice launch waits for the owner's run of `tools/VoiceProbe`

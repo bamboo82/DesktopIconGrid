@@ -24,6 +24,9 @@ public enum BarCommandKind
     Hide,
 
     Toggle,
+
+    /// <summary><c>--voice</c>: listens for one spoken name (0.11.0), as the voice hotkey does.</summary>
+    Voice,
 }
 
 /// <summary>One thing for the bar to do: <see cref="Value"/> is the path or the name, <see cref="Group"/> the group to add into.</summary>
@@ -32,7 +35,7 @@ public sealed record BarCommand(BarCommandKind Kind, string? Value = null, strin
 /// <summary>
 /// The command line of <c>DesktopIconGrid.exe</c>, and the message a second start hands to the running bar:
 /// <c>--add &lt;path&gt;… [--group &lt;name&gt;]</c> (what Explorer's <em>Send to</em> passes), <c>--launch &lt;name&gt;</c>,
-/// <c>--show</c>, <c>--hide</c>, <c>--toggle</c>; <c>--hidden</c> belongs to the start itself and is passed over. A
+/// <c>--show</c>, <c>--hide</c>, <c>--toggle</c>, <c>--voice</c>; <c>--hidden</c> belongs to the start itself and is passed over. A
 /// message is checked as strictly as a command line (<see cref="Validate"/>): the pipe only lets this Windows user in,
 /// but whatever it hands over reaches the layout.
 /// </summary>
@@ -86,6 +89,10 @@ public static class BarCommands
                     break;
                 case "--toggle":
                     commands.Add(new BarCommand(BarCommandKind.Toggle));
+                    i++;
+                    break;
+                case "--voice":
+                    commands.Add(new BarCommand(BarCommandKind.Voice));
                     i++;
                     break;
                 case "--launch":

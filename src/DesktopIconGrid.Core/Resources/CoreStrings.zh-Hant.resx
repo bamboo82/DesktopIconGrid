@@ -125,7 +125,7 @@
     <value>--add 至少需要一個路徑。</value>
   </data>
   <data name="Commands_NotUnderstood" xml:space="preserve">
-    <value>無法辨識「{0}」。請使用 --add &lt;路徑&gt;… [--group &lt;名稱&gt;]、--launch &lt;名稱&gt;、--workspace &lt;名稱&gt;、--show、--hide 或 --toggle。</value>
+    <value>無法辨識「{0}」。請使用 --add &lt;路徑&gt;… [--group &lt;名稱&gt;]、--launch &lt;名稱&gt;、--workspace &lt;名稱&gt;、--show、--hide、--toggle 或 --voice。</value>
   </data>
   <data name="Commands_TooMany" xml:space="preserve">
     <value>一次超過 {0} 個命令。</value>
@@ -140,6 +140,6 @@
     <value>群組名稱是空的、太長，或含有換行。</value>
   </data>
   <data name="Commands_TakesNothing" xml:space="preserve">
-    <value>--show、--hide 和 --toggle 不接受任何參數。</value>
+    <value>--show、--hide、--toggle 和 --voice 不接受任何參數。</value>
   </data>
 </root>

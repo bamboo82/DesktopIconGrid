@@ -53,7 +53,7 @@ internal sealed class HotkeySet
             {
                 // The same combination twice (only a hand-edited settings file; the dialog refuses it): the first keeps it.
                 gestures[i] = null;
-                refusals[i] = Strings.Settings_PointerHotkeySame;
+                refusals[i] = i >= 2 ? Strings.Settings_VoiceHotkeySame : Strings.Settings_PointerHotkeySame;
             }
         }
 

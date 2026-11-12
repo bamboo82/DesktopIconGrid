@@ -24,6 +24,8 @@ public partial class SettingsWindow : Window
 
     private void ClearPointerHotkey_Click(object sender, RoutedEventArgs e) => SetHotkey(PointerHotkeyBox, string.Empty);
 
+    private void ClearVoiceHotkey_Click(object sender, RoutedEventArgs e) => SetHotkey(VoiceHotkeyBox, string.Empty);
+
     /// <summary>Stores a captured combination in the hotkey that <paramref name="box"/> shows, and hides that box's warning.</summary>
     private void SetHotkey(TextBox box, string text)
     {
@@ -40,7 +42,11 @@ public partial class SettingsWindow : Window
             return; // RegisterHotKey would take it from the bar's window everywhere
         }
 
-        if (ReferenceEquals(box, PointerHotkeyBox))
+        if (ReferenceEquals(box, VoiceHotkeyBox))
+        {
+            viewModel.VoiceHotkey = text;
+        }
+        else if (ReferenceEquals(box, PointerHotkeyBox))
         {
             viewModel.ShowAtPointerHotkey = text;
         }
@@ -52,7 +58,8 @@ public partial class SettingsWindow : Window
         WarningOf(box).Visibility = Visibility.Collapsed;
     }
 
-    private TextBlock WarningOf(TextBox box) => ReferenceEquals(box, PointerHotkeyBox) ? PointerHotkeyHint : HotkeyHint;
+    private TextBlock WarningOf(TextBox box) =>
+        ReferenceEquals(box, VoiceHotkeyBox) ? VoiceHotkeyWarning : ReferenceEquals(box, PointerHotkeyBox) ? PointerHotkeyHint : HotkeyHint;
 
     /// <summary>
     /// Captures a key of the bar's window in its box: Backspace turns it off, Tab and Escape keep their usual work, and a

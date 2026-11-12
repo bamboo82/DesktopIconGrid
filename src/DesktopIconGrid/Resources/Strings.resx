@@ -2333,4 +2333,82 @@ Details are in {1}.</value>
   <data name="Commands_SendToPortable" xml:space="preserve">
     <value>A portable copy does not add itself to the Send to menu: the entry would stay on this PC after the drive is taken out.</value>
   </data>
+  <data name="Special_Voice_Name" xml:space="preserve">
+    <value>Voice</value>
+  </data>
+  <data name="Special_Voice_Desc" xml:space="preserve">
+    <value>Click it and say the name of an icon to start it.</value>
+  </data>
+  <data name="Voice_Title" xml:space="preserve">
+    <value>Voice launch</value>
+  </data>
+  <data name="Voice_Listening" xml:space="preserve">
+    <value>Listening… say a name</value>
+  </data>
+  <data name="Voice_ListeningIn" xml:space="preserve">
+    <value>Listening in {0}</value>
+  </data>
+  <data name="Voice_NotHeard" xml:space="preserve">
+    <value>Didn't catch that. Say a name as it is on the bar, or give it another phrase under Edit names → Also say.</value>
+  </data>
+  <data name="Voice_Starting" xml:space="preserve">
+    <value>Starting {0}</value>
+  </data>
+  <data name="Voice_Choose" xml:space="preserve">
+    <value>Which one?</value>
+  </data>
+  <data name="Voice_NoRecogniser" xml:space="preserve">
+    <value>This PC has no speech recogniser. Windows adds one with a language's speech pack: Settings → Time &amp; language → Language &amp; region → the language → Speech.</value>
+  </data>
+  <data name="Voice_NothingToSay" xml:space="preserve">
+    <value>There is nothing on the bar with a name to say yet.</value>
+  </data>
+  <data name="Voice_Problem" xml:space="preserve">
+    <value>Listening did not work: {0} Check that a microphone is the default recording device.</value>
+  </data>
+  <data name="Voice_ShowBarPhrases" xml:space="preserve">
+    <value>Show bar;Show the bar</value>
+  </data>
+  <data name="Voice_HideBarPhrases" xml:space="preserve">
+    <value>Hide bar;Hide the bar</value>
+  </data>
+  <data name="Voice_ToolTip" xml:space="preserve">
+    <value>Click, then say a name ({0})</value>
+  </data>
+  <data name="Settings_VoiceHotkey" xml:space="preserve">
+    <value>Voice hotkey:</value>
+  </data>
+  <data name="Settings_VoiceHotkeyName" xml:space="preserve">
+    <value>Voice hotkey</value>
+  </data>
+  <data name="Settings_VoiceHotkeyHint" xml:space="preserve">
+    <value>Press it anywhere, then say the name of an icon (or a workspace) to start it. The bar listens for one name each time, never all the time.</value>
+  </data>
+  <data name="Settings_VoiceHotkeySame" xml:space="preserve">
+    <value>Use a different combination from the other two hotkeys.</value>
+  </data>
+  <data name="Settings_VoiceLanguage" xml:space="preserve">
+    <value>Voice language:</value>
+  </data>
+  <data name="Settings_VoiceLanguageName" xml:space="preserve">
+    <value>Voice language</value>
+  </data>
+  <data name="Settings_VoiceLanguageAuto" xml:space="preserve">
+    <value>Same as the bar</value>
+  </data>
+  <data name="Settings_VoiceLanguageHint" xml:space="preserve">
+    <value>The speech recognisers this PC has. Names in another language are heard badly: give them another phrase under Edit names → Also say.</value>
+  </data>
+  <data name="Settings_VoiceLanguageNone" xml:space="preserve">
+    <value>This PC has no speech recogniser.</value>
+  </data>
+  <data name="Main_VoiceHotkeyTitle" xml:space="preserve">
+    <value>Voice hotkey</value>
+  </data>
+  <data name="WindowKey_VoiceHotkey" xml:space="preserve">
+    <value>Voice launch (system-wide)</value>
+  </data>
+  <data name="Names_AlsoSay" xml:space="preserve">
+    <value>Also say (voice)</value>
+  </data>
 </root>

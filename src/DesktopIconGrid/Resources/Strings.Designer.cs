@@ -2805,6 +2805,15 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Voice hotkey.
+        /// </summary>
+        public static string Main_VoiceHotkeyTitle {
+            get {
+                return ResourceManager.GetString("Main_VoiceHotkeyTitle", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to About….
         /// </summary>
         public static string Menu_About {
@@ -3530,6 +3539,15 @@ namespace DesktopIconGrid.Resources {
         public static string Names_AllItems {
             get {
                 return ResourceManager.GetString("Names_AllItems", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Also say (voice).
+        /// </summary>
+        public static string Names_AlsoSay {
+            get {
+                return ResourceManager.GetString("Names_AlsoSay", resourceCulture);
             }
         }
 
@@ -5199,6 +5217,87 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Voice hotkey:.
+        /// </summary>
+        public static string Settings_VoiceHotkey {
+            get {
+                return ResourceManager.GetString("Settings_VoiceHotkey", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Press it anywhere, then say the name of an icon (or a workspace) to start it. Th [rest of string was truncated]";.
+        /// </summary>
+        public static string Settings_VoiceHotkeyHint {
+            get {
+                return ResourceManager.GetString("Settings_VoiceHotkeyHint", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Voice hotkey.
+        /// </summary>
+        public static string Settings_VoiceHotkeyName {
+            get {
+                return ResourceManager.GetString("Settings_VoiceHotkeyName", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Use a different combination from the other two hotkeys..
+        /// </summary>
+        public static string Settings_VoiceHotkeySame {
+            get {
+                return ResourceManager.GetString("Settings_VoiceHotkeySame", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Voice language:.
+        /// </summary>
+        public static string Settings_VoiceLanguage {
+            get {
+                return ResourceManager.GetString("Settings_VoiceLanguage", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Same as the bar.
+        /// </summary>
+        public static string Settings_VoiceLanguageAuto {
+            get {
+                return ResourceManager.GetString("Settings_VoiceLanguageAuto", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The speech recognisers this PC has. Names in another language are heard badly: g [rest of string was truncated]";.
+        /// </summary>
+        public static string Settings_VoiceLanguageHint {
+            get {
+                return ResourceManager.GetString("Settings_VoiceLanguageHint", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Voice language.
+        /// </summary>
+        public static string Settings_VoiceLanguageName {
+            get {
+                return ResourceManager.GetString("Settings_VoiceLanguageName", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to This PC has no speech recogniser..
+        /// </summary>
+        public static string Settings_VoiceLanguageNone {
+            get {
+                return ResourceManager.GetString("Settings_VoiceLanguageNone", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Window:.
         /// </summary>
         public static string Settings_Window {
@@ -5456,6 +5555,24 @@ namespace DesktopIconGrid.Resources {
         public static string Special_UnknownName {
             get {
                 return ResourceManager.GetString("Special_UnknownName", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Click it and say the name of an icon to start it..
+        /// </summary>
+        public static string Special_Voice_Desc {
+            get {
+                return ResourceManager.GetString("Special_Voice_Desc", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Voice.
+        /// </summary>
+        public static string Special_Voice_Name {
+            get {
+                return ResourceManager.GetString("Special_Voice_Name", resourceCulture);
             }
         }
 
@@ -6684,6 +6801,114 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Which one?.
+        /// </summary>
+        public static string Voice_Choose {
+            get {
+                return ResourceManager.GetString("Voice_Choose", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Hide bar;Hide the bar.
+        /// </summary>
+        public static string Voice_HideBarPhrases {
+            get {
+                return ResourceManager.GetString("Voice_HideBarPhrases", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Listening… say a name.
+        /// </summary>
+        public static string Voice_Listening {
+            get {
+                return ResourceManager.GetString("Voice_Listening", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Listening in {0}.
+        /// </summary>
+        public static string Voice_ListeningIn {
+            get {
+                return ResourceManager.GetString("Voice_ListeningIn", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to This PC has no speech recogniser. Windows adds one with a language's speech pack [rest of string was truncated]";.
+        /// </summary>
+        public static string Voice_NoRecogniser {
+            get {
+                return ResourceManager.GetString("Voice_NoRecogniser", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Didn't catch that. Say a name as it is on the bar, or give it another phrase und [rest of string was truncated]";.
+        /// </summary>
+        public static string Voice_NotHeard {
+            get {
+                return ResourceManager.GetString("Voice_NotHeard", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to There is nothing on the bar with a name to say yet..
+        /// </summary>
+        public static string Voice_NothingToSay {
+            get {
+                return ResourceManager.GetString("Voice_NothingToSay", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Listening did not work: {0} Check that a microphone is the default recording dev [rest of string was truncated]";.
+        /// </summary>
+        public static string Voice_Problem {
+            get {
+                return ResourceManager.GetString("Voice_Problem", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Show bar;Show the bar.
+        /// </summary>
+        public static string Voice_ShowBarPhrases {
+            get {
+                return ResourceManager.GetString("Voice_ShowBarPhrases", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Starting {0}.
+        /// </summary>
+        public static string Voice_Starting {
+            get {
+                return ResourceManager.GetString("Voice_Starting", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Voice launch.
+        /// </summary>
+        public static string Voice_Title {
+            get {
+                return ResourceManager.GetString("Voice_Title", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Click, then say a name ({0}).
+        /// </summary>
+        public static string Voice_ToolTip {
+            get {
+                return ResourceManager.GetString("Voice_ToolTip", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Shows the speakers' volume. Turn the mouse wheel over it to change the volume; c [rest of string was truncated]";.
         /// </summary>
         public static string Volume_Desc {
@@ -6806,6 +7031,15 @@ namespace DesktopIconGrid.Resources {
         public static string WindowKey_UndoRemove {
             get {
                 return ResourceManager.GetString("WindowKey_UndoRemove", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Voice launch (system-wide).
+        /// </summary>
+        public static string WindowKey_VoiceHotkey {
+            get {
+                return ResourceManager.GetString("WindowKey_VoiceHotkey", resourceCulture);
             }
         }
 

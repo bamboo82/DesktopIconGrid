@@ -58,6 +58,8 @@
       <DataGrid.Columns>
         <DataGridTextColumn Header="{x:Static r:Strings.Names_Given}" Width="200" SortMemberPath="GivenName"
                             Binding="{Binding GivenName, UpdateSourceTrigger=PropertyChanged}" />
+        <DataGridTextColumn Header="{x:Static r:Strings.Names_AlsoSay}" Width="170" SortMemberPath="AlsoSay"
+                            Binding="{Binding AlsoSay, UpdateSourceTrigger=PropertyChanged}" />
         <DataGridTextColumn Header="{x:Static r:Strings.Names_Original}" Width="180" IsReadOnly="True" Binding="{Binding OriginalName}" />
         <DataGridTextColumn Header="{x:Static r:Strings.Names_Kind}" Width="110" IsReadOnly="True" Binding="{Binding Kind}" />
         <DataGridTextColumn Header="{x:Static r:Strings.Names_InGroup}" Width="110" IsReadOnly="True" Binding="{Binding GroupName}" />

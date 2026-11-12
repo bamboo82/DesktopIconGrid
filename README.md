@@ -3,7 +3,7 @@
 A compact launcher bar for Windows. Put programs, folders and web links on it as
 icons, arrange them in a grid, and open any of them with one click.
 
-Built with .NET 10 and WPF, with no third-party packages. The Google sign-in token is encrypted
+Built with .NET 10 and WPF. Its only package is Microsoft's `System.Speech`, for voice launch. The Google sign-in token is encrypted
 with Windows DPAPI.
 
 ## Features
@@ -24,7 +24,7 @@ with Windows DPAPI.
 - **Sound Replayer** — a special icon: press and hold to record from the microphone, release
   to loop the recording, click to stop.
 - **Edit names table** — rename all shortcuts in one sortable grid (given vs. original name);
-  these names are the future voice-command phrases.
+  these names, and the *Also say* column next to them, are what voice launch listens for.
 - **Log viewer** — a live, filterable log of what the app does: sign-ins, sync, Drive uploads
   and downloads, launches, settings changes, errors (tray → *Log viewer…*; also in `logs\app.log`).
 - **Tray icon** — show or hide the bar, reset its position when it is lost on a disconnected

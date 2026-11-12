@@ -100,6 +100,18 @@ public sealed partial class LauncherSettings
     public string? ShowAtPointerHotkey { get; set; }
 
     /// <summary>
+    /// System-wide key combination that makes the bar listen for one spoken name (voice launch, 0.11.0);
+    /// <see langword="null"/> for none (the default).
+    /// </summary>
+    public string? VoiceHotkey { get; set; }
+
+    /// <summary>
+    /// The language voice launch listens in, as a culture name (<c>zh-TW</c>, <c>en-US</c>); <see langword="null"/>
+    /// follows the bar's language where this PC has a recogniser for it.
+    /// </summary>
+    public string? VoiceLanguage { get; set; }
+
+    /// <summary>
     /// The bar window's keys that differ from their defaults (<see cref="Models.WindowKeys"/>), by action name; an empty
     /// text turns a key off. <see langword="null"/> when every key is its default.
     /// </summary>
@@ -134,6 +146,8 @@ public sealed partial class LauncherSettings
         FluentDialogs = source.FluentDialogs;
         ToggleHotkey = source.ToggleHotkey;
         ShowAtPointerHotkey = source.ShowAtPointerHotkey;
+        VoiceHotkey = source.VoiceHotkey;
+        VoiceLanguage = source.VoiceLanguage;
         WindowKeys = source.WindowKeys is null ? null : new Dictionary<string, string>(source.WindowKeys);
         Opacity = source.Opacity;
         CloseToTray = source.CloseToTray;
@@ -206,6 +220,8 @@ public sealed partial class LauncherSettings
 
         ToggleHotkey = string.IsNullOrWhiteSpace(ToggleHotkey) ? null : ToggleHotkey.Trim();
         ShowAtPointerHotkey = string.IsNullOrWhiteSpace(ShowAtPointerHotkey) ? null : ShowAtPointerHotkey.Trim();
+        VoiceHotkey = string.IsNullOrWhiteSpace(VoiceHotkey) ? null : VoiceHotkey.Trim();
+        VoiceLanguage = string.IsNullOrWhiteSpace(VoiceLanguage) || VoiceLanguage.Trim().Length > 20 ? null : VoiceLanguage.Trim();
 
         var language = Languages.FirstOrDefault(l => string.Equals(l, Language?.Trim(), StringComparison.OrdinalIgnoreCase));
         if (language is null)

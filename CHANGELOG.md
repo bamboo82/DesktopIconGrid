@@ -6,11 +6,20 @@ version numbers follow [Semantic Versioning](https://semver.org/).
 ## [0.11.0] – Unreleased
 
 What 0.10.0 left out (a volume tile, dropping a file onto a program inside a folder stack, sending files through
-Google Drive; voice launch is still to come), and the fixes the review of 0.10.0 placed after the release.
+Google Drive, voice launch), and the fixes the review of 0.10.0 placed after the release.
 0.10.1 was not released on its own: its fixes are the "Fixed" list below.
 
 ### Added
 
+- **Voice launch**: press the voice hotkey (Settings), click a *Voice* icon, or run `DesktopIconGrid.exe --voice`,
+  then say the name of an icon or a workspace to start it; "Show bar" and "Hide bar" work too. The bar listens for
+  one name each time, never all the time, on this PC only (Windows' own speech recogniser, no online service),
+  and only for the names on the bar. A name heard clearly starts; one heard less clearly is offered with the
+  other candidates; anything less starts nothing. *Edit names* has a new column, *Also say*, for other phrases
+  (several separated by `;`): a Chinese recogniser hears English product names badly, and the reverse.
+  *Voice language* in Settings picks among the recognisers the PC has (Windows adds one with a language's speech
+  pack) and follows the bar's language by default. Voice launch uses Microsoft's `System.Speech`, the app's first
+  package.
 - **Volume** tile: shows the speakers' volume; the mouse wheel over it turns the volume up and down in steps
   of 2, a click mutes or unmutes (red while muted).
 - Folder stacks: drop a file onto a program or shortcut inside a stack to open the file with it.

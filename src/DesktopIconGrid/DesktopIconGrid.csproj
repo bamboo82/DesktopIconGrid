@@ -19,6 +19,13 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- The app's only package (the owner's decision, 2026-11-12): Microsoft's wrapper over Windows' desktop speech
+         recognisers, for voice launch. The trial in FEATURES §6.1 showed the newer WinRT recogniser cannot be created
+         on the owner's PC, and this one hears the names. -->
+    <PackageReference Include="System.Speech" Version="10.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
     <InternalsVisibleTo Include="DesktopIconGrid.App.Tests" />
   </ItemGroup>
 

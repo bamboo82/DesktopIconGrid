@@ -28,6 +28,9 @@ public static class SpecialIconKinds
     /// <summary>Sends dropped files to another PC of the sync folder (0.10.0).</summary>
     public const string SendToDevice = "send-to-device";
 
+    /// <summary>A click makes the bar listen for one spoken name (voice launch, 0.11.0).</summary>
+    public const string Voice = "voice";
+
     public const string GoogleDriveBucket = "google-drive-bucket";
     public const string SoundReplayer = "sound-replayer";
 

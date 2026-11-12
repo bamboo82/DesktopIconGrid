@@ -2333,4 +2333,82 @@
   <data name="Commands_SendToPortable" xml:space="preserve">
     <value>可攜式複本不會把自己加入「傳送到」功能表：磁碟機移除後，該項目仍會留在這部電腦上。</value>
   </data>
+  <data name="Special_Voice_Name" xml:space="preserve">
+    <value>語音</value>
+  </data>
+  <data name="Special_Voice_Desc" xml:space="preserve">
+    <value>按一下，然後說出圖示的名稱即可啟動。</value>
+  </data>
+  <data name="Voice_Title" xml:space="preserve">
+    <value>語音啟動</value>
+  </data>
+  <data name="Voice_Listening" xml:space="preserve">
+    <value>聆聽中…請說出名稱</value>
+  </data>
+  <data name="Voice_ListeningIn" xml:space="preserve">
+    <value>聆聽語言：{0}</value>
+  </data>
+  <data name="Voice_NotHeard" xml:space="preserve">
+    <value>沒有聽清楚。請說出工具列上的名稱，或在「編輯名稱」→「也可以說」為它加上另一個說法。</value>
+  </data>
+  <data name="Voice_Starting" xml:space="preserve">
+    <value>正在啟動 {0}</value>
+  </data>
+  <data name="Voice_Choose" xml:space="preserve">
+    <value>哪一個？</value>
+  </data>
+  <data name="Voice_NoRecogniser" xml:space="preserve">
+    <value>這部電腦沒有語音辨識器。Windows 會隨語言的語音套件加入：設定 → 時間與語言 → 語言與地區 → 該語言 → 語音。</value>
+  </data>
+  <data name="Voice_NothingToSay" xml:space="preserve">
+    <value>工具列上還沒有可以說出名稱的項目。</value>
+  </data>
+  <data name="Voice_Problem" xml:space="preserve">
+    <value>無法聆聽：{0} 請確認預設的錄音裝置是麥克風。</value>
+  </data>
+  <data name="Voice_ShowBarPhrases" xml:space="preserve">
+    <value>顯示工具列;顯示列</value>
+  </data>
+  <data name="Voice_HideBarPhrases" xml:space="preserve">
+    <value>隱藏工具列;隱藏列</value>
+  </data>
+  <data name="Voice_ToolTip" xml:space="preserve">
+    <value>按一下，然後說出名稱（{0}）</value>
+  </data>
+  <data name="Settings_VoiceHotkey" xml:space="preserve">
+    <value>語音快速鍵：</value>
+  </data>
+  <data name="Settings_VoiceHotkeyName" xml:space="preserve">
+    <value>語音快速鍵</value>
+  </data>
+  <data name="Settings_VoiceHotkeyHint" xml:space="preserve">
+    <value>在任何地方按下，然後說出圖示（或工作區）的名稱即可啟動。每次只聆聽一個名稱，不會持續聆聽。</value>
+  </data>
+  <data name="Settings_VoiceHotkeySame" xml:space="preserve">
+    <value>請使用與另外兩個快速鍵不同的組合。</value>
+  </data>
+  <data name="Settings_VoiceLanguage" xml:space="preserve">
+    <value>語音語言：</value>
+  </data>
+  <data name="Settings_VoiceLanguageName" xml:space="preserve">
+    <value>語音語言</value>
+  </data>
+  <data name="Settings_VoiceLanguageAuto" xml:space="preserve">
+    <value>與工具列相同</value>
+  </data>
+  <data name="Settings_VoiceLanguageHint" xml:space="preserve">
+    <value>這部電腦擁有的語音辨識器。其他語言的名稱不容易聽懂：請在「編輯名稱」→「也可以說」為它們加上另一個說法。</value>
+  </data>
+  <data name="Settings_VoiceLanguageNone" xml:space="preserve">
+    <value>這部電腦沒有語音辨識器。</value>
+  </data>
+  <data name="Main_VoiceHotkeyTitle" xml:space="preserve">
+    <value>語音快速鍵</value>
+  </data>
+  <data name="WindowKey_VoiceHotkey" xml:space="preserve">
+    <value>語音啟動（全系統）</value>
+  </data>
+  <data name="Names_AlsoSay" xml:space="preserve">
+    <value>也可以說（語音）</value>
+  </data>
 </root>

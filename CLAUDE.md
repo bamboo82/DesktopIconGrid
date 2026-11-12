@@ -6,7 +6,8 @@ only for the part you need (they are long).
 ## What this is
 
 Desktop Icon Grid: a .NET 10 WPF launcher bar for Windows (shortcuts, groups, special icons, sync through
-Google Drive or a folder). No third-party packages in the app; ask the owner before adding one.
+Google Drive or a folder). The app has one package, Microsoft's `System.Speech` (voice launch; the owner's decision); ask the owner before
+adding another.
 
 ## Layout
 
@@ -81,12 +82,16 @@ After removing or editing a key in the `.resx` files, run `python3 -I tools/gen_
   the text was scrolled into view. Text fields pass `CommandTileSettings.IsShowable`. Without a machine key
   (`ThisDevice.IsOfThisMachine` false) approvals last only until the program ends.
 - The command line and the pipe message go through one `BarCommands.Validate`; the pipe is `CurrentUserOnly`.
+- Voice launch listens only when asked (hotkey, Voice icon, `--voice`), for one utterance, against the bar's
+  names only; it starts a target only at confidence 0.80 or more with one candidate, otherwise it offers or
+  does nothing. What it starts goes through the same path as a click.
 
 ## State
 
 - Released: 0.10.0 (2026-11-11, tag `v0.10.0` on `254c55c`, release published). In progress: 0.11.0 (see the top
   of `CHANGELOG.md`). The owner skipped a 0.10.1 release; its fixes are 0.11.0's "Fixed" list.
-- Open: voice launch (waits for the owner's run of `tools/VoiceProbe`, FEATURES §6.1); what is left of review
+- Voice launch is built (REVIEW_NOTES entry 64) and has never been tried with a real microphone in the app.
+- Open: what is left of review
   24's list (REVIEW_NOTES entry 60: W3, L5, I3's subfolder (needs the owner), a few
   minor items).
 - Nothing of 0.9.0 or 0.10.0 has been seen on a real bar: the owner skipped the in-app check of 0.9.0, and

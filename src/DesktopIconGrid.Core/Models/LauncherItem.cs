@@ -32,6 +32,12 @@ public abstract class LauncherItem
     /// <summary>A colour tag from <see cref="ColorTags"/> (drawn as a corner on the icon); <see langword="null"/> for none.</summary>
     public string? ColorTag { get; set; }
 
+    /// <summary>
+    /// Other phrases voice launch takes for this item besides <see cref="Name"/> (0.11.0), joined by "; "
+    /// (<see cref="Voice.VoiceVocabulary.NormalizeAlsoSay"/>); <see langword="null"/> for none.
+    /// </summary>
+    public string? AlsoSay { get; set; }
+
     [JsonIgnore]
     public bool HasCustomIcon => !string.IsNullOrWhiteSpace(IconPath);
 
@@ -64,5 +70,6 @@ public abstract class LauncherItem
         IconPath = string.IsNullOrWhiteSpace(source.IconPath) ? null : source.IconPath.Trim();
         TextIcon = source.TextIcon?.Normalized();
         ColorTag = ColorTags.Normalize(source.ColorTag);
+        AlsoSay = Voice.VoiceVocabulary.NormalizeAlsoSay(source.AlsoSay);
     }
 }

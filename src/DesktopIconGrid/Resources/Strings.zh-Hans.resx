@@ -2333,4 +2333,82 @@
   <data name="Commands_SendToPortable" xml:space="preserve">
     <value>便携副本不会把自己添加到“发送到”菜单：驱动器移除后，该项目仍会留在这台电脑上。</value>
   </data>
+  <data name="Special_Voice_Name" xml:space="preserve">
+    <value>语音</value>
+  </data>
+  <data name="Special_Voice_Desc" xml:space="preserve">
+    <value>单击，然后说出图标的名称即可启动。</value>
+  </data>
+  <data name="Voice_Title" xml:space="preserve">
+    <value>语音启动</value>
+  </data>
+  <data name="Voice_Listening" xml:space="preserve">
+    <value>正在聆听…请说出名称</value>
+  </data>
+  <data name="Voice_ListeningIn" xml:space="preserve">
+    <value>聆听语言：{0}</value>
+  </data>
+  <data name="Voice_NotHeard" xml:space="preserve">
+    <value>没有听清楚。请说出工具栏上的名称，或在“编辑名称”→“也可以说”中为它添加另一种说法。</value>
+  </data>
+  <data name="Voice_Starting" xml:space="preserve">
+    <value>正在启动 {0}</value>
+  </data>
+  <data name="Voice_Choose" xml:space="preserve">
+    <value>哪一个？</value>
+  </data>
+  <data name="Voice_NoRecogniser" xml:space="preserve">
+    <value>这台电脑没有语音识别器。Windows 会随语言的语音包添加：设置 → 时间和语言 → 语言和区域 → 该语言 → 语音。</value>
+  </data>
+  <data name="Voice_NothingToSay" xml:space="preserve">
+    <value>工具栏上还没有可以说出名称的项目。</value>
+  </data>
+  <data name="Voice_Problem" xml:space="preserve">
+    <value>无法聆听：{0} 请确认默认的录音设备是麦克风。</value>
+  </data>
+  <data name="Voice_ShowBarPhrases" xml:space="preserve">
+    <value>显示工具栏;显示栏</value>
+  </data>
+  <data name="Voice_HideBarPhrases" xml:space="preserve">
+    <value>隐藏工具栏;隐藏栏</value>
+  </data>
+  <data name="Voice_ToolTip" xml:space="preserve">
+    <value>单击，然后说出名称（{0}）</value>
+  </data>
+  <data name="Settings_VoiceHotkey" xml:space="preserve">
+    <value>语音快捷键：</value>
+  </data>
+  <data name="Settings_VoiceHotkeyName" xml:space="preserve">
+    <value>语音快捷键</value>
+  </data>
+  <data name="Settings_VoiceHotkeyHint" xml:space="preserve">
+    <value>在任何地方按下，然后说出图标（或工作区）的名称即可启动。每次只聆听一个名称，不会持续聆听。</value>
+  </data>
+  <data name="Settings_VoiceHotkeySame" xml:space="preserve">
+    <value>请使用与另外两个快捷键不同的组合。</value>
+  </data>
+  <data name="Settings_VoiceLanguage" xml:space="preserve">
+    <value>语音语言：</value>
+  </data>
+  <data name="Settings_VoiceLanguageName" xml:space="preserve">
+    <value>语音语言</value>
+  </data>
+  <data name="Settings_VoiceLanguageAuto" xml:space="preserve">
+    <value>与工具栏相同</value>
+  </data>
+  <data name="Settings_VoiceLanguageHint" xml:space="preserve">
+    <value>这台电脑拥有的语音识别器。其他语言的名称不容易听懂：请在“编辑名称”→“也可以说”中为它们添加另一种说法。</value>
+  </data>
+  <data name="Settings_VoiceLanguageNone" xml:space="preserve">
+    <value>这台电脑没有语音识别器。</value>
+  </data>
+  <data name="Main_VoiceHotkeyTitle" xml:space="preserve">
+    <value>语音快捷键</value>
+  </data>
+  <data name="WindowKey_VoiceHotkey" xml:space="preserve">
+    <value>语音启动（全系统）</value>
+  </data>
+  <data name="Names_AlsoSay" xml:space="preserve">
+    <value>也可以说（语音）</value>
+  </data>
 </root>

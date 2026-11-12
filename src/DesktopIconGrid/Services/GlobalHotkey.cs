@@ -197,6 +197,9 @@ public sealed class GlobalHotkey : IDisposable
     /// <summary>The first of the two ids of the Show-at-pointer hotkey.</summary>
     public const int PointerIds = 0x4A21;
 
+    /// <summary>The first of the two ids of the voice hotkey.</summary>
+    public const int VoiceIds = 0x4A31;
+
     private const int WmHotkey = 0x0312;
     private const uint ModNoRepeat = 0x4000;
     private const int ErrorHotkeyAlreadyRegistered = 1409;

@@ -259,8 +259,8 @@ folder.
 - **0.10.0 "Bigger moves"** (released 2026-11-11): more gauges and the sparkline, clock and timer, 10 (folder
   stacks), mic tile, paste to a bucket, 4 (workspaces), 12 (send to a device, through a sync folder).
 - **0.11.0** (in progress): the review fixes after 0.10.0, a volume tile, drop onto a program inside a stack,
-  12 through Google Drive.
-- **Next**: 11 (voice, if the spike says yes).
+  12 through Google Drive, 11 (voice launch, through Windows' desktop recognisers: the spike's answer for
+  the newer recogniser was no, FEATURES §6.1).
 - **1.0.0 "Ship it"**: the existing backlog — installer (MSIX/winget), code signing, toast notifications.
 
 Not yet placed in a release: glyph icons, usage columns, the accent theme, spring-loaded groups and the

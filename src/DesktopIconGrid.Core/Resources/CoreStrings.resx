@@ -125,7 +125,7 @@
     <value>--add needs at least one path.</value>
   </data>
   <data name="Commands_NotUnderstood" xml:space="preserve">
-    <value>"{0}" is not understood. Use --add &lt;path&gt;… [--group &lt;name&gt;], --launch &lt;name&gt;, --workspace &lt;name&gt;, --show, --hide or --toggle.</value>
+    <value>"{0}" is not understood. Use --add &lt;path&gt;… [--group &lt;name&gt;], --launch &lt;name&gt;, --workspace &lt;name&gt;, --show, --hide, --toggle or --voice.</value>
   </data>
   <data name="Commands_TooMany" xml:space="preserve">
     <value>More than {0} commands at once.</value>
@@ -140,6 +140,6 @@
     <value>The group's name is empty, too long, or holds a line break.</value>
   </data>
   <data name="Commands_TakesNothing" xml:space="preserve">
-    <value>--show, --hide and --toggle take nothing.</value>
+    <value>--show, --hide, --toggle and --voice take nothing.</value>
   </data>
 </root>

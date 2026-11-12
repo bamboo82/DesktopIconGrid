@@ -276,6 +276,9 @@ their tooltips end with a line of the last 60 samples (`▁▂▃▅▇█`; the
   turns it up or down 2 points a notch (turning up unmutes), a click mutes or unmutes; red with `MUTE`
   while muted, `—` when there are no speakers. It follows changes made elsewhere within 2 seconds.
 
+- **Voice** (0.11.0) — a click makes the bar listen for one spoken name, as the voice hotkey does (see *Voice
+  launch* in §6.1). Nothing to set; its tooltip shows the language it listens in.
+
 - **Send to PC** (0.10.0; through Google Drive since 0.11.0) — drop files on it (or `Ctrl+V` with it
   focused) to send them to another PC that uses the same sync folder, or is signed in to the same Google
   account with the app's credentials; its properties pick the PC. With Google the inbox is the same
@@ -473,8 +476,32 @@ items with one colour tag, or those without (0.7.0), or to the shortcuts missing
 separators are not listed. Click a column header
 to sort; *Use original name*
 resets the selected rows, *Use original names for all* resets everything; *Save* applies all
-changes at once. The given names are the captions on the bar and will be the phrases for
-voice commands in a later design, so this is where that vocabulary is maintained.
+changes at once. The given names are the captions on the bar and the phrases voice launch listens for; the
+*Also say (voice)* column (0.11.0) gives a shortcut or special icon more phrases, separated by `;`, `；`, `、` or
+`|`, stored tidied as `alsoSay` with the item.
+
+**Voice launch (0.11.0).** The voice hotkey (Settings, system-wide, none by default), a click on a *Voice* icon,
+or `--voice` makes the bar listen for one utterance and start what is called so, as a click on it would (so a
+paused command tile still asks, and a shortcut's questions still come).
+
+- What is listened for: the names and *Also say* phrases of shortcuts and special icons (also inside groups),
+  the workspace names, and "Show bar" / "Hide bar" in the language listened in. Groups and the Voice icon are
+  not started by voice. A phrase must have a letter or digit, at most 60 characters, and pass the same
+  "shown as written" rule as command tiles.
+- How sure: the recogniser's best answer at 0.80 or more that belongs to one item starts it. Otherwise the items
+  of the answers at 0.40 or more are offered as up to three buttons (also when two items share a phrase heard
+  clearly). Below that nothing starts and the window says so. Starting a program is never a guess.
+- A small window near the bottom of the main screen shows *Listening…* with Cancel, then what is started or why
+  nothing is; it never takes the keyboard. Listening ends with the utterance, after 6 seconds of silence, or
+  after 15 seconds at most. One listening at a time.
+- Language: *Voice language* in Settings lists the recognisers this PC has; *Same as the bar* takes the bar's
+  language (zh-Hant: zh-TW, then zh-HK; zh-Hans: zh-CN, then zh-SG; else another region of the language), and
+  the PC's first recogniser when it has none for that. A setting that came from another PC and has no
+  recogniser here is kept, and the bar's language is used meanwhile.
+- Engine: Windows' desktop recognisers (SAPI) through Microsoft's `System.Speech` package, on the device. No
+  audio and nothing that was said is stored, logged or sent; the log has the number of answers and the best
+  confidence. A name the recogniser has no pronunciation for is left out of the list (it needs an *Also say*
+  phrase). Without a recogniser, or without a recording device, the window says so.
 
 **Voice spike (0.7.0).** The question: does `Windows.Media.SpeechRecognition.SpeechRecognizer` with a list
 constraint recognise these names in zh-TW from an unpackaged app on Windows 11 — yes or no?
@@ -570,6 +597,9 @@ It prints the installed speech languages, compiles the list, listens three times
 planned; **no** for want of a speech pack → that pack becomes a documented requirement and the probe is run
 again; **no** for any other reason → the SAPI fallback (`System.Speech`, a package) is the owner's call.
 Nothing is built for voice until the answer is in this section.
+
+**Decision (2026-11-12, the owner).** Voice launch is built on the desktop recognisers through `System.Speech`
+in the app, and the listening language is a setting that follows the bar's language by default.
 
 ### 6.2 Log viewer
 

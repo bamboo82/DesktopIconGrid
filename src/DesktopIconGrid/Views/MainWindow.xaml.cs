@@ -26,6 +26,7 @@ public partial class MainWindow : Window
     private readonly LauncherViewModel _viewModel;
     private GlobalHotkey? _hotkey;
     private GlobalHotkey? _pointerHotkey;
+    private GlobalHotkey? _voiceHotkey;
     private HotkeySet? _hotkeys;
     private PointerWindow? _pointerWindow;
     private TrayIcon? _tray;
@@ -68,7 +69,9 @@ public partial class MainWindow : Window
             _hotkey.Pressed += (_, _) => ToggleVisibility();
             _pointerHotkey = new GlobalHotkey(source, GlobalHotkey.PointerIds);
             _pointerHotkey.Pressed += (_, _) => TogglePointerWindow();
-            _hotkeys = new HotkeySet((_hotkey, "Show/hide hotkey"), (_pointerHotkey, "Show-at-pointer hotkey"));
+            _voiceHotkey = new GlobalHotkey(source, GlobalHotkey.VoiceIds);
+            _voiceHotkey.Pressed += (_, _) => ListenForVoice();
+            _hotkeys = new HotkeySet((_hotkey, "Show/hide hotkey"), (_pointerHotkey, "Show-at-pointer hotkey"), (_voiceHotkey, "Voice hotkey"));
             ApplyHotkeys(reportErrors: true);
         }
 
@@ -306,6 +309,10 @@ public partial class MainWindow : Window
         _hotkey = null;
         _pointerHotkey?.Dispose();
         _pointerHotkey = null;
+        _voiceHotkey?.Dispose();
+        _voiceHotkey = null;
+        _voiceWindow?.CloseForGood();
+        _voiceWindow = null;
         _pointerWindow?.CloseForGood();
         _pointerWindow = null;
         _tray?.Dispose();
@@ -415,6 +422,9 @@ public partial class MainWindow : Window
                     break;
                 case BarCommandKind.Toggle:
                     ToggleVisibility();
+                    break;
+                case BarCommandKind.Voice:
+                    ListenForVoice();
                     break;
             }
         }
@@ -534,9 +544,10 @@ public partial class MainWindow : Window
         }
 
         var settings = _viewModel.Model.Settings;
-        var refusals = _hotkeys.Apply([settings.ToggleHotkey, settings.ShowAtPointerHotkey]);
+        var refusals = _hotkeys.Apply([settings.ToggleHotkey, settings.ShowAtPointerHotkey, settings.VoiceHotkey]);
         var toggleError = refusals[0];
         var pointerError = refusals[1];
+        var voiceError = refusals[2];
         if (!reportErrors)
         {
             return;
@@ -551,7 +562,29 @@ public partial class MainWindow : Window
         {
             MessageBox.Show(this, pointerError, Strings.Main_PointerHotkeyTitle, MessageBoxButton.OK, MessageBoxImage.Warning);
         }
+
+        if (!string.IsNullOrEmpty(voiceError))
+        {
+            MessageBox.Show(this, voiceError, Strings.Main_VoiceHotkeyTitle, MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
     }
+
+    // ----- voice launch ------------------------------------------------------------------------------
+
+    private VoiceWindow? _voiceWindow;
+    private VoiceLaunch? _voice;
+
+    /// <summary>The recogniser; the app gives the real one, a test another.</summary>
+    internal IVoiceEar VoiceEar { get; set; } = new VoiceEar();
+
+    /// <summary>The recogniser language voice launch would use now, for the Voice icon's tooltip.</summary>
+    public string? VoiceLanguageInUse => Voice().Language;
+
+    /// <summary>The voice hotkey, a click on the Voice icon, <c>--voice</c>: listens for one spoken name (<see cref="VoiceLaunch"/>).</summary>
+    public void ListenForVoice() => _ = Voice().ListenAsync();
+
+    private VoiceLaunch Voice() =>
+        _voice ??= new VoiceLaunch(_viewModel, VoiceEar, _voiceWindow ??= new VoiceWindow(), ShowFromOtherInstance, HideBar);
 
     // ----- type to find ------------------------------------------------------------------------------
 

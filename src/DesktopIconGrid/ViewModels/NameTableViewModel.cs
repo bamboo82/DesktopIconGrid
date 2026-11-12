@@ -27,6 +27,9 @@ public sealed class NameRowViewModel : ObservableObject
         ModifiedAt = item.ModifiedAt?.LocalDateTime;
         InitialName = item.Name;
         _givenName = item.Name;
+        InitialAlsoSay = item.AlsoSay ?? string.Empty;
+        _alsoSay = InitialAlsoSay;
+        CanBeSaid = item is ShortcutItem or SpecialIconItem;
         ColorTag = ColorTags.Find(item.ColorTag)?.Name;
         ColorTagName = ColorTagNames.Of(item.ColorTag);
         ColorTagBrush = ColorTags.Find(item.ColorTag) is { } tag ? ThemeManager.ToBrush(tag.Color) : null;
@@ -78,7 +81,32 @@ public sealed class NameRowViewModel : ObservableObject
         }
     }
 
-    public bool IsChanged => !string.Equals(_givenName.Trim(), InitialName, StringComparison.Ordinal);
+    public bool IsChanged => !string.Equals(_givenName.Trim(), InitialName, StringComparison.Ordinal) || IsAlsoSayChanged;
+
+    public bool IsNameChanged => !string.Equals(_givenName.Trim(), InitialName, StringComparison.Ordinal);
+
+    private string _alsoSay;
+
+    public string InitialAlsoSay { get; }
+
+    /// <summary>Whether voice launch starts this row's item at all (not a group), so the phrases are worth editing.</summary>
+    public bool CanBeSaid { get; }
+
+    /// <summary>Other phrases voice launch takes for the item, separated by <c>;</c> (<see cref="LauncherItem.AlsoSay"/>).</summary>
+    public string AlsoSay
+    {
+        get => _alsoSay;
+        set
+        {
+            if (CanBeSaid && SetProperty(ref _alsoSay, value ?? string.Empty))
+            {
+                OnPropertyChanged(nameof(IsChanged));
+            }
+        }
+    }
+
+    public bool IsAlsoSayChanged =>
+        !string.Equals(Core.Voice.VoiceVocabulary.NormalizeAlsoSay(_alsoSay) ?? string.Empty, InitialAlsoSay, StringComparison.Ordinal);
 
     public bool IsOriginal => string.Equals(_givenName.Trim(), OriginalName, StringComparison.Ordinal);
 }
@@ -217,19 +245,21 @@ public sealed class NameTableViewModel : ObservableObject
 
     public string Hint => Strings.Names_Hint;
 
-    public int ChangedCount => Rows.Count(r => r.IsChanged && r.GivenName.Trim().Length > 0);
+    public int ChangedCount => Rows.Count(r => (r.IsNameChanged && r.GivenName.Trim().Length > 0) || r.IsAlsoSayChanged);
 
     public ICommand UseOriginalCommand { get; }
 
     public ICommand UseOriginalForAllCommand { get; }
 
-    /// <summary>Applies the edited names to the bar. Empty names are ignored.</summary>
+    /// <summary>Applies the edited names and voice phrases to the bar; returns how many items changed. Empty names are ignored.</summary>
     public int Apply()
     {
         var renamed = 0;
-        foreach (var row in Rows.Where(r => r.IsChanged && r.GivenName.Trim().Length > 0))
+        foreach (var row in Rows)
         {
-            if (_root.RenameItem(row.Id, row.GivenName.Trim(), save: false))
+            var changed = row.IsNameChanged && row.GivenName.Trim().Length > 0 && _root.RenameItem(row.Id, row.GivenName.Trim(), save: false);
+            changed |= row.IsAlsoSayChanged && _root.SetAlsoSay(row.Id, row.AlsoSay);
+            if (changed)
             {
                 renamed++;
             }

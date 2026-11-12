@@ -1674,6 +1674,23 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
         return true;
     }
 
+    /// <summary>
+    /// Gives an item its other phrases for voice launch (<see cref="LauncherItem.AlsoSay"/>), tidied; false when the item
+    /// is gone or nothing changes. Not saved: the names table saves once for all its rows.
+    /// </summary>
+    public bool SetAlsoSay(Guid id, string? alsoSay)
+    {
+        var phrases = Core.Voice.VoiceVocabulary.NormalizeAlsoSay(alsoSay);
+        if (Model.Find(id) is not { } item || string.Equals(item.AlsoSay, phrases, StringComparison.Ordinal))
+        {
+            return false;
+        }
+
+        item.AlsoSay = phrases;
+        item.ModifiedAt = DateTimeOffset.UtcNow;
+        return true;
+    }
+
     /// <summary>A copy of the current settings, items and window placement.</summary>
     public LauncherLayout ExportLayout() => Model.ToLayout();
 
