@@ -9,6 +9,44 @@ The owner relays replies.
 
 ---
 
+## 2026-11-12 (62) — Send to PC through Google Drive (owner's choice of what is next)
+
+Run 152 (`e8dc629`) is green.
+
+- **`IInbox`** (Core): `AnnounceAsync`, `DevicesAsync`, `SendAsync`, `PendingAsync(skip)`, `ReceiveAsync`,
+  `NameOfDeviceAsync`. `FolderInbox` implements it by wrapping its tested synchronous methods; nothing in it
+  changed apart from sharing helpers (`InboxName`, `TryReadInboxName`, `Unique`, `PlainName`, the suffixes).
+- **`DriveInbox`** (Core) uses the same layout under the app's folder on Drive: `inbox/<device id>/device.json`
+  and files named `<sender id>~<name>`.
+  - `IDriveFiles` gains `AppFolderIdAsync` and `DeleteEntryAsync` as default methods that throw; the real client
+    implements them with its existing `EnsureFolderAsync` and `DeleteAsync`. Folder ids are cached per
+    `DriveInbox`.
+  - `SendAsync` has the same refusals as the folder (`SendProblem`). The target's folder must exist; sending
+    never creates another PC's inbox.
+  - `PendingAsync` takes only non-folder, non-Google-format entries with a size and a valid inbox name, and
+    applies the same 2 GB, 20-file and 4 GB limits.
+  - `ReceiveAsync` downloads to `<final>.part`, marks, renames, then deletes on Drive. A failed delete returns
+    `Cleared = false`, and the service remembers the id for the run. Names go through `PlainName`, so `.url`
+    and the rest arrive inert here too.
+  - It needs no new permission: the files are the app's own, so `drive.file` covers them.
+- **App.** `InboxService.Current()` returns the folder inbox when a sync folder is used, else a `DriveInbox`
+  when signed in to Google. The Drive inbox is kept per account, device id and name. `CanReceive` is true for
+  either transport. The off-by-default rule and the local icon mark are unchanged and apply to both.
+  `SendToDeviceHandler` works on `IInbox`. Opening its properties lists the PCs on a worker thread and waits up
+  to 20 s with a wait cursor.
+- **To look at.**
+  1. Trust: with Drive, the boundary is the Google account plus the app's OAuth client. `drive.file` shows
+     this app's files to any PC signed in with the same client id and account. A file planted in `inbox/<id>/`
+     by another app cannot be seen by this one. The sender id in the name is still only a label.
+  2. Polling is three or four Drive calls a minute per receiving PC: two lists and, at first, a small upload.
+     I did not add a back-off for a lapsed sign-in; a failure is logged every minute.
+  3. `AnnounceAsync` re-uploads `device.json` only when the size differs, so a rename to a name of the same
+     length is not announced.
+  4. The 20 s blocking wait in `ShowProperties` is on the UI thread.
+- **Tests.** Core `DriveInboxTests`, against a Drive kept in memory: send, receive under a free name with the
+  mark on the `.part` file, strays ignored, `.url` inert, traversal, the refusals, a failed delete. The real
+  Drive calls are **not** exercised: there is no account in CI.
+
 ## 2026-11-12 (61) — 0.10.1 is not released on its own; 0.11.0: volume tile, drop onto a program in a stack
 
 The owner: "skip 0.10.1 release, continue next". Run 151 (`767a88b`) is green. The version is 0.11.0; the 0.10.1

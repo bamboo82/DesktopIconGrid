@@ -592,6 +592,10 @@ public sealed class GoogleDriveClient : IDriveClient, IDriveFiles
         }
     }
 
+    public Task<string> AppFolderIdAsync(CancellationToken cancellationToken) => EnsureFolderAsync(cancellationToken);
+
+    public Task DeleteEntryAsync(string id, CancellationToken cancellationToken) => DeleteAsync(id, cancellationToken);
+
     // ----- plumbing -------------------------------------------------------------------------------------
 
     private async Task<string> EnsureFolderAsync(CancellationToken cancellationToken)

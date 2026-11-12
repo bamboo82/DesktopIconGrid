@@ -16,7 +16,7 @@ namespace DesktopIconGrid.SpecialIcons;
 /// "Send to PC": drop files on it (or paste them) and they go to another PC that shares the sync folder, which puts
 /// them in its Downloads folder (<see cref="InboxService"/>). Only with a sync folder.
 /// </summary>
-public sealed class SendToDeviceHandler(Func<FolderInbox?> inbox, IDialogService dialogs, Func<Window?> ownerProvider, string pasteDirectory, CommandTrust trust) : ISpecialIconHandler
+public sealed class SendToDeviceHandler(Func<IInbox?> inbox, IDialogService dialogs, Func<Window?> ownerProvider, string pasteDirectory, CommandTrust trust) : ISpecialIconHandler
 {
     public const string DeviceIdKey = "deviceId";
     public const string DeviceNameKey = "deviceName";
@@ -99,10 +99,20 @@ public sealed class SendToDeviceHandler(Func<FolderInbox?> inbox, IDialogService
         }
 
         var stored = item.GetSetting(DeviceNameKey);
-        var (sent, problems, name) = await Task.Run(() =>
+        var (sent, problems, name) = await Task.Run(async () =>
         {
-            var result = Send(mine, target, paths);
-            return (result.Sent, result.Problems, mine.NameOfDevice(target, stored)); // the PC's own name as it is now
+            var result = await SendAsync(mine, target, paths).ConfigureAwait(false);
+            string shown;
+            try
+            {
+                shown = await mine.NameOfDeviceAsync(target, stored, CancellationToken.None).ConfigureAwait(false); // the PC's own name as it is now
+            }
+            catch (Exception ex) when (ex is IOException or DriveException or System.Net.Http.HttpRequestException)
+            {
+                shown = FolderInbox.ShownName(stored, target);
+            }
+
+            return (result.Sent, result.Problems, shown);
         });
         if (sent > 0)
         {
@@ -112,7 +122,7 @@ public sealed class SendToDeviceHandler(Func<FolderInbox?> inbox, IDialogService
         return problems.Count == 0 ? LaunchResult.Started : LaunchResult.Failure(string.Join("\n", problems));
     }
 
-    internal static (int Sent, List<string> Problems) Send(FolderInbox mine, string target, IReadOnlyList<string> paths)
+    internal static async Task<(int Sent, List<string> Problems)> SendAsync(IInbox mine, string target, IReadOnlyList<string> paths)
     {
         var sent = 0;
         var problems = new List<string>();
@@ -120,10 +130,10 @@ public sealed class SendToDeviceHandler(Func<FolderInbox?> inbox, IDialogService
         {
             try
             {
-                mine.Send(target, path);
+                await mine.SendAsync(target, path, CancellationToken.None).ConfigureAwait(false);
                 sent++;
             }
-            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or DriveException or System.Net.Http.HttpRequestException)
             {
                 // The reasons this app knows, in the user's language; anything else as Windows says it.
                 var reason = ex is InboxSendException known
@@ -152,16 +162,36 @@ public sealed class SendToDeviceHandler(Func<FolderInbox?> inbox, IDialogService
             return false;
         }
 
+        // This PC takes part from the moment it gets the icon, so the other PCs can pick it too; then the list of the
+        // others. Through Drive these are network calls: off the UI thread, and given up after a while.
+        IReadOnlyList<InboxDevice> devices = [];
+        var listing = Task.Run(async () =>
+        {
+            await mine.AnnounceAsync(CancellationToken.None).ConfigureAwait(false);
+            return await mine.DevicesAsync(CancellationToken.None).ConfigureAwait(false);
+        });
         try
         {
-            mine.Announce(); // this PC takes part from the moment it gets the icon: the other PCs can then pick it too
+            System.Windows.Input.Mouse.OverrideCursor = System.Windows.Input.Cursors.Wait;
+            if (listing.Wait(TimeSpan.FromSeconds(20)))
+            {
+                devices = listing.Result;
+            }
+            else
+            {
+                AppLog.Default.Warning("Inbox", "The other PCs could not be listed in time");
+            }
         }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        catch (AggregateException ex) when (ex.InnerException is IOException or UnauthorizedAccessException or DriveException or System.Net.Http.HttpRequestException or InvalidOperationException)
         {
-            AppLog.Default.Warning("Inbox", $"This PC could not be announced in the sync folder: {ex.Message}");
+            AppLog.Default.Warning("Inbox", $"The other PCs could not be listed: {ex.InnerException.Message}");
+        }
+        finally
+        {
+            System.Windows.Input.Mouse.OverrideCursor = null;
         }
 
-        var viewModel = new SendToDeviceViewModel(item, mine.Devices());
+        var viewModel = new SendToDeviceViewModel(item, devices);
         var window = new SendToDeviceWindow { DataContext = viewModel, Owner = ownerProvider() };
         if (window.ShowDialog() != true)
         {

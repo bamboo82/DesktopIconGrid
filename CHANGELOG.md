@@ -5,8 +5,8 @@ version numbers follow [Semantic Versioning](https://semver.org/).
 
 ## [0.11.0] – Unreleased
 
-What 0.10.0 left out (a volume tile, dropping a file onto a program inside a folder stack; sending files through
-Google Drive and voice launch are still to come), and the fixes the review of 0.10.0 placed after the release.
+What 0.10.0 left out (a volume tile, dropping a file onto a program inside a folder stack, sending files through
+Google Drive; voice launch is still to come), and the fixes the review of 0.10.0 placed after the release.
 0.10.1 was not released on its own: its fixes are the "Fixed" list below.
 
 ### Added
@@ -14,6 +14,9 @@ Google Drive and voice launch are still to come), and the fixes the review of 0.
 - **Volume** tile: shows the speakers' volume; the mouse wheel over it turns the volume up and down in steps
   of 2, a click mutes or unmutes (red while muted).
 - Folder stacks: drop a file onto a program or shortcut inside a stack to open the file with it.
+- Send to PC through Google Drive: PCs signed in to the same Google account (Sync across PCs) can send each
+  other files without a sync folder. The rules are the same: receiving is off until you add a Send to PC icon
+  on that PC or tick *Receive files from my other PCs*; files land in Downloads, marked as downloaded.
 
 ### Fixed
 

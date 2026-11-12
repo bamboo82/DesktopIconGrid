@@ -2238,7 +2238,7 @@ Details are in {1}.</value>
     <value>Send to {0}</value>
   </data>
   <data name="SendTo_Desc" xml:space="preserve">
-    <value>Drop files on it to send them to another of your PCs through the sync folder. They arrive in that PC's Downloads folder.</value>
+    <value>Drop files on it to send them to another of your PCs through your sync folder or Google Drive. They arrive in that PC's Downloads folder.</value>
   </data>
   <data name="SendTo_Device" xml:space="preserve">
     <value>Send to:</value>
@@ -2250,13 +2250,13 @@ Details are in {1}.</value>
     <value>No PC is chosen yet. Open Properties to choose one.</value>
   </data>
   <data name="SendTo_NeedsFolder" xml:space="preserve">
-    <value>Sending files to another PC needs a sync folder (Sync across PCs → a folder). It does not work through Google Drive yet.</value>
+    <value>Sending files to another PC needs Sync across PCs to be set up: a sync folder, or a Google sign-in. The other PC must use the same one.</value>
   </data>
   <data name="SendTo_NoOtherPcs" xml:space="preserve">
-    <value>No other PC has used this sync folder with this version yet. Start Desktop Icon Grid 0.10.0 or later on the other PC with the same sync folder, wait for the folder to sync, then open this again.</value>
+    <value>No other PC is receiving files yet. On the other PC, with Desktop Icon Grid 0.10.0 or later and the same sync folder or Google account, add a Send to PC icon or tick “Receive files from my other PCs”; then open this again.</value>
   </data>
   <data name="SendTo_Hint" xml:space="preserve">
-    <value>Files go through the sync folder; the other PC takes them within a minute of their arriving, while the bar runs there.</value>
+    <value>Files go through your sync folder or your Google Drive; the other PC takes them within a minute of their arriving, while the bar runs there.</value>
   </data>
   <data name="SendTo_Sent" xml:space="preserve">
     <value>{0} file(s) on the way to {1}.</value>
@@ -2286,16 +2286,16 @@ Details are in {1}.</value>
     <value>Receive files from my other PCs</value>
   </data>
   <data name="Menu_ReceiveFilesToolTip" xml:space="preserve">
-    <value>Files other PCs send to this one through the sync folder are put in Downloads. A PC with a Send to PC icon receives too.</value>
+    <value>Files other PCs send to this one through the sync folder or Google Drive are put in Downloads. A PC with a Send to PC icon added there receives too.</value>
   </data>
   <data name="Inbox_WaitingTitle" xml:space="preserve">
     <value>File from {0} is waiting</value>
   </data>
   <data name="Inbox_WaitingForSpace" xml:space="preserve">
-    <value>“{0}” ({1}) cannot be received yet: the drive of your Downloads folder has {2} free, and receiving always leaves {3} free. Free up some space; the file stays in the sync folder and is taken automatically within a minute of there being room.</value>
+    <value>“{0}” ({1}) cannot be received yet: the drive of your Downloads folder has {2} free, and receiving always leaves {3} free. Free up some space; the file stays where it was sent and is taken automatically within a minute of there being room.</value>
   </data>
   <data name="SendTo_ProblemNoInbox" xml:space="preserve">
-    <value>that PC is not receiving files. On that PC, add a Send to PC icon or tick “Receive files from my other PCs”, and wait for the sync folder to sync.</value>
+    <value>that PC is not receiving files. On that PC, add a Send to PC icon or tick “Receive files from my other PCs”, and give it a minute.</value>
   </data>
   <data name="SendTo_ProblemNotAFile" xml:space="preserve">
     <value>only files can be sent, not folders.</value>

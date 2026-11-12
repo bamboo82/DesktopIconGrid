@@ -28,6 +28,15 @@ public interface IDriveFiles
     /// <summary>Streams a file's bytes into <paramref name="destination"/>; <paramref name="progress"/> receives bytes received so far.</summary>
     Task DownloadAsync(string fileId, Stream destination, IProgress<long>? progress, CancellationToken cancellationToken);
 
+    /// <summary>
+    /// The id of the app's own folder on Drive (created when missing), under which the layout copies and the inbox
+    /// live. Only the real client has one.
+    /// </summary>
+    Task<string> AppFolderIdAsync(CancellationToken cancellationToken) => throw new NotSupportedException();
+
+    /// <summary>Deletes a file or folder the app created.</summary>
+    Task DeleteEntryAsync(string id, CancellationToken cancellationToken) => throw new NotSupportedException();
+
     /// <summary>Exports a Google document in the given format.</summary>
     Task ExportAsync(string fileId, string exportMimeType, Stream destination, CancellationToken cancellationToken);
 }

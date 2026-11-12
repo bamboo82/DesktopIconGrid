@@ -276,8 +276,11 @@ their tooltips end with a line of the last 60 samples (`▁▂▃▅▇█`; the
   turns it up or down 2 points a notch (turning up unmutes), a click mutes or unmutes; red with `MUTE`
   while muted, `—` when there are no speakers. It follows changes made elsewhere within 2 seconds.
 
-- **Send to PC** (0.10.0) — drop files on it (or `Ctrl+V` with it focused) to send them to another PC
-  that uses the same sync folder; its properties pick the PC. **Receiving is off until you ask for it:**
+- **Send to PC** (0.10.0; through Google Drive since 0.11.0) — drop files on it (or `Ctrl+V` with it
+  focused) to send them to another PC that uses the same sync folder, or is signed in to the same Google
+  account with the app's credentials; its properties pick the PC. With Google the inbox is the same
+  layout inside the app's own `DesktopIconGrid` folder on Drive (`inbox/<device id>/`), which the basic
+  Drive permission covers, and whoever can sign in to that account with the app can send. **Receiving is off until you ask for it:**
   a PC takes part only when a *Send to PC* icon was added (or its properties saved) on that PC, or
   *Receive files from my other PCs* (options and tray menus) is ticked. Both are kept on the PC and not
   synced: an icon that arrives with a synced bar can send, but does not turn receiving on there. A PC that takes part
@@ -293,8 +296,8 @@ their tooltips end with a line of the last 60 samples (`▁▂▃▅▇█`; the
   `.searchConnector-ms`, `.search-ms`, `.website`, `.pif`, `.appref-ms`, and `desktop.ini`) arrive with
   `.received` added to their name: they are shown as plain files and nothing in them is followed;
   remove the ending to use one.
-  Whoever can write to the sync folder can send, as they can change the synced bar. Not in: sending
-  through Google Drive; a click that opens the received file's folder.
+  Whoever can write to the sync folder can send, as they can change the synced bar. Not in: a click
+  that opens the received file's folder.
 
 - **Clock** (0.10.0) — the time (`14:05`) on this PC or in a time zone you pick. *On a click* can be
   nothing, a countdown of N minutes, or a Pomodoro (N minutes of work, a break, and again until
@@ -743,9 +746,10 @@ bucket, the microphone tile. Then workspaces (Multi Launch that puts windows bac
 another PC through a sync folder.
 
 **0.11.0** *(in progress)* — the fixes the review of 0.10.0 placed after the release (0.10.1 was not
-released on its own), a volume tile, and dropping a file onto a program inside a folder stack.
+released on its own), a volume tile, dropping a file onto a program inside a folder stack, and Send to PC
+through Google Drive.
 
-**Next** — sending files through Google Drive, voice launch (if the spike says yes).
+**Next** — voice launch (if the spike says yes).
 
 **1.0.0 "Ship it"** — the existing backlog: installer (MSIX/winget), code signing, toast notifications.
 

@@ -29,8 +29,33 @@ public sealed class InboxSendException(SendProblem problem, string message) : IO
     public SendProblem Problem { get; } = problem;
 }
 
+/// <summary>
+/// Sending files between the user's PCs, whatever carries them: a sync folder (<see cref="FolderInbox"/>) or the
+/// app's folder on Google Drive (<see cref="DriveInbox"/>). The calls can be slow; none belongs on the UI thread.
+/// </summary>
+public interface IInbox
+{
+    /// <summary>Creates this PC's inbox and says its name there.</summary>
+    Task AnnounceAsync(CancellationToken cancellationToken);
+
+    /// <summary>The other PCs with an inbox, by name.</summary>
+    Task<IReadOnlyList<InboxDevice>> DevicesAsync(CancellationToken cancellationToken);
+
+    /// <summary>Puts a file into the inbox of <paramref name="targetId"/>; the name it has there. Throws <see cref="InboxSendException"/> for the known refusals.</summary>
+    Task<string> SendAsync(string targetId, string filePath, CancellationToken cancellationToken);
+
+    /// <summary>The files waiting for this PC, oldest first, within the per-look limits; <paramref name="skip"/> passes over locators.</summary>
+    Task<IReadOnlyList<InboxFile>> PendingAsync(Func<string, bool>? skip, CancellationToken cancellationToken);
+
+    /// <summary>Delivers a waiting file once, as a plain marked file (see <see cref="FolderInbox.Receive"/>).</summary>
+    Task<(string Path, bool Marked, bool Cleared)> ReceiveAsync(InboxFile file, string destinationFolder, Func<string, bool>? mark, CancellationToken cancellationToken);
+
+    /// <summary>The PC's own current name, or <paramref name="stored"/> made fit to show.</summary>
+    Task<string> NameOfDeviceAsync(string id, string? stored, CancellationToken cancellationToken);
+}
+
 /// <summary>A file waiting in this PC's inbox.</summary>
-/// <param name="Path">Where it lies in the sync folder.</param>
+/// <param name="Path">Where it waits: its path in the sync folder, or its file id on Drive.</param>
 /// <param name="Name">The name it was sent under, made safe for Windows; never a path.</param>
 public sealed record InboxFile(string Path, string Name, string SenderId, string SenderName, long Size);
 
@@ -41,7 +66,7 @@ public sealed record InboxFile(string Path, string Name, string SenderId, string
 /// trust boundary, as for the layout copies: whoever can write there can send. Nothing received is opened, names are
 /// made safe and never treated as paths, and the caller marks the file as downloaded.
 /// </summary>
-public sealed class FolderInbox
+public sealed class FolderInbox : IInbox
 {
     public const string FolderName = "inbox";
     public const string DeviceFile = "device.json";
@@ -61,12 +86,12 @@ public sealed class FolderInbox
     /// <summary>Whether a file of <paramref name="fileSize"/> may be taken with <paramref name="freeBytes"/> free on the destination drive.</summary>
     public static bool HasRoom(long freeBytes, long fileSize) => freeBytes - fileSize >= FreeSpaceFloor;
 
-    private const string PartSuffix = ".part";
+    internal const string PartSuffix = ".part";
 
     /// <summary>What an inbox file is renamed to when it was delivered but could not be deleted, so it is not delivered again.</summary>
     private const string TakenSuffix = ".taken";
 
-    private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
+    internal static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
 
     private readonly string _root;
     private readonly string _deviceId;
@@ -348,7 +373,7 @@ public sealed class FolderInbox
             : safe;
     }
 
-    private static string Unique(string folder, string name)
+    internal static string Unique(string folder, string name)
     {
         var path = Path.Combine(folder, name);
         var stem = Path.GetFileNameWithoutExtension(name);
@@ -397,5 +422,56 @@ public sealed class FolderInbox
         return kept.Length == 0 ? id[..8] : kept.Length > SyncSettings.MaxDeviceNameLength ? kept[..SyncSettings.MaxDeviceNameLength] : kept;
     }
 
-    private sealed record DeviceInfo(string? Name);
+    internal sealed record DeviceInfo(string? Name);
+
+    // ----- the same inbox through another transport (DriveInbox) shares these ---------------------------------
+
+    /// <summary>The name a file has in an inbox: the sender's id, <c>~</c>, and its name made safe and deliverable.</summary>
+    internal static string InboxName(string senderId, string fileName)
+    {
+        var name = FileNames.Safe(fileName);
+        if (name.EndsWith(PartSuffix, StringComparison.OrdinalIgnoreCase) || name.EndsWith(TakenSuffix, StringComparison.OrdinalIgnoreCase))
+        {
+            name += "_";
+        }
+
+        return $"{senderId}~{name}";
+    }
+
+    /// <summary>The sender's id and the plain name of an inbox entry, or false when this app did not put it there.</summary>
+    internal static bool TryReadInboxName(string inboxName, out string senderId, out string plainName)
+    {
+        senderId = plainName = string.Empty;
+        var separator = inboxName.IndexOf('~');
+        if (separator != 32
+            || !IsDeviceId(inboxName[..separator])
+            || inboxName.EndsWith(PartSuffix, StringComparison.OrdinalIgnoreCase)
+            || inboxName.EndsWith(TakenSuffix, StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        senderId = inboxName[..separator].ToLowerInvariant();
+        plainName = PlainName(inboxName[(separator + 1)..]);
+        return true;
+    }
+
+    // ----- IInbox ---------------------------------------------------------------------------------------------
+
+    Task IInbox.AnnounceAsync(CancellationToken cancellationToken)
+    {
+        Announce();
+        return Task.CompletedTask;
+    }
+
+    Task<IReadOnlyList<InboxDevice>> IInbox.DevicesAsync(CancellationToken cancellationToken) => Task.FromResult(Devices());
+
+    Task<string> IInbox.SendAsync(string targetId, string filePath, CancellationToken cancellationToken) => Task.FromResult(Send(targetId, filePath));
+
+    Task<IReadOnlyList<InboxFile>> IInbox.PendingAsync(Func<string, bool>? skip, CancellationToken cancellationToken) => Task.FromResult(Pending(skip));
+
+    Task<(string Path, bool Marked, bool Cleared)> IInbox.ReceiveAsync(InboxFile file, string destinationFolder, Func<string, bool>? mark, CancellationToken cancellationToken) =>
+        Task.FromResult(Receive(file, destinationFolder, mark));
+
+    Task<string> IInbox.NameOfDeviceAsync(string id, string? stored, CancellationToken cancellationToken) => Task.FromResult(NameOfDevice(id, stored));
 }

@@ -2958,7 +2958,7 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Files other PCs send to this one through the sync folder are put in Downloads. A [rest of string was truncated]";.
+        ///   Looks up a localized string similar to Files other PCs send to this one through the sync folder or Google Drive are put [rest of string was truncated]";.
         /// </summary>
         public static string Menu_ReceiveFilesToolTip {
             get {
@@ -4506,7 +4506,7 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Drop files on it to send them to another of your PCs through the sync folder. Th [rest of string was truncated]";.
+        ///   Looks up a localized string similar to Drop files on it to send them to another of your PCs through your sync folder or [rest of string was truncated]";.
         /// </summary>
         public static string SendTo_Desc {
             get {
@@ -4524,7 +4524,7 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Files go through the sync folder; the other PC takes them within a minute of the [rest of string was truncated]";.
+        ///   Looks up a localized string similar to Files go through your sync folder or your Google Drive; the other PC takes them [rest of string was truncated]";.
         /// </summary>
         public static string SendTo_Hint {
             get {
@@ -4551,7 +4551,7 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Sending files to another PC needs a sync folder (Sync across PCs → a folder). It [rest of string was truncated]";.
+        ///   Looks up a localized string similar to Sending files to another PC needs Sync across PCs to be set up: a sync folder, o [rest of string was truncated]";.
         /// </summary>
         public static string SendTo_NeedsFolder {
             get {
@@ -4569,7 +4569,7 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to No other PC has used this sync folder with this version yet. Start Desktop Icon [rest of string was truncated]";.
+        ///   Looks up a localized string similar to No other PC is receiving files yet. On the other PC, with Desktop Icon Grid 0.10 [rest of string was truncated]";.
         /// </summary>
         public static string SendTo_NoOtherPcs {
             get {

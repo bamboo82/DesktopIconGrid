@@ -19,7 +19,7 @@ public sealed class SendToDeviceTests : IDisposable
     public void Dispose() => Directory.Delete(_folder, recursive: true);
 
     [Fact]
-    public void Files_are_sent_and_a_folder_is_reported_not_sent()
+    public async Task Files_are_sent_and_a_folder_is_reported_not_sent()
     {
         var sync = Path.Combine(_folder, "sync");
         var laptop = new FolderInbox(sync, Laptop, "Laptop");
@@ -29,7 +29,7 @@ public sealed class SendToDeviceTests : IDisposable
         var file = Path.Combine(_folder, "a.txt");
         File.WriteAllText(file, "x");
 
-        var (sent, problems) = SendToDeviceHandler.Send(laptop, Desktop, [file, _folder]);
+        var (sent, problems) = await SendToDeviceHandler.SendAsync(laptop, Desktop, [file, _folder]);
 
         Assert.Equal(1, sent);
         Assert.Single(problems);

@@ -2238,7 +2238,7 @@
     <value>发送到 {0}</value>
   </data>
   <data name="SendTo_Desc" xml:space="preserve">
-    <value>将文件拖放到此图标，即可通过同步文件夹发送到您的另一台电脑，并存入该电脑的“下载”文件夹。</value>
+    <value>将文件拖放到此图标，即可通过同步文件夹或 Google 云端硬盘发送到您的另一台电脑，并存入该电脑的“下载”文件夹。</value>
   </data>
   <data name="SendTo_Device" xml:space="preserve">
     <value>发送到：</value>
@@ -2250,13 +2250,13 @@
     <value>尚未选择电脑。请打开“属性”选择。</value>
   </data>
   <data name="SendTo_NeedsFolder" xml:space="preserve">
-    <value>发送文件到另一台电脑需要同步文件夹（跨电脑同步 → 文件夹）。目前尚不支持通过 Google 云端硬盘。</value>
+    <value>发送文件到另一台电脑需要先设置“跨电脑同步”：同步文件夹，或登录 Google。另一台电脑必须使用相同的方式。</value>
   </data>
   <data name="SendTo_NoOtherPcs" xml:space="preserve">
-    <value>尚无其他电脑以此版本使用过这个同步文件夹。请在另一台电脑上以相同的同步文件夹启动 Desktop Icon Grid 0.10.0 或更高版本，等待文件夹同步后再打开此窗口。</value>
+    <value>尚无其他电脑在接收文件。请在另一台电脑上（Desktop Icon Grid 0.10.0 或更高版本，使用相同的同步文件夹或 Google 帐户）添加“发送到电脑”图标，或勾选“接收来自我其他电脑的文件”，然后再打开此窗口。</value>
   </data>
   <data name="SendTo_Hint" xml:space="preserve">
-    <value>文件会经由同步文件夹发送；另一台电脑的栏运行时，会在文件到达后一分钟内取走。</value>
+    <value>文件会经由同步文件夹或 Google 云端硬盘发送；另一台电脑的栏运行时，会在文件到达后一分钟内取走。</value>
   </data>
   <data name="SendTo_Sent" xml:space="preserve">
     <value>{0} 个文件正在发送到 {1}。</value>
@@ -2286,16 +2286,16 @@
     <value>接收来自我其他电脑的文件</value>
   </data>
   <data name="Menu_ReceiveFilesToolTip" xml:space="preserve">
-    <value>其他电脑通过同步文件夹发送到这台电脑的文件会存入“下载”文件夹。有“发送到电脑”图标的电脑也会接收。</value>
+    <value>其他电脑通过同步文件夹或 Google 云端硬盘发送到这台电脑的文件会存入“下载”文件夹。在该电脑上添加了“发送到电脑”图标的电脑也会接收。</value>
   </data>
   <data name="Inbox_WaitingTitle" xml:space="preserve">
     <value>来自 {0} 的文件正在等待</value>
   </data>
   <data name="Inbox_WaitingForSpace" xml:space="preserve">
-    <value>尚无法接收“{0}”（{1}）：“下载”文件夹所在的驱动器只剩 {2} 可用空间，而接收时始终保留 {3}。请释放一些空间；文件会留在同步文件夹中，有足够空间后一分钟内会自动接收。</value>
+    <value>尚无法接收“{0}”（{1}）：“下载”文件夹所在的驱动器只剩 {2} 可用空间，而接收时始终保留 {3}。请释放一些空间；文件会留在发送到的位置，有足够空间后一分钟内会自动接收。</value>
   </data>
   <data name="SendTo_ProblemNoInbox" xml:space="preserve">
-    <value>该电脑未接收文件。请在该电脑上添加“发送到电脑”图标，或勾选“接收来自我其他电脑的文件”，并等待同步文件夹同步。</value>
+    <value>该电脑未接收文件。请在该电脑上添加“发送到电脑”图标，或勾选“接收来自我其他电脑的文件”，并稍候一分钟。</value>
   </data>
   <data name="SendTo_ProblemNotAFile" xml:space="preserve">
     <value>只能发送文件，不能发送文件夹。</value>

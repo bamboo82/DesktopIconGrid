@@ -39,7 +39,10 @@ public sealed class InboxService : IDisposable
     public Func<bool> HasSendIcon { get; set; } = () => false;
 
     /// <summary>Whether a sync folder is in use, so that receiving can be turned on at all.</summary>
-    public bool CanReceive => _sync.UsesFolder && FolderInbox.IsDeviceId(_sync.Settings.DeviceId);
+    public bool CanReceive => (_sync.UsesFolder || UsesDrive) && FolderInbox.IsDeviceId(_sync.Settings.DeviceId);
+
+    /// <summary>Signed in to Google Drive (and not on a sync folder): files travel through the app's folder there.</summary>
+    private bool UsesDrive => !_sync.UsesFolder && _sync.IsGoogleConnected && _sync.Files is not null;
 
     /// <summary>The setting: take files even without a Send to PC icon. Saved in the local sync settings.</summary>
     public bool ReceiveSetting
@@ -67,16 +70,36 @@ public sealed class InboxService : IDisposable
     public bool IsReceiving => FolderInbox.TakesPart(CanReceive, _sync.Settings.ReceiveFiles, HasSendIcon());
 
     /// <summary>This PC's inbox in the sync folder, or <see langword="null"/> when no sync folder is used.</summary>
-    public FolderInbox? Current()
+    public IInbox? Current()
     {
         var settings = _sync.Settings;
-        if (!_sync.UsesFolder || settings.SyncFolder is not { } folder || !FolderInbox.IsDeviceId(settings.DeviceId))
+        if (!FolderInbox.IsDeviceId(settings.DeviceId))
         {
             return null;
         }
 
-        return new FolderInbox(folder, settings.DeviceId, settings.DeviceName);
+        if (_sync.UsesFolder && settings.SyncFolder is { } folder)
+        {
+            return new FolderInbox(folder, settings.DeviceId, settings.DeviceName);
+        }
+
+        if (UsesDrive)
+        {
+            // Kept while the account stays the same: it remembers the ids of its folders on Drive.
+            if (_drive is null || _driveFor != (settings.AccountEmail, settings.DeviceId, settings.DeviceName))
+            {
+                _drive = new DriveInbox(_sync.Files!, settings.DeviceId, settings.DeviceName);
+                _driveFor = (settings.AccountEmail, settings.DeviceId, settings.DeviceName);
+            }
+
+            return _drive;
+        }
+
+        return null;
     }
+
+    private DriveInbox? _drive;
+    private (string? Account, string DeviceId, string DeviceName) _driveFor;
 
     public void Start()
     {
@@ -96,7 +119,7 @@ public sealed class InboxService : IDisposable
         _busy = true;
         try
         {
-            var (received, waiting) = await Task.Run(() => Take(inbox));
+            var (received, waiting) = await Task.Run(() => TakeAsync(inbox));
             foreach (var (name, sender, size, free) in waiting)
             {
                 _notify(
@@ -126,15 +149,15 @@ public sealed class InboxService : IDisposable
         }
     }
 
-    private static (List<(string Name, string Sender, bool Marked)> Received, List<(string Name, string Sender, long Size, long Free)> Waiting) Take(FolderInbox inbox)
+    private static async Task<(List<(string Name, string Sender, bool Marked)> Received, List<(string Name, string Sender, long Size, long Free)> Waiting)> TakeAsync(IInbox inbox)
     {
         var received = new List<(string, string, bool)>();
         var waiting = new List<(string, string, long, long)>();
         try
         {
-            inbox.Announce();
+            await inbox.AnnounceAsync(CancellationToken.None).ConfigureAwait(false);
             var downloads = DownloadsPath();
-            foreach (var file in inbox.Pending(WasDelivered))
+            foreach (var file in await inbox.PendingAsync(WasDelivered, CancellationToken.None).ConfigureAwait(false))
             {
                 if (FreeBytes(downloads) is { } free && !FolderInbox.HasRoom(free, file.Size))
                 {
@@ -157,7 +180,7 @@ public sealed class InboxService : IDisposable
 
                 try
                 {
-                    var (path, marked, cleared) = FolderInbox.Receive(file, downloads, MarkAsDownloaded);
+                    var (path, marked, cleared) = await inbox.ReceiveAsync(file, downloads, MarkAsDownloaded, CancellationToken.None).ConfigureAwait(false);
                     if (!cleared)
                     {
                         lock (Delivered)
@@ -169,15 +192,16 @@ public sealed class InboxService : IDisposable
                     AppLog.Default.Info("Inbox", $"Received \"{Path.GetFileName(path)}\" ({file.Size} bytes) from {file.SenderName}{(marked ? string.Empty : ", not marked as downloaded")}");
                     received.Add((Path.GetFileName(path), file.SenderName, marked));
                 }
-                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or DriveException or System.Net.Http.HttpRequestException)
                 {
-                    // Still being written by the sync program, or locked: the next look takes it.
+                    // Still being written by the sync program, locked, or Drive did not answer: the next look takes it.
                     AppLog.Default.Debug("Inbox", $"\"{file.Name}\" could not be taken yet: {ex.Message}");
                 }
             }
         }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or DriveException or System.Net.Http.HttpRequestException or InvalidOperationException)
         {
+            // The folder is not there, Drive did not answer, or the sign-in has lapsed: tried again at the next look.
             AppLog.Default.Warning("Inbox", $"The inbox could not be used: {ex.Message}");
         }
 
