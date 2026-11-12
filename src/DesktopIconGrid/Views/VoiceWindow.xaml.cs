@@ -58,6 +58,12 @@ public partial class VoiceWindow : Window, IVoiceView
         _timer.Start();
     }
 
+    public void Done()
+    {
+        Reset();
+        Hide();
+    }
+
     public Task<VoiceTarget?> ChooseAsync(IReadOnlyList<VoiceTarget> targets)
     {
         Reset();

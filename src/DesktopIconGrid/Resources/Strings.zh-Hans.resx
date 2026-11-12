@@ -2382,7 +2382,7 @@
     <value>语音快捷键</value>
   </data>
   <data name="Settings_VoiceHotkeyHint" xml:space="preserve">
-    <value>在任何地方按下，然后说出图标（或工作区）的名称即可启动。每次只聆听一个名称，不会持续聆听。</value>
+    <value>在任何地方按住并说出图标（或工作区）的名称即可启动；松开即结束聆听。短按一下则会聆听到说出名称为止。工具栏不会自行聆听。</value>
   </data>
   <data name="Settings_VoiceHotkeySame" xml:space="preserve">
     <value>请使用与另外两个快捷键不同的组合。</value>

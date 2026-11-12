@@ -70,7 +70,7 @@ public partial class MainWindow : Window
             _pointerHotkey = new GlobalHotkey(source, GlobalHotkey.PointerIds);
             _pointerHotkey.Pressed += (_, _) => TogglePointerWindow();
             _voiceHotkey = new GlobalHotkey(source, GlobalHotkey.VoiceIds);
-            _voiceHotkey.Pressed += (_, _) => ListenForVoice();
+            _voiceHotkey.Pressed += (_, _) => ListenWhileVoiceHotkeyIsHeld();
             _hotkeys = new HotkeySet((_hotkey, "Show/hide hotkey"), (_pointerHotkey, "Show-at-pointer hotkey"), (_voiceHotkey, "Voice hotkey"));
             ApplyHotkeys(reportErrors: true);
         }
@@ -582,6 +582,59 @@ public partial class MainWindow : Window
 
     /// <summary>The voice hotkey, a click on the Voice icon, <c>--voice</c>: listens for one spoken name (<see cref="VoiceLaunch"/>).</summary>
     public void ListenForVoice() => _ = Voice().ListenAsync();
+
+    /// <summary>A hotkey let go sooner than this was tapped, not held: listening then goes on until a name was said.</summary>
+    private static readonly TimeSpan VoiceTap = TimeSpan.FromMilliseconds(400);
+
+    private DispatcherTimer? _voiceHoldTimer;
+
+    /// <summary>
+    /// The voice hotkey is push to talk: listening starts when it goes down and ends when it is let go (a moment
+    /// later, so the end of the word is still heard). Windows reports a hotkey going down but not coming up, so its
+    /// key is looked at 20 times a second while listening. A short tap is a plain trigger instead, for those who
+    /// would rather not hold a key while speaking.
+    /// </summary>
+    private void ListenWhileVoiceHotkeyIsHeld()
+    {
+        var voice = Voice();
+        if (voice.IsListening)
+        {
+            return; // a second press while a tapped listening goes on
+        }
+
+        ListenForVoice();
+        if (_hotkeys?.Held[2] is not { } gesture)
+        {
+            return;
+        }
+
+        var key = KeyInterop.VirtualKeyFromKey(gesture.Key);
+        var pressed = DateTime.UtcNow;
+        _voiceHoldTimer?.Stop();
+        _voiceHoldTimer = new DispatcherTimer(TimeSpan.FromMilliseconds(50), DispatcherPriority.Input, (sender, _) =>
+        {
+            var timer = (DispatcherTimer)sender!;
+            if (!voice.IsListening && DateTime.UtcNow - pressed > TimeSpan.FromSeconds(1))
+            {
+                timer.Stop(); // it ended by itself (the first second covers the recogniser's start)
+                return;
+            }
+
+            if ((GetAsyncKeyState(key) & 0x8000) != 0)
+            {
+                return; // still held
+            }
+
+            timer.Stop();
+            if (DateTime.UtcNow - pressed >= VoiceTap)
+            {
+                voice.Release();
+            }
+        }, Dispatcher);
+    }
+
+    [DllImport("user32.dll")]
+    private static extern short GetAsyncKeyState(int virtualKey);
 
     private VoiceLaunch Voice() =>
         _voice ??= new VoiceLaunch(_viewModel, VoiceEar, _voiceWindow ??= new VoiceWindow(), ShowFromOtherInstance, HideBar);

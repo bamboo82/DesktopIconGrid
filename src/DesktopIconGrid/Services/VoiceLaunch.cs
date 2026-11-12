@@ -16,6 +16,9 @@ public interface IVoiceView
     /// <summary>A last word (what is started, or what went wrong); goes away by itself.</summary>
     void Say(string message);
 
+    /// <summary>Nothing more to show: the window goes away without a word (the hotkey was let go before anything was said).</summary>
+    void Done();
+
     /// <summary>Lets the user pick one of <paramref name="targets"/>; <see langword="null"/> when they pick none.</summary>
     Task<VoiceTarget?> ChooseAsync(IReadOnlyList<VoiceTarget> targets);
 }
@@ -25,14 +28,42 @@ public interface IVoiceView
 /// spoken name and starts what is called so, as a click on it would. It never listens on its own or all the time, and
 /// it only matches the names on the bar (<see cref="VoiceVocabulary"/>): nothing that is said is typed, sent or kept.
 /// A name heard clearly starts; one heard less clearly is offered with the other candidates; anything less starts
-/// nothing.
+/// nothing. The hotkey is push to talk when held (<see cref="Release"/>), and a plain trigger when tapped.
 /// </summary>
 public sealed class VoiceLaunch(LauncherViewModel bar, IVoiceEar ear, IVoiceView view, Action showBar, Action hideBar)
 {
     /// <summary>The longest one listening lasts, whatever the recogniser does.</summary>
     private static readonly TimeSpan Limit = TimeSpan.FromSeconds(15);
 
+    /// <summary>What the recogniser still gets after the hotkey is let go: the end of a word said while letting go.</summary>
+    public static readonly TimeSpan ReleaseGrace = TimeSpan.FromMilliseconds(700);
+
     private bool _busy;
+    private CancellationTokenSource? _listening;
+    private bool _released;
+
+    /// <summary>Whether it is listening now.</summary>
+    public bool IsListening => _listening is not null;
+
+    /// <summary>
+    /// The held hotkey was let go (push to talk): listening ends after <see cref="ReleaseGrace"/>. What was heard by
+    /// then is acted on as usual; when nothing was, the window just goes away, since letting go is how one cancels.
+    /// </summary>
+    public void Release()
+    {
+        if (_listening is { } listening)
+        {
+            _released = true;
+            try
+            {
+                listening.CancelAfter(ReleaseGrace);
+            }
+            catch (ObjectDisposedException)
+            {
+                // It ended this very moment.
+            }
+        }
+    }
 
     /// <summary>The recogniser language in use with the current settings, or <see langword="null"/> when this PC has none.</summary>
     public string? Language => VoiceLanguage.Pick(bar.Model.Settings.VoiceLanguage, CultureInfo.CurrentUICulture.Name, ear.InstalledLanguages());
@@ -62,8 +93,19 @@ public sealed class VoiceLaunch(LauncherViewModel bar, IVoiceEar ear, IVoiceView
             }
 
             using var cancellation = new CancellationTokenSource(Limit);
+            _released = false;
+            _listening = cancellation;
             view.Listening(language, cancellation.Cancel);
-            var result = await ear.ListenAsync(language, vocabulary.Phrases, cancellation.Token);
+            VoiceListenResult result;
+            try
+            {
+                result = await ear.ListenAsync(language, vocabulary.Phrases, cancellation.Token);
+            }
+            finally
+            {
+                _listening = null;
+            }
+
             if (result.Problem is not null)
             {
                 view.Say(string.Format(Strings.Voice_Problem, result.Problem));
@@ -84,7 +126,15 @@ public sealed class VoiceLaunch(LauncherViewModel bar, IVoiceEar ear, IVoiceView
 
                     break;
                 default:
-                    view.Say(Strings.Voice_NotHeard);
+                    if (_released)
+                    {
+                        view.Done(); // let go without a name: cancelled, nothing to explain
+                    }
+                    else
+                    {
+                        view.Say(Strings.Voice_NotHeard);
+                    }
+
                     break;
             }
         }

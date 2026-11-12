@@ -9,6 +9,24 @@ The owner relays replies.
 
 ---
 
+## 2026-11-12 (65) — The voice hotkey is push to talk (the owner's request)
+
+The owner asked for a hotkey that listens while it is held and cancels when it is let go.
+
+- `MainWindow.ListenWhileVoiceHotkeyIsHeld`: the hotkey's press starts listening as before. `RegisterHotKey`
+  reports no key-up, so a 50 ms `DispatcherTimer` reads `GetAsyncKeyState` for the gesture's key (not its
+  modifiers) until it is up, then calls `VoiceLaunch.Release()`.
+- `Release()` cancels the listening after 0.7 s (`ReleaseGrace`), so a word that ends as the key comes up is
+  still recognised. An answer that arrives in time is decided as usual. With no answer the window closes through
+  the new `IVoiceView.Done()` instead of saying "Didn't catch that".
+- A press shorter than 0.4 s (`VoiceTap`) is not a hold: listening goes on until the utterance or the limits,
+  as it does for the icon and `--voice`. A press while listening is ignored.
+- The Settings hint says so in the three languages.
+- Look at: whether 0.7 s is enough for the recogniser to finish an utterance (I cannot measure it here); only
+  the main key is watched, so letting go of Ctrl alone does not end the listening.
+- Test (App, CI only): `Letting_the_hotkey_go_ends_the_listening_without_a_word`, with an ear that waits for
+  its cancellation. Not tested: the timer and `GetAsyncKeyState`.
+
 ## 2026-11-12 (64) — Voice launch (ROADMAP #11), on the desktop recognisers
 
 Commits: `5f62e0f`, `6671613` and `c9656d9` (the trial, `tools/VoiceProbe` and FEATURES §6.1 only), then the

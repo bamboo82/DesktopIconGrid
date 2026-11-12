@@ -5226,7 +5226,7 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Press it anywhere, then say the name of an icon (or a workspace) to start it. Th [rest of string was truncated]";.
+        ///   Looks up a localized string similar to Hold it anywhere and say the name of an icon (or a workspace) to start it; letti [rest of string was truncated]";.
         /// </summary>
         public static string Settings_VoiceHotkeyHint {
             get {

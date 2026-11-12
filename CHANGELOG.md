@@ -11,8 +11,9 @@ Google Drive, voice launch), and the fixes the review of 0.10.0 placed after the
 
 ### Added
 
-- **Voice launch**: press the voice hotkey (Settings), click a *Voice* icon, or run `DesktopIconGrid.exe --voice`,
-  then say the name of an icon or a workspace to start it; "Show bar" and "Hide bar" work too. The bar listens for
+- **Voice launch**: hold the voice hotkey (Settings) and say the name of an icon or a workspace to start it;
+  letting the hotkey go ends the listening (a short tap listens until a name was said). A click on a *Voice*
+  icon or `DesktopIconGrid.exe --voice` listens too; "Show bar" and "Hide bar" work too. The bar listens for
   one name each time, never all the time, on this PC only (Windows' own speech recogniser, no online service),
   and only for the names on the bar. A name heard clearly starts; one heard less clearly is offered with the
   other candidates; anything less starts nothing. *Edit names* has a new column, *Also say*, for other phrases

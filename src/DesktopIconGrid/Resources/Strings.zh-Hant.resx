@@ -2382,7 +2382,7 @@
     <value>語音快速鍵</value>
   </data>
   <data name="Settings_VoiceHotkeyHint" xml:space="preserve">
-    <value>在任何地方按下，然後說出圖示（或工作區）的名稱即可啟動。每次只聆聽一個名稱，不會持續聆聽。</value>
+    <value>在任何地方按住並說出圖示（或工作區）的名稱即可啟動；放開即結束聆聽。短按一下則會聆聽到說出名稱為止。工具列不會自行聆聽。</value>
   </data>
   <data name="Settings_VoiceHotkeySame" xml:space="preserve">
     <value>請使用與另外兩個快速鍵不同的組合。</value>

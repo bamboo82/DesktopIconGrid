@@ -37,6 +37,26 @@ public sealed class VoiceLaunchTests : IDisposable
         }
     }
 
+    /// <summary>An ear that listens until it is cancelled, as a real one does while nobody speaks.</summary>
+    private sealed class WaitingEar : IVoiceEar
+    {
+        public TaskCompletionSource Started { get; } = new();
+
+        public IReadOnlyList<string> InstalledLanguages() => ["en-US"];
+
+        public async Task<VoiceListenResult> ListenAsync(string language, IReadOnlyCollection<string> phrases, CancellationToken cancellation)
+        {
+            Started.TrySetResult();
+            var cancelled = new TaskCompletionSource();
+            using (cancellation.Register(() => cancelled.TrySetResult()))
+            {
+                await cancelled.Task;
+            }
+
+            return new VoiceListenResult([]);
+        }
+    }
+
     private sealed class RecordingView : IVoiceView
     {
         public List<string> Said { get; } = [];
@@ -50,6 +70,10 @@ public sealed class VoiceLaunchTests : IDisposable
         public void Listening(string language, Action cancel) => ListeningShown++;
 
         public void Say(string message) => Said.Add(message);
+
+        public int DoneShown { get; private set; }
+
+        public void Done() => DoneShown++;
 
         public Task<VoiceTarget?> ChooseAsync(IReadOnlyList<VoiceTarget> targets)
         {
@@ -154,6 +178,31 @@ public sealed class VoiceLaunchTests : IDisposable
         await new VoiceLaunch(bar.ViewModel, ear, new RecordingView(), () => { }, () => hidden++).ListenAsync();
 
         Assert.Equal(1, hidden);
+    }
+
+    [Fact]
+    public async Task Letting_the_hotkey_go_ends_the_listening_without_a_word()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        using var bar = new TestBar(_directory, Bar());
+        var ear = new WaitingEar();
+        var view = new RecordingView();
+        var voice = new VoiceLaunch(bar.ViewModel, ear, view, () => { }, () => { });
+        Assert.False(voice.IsListening);
+
+        var listening = voice.ListenAsync();
+        await ear.Started.Task;
+        Assert.True(voice.IsListening);
+        voice.Release();
+        await listening.WaitAsync(TimeSpan.FromSeconds(10));
+
+        Assert.False(voice.IsListening);
+        Assert.Equal(1, view.DoneShown);
+        Assert.Empty(view.Said); // cancelled by letting go: not "Didn't catch that"
     }
 
     [Fact]

@@ -2382,7 +2382,7 @@ Details are in {1}.</value>
     <value>Voice hotkey</value>
   </data>
   <data name="Settings_VoiceHotkeyHint" xml:space="preserve">
-    <value>Press it anywhere, then say the name of an icon (or a workspace) to start it. The bar listens for one name each time, never all the time.</value>
+    <value>Hold it anywhere and say the name of an icon (or a workspace) to start it; letting go ends the listening. A short tap listens until a name was said. The bar never listens on its own.</value>
   </data>
   <data name="Settings_VoiceHotkeySame" xml:space="preserve">
     <value>Use a different combination from the other two hotkeys.</value>

@@ -484,6 +484,10 @@ changes at once. The given names are the captions on the bar and the phrases voi
 or `--voice` makes the bar listen for one utterance and start what is called so, as a click on it would (so a
 paused command tile still asks, and a shortcut's questions still come).
 
+- The hotkey is push to talk: listening starts when it goes down and ends 0.7 seconds after it is let go, so
+  the end of the word is still heard. What was heard by then is acted on; when nothing was, the window just
+  goes away (letting go is how one cancels). A tap shorter than 0.4 seconds is a plain trigger instead:
+  listening then lasts until a name was said or the limits below.
 - What is listened for: the names and *Also say* phrases of shortcuts and special icons (also inside groups),
   the workspace names, and "Show bar" / "Hide bar" in the language listened in. Groups and the Voice icon are
   not started by voice. A phrase must have a letter or digit, at most 60 characters, and pass the same
