@@ -2181,10 +2181,10 @@
     <value>麦克风</value>
   </data>
   <data name="Mic_Desc" xml:space="preserve">
-    <value>为所有程序将默认麦克风静音或取消静音。静音时显示红色。</value>
+    <value>将默认麦克风（通话与会议所用的那一支）静音或取消静音。静音时显示红色。</value>
   </data>
   <data name="Mic_LabelOn" xml:space="preserve">
-    <value>MIC</value>
+    <value>开</value>
   </data>
   <data name="Mic_LabelMuted" xml:space="preserve">
     <value>静音</value>
@@ -2308,5 +2308,11 @@
   </data>
   <data name="Stack_Unreadable" xml:space="preserve">
     <value>目前无法读取此文件夹。它可能位于未连接的驱动器或共享位置，或者您没有访问权限。</value>
+  </data>
+  <data name="Monitor_BatteryLevel" xml:space="preserve">
+    <value>电池 {0}%</value>
+  </data>
+  <data name="Clock_UnknownZone" xml:space="preserve">
+    <value>{0}（这台电脑不认识；在此显示这台电脑的时间）</value>
   </data>
 </root>

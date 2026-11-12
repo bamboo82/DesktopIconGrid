@@ -798,6 +798,15 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to {0} (not known on this PC; shows this PC's time here).
+        /// </summary>
+        public static string Clock_UnknownZone {
+            get {
+                return ResourceManager.GetString("Clock_UnknownZone", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to The break is over: {0} minutes of work..
         /// </summary>
         public static string Clock_WorkStarted {
@@ -3057,7 +3066,7 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Mutes or unmutes the default microphone for every program. Red while muted..
+        ///   Looks up a localized string similar to Mutes or unmutes the default microphone (the one calls and meetings use). Red wh [rest of string was truncated]";.
         /// </summary>
         public static string Mic_Desc {
             get {
@@ -3075,7 +3084,7 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to MIC.
+        ///   Looks up a localized string similar to ON.
         /// </summary>
         public static string Mic_LabelOn {
             get {
@@ -3152,6 +3161,15 @@ namespace DesktopIconGrid.Resources {
         public static string Monitor_BatteryDesc {
             get {
                 return ResourceManager.GetString("Monitor_BatteryDesc", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Battery {0}%.
+        /// </summary>
+        public static string Monitor_BatteryLevel {
+            get {
+                return ResourceManager.GetString("Monitor_BatteryLevel", resourceCulture);
             }
         }
 

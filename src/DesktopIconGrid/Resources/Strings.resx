@@ -2181,10 +2181,10 @@ Details are in {1}.</value>
     <value>Microphone</value>
   </data>
   <data name="Mic_Desc" xml:space="preserve">
-    <value>Mutes or unmutes the default microphone for every program. Red while muted.</value>
+    <value>Mutes or unmutes the default microphone (the one calls and meetings use). Red while muted.</value>
   </data>
   <data name="Mic_LabelOn" xml:space="preserve">
-    <value>MIC</value>
+    <value>ON</value>
   </data>
   <data name="Mic_LabelMuted" xml:space="preserve">
     <value>MUTE</value>
@@ -2308,5 +2308,11 @@ Details are in {1}.</value>
   </data>
   <data name="Stack_Unreadable" xml:space="preserve">
     <value>This folder cannot be read right now. It may be on a drive or share that is not connected, or you may not have access.</value>
+  </data>
+  <data name="Monitor_BatteryLevel" xml:space="preserve">
+    <value>Battery {0}%</value>
+  </data>
+  <data name="Clock_UnknownZone" xml:space="preserve">
+    <value>{0} (not known on this PC; shows this PC's time here)</value>
   </data>
 </root>

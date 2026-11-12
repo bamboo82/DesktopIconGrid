@@ -34,8 +34,12 @@ public sealed class SendToDeviceHandler(Func<FolderInbox?> inbox, IDialogService
     public string? GetToolTip(SpecialIconItem item) =>
         item.GetSetting(DeviceIdKey) is { } id ? string.Format(Strings.SendTo_ToolTip, StoredName(item, id)) : Strings.SendTo_NoDevice;
 
-    public LaunchResult Activate(SpecialIconItem item, ActivationModifiers modifiers) =>
-        LaunchResult.Failure(item.GetSetting(DeviceIdKey) is { } id ? string.Format(Strings.SendTo_ToolTip, StoredName(item, id)) : Strings.SendTo_NoDevice);
+    /// <summary>A click sends nothing: it says what the icon is for (a hint, not a failure).</summary>
+    public LaunchResult Activate(SpecialIconItem item, ActivationModifiers modifiers)
+    {
+        dialogs.Notify(item.Name, item.GetSetting(DeviceIdKey) is { } id ? string.Format(Strings.SendTo_ToolTip, StoredName(item, id)) : Strings.SendTo_NoDevice);
+        return LaunchResult.Started;
+    }
 
     /// <summary>The name kept with the icon, made fit to show: it may have come with a synced bar (review 24 I4).</summary>
     private static string StoredName(SpecialIconItem item, string id) =>

@@ -15,6 +15,9 @@ What the review of 0.10.0 placed after the release.
   per look; the tooltip and the "sent" notice show the other PC's current name, not one stored with the icon.
   A file that has to wait for disk space is announced once, with its size, the free space and what to do; the
   reasons a file was not sent (the other PC is not receiving, a folder, over 2 GB) are said in your language.
+- Send to PC: a received file that Explorer would read and follow just by showing the Downloads folder (an
+  Internet shortcut `.url`, a `.lnk`, `.scf`, `.library-ms` and the like) arrives with `.received` added to
+  its name, so it is only shown. Remove the ending to use it.
 - A folder stack on a network share or mapped drive no longer freezes the bar while the share wakes up, and a
   folder that cannot be read says so instead of "This folder is empty".
 - A clock tile on "this PC's time" follows a change of Windows' time zone without a restart.
@@ -22,7 +25,10 @@ What the review of 0.10.0 placed after the release.
   monitor moves to the monitor it was remembered on; a window remembered on a monitor that is gone is put on
   one that is there; a member that is closed when positions are remembered keeps the place it had.
 - A folder stack does not refresh while the pointer is over it, so a finished download no longer moves the
-  rows under a click.
+  rows under a click. A batch file opened from a stack starts in the stack's folder.
+- Smaller: the microphone tile shows `ON` instead of repeating `MIC`; a battery whose state Windows does not
+  report shows its charge without claiming it is plugged in; a clock tile's time zone that this PC does not
+  know is kept when its properties are saved here; a click on a *Send to PC* icon gives a hint, not an error.
 
 ## [0.10.0] – 2026-11-11
 

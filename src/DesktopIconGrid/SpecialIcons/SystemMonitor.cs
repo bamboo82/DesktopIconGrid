@@ -247,13 +247,18 @@ public sealed class SystemMonitor : IDisposable
     /// </summary>
     internal static (double? Percent, bool OnBattery, string Detail) ReadBattery(byte percent, byte flag, byte line)
     {
-        if (percent > 100 || (flag & 128) != 0)
+        // A flag or line status of 255 is "unknown", not "every bit set": then only the percentage is known.
+        var flagKnown = flag != 255;
+        if (percent > 100 || (flagKnown && (flag & 128) != 0))
         {
             return (null, false, Strings.Monitor_NoBattery);
         }
 
         var onBattery = line == 0;
-        var text = (flag & 8) != 0 ? Strings.Monitor_BatteryCharging : onBattery ? Strings.Monitor_BatteryOn : Strings.Monitor_BatteryPlugged;
+        var text = flagKnown && (flag & 8) != 0 ? Strings.Monitor_BatteryCharging
+            : onBattery ? Strings.Monitor_BatteryOn
+            : line == 1 ? Strings.Monitor_BatteryPlugged
+            : Strings.Monitor_BatteryLevel;
         return (percent, onBattery, string.Format(text, percent));
     }
 

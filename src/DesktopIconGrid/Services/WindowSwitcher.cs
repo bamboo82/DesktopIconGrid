@@ -98,10 +98,7 @@ public sealed class WindowSwitcher : IWindowSwitcher, IDisposable
         }
     }
 
-    /// <summary>
-    /// Every top-level window, topmost first, described for <see cref="WindowSwitching"/>; <paramref name="withAppIds"/>
-    /// also reads the AppUserModelID of each Store app frame.
-    /// </summary>
+    /// <summary>Where the program's first window goes back to (its normal rectangle) and whether it is maximised.</summary>
     public SavedWindow? Capture(IReadOnlySet<int> processIds, string? packageFamily = null)
     {
         if (FirstWindow(processIds, packageFamily) is not { } window)
@@ -160,6 +157,10 @@ public sealed class WindowSwitcher : IWindowSwitcher, IDisposable
         return windows.Count > 0 ? windows[0].Handle : null;
     }
 
+    /// <summary>
+    /// Every top-level window, topmost first, described for <see cref="WindowSwitching"/>; <paramref name="withAppIds"/>
+    /// also reads the AppUserModelID of each Store app frame.
+    /// </summary>
     internal static List<WindowInfo> Snapshot(bool withAppIds = false)
     {
         var windows = new List<WindowInfo>();

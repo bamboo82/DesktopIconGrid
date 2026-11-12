@@ -233,7 +233,8 @@ public partial class StackWindow : Window
 
     private void Open(string path)
     {
-        var result = ProcessLauncher.Start(new ProcessStartInfo(path) { UseShellExecute = true });
+        // Started in the stack's folder, as a double-click in Explorer does: a batch file there finds its neighbours.
+        var result = ProcessLauncher.Start(new ProcessStartInfo(path) { UseShellExecute = true, WorkingDirectory = Directory.Exists(_folder) && !IconWorker.IsOnSlowStorage(_folder) ? _folder : string.Empty });
         result.Process?.Dispose();
         if (result.Outcome == LaunchOutcome.Failed)
         {

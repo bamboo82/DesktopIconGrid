@@ -188,7 +188,7 @@ public static class BarCommands
 
                     break;
                 case BarCommandKind.Workspace:
-                    if (!IsText(command.Value, MaxGroupLength) || command.Group is not null)
+                    if (!IsText(command.Value, Launching.Workspaces.MaxNameLength) || command.Group is not null)
                     {
                         return "--workspace needs the name of a workspace.";
                     }

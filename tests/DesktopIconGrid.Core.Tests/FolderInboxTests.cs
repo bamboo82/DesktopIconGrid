@@ -243,4 +243,28 @@ public sealed class FolderInboxTests : IDisposable
         Assert.Equal("an old name", laptop.NameOfDevice(new string('c', 32), "an old‮ name")); // no inbox: the stored one, cleaned
         Assert.Equal("cccccccc", laptop.NameOfDevice(new string('c', 32), null));
     }
+
+    [Theory]
+    [InlineData("site.url", "site.url.received")]
+    [InlineData("Tool.LNK", "Tool.LNK.received")]
+    [InlineData("x.scf", "x.scf.received")]
+    [InlineData("Docs.library-ms", "Docs.library-ms.received")]
+    [InlineData("s.searchConnector-ms", "s.searchConnector-ms.received")]
+    [InlineData("report.pdf", "report.pdf")]
+    [InlineData("setup.exe", "setup.exe")] // not read on sight; the mark of a downloaded file guards opening it
+    [InlineData("notes.url.txt", "notes.url.txt")]
+    public void A_file_Explorer_would_follow_on_sight_arrives_as_a_plain_file(string sent, string arrives)
+    {
+        Assert.Equal(arrives, FolderInbox.PlainName(sent));
+
+        var laptop = new FolderInbox(Sync, Laptop, "Laptop");
+        var desktop = new FolderInbox(Sync, Desktop, "Desktop");
+        laptop.Announce();
+        desktop.Announce();
+        laptop.Send(Desktop, MakeFile(sent, "[InternetShortcut]\nURL=file://evil/share"));
+
+        var received = FolderInbox.Receive(Assert.Single(desktop.Pending()), Path.Combine(_folder, "Downloads")).Path;
+
+        Assert.Equal(arrives, Path.GetFileName(received));
+    }
 }

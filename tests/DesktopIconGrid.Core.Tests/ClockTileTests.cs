@@ -86,4 +86,13 @@ public class ClockTileTests
         Assert.Equal(TimeZoneInfo.Local, settings.Zone());
         Assert.Matches(@"^\d\d:\d\d$", new ClockTimer(settings).Label(Noon));
     }
+
+    [Fact]
+    public void A_zone_this_PC_does_not_know_is_told_apart_from_no_zone()
+    {
+        Assert.False(ClockTileSettings.Default.ZoneIsUnknownHere); // this PC's time
+        Assert.False((ClockTileSettings.Default with { TimeZoneId = "UTC" }).ZoneIsUnknownHere);
+        Assert.True((ClockTileSettings.Default with { TimeZoneId = "Mars/Olympus_Mons" }).ZoneIsUnknownHere);
+        Assert.True((ClockTileSettings.Default with { TimeZoneId = "\\" }).ZoneIsUnknownHere);
+    }
 }

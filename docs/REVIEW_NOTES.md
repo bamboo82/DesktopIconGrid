@@ -9,6 +9,43 @@ The owner relays replies.
 
 ---
 
+## 2026-11-12 (60) — Review 24's minor list; what 0.10.1 has and has not
+
+The owner asked to complete 0.10.1. Run 150 (`8c3ad7c`) is green.
+
+- **Taken from the minor list.**
+  - Microphone: `Mic_LabelOn` is `ON` (the caption already says MIC). `Mic_Desc` says "the default microphone
+    (the one calls and meetings use)", not "for every program".
+  - Battery: a flag of 255 is "unknown", not "no battery". An unknown line status shows `Battery N%`
+    (`Monitor_BatteryLevel`) instead of "plugged in". Two test rows.
+  - Stack: an unreadable folder says so (entry 58). Rows carry `AutomationProperties.Name`. An entry is started
+    with the stack's folder as its working directory (not on slow storage).
+  - Clock: `ClockTimer` resolves a named zone once, so an unknown id no longer throws every second.
+    `ZoneIsUnknownHere` is new, and the dialog lists such an id as "(not known on this PC…)" and keeps it on
+    OK. Core test.
+  - `Snapshot`'s doc comment is back on `Snapshot`.
+  - `workspaces.json` over 1 MB is not read.
+  - A click on *Send to PC* is a notice and `Started`, not a failure.
+  - `--workspace` takes at most `Workspaces.MaxNameLength` characters. Test.
+- **Not taken.**
+  - W3 (two members on one program share "the first window"; a splash screen satisfies the poll). The window
+    order from `EnumWindows` is z-order, which changes between capture and place, so an index does not identify
+    a window. It needs something stable per member (the window's title pattern, or the process the bar
+    started), and I do not want to guess at it without a PC to try on.
+  - L5 (a test for the parameters rule): it needs a tracker with injected processes.
+  - I3's subfolder: the owner answered while this entry was written, in these words: "just show the file like
+    .url and don't follow the link". So there is no subfolder; see the next point.
+  - Tests that say more than they check (three names), dot files not counted in "N more", "No microphone was
+    found" for every failure, the number style's repeated caption elsewhere.
+- **I3, the owner's way.** Files stay in Downloads. `FolderInbox.PlainName` appends `.received` to the types
+  Explorer reads on sight: `.url`, `.lnk`, `.scf`, `.library-ms`, `.searchconnector-ms`, `.search-ms`,
+  `.website`, `.pif`, `.appref-ms`, and `desktop.ini` as before. Explorer then shows them as plain files and
+  follows nothing. `.exe` and documents are not renamed; the downloaded mark guards those. The Core test covers
+  the list, three types that must not change, and a whole send and receive. Please check the list: it is from
+  memory of what the shell parses for icons and targets, and I may have missed a type.
+- **Nothing of 0.10.1 has been tried in the app.** `SetWindowPlacement`, the background gauge reads and the
+  stack's async fill are the three I would look at first on a real PC.
+
 ## 2026-11-12 (59) — Workspaces W1, W2, W6, W7; stacks S4
 
 Run 149 (`950f482`) is green.

@@ -13,6 +13,8 @@ public class MoreGaugesTests
     [InlineData(100, 0, 1, 100d, false)] // plugged in, full
     [InlineData(255, 128, 1, null, false)] // a desktop PC: no battery
     [InlineData(255, 0, 1, null, false)] // percentage unknown
+    [InlineData(60, 255, 0, 60d, true)] // flag unknown (255 is not "no battery"), on battery
+    [InlineData(60, 255, 255, 60d, false)] // nothing known but the percentage: no claim that it is plugged in
     public void The_power_status_bytes_are_read(byte percent, byte flag, byte line, double? expected, bool onBattery)
     {
         var reading = SystemMonitor.ReadBattery(percent, flag, line);

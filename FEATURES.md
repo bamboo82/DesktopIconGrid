@@ -267,7 +267,7 @@ their tooltips end with a line of the last 60 samples (`▁▂▃▅▇█`; the
   A click while stopped replays the last recording. Shows REC / LOOP on the icon.
 
 - **Microphone** (0.10.0) — a click mutes or unmutes the default microphone (the one meetings use, else
-  the general default) for every program. `MIC` in green while on, `MUTE` in red while muted, `—` when
+  the general default) for every program. `ON` in green while on, `MUTE` in red while muted, `—` when
   there is no microphone; it follows mutes made elsewhere within 2 seconds. As a ring or bar it shows
   the microphone's level. Not in: a volume tile that takes the mouse wheel.
 
@@ -283,8 +283,11 @@ their tooltips end with a line of the last 60 samples (`▁▂▃▅▇█`; the
   Downloads folder under a free name, marks it as downloaded from another computer
   (so SmartScreen and Protected View apply), and shows a notification. Nothing received is opened. A file
   arrives once, as a plain file: read-only and hidden attributes do not travel, it is marked before it
-  gets its name, a `desktop.ini` arrives as `desktop.ini.received`, and when the drive keeps no such mark
-  the notification says so.
+  gets its name, and when the drive keeps no such mark the notification says so. Files that Explorer
+  reads and follows just by showing their folder (`.url`, `.lnk`, `.scf`, `.library-ms`,
+  `.searchConnector-ms`, `.search-ms`, `.website`, `.pif`, `.appref-ms`, and `desktop.ini`) arrive with
+  `.received` added to their name: they are shown as plain files and nothing in them is followed;
+  remove the ending to use one.
   Whoever can write to the sync folder can send, as they can change the synced bar. Not in: sending
   through Google Drive; a click that opens the received file's folder.
 
@@ -293,7 +296,8 @@ their tooltips end with a line of the last 60 samples (`▁▂▃▅▇█`; the
   clicked). While it runs the tile shows what is left (green for work, amber for a break), each phase
   ends with a notification, a finished countdown shows `0:00` in red until clicked, and a click while
   it runs stops it. After the PC slept through a phase the next one starts from the wake-up. A zone id
-  another PC does not know falls back to that PC's own time.
+  a PC does not know shows that PC's own time there; its properties list the id as "not known on this
+  PC" and keep it, so the PCs that do know it are not changed.
 
 - **Command tile** (0.9.0) — runs a program without a window, every N seconds (at least 10) or only on a
   click, and shows the first line of its output, or the first number in it as a ring, bar or number with

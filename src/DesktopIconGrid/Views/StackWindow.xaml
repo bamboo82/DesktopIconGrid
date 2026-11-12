@@ -29,6 +29,11 @@
                PreviewMouseLeftButtonDown="List_PreviewMouseLeftButtonDown"
                PreviewMouseMove="List_PreviewMouseMove"
                PreviewMouseLeftButtonUp="List_PreviewMouseLeftButtonUp">
+        <ListBox.ItemContainerStyle>
+          <Style TargetType="ListBoxItem">
+            <Setter Property="AutomationProperties.Name" Value="{Binding Name}" />
+          </Style>
+        </ListBox.ItemContainerStyle>
         <ListBox.ItemTemplate>
           <DataTemplate>
             <DockPanel ToolTip="{Binding Path}">

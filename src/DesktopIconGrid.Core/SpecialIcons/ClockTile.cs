@@ -70,6 +70,28 @@ public sealed record ClockTileSettings(string? TimeZoneId, ClockTimerKind Timer,
         item.SetSetting(BreakKey, Math.Clamp(BreakMinutes, 1, MaxMinutes).ToString(CultureInfo.InvariantCulture));
     }
 
+    /// <summary>Whether <see cref="TimeZoneId"/> is set but not a zone this PC knows (ids differ between systems).</summary>
+    public bool ZoneIsUnknownHere
+    {
+        get
+        {
+            if (string.IsNullOrWhiteSpace(TimeZoneId))
+            {
+                return false;
+            }
+
+            try
+            {
+                TimeZoneInfo.FindSystemTimeZoneById(TimeZoneId.Trim());
+                return false;
+            }
+            catch (Exception)
+            {
+                return true; // not found, or an id the runtime chokes on
+            }
+        }
+    }
+
     /// <summary>The zone, or this PC's when none is set or the id is not known on this PC (ids differ between systems).</summary>
     public TimeZoneInfo Zone()
     {
@@ -97,6 +119,9 @@ public sealed record ClockTileSettings(string? TimeZoneId, ClockTimerKind Timer,
 /// <summary>The timer of one clock tile: started and stopped by clicks, moved on by ticks. Time is passed in, so it can be tested.</summary>
 public sealed class ClockTimer(ClockTileSettings settings)
 {
+    // Looked up once: an id this PC does not know would otherwise throw (and be caught) every second per tile. "This
+    // PC's time" is asked each time, so it follows a change of Windows' time zone.
+    private readonly TimeZoneInfo? _zone = string.IsNullOrWhiteSpace(settings.TimeZoneId) ? null : settings.Zone();
     private DateTimeOffset _end;
 
     public ClockPhase Phase { get; private set; }
@@ -143,7 +168,7 @@ public sealed class ClockTimer(ClockTileSettings settings)
         switch (Phase)
         {
             case ClockPhase.Idle:
-                return TimeZoneInfo.ConvertTime(now, settings.Zone()).ToString("HH:mm", CultureInfo.InvariantCulture);
+                return TimeZoneInfo.ConvertTime(now, _zone ?? TimeZoneInfo.Local).ToString("HH:mm", CultureInfo.InvariantCulture);
             case ClockPhase.Done:
                 return "0:00";
             default:

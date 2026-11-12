@@ -322,14 +322,30 @@ public sealed class FolderInbox
         }
     }
 
+    /// <summary>What a received file's name gets appended when Explorer would otherwise read the file just by listing its folder.</summary>
+    public const string InertSuffix = ".received";
+
     /// <summary>
-    /// A received file's name: safe for Windows, never a path, and never <c>desktop.ini</c>, which Explorer would read
-    /// as the Downloads folder's own settings.
+    /// File types Explorer opens and follows when it merely shows the folder they are in (to draw an icon, a preview or
+    /// a link's target): a received one could make this PC contact an address or a share without anyone opening it.
     /// </summary>
-    private static string PlainName(string name)
+    private static readonly HashSet<string> ReadOnSight = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ".url", ".lnk", ".scf", ".library-ms", ".searchconnector-ms", ".search-ms", ".website", ".pif", ".appref-ms",
+    };
+
+    /// <summary>
+    /// A received file's name: safe for Windows, never a path, and inert. <c>desktop.ini</c> (which Explorer would read
+    /// as the Downloads folder's own settings) and the <see cref="ReadOnSight"/> types arrive with
+    /// <see cref="InertSuffix"/> appended, so they are shown as plain files and nothing in them is followed (the
+    /// owner's decision); removing the suffix makes the file what it was.
+    /// </summary>
+    public static string PlainName(string name)
     {
         var safe = FileNames.Safe(name);
-        return string.Equals(safe, "desktop.ini", StringComparison.OrdinalIgnoreCase) ? safe + ".received" : safe;
+        return string.Equals(safe, "desktop.ini", StringComparison.OrdinalIgnoreCase) || ReadOnSight.Contains(Path.GetExtension(safe))
+            ? safe + InertSuffix
+            : safe;
     }
 
     private static string Unique(string folder, string name)

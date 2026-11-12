@@ -129,6 +129,9 @@ public sealed class WorkspacePositions
 {
     public const string FileName = "workspaces.json";
 
+    /// <summary>Far more than any bar's positions take; a larger file is not this app's.</summary>
+    public const long MaxFileBytes = 1024 * 1024;
+
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web) { WriteIndented = true };
 
     private readonly string? _filePath;
@@ -186,6 +189,12 @@ public sealed class WorkspacePositions
 
         try
         {
+            if (new FileInfo(filePath).Length > MaxFileBytes)
+            {
+                AppLog.Default.Warning("Workspaces", "The window positions file is too large to be one; it is not read");
+                return empty;
+            }
+
             var read = JsonSerializer.Deserialize<Dictionary<string, Dictionary<Guid, SavedWindow>>>(File.ReadAllBytes(filePath), Json);
             foreach (var (name, windows) in read ?? [])
             {

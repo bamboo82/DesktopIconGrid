@@ -33,6 +33,13 @@ public sealed class ClockTileViewModel : ObservableObject
         var settings = ClockTileSettings.From(item);
         _name = item.Name;
         Zones = [new ZoneChoice(null, Strings.Clock_ThisPc), .. TimeZoneInfo.GetSystemTimeZones().Select(zone => new ZoneChoice(zone.Id, zone.DisplayName))];
+        if (settings.ZoneIsUnknownHere && CommandTileSettings.IsShowable(settings.TimeZoneId!) && settings.TimeZoneId!.Length <= 100)
+        {
+            // A zone another PC knows and this one does not: kept as a choice, so OK here does not overwrite it for the
+            // PCs that do know it (the tile shows this PC's time meanwhile).
+            Zones = [.. Zones, new ZoneChoice(settings.TimeZoneId, string.Format(Strings.Clock_UnknownZone, settings.TimeZoneId))];
+        }
+
         _zone = Zones.FirstOrDefault(zone => string.Equals(zone.Id, settings.TimeZoneId, StringComparison.OrdinalIgnoreCase)) ?? Zones[0];
         _timer = TimerChoices.First(choice => choice.Kind == settings.Timer);
         _minutes = settings.Minutes.ToString(CultureInfo.CurrentCulture);

@@ -85,6 +85,7 @@ public sealed class WorkspacesTests : IDisposable
         Assert.Equal([new BarCommand(BarCommandKind.Workspace, "Work")], commands);
         Assert.Equal(commands, BarCommands.Deserialize(BarCommands.Serialize(commands)));
         Assert.NotNull(BarCommands.Parse(["--workspace"]).Error);
+        Assert.NotNull(BarCommands.Parse(["--workspace", new string('x', Workspaces.MaxNameLength + 1)]).Error); // no workspace has such a name
         Assert.NotNull(BarCommands.Parse(["--workspace", "--show"]).Error);
     }
 
