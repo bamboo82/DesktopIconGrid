@@ -496,6 +496,22 @@ requirement of voice launch, and the probe runs again once the pack is installed
 list constraint then recognises these names, on the device and without online-speech consent, is still
 open until that second run.
 
+**Second and third run (2026-11-12, same PC, still only the en-US pack).** zh-TW gave the same refusal. en-US,
+whose pack is installed, failed too:
+
+```
+Windows 10.0.22631.0, 64-bit process, not packaged
+Speech languages installed: en-US
+Windows speech language: en-US
+Failed: 0x800455A0 COMException: 找不到與此錯誤碼關聯的文字。
+Internal Speech Error.
+ANSWER: no (see the error above)
+```
+
+So this is a "no" for another reason than the speech pack, and which step failed is not known: the probe did
+not say. It now prints the microphones Windows lists, the step that failed, and the older desktop (SAPI)
+recognisers on the PC. The answer stays open until a run with that output; nothing is built.
+
 What was known before running it:
 
 - The recogniser is a WinRT API. An unpackaged .NET process reaches it through the Windows SDK projection of

@@ -13,11 +13,51 @@ Console.WriteLine($"Windows {Environment.OSVersion.Version}, {(Environment.Is64B
 Console.WriteLine($"Speech languages installed: {string.Join(", ", SpeechRecognizer.SupportedGrammarLanguages.Select(l => l.LanguageTag))}");
 Console.WriteLine($"Windows speech language: {SpeechRecognizer.SystemSpeechLanguage?.LanguageTag ?? "(none)"}");
 
+// What the second run (en-US, "Internal Speech Error") could not tell: is there a microphone at all, which step
+// failed, and which of the older desktop recognisers (SAPI, the fallback) this PC has.
+try
+{
+    var microphones = await Windows.Devices.Enumeration.DeviceInformation.FindAllAsync(Windows.Devices.Enumeration.DeviceClass.AudioCapture);
+    Console.WriteLine($"Microphones: {(microphones.Count == 0 ? "(none)" : string.Join(", ", microphones.Select(m => $"{m.Name}{(m.IsEnabled ? string.Empty : " [disabled]")}{(m.IsDefault ? " [default]" : string.Empty)}")))}");
+}
+catch (Exception ex)
+{
+    Console.WriteLine($"Microphones: could not be listed (0x{ex.HResult:X8} {ex.Message.Trim()})");
+}
+
+try
+{
+    if (Type.GetTypeFromProgID("SAPI.SpInprocRecognizer") is { } sapi && Activator.CreateInstance(sapi) is { } created)
+    {
+        dynamic desktop = created;
+        dynamic tokens = desktop.GetRecognizers(string.Empty, string.Empty);
+        var names = new List<string>();
+        for (var i = 0; i < (int)tokens.Count; i++)
+        {
+            names.Add((string)tokens.Item(i).GetDescription(0));
+        }
+
+        Console.WriteLine($"Desktop (SAPI) recognisers: {(names.Count == 0 ? "(none)" : string.Join("; ", names))}");
+    }
+    else
+    {
+        Console.WriteLine("Desktop (SAPI) recognisers: SAPI is not there");
+    }
+}
+catch (Exception ex)
+{
+    Console.WriteLine($"Desktop (SAPI) recognisers: could not be listed (0x{ex.HResult:X8} {ex.Message.Trim()})");
+}
+
+var step = "creating the recogniser";
 try
 {
     using var recognizer = new SpeechRecognizer(new Language(tag));
+    step = "adding the list of names";
     recognizer.Constraints.Add(new SpeechRecognitionListConstraint(phrases, "names"));
+    step = "compiling the list";
     var compiled = await recognizer.CompileConstraintsAsync();
+    step = "listening";
     Console.WriteLine($"Recogniser for {recognizer.CurrentLanguage.LanguageTag}: compile {compiled.Status}");
     if (compiled.Status != SpeechRecognitionResultStatus.Success)
     {
@@ -47,7 +87,7 @@ catch (Exception ex)
     // Failures to tell apart: 0x80070005 (access denied: the microphone switch for desktop apps is off), 0x80045509
     // (the online speech privacy consent, which an offline list constraint should not need), or an exception for the
     // language itself (no speech pack for it).
-    Console.WriteLine($"Failed: 0x{ex.HResult:X8} {ex.GetType().Name}: {ex.Message}");
+    Console.WriteLine($"Failed while {step}: 0x{ex.HResult:X8} {ex.GetType().Name}: {ex.Message}");
     Console.WriteLine("ANSWER: no (see the error above)");
     return 1;
 }
