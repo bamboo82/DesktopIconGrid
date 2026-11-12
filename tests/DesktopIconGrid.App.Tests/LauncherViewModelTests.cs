@@ -575,8 +575,14 @@ public sealed class LauncherViewModelTests : IDisposable
     {
         var (viewModel, model, dialogs) = Create();
         var folder = new ShortcutItem { Name = "Downloads", Location = _directory, OpenAsStack = true, StackNewestFirst = true };
+        // Two more icons on the folder for Shift and the middle click: a second click on one icon within 0.4 s is taken
+        // for a double-click and dropped.
+        var shifted = new ShortcutItem { Name = "Downloads 2", Location = _directory, OpenAsStack = true };
+        var middle = new ShortcutItem { Name = "Downloads 3", Location = _directory, OpenAsStack = true };
         var gone = new ShortcutItem { Name = "Gone", Location = Path.Combine(_directory, "nope"), OpenAsStack = true };
         model.Add(folder);
+        model.Add(shifted);
+        model.Add(middle);
         model.Add(gone);
         viewModel.RootItems.Sync();
 
@@ -593,12 +599,13 @@ public sealed class LauncherViewModelTests : IDisposable
         Assert.Equal([@"C:\a.txt"], opened.Paths);
 
         // Shift (and a middle click, which arrives as NewInstance) opens the folder itself, as before stacks.
-        viewModel.Activate(viewModel.GetOrCreateViewModel(folder), null, ActivationModifiers.Shift);
+        viewModel.Activate(viewModel.GetOrCreateViewModel(shifted), null, ActivationModifiers.Shift);
         Assert.Single(dialogs.Stacks);
         Assert.Equal(_directory, Assert.Single(_launcher.Launches).Location);
-        viewModel.Activate(viewModel.GetOrCreateViewModel(folder), null, ActivationModifiers.NewInstance);
+        viewModel.Activate(viewModel.GetOrCreateViewModel(middle), null, ActivationModifiers.NewInstance);
         Assert.Single(dialogs.Stacks);
         Assert.Equal(2, _launcher.Launches.Count);
+        Assert.Equal(_directory, _launcher.Launches[1].Location);
 
         viewModel.Activate(viewModel.GetOrCreateViewModel(gone), null, ActivationModifiers.None); // not a folder here: launched as usual
         Assert.Single(dialogs.Stacks);
@@ -656,7 +663,7 @@ public sealed class LauncherViewModelTests : IDisposable
         // Closed again. Started, it has a process at once and shows its window two looks later.
         switcher.Shown.Clear();
         viewModel.Tracker.ApplySnapshot(Running((exe, [501])));
-        switcher.Coming.Add((FakeSwitcher.Window(2, 501), 2));
+        switcher.Coming.Add((FakeSwitcher.Window(2, 501), 2)); // the start's first look is the one before anything is started
         await viewModel.StartWorkspaceAsync("work");
 
         Assert.Equal([(exe, false)], _launcher.Launches); // only the member, not the Multi Launch one
@@ -718,7 +725,7 @@ public sealed class LauncherViewModelTests : IDisposable
         // The tool is closed. Started, "todo" opens in the editor's running process (10) as a new window (3).
         switcher.Shown.RemoveAt(2);
         viewModel.Tracker.ApplySnapshot(Running((editor, [10, 11])));
-        switcher.Coming.Add((FakeSwitcher.Window(3, 10), 1));
+        switcher.Coming.Add((FakeSwitcher.Window(3, 10), 2)); // the start's first look is the one before anything is started
         var timer = System.Diagnostics.Stopwatch.StartNew();
         await viewModel.StartWorkspaceAsync("Work");
 

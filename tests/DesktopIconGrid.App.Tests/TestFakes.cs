@@ -210,7 +210,10 @@ internal sealed class FakeSwitcher : IWindowSwitcher
     /// <summary>The windows on the screen, topmost first.</summary>
     public List<WindowInfo> Shown { get; } = [];
 
-    /// <summary>Windows that show after this many more looks (a program that takes a moment to start); a new one comes to the top.</summary>
+    /// <summary>
+    /// Windows that show at this many looks from now (a program that takes a moment to start); a new one comes to the top.
+    /// A workspace start looks once before it starts anything, so a window meant to open for a started member needs 2 or more.
+    /// </summary>
     public List<(WindowInfo Window, int Looks)> Coming { get; } = [];
 
     /// <summary>Where each window is: what <see cref="Capture"/> answers.</summary>
