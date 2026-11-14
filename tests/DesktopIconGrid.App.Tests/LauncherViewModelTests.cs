@@ -52,6 +52,23 @@ public sealed class LauncherViewModelTests : IDisposable
     private static IEnumerable<string> Names(IEnumerable<LauncherItem> items) => items.Select(i => i.Name);
 
     [Fact]
+    public void A_number_tiles_caption_is_drawn_from_40_px_icons_on()
+    {
+        // Review 27 T1: at 32 px the caption was about 6 px high.
+        var (viewModel, model, _) = Create();
+        var changed = new List<string?>();
+        viewModel.PropertyChanged += (_, e) => changed.Add(e.PropertyName);
+        Assert.False(viewModel.ShowsNumberCaptions); // 32 px, the default
+
+        var bigger = model.Settings.Clone();
+        bigger.IconSize = 48;
+        viewModel.ApplySettings(bigger);
+
+        Assert.True(viewModel.ShowsNumberCaptions);
+        Assert.Contains(nameof(LauncherViewModel.ShowsNumberCaptions), changed);
+    }
+
+    [Fact]
     public void A_line_turned_into_a_label_offers_no_text_even_with_a_stale_name()
     {
         var (viewModel, model, dialogs) = Create();

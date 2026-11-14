@@ -64,6 +64,10 @@ Google Drive, voice launch), and the fixes the review of 0.10.0 placed after the
   one that is there; a member that is closed when positions are remembered keeps the place it had.
 - A folder stack does not refresh while the pointer is over it, so a finished download no longer moves the
   rows under a click. A batch file opened from a stack starts in the stack's folder.
+- A number tile's name under the number shows its start, cut with `…`, instead of its middle, and is left out
+  below 48 px icons, where it was too small to read (the tooltip names the tile).
+- Sync folder: a copy that says it was written to its own file is believed only when the file is named after the
+  copy; a name is listed once, and a second copy of it under its file name, so the start-up check names it.
 - Smaller: the microphone tile shows `ON` instead of repeating `MIC`; a battery whose state Windows does not
   report shows its charge without claiming it is plugged in; a clock tile's time zone that this PC does not
   know, or knows without listing it (an IANA id such as `Asia/Tokyo`), is kept when its properties are saved here; a click on a *Send to PC* icon gives a hint, not an error.
@@ -95,7 +99,8 @@ Google Drive, voice launch), and the fixes the review of 0.10.0 placed after the
   last counts. `\\server\pipe/…` is refused as `\\server\pipe\…` is; a broken language in the layout file no longer
   stops a start's error message; the pipe listens again after at most 10 s.
 - Voice launch: the voice hotkey and language are kept on this PC and never travel with a synced, restored or
-  imported bar. A phrase under *Also say* starts its item at once only when it was typed here or picked here once;
+  imported bar; a portable copy keeps them for each PC it is used on. Phrases are compared without spaces too, so
+  "Hide-bar" is "Hide bar". A phrase under *Also say* starts its item at once only when it was typed here or picked here once;
   one that came with the bar is offered first, marked as coming from another PC. A clearly heard name close to
   another one (Word and WordPad) is offered instead of started. The choice window says what each button starts, and
   starts nothing when the bar changed while it waited. "Starting …" is said only after something started; Cancel

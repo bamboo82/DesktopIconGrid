@@ -58,7 +58,9 @@ public sealed record VoiceOutcome(VoiceOutcomeKind Kind, IReadOnlyList<VoiceChoi
 /// product names badly and the reverse, so "WinSCP" may also be 檔案傳輸), a workspace's name, or one of the built-in
 /// phrases for showing and hiding the bar. Only shortcuts and special icons are started: a group opens a window at its
 /// icon, which is of no use to someone who is not looking at the bar. The voice icon itself is left out.
-/// Phrases are told apart folded (<see cref="Fold"/>): "Hide bar.", "hide  bar" and a full-width spelling are one phrase.
+/// Phrases are told apart folded (<see cref="Fold"/>): "Hide bar.", "hide-bar" and a full-width spelling are the same
+/// words, with the same targets and approvals. The recogniser still gets each way of saying them (an <em>Also say</em>
+/// "win S C P" for "WinSCP" is said letter by letter), at most once.
 /// An item's own name, a workspace and the built-in phrases may start at once; an <em>Also say</em> phrase only when it
 /// is approved on this PC (review 27 B3b), since it may have arrived with a synced bar.
 /// </summary>
@@ -87,9 +89,14 @@ public sealed class VoiceVocabulary
 
     private static readonly char[] AlsoSaySeparators = [';', '；', '、', '\n', '\r', '|'];
 
+    /// <summary>What the recogniser gets: each way of saying a phrase once (<see cref="Saying"/>).</summary>
     private readonly List<string> _phrases = [];
-    private readonly Dictionary<string, int> _indexes = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, int> _sayings = new(StringComparer.Ordinal);
+
+    /// <summary>The targets of each folded phrase (<see cref="Fold"/>), and which of them each said phrase is.</summary>
+    private readonly Dictionary<string, int> _keys = new(StringComparer.Ordinal);
     private readonly List<List<Entry>> _entries = [];
+    private readonly List<int> _keyOf = [];
 
     private VoiceVocabulary()
     {
@@ -101,8 +108,15 @@ public sealed class VoiceVocabulary
     /// <summary>How many phrases were left out by <see cref="MaxPhrases"/> (the built-in phrases and the names go in first).</summary>
     public int LeftOut { get; private set; }
 
-    /// <summary>The index of <paramref name="phrase"/> (folded), or -1 when it is not in the vocabulary.</summary>
-    public int IndexOf(string? phrase) => phrase is not null && _indexes.TryGetValue(Fold(phrase), out var index) ? index : -1;
+    /// <summary>
+    /// The index of <paramref name="phrase"/> in <see cref="Phrases"/>, said as written or, failing that, of a phrase with
+    /// the same words (<see cref="Fold"/>); -1 when it is not in the vocabulary.
+    /// </summary>
+    public int IndexOf(string? phrase) =>
+        phrase is null ? -1
+        : _sayings.TryGetValue(Saying(phrase), out var index) ? index
+        : _keys.TryGetValue(Fold(phrase), out var key) ? _keyOf.IndexOf(key)
+        : -1;
 
     /// <summary>What <paramref name="phrase"/> starts; empty for a phrase that is not in the vocabulary.</summary>
     public IReadOnlyList<VoiceTarget> TargetsOf(string phrase) => [.. EntriesOf(IndexOf(phrase)).Select(entry => entry.Target)];
@@ -110,7 +124,7 @@ public sealed class VoiceVocabulary
     /// <summary>Whether <paramref name="phrase"/> may start <paramref name="target"/> without a question.</summary>
     public bool MayStart(string phrase, VoiceTarget target) => EntriesOf(IndexOf(phrase)).Any(entry => entry.Target == target && entry.MayStart);
 
-    private IReadOnlyList<Entry> EntriesOf(int index) => index >= 0 && index < _entries.Count ? _entries[index] : [];
+    private IReadOnlyList<Entry> EntriesOf(int index) => index >= 0 && index < _keyOf.Count ? _entries[_keyOf[index]] : [];
 
     /// <param name="model">The bar.</param>
     /// <param name="showBar">The built-in phrases that show the bar, in the language listened in.</param>
@@ -132,7 +146,7 @@ public sealed class VoiceVocabulary
         {
             var target = new VoiceTarget(VoiceTargetKind.Item, item.Name.Trim(), item.Id);
             names.Add(new Candidate(item.Name, target, MayStart: true));
-            foreach (var phrase in AlsoSayOf(item).Where(phrase => !builtInKeys.Contains(Fold(phrase)))) // never a built-in phrase (review 27 B3a)
+            foreach (var phrase in AlsoSayOf(item).Where(phrase => !builtInKeys.Contains(Fold(phrase)))) // never a built-in phrase, however spelled (review 27 B3a)
             {
                 alsoSay.Add(new Candidate(phrase, target, MayStart: isApproved?.Invoke(item.Id, Fold(phrase)) == true));
             }
@@ -148,9 +162,9 @@ public sealed class VoiceVocabulary
         var refused = new HashSet<string>(StringComparer.Ordinal);
         foreach (var candidate in builtIn.Concat(names).Concat(workspaces).Concat(alsoSay))
         {
-            if (Speakable(candidate.Text) is { } phrase && !admitted.Contains(Fold(phrase)))
+            if (Speakable(candidate.Text) is { } phrase && !admitted.Contains(Saying(phrase)))
             {
-                (admitted.Count < MaxPhrases ? admitted : refused).Add(Fold(phrase));
+                (admitted.Count < MaxPhrases ? admitted : refused).Add(Saying(phrase));
             }
         }
 
@@ -161,7 +175,7 @@ public sealed class VoiceVocabulary
         var itemCandidates = names.Concat(alsoSay).OrderBy(candidate => itemOrder[candidate.Target]); // stable: a name before its Also say
         foreach (var candidate in itemCandidates.Concat(workspaces).Concat(builtIn))
         {
-            if (Speakable(candidate.Text) is { } phrase && admitted.Contains(Fold(phrase)))
+            if (Speakable(candidate.Text) is { } phrase && admitted.Contains(Saying(phrase)))
             {
                 vocabulary.Add(phrase, candidate.Target, candidate.MayStart);
             }
@@ -203,7 +217,7 @@ public sealed class VoiceVocabulary
         var phrases = new List<string>();
         foreach (var text in new[] { item.Name }.Concat(AlsoSayOf(item)))
         {
-            if (Speakable(text) is { } phrase && !phrases.Any(other => Fold(other) == Fold(phrase)))
+            if (Speakable(text) is { } phrase && !phrases.Any(other => Saying(other) == Saying(phrase)))
             {
                 phrases.Add(phrase);
             }
@@ -212,9 +226,12 @@ public sealed class VoiceVocabulary
         return phrases;
     }
 
-    /// <summary>An item's <em>Also say</em> phrases, tidied: speakable, no repeats, none that is its name, at most <see cref="MaxAlsoSayPhrases"/>.</summary>
+    /// <summary>
+    /// An item's <em>Also say</em> phrases, tidied: speakable, no repeats, none that is its name said the same way, at most
+    /// <see cref="MaxAlsoSayPhrases"/>. Its name said another way stays: that is what <em>Also say</em> is for.
+    /// </summary>
     private static IEnumerable<string> AlsoSayOf(LauncherItem item) =>
-        SplitAlsoSay(VoiceVocabulary.NormalizeAlsoSay(item.AlsoSay)).Where(phrase => Speakable(item.Name) is not { } name || Fold(name) != Fold(phrase));
+        SplitAlsoSay(VoiceVocabulary.NormalizeAlsoSay(item.AlsoSay)).Where(phrase => Speakable(item.Name) is not { } name || Saying(name) != Saying(phrase));
 
     /// <summary>The phrases of an <em>Also say</em> text: separated by <c>;</c>, <c>；</c>, <c>、</c>, <c>|</c> or line breaks.</summary>
     public static IReadOnlyList<string> SplitAlsoSay(string? alsoSay) =>
@@ -231,7 +248,7 @@ public sealed class VoiceVocabulary
         var phrases = new List<string>();
         foreach (var phrase in SplitAlsoSay(alsoSay).Select(Speakable).OfType<string>())
         {
-            if (phrases.Count < MaxAlsoSayPhrases && !phrases.Any(other => Fold(other) == Fold(phrase)))
+            if (phrases.Count < MaxAlsoSayPhrases && !phrases.Any(other => Saying(other) == Saying(phrase)))
             {
                 phrases.Add(phrase);
             }
@@ -261,11 +278,31 @@ public sealed class VoiceVocabulary
 
     /// <summary>
     /// How phrases are compared (review 27 B3a): NFKC (full-width letters become plain ones), lower case, and only letters
-    /// and digits, with the spaces between words kept as one; anything else (punctuation, symbols) is dropped.
+    /// and digits; anything else is dropped, white space too, so every spelling of the same words is one key: "Hide bar",
+    /// "Hide-bar" and "hidebar" (the review's note 2 on WP3).
     /// </summary>
     public static string Fold(string text)
     {
         ArgumentNullException.ThrowIfNull(text);
+        var normalized = text.Normalize(System.Text.NormalizationForm.FormKC).ToLowerInvariant();
+        var builder = new System.Text.StringBuilder(normalized.Length);
+        foreach (var rune in normalized.EnumerateRunes())
+        {
+            if (System.Text.Rune.IsLetterOrDigit(rune))
+            {
+                builder.Append(rune.ToString());
+            }
+        }
+
+        return builder.ToString();
+    }
+
+    /// <summary>
+    /// How a phrase is said, to give the recogniser each way once: as <see cref="Fold"/>, but with the spaces between
+    /// words kept as one. "win S C P" and "WinSCP" are the same words (one <see cref="Fold"/>) said two ways.
+    /// </summary>
+    private static string Saying(string text)
+    {
         var normalized = text.Normalize(System.Text.NormalizationForm.FormKC).ToLowerInvariant();
         var builder = new System.Text.StringBuilder(normalized.Length);
         var space = false;
@@ -297,12 +334,17 @@ public sealed class VoiceVocabulary
     private void Add(string phrase, VoiceTarget target, bool mayStart)
     {
         var key = Fold(phrase);
-        if (!_indexes.TryGetValue(key, out var index))
+        if (!_keys.TryGetValue(key, out var index))
         {
-            index = _phrases.Count;
-            _indexes[key] = index;
-            _phrases.Add(phrase);
+            index = _entries.Count;
+            _keys[key] = index;
             _entries.Add([]);
+        }
+
+        if (_sayings.TryAdd(Saying(phrase), _phrases.Count))
+        {
+            _phrases.Add(phrase);
+            _keyOf.Add(index);
         }
 
         var entries = _entries[index];

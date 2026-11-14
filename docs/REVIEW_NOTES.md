@@ -9,6 +9,89 @@ The owner relays replies.
 
 ---
 
+## 2026-11-14 (74) — WP7: tiles, sync copies, the owed tests, and your three notes on WP1–WP3
+
+Run 171 (`515bc70`, F1) is green. This entry claims no run for its own commit; when it is green I write "ready for
+the release check" in the next one.
+
+### T1: the number tile's caption
+
+- The caption has `MaxWidth="96"` and `TextTrimming="CharacterEllipsis"`, so it shows its start.
+- `LauncherViewModel.ShowsNumberCaptions` is `IconSize >= 40`, raised with the other appearance properties. Below
+  40 px the caption is collapsed and the number loses its −14 top margin, so it is centred. Of the sizes the bar
+  offers, 48 and 64 px draw the caption, 16, 24 and 32 px (the default) do not.
+- **Nearest thing:** "the number uses the freed height" is the centring only. The number's size is limited by its
+  width: four characters at 42 units already take most of the 100, so a larger font would cut it.
+- **Test (App):** the property at 32 and 48 px, and its change notice. The drawing is not tested.
+
+### C3: sync copies
+
+- `ReadProperties` believes `"file"` only when the file's stem is `Safe(name)` or `Safe(name) (k)`. Otherwise the
+  copy is read as one without `"file"`, and `DisplayName` gives its stem.
+- `OneCopyPerName` runs after `ListNumberedOriginals`. Of several files listed under one name, the name goes to the
+  one whose stem is `Safe(name)`, else to the lowest number, else to the first by file name. The others are listed
+  under their stems, as conflict copies.
+- **Tests:**
+  - `AAA.json`, saying "Work" with `"file": "AAA.json"`, next to a saved `Work.json`: "AAA" (a conflict copy) and
+    "Work";
+  - entry 63's gap, `X.json` from 0.10.0 next to `X (2).json` with its own `"file"`: "X" for `X.json`, "X (2)" for
+    the other.
+
+### Owed tests
+
+- The battery theory asserts the detail text of each row: on battery, charging, plugged in, no battery, and
+  "Battery 60%" when nothing but the percentage is known.
+- `TakeNew` takes own windows before program windows, in both member orders. The setup is such that the member with
+  no own process would take the other's own window if it went first.
+- Splash-then-main through the App loop was done in WP4 (entry 70).
+
+### Your three notes on WP1–WP3
+
+**Note 1, the end of a host name.**
+
+- A new reader, `SshHostEnd`, sits between `SshDestinationPart` and `SshOption`, since readers combine by order. It
+  refuses what a part refuses, and `.` as well.
+- `DestinationReader` gives it when the placeholder ends a host name the template begins: host text right before it
+  (after the last `@`, if there is one) and none after it (the destination ends, or `:`, `]` or `/` follows).
+- It does not apply to:
+  - the user part, with an `@` after the placeholder;
+  - a port, with a `:` before the placeholder outside brackets;
+  - a whole host after `user@`;
+  - `{x}.example.com`.
+- The refusal messages name it as ssh's, as they do for a part.
+- **Tests:** five host-end cases refuse `.` (and still `/` and a leading `-`); five other places keep their dots. The
+  old row `scp://server2{ask:Suffix}` moved to the new test.
+
+**Note 2, `Fold`.**
+
+- `Fold` drops white space too, so "Hide-bar", "hidebar" and "Hide bar" are one key.
+- **Please look:** `Fold` decides what is the same phrase: the built-in check, approvals, targets. A separate private
+  `Saying` (the old fold) decides what the recogniser is given, so each way of saying a phrase is listened for once.
+  - Otherwise an *Also say* "win S C P" for "WinSCP" would fold into the name and never reach the recogniser. That
+    phrase is said letter by letter, which is the reason *Also say* exists.
+  - Such a phrase is the item's own name, so it starts as the name does. It can only reach the targets of the
+    name's key, and a key with two targets is a choice.
+- The approval test now uses another phrase for "the other one is not". A new test: "Hide-bar" and "hidebar" in
+  *Also say* are the built-in "Hide bar".
+
+**Your answer on `this-pc.json`: per machine.**
+
+- The file is now `{"pcs": {"<ThisDevice.Id>": {voiceHotkey, voiceLanguage}}}`, plus anything a newer version
+  writes.
+- `Load` and `Save` act on this PC's entry only. Without `IsOfThisMachine`, nothing is read or written, `Save`
+  returns false, and the bar keeps the values for the run.
+- A save does not overwrite a file that is there but cannot be read now (a lock). A flat file from a development
+  build is no PC's, and its two keys go at the next save.
+- `ApplyLocalSettings` saves only when the hotkey or the language changed. A PC without a machine key is therefore
+  told it was not saved once per change, not on every OK in Settings.
+- **Tests:** a round trip for one PC; two PCs on one file; no machine key; broken, oversized and flat files.
+
+### Not tested
+
+- The number tile drawn.
+- Real scp or ssh.
+- A real recogniser.
+
 ## 2026-11-14 (73) — F1: the wheel reaches the volume tile
 
 Run 170 (`984fa7a`, WP6) is green. Your review of WP5 arrived, and F1 is right: the gauge's drawing has the gauge as

@@ -185,6 +185,12 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
 
     public int IconSize => Model.Settings.IconSize;
 
+    /// <summary>
+    /// Whether a number tile draws its caption under the number: from 40 px icons on. Below, the caption is a few pixels
+    /// high and unreadable, the number takes the whole height, and the tooltip names the tile (review 27 T1).
+    /// </summary>
+    public bool ShowsNumberCaptions => IconSize >= 40;
+
     public int CellPadding => Model.Settings.CellPadding;
 
     public bool ShowLabels => Model.Settings.ShowLabels;
@@ -1693,13 +1699,17 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
         Local = store.Load();
     }
 
-    /// <summary>Keeps <paramref name="local"/> as this PC's settings and saves them.</summary>
+    /// <summary>
+    /// Keeps <paramref name="local"/> as this PC's settings and saves them when they changed. When they cannot be kept past
+    /// this run (no file, or no machine key: <see cref="LocalSettingsStore"/>), the user is told, once per change.
+    /// </summary>
     public void ApplyLocalSettings(LocalSettings local)
     {
         ArgumentNullException.ThrowIfNull(local);
         local.Normalize();
+        var changed = local.VoiceHotkey != Local.VoiceHotkey || local.VoiceLanguage != Local.VoiceLanguage;
         Local = local;
-        if (_localStore?.Save(local) == false)
+        if (changed && _localStore?.Save(local) == false)
         {
             _dialogs.Notify(Strings.Settings_Title, Strings.Settings_LocalNotSaved);
         }
@@ -1872,6 +1882,7 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
     private void NotifyAppearanceChanged()
     {
         OnPropertyChanged(nameof(IconSize));
+        OnPropertyChanged(nameof(ShowsNumberCaptions));
         OnPropertyChanged(nameof(CellPadding));
         OnPropertyChanged(nameof(ShowLabels));
         OnPropertyChanged(nameof(DoubleClickToLaunch));

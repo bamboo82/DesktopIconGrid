@@ -8,20 +8,28 @@ namespace DesktopIconGrid.App.Tests;
 public class MoreGaugesTests
 {
     [Theory]
-    [InlineData(80, 0, 0, 80d, true)] // on battery
-    [InlineData(55, 8, 1, 55d, false)] // charging
-    [InlineData(100, 0, 1, 100d, false)] // plugged in, full
-    [InlineData(255, 128, 1, null, false)] // a desktop PC: no battery
-    [InlineData(255, 0, 1, null, false)] // percentage unknown
-    [InlineData(60, 255, 0, 60d, true)] // flag unknown (255 is not "no battery"), on battery
-    [InlineData(60, 255, 255, 60d, false)] // nothing known but the percentage: no claim that it is plugged in
-    public void The_power_status_bytes_are_read(byte percent, byte flag, byte line, double? expected, bool onBattery)
+    [InlineData(80, 0, 0, 80d, true, "on")] // on battery
+    [InlineData(55, 8, 1, 55d, false, "charging")]
+    [InlineData(100, 0, 1, 100d, false, "plugged")] // plugged in, full
+    [InlineData(255, 128, 1, null, false, "none")] // a desktop PC: no battery
+    [InlineData(255, 0, 1, null, false, "none")] // percentage unknown
+    [InlineData(60, 255, 0, 60d, true, "on")] // flag unknown (255 is not "no battery"), on battery
+    [InlineData(60, 255, 255, 60d, false, "level")] // nothing known but the percentage: "Battery 60%", no claim that it is plugged in
+    public void The_power_status_bytes_are_read(byte percent, byte flag, byte line, double? expected, bool onBattery, string detail)
     {
         var reading = SystemMonitor.ReadBattery(percent, flag, line);
 
         Assert.Equal(expected, reading.Percent);
         Assert.Equal(onBattery, reading.OnBattery);
-        Assert.NotEmpty(reading.Detail);
+        var text = detail switch
+        {
+            "on" => DesktopIconGrid.Resources.Strings.Monitor_BatteryOn,
+            "charging" => DesktopIconGrid.Resources.Strings.Monitor_BatteryCharging,
+            "plugged" => DesktopIconGrid.Resources.Strings.Monitor_BatteryPlugged,
+            "level" => DesktopIconGrid.Resources.Strings.Monitor_BatteryLevel,
+            _ => DesktopIconGrid.Resources.Strings.Monitor_NoBattery,
+        };
+        Assert.Equal(detail == "none" ? text : string.Format(text, percent), reading.Detail); // review 27: the detail itself
     }
 
     [Theory]

@@ -879,7 +879,7 @@ public static partial class LaunchPlaceholders
         }
 
         var (start, end) = PlaceholderIn(text, offset);
-        return DestinationReader(start, end, from, to);
+        return DestinationReader(text, start, end, from, to);
     }
 
     /// <summary>Where the placeholder that starts at <paramref name="offset"/> of <paramref name="text"/>, or right after a quote there, starts and ends.</summary>
@@ -913,11 +913,65 @@ public static partial class LaunchPlaceholders
 
     /// <summary>
     /// The reader of a placeholder from <paramref name="start"/> to <paramref name="end"/> in a destination (or a URI's
-    /// authority) from <paramref name="from"/> to <paramref name="to"/>: the whole destination, or a part of it whose
-    /// value may only complete a name (review 27 C1).
+    /// authority) from <paramref name="from"/> to <paramref name="to"/>: the whole destination, the end of a host name the
+    /// template begins, or another part of it whose value may only complete a name (review 27 C1).
     /// </summary>
-    private static ArgumentReader DestinationReader(int start, int end, int from, int to) =>
-        start <= from && end >= to ? ArgumentReader.SshDestination : ArgumentReader.SshDestinationPart;
+    private static ArgumentReader DestinationReader(string text, int start, int end, int from, int to) =>
+        start <= from && end >= to ? ArgumentReader.SshDestination
+        : EndsHostName(text, start, end, from, to) ? ArgumentReader.SshHostEnd
+        : ArgumentReader.SshDestinationPart;
+
+    /// <summary>
+    /// Whether the placeholder ends a host name the template begins: text of the host is written right before it and
+    /// none after it, as in <c>scp://host{x}/p</c>, <c>user@host{x}:/p</c> or <c>ssh srv.{x}</c>. There a value with a
+    /// dot would move the host to another domain (<c>.evil.example</c> makes host.evil.example); <c>{x}.example.com</c>,
+    /// a whole host after <c>user@</c>, a user name and a port keep the dot (the review's note 1 on WP2).
+    /// </summary>
+    private static bool EndsHostName(string text, int start, int end, int from, int to)
+    {
+        var inside = PlaceholderSpans(text);
+        bool Outside(int k) => !inside.Any(range => k >= range.Index && k < range.End);
+
+        for (var k = end; k < to; k++)
+        {
+            if (text[k] == '@' && Outside(k))
+            {
+                return false; // the user part
+            }
+        }
+
+        var hostStart = from;
+        for (var k = start - 1; k >= from; k--)
+        {
+            if (text[k] == '@' && Outside(k))
+            {
+                hostStart = k + 1;
+                break;
+            }
+        }
+
+        if (start <= hostStart)
+        {
+            return false; // nothing of the host before it: the value is the whole host, or begins it
+        }
+
+        var depth = 0;
+        for (var k = hostStart; k < start; k++)
+        {
+            if (!Outside(k))
+            {
+                continue;
+            }
+
+            depth += text[k] switch { '[' => 1, ']' => -1, _ => 0 };
+            if (text[k] == ':' && depth == 0)
+            {
+                return false; // after the host: a port
+            }
+        }
+
+        return end >= to || text[end] is ':' or ']' or '/';
+    }
 
     /// <summary>
     /// The colon that makes an scp operand <c>host:path</c>: not one inside a placeholder, and not a drive letter's
@@ -1066,7 +1120,7 @@ public static partial class LaunchPlaceholders
             {
                 var authority = lead + scheme.Length;
                 var slash = AuthorityEnd(text, authority, wordEnd);
-                return (start < slash ? DestinationReader(start, end, authority, slash) : remotePath, ScpOperand.None);
+                return (start < slash ? DestinationReader(text, start, end, authority, slash) : remotePath, ScpOperand.None);
             }
         }
 
@@ -1076,11 +1130,11 @@ public static partial class LaunchPlaceholders
             // No colon in what the shortcut says, so the filled value decides whether scp reads the word as a path here
             // or as host:path: the colon rule goes with the line's reader. sftp takes one operand, its destination.
             return sftp
-                ? (first ? DestinationReader(start, end, lead, wordEnd) : ArgumentReader.Plain, ScpOperand.None)
+                ? (first ? DestinationReader(text, start, end, lead, wordEnd) : ArgumentReader.Plain, ScpOperand.None)
                 : (local, offset <= lead ? ScpOperand.WholeWord : ScpOperand.PartOfWord);
         }
 
-        return (start < colon ? DestinationReader(start, end, lead, colon) : remotePath, ScpOperand.None);
+        return (start < colon ? DestinationReader(text, start, end, lead, colon) : remotePath, ScpOperand.None);
     }
 
     /// <summary>plink's options that take a value (PuTTY 0.8x), and its flags.</summary>
@@ -1225,6 +1279,7 @@ public static partial class LaunchPlaceholders
             ArgumentReader.PosixShell => IsAllowedForPosixShell,
             ArgumentReader.SshDestination => IsAllowedInSshDestination,
             ArgumentReader.SshDestinationPart => IsAllowedInSshDestinationPart,
+            ArgumentReader.SshHostEnd => IsAllowedAtSshHostEnd,
             ArgumentReader.RemoteShell or ArgumentReader.PowerShellCommand => IsAllowedInScriptText,
             ArgumentReader.SshOption => (_, _) => false,
             _ => IsAllowedForAny,
@@ -1256,6 +1311,7 @@ public static partial class LaunchPlaceholders
             ArgumentReader.PosixShell => (text, index) => text[index] is not ('%' or '!' or '$' or '`' or FullwidthQuotationMark),
             ArgumentReader.SshDestination => IsAllowedInSshDestination,
             ArgumentReader.SshDestinationPart => IsAllowedInSshDestinationPart,
+            ArgumentReader.SshHostEnd => IsAllowedAtSshHostEnd,
             ArgumentReader.RemoteShell or ArgumentReader.PowerShellCommand => IsAllowedInScriptText,
             ArgumentReader.SshOption => (_, _) => false,
             _ => (text, index) => text[index] != FullwidthQuotationMark,
@@ -1392,6 +1448,9 @@ public static partial class LaunchPlaceholders
     private static bool IsAllowedInSshDestinationPart(string text, int index) =>
         char.IsAsciiLetterOrDigit(text[index]) || text[index] is '.' or '_' || (text[index] == '-' && index > 0);
 
+    /// <summary>What a part of a destination takes, but no dot: the value ends a host name the template begins.</summary>
+    private static bool IsAllowedAtSshHostEnd(string text, int index) => text[index] != '.' && IsAllowedInSshDestinationPart(text, index);
+
     /// <summary>What cmd.exe takes, less <c>$</c> and <c>`</c>, so the readers stay in order of strictness (<c>cmd /c wsl …</c>).</summary>
     private static bool IsAllowedForPosixShell(string text, int index) => IsAllowedForCmd(text, index) && text[index] is not ('$' or '`');
 
@@ -1474,6 +1533,13 @@ public enum ArgumentReader
     /// before it lets pass, so it refuses at least what they refuse and ranks after them.
     /// </summary>
     SshDestinationPart,
+
+    /// <summary>
+    /// The end of a host name the template begins (<c>scp://host{x}/p</c>, <c>user@host{x}:/p</c>): what
+    /// <see cref="SshDestinationPart"/> takes but a dot, which would move the host to another domain. Stricter than it, so
+    /// it ranks after it.
+    /// </summary>
+    SshHostEnd,
 
     /// <summary>
     /// ssh reading the value as its own settings: a placeholder that starts <c>-o</c>'s value or stands in its keyword

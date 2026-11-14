@@ -127,7 +127,34 @@ public sealed class FolderSyncClient : IDriveClient
         }
 
         ListNumberedOriginals(files);
+        OneCopyPerName(files);
         return files;
+    }
+
+    /// <summary>
+    /// One copy per name (review 27 C3): when several would still be listed under one name, the file named after it
+    /// without a number keeps it, else the lowest-numbered, and the others are listed under their file names, so the
+    /// start-up check names them. Entry 63's gap: a copy saved by 0.10.0 or older in <c>X.json</c> next to a newer
+    /// <c>X (2).json</c> that says it is the original of "X".
+    /// </summary>
+    private static void OneCopyPerName(List<DriveFile> files)
+    {
+        foreach (var same in files.GroupBy(file => file.AppProperties["profile"], StringComparer.OrdinalIgnoreCase).Where(group => group.Count() > 1))
+        {
+            var safe = FileNames.Safe(same.Key);
+            var keep = same
+                .OrderBy(file => string.Equals(StemOf(file.Name), safe, StringComparison.OrdinalIgnoreCase) ? 0 : 1)
+                .ThenBy(file => NumberAfter(StemOf(file.Name), safe) is var number and >= 2 ? number : int.MaxValue)
+                .ThenBy(file => file.Name, StringComparer.OrdinalIgnoreCase)
+                .First();
+            foreach (var other in same.Where(file => !ReferenceEquals(file, keep)))
+            {
+                if (other.AppProperties is IDictionary<string, string> properties)
+                {
+                    properties["profile"] = StemOf(other.Name);
+                }
+            }
+        }
     }
 
     /// <summary>
@@ -169,6 +196,18 @@ public sealed class FolderSyncClient : IDriveClient
     private static string StemOf(string fileName) =>
         fileName.EndsWith(RemoteProfile.FileExtension, StringComparison.OrdinalIgnoreCase) ? fileName[..^RemoteProfile.FileExtension.Length] : fileName;
 
+    /// <summary>Whether a file's stem is the file name of <paramref name="name"/>, with or without a number.</summary>
+    private static bool IsNamedAfter(string stem, string? name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            return false;
+        }
+
+        var safe = FileNames.Safe(name);
+        return string.Equals(stem, safe, StringComparison.OrdinalIgnoreCase) || NumberAfter(stem, safe) >= 2;
+    }
+
     /// <summary>The <c>k</c> of a stem written <c>{safe} (k)</c>, or 0.</summary>
     internal static int NumberAfter(string stem, string safe) =>
         stem.StartsWith(safe + " (", StringComparison.OrdinalIgnoreCase) && stem.EndsWith(')')
@@ -197,17 +236,20 @@ public sealed class FolderSyncClient : IDriveClient
 
             string? Text(string name) => root.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.String ? value.GetString() : null;
             // The copy says which file it was written to (0.11.0 on): in that file it is the original of its name,
-            // whatever number the file has; in any other file it is a copy some program made of it. Without it the
-            // file names are compared, and the listing as a whole decides (ListNumberedOriginals).
-            if (Text("file") is { Length: > 0 } written)
+            // whatever number the file has; in any other file it is a copy some program made of it. That is believed
+            // only of a file named after the name inside, Safe(name) or that with a number (review 27 C3): AAA.json
+            // that says "Work" is no second "Work", whatever file it says. Otherwise the file names are compared, and
+            // the listing as a whole decides (ListNumberedOriginals).
+            var nameInside = Text("name");
+            if (Text("file") is { Length: > 0 } written && IsNamedAfter(StemOf(info.Name), nameInside))
             {
                 var own = string.Equals(written, info.Name, StringComparison.OrdinalIgnoreCase);
                 properties[OwnFileProperty] = own ? "true" : "false";
-                properties["profile"] = own && !string.IsNullOrWhiteSpace(Text("name")) ? Text("name")!.Trim() : DisplayName(info.Name, null);
+                properties["profile"] = own ? nameInside!.Trim() : DisplayName(info.Name, null);
             }
             else
             {
-                properties["profile"] = DisplayName(info.Name, Text("name"));
+                properties["profile"] = DisplayName(info.Name, nameInside);
             }
 
             Add(properties, NameInsideProperty, Text("name"));

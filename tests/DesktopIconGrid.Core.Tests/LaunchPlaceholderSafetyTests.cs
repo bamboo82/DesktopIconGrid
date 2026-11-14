@@ -330,7 +330,6 @@ public sealed class LaunchPlaceholderSafetyTests : IDisposable
     [InlineData("scp.exe", "a.txt {ask:User}@server2:/tmp/", "{ask:User}", "evil.example:", ":")]
     [InlineData("scp.exe", "scp://{ask:User}@server2:2222/x .", "{ask:User}", "evil.example/", "/")]
     [InlineData("scp.exe", "scp://server2:{ask:Port}/x .", "{ask:Port}", "22@evil.example", "@")]
-    [InlineData("scp.exe", "scp://server2{ask:Suffix} .", "{ask:Suffix}", ".evil.example/x", "/")]
     [InlineData("ssh.exe", "{ask:User}@server2 uptime", "{ask:User}", "a@evil.example", "@")]
     [InlineData("ssh.exe", "ssh://admin@{ask:Host}:22", "{ask:Host}", "evil.example:2222", ":")]
     public void A_value_inside_a_destination_the_template_writes_more_of_can_only_complete_a_name(string location, string parameters, string placeholder, string value, string refused)
@@ -341,6 +340,38 @@ public sealed class LaunchPlaceholderSafetyTests : IDisposable
         Assert.Equal(refused, LaunchPlaceholders.Refused(value, judgement.Reader, judgement.Scp));
         Assert.Null(LaunchPlaceholders.Refused("deploy-2.example", judgement.Reader, judgement.Scp)); // a name passes
         Assert.Equal("-", LaunchPlaceholders.Refused("-oProxyCommand", judgement.Reader, judgement.Scp)); // never an option
+    }
+
+    /// <summary>The review's note 1 on WP2: where the value ends a host name the template begins, a dot would move the host.</summary>
+    [Theory]
+    [InlineData("scp.exe", "scp://server2{ask:Suffix} .", "{ask:Suffix}")]
+    [InlineData("scp.exe", "a.txt user@host{ask:N}:/p", "{ask:N}")]
+    [InlineData("scp.exe", "a.txt host{ask:N}:/p", "{ask:N}")]
+    [InlineData("ssh.exe", "srv.{ask:Zone} uptime", "{ask:Zone}")] // "evil.example" would make srv.evil.example
+    [InlineData("ssh.exe", "ssh://admin@db{ask:N}:22", "{ask:N}")]
+    public void A_value_that_ends_a_host_name_the_template_begins_may_not_hold_a_dot(string location, string parameters, string placeholder)
+    {
+        var judgement = LaunchPlaceholders.JudgeAt(location, parameters, parameters.IndexOf(placeholder, StringComparison.Ordinal));
+
+        Assert.Equal(ArgumentReader.SshHostEnd, judgement.Reader);
+        Assert.Equal(".", LaunchPlaceholders.Refused(".evil.example", judgement.Reader, judgement.Scp));
+        Assert.Equal("/", LaunchPlaceholders.Refused("2/x", judgement.Reader, judgement.Scp)); // what a part refuses, too
+        Assert.Equal("-", LaunchPlaceholders.Refused("-x", judgement.Reader, judgement.Scp));
+        Assert.Null(LaunchPlaceholders.Refused("02-b_c", judgement.Reader, judgement.Scp));
+    }
+
+    [Theory]
+    [InlineData("scp.exe", "a.txt {ask:Sub}.example.com:/p", "{ask:Sub}")] // the template ends the host: a subdomain at most
+    [InlineData("scp.exe", "a.txt srv{ask:N}.example.com:/p", "{ask:N}")] // inside the host
+    [InlineData("scp.exe", "a.txt {ask:User}.ops@host:/p", "{ask:User}")] // the user part
+    [InlineData("ssh.exe", "admin@{ask:Host} uptime", "{ask:Host}")] // the whole host, after the user the template writes
+    [InlineData("scp.exe", "scp://host:{ask:Port}/x .", "{ask:Port}")] // the port
+    public void Elsewhere_in_a_destination_a_value_keeps_its_dots(string location, string parameters, string placeholder)
+    {
+        var judgement = LaunchPlaceholders.JudgeAt(location, parameters, parameters.IndexOf(placeholder, StringComparison.Ordinal));
+
+        Assert.Equal(ArgumentReader.SshDestinationPart, judgement.Reader);
+        Assert.Null(LaunchPlaceholders.Refused("a.b", judgement.Reader, judgement.Scp));
     }
 
     [Theory]

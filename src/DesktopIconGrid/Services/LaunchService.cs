@@ -354,7 +354,7 @@ public sealed class LaunchService(ProcessTracker tracker, ILaunchPrompts? prompt
     private static string RefusalMessage(string character, PlaceholderJudgement judgement) => judgement.Reader == ArgumentReader.SshOption ? Strings.Launch_SshOptionValue : character switch
     {
         "\r" or "\n" => Strings.Launch_ValueHasLineBreak,
-        "-" when judgement.Reader is ArgumentReader.SshDestination or ArgumentReader.SshDestinationPart => Strings.Launch_SshNameIsOption,
+        "-" when judgement.Reader is ArgumentReader.SshDestination or ArgumentReader.SshDestinationPart or ArgumentReader.SshHostEnd => Strings.Launch_SshNameIsOption,
         "-" => judgement.Reader == ArgumentReader.RemoteShell ? Strings.Launch_WordIsRemoteOption : Strings.Launch_WordIsParameter, // a word of bare words
         _ when character[0] == LaunchPlaceholders.FullwidthQuotationMark => Strings.Launch_LookalikeQuote,
         ":" when judgement.Scp != ScpOperand.None => string.Format(Strings.Launch_UnsafeValue, character, "scp"),
@@ -362,7 +362,7 @@ public sealed class LaunchService(ProcessTracker tracker, ILaunchPrompts? prompt
         {
             ArgumentReader.Cmd => "cmd.exe",
             ArgumentReader.PosixShell => "WSL",
-            ArgumentReader.SshDestination or ArgumentReader.SshDestinationPart or ArgumentReader.RemoteShell => "ssh",
+            ArgumentReader.SshDestination or ArgumentReader.SshDestinationPart or ArgumentReader.SshHostEnd or ArgumentReader.RemoteShell => "ssh",
             ArgumentReader.Plain => "scp", // only scp's colon rule refuses anything more than every program does
             _ => "PowerShell",
         }),

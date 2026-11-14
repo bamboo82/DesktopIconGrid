@@ -120,11 +120,18 @@ public class VoiceVocabularyTests
     public void An_also_say_phrase_approved_on_this_PC_starts_at_once()
     {
         var approved = new HashSet<string> { VoiceVocabulary.ApprovalHash(WinScp.Id, "檔案傳輸") };
-        var layout = new LauncherLayout { Items = [WinScp.Clone()] };
+        var winScp = (ShortcutItem)WinScp.Clone();
+        winScp.AlsoSay = "檔案傳輸; 傳檔; win S C P";
+        var layout = new LauncherLayout { Items = [winScp] };
         var vocabulary = VoiceVocabulary.Build(LauncherModel.FromLayout(layout), ["顯示列"], ["隱藏列"], (id, phrase) => approved.Contains(VoiceVocabulary.ApprovalHash(id, phrase)));
 
         Assert.Equal(VoiceOutcomeKind.Start, vocabulary.Decide([Heard(vocabulary, "檔案傳輸", 0.95)]).Kind);
-        Assert.Equal(VoiceOutcomeKind.Choose, vocabulary.Decide([Heard(vocabulary, "win S C P", 0.95)]).Kind); // the other one is not
+        Assert.Equal(VoiceOutcomeKind.Choose, vocabulary.Decide([Heard(vocabulary, "傳檔", 0.95)]).Kind); // the other one is not
+
+        // Its own name said another way is the same words as the name (the review's note 2), which may start; the
+        // recogniser still gets that way of saying it.
+        Assert.Equal(VoiceOutcomeKind.Start, vocabulary.Decide([Heard(vocabulary, "win S C P", 0.95)]).Kind);
+        Assert.Contains("win S C P", vocabulary.Phrases);
         Assert.Equal(VoiceVocabulary.ApprovalHash(WinScp.Id, "Win  s c p!"), VoiceVocabulary.ApprovalHash(WinScp.Id, "win S C P")); // folded
         Assert.NotEqual(VoiceVocabulary.ApprovalHash(WinScp.Id, "win S C P"), VoiceVocabulary.ApprovalHash(Notepad.Id, "win S C P"));
     }
@@ -133,14 +140,22 @@ public class VoiceVocabularyTests
     [Fact]
     public void Phrases_are_compared_folded_and_an_also_say_phrase_cannot_be_a_built_in_one()
     {
-        Assert.Equal("hide bar", VoiceVocabulary.Fold("  Hide   bar. "));
-        Assert.Equal("hide bar", VoiceVocabulary.Fold("ＨＩＤＥ　ＢＡＲ")); // full width
+        Assert.Equal("hidebar", VoiceVocabulary.Fold("  Hide   bar. "));
+        Assert.Equal("hidebar", VoiceVocabulary.Fold("ＨＩＤＥ　ＢＡＲ")); // full width
+        Assert.Equal("hidebar", VoiceVocabulary.Fold("Hide-bar")); // one key for every spelling (the review's note 2)
         Assert.Equal("notepad", VoiceVocabulary.Fold("Note-pad"));
 
         var sneaky = new ShortcutItem { Name = "Tool", Location = @"\\nas\run.cmd", AlsoSay = "隱藏列; Notepad!" };
         var vocabulary = Build(sneaky, new ShortcutItem { Name = "notepad", Location = "notepad.exe" });
 
         Assert.Equal(VoiceTargetKind.HideBar, Assert.Single(vocabulary.TargetsOf("隱藏列")).Kind); // not the item's
+
+        // However it is spelled (the review's note 2 on WP3): "Hide-bar" and "hidebar" are the built-in's words.
+        var tool = new ShortcutItem { Name = "Tool", Location = "tool.exe", AlsoSay = "Hide-bar; hidebar" };
+        var english = VoiceVocabulary.Build(LauncherModel.FromLayout(new LauncherLayout { Items = [tool] }), ["Show bar"], ["Hide bar"]);
+        Assert.Equal(VoiceTargetKind.HideBar, Assert.Single(english.TargetsOf("hidebar")).Kind);
+        Assert.Equal(VoiceTargetKind.HideBar, Assert.Single(english.TargetsOf("Hide-bar")).Kind);
+        Assert.DoesNotContain("Hide-bar", english.Phrases);
         Assert.Equal(2, vocabulary.TargetsOf("NOTEPAD").Count); // "Notepad!" and "notepad" are one phrase, shared
         Assert.Null(VoiceVocabulary.Speakable("say \"hi\""));
     }

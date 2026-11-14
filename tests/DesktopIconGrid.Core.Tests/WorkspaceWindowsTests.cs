@@ -61,6 +61,25 @@ public class WorkspaceWindowsTests
     }
 
     [Fact]
+    public void Members_just_started_take_their_own_windows_before_their_programs_in_either_order()
+    {
+        // Owed by review 27: B's own window is the older of the two, so a member that took its program's oldest window
+        // first would take B's. Whichever member comes first, each gets the right one.
+        foreach (var bFirst in new[] { false, true })
+        {
+            var windows = new WorkspaceWindows([]);
+            var a = Member(A, own: [], program: [10, 11]); // its launcher stub has ended: no own process known
+            var b = Member(B, own: [11], program: [10, 11]);
+            windows.Look([Window(2, 10), Window(1, 11)]); // 1 opened first (lower), and is B's own
+
+            windows.TakeNew(bFirst ? [b, a] : [a, b], waitIsOver: false);
+
+            Assert.Equal(new IntPtr(1), windows.WindowOf(B));
+            Assert.Equal(new IntPtr(2), windows.WindowOf(A));
+        }
+    }
+
+    [Fact]
     public void A_window_seen_in_an_earlier_look_is_older_than_one_on_top_of_it()
     {
         var windows = new WorkspaceWindows([]);

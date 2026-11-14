@@ -620,6 +620,35 @@ public sealed class FolderSyncTests : IDisposable
     }
 
     [Fact]
+    public async Task A_copy_in_a_file_not_named_after_it_is_listed_under_its_file_name_whatever_file_it_says()
+    {
+        // Review 27 C3: AAA.json saying "Work" and that it was written to AAA.json was a second "Work".
+        await Device("DESK").SaveProfileAsync("Work", Layout("a"), CancellationToken.None);
+        File.WriteAllText(PathOf("AAA.json"), "{\"format\":1,\"file\":\"AAA.json\",\"name\":\"Work\",\"savedBy\":\"X\",\"layout\":{\"items\":[]}}");
+
+        var copies = await Device("LAPTOP").ListProfilesAsync(CancellationToken.None);
+
+        Assert.Equal(["AAA", "Work"], copies.Select(c => c.Name).Order(StringComparer.Ordinal));
+        Assert.Equal("Work.json", copies.Single(c => c.Name == "Work").FileId);
+        Assert.True(copies.Single(c => c.Name == "AAA").IsConflictCopy);
+    }
+
+    [Fact]
+    public async Task Of_an_older_versions_copy_and_a_newer_numbered_one_of_the_same_name_the_unnumbered_keeps_it()
+    {
+        // Entry 63's gap: X.json from 0.10.0 (no "file") and X (2).json saying it is the original of "X" were both "X".
+        File.WriteAllText(PathOf("X.json"), "{\"format\":1,\"name\":\"X\",\"savedBy\":\"OLD\",\"layout\":{\"items\":[]}}");
+        File.WriteAllText(PathOf("X (2).json"), "{\"format\":1,\"file\":\"X (2).json\",\"name\":\"X\",\"savedBy\":\"NEW\",\"layout\":{\"items\":[]}}");
+
+        var copies = await Device("LAPTOP").ListProfilesAsync(CancellationToken.None);
+
+        Assert.Equal("X", copies.Single(c => c.FileId == "X.json").Name);
+        var other = copies.Single(c => c.FileId == "X (2).json");
+        Assert.Equal("X (2)", other.Name);
+        Assert.True(other.IsConflictCopy);
+    }
+
+    [Fact]
     public void The_file_name_replaces_an_older_one_and_keeps_what_a_newer_version_wrote()
     {
         var json = FolderSyncClient.WithFileName("{\"format\":1,\"name\":\"Work\",\"file\":\"Old.json\",\"future\":{\"x\":[1,2]},\"layout\":{}}", "Work.json");

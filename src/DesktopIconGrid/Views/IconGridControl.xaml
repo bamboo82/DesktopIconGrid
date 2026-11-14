@@ -124,14 +124,27 @@
                              Foreground="{DynamicResource Theme.Foreground}"
                              HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,2" />
                 </Grid>
-                <!-- Number -->
+                <!-- Number. The caption shows its start (review 27 T1) and is drawn from 40 px icons on; below, the number
+                     is centred in the whole height. Its width, not the height, limits its size. -->
                 <Grid Visibility="{Binding IsNumber, Converter={StaticResource BoolToVisibility}}">
                   <TextBlock Text="{Binding Label}" FontSize="{Binding LabelFontSize}" FontWeight="Bold"
                              Foreground="{Binding LevelBrush}" TextTrimming="CharacterEllipsis" MaxWidth="98"
-                             HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,-14,0,0" />
-                  <TextBlock Text="{Binding Caption}" FontSize="22"
+                             HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <TextBlock.Style>
+                      <Style TargetType="TextBlock">
+                        <Setter Property="Margin" Value="0,-14,0,0" />
+                        <Style.Triggers>
+                          <DataTrigger Binding="{Binding DataContext.Root.ShowsNumberCaptions, RelativeSource={RelativeSource AncestorType=Viewbox}}" Value="False">
+                            <Setter Property="Margin" Value="0" />
+                          </DataTrigger>
+                        </Style.Triggers>
+                      </Style>
+                    </TextBlock.Style>
+                  </TextBlock>
+                  <TextBlock Text="{Binding Caption}" FontSize="22" MaxWidth="96" TextTrimming="CharacterEllipsis"
                              Foreground="{DynamicResource Theme.Foreground}"
-                             HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,2" />
+                             HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,2"
+                             Visibility="{Binding DataContext.Root.ShowsNumberCaptions, RelativeSource={RelativeSource AncestorType=Viewbox}, Converter={StaticResource BoolToVisibility}}" />
                 </Grid>
               </Grid>
             </Viewbox>
