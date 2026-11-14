@@ -47,6 +47,47 @@ public static class BarCommands
     /// </summary>
     public const int MaxCommands = 4096;
 
+    /// <summary>
+    /// The most commands kept while a dialog of the bar is open (review 27 C4). More are refused to the start that sent
+    /// them, which then ends with exit code 3, rather than piling up without end.
+    /// </summary>
+    public const int MaxWaitingCommands = 200;
+
+    /// <summary>How long a start (<c>--launch</c>, <c>--workspace</c>, <c>--voice</c>) may wait for a dialog to close before it is dropped.</summary>
+    public static readonly TimeSpan WaitingStartsExpireAfter = TimeSpan.FromSeconds(30);
+
+    /// <summary>
+    /// What is left to do of commands that waited for a dialog to close, in the order they came: a start older than
+    /// <see cref="WaitingStartsExpireAfter"/> is dropped (whoever asked for it has moved on), and of <c>--show</c>,
+    /// <c>--hide</c> and <c>--toggle</c> only the last one counts. Additions are never dropped: they are what the user
+    /// asked to keep.
+    /// </summary>
+    /// <param name="waiting">Each message's commands with when it arrived.</param>
+    /// <param name="dropped">How many starts were too old.</param>
+    public static IReadOnlyList<BarCommand> AfterWaiting(IReadOnlyList<(IReadOnlyList<BarCommand> Commands, DateTime Arrived)> waiting, DateTime now, out int dropped)
+    {
+        ArgumentNullException.ThrowIfNull(waiting);
+        dropped = 0;
+        var due = new List<BarCommand>();
+        foreach (var (commands, arrived) in waiting)
+        {
+            foreach (var command in commands)
+            {
+                if (command.Kind is BarCommandKind.Launch or BarCommandKind.Workspace or BarCommandKind.Voice
+                    && now - arrived > WaitingStartsExpireAfter)
+                {
+                    dropped++;
+                    continue;
+                }
+
+                due.Add(command);
+            }
+        }
+
+        var lastVisibility = due.FindLastIndex(command => command.Kind is BarCommandKind.Show or BarCommandKind.Hide or BarCommandKind.Toggle);
+        return due.Where((command, index) => index == lastVisibility || command.Kind is not (BarCommandKind.Show or BarCommandKind.Hide or BarCommandKind.Toggle)).ToList();
+    }
+
     public const int MaxMessageBytes = 2 * 1024 * 1024;
 
     public const int MaxTextLength = 2048;
@@ -251,7 +292,8 @@ public static class BarCommands
 
     /// <summary>
     /// A full path on a drive (<c>C:\…</c>) or a share (<c>\\server\share\…</c>); nothing relative, no device path, and
-    /// no server's pipes or mail slots (<c>\\localhost\pipe\x</c> is no share).
+    /// no server's pipes or mail slots (<c>\\localhost\pipe\x</c> is no share, nor <c>\\localhost\pipe/x</c>: Windows
+    /// takes either slash, so they are made one before the parts are looked at).
     /// </summary>
     private static bool IsPath(string path)
     {
@@ -259,6 +301,8 @@ public static class BarCommands
         {
             return false;
         }
+
+        path = path.Replace('/', '\\');
 
         var onDrive = path.Length >= 3 && char.IsAsciiLetter(path[0]) && path[1] == ':' && path[2] is '\\' or '/';
         var onShare = path.StartsWith(@"\\", StringComparison.Ordinal) && path.Length > 2 && path[2] is not ('?' or '.' or '\\')

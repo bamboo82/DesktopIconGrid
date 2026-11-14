@@ -10,7 +10,9 @@ namespace DesktopIconGrid.Services;
 /// How a second start hands its command line to the running bar: a named pipe of this Windows session, which both
 /// ends open with <see cref="PipeOptions.CurrentUserOnly"/>, so neither another user's process nor a pipe another
 /// user made under this name is talked to. One message per connection, read with a size limit and a time limit, and
-/// checked as strictly as a command line (<see cref="BarCommands.Deserialize"/>) before anything is done with it.
+/// checked as strictly as a command line (<see cref="BarCommands.Deserialize"/>) before anything is done with it. The
+/// pipe is in message mode, so the bar can answer in the same connection (review 27 C4): one byte, 1 when it took the
+/// commands, 0 when it refused them (too many already wait for a dialog to close).
 /// </summary>
 public sealed class CommandPipe : IDisposable
 {
@@ -27,18 +29,30 @@ public sealed class CommandPipe : IDisposable
         /// owners, which differ between an elevated start and a plain one of the same user.
         /// </summary>
         Refused,
+
+        /// <summary>The bar answered that it does not take them now: a dialog is open and too many commands already wait.</summary>
+        Busy,
     }
 
     private static readonly TimeSpan ReadLimit = TimeSpan.FromSeconds(5);
 
+    /// <summary>How long a start waits for the bar's answer once its message is written.</summary>
+    private static readonly TimeSpan AnswerLimit = TimeSpan.FromSeconds(10);
+
+    private const byte Taken = 1;
+    private const byte NotTaken = 0;
+
     private readonly CancellationTokenSource _stop = new();
-    private readonly Action<IReadOnlyList<BarCommand>> _received;
+    private readonly Func<IReadOnlyList<BarCommand>, bool> _received;
     private readonly string _name;
     private Task? _loop;
 
-    /// <param name="received">Called (on a worker thread) with each message's commands; the caller moves to the UI thread.</param>
+    /// <param name="received">
+    /// Called (on a worker thread) with each message's commands; whether the bar takes them, which the sender is told. The
+    /// caller asks the UI thread and should only decide there, and carry them out later.
+    /// </param>
     /// <param name="name">The pipe's name; <see cref="Name"/> when not given (tests use their own).</param>
-    public CommandPipe(Action<IReadOnlyList<BarCommand>> received, string? name = null)
+    public CommandPipe(Func<IReadOnlyList<BarCommand>, bool> received, string? name = null)
     {
         _received = received;
         _name = name ?? Name;
@@ -59,11 +73,12 @@ public sealed class CommandPipe : IDisposable
     {
         try
         {
-            using var client = new NamedPipeClientStream(".", name ?? Name, PipeDirection.Out, PipeOptions.CurrentUserOnly);
+            using var client = new NamedPipeClientStream(".", name ?? Name, PipeDirection.InOut, PipeOptions.Asynchronous | PipeOptions.CurrentUserOnly);
             client.Connect((int)timeout.TotalMilliseconds);
+            client.ReadMode = PipeTransmissionMode.Message;
             client.Write(message);
             client.Flush();
-            return SendResult.Sent;
+            return Answer(client);
         }
         catch (UnauthorizedAccessException ex)
         {
@@ -77,6 +92,26 @@ public sealed class CommandPipe : IDisposable
         }
     }
 
+    /// <summary>
+    /// The bar's answer to a written message. No byte at all (the bar dropped the message as unreadable, or closed) is no
+    /// answer; one that does not come in time means a bar too busy to answer, which has the message and runs it later.
+    /// </summary>
+    private static SendResult Answer(NamedPipeClientStream client)
+    {
+        using var limit = new CancellationTokenSource(AnswerLimit);
+        var answer = new byte[1];
+        try
+        {
+            var read = client.ReadAsync(answer, limit.Token).AsTask().GetAwaiter().GetResult();
+            return read == 0 ? SendResult.NoAnswer : answer[0] == Taken ? SendResult.Sent : SendResult.Busy;
+        }
+        catch (OperationCanceledException)
+        {
+            AppLog.Default.Warning("Commands", "The running bar did not answer in time; it has the commands");
+            return SendResult.Sent;
+        }
+    }
+
     private async Task ListenAsync(CancellationToken stop)
     {
         var failures = 0; // in a row: said once, then waited out with longer pauses (review 21: a held name warned every 2 s for ever)
@@ -85,7 +120,7 @@ public sealed class CommandPipe : IDisposable
             try
             {
                 await using var server = new NamedPipeServerStream(
-                    _name, PipeDirection.In, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous | PipeOptions.CurrentUserOnly);
+                    _name, PipeDirection.InOut, 1, PipeTransmissionMode.Message, PipeOptions.Asynchronous | PipeOptions.CurrentUserOnly);
                 await server.WaitForConnectionAsync(stop).ConfigureAwait(false);
                 if (failures > 0)
                 {
@@ -102,11 +137,12 @@ public sealed class CommandPipe : IDisposable
                 if (BarCommands.Deserialize(message) is { } commands)
                 {
                     AppLog.Default.Info("Commands", $"{commands.Count} command(s) received from another start");
-                    _received(commands);
+                    var taken = _received(commands);
+                    await AnswerAsync(server, taken, stop).ConfigureAwait(false);
                 }
                 else
                 {
-                    AppLog.Default.Warning("Commands", "A message that is no list of commands was ignored");
+                    AppLog.Default.Warning("Commands", "A message that is no list of commands was ignored"); // no answer: the sender is told nothing was taken
                 }
             }
             catch (OperationCanceledException) when (stop.IsCancellationRequested)
@@ -139,12 +175,29 @@ public sealed class CommandPipe : IDisposable
         }
     }
 
-    /// <summary>The pause before listening again after <paramref name="failures"/> failures in a row: 2 s, doubling up to a minute.</summary>
+    /// <summary>
+    /// The pause before listening again after <paramref name="failures"/> failures in a row: 2 s, doubling up to 10 s. A
+    /// second start waits for the bar up to its own timeout, so a longer pause would make it give up (review 27).
+    /// </summary>
     internal static TimeSpan RetryDelay(int failures) =>
-        TimeSpan.FromSeconds(Math.Min(60, 2 * Math.Pow(2, Math.Clamp(failures - 1, 0, 10))));
+        TimeSpan.FromSeconds(Math.Min(10, 2 * Math.Pow(2, Math.Clamp(failures - 1, 0, 10))));
+
+    /// <summary>Tells the sender whether its commands were taken; a sender that did not wait for the answer is no failure of the pipe.</summary>
+    private static async Task AnswerAsync(NamedPipeServerStream server, bool taken, CancellationToken stop)
+    {
+        try
+        {
+            await server.WriteAsync(new[] { taken ? Taken : NotTaken }, stop).ConfigureAwait(false);
+            await server.FlushAsync(stop).ConfigureAwait(false);
+        }
+        catch (IOException)
+        {
+            // The sender closed its end already.
+        }
+    }
 
     /// <summary>The whole message, or <see langword="null"/> when it is too large or does not end within the time limit.</summary>
-    private static async Task<byte[]?> ReadAsync(Stream stream, CancellationToken stop)
+    private static async Task<byte[]?> ReadAsync(NamedPipeServerStream stream, CancellationToken stop)
     {
         using var limit = CancellationTokenSource.CreateLinkedTokenSource(stop);
         limit.CancelAfter(ReadLimit);
@@ -162,6 +215,10 @@ public sealed class CommandPipe : IDisposable
                 }
 
                 buffer.Write(chunk, 0, read);
+                if (stream.IsMessageComplete)
+                {
+                    break; // the sender keeps its end open for the answer
+                }
             }
         }
         catch (OperationCanceledException) when (!stop.IsCancellationRequested)

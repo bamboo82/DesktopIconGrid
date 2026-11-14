@@ -347,6 +347,23 @@ public static partial class LaunchPlaceholders
         Func<string, string?>? registeredPathOf = null,
         string? searchPath = null,
         string? pathExtensions = null,
+        string? systemDirectory = null) =>
+        JudgeAt(location, parameters, placeholderIndex, startIn, registeredPathOf, searchPath, pathExtensions, systemDirectory).Reader;
+
+    /// <summary>
+    /// <see cref="ReaderAt"/>, and whether scp's colon rule applies to the value as well (<see cref="ScpOperand"/>). The
+    /// rule is a check added to whatever reader the line has, not a reader of its own (review 27 B2): ranked as a reader
+    /// it replaced cmd.exe's, WSL's or the remote shell's wherever scp came before the placeholder, as in
+    /// <c>wsl.exe scp {clipboard} host:/tmp/</c>.
+    /// </summary>
+    public static PlaceholderJudgement JudgeAt(
+        string? location,
+        string? parameters,
+        int placeholderIndex,
+        string? startIn = null,
+        Func<string, string?>? registeredPathOf = null,
+        string? searchPath = null,
+        string? pathExtensions = null,
         string? systemDirectory = null)
     {
         var system = systemDirectory ?? Environment.SystemDirectory;
@@ -358,7 +375,8 @@ public static partial class LaunchPlaceholders
         }
 
         var offset = at < words.Count ? placeholderIndex - words[at].Start : 0;
-        var reader = ReaderOfLocation(location, words, at, offset, startIn, registeredPathOf, searchPath, pathExtensions, system);
+        var scp = ScpOperand.None;
+        var reader = ReaderOfLocation(location, words, at, offset, startIn, registeredPathOf, searchPath, pathExtensions, system, ref scp);
         var relayed = IsRelay(FileNameOf(Environment.ExpandEnvironmentVariables(location ?? string.Empty).Trim().Trim('"')));
         for (var i = 0; i < words.Count && reader != ArgumentReader.PowerShellCommand; i++)
         {
@@ -371,6 +389,13 @@ public static partial class LaunchPlaceholders
 
             var rest = words.GetRange(i + 1, words.Count - i - 1);
             var restAt = at - i - 1; // the placeholder's place among the words after this one; negative when it comes before
+            ArgumentReader ScpOrSftp(bool sftp)
+            {
+                var (found, operand) = ScpReader(rest, restAt, offset, sftp);
+                scp = operand > scp ? operand : scp;
+                return found;
+            }
+
             reader = Stricter(reader, named switch
             {
                 "cmd" or "cmd.exe" or "gsudo" or "gsudo.exe" => ArgumentReader.Cmd, // gsudo runs what is no program as %COMSPEC% /s /c "…"
@@ -382,13 +407,13 @@ public static partial class LaunchPlaceholders
                 "ssh" or "ssh.exe" => restAt >= 0 ? SshReader(rest, restAt, offset) : ArgumentReader.RemoteShell,
                 "plink" or "plink.exe" => restAt >= 0 ? PlinkReader(rest, restAt) : ArgumentReader.RemoteShell,
                 "putty" or "putty.exe" => restAt >= 0 ? PlinkReader(rest, restAt, putty: true) : ArgumentReader.RemoteShell,
-                "scp" or "scp.exe" => restAt >= 0 ? ScpReader(rest, restAt, offset, sftp: false) : ArgumentReader.RemoteShell,
-                "sftp" or "sftp.exe" => restAt >= 0 ? ScpReader(rest, restAt, offset, sftp: true) : ArgumentReader.RemoteShell,
+                "scp" or "scp.exe" => restAt >= 0 ? ScpOrSftp(sftp: false) : ArgumentReader.RemoteShell,
+                "sftp" or "sftp.exe" => restAt >= 0 ? ScpOrSftp(sftp: true) : ArgumentReader.RemoteShell,
                 _ => ArgumentReader.Plain,
             });
         }
 
-        return reader;
+        return new PlaceholderJudgement(reader, scp);
     }
 
     /// <summary>
@@ -495,7 +520,7 @@ public static partial class LaunchPlaceholders
             .Concat((parameters ?? string.Empty).Split([' ', '\t'], StringSplitOptions.RemoveEmptyEntries).Select(FileNameOf));
 
     private static ArgumentReader ReaderOfLocation(
-        string? location, List<Word> words, int at, int offset, string? startIn, Func<string, string?>? registeredPathOf, string? searchPath, string? pathExtensions, string system)
+        string? location, List<Word> words, int at, int offset, string? startIn, Func<string, string?>? registeredPathOf, string? searchPath, string? pathExtensions, string system, ref ScpOperand scp)
     {
         var path = Environment.ExpandEnvironmentVariables(location?.Trim().Trim('"') ?? string.Empty);
         if (path.Length == 0 || LaunchPlanner.IsShellNamespace(path) || LaunchPlanner.IsSpecial(path) || LaunchPlanner.IsUri(path))
@@ -511,7 +536,7 @@ public static partial class LaunchPlaceholders
 
         if (name is "cmd" or "powershell" or "pwsh" or "wsl" or "gsudo" || Path.GetExtension(name).Length > 0)
         {
-            return ReaderOfFile(path, words, at, offset, system);
+            return ReaderOfFile(path, words, at, offset, system, ref scp);
         }
 
         if (Directory.Exists(path))
@@ -520,9 +545,18 @@ public static partial class LaunchPlaceholders
         }
 
         var found = Candidates(path, startIn, registeredPathOf, searchPath, pathExtensions, out _);
-        return found.Count == 0
-            ? ArgumentReader.Cmd // unknown here: it may be a batch file where it runs
-            : found.Select(file => ReaderOfFile(file, words, at, offset, system)).Aggregate(Stricter);
+        if (found.Count == 0)
+        {
+            return ArgumentReader.Cmd; // unknown here: it may be a batch file where it runs
+        }
+
+        var reader = ArgumentReader.Plain;
+        foreach (var file in found)
+        {
+            reader = Stricter(reader, ReaderOfFile(file, words, at, offset, system, ref scp));
+        }
+
+        return reader;
     }
 
     /// <summary>
@@ -614,9 +648,16 @@ public static partial class LaunchPlaceholders
     }
 
     /// <summary>Who reads the command line of the file at <paramref name="path"/> (with its extension, or a name judged by itself).</summary>
-    private static ArgumentReader ReaderOfFile(string path, List<Word> words, int at, int offset, string system)
+    private static ArgumentReader ReaderOfFile(string path, List<Word> words, int at, int offset, string system, ref ScpOperand scp)
     {
         var name = FileNameOf(path);
+        if (name is "scp.exe" or "sftp.exe")
+        {
+            var (reader, operand) = ScpReader(words, at, offset, sftp: name == "sftp.exe");
+            scp = operand > scp ? operand : scp;
+            return reader;
+        }
+
         return name switch
         {
             "gsudo" => ArgumentReader.Cmd,
@@ -629,8 +670,6 @@ public static partial class LaunchPlaceholders
             "ssh.exe" => SshReader(words, at, offset),
             "plink.exe" => PlinkReader(words, at),
             "putty.exe" => PlinkReader(words, at, putty: true), // plink's options, but no remote command
-            "scp.exe" => ScpReader(words, at, offset, sftp: false),
-            "sftp.exe" => ScpReader(words, at, offset, sftp: true),
             _ => ArgumentReader.Plain,
         };
     }
@@ -809,7 +848,7 @@ public static partial class LaunchPlaceholders
             {
                 if (j == at)
                 {
-                    return ArgumentReader.SshDestination;
+                    return SshDestinationReader(words[j].Text, offset);
                 }
 
                 destination = true;
@@ -821,6 +860,107 @@ public static partial class LaunchPlaceholders
         }
 
         return destination ? ArgumentReader.RemoteShell : ArgumentReader.SshDestination; // a file dropped at the end
+    }
+
+    /// <summary>
+    /// The reader of a placeholder in ssh's destination word: <see cref="ArgumentReader.SshDestination"/> when it is the
+    /// whole destination (the word, or the authority of an <c>ssh://</c> URI), <see cref="ArgumentReader.SshDestinationPart"/>
+    /// when the template writes more of the destination around it (<c>{x}@server2</c>, <c>ssh://admin@{x}:22</c>), where a
+    /// value with <c>@ : /</c> would make another host of it (review 27 C1).
+    /// </summary>
+    private static ArgumentReader SshDestinationReader(string text, int offset)
+    {
+        var lead = text.StartsWith('"') ? 1 : 0;
+        var (from, to) = (lead, WordEnd(text, lead));
+        if (text.AsSpan(lead).StartsWith("ssh://", StringComparison.OrdinalIgnoreCase))
+        {
+            from = lead + "ssh://".Length;
+            to = AuthorityEnd(text, from, to);
+        }
+
+        var (start, end) = PlaceholderIn(text, offset);
+        return DestinationReader(start, end, from, to);
+    }
+
+    /// <summary>Where the placeholder that starts at <paramref name="offset"/> of <paramref name="text"/>, or right after a quote there, starts and ends.</summary>
+    private static (int Start, int End) PlaceholderIn(string text, int offset)
+    {
+        var start = offset < text.Length && text[offset] == '"' ? offset + 1 : offset;
+        var match = AnyPlaceholder().Match(text, Math.Min(start, text.Length));
+        return match.Success && match.Index == start ? (start, start + match.Length) : (start, start);
+    }
+
+    /// <summary>The end of a word's text without the quote that closes it.</summary>
+    private static int WordEnd(string text, int lead) => text.Length > lead && text.EndsWith('"') ? text.Length - 1 : text.Length;
+
+    /// <summary>The first <c>/</c> from <paramref name="from"/> that is not inside a placeholder (the end of a URI's authority), else <paramref name="end"/>.</summary>
+    private static int AuthorityEnd(string text, int from, int end)
+    {
+        var inside = PlaceholderSpans(text);
+        for (var k = from; k < end; k++)
+        {
+            if (text[k] == '/' && !inside.Any(range => k >= range.Index && k < range.End))
+            {
+                return k;
+            }
+        }
+
+        return end;
+    }
+
+    private static List<(int Index, int End)> PlaceholderSpans(string text) =>
+        AnyPlaceholder().Matches(text).Select(m => (m.Index, End: m.Index + m.Length)).ToList();
+
+    /// <summary>
+    /// The reader of a placeholder from <paramref name="start"/> to <paramref name="end"/> in a destination (or a URI's
+    /// authority) from <paramref name="from"/> to <paramref name="to"/>: the whole destination, or a part of it whose
+    /// value may only complete a name (review 27 C1).
+    /// </summary>
+    private static ArgumentReader DestinationReader(int start, int end, int from, int to) =>
+        start <= from && end >= to ? ArgumentReader.SshDestination : ArgumentReader.SshDestinationPart;
+
+    /// <summary>
+    /// The colon that makes an scp operand <c>host:path</c>: not one inside a placeholder, and not a drive letter's
+    /// (<c>C:\</c>); -1 when there is none.
+    /// </summary>
+    private static int HostColon(string text, int lead)
+    {
+        var inside = PlaceholderSpans(text);
+        for (var k = 0; k < text.Length; k++)
+        {
+            if (text[k] == ':' && !inside.Any(range => k >= range.Index && k < range.End) && !(k == 1 + lead && char.IsAsciiLetter(text[k - 1])))
+            {
+                return k;
+            }
+        }
+
+        return -1;
+    }
+
+    /// <summary>
+    /// Whether an operand from <paramref name="first"/> on, as the template writes it, names another computer:
+    /// <c>host:path</c>, or a <c>scp://</c> or <c>sftp://</c> address. sftp's always does.
+    /// </summary>
+    private static bool NamesARemote(IReadOnlyList<Word> words, int first, bool sftp)
+    {
+        if (sftp)
+        {
+            return true;
+        }
+
+        for (var k = first; k < words.Count; k++)
+        {
+            var text = words[k].Text;
+            var lead = text.StartsWith('"') ? 1 : 0;
+            if (text.AsSpan(lead).StartsWith("scp://", StringComparison.OrdinalIgnoreCase)
+                || text.AsSpan(lead).StartsWith("sftp://", StringComparison.OrdinalIgnoreCase)
+                || HostColon(text, lead) >= 0)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /// <summary>scp's options that take a value (OpenSSH 9.x).</summary>
@@ -839,7 +979,7 @@ public static partial class LaunchPlaceholders
     /// Windows 10 still has, so a remote path counts as the remote shell's unless <c>-s</c> (SFTP) comes after any
     /// <c>-O</c>. sftp's first operand is its destination.
     /// </summary>
-    private static ArgumentReader ScpReader(IReadOnlyList<Word> words, int at, int offset, bool sftp)
+    private static (ArgumentReader Reader, ScpOperand Operand) ScpReader(IReadOnlyList<Word> words, int at, int offset, bool sftp)
     {
         var letters = (sftp ? SftpOptionsWithValue : ScpOptionsWithValue).ToCharArray();
         var overSftp = sftp; // scp's -s: the SFTP protocol, where no shell reads the remote path
@@ -848,7 +988,9 @@ public static partial class LaunchPlaceholders
             var word = Masked(words[j].Bare);
             if (word == "--")
             {
-                return at > j ? ScpOperand(words, at, offset, sftp, overSftp, first: at == j + 1) : ArgumentReader.Plain;
+                return at > j
+                    ? ScpOperandOf(words, at, offset, sftp, overSftp, first: at == j + 1, remote: NamesARemote(words, j + 1, sftp))
+                    : (ArgumentReader.Plain, ScpOperand.None);
             }
 
             if (!sftp && word.Length > 1 && word[0] == '-' && word != "--")
@@ -867,7 +1009,7 @@ public static partial class LaunchPlaceholders
                     var lead = text.StartsWith('"') ? 1 : 0;
                     var prefix = Masked(text[lead..Math.Max(lead, offset)]);
                     var letter = prefix.IndexOfAny(letters, 1);
-                    return letter < 0 ? ArgumentReader.SshOption : SshValueReader(prefix[letter], prefix[(letter + 1)..], scp: true);
+                    return (letter < 0 ? ArgumentReader.SshOption : SshValueReader(prefix[letter], prefix[(letter + 1)..], scp: true), ScpOperand.None);
                 }
 
                 var valueLetter = word.IndexOfAny(letters, 1);
@@ -878,7 +1020,7 @@ public static partial class LaunchPlaceholders
                     {
                         var before = string.Join(' ', words.Skip(j + 1).Take(at - j - 1).Select(w => w.Text));
                         var inWord = at < words.Count ? words[at].Text[..Math.Min(offset, words[at].Text.Length)] : string.Empty;
-                        return SshValueReader(word[valueLetter], before.Length > 0 ? before + " " + inWord : inWord, scp: true);
+                        return (SshValueReader(word[valueLetter], before.Length > 0 ? before + " " + inWord : inWord, scp: true), ScpOperand.None);
                     }
 
                     j = last;
@@ -887,61 +1029,58 @@ public static partial class LaunchPlaceholders
                 continue;
             }
 
-            return ScpOperand(words, at, offset, sftp, overSftp, first: at == j); // the operands start here
+            return ScpOperandOf(words, at, offset, sftp, overSftp, first: at == j, remote: NamesARemote(words, j, sftp)); // the operands start here
         }
 
-        return sftp ? ArgumentReader.SshDestination : ArgumentReader.Plain; // a file dropped at the end
+        // A file dropped at the end, after options only: sftp's destination; for scp a local path, and with no operand
+        // naming another computer, scp copies here through cmd.exe (review 27 C2).
+        return (sftp ? ArgumentReader.SshDestination : ArgumentReader.Cmd, ScpOperand.None);
     }
 
-    private static ArgumentReader ScpOperand(IReadOnlyList<Word> words, int at, int offset, bool sftp, bool overSftp, bool first)
+    /// <summary>
+    /// The reader of a placeholder in an operand of scp or sftp, and whether scp's colon rule is added to it. A placeholder
+    /// in the destination part of <c>host:path</c> or in a <c>scp://</c> authority is a host; one after it a remote path.
+    /// An operand the template writes without a colon is a local path, and the value may not bring a colon that would make
+    /// it <c>host:path</c> (<see cref="ScpOperand"/>, review 17 P15). <paramref name="remote"/>: some operand of the line
+    /// names another computer. Without one, Windows' scp copies from here to here through cmd.exe, so its local paths are
+    /// read as cmd.exe reads them (review 27 C2).
+    /// </summary>
+    private static (ArgumentReader Reader, ScpOperand Operand) ScpOperandOf(IReadOnlyList<Word> words, int at, int offset, bool sftp, bool overSftp, bool first, bool remote)
     {
+        var local = remote ? ArgumentReader.Plain : ArgumentReader.Cmd;
         if (at >= words.Count)
         {
-            return ArgumentReader.Plain; // a file dropped at the end: a local path
+            return (local, ScpOperand.None); // a file dropped at the end: a local path
         }
 
-        // The colon that makes the word host:path: not one inside a placeholder, and not a drive letter's (C:\).
         var text = words[at].Text;
-        var inside = AnyPlaceholder().Matches(text).Select(m => (m.Index, End: m.Index + m.Length)).ToList();
         var lead = text.StartsWith('"') ? 1 : 0;
+        var (start, end) = PlaceholderIn(text, offset);
+        var wordEnd = WordEnd(text, lead);
+        var remotePath = overSftp ? ArgumentReader.Plain : ArgumentReader.RemoteShell;
 
         // scp://[user@]host[:port]/path and sftp://…: up to the slash that ends the authority it is a host, after it a path.
         foreach (var scheme in (string[])["scp://", "sftp://"])
         {
             if (text.AsSpan(lead).StartsWith(scheme, StringComparison.OrdinalIgnoreCase))
             {
-                var slash = -1;
-                for (var k = lead + scheme.Length; k < text.Length && slash < 0; k++)
-                {
-                    if (text[k] == '/' && !inside.Any(range => k >= range.Index && k < range.End))
-                    {
-                        slash = k;
-                    }
-                }
-
-                return slash < 0 || offset < slash ? ArgumentReader.SshDestination : overSftp ? ArgumentReader.Plain : ArgumentReader.RemoteShell;
+                var authority = lead + scheme.Length;
+                var slash = AuthorityEnd(text, authority, wordEnd);
+                return (start < slash ? DestinationReader(start, end, authority, slash) : remotePath, ScpOperand.None);
             }
         }
 
-        var colon = -1;
-        for (var k = 0; k < text.Length && colon < 0; k++)
-        {
-            if (text[k] == ':' && !inside.Any(range => k >= range.Index && k < range.End)
-                && !(k == 1 + (text.StartsWith('"') ? 1 : 0) && char.IsAsciiLetter(text[k - 1])))
-            {
-                colon = k;
-            }
-        }
-
+        var colon = HostColon(text, lead);
         if (colon < 0)
         {
             // No colon in what the shortcut says, so the filled value decides whether scp reads the word as a path here
-            // or as host:path (review 17 P15): it is judged by its own colons. sftp takes one operand, its destination.
-            return sftp ? first ? ArgumentReader.SshDestination : ArgumentReader.Plain
-                : offset <= lead ? ArgumentReader.ScpPath : ArgumentReader.ScpPathPart;
+            // or as host:path: the colon rule goes with the line's reader. sftp takes one operand, its destination.
+            return sftp
+                ? (first ? DestinationReader(start, end, lead, wordEnd) : ArgumentReader.Plain, ScpOperand.None)
+                : (local, offset <= lead ? ScpOperand.WholeWord : ScpOperand.PartOfWord);
         }
 
-        return offset < colon ? ArgumentReader.SshDestination : overSftp ? ArgumentReader.Plain : ArgumentReader.RemoteShell;
+        return (start < colon ? DestinationReader(start, end, lead, colon) : remotePath, ScpOperand.None);
     }
 
     /// <summary>plink's options that take a value (PuTTY 0.8x), and its flags.</summary>
@@ -1072,7 +1211,7 @@ public static partial class LaunchPlaceholders
     /// shell, which also gets bare words.</item>
     /// </list>
     /// </summary>
-    public static string? Refused(string value, ArgumentReader reader)
+    public static string? Refused(string value, ArgumentReader reader, ScpOperand scp = ScpOperand.None)
     {
         ArgumentNullException.ThrowIfNull(value);
         if (reader == ArgumentReader.SshOption)
@@ -1080,18 +1219,25 @@ public static partial class LaunchPlaceholders
             return value.Length > 0 ? value[..(char.IsSurrogatePair(value, 0) ? 2 : 1)] : string.Empty; // every value, the empty one too: -o{ask:Extra} left empty makes the next word -o's
         }
 
-        return FirstNotAllowed(value, reader switch
+        return FirstNotAllowed(value, WithScpColon(reader switch
         {
             ArgumentReader.Cmd => IsAllowedForCmd,
             ArgumentReader.PosixShell => IsAllowedForPosixShell,
             ArgumentReader.SshDestination => IsAllowedInSshDestination,
+            ArgumentReader.SshDestinationPart => IsAllowedInSshDestinationPart,
             ArgumentReader.RemoteShell or ArgumentReader.PowerShellCommand => IsAllowedInScriptText,
             ArgumentReader.SshOption => (_, _) => false,
-            ArgumentReader.ScpPath => (text, index) => IsAllowedForAny(text, index) && !IsHostColon(text, index, wordStart: true),
-            ArgumentReader.ScpPathPart => (text, index) => IsAllowedForAny(text, index) && !IsHostColon(text, index, wordStart: false),
             _ => IsAllowedForAny,
-        });
+        }, scp));
     }
+
+    /// <summary>
+    /// <paramref name="allowed"/> and, for an scp operand the template writes without a colon, no colon that would make it
+    /// <c>host:path</c> (<see cref="IsHostColon"/>): the check added to the line's reader (review 27 B2).
+    /// </summary>
+    private static Func<string, int, bool> WithScpColon(Func<string, int, bool> allowed, ScpOperand scp) => scp == ScpOperand.None
+        ? allowed
+        : (text, index) => allowed(text, index) && !IsHostColon(text, index, wordStart: scp == ScpOperand.WholeWord);
 
     /// <summary>
     /// What a dropped file's path holds that the program would act on even inside the quotes the path is given, or
@@ -1101,20 +1247,19 @@ public static partial class LaunchPlaceholders
     /// <c>a;Write-Output x;.txt</c> is a legal file name. <see cref="FullwidthQuotationMark"/> is refused for every
     /// program.
     /// </summary>
-    public static string? RefusedInPath(string path, ArgumentReader reader)
+    public static string? RefusedInPath(string path, ArgumentReader reader, ScpOperand scp = ScpOperand.None)
     {
         ArgumentNullException.ThrowIfNull(path);
-        return FirstNotAllowed(path, reader switch
+        return FirstNotAllowed(path, WithScpColon(reader switch
         {
             ArgumentReader.Cmd => (text, index) => text[index] is not ('%' or '!' or FullwidthQuotationMark), // ! for delayed expansion (/V:ON, setlocal)
             ArgumentReader.PosixShell => (text, index) => text[index] is not ('%' or '!' or '$' or '`' or FullwidthQuotationMark),
             ArgumentReader.SshDestination => IsAllowedInSshDestination,
+            ArgumentReader.SshDestinationPart => IsAllowedInSshDestinationPart,
             ArgumentReader.RemoteShell or ArgumentReader.PowerShellCommand => IsAllowedInScriptText,
             ArgumentReader.SshOption => (_, _) => false,
-            ArgumentReader.ScpPath => (text, index) => text[index] != FullwidthQuotationMark && !IsHostColon(text, index, wordStart: true),
-            ArgumentReader.ScpPathPart => (text, index) => text[index] != FullwidthQuotationMark && !IsHostColon(text, index, wordStart: false),
             _ => (text, index) => text[index] != FullwidthQuotationMark,
-        });
+        }, scp));
     }
 
     /// <summary>
@@ -1239,6 +1384,14 @@ public static partial class LaunchPlaceholders
         char.IsAsciiLetterOrDigit(text[index]) || text[index] is '.' or '_' or '@' or ':' or '[' or ']' or '/'
         || (text[index] == '-' && index > 0 && text[index - 1] is not ('@' or '/' or '[' or ':'));
 
+    /// <summary>
+    /// Part of a destination the template writes more of (review 27 C1): ASCII letters and digits and <c>. _ -</c>, not
+    /// starting with <c>-</c>. Nothing that separates the user, the host, the port or the path, so the value can only
+    /// complete a name: <c>{ask:User}@server2:/tmp/</c> filled with <c>evil.example:</c> would copy to evil.example.
+    /// </summary>
+    private static bool IsAllowedInSshDestinationPart(string text, int index) =>
+        char.IsAsciiLetterOrDigit(text[index]) || text[index] is '.' or '_' || (text[index] == '-' && index > 0);
+
     /// <summary>What cmd.exe takes, less <c>$</c> and <c>`</c>, so the readers stay in order of strictness (<c>cmd /c wsl …</c>).</summary>
     private static bool IsAllowedForPosixShell(string text, int index) => IsAllowedForCmd(text, index) && text[index] is not ('$' or '`');
 
@@ -1315,21 +1468,38 @@ public enum ArgumentReader
     PowerShellCommand,
 
     /// <summary>
+    /// Part of an ssh or scp destination, or of a URI's authority, that the template writes more of: <c>{x}@host:path</c>,
+    /// <c>scp://{x}@host/…</c>, <c>scp://host:{x}/…</c>, <c>scp://host{x}</c> (review 27 C1). Only ASCII letters, digits
+    /// and <c>. _ -</c> pass, so a value can complete a name but not move the host. That is a subset of what every reader
+    /// before it lets pass, so it refuses at least what they refuse and ranks after them.
+    /// </summary>
+    SshDestinationPart,
+
+    /// <summary>
     /// ssh reading the value as its own settings: a placeholder that starts <c>-o</c>'s value or stands in its keyword
     /// (ssh_config takes a space or <c>=</c> after the keyword, so <c>ProxyCommand calc</c> runs calc), one after a
     /// keyword that runs or loads something (<c>ProxyCommand</c>, <c>PKCS11Provider</c>, <c>Include</c>), or one among
     /// an option's letters. Every value is refused.
     /// </summary>
     SshOption,
-
-    /// <summary>
-    /// An operand of scp that the shortcut writes without a colon, the placeholder at its start: a path on this PC as
-    /// long as the value brings no colon of its own that would make it <c>host:path</c> or a <c>scp://</c> URI. What
-    /// every program refuses is refused, and every colon but a drive letter's.
-    /// </summary>
-    ScpPath,
-
-    /// <summary>As <see cref="ScpPath"/> with text before the placeholder in its word: no colon at all.</summary>
-    ScpPathPart,
 }
+
+/// <summary>
+/// Whether a placeholder is an operand of scp that the template writes without a colon (review 17 P15): a path on this
+/// PC as long as the value brings no colon of its own that would make it <c>host:path</c> or a <c>scp://</c> address. The
+/// colon rule is checked on top of the line's reader (review 27 B2), never in its place.
+/// </summary>
+public enum ScpOperand
+{
+    None,
+
+    /// <summary>The placeholder starts the word: every colon but a drive letter's is refused.</summary>
+    WholeWord,
+
+    /// <summary>Text comes before the placeholder in its word (<c>ho{x}</c>): every colon is refused.</summary>
+    PartOfWord,
+}
+
+/// <summary>Who reads a placeholder's value (<see cref="LaunchPlaceholders.JudgeAt"/>), and whether scp's colon rule applies on top.</summary>
+public readonly record struct PlaceholderJudgement(ArgumentReader Reader, ScpOperand Scp = ScpOperand.None);
 

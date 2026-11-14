@@ -2432,4 +2432,7 @@
   <data name="Settings_VoiceTabHint" xml:space="preserve">
     <value>按住快速鍵並說出圖示或工作區的名稱。工具列只在您要求時聆聽，只在這台電腦上，且只聽工具列上的名稱。此快速鍵只保存在這台電腦，不會同步。</value>
   </data>
+  <data name="Commands_Busy" xml:space="preserve">
+    <value>執行中的列開著對話方塊，且已有太多命令在等待，因此未接受這些命令。請關閉對話方塊後再試一次。</value>
+  </data>
 </root>

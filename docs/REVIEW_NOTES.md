@@ -9,6 +9,88 @@ The owner relays replies.
 
 ---
 
+## 2026-11-14 (68) — WP2: scp placeholders (B2, C1, C2), the command line's small items and C4
+
+Run 163 (`96b45d1`, WP1) is green. This entry claims no run for its own commit.
+
+### B2: the colon rule is added to the line's reader
+
+- `ScpPath` and `ScpPathPart` are gone from `ArgumentReader`.
+- `LaunchPlaceholders.JudgeAt` returns `PlaceholderJudgement(Reader, Scp)`. `Reader` is what `ReaderAt` returned
+  before P15. `Scp` is `ScpOperand.None`, `WholeWord` or `PartOfWord`, taken as the strongest over every scp or sftp
+  that reads the placeholder: the location itself, or named in the line.
+- `ReaderAt` is now `JudgeAt(…).Reader`, so its callers, and the 81 tests that call it, are unchanged.
+- `Refused` and `RefusedInPath` take the flag as an optional third argument. They apply the reader's rule and, with
+  the flag, `IsHostColon` (`WithScpColon`).
+- `LaunchService` judges each position with `JudgeAt` and passes the flag. The refusal message names scp when the
+  refused character is a colon under the flag.
+- **Tests**, each as the plan lists:
+  - wsl.exe + `scp {clipboard} h:/tmp/` with `$(id)`;
+  - `cmd.exe /c scp …` with `a&calc`;
+  - `ssh.exe s scp {clipboard} b:/x` with `x;id`;
+  - a dropped `$(id).txt` through the wsl line.
+
+  Each refuses, and each still refuses `evil.example:/etc/passwd`. The old scp rows now expect `Plain` from
+  `ReaderAt` and the flag from `JudgeAt`.
+
+### C1: `SshDestinationPart`
+
+- A new reader: ASCII letters and digits and `. _ -`, not starting with `-`.
+- It is used when the placeholder is not the whole of the destination it stands in:
+  - scp/sftp `host:path` before the colon;
+  - a `scp://` or `sftp://` authority;
+  - sftp's first operand;
+  - ssh's destination word (also an `ssh://` authority).
+
+  Your four shapes are covered, `scp://host{x}` included, which has its template text before the placeholder: I read
+  the rule as "the template writes more of the destination", before or after.
+- A placeholder that is the whole destination (`{x}:/tmp/`, `scp://{x}/…`, `sftp {x}`, `ssh {x}`) keeps
+  `SshDestination`, so `admin@server2` still goes there.
+- **Its rank.** It sits after `PowerShellCommand`, before `SshOption`. What it lets pass is a subset of what every
+  reader before it lets pass, so the chain "each refuses at least what the ones before refuse" holds, and
+  `Stricter(RemoteShell, SshDestinationPart)` keeps the part rule: `ssh s scp {x}@b:/x` is still covered.
+  `SpotAt`'s `>= Cmd` and `>= PosixShell` read it as they read `SshDestination`.
+- Not covered: ssh's `-J` and `-l` values with template text around the placeholder, and plink's destination. Both
+  are still `SshDestination`.
+- **Tests:** the three values of C1 and `.evil.example/x`, one ssh row and one `ssh://` row. Each also checks that a
+  name passes and a leading `-` does not. The whole-destination rows still take `admin@server2`.
+
+### C2
+
+- `NamesARemote`: an operand the template writes with a host colon (`HostColon`, the same test as before) or a
+  `scp://`/`sftp://` start. Without one, scp operands and a file dropped at the end are read as `Cmd`. The colon
+  rule still comes on top, so a value cannot make one of them remote.
+- sftp always names a remote.
+- Tests: `{clipboard} D:\backup\`, `C:\in\a.txt {ask:Where}`, `-r {file} {ask:Where}`.
+
+### Small items
+
+- `\\localhost\pipe/x`: the path's `/` become `\` before the share parts are looked at. Two test rows.
+- `ApplySavedLanguage`: a file over 8 MB is not read, and `InvalidOperationException` is caught (the lone surrogate).
+- Pipe back-off: at most 10 s.
+- The waiting timer: `??=`.
+
+### C4
+
+- **The pipe answers.** Both ends are opened in message mode, `InOut`. The bar reads one message, until
+  `IsMessageComplete`, and answers with one byte: 1 taken, 0 not taken. The sender reads the answer for up to 10 s:
+  - 0 is the new `SendResult.Busy`, which ends the start with exit code 3 and the new `Commands_Busy` text;
+  - no byte (an unreadable message, dropped as before) is `NoAnswer`;
+  - no answer in time counts as sent, with a log line: the bar has the message.
+- `CommandPipe` takes a `Func<…, bool>`. App answers with `Dispatcher.Invoke(() => window.Take(received))`.
+  `MainWindow.Take` only decides: it queues, or posts `Run` to come after the answer.
+- **The queue** keeps each message with the time it arrived.
+  - More than `BarCommands.MaxWaitingCommands` (200) waiting: the message is refused, with one log line.
+  - When the dialog closes, `BarCommands.AfterWaiting` (Core, tested) drops a launch, workspace or voice start that
+    waited more than 30 s, with a log line, and keeps only the last show, hide or toggle. Additions are never
+    dropped.
+- **Mixed versions.** A start of this version talking to a bar of an older one, which opens the pipe inbound only,
+  fails to connect and reports the bar as not answering. Both are the same exe in practice. Say if you want the old
+  protocol kept as a fallback.
+- **Tests:** Core `AfterWaiting`. App, CI only: a bar that answers false gives `Busy`, and broken messages now give
+  `NoAnswer` (the test's earlier `Sent` expectation is changed accordingly). Not tested: the queue under a real
+  dialog, and `Dispatcher.Invoke` from the pipe.
+
 ## 2026-11-14 (67) — WP1: Settings as tabs (review 27 B1)
 
 Review 27 and its work plan arrived in two messages, and both are taken as the plan for 0.11.0. Run 162 (`d53640d`)

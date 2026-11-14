@@ -84,17 +84,17 @@ public sealed class LaunchService(ProcessTracker tracker, ILaunchPrompts? prompt
         }
 
         // Then everything goes in at once.
-        var readers = LaunchPlaceholders.FilePositions(judged).Select(index => ReaderAt(shortcut, judged, index)).Distinct().ToList();
+        var judgements = LaunchPlaceholders.FilePositions(judged).Select(index => JudgeAt(shortcut, judged, index)).Distinct().ToList();
         var terminal = LaunchPlaceholders.SplitsAtSemicolons(shortcut.EffectiveLocation, template);
         var relay = LaunchPlaceholders.DropsQuotes(shortcut.EffectiveLocation, template);
         foreach (var path in paths)
         {
-            foreach (var reader in readers)
+            foreach (var judgement in judgements)
             {
-                if (LaunchPlaceholders.RefusedInPath(path, reader) is { } character)
+                if (LaunchPlaceholders.RefusedInPath(path, judgement.Reader, judgement.Scp) is { } character)
                 {
-                    AppLog.Default.Warning("Launch", $"A dropped path was refused for {reader}: {path}");
-                    return LaunchResult.Failure(RefusalMessage(character, reader));
+                    AppLog.Default.Warning("Launch", $"A dropped path was refused for {judgement.Reader}{(judgement.Scp == ScpOperand.None ? string.Empty : " (scp operand)")}: {path}");
+                    return LaunchResult.Failure(RefusalMessage(character, judgement));
                 }
             }
 
@@ -241,7 +241,7 @@ public sealed class LaunchService(ProcessTracker tracker, ILaunchPrompts? prompt
 
             foreach (var index in LaunchPlaceholders.ClipboardPositions(template)) // each place it goes is judged on its own
             {
-                if (Refuse(clipboard, ReaderAt(shortcut, template, index), LaunchPlaceholders.TakesOptionAt(template, index, shortcut.EffectiveLocation), terminal, relay) is { } refused)
+                if (Refuse(clipboard, JudgeAt(shortcut, template, index), LaunchPlaceholders.TakesOptionAt(template, index, shortcut.EffectiveLocation), terminal, relay) is { } refused)
                 {
                     return (null, [], refused);
                 }
@@ -259,7 +259,7 @@ public sealed class LaunchService(ProcessTracker tracker, ILaunchPrompts? prompt
             }
 
             var position = askPositions[answers.Count];
-            if (Refuse(answer, ReaderAt(shortcut, template, position), LaunchPlaceholders.TakesOptionAt(template, position, shortcut.EffectiveLocation), terminal, relay) is { } refused)
+            if (Refuse(answer, JudgeAt(shortcut, template, position), LaunchPlaceholders.TakesOptionAt(template, position, shortcut.EffectiveLocation), terminal, relay) is { } refused)
             {
                 return (null, [], refused);
             }
@@ -274,8 +274,11 @@ public sealed class LaunchService(ProcessTracker tracker, ILaunchPrompts? prompt
     /// Who reads the value of the placeholder at <paramref name="index"/>: the shortcut's program as Windows finds it (App
     /// Paths, its start-in folder, PATH), what its parameters hand on to, and where the placeholder stands among them.
     /// </summary>
-    private static ArgumentReader ReaderAt(ShortcutItem shortcut, string template, int index) =>
-        LaunchPlaceholders.ReaderAt(shortcut.EffectiveLocation, template, index, shortcut.StartIn, InstalledPrograms.RegisteredPath);
+    private static ArgumentReader ReaderAt(ShortcutItem shortcut, string template, int index) => JudgeAt(shortcut, template, index).Reader;
+
+    /// <summary><see cref="ReaderAt"/>, with whether scp's colon rule applies to the value on top (review 27 B2).</summary>
+    private static PlaceholderJudgement JudgeAt(ShortcutItem shortcut, string template, int index) =>
+        LaunchPlaceholders.JudgeAt(shortcut.EffectiveLocation, template, index, shortcut.StartIn, InstalledPrograms.RegisteredPath);
 
     /// <summary>
     /// The refusal of a template with a placeholder that cannot stand where it does for the program that reads it (see
@@ -310,14 +313,15 @@ public sealed class LaunchService(ProcessTracker tracker, ILaunchPrompts? prompt
     /// <summary>The refusal of a <c>;</c> for Windows Terminal (<see cref="LaunchPlaceholders.SplitsAtSemicolons"/>).</summary>
     private static LaunchResult TerminalRefusal => LaunchResult.Failure(string.Format(Strings.Launch_UnsafeValue, ';', "Windows Terminal"));
 
-    private static LaunchResult? Refuse(string value, ArgumentReader reader, bool takesOption, bool terminal, string? relay)
+    private static LaunchResult? Refuse(string value, PlaceholderJudgement judgement, bool takesOption, bool terminal, string? relay)
     {
-        if (LaunchPlaceholders.Refused(value, reader) is { } character)
+        var reader = judgement.Reader;
+        if (LaunchPlaceholders.Refused(value, reader, judgement.Scp) is { } character)
         {
             AppLog.Default.Warning("Launch", character.Length == 0
                 ? $"An empty placeholder value was refused for {reader}"
-                : $"A placeholder value was refused: it holds U+{char.ConvertToUtf32(character, 0):X4}, which {reader} could act on");
-            return LaunchResult.Failure(RefusalMessage(character, reader));
+                : $"A placeholder value was refused: it holds U+{char.ConvertToUtf32(character, 0):X4}, which {reader}{(judgement.Scp == ScpOperand.None ? string.Empty : " or scp")} could act on");
+            return LaunchResult.Failure(RefusalMessage(character, judgement));
         }
 
         if (relay is not null && LaunchPlaceholders.SplitByRelay(value) is { } split)
@@ -347,18 +351,19 @@ public sealed class LaunchService(ProcessTracker tracker, ILaunchPrompts? prompt
         return null;
     }
 
-    private static string RefusalMessage(string character, ArgumentReader reader) => reader == ArgumentReader.SshOption ? Strings.Launch_SshOptionValue : character switch
+    private static string RefusalMessage(string character, PlaceholderJudgement judgement) => judgement.Reader == ArgumentReader.SshOption ? Strings.Launch_SshOptionValue : character switch
     {
         "\r" or "\n" => Strings.Launch_ValueHasLineBreak,
-        "-" when reader == ArgumentReader.SshDestination => Strings.Launch_SshNameIsOption,
-        "-" => reader == ArgumentReader.RemoteShell ? Strings.Launch_WordIsRemoteOption : Strings.Launch_WordIsParameter, // a word of bare words
+        "-" when judgement.Reader is ArgumentReader.SshDestination or ArgumentReader.SshDestinationPart => Strings.Launch_SshNameIsOption,
+        "-" => judgement.Reader == ArgumentReader.RemoteShell ? Strings.Launch_WordIsRemoteOption : Strings.Launch_WordIsParameter, // a word of bare words
         _ when character[0] == LaunchPlaceholders.FullwidthQuotationMark => Strings.Launch_LookalikeQuote,
-        _ => string.Format(Strings.Launch_UnsafeValue, character, reader switch
+        ":" when judgement.Scp != ScpOperand.None => string.Format(Strings.Launch_UnsafeValue, character, "scp"),
+        _ => string.Format(Strings.Launch_UnsafeValue, character, judgement.Reader switch
         {
             ArgumentReader.Cmd => "cmd.exe",
             ArgumentReader.PosixShell => "WSL",
-            ArgumentReader.SshDestination or ArgumentReader.RemoteShell => "ssh",
-            ArgumentReader.ScpPath or ArgumentReader.ScpPathPart => "scp",
+            ArgumentReader.SshDestination or ArgumentReader.SshDestinationPart or ArgumentReader.RemoteShell => "ssh",
+            ArgumentReader.Plain => "scp", // only scp's colon rule refuses anything more than every program does
             _ => "PowerShell",
         }),
     };

@@ -139,12 +139,12 @@ public sealed class LaunchPlaceholderSafetyTests : IDisposable
     [InlineData("scp.exe", "-S {clipboard} a.txt server2:/tmp/", "{clipboard}", ArgumentReader.SshOption)] // a program run instead of ssh
     [InlineData("scp.exe", "-F {clipboard} a.txt server2:/tmp/", "{clipboard}", ArgumentReader.SshOption)]
     [InlineData("scp.exe", "-o {clipboard} a.txt server2:/tmp/", "{clipboard}", ArgumentReader.SshOption)]
-    [InlineData("scp.exe", "{file} server2:/tmp/", "{file}", ArgumentReader.ScpPath)] // a local path, unless the value brings a colon
-    [InlineData("scp.exe", "C:\\out\\{file} server2:/tmp/", "{file}", ArgumentReader.ScpPathPart)] // a drive letter is no host
-    [InlineData("scp.exe", "\"{clipboard}\" server2:/tmp/", "{clipboard}", ArgumentReader.ScpPath)]
-    [InlineData("scp.exe", "server2:/tmp/a.txt {ask:Where}", "{ask:Where}", ArgumentReader.ScpPath)]
+    [InlineData("scp.exe", "{file} server2:/tmp/", "{file}", ArgumentReader.Plain)] // a local path; the colon rule comes on top (JudgeAt)
+    [InlineData("scp.exe", "C:\\out\\{file} server2:/tmp/", "{file}", ArgumentReader.Plain)] // a drive letter is no host
+    [InlineData("scp.exe", "\"{clipboard}\" server2:/tmp/", "{clipboard}", ArgumentReader.Plain)]
+    [InlineData("scp.exe", "server2:/tmp/a.txt {ask:Where}", "{ask:Where}", ArgumentReader.Plain)]
     [InlineData("scp.exe", "scp://{ask:Host}/tmp/a.txt .", "{ask:Host}", ArgumentReader.SshDestination)] // review 17 P15: a URI's authority
-    [InlineData("scp.exe", "scp://{ask:User}@server2:2222/tmp/a.txt .", "{ask:User}", ArgumentReader.SshDestination)]
+    [InlineData("scp.exe", "scp://{ask:User}@server2:2222/tmp/a.txt .", "{ask:User}", ArgumentReader.SshDestinationPart)] // review 27 C1: part of it
     [InlineData("scp.exe", "scp://server2/{clipboard} .", "{clipboard}", ArgumentReader.RemoteShell)]
     [InlineData("scp.exe", "-s scp://server2/{clipboard} .", "{clipboard}", ArgumentReader.Plain)]
     [InlineData("scp.exe", "SCP://{clipboard} .", "{clipboard}", ArgumentReader.SshDestination)]
@@ -268,9 +268,9 @@ public sealed class LaunchPlaceholderSafetyTests : IDisposable
         var positions = LaunchPlaceholders.FilePositions(template);
 
         Assert.Equal(2, positions.Count);
-        Assert.All(positions, index => Assert.Equal(ArgumentReader.ScpPath, LaunchPlaceholders.ReaderAt("scp.exe", template, index)));
-        Assert.Null(LaunchPlaceholders.RefusedInPath(@"C:\Users\me\report.txt", ArgumentReader.ScpPath));
-        Assert.Null(LaunchPlaceholders.RefusedInPath(@"\\nas\share\report.txt", ArgumentReader.ScpPath));
+        Assert.All(positions, index => Assert.Equal(new PlaceholderJudgement(ArgumentReader.Plain, ScpOperand.WholeWord), LaunchPlaceholders.JudgeAt("scp.exe", template, index)));
+        Assert.Null(LaunchPlaceholders.RefusedInPath(@"C:\Users\me\report.txt", ArgumentReader.Plain, ScpOperand.WholeWord));
+        Assert.Null(LaunchPlaceholders.RefusedInPath(@"\\nas\share\report.txt", ArgumentReader.Plain, ScpOperand.WholeWord));
     }
 
     [Theory]
@@ -282,17 +282,92 @@ public sealed class LaunchPlaceholderSafetyTests : IDisposable
     [InlineData(@"C:\out\a:b")]
     public void A_value_that_scp_would_read_as_another_computer_is_refused(string value)
     {
-        Assert.Equal(":", LaunchPlaceholders.Refused(value, ArgumentReader.ScpPath));
-        Assert.Equal(":", LaunchPlaceholders.Refused(value, ArgumentReader.ScpPathPart));
+        Assert.Equal(":", LaunchPlaceholders.Refused(value, ArgumentReader.Plain, ScpOperand.WholeWord));
+        Assert.Equal(":", LaunchPlaceholders.Refused(value, ArgumentReader.Plain, ScpOperand.PartOfWord));
     }
 
     [Fact]
     public void A_drive_letter_passes_only_where_the_value_starts_the_word()
     {
-        Assert.Null(LaunchPlaceholders.Refused(@"C:\out\a.txt", ArgumentReader.ScpPath));
-        Assert.Null(LaunchPlaceholders.Refused(@"out\a.txt", ArgumentReader.ScpPathPart));
-        Assert.Equal(":", LaunchPlaceholders.Refused(@"s:tmp", ArgumentReader.ScpPathPart)); // "ho{x}" filled to "hos:tmp"
-        Assert.Equal("\n", LaunchPlaceholders.Refused("a\nb", ArgumentReader.ScpPath)); // what every program refuses, too
+        Assert.Null(LaunchPlaceholders.Refused(@"C:\out\a.txt", ArgumentReader.Plain, ScpOperand.WholeWord));
+        Assert.Null(LaunchPlaceholders.Refused(@"out\a.txt", ArgumentReader.Plain, ScpOperand.PartOfWord));
+        Assert.Equal(":", LaunchPlaceholders.Refused(@"s:tmp", ArgumentReader.Plain, ScpOperand.PartOfWord)); // "ho{x}" filled to "hos:tmp"
+        Assert.Equal("\n", LaunchPlaceholders.Refused("a\nb", ArgumentReader.Plain, ScpOperand.WholeWord)); // what every program refuses, too
+        Assert.Null(LaunchPlaceholders.Refused("evil.example:/x", ArgumentReader.Plain)); // without the flag no colon rule
+    }
+
+    /// <summary>
+    /// Review 27 B2: scp's colon rule ranked as a reader of its own replaced the shell's reader wherever scp came before
+    /// the placeholder. Now the shell's rule stays and the colon rule comes on top.
+    /// </summary>
+    [Theory]
+    [InlineData("wsl.exe", "scp {clipboard} h:/tmp/", "$(id)", "$", ArgumentReader.PosixShell)]
+    [InlineData("cmd.exe", "/c scp {clipboard} h:/tmp/", "a&calc", "&", ArgumentReader.Cmd)]
+    [InlineData("ssh.exe", "s scp {clipboard} b:/x", "x;id", ";", ArgumentReader.RemoteShell)]
+    public void Scp_after_a_shell_keeps_the_shells_rule_and_adds_its_colon_rule(string location, string parameters, string value, string refused, ArgumentReader reader)
+    {
+        var judgement = LaunchPlaceholders.JudgeAt(location, parameters, parameters.IndexOf("{clipboard}", StringComparison.Ordinal));
+
+        Assert.Equal(new PlaceholderJudgement(reader, ScpOperand.WholeWord), judgement);
+        Assert.Equal(reader, LaunchPlaceholders.ReaderAt(location, parameters, parameters.IndexOf("{clipboard}", StringComparison.Ordinal)));
+        Assert.Equal(refused, LaunchPlaceholders.Refused(value, judgement.Reader, judgement.Scp));
+        Assert.Equal(":", LaunchPlaceholders.Refused("evil.example:/etc/passwd", judgement.Reader, judgement.Scp)); // and still no host:path
+    }
+
+    [Fact]
+    public void A_dropped_file_through_wsl_and_scp_keeps_the_shells_rule()
+    {
+        const string Parameters = "scp {file} h:/tmp/";
+        var judgement = LaunchPlaceholders.JudgeAt("wsl.exe", Parameters, Parameters.IndexOf("{file}", StringComparison.Ordinal));
+
+        Assert.Equal(new PlaceholderJudgement(ArgumentReader.PosixShell, ScpOperand.WholeWord), judgement);
+        Assert.Equal("$", LaunchPlaceholders.RefusedInPath(@"C:\Users\me\$(id).txt", judgement.Reader, judgement.Scp));
+        Assert.Null(LaunchPlaceholders.RefusedInPath(@"C:\Users\me\report.txt", judgement.Reader, judgement.Scp));
+    }
+
+    /// <summary>Review 27 C1: a value beside a host the template writes could change the host.</summary>
+    [Theory]
+    [InlineData("scp.exe", "a.txt {ask:User}@server2:/tmp/", "{ask:User}", "evil.example:", ":")]
+    [InlineData("scp.exe", "scp://{ask:User}@server2:2222/x .", "{ask:User}", "evil.example/", "/")]
+    [InlineData("scp.exe", "scp://server2:{ask:Port}/x .", "{ask:Port}", "22@evil.example", "@")]
+    [InlineData("scp.exe", "scp://server2{ask:Suffix} .", "{ask:Suffix}", ".evil.example/x", "/")]
+    [InlineData("ssh.exe", "{ask:User}@server2 uptime", "{ask:User}", "a@evil.example", "@")]
+    [InlineData("ssh.exe", "ssh://admin@{ask:Host}:22", "{ask:Host}", "evil.example:2222", ":")]
+    public void A_value_inside_a_destination_the_template_writes_more_of_can_only_complete_a_name(string location, string parameters, string placeholder, string value, string refused)
+    {
+        var judgement = LaunchPlaceholders.JudgeAt(location, parameters, parameters.IndexOf(placeholder, StringComparison.Ordinal));
+
+        Assert.Equal(ArgumentReader.SshDestinationPart, judgement.Reader);
+        Assert.Equal(refused, LaunchPlaceholders.Refused(value, judgement.Reader, judgement.Scp));
+        Assert.Null(LaunchPlaceholders.Refused("deploy-2.example", judgement.Reader, judgement.Scp)); // a name passes
+        Assert.Equal("-", LaunchPlaceholders.Refused("-oProxyCommand", judgement.Reader, judgement.Scp)); // never an option
+    }
+
+    [Theory]
+    [InlineData("ssh.exe", "{ask:Target} uptime", "{ask:Target}")] // the whole destination may still be user@host
+    [InlineData("ssh.exe", "ssh://{ask:Target}/", "{ask:Target}")]
+    [InlineData("scp.exe", "{ask:Target}:/tmp/x .", "{ask:Target}")]
+    [InlineData("sftp.exe", "{ask:Target}", "{ask:Target}")]
+    public void A_placeholder_that_is_the_whole_destination_keeps_the_destination_reader(string location, string parameters, string placeholder)
+    {
+        var reader = LaunchPlaceholders.ReaderAt(location, parameters, parameters.IndexOf(placeholder, StringComparison.Ordinal));
+
+        Assert.Equal(ArgumentReader.SshDestination, reader);
+        Assert.Null(LaunchPlaceholders.Refused("admin@server2", reader));
+    }
+
+    /// <summary>Review 27 C2: with no operand naming another computer, Windows' scp copies here through cmd.exe.</summary>
+    [Theory]
+    [InlineData("scp.exe", "{clipboard} D:\\backup\\", "{clipboard}")]
+    [InlineData("scp.exe", "C:\\in\\a.txt {ask:Where}", "{ask:Where}")]
+    [InlineData("scp.exe", "-r {file} {ask:Where}", "{file}")]
+    public void An_scp_line_that_names_no_other_computer_is_read_as_cmd_reads_it(string location, string parameters, string placeholder)
+    {
+        var judgement = LaunchPlaceholders.JudgeAt(location, parameters, parameters.IndexOf(placeholder, StringComparison.Ordinal));
+
+        Assert.Equal(new PlaceholderJudgement(ArgumentReader.Cmd, ScpOperand.WholeWord), judgement);
+        Assert.Equal("&", LaunchPlaceholders.Refused("a&calc", judgement.Reader, judgement.Scp));
+        Assert.Equal(":", LaunchPlaceholders.Refused("server2:/tmp/", judgement.Reader, judgement.Scp));
     }
 
     [Fact]

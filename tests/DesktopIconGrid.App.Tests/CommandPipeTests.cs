@@ -54,12 +54,14 @@ public class CommandPipeTests
                 }
 
                 good.TrySetResult();
+                return true;
             },
             name);
         pipe.Start();
 
-        Assert.Equal(CommandPipe.SendResult.Sent, CommandPipe.SendBytes(Encoding.UTF8.GetBytes("not json"), TimeSpan.FromSeconds(5), name));
-        Assert.Equal(CommandPipe.SendResult.Sent, CommandPipe.SendBytes(Encoding.UTF8.GetBytes("""{"version":1,"commands":[{"kind":"Add","value":"relative"}]}"""), TimeSpan.FromSeconds(5), name));
+        // Dropped without an answer, so the sender knows nothing was taken (review 27 C4: the pipe answers now).
+        Assert.Equal(CommandPipe.SendResult.NoAnswer, CommandPipe.SendBytes(Encoding.UTF8.GetBytes("not json"), TimeSpan.FromSeconds(5), name));
+        Assert.Equal(CommandPipe.SendResult.NoAnswer, CommandPipe.SendBytes(Encoding.UTF8.GetBytes("""{"version":1,"commands":[{"kind":"Add","value":"relative"}]}"""), TimeSpan.FromSeconds(5), name));
         // Over the cap: the writer may see the pipe closed under it (NoAnswer), which is fine; nothing may arrive.
         CommandPipe.SendBytes(new byte[BarCommands.MaxMessageBytes + 1024], TimeSpan.FromSeconds(5), name);
 
@@ -70,5 +72,20 @@ public class CommandPipeTests
         {
             Assert.Equal([new BarCommand(BarCommandKind.Toggle)], Assert.Single(received));
         }
+    }
+    [Fact]
+    public void A_bar_that_does_not_take_the_commands_says_so_to_the_sender()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        // Review 27 C4: a dialog is open and 200 commands already wait.
+        var name = NewName();
+        using var pipe = new CommandPipe(_ => false, name);
+        pipe.Start();
+
+        Assert.Equal(CommandPipe.SendResult.Busy, CommandPipe.Send([new BarCommand(BarCommandKind.Launch, "Mail")], TimeSpan.FromSeconds(5), name));
     }
 }

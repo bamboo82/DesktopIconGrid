@@ -346,27 +346,62 @@ public partial class MainWindow : Window
         // bar may be about to be replaced, and what was added now would go with it: the commands wait until it closes.
         if (_waitingCommands.Count > 0 || IsUnderDialog())
         {
-            _waitingCommands.Enqueue(commands);
-            if (_waitingCommandsTimer is null)
-            {
-                AppLog.Default.Info("Commands", "A dialog is open: the commands wait until it is closed");
-                _waitingCommandsTimer = new DispatcherTimer(TimeSpan.FromMilliseconds(400), DispatcherPriority.Background, (_, _) => RunWaitingCommands(), Dispatcher);
-            }
-
+            Wait(commands);
             return;
         }
 
         RunNow(commands);
     }
 
-    private readonly Queue<IReadOnlyList<BarCommand>> _waitingCommands = new();
+    /// <summary>
+    /// Takes another start's commands (<see cref="CommandPipe"/> asks on the UI thread): they run right after the answer,
+    /// or wait for a dialog to close. False, which that start is told, when they would make more than
+    /// <see cref="BarCommands.MaxWaitingCommands"/> wait (review 27 C4).
+    /// </summary>
+    public bool Take(IReadOnlyList<BarCommand> commands)
+    {
+        ArgumentNullException.ThrowIfNull(commands);
+        if (_waitingCommands.Count > 0 || IsUnderDialog())
+        {
+            return Wait(commands);
+        }
+
+        Dispatcher.BeginInvoke(() => Run(commands)); // after the sender has its answer
+        return true;
+    }
+
+    private readonly Queue<(IReadOnlyList<BarCommand> Commands, DateTime Arrived)> _waitingCommands = new();
     private DispatcherTimer? _waitingCommandsTimer;
+
+    /// <summary>Keeps commands until no dialog is open; false when there is no room for them.</summary>
+    private bool Wait(IReadOnlyList<BarCommand> commands)
+    {
+        var waiting = _waitingCommands.Sum(entry => entry.Commands.Count);
+        if (waiting + commands.Count > BarCommands.MaxWaitingCommands)
+        {
+            AppLog.Default.Warning("Commands", $"{commands.Count} command(s) refused: {waiting} already wait for a dialog to close");
+            return false;
+        }
+
+        if (_waitingCommands.Count == 0)
+        {
+            AppLog.Default.Info("Commands", "A dialog is open: the commands wait until it is closed");
+        }
+
+        _waitingCommands.Enqueue((commands, DateTime.UtcNow));
+        _waitingCommandsTimer ??= new DispatcherTimer(TimeSpan.FromMilliseconds(400), DispatcherPriority.Background, (_, _) => RunWaitingCommands(), Dispatcher);
+        return true;
+    }
 
     /// <summary>A modal window of this program is open (WPF's or a message box, which disables this window).</summary>
     private bool IsUnderDialog() =>
         ComponentDispatcher.IsThreadModal
         || (new WindowInteropHelper(this).Handle is var handle && handle != IntPtr.Zero && !IsWindowEnabled(handle));
 
+    /// <summary>
+    /// Once no dialog is open: what waited, less starts that waited too long and all but the last show or hide
+    /// (<see cref="BarCommands.AfterWaiting"/>). A command that opens a dialog of its own holds the rest until it closes.
+    /// </summary>
     private void RunWaitingCommands()
     {
         if (IsUnderDialog())
@@ -376,15 +411,15 @@ public partial class MainWindow : Window
 
         _waitingCommandsTimer?.Stop();
         _waitingCommandsTimer = null;
-        while (_waitingCommands.Count > 0 && !IsUnderDialog())
+        var waited = _waitingCommands.ToList();
+        _waitingCommands.Clear();
+        var due = BarCommands.AfterWaiting(waited, DateTime.UtcNow, out var dropped);
+        if (dropped > 0)
         {
-            RunNow(_waitingCommands.Dequeue()); // a command may open a dialog itself: the rest wait again
+            AppLog.Default.Info("Commands", $"{dropped} start(s) waited more than {BarCommands.WaitingStartsExpireAfter.TotalSeconds:0} s for a dialog and were dropped");
         }
 
-        if (_waitingCommands.Count > 0)
-        {
-            _waitingCommandsTimer = new DispatcherTimer(TimeSpan.FromMilliseconds(400), DispatcherPriority.Background, (_, _) => RunWaitingCommands(), Dispatcher);
-        }
+        RunNow(due);
     }
 
     [DllImport("user32.dll")]

@@ -2432,4 +2432,7 @@
   <data name="Settings_VoiceTabHint" xml:space="preserve">
     <value>按住快捷键并说出图标或工作区的名称。工具栏只在您要求时聆听，只在这台电脑上，且只听工具栏上的名称。此快捷键只保存在这台电脑，不会同步。</value>
   </data>
+  <data name="Commands_Busy" xml:space="preserve">
+    <value>运行中的栏开着对话框，且已有太多命令在等待，因此未接受这些命令。请关闭对话框后再试一次。</value>
+  </data>
 </root>

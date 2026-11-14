@@ -2432,4 +2432,7 @@ Details are in {1}.</value>
   <data name="Settings_VoiceTabHint" xml:space="preserve">
     <value>Hold the hotkey and say the name of an icon or a workspace. The bar listens only while you ask it to, on this PC, and only for the names on the bar. This hotkey is kept on this PC and is not synced.</value>
   </data>
+  <data name="Commands_Busy" xml:space="preserve">
+    <value>The running bar has a dialog open and too many commands already wait for it, so it did not take these. Close the dialog and try again.</value>
+  </data>
 </root>

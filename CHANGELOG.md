@@ -73,6 +73,15 @@ Google Drive, voice launch), and the fixes the review of 0.10.0 placed after the
 - A portable copy no longer adds itself to another PC's *Send to* menu. When Windows' machine id cannot be read,
   approvals of command tiles and health checks last until the program ends, since they could not be tied to the
   PC.
+- Placeholders with scp: the check that keeps a filled value from turning a local path into `host:path` no longer
+  replaces the check of the program that reads the line, so `wsl.exe scp {clipboard} host:/tmp/`, `cmd /c scp …` and
+  `ssh host scp …` refuse what WSL, cmd.exe or the remote shell would act on again. A placeholder beside a host the
+  shortcut writes (`{ask:User}@server2:/tmp/`, `scp://server2:{ask:Port}/x`) may only complete the name; an scp line
+  that copies from this PC to this PC is checked as cmd.exe reads it.
+- Command line: at most 200 commands wait while a dialog of the bar is open (more are refused, and the start that
+  sent them ends with code 3); a start that waited more than 30 s is dropped, and of show, hide and toggle only the
+  last counts. `\\server\pipe/…` is refused as `\\server\pipe\…` is; a broken language in the layout file no longer
+  stops a start's error message; the pipe listens again after at most 10 s.
 - Workspaces: two members on one program (two documents, two servers) get a window each instead of both moving
   the same one; a member that was just started takes a window that opened for it, never the user's other window
   of that program; a splash screen is no longer resized in place of the main window.

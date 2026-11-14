@@ -1185,6 +1185,15 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to The running bar has a dialog open and too many commands already wait for it, so [rest of string was truncated]";.
+        /// </summary>
+        public static string Commands_Busy {
+            get {
+                return ResourceManager.GetString("Commands_Busy", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to The command line could not be read: {0}.
         /// </summary>
         public static string Commands_Invalid {

@@ -29,6 +29,8 @@ public class BarCommandsTests
     [InlineData("--add", @"C:\a?.txt")]
     [InlineData("--add", @"\\localhost\pipe\x")] // review 21: a server's pipes are no share
     [InlineData("--add", @"\\nas\MAILSLOT\x")]
+    [InlineData("--add", @"\\localhost\pipe/x")] // review 27: either slash
+    [InlineData("--add", @"\\localhost/pipe/x")]
     [InlineData("--add", @"C:\a.txt", "--group")]
     [InlineData("--launch")]
     [InlineData("--launch", "--show")]
@@ -98,5 +100,20 @@ public class BarCommandsTests
         Assert.Null(error);
         Assert.Equal([new BarCommand(BarCommandKind.Add, @"C:\f1.txt", "Tools"), new BarCommand(BarCommandKind.Add, @"C:\f2.txt", "Tools")], commands);
         Assert.NotNull(BarCommands.Parse(["--add", "--group", "A", @"C:\f.txt", "--group", "B"]).Error);
+    }
+    [Fact]
+    public void Commands_that_waited_for_a_dialog_drop_old_starts_and_keep_only_the_last_show_or_hide()
+    {
+        var now = new DateTime(2026, 11, 14, 12, 0, 0, DateTimeKind.Utc);
+        IReadOnlyList<BarCommand> old = [new(BarCommandKind.Launch, "Mail"), new(BarCommandKind.Show), new(BarCommandKind.Add, @"C:\a.txt")];
+        IReadOnlyList<BarCommand> recent = [new(BarCommandKind.Hide), new(BarCommandKind.Workspace, "Work"), new(BarCommandKind.Toggle), new(BarCommandKind.Voice)];
+
+        var due = BarCommands.AfterWaiting([(old, now.AddSeconds(-45)), (recent, now.AddSeconds(-5))], now, out var dropped);
+
+        Assert.Equal(1, dropped); // the launch waited 45 s
+        Assert.Equal(
+            [new BarCommand(BarCommandKind.Add, @"C:\a.txt"), new BarCommand(BarCommandKind.Workspace, "Work"), new BarCommand(BarCommandKind.Toggle), new BarCommand(BarCommandKind.Voice)],
+            due); // an addition is kept however old; of show, hide and toggle only the last
+        Assert.Equal(200, BarCommands.MaxWaitingCommands);
     }
 }

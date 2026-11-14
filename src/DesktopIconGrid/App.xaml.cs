@@ -106,13 +106,20 @@ public partial class App : Application
 
     /// <summary>
     /// The language chosen in Settings, for a message shown before the bar's settings are loaded (a start that only hands
-    /// over commands never loads them). Read from the layout file as it is; anything wrong leaves Windows' language.
+    /// over commands never loads them). Read from the layout file as it is; anything wrong leaves Windows' language. A file
+    /// over 8 MB is not read: it is no layout this app wrote, and the start must not stall on it.
     /// </summary>
     private static void ApplySavedLanguage()
     {
         try
         {
-            using var document = System.Text.Json.JsonDocument.Parse(File.ReadAllBytes(LayoutStorage.GetDefaultFilePath()));
+            var file = new FileInfo(LayoutStorage.GetDefaultFilePath());
+            if (!file.Exists || file.Length > MaxLanguageReadBytes)
+            {
+                return;
+            }
+
+            using var document = System.Text.Json.JsonDocument.Parse(File.ReadAllBytes(file.FullName));
             if (document.RootElement.ValueKind == System.Text.Json.JsonValueKind.Object
                 && document.RootElement.TryGetProperty("settings", out var settings)
                 && settings.ValueKind == System.Text.Json.JsonValueKind.Object
@@ -124,11 +131,14 @@ public partial class App : Application
                 System.Globalization.CultureInfo.CurrentUICulture = culture;
             }
         }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Text.Json.JsonException or ArgumentException or NotSupportedException)
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Text.Json.JsonException or ArgumentException or NotSupportedException or InvalidOperationException)
         {
-            // No layout yet, or it cannot be read: Windows' display language.
+            // No layout yet, or it cannot be read: Windows' display language. GetString throws InvalidOperationException for
+            // a lone surrogate ("language": "\ud800"), review 27.
         }
     }
+
+    private const long MaxLanguageReadBytes = 8L * 1024 * 1024;
 
     /// <param name="startHidden">From <c>--hidden</c> (the Run entry written by "start hidden"): create the bar but leave it in the tray.</param>
     /// <param name="commands">The command line's (<see cref="BarCommands"/>): carried out here once the bar is up, or handed to the bar that runs already.</param>
@@ -141,7 +151,12 @@ public partial class App : Application
             if (handedOver != CommandPipe.SendResult.Sent)
             {
                 ApplySavedLanguage();
-                Tell(handedOver == CommandPipe.SendResult.Refused ? Strings.Commands_Refused : Strings.Commands_NotAnswered);
+                Tell(handedOver switch
+                {
+                    CommandPipe.SendResult.Refused => Strings.Commands_Refused,
+                    CommandPipe.SendResult.Busy => Strings.Commands_Busy,
+                    _ => Strings.Commands_NotAnswered,
+                });
             }
 
             // 3: the commands did not reach the bar, so a script can tell (2 is a command line that cannot be read).
@@ -296,7 +311,7 @@ public partial class App : Application
 
         ListenForShowRequests(window);
         _inbox.Start();
-        _commandPipe = new CommandPipe(received => Dispatcher.BeginInvoke(() => window.Run(received)));
+        _commandPipe = new CommandPipe(received => Dispatcher.Invoke(() => window.Take(received))); // the answer the sender gets
         _commandPipe.Start();
         if (commands.Count > 0)
         {
