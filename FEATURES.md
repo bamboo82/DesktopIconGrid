@@ -128,7 +128,8 @@ background, and a folder that cannot be read says so instead of looking empty. T
 refreshed while the pointer is over it, so rows do not move under a click. Shift+click or a middle click
 on the icon opens the folder in File Explorer as before, as does a click when the folder is not there.
 Drag a file inside the stack onto a program, a batch file or a shortcut there to open the file with it
-(0.11.0); it goes the way a drop onto a shortcut of the bar goes, with the same checks.
+(0.11.0); it goes the way a drop onto a shortcut of the bar goes, with the same checks. A shortcut to a
+folder takes no drop: the shortcut file says so itself, so its target is not asked.
 
 **Health light (0.9.0).** *Properties → Advanced → Health check* gives a shortcut a light in its top-left
 corner: `ping host`, `tcp host:port`, or an `http://` or `https://` address that must answer 2xx or 3xx
@@ -272,11 +273,18 @@ their tooltips end with a line of the last 60 samples (`▁▂▃▅▇█`; the
   the general default) for every program. `ON` in green while on, `MUTE` in red while muted, `—` when
   there is no microphone or Windows' audio calls fail (the tooltip says which; app.log has the reason);
   it follows mutes made elsewhere within 2 seconds. As a ring or bar it shows the microphone's level.
+  Windows' audio is asked off the bar's own thread (0.11.0): a call or reading that has not answered after
+  10 seconds shows `—` ("cannot be reached") until it answers, and a reading taken while a click's mute was
+  under way does not put the old state back.
 
 - **Volume** (0.11.0) — the speakers' volume as a ring, bar or number. The mouse wheel over the icon
   turns it up or down 2 points a notch (turning up unmutes), a click mutes or unmutes; red with `MUTE`
   while muted, `—` when there are no speakers or they cannot be reached (the tooltip says which). It
-  follows changes made elsewhere within 2 seconds.
+  follows changes made elsewhere within 2 seconds. A touchpad's small scroll steps add up to whole notches
+  (what is left of one is dropped when the pointer leaves the icon or the direction changes). A scroll of the
+  bar that brings the icon under the pointer goes on scrolling the bar: the wheel is the icon's when the
+  scroll begins on it, or after a pause of 0.4 seconds. Steps and clicks are carried out as the microphone's
+  are: one at a time, the notches that come meanwhile in one step, `—` after 10 seconds without an answer.
 
 - **Voice** (0.11.0) — a click makes the bar listen for one spoken name, as the voice hotkey does (see *Voice
   launch* in §6.1). Nothing to set; its tooltip shows the language it listens in.
@@ -309,8 +317,10 @@ their tooltips end with a line of the last 60 samples (`▁▂▃▅▇█`; the
   clicked). While it runs the tile shows what is left (green for work, amber for a break), each phase
   ends with a notification, a finished countdown shows `0:00` in red until clicked, and a click while
   it runs stops it. After the PC slept through a phase the next one starts from the wake-up. A zone id
-  a PC does not know shows that PC's own time there; its properties list the id as "not known on this
-  PC" and keep it, so the PCs that do know it are not changed.
+  a PC does not know shows that PC's own time there, and follows a change of that PC's time zone; its
+  properties list the id as "not known on this PC" and keep it, so the PCs that do know it are not changed.
+  An id that Windows understands without listing it (an IANA id such as `Asia/Tokyo`) is listed with its
+  zone's name and the id, and kept as well (0.11.0).
 
 - **Command tile** (0.9.0) — runs a program without a window, every N seconds (at least 10) or only on a
   click, and shows the first line of its output, or the first number in it as a ring, bar or number with

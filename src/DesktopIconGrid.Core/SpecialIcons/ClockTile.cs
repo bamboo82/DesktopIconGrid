@@ -71,33 +71,20 @@ public sealed record ClockTileSettings(string? TimeZoneId, ClockTimerKind Timer,
     }
 
     /// <summary>Whether <see cref="TimeZoneId"/> is set but not a zone this PC knows (ids differ between systems).</summary>
-    public bool ZoneIsUnknownHere
-    {
-        get
-        {
-            if (string.IsNullOrWhiteSpace(TimeZoneId))
-            {
-                return false;
-            }
-
-            try
-            {
-                TimeZoneInfo.FindSystemTimeZoneById(TimeZoneId.Trim());
-                return false;
-            }
-            catch (Exception)
-            {
-                return true; // not found, or an id the runtime chokes on
-            }
-        }
-    }
+    public bool ZoneIsUnknownHere => !string.IsNullOrWhiteSpace(TimeZoneId) && KnownZone() is null;
 
     /// <summary>The zone, or this PC's when none is set or the id is not known on this PC (ids differ between systems).</summary>
-    public TimeZoneInfo Zone()
+    public TimeZoneInfo Zone() => KnownZone() ?? TimeZoneInfo.Local;
+
+    /// <summary>
+    /// The zone when one is set and this PC knows it (a Windows id, or an IANA id such as "Asia/Tokyo", which .NET
+    /// resolves); otherwise <see langword="null"/>, for this PC's own time.
+    /// </summary>
+    public TimeZoneInfo? KnownZone()
     {
         if (string.IsNullOrWhiteSpace(TimeZoneId))
         {
-            return TimeZoneInfo.Local;
+            return null;
         }
 
         try
@@ -108,7 +95,7 @@ public sealed record ClockTileSettings(string? TimeZoneId, ClockTimerKind Timer,
         {
             // Not found, damaged, or an id the runtime chokes on ("\" throws NullReferenceException on .NET 10): the id
             // comes from a layout that may be synced, and a tile must never stop the bar from being built (review 24 R2).
-            return TimeZoneInfo.Local;
+            return null;
         }
     }
 
@@ -120,8 +107,9 @@ public sealed record ClockTileSettings(string? TimeZoneId, ClockTimerKind Timer,
 public sealed class ClockTimer(ClockTileSettings settings)
 {
     // Looked up once: an id this PC does not know would otherwise throw (and be caught) every second per tile. "This
-    // PC's time" is asked each time, so it follows a change of Windows' time zone.
-    private readonly TimeZoneInfo? _zone = string.IsNullOrWhiteSpace(settings.TimeZoneId) ? null : settings.Zone();
+    // PC's time", for no zone and for an id unknown here, is asked each time, so it follows a change of Windows' time
+    // zone (review 27).
+    private readonly TimeZoneInfo? _zone = settings.KnownZone();
     private DateTimeOffset _end;
 
     public ClockPhase Phase { get; private set; }

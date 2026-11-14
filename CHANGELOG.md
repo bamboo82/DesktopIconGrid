@@ -22,8 +22,10 @@ Google Drive, voice launch), and the fixes the review of 0.10.0 placed after the
   pack) and follows the bar's language by default. Voice launch uses Microsoft's `System.Speech`, the app's first
   package.
 - **Volume** tile: shows the speakers' volume; the mouse wheel over it turns the volume up and down in steps
-  of 2, a click mutes or unmutes (red while muted).
-- Folder stacks: drop a file onto a program or shortcut inside a stack to open the file with it.
+  of 2, a click mutes or unmutes (red while muted). A touchpad turns it by whole notches, and a scroll of the
+  bar that brings the tile under the pointer goes on scrolling the bar.
+- Folder stacks: drop a file onto a program or shortcut inside a stack to open the file with it (not onto a
+  shortcut to a folder).
 - Send to PC through Google Drive: PCs signed in to the same Google account (Sync across PCs) can send each
   other files without a sync folder. The rules are the same: receiving is off until you add a Send to PC icon
   on that PC or tick *Receive files from my other PCs*; files land in Downloads, marked as downloaded.
@@ -36,7 +38,10 @@ Google Drive, voice launch), and the fixes the review of 0.10.0 placed after the
 ### Fixed
 
 - The network, disk and microphone tiles read their values off the UI thread, so a slow adapter list, a sleeping
-  network drive or an odd audio driver no longer makes the bar stutter every two seconds.
+  network drive or an odd audio driver no longer makes the bar stutter every two seconds. A click on the
+  microphone tile mutes off the UI thread too; when Windows' audio does not answer within 10 seconds the tile
+  says it cannot be reached until it answers, and a reading taken during a click no longer shows the old state
+  again. The network tile's rate is measured between its readings, not between screen updates.
 - Send to PC: receiving stops before the Downloads drive runs low (it keeps 1 GB free) and takes at most 4 GB
   per look; the tooltip and the "sent" notice show the other PC's current name, not one stored with the icon.
   A file that has to wait for disk space is announced once, with its size, the free space and what to do; the
@@ -46,7 +51,8 @@ Google Drive, voice launch), and the fixes the review of 0.10.0 placed after the
   its name, so it is only shown. Remove the ending to use it.
 - A folder stack on a network share or mapped drive no longer freezes the bar while the share wakes up, and a
   folder that cannot be read says so instead of "This folder is empty".
-- A clock tile on "this PC's time" follows a change of Windows' time zone without a restart.
+- A clock tile on "this PC's time" follows a change of Windows' time zone without a restart, as does one whose
+  zone this PC does not know.
 - Workspaces: a window's place and its maximised state are set in one step, so a window maximised on one
   monitor moves to the monitor it was remembered on; a window remembered on a monitor that is gone is put on
   one that is there; a member that is closed when positions are remembered keeps the place it had.
@@ -54,7 +60,7 @@ Google Drive, voice launch), and the fixes the review of 0.10.0 placed after the
   rows under a click. A batch file opened from a stack starts in the stack's folder.
 - Smaller: the microphone tile shows `ON` instead of repeating `MIC`; a battery whose state Windows does not
   report shows its charge without claiming it is plugged in; a clock tile's time zone that this PC does not
-  know is kept when its properties are saved here; a click on a *Send to PC* icon gives a hint, not an error.
+  know, or knows without listing it (an IANA id such as `Asia/Tokyo`), is kept when its properties are saved here; a click on a *Send to PC* icon gives a hint, not an error.
 - Placeholders with `scp`: a filled value (`{clipboard}`, `{ask:…}`, a dropped file) that stands where a local
   path is expected is refused when it holds a colon that would make scp read it as `host:path` or a `scp://`
   address on another computer (a drive letter's colon is fine). A placeholder in the host part of a `scp://` or

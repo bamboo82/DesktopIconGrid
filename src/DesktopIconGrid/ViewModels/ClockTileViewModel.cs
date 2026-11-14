@@ -33,14 +33,20 @@ public sealed class ClockTileViewModel : ObservableObject
         var settings = ClockTileSettings.From(item);
         _name = item.Name;
         Zones = [new ZoneChoice(null, Strings.Clock_ThisPc), .. TimeZoneInfo.GetSystemTimeZones().Select(zone => new ZoneChoice(zone.Id, zone.DisplayName))];
-        if (settings.ZoneIsUnknownHere && CommandTileSettings.IsShowable(settings.TimeZoneId!) && settings.TimeZoneId!.Length <= 100)
+        var id = settings.TimeZoneId?.Trim();
+        if (!string.IsNullOrEmpty(id)
+            && !Zones.Any(zone => string.Equals(zone.Id, id, StringComparison.OrdinalIgnoreCase))
+            && CommandTileSettings.IsShowable(id)
+            && id.Length <= 100)
         {
-            // A zone another PC knows and this one does not: kept as a choice, so OK here does not overwrite it for the
-            // PCs that do know it (the tile shows this PC's time meanwhile).
-            Zones = [.. Zones, new ZoneChoice(settings.TimeZoneId, string.Format(Strings.Clock_UnknownZone, settings.TimeZoneId))];
+            // An id the list lacks, kept as a choice so that OK here does not overwrite it: a zone another PC knows and
+            // this one does not (the tile shows this PC's time meanwhile), or one this PC resolves without listing it, such
+            // as an IANA id ("Asia/Tokyo", review 27).
+            var known = settings.KnownZone();
+            Zones = [.. Zones, new ZoneChoice(id, known is null ? string.Format(Strings.Clock_UnknownZone, id) : $"{known.DisplayName} ({id})")];
         }
 
-        _zone = Zones.FirstOrDefault(zone => string.Equals(zone.Id, settings.TimeZoneId, StringComparison.OrdinalIgnoreCase)) ?? Zones[0];
+        _zone = Zones.FirstOrDefault(zone => string.Equals(zone.Id, id, StringComparison.OrdinalIgnoreCase)) ?? Zones[0];
         _timer = TimerChoices.First(choice => choice.Kind == settings.Timer);
         _minutes = settings.Minutes.ToString(CultureInfo.CurrentCulture);
         _breakMinutes = settings.BreakMinutes.ToString(CultureInfo.CurrentCulture);

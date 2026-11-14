@@ -95,4 +95,16 @@ public class ClockTileTests
         Assert.True((ClockTileSettings.Default with { TimeZoneId = "Mars/Olympus_Mons" }).ZoneIsUnknownHere);
         Assert.True((ClockTileSettings.Default with { TimeZoneId = "\\" }).ZoneIsUnknownHere);
     }
+
+    [Fact]
+    public void Only_a_zone_this_PC_knows_is_looked_up_once_and_kept()
+    {
+        // Review 27: for no zone and for an id unknown here the timer keeps nothing, and asks for this PC's zone each
+        // time, so a change of Windows' time zone shows; .NET resolves IANA ids on Windows as well.
+        Assert.Null(ClockTileSettings.Default.KnownZone());
+        Assert.Null((ClockTileSettings.Default with { TimeZoneId = "Mars/Olympus_Mons" }).KnownZone());
+        Assert.Equal("UTC", (ClockTileSettings.Default with { TimeZoneId = " UTC " }).KnownZone()?.Id);
+        Assert.NotNull((ClockTileSettings.Default with { TimeZoneId = "Asia/Tokyo" }).KnownZone());
+        Assert.Equal(TimeZoneInfo.Local, (ClockTileSettings.Default with { TimeZoneId = "Mars/Olympus_Mons" }).Zone());
+    }
 }

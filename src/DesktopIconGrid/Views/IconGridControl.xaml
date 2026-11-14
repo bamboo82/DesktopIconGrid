@@ -21,6 +21,7 @@
               MouseDoubleClick="Item_MouseDoubleClick"
               MouseUp="Item_MouseUp"
               PreviewMouseWheel="Item_PreviewMouseWheel"
+              MouseLeave="Item_MouseLeave"
               KeyDown="Item_KeyDown">
         <Button.ContextMenu>
           <ContextMenu Opened="ItemMenu_Opened">

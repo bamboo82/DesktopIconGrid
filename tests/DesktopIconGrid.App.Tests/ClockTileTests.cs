@@ -59,6 +59,15 @@ public class ClockTileTests
         viewModel.Apply(item);
         Assert.Equal(elsewhere, ClockTileSettings.From(item).TimeZoneId);
 
+        // Review 27: an id this PC resolves but does not list (an IANA id) is kept as well, under the zone's name.
+        const string iana = "Asia/Tokyo";
+        (ClockTileSettings.Default with { TimeZoneId = iana }).ApplyTo(item);
+        viewModel = new ClockTileViewModel(item);
+        Assert.Equal(iana, viewModel.SelectedZone.Id);
+        Assert.EndsWith($"({iana})", viewModel.SelectedZone.Label);
+        viewModel.Apply(item);
+        Assert.Equal(iana, ClockTileSettings.From(item).TimeZoneId);
+
         // A choice made in the dialog replaces it.
         viewModel.SelectedZone = viewModel.Zones[0];
         viewModel.Apply(item);

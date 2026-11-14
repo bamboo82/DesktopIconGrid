@@ -52,12 +52,27 @@ public sealed class SystemMonitor : IDisposable
         }
     }
 
+    /// <summary>How long a slow read may take before <c>whenNoAnswer</c> is shown; tests shorten it.</summary>
+    internal static TimeSpan NoAnswerAfter { get; set; } = TimeSpan.FromSeconds(10);
+
     /// <summary>
     /// As <see cref="Register"/> for a value that can be slow to read (the adapters' counters, a network drive, a COM
     /// call): <paramref name="read"/> runs on a worker thread, <paramref name="show"/> on the UI thread with what it
     /// read. One read at a time per gauge; a tick that comes while one is under way is skipped (review 24 G1).
     /// </summary>
-    public void RegisterSlow<T>(GaugeState state, Func<T> read, Func<T, (double? Percent, string Detail)> show, int everyTicks, bool recordsPercent = true)
+    /// <param name="whenNoAnswer">What the tile shows while a read has not answered after <see cref="NoAnswerAfter"/> (review 27 G2); nothing without it.</param>
+    /// <param name="changes">
+    /// A count that something else (a click's call) raises when it changes the value: a read during which the count
+    /// moved is not shown, since it may overwrite the change's result with an older reading (review 27 G2).
+    /// </param>
+    public void RegisterSlow<T>(
+        GaugeState state,
+        Func<T> read,
+        Func<T, (double? Percent, string Detail)> show,
+        int everyTicks,
+        bool recordsPercent = true,
+        Func<(double? Percent, string Detail)>? whenNoAnswer = null,
+        Func<int>? changes = null)
     {
         ArgumentNullException.ThrowIfNull(state);
         var busy = false;
@@ -71,8 +86,16 @@ public sealed class SystemMonitor : IDisposable
             busy = true;
             try
             {
-                var value = await Task.Run(read);
-                if (state.IsDetached)
+                var before = changes?.Invoke();
+                var reading = Task.Run(read);
+                if (whenNoAnswer is not null && await Task.WhenAny(reading, Task.Delay(NoAnswerAfter)) != reading && !state.IsDetached)
+                {
+                    var (stalledPercent, stalledDetail) = whenNoAnswer();
+                    state.Update(stalledPercent, stalledDetail); // until the read answers
+                }
+
+                var value = await reading;
+                if (state.IsDetached || (changes is not null && changes() != before))
                 {
                     return;
                 }

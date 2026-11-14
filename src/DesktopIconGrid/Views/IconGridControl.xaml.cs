@@ -44,6 +44,7 @@ public partial class IconGridControl : UserControl
         InitializeComponent();
         _holdTimer = new DispatcherTimer(HoldDelay, DispatcherPriority.Input, OnHoldTimerTick, Dispatcher);
         _holdTimer.Stop();
+        AddHandler(PreviewMouseWheelEvent, new MouseWheelEventHandler(Bar_PreviewMouseWheel), handledEventsToo: true);
     }
 
     private ItemListViewModel? List => DataContext as ItemListViewModel;
@@ -192,14 +193,54 @@ public partial class IconGridControl : UserControl
         return modifiers;
     }
 
-    /// <summary>The wheel over a special icon that uses it (the volume tile); otherwise the bar scrolls as usual.</summary>
+    private readonly Core.SpecialIcons.WheelGesture _wheel = new();
+
+    /// <summary>
+    /// Every wheel event on the bar, before the icon under the pointer gets it: one that is not over a tile taking the
+    /// wheel scrolls the bar and ends a tile's gesture (review 27 G1).
+    /// </summary>
+    private void Bar_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
+    {
+        if (!TakesWheel((e.OriginalSource as FrameworkElement)?.DataContext as ItemViewModel))
+        {
+            _wheel.Elsewhere(DateTime.UtcNow);
+        }
+    }
+
+    /// <summary>A special icon that uses the wheel (the volume tile); asking with 0 notches changes nothing.</summary>
+    private static bool TakesWheel(ItemViewModel? item) => item is { Model: SpecialIconItem special } && item.SpecialHandler.Wheel(special, 0);
+
+    /// <summary>
+    /// The wheel over a special icon that uses it (the volume tile), in whole notches and only for a gesture that began
+    /// on it (<see cref="Core.SpecialIcons.WheelGesture"/>); otherwise the bar scrolls as usual.
+    /// </summary>
     private void Item_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
     {
-        if (ItemOf(sender) is { Model: SpecialIconItem special } item
-            && e.Delta != 0
-            && item.SpecialHandler.Wheel(special, Math.Sign(e.Delta) * Math.Max(1, Math.Abs(e.Delta) / Mouse.MouseWheelDeltaForOneLine)))
+        var now = DateTime.UtcNow;
+        if (e.Delta == 0 || ItemOf(sender) is not { Model: SpecialIconItem special } item || !TakesWheel(item))
         {
-            e.Handled = true;
+            _wheel.Elsewhere(now); // also for a group's popup, which is outside the bar's own tree
+            return;
+        }
+
+        if (_wheel.OverTile(item.Id, e.Delta, now) is not { } notches)
+        {
+            return; // a scroll that began elsewhere on the bar goes on scrolling it
+        }
+
+        e.Handled = true;
+        if (notches != 0)
+        {
+            item.SpecialHandler.Wheel(special, notches);
+        }
+    }
+
+    /// <summary>The pointer left an icon: the rest of a notch over it is dropped.</summary>
+    private void Item_MouseLeave(object sender, MouseEventArgs e)
+    {
+        if (ItemOf(sender) is { } item)
+        {
+            _wheel.Left(item.Id);
         }
     }
 

@@ -9,6 +9,79 @@ The owner relays replies.
 
 ---
 
+## 2026-11-14 (71) — WP5: volume and the slow reads (B6, G1, G2 and the small items)
+
+Run 168 (`1f60d84`, WP4) is green. This entry claims no run for its own commit.
+
+### B6 and G1: the wheel
+
+- `Core/SpecialIcons/WheelGesture`, one per grid (a group's popup has its own). A notch is 120. What is left over
+  waits for the next event, and is dropped when the pointer leaves the tile (`MouseLeave` on the item's button) or
+  the direction changes.
+- G1: the grid's own `PreviewMouseWheel` (added with `handledEventsToo`) marks every wheel event that is not over a
+  tile taking the wheel. Over the tile, an event less than 400 ms after such an event is not the tile's: it is not
+  marked handled, so the bar's scroll viewer scrolls.
+- **Please look:** an event refused this way counts as the bar's too, so the gesture goes on while the user keeps
+  scrolling, and the tile takes the wheel only after a 400 ms pause. Your text says "the last wheel event anywhere
+  on the bar … was not over this tile". Read literally, the second event over the tile would take the wheel right
+  after the first was refused.
+- Whether a tile takes the wheel is asked as `Wheel(item, 0)`, which changes nothing; only the volume tile says yes.
+
+### G2: audio calls and slow reads
+
+- `SpecialIcons/AudioCalls`, one per microphone or volume tile. A click and the wheel's steps run on the thread
+  pool, one call at a time. A waiting click goes first, then the notches that came meanwhile, summed into one step.
+  Each result redraws the tile. A call with no answer after 10 s shows "cannot be reached" (`AudioReading.Unreadable`)
+  and goes on waiting; its answer redraws the tile when it comes.
+- What changes for the user: a click no longer returns a failure message, since the result comes later. A failure
+  shows on the tile instead (`—`, and the tooltip says which).
+- An item whose tile is not drawn runs the toggle on a worker too, with nothing to redraw. Every `ItemViewModel`
+  builds its gauge, so I found no way to reach that path today.
+- `SystemMonitor.RegisterSlow` takes two new arguments:
+  - `whenNoAnswer`: shown when a read has not answered after 10 s. The two audio tiles pass `Unreadable`; the other
+    slow reads pass nothing and behave as before.
+  - `changes`: here `AudioCalls.Changes`, which goes up when a call starts and when the calls are over. A read during
+    which the count moved is not shown. A read begun before a click, or while its call ran, can hold the state from
+    before the click, so it must not replace the click's result.
+- Network: the read returns its `Stopwatch` timestamp with the counters, and the rate divides by the time between
+  two reads' timestamps.
+
+### The small items
+
+- `StackWindow.xaml.cs:240`: `IsOnSlowStorage` comes before `Directory.Exists`.
+- The clock's timer keeps only a zone this PC knows (`ClockTileSettings.KnownZone()`). No zone, or an id unknown here,
+  asks for `TimeZoneInfo.Local` each time.
+- The clock dialog keeps any id the list lacks, whether or not this PC resolves it.
+  - Unknown: labelled as before ("not known on this PC").
+  - Resolved (an IANA id such as `Asia/Tokyo`): labelled `<zone's display name> (<id>)`. That is made from data, so
+    there is no new string; say if you want a worded label.
+- A `.lnk` in a stack whose target is a folder takes no drop. `FolderStack.List` reads the first 28 bytes of each
+  shown `.lnk` on its worker (MS-SHLLINK 2.1). Header size `0x4C`, the shell link class id, and
+  `FILE_ATTRIBUTE_DIRECTORY` in the target attributes the header keeps from when the link was made. The target
+  itself is never touched, so a share that sleeps is not woken.
+  - Anything else takes a drop as before: a link without that bit, one that is not a shell link, one that cannot be
+    read.
+  - A link to a shell object with no attributes (Control Panel) still takes one, and the launch then fails as it
+    did.
+
+### Tests
+
+- **Core:**
+  - `WheelGesture`: notches and a touchpad's small steps; the remainder dropped on leaving and on a turn; a scroll
+    begun elsewhere goes on.
+  - The `.lnk` header, with links to a folder, to a file, a wrong class id, and a file too short; `TakesDrop` for a
+    link to a folder.
+  - `KnownZone` for none, unknown, padded `UTC` and `Asia/Tokyo`.
+- **App, CI only:**
+  - `AudioCalls`: three steps that come during one are summed into one call (steps `[1, 2]`); a call with no answer
+    shows `Unreadable`, then its answer.
+  - `RegisterSlow`: the stand-in after the wait; a read during which `changes` moved is not shown, and the next one is.
+  - The clock dialog keeps `Asia/Tokyo` through OK.
+- **Not tested:**
+  - The grid's wheel handling: it needs real mouse input.
+  - The audio COM calls hanging.
+  - A `.lnk` written by the shell: the test writes the header bytes.
+
 ## 2026-11-14 (70) — WP4: workspaces (B5, W1–W4 and the small items)
 
 Run 166 (`7736e0a`, WP3) is green, and your check of WP1–WP3 arrived. Run 167 (`25720b3`) failed in my new W3

@@ -86,5 +86,35 @@ public sealed class FolderStackTests : IDisposable
         Assert.False(FolderStack.TakesDrop(folder, [@"C:\S\a.txt"]));
         Assert.False(FolderStack.TakesDrop(program, [@"c:\s\TOOL.exe"])); // onto itself
         Assert.False(FolderStack.TakesDrop(program, []));
+        Assert.False(FolderStack.TakesDrop(shortcut with { LinksToFolder = true }, [@"C:\S\a.txt"])); // review 27
+    }
+
+    /// <summary>The first 28 bytes of a shell link (MS-SHLLINK 2.1): header size, class id, flags, the target's attributes.</summary>
+    private void Link(string name, int attributes, bool shellLink = true)
+    {
+        var header = new byte[76];
+        BitConverter.GetBytes(0x4C).CopyTo(header, 0);
+        (shellLink ? new Guid("00021401-0000-0000-c000-000000000046") : Guid.NewGuid()).TryWriteBytes(header.AsSpan(4, 16));
+        BitConverter.GetBytes(attributes).CopyTo(header, 24);
+        File.WriteAllBytes(Path.Combine(_folder, name), header);
+    }
+
+    [Fact]
+    public void A_shortcut_whose_target_is_a_folder_takes_no_drop_and_its_target_is_not_touched()
+    {
+        // Review 27: the header keeps the target's attributes, so a target on a share that sleeps is not asked.
+        Link("Projects.lnk", 0x10); // FILE_ATTRIBUTE_DIRECTORY
+        Link("Editor.lnk", 0x20); // FILE_ATTRIBUTE_ARCHIVE: a file
+        Link("Odd.lnk", 0x10, shellLink: false); // not a shell link, whatever it says
+        File.WriteAllText(Path.Combine(_folder, "Short.lnk"), "x"); // too short to be one
+
+        var entries = FolderStack.List(_folder, newestFirst: false).Entries.ToDictionary(entry => entry.Name);
+
+        Assert.True(entries["Projects"].LinksToFolder);
+        Assert.False(entries["Editor"].LinksToFolder);
+        Assert.False(entries["Odd"].LinksToFolder);
+        Assert.False(entries["Short"].LinksToFolder);
+        Assert.False(FolderStack.TakesDrop(entries["Projects"], [Path.Combine(_folder, "a.txt")]));
+        Assert.True(FolderStack.TakesDrop(entries["Editor"], [Path.Combine(_folder, "a.txt")]));
     }
 }

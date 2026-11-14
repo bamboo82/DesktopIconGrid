@@ -214,15 +214,16 @@ public sealed class NetworkHandler(SystemMonitor monitor, Func<Window?> ownerPro
             LabelText = "…",
         };
         var readings = new NetworkReadings(state);
-        var watch = System.Diagnostics.Stopwatch.StartNew();
+        long? before = null;
         Monitor.RegisterSlow(
             state,
-            SystemMonitor.ReadNetworkCounters, // about 50 ms with many adapters: not on the UI thread
-            now =>
+            () => (Counters: SystemMonitor.ReadNetworkCounters(), At: System.Diagnostics.Stopwatch.GetTimestamp()), // about 50 ms with many adapters: not on the UI thread
+            read =>
             {
-                var seconds = watch.Elapsed.TotalSeconds;
-                watch.Restart();
-                return readings.Show(now, seconds);
+                // The time between two reads, taken where the counters were read, not when the UI thread got to them (review 27).
+                var seconds = before is { } last ? System.Diagnostics.Stopwatch.GetElapsedTime(last, read.At).TotalSeconds : 0;
+                before = read.At;
+                return readings.Show(read.Counters, seconds);
             },
             everyTicks: 1,
             recordsPercent: false);
@@ -269,7 +270,7 @@ internal sealed class NetworkReadings(GaugeState state)
 /// </summary>
 public sealed class MicrophoneMuteHandler(SystemMonitor monitor, Func<Window?> ownerProvider) : MonitorHandlerBase(monitor, ownerProvider)
 {
-    private readonly System.Runtime.CompilerServices.ConditionalWeakTable<SpecialIconItem, GaugeState> _states = [];
+    private readonly System.Runtime.CompilerServices.ConditionalWeakTable<SpecialIconItem, AudioCalls> _calls = [];
 
     public override string Kind => SpecialIconKinds.MicrophoneMute;
 
@@ -289,25 +290,33 @@ public sealed class MicrophoneMuteHandler(SystemMonitor monitor, Func<Window?> o
     public override GaugeState CreateState(SpecialIconItem item)
     {
         var state = new GaugeState("MIC", MonitorIconSettings.From(item).Style, warningAt: 101, criticalAt: 101, Strings.Mic_Name);
-        _states.AddOrUpdate(item, state);
-        Monitor.RegisterSlow(state, MicrophoneControl.Read, reading => Show(state, reading), everyTicks: 1, recordsPercent: false);
-        return state;
-    }
-
-    public override LaunchResult Activate(SpecialIconItem item, ActivationModifiers modifiers)
-    {
-        var reading = MicrophoneControl.Toggle();
-        if (reading.State is null)
-        {
-            return LaunchResult.Failure(reading.Failed ? Strings.Mic_Unreachable : Strings.Mic_None);
-        }
-
-        if (_states.TryGetValue(item, out var state))
+        var calls = new AudioCalls(MicrophoneControl.Toggle, step: null, reading =>
         {
             var (percent, detail) = Show(state, reading);
             state.Update(percent, detail); // at once, not at the next sample
+        });
+        _calls.AddOrUpdate(item, calls);
+        Monitor.RegisterSlow(
+            state,
+            MicrophoneControl.Read,
+            reading => Show(state, reading),
+            everyTicks: 1,
+            recordsPercent: false,
+            whenNoAnswer: () => Show(state, AudioReading.Unreadable),
+            changes: () => calls.Changes);
+        return state;
+    }
+
+    /// <summary>The mute switch, on a worker (review 27 G2): the tile shows the result when it comes.</summary>
+    public override LaunchResult Activate(SpecialIconItem item, ActivationModifiers modifiers)
+    {
+        if (_calls.TryGetValue(item, out var calls))
+        {
+            calls.Toggle();
+            return LaunchResult.Started;
         }
 
+        _ = Task.Run(MicrophoneControl.Toggle); // an item with no tile drawn: on a worker as well, with nothing to redraw
         return LaunchResult.Started;
     }
 
@@ -333,7 +342,7 @@ public sealed class MicrophoneMuteHandler(SystemMonitor monitor, Func<Window?> o
 /// </summary>
 public sealed class VolumeHandler(SystemMonitor monitor, Func<Window?> ownerProvider) : MonitorHandlerBase(monitor, ownerProvider)
 {
-    private readonly System.Runtime.CompilerServices.ConditionalWeakTable<SpecialIconItem, GaugeState> _states = [];
+    private readonly System.Runtime.CompilerServices.ConditionalWeakTable<SpecialIconItem, AudioCalls> _calls = [];
 
     public override string Kind => SpecialIconKinds.Volume;
 
@@ -353,40 +362,48 @@ public sealed class VolumeHandler(SystemMonitor monitor, Func<Window?> ownerProv
     public override GaugeState CreateState(SpecialIconItem item)
     {
         var state = new GaugeState("VOL", MonitorIconSettings.From(item).Style, warningAt: 101, criticalAt: 101, Strings.Volume_Name);
-        _states.AddOrUpdate(item, state);
-        Monitor.RegisterSlow(state, MicrophoneControl.ReadSpeakers, reading => Show(state, reading), everyTicks: 1, recordsPercent: false);
-        return state;
-    }
-
-    public override LaunchResult Activate(SpecialIconItem item, ActivationModifiers modifiers)
-    {
-        var reading = MicrophoneControl.ToggleSpeakers();
-        if (reading.State is null)
-        {
-            return LaunchResult.Failure(reading.Failed ? Strings.Volume_Unreachable : Strings.Volume_None);
-        }
-
-        Redraw(item, reading);
-        return LaunchResult.Started;
-    }
-
-    public override bool Wheel(SpecialIconItem item, int notches)
-    {
-        if (notches != 0)
-        {
-            Redraw(item, MicrophoneControl.StepSpeakers(notches)); // at once: the wheel must feel direct
-        }
-
-        return true;
-    }
-
-    private void Redraw(SpecialIconItem item, AudioReading reading)
-    {
-        if (_states.TryGetValue(item, out var state))
+        var calls = new AudioCalls(MicrophoneControl.ToggleSpeakers, MicrophoneControl.StepSpeakers, reading =>
         {
             var (percent, detail) = Show(state, reading);
             state.Update(percent, detail);
+        });
+        _calls.AddOrUpdate(item, calls);
+        Monitor.RegisterSlow(
+            state,
+            MicrophoneControl.ReadSpeakers,
+            reading => Show(state, reading),
+            everyTicks: 1,
+            recordsPercent: false,
+            whenNoAnswer: () => Show(state, AudioReading.Unreadable),
+            changes: () => calls.Changes);
+        return state;
+    }
+
+    /// <summary>Mute or unmute, on a worker (review 27 G2): the tile shows the result when it comes.</summary>
+    public override LaunchResult Activate(SpecialIconItem item, ActivationModifiers modifiers)
+    {
+        if (_calls.TryGetValue(item, out var calls))
+        {
+            calls.Toggle();
+            return LaunchResult.Started;
         }
+
+        _ = Task.Run(MicrophoneControl.ToggleSpeakers); // an item with no tile drawn: on a worker as well, with nothing to redraw
+        return LaunchResult.Started;
+    }
+
+    /// <summary>
+    /// Takes the wheel; <paramref name="notches"/> are whole ones (<see cref="Core.SpecialIcons.WheelGesture"/>), summed
+    /// while a step is under way and set on a worker (review 27 B6, G2). 0 only asks whether the tile takes the wheel.
+    /// </summary>
+    public override bool Wheel(SpecialIconItem item, int notches)
+    {
+        if (notches != 0 && _calls.TryGetValue(item, out var calls))
+        {
+            calls.Step(notches);
+        }
+
+        return true;
     }
 
     /// <summary>Sets the tile's text and colour for a reading and returns its level and tooltip.</summary>
