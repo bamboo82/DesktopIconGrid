@@ -23,7 +23,7 @@
     <ItemsControl x:Name="Choices" Margin="0,10,0,0" Visibility="Collapsed" IsTabStop="False">
       <ItemsControl.ItemTemplate>
         <DataTemplate>
-          <Button Tag="{Binding}" Margin="0,0,0,6" Padding="10,6" HorizontalContentAlignment="Stretch" Click="Choice_Click"
+          <Button Tag="{Binding}" Margin="0,0,0,6" Padding="10,6" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" Click="Choice_Click"
                   AutomationProperties.Name="{Binding Name}" AutomationProperties.HelpText="{Binding Detail}">
             <StackPanel>
               <TextBlock Text="{Binding Name}" FontWeight="Bold" TextWrapping="Wrap" />

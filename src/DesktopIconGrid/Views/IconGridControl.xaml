@@ -125,13 +125,14 @@
                              HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,2" />
                 </Grid>
                 <!-- Number. The caption shows its start (review 27 T1) and is drawn from 40 px icons on; below, the number
-                     is centred in the whole height. Its width, not the height, limits its size. -->
+                     is centred in the whole height. The number starts at LabelFontSize and shrinks to fit the width rather
+                     than being cut ("100%" is 109 units wide in Segoe UI Bold 42, release check N1); a line longer than
+                     160 units (a command tile's) is trimmed there, so it never shrinks below about 0.6. -->
                 <Grid Visibility="{Binding IsNumber, Converter={StaticResource BoolToVisibility}}">
-                  <TextBlock Text="{Binding Label}" FontSize="{Binding LabelFontSize}" FontWeight="Bold"
-                             Foreground="{Binding LevelBrush}" TextTrimming="CharacterEllipsis" MaxWidth="98"
-                             HorizontalAlignment="Center" VerticalAlignment="Center">
-                    <TextBlock.Style>
-                      <Style TargetType="TextBlock">
+                  <Viewbox x:Name="NumberFit" Stretch="Uniform" StretchDirection="DownOnly" MaxWidth="98"
+                           HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <Viewbox.Style>
+                      <Style TargetType="Viewbox">
                         <Setter Property="Margin" Value="0,-14,0,0" />
                         <Style.Triggers>
                           <DataTrigger Binding="{Binding DataContext.Root.ShowsNumberCaptions, RelativeSource={RelativeSource AncestorType=Viewbox}}" Value="False">
@@ -139,8 +140,10 @@
                           </DataTrigger>
                         </Style.Triggers>
                       </Style>
-                    </TextBlock.Style>
-                  </TextBlock>
+                    </Viewbox.Style>
+                    <TextBlock x:Name="NumberText" Text="{Binding Label}" FontSize="{Binding LabelFontSize}" FontWeight="Bold"
+                               Foreground="{Binding LevelBrush}" TextTrimming="CharacterEllipsis" MaxWidth="160" />
+                  </Viewbox>
                   <TextBlock Text="{Binding Caption}" FontSize="22" MaxWidth="96" TextTrimming="CharacterEllipsis"
                              Foreground="{DynamicResource Theme.Foreground}"
                              HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,2"
@@ -290,6 +293,8 @@
         <ItemsControl.ItemContainerStyle>
           <Style TargetType="ContentPresenter">
             <Setter Property="views:FlowPanel.Slot" Value="{Binding Slot}" />
+            <!-- The tile's name for UI Automation, instead of the view model's type name (release check N3). -->
+            <Setter Property="AutomationProperties.Name" Value="{Binding Name}" />
           </Style>
         </ItemsControl.ItemContainerStyle>
       </ItemsControl>

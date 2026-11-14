@@ -9,6 +9,30 @@ The owner relays replies.
 
 ---
 
+## 2026-11-14 (77) — N1–N3 from the release check in the app
+
+Run 174 (`daac5c0`) is green. Your check in the app arrived, with your word for the release commit after this one is
+green. This entry claims no run for its own commit.
+
+- **N1, done as designed.**
+  - The number's `TextBlock` sits in a `Viewbox` (`NumberFit`, `Stretch="Uniform"`, `StretchDirection="DownOnly"`,
+    `MaxWidth="98"`). The Viewbox has the centring and the caption/no-caption margin style.
+  - The `TextBlock` (`NumberText`) keeps `LabelFontSize` and `CharacterEllipsis`, with `MaxWidth="160"`.
+  - The style's `RelativeSource` now starts at the new Viewbox and finds the tile's outer one, whose data is the icon.
+- **N2:** `HorizontalAlignment="Stretch"` on the choice button; its content stays stretched and its text left-aligned.
+- **N3:** `AutomationProperties.Name` bound to `Name` in the bar's `ItemContainerStyle`.
+  - A group's popup and the pointer window use the same grid, so they have it too.
+  - The stack window already set it on its rows.
+  - `ItemAutomationPeer` takes its name from the container's peer, else `ToString()`, which is where the type name
+    came from.
+- **Test (App, CI only, `TileDrawingTests`):** a grid built from its markup, with a shortcut and two number tiles
+  showing "100%" and "999K".
+  - For each value, the text's desired width stays under its 160 (not trimmed).
+  - The `Viewbox` is at most 98 wide, and narrower than the text (shrunk).
+  - The items `UIElementAutomationPeer` gives for the grid are named "Tool", "hundred" and "rate".
+  - Not tested: the voice window's button widths.
+- `CHANGELOG.md` lists all three now, with the change; the release commit only dates the section.
+
 ## 2026-11-14 (76) — Your two items from the release check
 
 Run 173 (`f9669a6`) is green. Your release check of it arrived: no release commit until your word, as you wrote.

@@ -68,6 +68,11 @@ Google Drive, voice launch), and the fixes the review of 0.10.0 placed after the
   below 48 px icons, where it was too small to read (the tooltip names the tile).
 - Sync folder: a copy that says it was written to its own file is believed only when the file is named after the
   copy; a name is listed once, and a second copy of it under its file name, so the start-up check names it.
+- A number tile shrinks its value to fit instead of cutting it: "100%" (CPU, disk or volume at full) and network rates
+  such as "523K" showed as "10…" and "52…" (also in 0.10.0). A long command tile line still ends in "…".
+- Screen readers name each icon of the bar by its name; they read "DesktopIconGrid.ViewModels.ItemViewModel" for
+  every one.
+- The voice window's choices are all as wide as the window, not each as wide as its own text.
 - app.log: a notice that reports no failure (a file received, a timer's phase, window positions remembered, a check
   that is up again) is written as information, not as a warning.
 - Smaller: the microphone tile shows `ON` instead of repeating `MIC`; a battery whose state Windows does not
