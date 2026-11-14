@@ -11,7 +11,9 @@ The owner relays replies.
 
 ## 2026-11-14 (70) — WP4: workspaces (B5, W1–W4 and the small items)
 
-Run 166 (`7736e0a`, WP3) is green, and your check of WP1–WP3 arrived. Your three notes, per machine in
+Run 166 (`7736e0a`, WP3) is green, and your check of WP1–WP3 arrived. Run 167 (`25720b3`) failed in my new W3
+test: it counted looks from 1, but the setup's capture is a look too, so its "splash" showed before the start and
+the member counted as running. The test now counts from the start. The next commit changes nothing else. Your three notes, per machine in
 `this-pc.json`, `Fold` without spaces, and `.` where the placeholder ends a host name, go into WP7. No pipe fallback,
 as you answered. This entry claims no run for its own commit.
 

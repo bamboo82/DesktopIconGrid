@@ -772,14 +772,15 @@ public sealed class LauncherViewModelTests : IDisposable
         var (viewModel, switcher, _) = OneMemberWorkspace(running: false);
 
         // A splash screen with a title bar (window 2) shows at the first look after the start and closes at the next,
-        // when the main window (3) shows. Look 1 is the one before anything is started.
+        // when the main window (3) shows. The start's own first look is the one before anything is started.
+        var start = switcher.Looks; // the capture looked already
         switcher.OnLook = look =>
         {
-            if (look == 2)
+            if (look == start + 2)
             {
                 switcher.Shown.Insert(0, FakeSwitcher.Window(2, 41));
             }
-            else if (look == 3)
+            else if (look == start + 3)
             {
                 switcher.Shown.RemoveAll(window => window.Handle == new IntPtr(2));
                 switcher.Shown.Insert(0, FakeSwitcher.Window(3, 41));
@@ -799,9 +800,10 @@ public sealed class LauncherViewModelTests : IDisposable
     public async Task The_late_pass_leaves_alone_a_window_the_user_minimised_meanwhile()
     {
         var (viewModel, switcher, remembered) = OneMemberWorkspace(running: true);
+        var start = switcher.Looks;
         switcher.OnLook = look =>
         {
-            if (look == 2)
+            if (look == start + 2) // after it was placed at once
             {
                 switcher.Shown[0] = switcher.Shown[0] with { IsMinimized = true };
             }
