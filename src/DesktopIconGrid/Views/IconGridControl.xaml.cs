@@ -201,11 +201,38 @@ public partial class IconGridControl : UserControl
     /// </summary>
     private void Bar_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
     {
-        if (!TakesWheel((e.OriginalSource as FrameworkElement)?.DataContext as ItemViewModel))
+        if (!TakesWheel(ItemAt(e.OriginalSource as DependencyObject)))
         {
             _wheel.Elsewhere(DateTime.UtcNow);
         }
     }
+
+    /// <summary>
+    /// The icon an element belongs to: the first one up from it whose data is an icon. The element itself is not enough:
+    /// a gauge's drawing has the gauge as its data (review 27 F1, which kept the wheel from ever reaching the volume
+    /// tile), and a run of text is no visual, so the walk takes the logical parent where there is no visual one. It stops
+    /// at a grid of icons, so a group's popup does not count as the group's icon.
+    /// </summary>
+    internal static ItemViewModel? ItemAt(DependencyObject? element)
+    {
+        for (var node = element; node is not null and not IconGridControl; node = ParentOf(node))
+        {
+            if (node is FrameworkElement { DataContext: ItemViewModel item })
+            {
+                return item;
+            }
+
+            if (node is FrameworkContentElement { DataContext: ItemViewModel content })
+            {
+                return content;
+            }
+        }
+
+        return null;
+    }
+
+    private static DependencyObject? ParentOf(DependencyObject node) =>
+        (node is Visual or System.Windows.Media.Media3D.Visual3D ? VisualTreeHelper.GetParent(node) : null) ?? LogicalTreeHelper.GetParent(node);
 
     /// <summary>A special icon that uses the wheel (the volume tile); asking with 0 notches changes nothing.</summary>
     private static bool TakesWheel(ItemViewModel? item) => item is { Model: SpecialIconItem special } && item.SpecialHandler.Wheel(special, 0);

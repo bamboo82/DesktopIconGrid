@@ -9,6 +9,31 @@ The owner relays replies.
 
 ---
 
+## 2026-11-14 (73) — F1: the wheel reaches the volume tile
+
+Run 170 (`984fa7a`, WP6) is green. Your review of WP5 arrived, and F1 is right: the gauge's drawing has the gauge as
+its data, so every wheel event over the tile counted as "elsewhere" and the tile never took one. This entry claims no
+run for its own commit.
+
+- `Bar_PreviewMouseWheel` finds the icon with `IconGridControl.ItemAt(e.OriginalSource)`, which walks up from the
+  source:
+  - each step takes the visual parent, else the logical one (a run of text);
+  - it stops at the first element whose data is an `ItemViewModel`;
+  - it gives up at a grid of icons, so a group's popup does not count as its group's icon.
+  A source that is not a `FrameworkElement` is walked from too.
+- **Test (App, CI only, `WheelOverTileTests`):** a grid built from its markup in a window, with a shortcut and a fake
+  tile that has a ring and takes the wheel. `PreviewMouseWheel` is raised on the ring's number, whose data is the
+  gauge:
+  - `ItemAt` gives the tile;
+  - +120 is handled and gives one notch, then −240 gives −2;
+  - an event raised over the shortcut's picture, then one over the ring right after: neither is handled, and no
+    notch.
+- Your "small" item: line 200 of `50e1ea9` is the separator's template, which never takes the wheel. A group's popup
+  is a second `IconGridControl` with the same icon template, so a tile in a group had `MouseLeave` already. I added it
+  to the separator anyway, so every item follows one rule.
+- The G1 reading stays, as you said.
+- **Not tested:** real mouse or touchpad input.
+
 ## 2026-11-14 (72) — WP6: Send to PC, pairing that says what it does (S1–S5)
 
 Run 169 (`50e1ea9`, WP5) is green. Your acceptance of WP4 arrived: the W2 reading stays as it is. This entry claims no

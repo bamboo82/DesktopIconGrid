@@ -198,6 +198,7 @@
               PreviewMouseLeftButtonUp="Item_PreviewMouseLeftButtonUp"
               LostMouseCapture="Item_LostMouseCapture"
               PreviewMouseWheel="Item_PreviewMouseWheel"
+              MouseLeave="Item_MouseLeave"
               KeyDown="Item_KeyDown">
         <Button.ContextMenu>
           <ContextMenu>
