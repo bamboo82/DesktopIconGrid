@@ -899,11 +899,12 @@ gauges (memory, battery, network) with a sparkline, the clock and timer tile, fo
 bucket, the microphone tile. Then workspaces (Multi Launch that puts windows back) and sending a file to
 another PC through a sync folder.
 
-**0.11.0** *(in progress)* — the fixes the review of 0.10.0 placed after the release (0.10.1 was not
-released on its own), a volume tile, dropping a file onto a program inside a folder stack, and Send to PC
-through Google Drive.
+**0.11.0** *(done, released 2026-11-14)* — the fixes the review of 0.10.0 placed after the release (0.10.1 was
+not released on its own), a volume tile, dropping a file onto a program inside a folder stack, Send to PC
+through Google Drive, and voice launch.
 
-**Next** — voice launch (if the spike says yes).
+**Next** — not planned yet. The review's outline after 0.11.0: toast notifications in place of tray balloons, a
+shorter Parameters hint in Properties, glyph icons for tiles, usage columns.
 
 **1.0.0 "Ship it"** — the existing backlog: installer (MSIX/winget), code signing, toast notifications.
 

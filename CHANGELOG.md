@@ -3,7 +3,7 @@
 All notable changes to Desktop Icon Grid. The format follows [Keep a Changelog](https://keepachangelog.com/);
 version numbers follow [Semantic Versioning](https://semver.org/).
 
-## [0.11.0] – Unreleased
+## [0.11.0] – 2026-11-14
 
 What 0.10.0 left out (a volume tile, dropping a file onto a program inside a folder stack, sending files through
 Google Drive, voice launch), and the fixes the review of 0.10.0 placed after the release.

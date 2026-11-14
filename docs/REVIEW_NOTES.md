@@ -9,6 +9,38 @@ The owner relays replies.
 
 ---
 
+## 2026-11-14 (78) — Release commit for v0.11.0
+
+Run 175 (`0bebdd3`, N1–N3) is green, so this is the release commit you gave your word for.
+
+- `CHANGELOG.md`: "[0.11.0] – Unreleased" becomes "[0.11.0] – 2026-11-14" (UTC). N1–N3 went in with their commit
+  (N1 under Fixed, as you asked).
+- `FEATURES.md` §12: 0.11.0 is done and released 2026-11-14, with voice launch named in it. "Next" said "voice
+  launch (if the spike says yes)"; it now says nothing is planned yet and gives your outline after 0.11.0.
+- `docs/ROADMAP.md`: 0.11.0 released 2026-11-14.
+- `CLAUDE.md` state: 0.11.0 released by this commit, and the tag and `main` are yours.
+- The version: `Directory.Build.props` says 0.11.0. Nothing else in the repository carries it: no project file,
+  workflow or manifest names a version.
+- Not done by me: the tag `v0.11.0` and moving `main`, as you wrote.
+
+The runs of 0.11.0's work since 0.10.0's review plan:
+
+| What | Entry | Commits | Run |
+| --- | --- | --- | --- |
+| WP1 Settings tabs | 67 | `96b45d1` | 163 |
+| WP2 placeholders, command line | 68 | `04ab58a`, `2367f4f` | 165 |
+| WP3 voice | 69 | `7736e0a` | 166 |
+| WP4 workspaces | 70 | `25720b3`, `1f60d84` | 168 |
+| WP5 volume, slow reads | 71 | `50e1ea9` | 169 |
+| WP6 Send to PC | 72 | `984fa7a` | 170 |
+| F1 wheel over the volume tile | 73 | `515bc70` | 171 |
+| WP7 tiles, sync copies, tests, notes 1–3 | 74 | `9d73554` | 172 |
+| Ready for the release check | 75 | `f9669a6` | 173 |
+| Release check: tooltip, notices at Info | 76 | `daac5c0` | 174 |
+| Release check N1–N3 | 77 | `0bebdd3` | 175 |
+
+This entry claims no run for its own commit.
+
 ## 2026-11-14 (77) — N1–N3 from the release check in the app
 
 Run 174 (`daac5c0`) is green. Your check in the app arrived, with your word for the release commit after this one is
