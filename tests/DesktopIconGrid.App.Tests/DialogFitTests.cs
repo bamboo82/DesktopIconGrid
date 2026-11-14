@@ -174,6 +174,63 @@ public sealed class DialogFitTests(WpfThread wpf)
         });
     }
 
+    [Fact]
+    public void Send_to_PC_opens_at_once_lists_the_PCs_after_it_shows_and_shows_the_menus_choice()
+    {
+        // Review 27 S2/S3, from the markup: the bindings, styles and resources the dialog uses are all there.
+        wpf.Invoke(() =>
+        {
+            var item = new SpecialIconItem { Name = Strings.SendTo_Name, Kind = DesktopIconGrid.Core.SpecialIcons.SpecialIconKinds.SendToDevice };
+            var listed = new TaskCompletionSource<IReadOnlyList<DesktopIconGrid.Core.Sync.InboxDevice>>();
+            var viewModel = new SendToDeviceViewModel(item, receives: true, receivesByMenu: false, _ => listed.Task);
+            var window = new SendToDeviceWindow { DataContext = viewModel };
+            try
+            {
+                window.Show();
+                Assert.True(viewModel.IsLooking); // the window is up while the list is looked for
+                var status = (TextBlock)window.FindName("StatusLine");
+                Assert.Equal(Strings.SendTo_Looking, status.Text);
+                Assert.False(LogicalDescendants<ComboBox>(window).Single().IsEnabled);
+
+                listed.SetResult([new("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "Den"), new("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "Study")]);
+                var deadline = DateTime.UtcNow.AddSeconds(10);
+                while (viewModel.IsLooking && DateTime.UtcNow < deadline)
+                {
+                    Settle(window);
+                }
+
+                Assert.False(viewModel.IsLooking);
+                Assert.Equal(Strings.SendTo_Hint, status.Text);
+                var combo = LogicalDescendants<ComboBox>(window).Single();
+                Assert.True(combo.IsEnabled);
+                Assert.Equal(2, combo.Items.Count);
+                Assert.True(LogicalDescendants<Button>(window).Single(b => Equals(b.Content, Strings.Common_OK)).IsEnabled);
+                var box = LogicalDescendants<CheckBox>(window).Single();
+                Assert.True(box.IsChecked == true && box.IsEnabled);
+                Assert.True(box.ActualWidth <= ((FrameworkElement)window.Content).ActualWidth + 0.5); // the long label wraps
+            }
+            finally
+            {
+                window.Close();
+            }
+
+            // The menu turns receiving on: the box is ticked, cannot be changed, and says why.
+            var byMenu = new SendToDeviceWindow { DataContext = new SendToDeviceViewModel(item, receives: false, receivesByMenu: true, _ => listed.Task) };
+            try
+            {
+                byMenu.Show();
+                var box = LogicalDescendants<CheckBox>(byMenu).Single();
+                Assert.True(box.IsChecked == true);
+                Assert.False(box.IsEnabled);
+                Assert.True(LogicalDescendants<TextBlock>(byMenu).Single(t => t.Text == Strings.SendTo_ReceivesByMenu).IsVisible);
+            }
+            finally
+            {
+                byMenu.Close();
+            }
+        });
+    }
+
     /// <summary>Lets the window take the size and place its last change asks for.</summary>
     private static void Settle(Window window)
     {

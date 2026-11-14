@@ -291,13 +291,23 @@ their tooltips end with a line of the last 60 samples (`▁▂▃▅▇█`; the
 
 - **Send to PC** (0.10.0; through Google Drive since 0.11.0) — drop files on it (or `Ctrl+V` with it
   focused) to send them to another PC that uses the same sync folder, or is signed in to the same Google
-  account with the app's credentials; its properties pick the PC. With Google the inbox is the same
+  account with the app's credentials; its properties pick the PC. The icon shows an outbox tray (📤), also an
+  icon made before 0.11.0. With Google the inbox is the same
   layout inside the app's own `DesktopIconGrid` folder on Drive (`inbox/<device id>/`), which the basic
   Drive permission covers, and whoever can sign in to that account with the app can send. **Receiving is off until you ask for it:**
-  a PC takes part only when a *Send to PC* icon was added (or its properties saved) on that PC, or
-  *Receive files from my other PCs* (options and tray menus) is ticked. Both are kept on the PC and not
-  synced: an icon that arrives with a synced bar can send, but does not turn receiving on there. A PC that takes part
-  has a folder `inbox\<device id>` in the sync folder with its name; a sent file is copied into the target's inbox
+  a PC takes part only when *This PC also receives files* is ticked in the properties of a *Send to PC* icon on
+  that PC, or *Receive files from my other PCs* (options and tray menus) is ticked. The box is ticked for a new
+  icon; an icon that arrived with a synced bar shows it unticked, and saving its properties turns receiving on only
+  when the box is ticked (0.11.0). While the menu item is on, the box shows ticked and cannot be changed. Both are
+  kept on the PC and not synced. A PC that takes part has a folder `inbox\<device id>` in the sync folder (or on
+  Drive) with a `device.json` that says its name; only a PC with one is offered and can be sent to. When receiving
+  is turned off (the menu item cleared and no icon of this PC with the box ticked), the PC takes its `device.json`
+  back within a minute: the others stop offering it, and files already waiting for it stay until it receives again.
+  The properties open at once and look for the other PCs in the background (↻ looks again; a failure is said on
+  the status line); nothing is said to the others or changed until OK. OK needs a name and either a PC or the box
+  ticked, so the first PC can be set to receive before there is another to choose. Through Google Drive a look that
+  failed is tried again after 1, 2, 5, then every 15 minutes (opening the properties ends the wait), a renamed PC
+  shows its new name, and a folder deleted on Drive is made again. A sent file is copied into the target's inbox
   (up to 2 GB; folders are not sent). The receiving PC looks once a minute while the bar runs, moves
   what waits (at most 20 files and 4 GB per look, and never leaving less than 1 GB free on that drive; a
   file that has to wait for space is announced once, with its size and the space there is) into its

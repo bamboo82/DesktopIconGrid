@@ -39,6 +39,13 @@ public interface ISpecialIconHandler
     /// <summary>The default icon image; <see langword="null"/> shows the placeholder (or the gauge when one is visible).</summary>
     ImageSource? GetIcon(SpecialIconItem item) => null;
 
+    /// <summary>
+    /// The glyph drawn for an icon of this kind that has neither its own picture nor its own text icon, such as one made
+    /// before the kind had a glyph (review 27 S5); <see langword="null"/> for the placeholder. Nothing is written into
+    /// the layout for it.
+    /// </summary>
+    TextIcon? DefaultTextIcon => null;
+
     /// <summary>Extra tooltip line shown when no gauge detail is visible.</summary>
     string? GetToolTip(SpecialIconItem item) => null;
 

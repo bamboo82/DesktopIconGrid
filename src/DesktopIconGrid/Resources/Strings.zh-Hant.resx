@@ -2253,7 +2253,7 @@
     <value>傳送檔案到另一台電腦需要先設定「跨電腦同步」：同步資料夾，或登入 Google。另一台電腦必須使用相同的方式。</value>
   </data>
   <data name="SendTo_NoOtherPcs" xml:space="preserve">
-    <value>尚無其他電腦在接收檔案。請在另一台電腦上（Desktop Icon Grid 0.10.0 或更新版本，使用相同的同步資料夾或 Google 帳戶）新增「傳送到電腦」圖示，或勾選「接收來自我其他電腦的檔案」，然後再開啟此視窗。</value>
+    <value>還沒有其他電腦在接收檔案。請在另一台電腦上開啟此視窗並勾選「這台電腦也接收檔案」，或在工具列功能表勾選「接收來自我其他電腦的檔案」，然後按 ↻。</value>
   </data>
   <data name="SendTo_Hint" xml:space="preserve">
     <value>檔案會經由同步資料夾或 Google 雲端硬碟傳送；另一台電腦的列執行時，會在檔案到達後一分鐘內取走。</value>
@@ -2467,5 +2467,23 @@
   </data>
   <data name="Settings_LocalNotSaved" xml:space="preserve">
     <value>無法儲存這台電腦的語音設定；在 Desktop Icon Grid 結束前仍有效。</value>
+  </data>
+  <data name="SendTo_Looking" xml:space="preserve">
+    <value>正在尋找您的其他電腦…</value>
+  </data>
+  <data name="SendTo_LookAgain" xml:space="preserve">
+    <value>重新尋找</value>
+  </data>
+  <data name="SendTo_LookFailed" xml:space="preserve">
+    <value>無法列出您的其他電腦：{0}</value>
+  </data>
+  <data name="SendTo_NoAnswer" xml:space="preserve">
+    <value>20 秒內沒有回應。</value>
+  </data>
+  <data name="SendTo_Receives" xml:space="preserve">
+    <value>這台電腦也接收檔案（存入「下載」資料夾）</value>
+  </data>
+  <data name="SendTo_ReceivesByMenu" xml:space="preserve">
+    <value>已在工具列功能表中開啟。</value>
   </data>
 </root>

@@ -1,3 +1,4 @@
+using System.Net;
 using System.Text;
 using System.Text.Json;
 using DesktopIconGrid.Core.Diagnostics;
@@ -11,6 +12,10 @@ namespace DesktopIconGrid.Core.Sync;
 /// basic <c>drive.file</c> permission is enough. The account is the trust boundary: whoever is signed in to it with
 /// this app's credentials can send.
 /// </summary>
+/// <remarks>
+/// The ids of the inbox folders are remembered, and looked up again after Drive answers "not found" (a folder deleted
+/// on Drive, review 27 S4). Of two folders of one name, made by two PCs at the same moment, every PC uses the older.
+/// </remarks>
 public sealed class DriveInbox : IInbox
 {
     private readonly IDriveFiles _files;
@@ -18,6 +23,9 @@ public sealed class DriveInbox : IInbox
     private readonly string _deviceName;
     private string? _inboxId;
     private string? _myFolderId;
+
+    /// <summary>What this PC's <c>device.json</c> on Drive says, as far as this run knows: read once, then remembered.</summary>
+    private string? _announced;
 
     public DriveInbox(IDriveFiles files, string deviceId, string deviceName)
     {
@@ -32,22 +40,52 @@ public sealed class DriveInbox : IInbox
         _deviceName = FolderInbox.ShownName(deviceName, deviceId);
     }
 
-    public async Task AnnounceAsync(CancellationToken cancellationToken)
+    /// <summary>
+    /// Says this PC's name, creating its folders when missing. The <c>device.json</c> there is read once per run and
+    /// written only when it says something else (a renamed PC whose name kept its length was not corrected, review 27
+    /// S4); then what it says is remembered.
+    /// </summary>
+    public Task AnnounceAsync(CancellationToken cancellationToken) => Guarded(async () =>
     {
-        var mine = await MyFolderAsync(create: true, cancellationToken).ConfigureAwait(false);
-        var json = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(new FolderInbox.DeviceInfo(_deviceName), FolderInbox.Json));
-        var existing = (await _files.ListChildrenAsync(mine!, cancellationToken).ConfigureAwait(false))
-            .FirstOrDefault(entry => !entry.IsFolder && entry.Name == FolderInbox.DeviceFile);
-        if (existing is not null && existing.Size == json.Length)
+        var json = JsonSerializer.Serialize(new FolderInbox.DeviceInfo(_deviceName), FolderInbox.Json);
+        if (_announced == json)
         {
-            return; // said already (a renamed PC of the same name length is corrected at the next change of length; names rarely change)
+            return true;
         }
 
-        using var content = new MemoryStream(json);
-        await _files.UploadAsync(mine!, FolderInbox.DeviceFile, "application/json", content, json.Length, existing?.Id, null, cancellationToken).ConfigureAwait(false);
-    }
+        var mine = (await MyFolderAsync(create: true, cancellationToken).ConfigureAwait(false))!;
+        var existing = (await _files.ListChildrenAsync(mine, cancellationToken).ConfigureAwait(false))
+            .FirstOrDefault(entry => !entry.IsFolder && entry.Name == FolderInbox.DeviceFile);
+        if (existing is { Size: > 0 and < 4096 } && await ReadTextAsync(existing.Id, cancellationToken).ConfigureAwait(false) == json)
+        {
+            _announced = json;
+            return true;
+        }
 
-    public async Task<IReadOnlyList<InboxDevice>> DevicesAsync(CancellationToken cancellationToken)
+        var bytes = Encoding.UTF8.GetBytes(json);
+        using var content = new MemoryStream(bytes);
+        await _files.UploadAsync(mine, FolderInbox.DeviceFile, "application/json", content, bytes.Length, existing?.Id, null, cancellationToken).ConfigureAwait(false);
+        _announced = json;
+        return true;
+    });
+
+    public Task<bool> WithdrawAsync(CancellationToken cancellationToken) => Guarded(async () =>
+    {
+        var removed = false;
+        if (await MyFolderAsync(create: false, cancellationToken).ConfigureAwait(false) is { } mine)
+        {
+            foreach (var file in (await _files.ListChildrenAsync(mine, cancellationToken).ConfigureAwait(false)).Where(entry => !entry.IsFolder && entry.Name == FolderInbox.DeviceFile))
+            {
+                await _files.DeleteEntryAsync(file.Id, cancellationToken).ConfigureAwait(false);
+                removed = true;
+            }
+        }
+
+        _announced = null;
+        return removed;
+    });
+
+    public Task<IReadOnlyList<InboxDevice>> DevicesAsync(CancellationToken cancellationToken) => Guarded<IReadOnlyList<InboxDevice>>(async () =>
     {
         var devices = new List<InboxDevice>();
         if (await InboxFolderAsync(create: false, cancellationToken).ConfigureAwait(false) is not { } inbox)
@@ -55,18 +93,21 @@ public sealed class DriveInbox : IInbox
             return devices;
         }
 
-        foreach (var folder in await _files.ListChildrenAsync(inbox, cancellationToken).ConfigureAwait(false))
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var folder in Oldest((await _files.ListChildrenAsync(inbox, cancellationToken).ConfigureAwait(false))
+                     .Where(entry => entry.IsFolder && FolderInbox.IsDeviceId(entry.Name) && !string.Equals(entry.Name, _deviceId, StringComparison.OrdinalIgnoreCase))))
         {
-            if (folder.IsFolder && FolderInbox.IsDeviceId(folder.Name) && !string.Equals(folder.Name, _deviceId, StringComparison.OrdinalIgnoreCase))
+            // Only a PC that says its name receives (review 27 S1); of two folders of one PC, the older.
+            if (seen.Add(folder.Name) && await NameInAsync(folder.Id, folder.Name, cancellationToken).ConfigureAwait(false) is { } name)
             {
-                devices.Add(new InboxDevice(folder.Name.ToLowerInvariant(), await NameInAsync(folder.Id, folder.Name, cancellationToken).ConfigureAwait(false)));
+                devices.Add(new InboxDevice(folder.Name.ToLowerInvariant(), name));
             }
         }
 
         return devices.OrderBy(device => device.Name, StringComparer.CurrentCultureIgnoreCase).ToList();
-    }
+    });
 
-    public async Task<string> SendAsync(string targetId, string filePath, CancellationToken cancellationToken)
+    public Task<string> SendAsync(string targetId, string filePath, CancellationToken cancellationToken) => Guarded(async () =>
     {
         if (!FolderInbox.IsDeviceId(targetId) || string.Equals(targetId, _deviceId, StringComparison.OrdinalIgnoreCase))
         {
@@ -84,18 +125,20 @@ public sealed class DriveInbox : IInbox
             throw new InboxSendException(SendProblem.TooLarge, $"{source.Name} is larger than 2 GB.");
         }
 
-        if (await DeviceFolderAsync(targetId, cancellationToken).ConfigureAwait(false) is not { } target)
+        if (await DeviceFolderAsync(targetId, cancellationToken).ConfigureAwait(false) is not { } target
+            || !(await _files.ListChildrenAsync(target, cancellationToken).ConfigureAwait(false)).Any(entry => !entry.IsFolder && entry.Name == FolderInbox.DeviceFile))
         {
-            throw new InboxSendException(SendProblem.NoInbox, "That PC has no inbox on Drive (yet).");
+            // No inbox, or one whose PC took its name back when it stopped receiving: nothing sent there would arrive.
+            throw new InboxSendException(SendProblem.NoInbox, "That PC is not receiving files.");
         }
 
         var inboxName = FolderInbox.InboxName(_deviceId, source.Name);
         await using var content = source.OpenRead();
         await _files.UploadAsync(target, inboxName, "application/octet-stream", content, source.Length, null, null, cancellationToken).ConfigureAwait(false);
         return inboxName[(inboxName.IndexOf('~') + 1)..];
-    }
+    });
 
-    public async Task<IReadOnlyList<InboxFile>> PendingAsync(Func<string, bool>? skip, CancellationToken cancellationToken)
+    public Task<IReadOnlyList<InboxFile>> PendingAsync(Func<string, bool>? skip, CancellationToken cancellationToken) => Guarded<IReadOnlyList<InboxFile>>(async () =>
     {
         var files = new List<InboxFile>();
         if (await MyFolderAsync(create: false, cancellationToken).ConfigureAwait(false) is not { } mine)
@@ -136,7 +179,7 @@ public sealed class DriveInbox : IInbox
         }
 
         return files;
-    }
+    });
 
     public async Task<(string Path, bool Marked, bool Cleared)> ReceiveAsync(InboxFile file, string destinationFolder, Func<string, bool>? mark, CancellationToken cancellationToken)
     {
@@ -184,28 +227,36 @@ public sealed class DriveInbox : IInbox
         return (destination, marked, cleared);
     }
 
-    public async Task<string> NameOfDeviceAsync(string id, string? stored, CancellationToken cancellationToken)
+    public Task<string> NameOfDeviceAsync(string id, string? stored, CancellationToken cancellationToken) => Guarded(async () =>
     {
-        if (FolderInbox.IsDeviceId(id) && await DeviceFolderAsync(id, cancellationToken).ConfigureAwait(false) is { } folder)
+        if (FolderInbox.IsDeviceId(id)
+            && await DeviceFolderAsync(id, cancellationToken).ConfigureAwait(false) is { } folder
+            && await NameInAsync(folder, id, cancellationToken).ConfigureAwait(false) is { } name)
         {
-            return await NameInAsync(folder, id, cancellationToken).ConfigureAwait(false);
+            return name;
         }
 
         return FolderInbox.ShownName(stored, FolderInbox.IsDeviceId(id) ? id : "????????");
-    }
+    });
 
-    private async Task<string> NameInAsync(string deviceFolderId, string id, CancellationToken cancellationToken)
+    /// <summary>
+    /// The name a PC says in its folder, made fit to show (the id's start when it cannot be read), or
+    /// <see langword="null"/> when it says none: a PC that does not receive.
+    /// </summary>
+    private async Task<string?> NameInAsync(string deviceFolderId, string id, CancellationToken cancellationToken)
     {
+        var file = (await _files.ListChildrenAsync(deviceFolderId, cancellationToken).ConfigureAwait(false))
+            .FirstOrDefault(entry => !entry.IsFolder && entry.Name == FolderInbox.DeviceFile);
+        if (file is null)
+        {
+            return null;
+        }
+
         try
         {
-            var file = (await _files.ListChildrenAsync(deviceFolderId, cancellationToken).ConfigureAwait(false))
-                .FirstOrDefault(entry => !entry.IsFolder && entry.Name == FolderInbox.DeviceFile && entry.Size is > 0 and < 4096);
-            if (file is not null)
+            if (file.Size is > 0 and < 4096 && await ReadTextAsync(file.Id, cancellationToken).ConfigureAwait(false) is { } json)
             {
-                using var buffer = new MemoryStream();
-                await _files.DownloadAsync(file.Id, buffer, null, cancellationToken).ConfigureAwait(false);
-                var info = JsonSerializer.Deserialize<FolderInbox.DeviceInfo>(buffer.ToArray(), FolderInbox.Json);
-                return FolderInbox.ShownName(info?.Name, id);
+                return FolderInbox.ShownName(JsonSerializer.Deserialize<FolderInbox.DeviceInfo>(json, FolderInbox.Json)?.Name, id);
             }
         }
         catch (Exception ex) when (ex is JsonException or DriveException or HttpRequestException or IOException)
@@ -216,6 +267,13 @@ public sealed class DriveInbox : IInbox
         return id[..8];
     }
 
+    private async Task<string> ReadTextAsync(string fileId, CancellationToken cancellationToken)
+    {
+        using var buffer = new MemoryStream();
+        await _files.DownloadAsync(fileId, buffer, null, cancellationToken).ConfigureAwait(false);
+        return Encoding.UTF8.GetString(buffer.ToArray());
+    }
+
     private async Task<string?> InboxFolderAsync(bool create, CancellationToken cancellationToken)
     {
         if (_inboxId is not null)
@@ -224,15 +282,45 @@ public sealed class DriveInbox : IInbox
         }
 
         var app = await _files.AppFolderIdAsync(cancellationToken).ConfigureAwait(false);
-        var found = (await _files.ListChildrenAsync(app, cancellationToken).ConfigureAwait(false))
-            .FirstOrDefault(entry => entry.IsFolder && entry.Name == FolderInbox.FolderName);
-        if (found is null && !create)
+        var found = await InboxFoldersAsync(app, cancellationToken).ConfigureAwait(false);
+        if (found.Count == 0)
         {
-            return null;
+            if (!create)
+            {
+                return null;
+            }
+
+            // Another PC may make one at the same moment: everyone keeps the older, and one just made in vain goes.
+            var made = await _files.CreateFolderAsync(app, FolderInbox.FolderName, cancellationToken).ConfigureAwait(false);
+            found = await InboxFoldersAsync(app, cancellationToken).ConfigureAwait(false);
+            if (found.Count > 0 && found[0].Id != made.Id)
+            {
+                try
+                {
+                    await _files.DeleteEntryAsync(made.Id, cancellationToken).ConfigureAwait(false);
+                    found.RemoveAll(entry => entry.Id == made.Id);
+                }
+                catch (Exception ex) when (ex is DriveException or HttpRequestException or IOException or NotSupportedException)
+                {
+                    // An empty extra folder is harmless: the older one is used.
+                }
+            }
+            else if (found.Count == 0)
+            {
+                found = [made];
+            }
         }
 
-        return _inboxId = (found ?? await _files.CreateFolderAsync(app, FolderInbox.FolderName, cancellationToken).ConfigureAwait(false)).Id;
+        if (found.Count > 1)
+        {
+            AppLog.Default.Warning("Inbox", $"{found.Count} \"{FolderInbox.FolderName}\" folders are on Drive; the oldest is used");
+        }
+
+        return _inboxId = found[0].Id;
     }
+
+    private async Task<List<DriveEntry>> InboxFoldersAsync(string appFolderId, CancellationToken cancellationToken) =>
+        Oldest((await _files.ListChildrenAsync(appFolderId, cancellationToken).ConfigureAwait(false)).Where(entry => entry.IsFolder && entry.Name == FolderInbox.FolderName));
 
     private async Task<string?> MyFolderAsync(bool create, CancellationToken cancellationToken)
     {
@@ -246,24 +334,41 @@ public sealed class DriveInbox : IInbox
             return null;
         }
 
-        var found = (await _files.ListChildrenAsync(inbox, cancellationToken).ConfigureAwait(false))
-            .FirstOrDefault(entry => entry.IsFolder && string.Equals(entry.Name, _deviceId, StringComparison.OrdinalIgnoreCase));
+        var found = await DeviceFolderInAsync(inbox, _deviceId, cancellationToken).ConfigureAwait(false);
         if (found is null && !create)
         {
             return null;
         }
 
-        return _myFolderId = (found ?? await _files.CreateFolderAsync(inbox, _deviceId, cancellationToken).ConfigureAwait(false)).Id;
+        return _myFolderId = found ?? (await _files.CreateFolderAsync(inbox, _deviceId, cancellationToken).ConfigureAwait(false)).Id;
     }
 
-    private async Task<string?> DeviceFolderAsync(string deviceId, CancellationToken cancellationToken)
-    {
-        if (await InboxFolderAsync(create: false, cancellationToken).ConfigureAwait(false) is not { } inbox)
-        {
-            return null;
-        }
+    private async Task<string?> DeviceFolderAsync(string deviceId, CancellationToken cancellationToken) =>
+        await InboxFolderAsync(create: false, cancellationToken).ConfigureAwait(false) is { } inbox
+            ? await DeviceFolderInAsync(inbox, deviceId, cancellationToken).ConfigureAwait(false)
+            : null;
 
-        return (await _files.ListChildrenAsync(inbox, cancellationToken).ConfigureAwait(false))
-            .FirstOrDefault(entry => entry.IsFolder && string.Equals(entry.Name, deviceId, StringComparison.OrdinalIgnoreCase))?.Id;
+    private async Task<string?> DeviceFolderInAsync(string inboxId, string deviceId, CancellationToken cancellationToken) =>
+        Oldest((await _files.ListChildrenAsync(inboxId, cancellationToken).ConfigureAwait(false))
+                .Where(entry => entry.IsFolder && string.Equals(entry.Name, deviceId, StringComparison.OrdinalIgnoreCase)))
+            .FirstOrDefault()?.Id;
+
+    /// <summary>The oldest first, by when they were made and then by id, so that every PC picks the same one.</summary>
+    private static List<DriveEntry> Oldest(IEnumerable<DriveEntry> entries) =>
+        entries.OrderBy(entry => entry.CreatedTime ?? entry.ModifiedTime ?? DateTimeOffset.MaxValue).ThenBy(entry => entry.Id, StringComparer.Ordinal).ToList();
+
+    /// <summary>A call whose "not found" (a folder deleted on Drive) makes the next call look the folders up again.</summary>
+    private async Task<T> Guarded<T>(Func<Task<T>> call)
+    {
+        try
+        {
+            return await call().ConfigureAwait(false);
+        }
+        catch (DriveException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
+        {
+            _inboxId = _myFolderId = _announced = null;
+            AppLog.Default.Info("Inbox", "A folder of the inbox is gone on Drive; it is looked up again at the next look");
+            throw;
+        }
     }
 }

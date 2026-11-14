@@ -125,7 +125,10 @@ public sealed class ItemViewModel : ObservableObject
     /// <summary>Live gauge of a monitor icon; <see langword="null"/> for other items.</summary>
     public GaugeState? Gauge => _gauge;
 
-    public bool ShowsGauge => _gauge is { IsVisible: true } && !Model.HasCustomIcon && Model.TextIcon is null;
+    public bool ShowsGauge => _gauge is { IsVisible: true } && !Model.HasCustomIcon && DrawnTextIcon is null;
+
+    /// <summary>The text icon drawn: the item's own, else for a special icon its kind's glyph (review 27 S5).</summary>
+    private TextIcon? DrawnTextIcon => Model.TextIcon ?? (Model is SpecialIconItem ? SpecialHandler.DefaultTextIcon : null);
 
     public string Name => Model.Name;
 
@@ -163,21 +166,21 @@ public sealed class ItemViewModel : ObservableObject
     // ----- text icons -----------------------------------------------------------------------------
 
     /// <summary>True when the icon is drawn as text; an explicit icon image takes precedence.</summary>
-    public bool HasTextIcon => !Model.HasCustomIcon && Model.TextIcon is not null;
+    public bool HasTextIcon => !Model.HasCustomIcon && DrawnTextIcon is not null;
 
     public bool ShowsImage => !HasTextIcon && !ShowsGauge;
 
-    public string TextIconText => Model.TextIcon?.Text ?? string.Empty;
+    public string TextIconText => DrawnTextIcon?.Text ?? string.Empty;
 
-    public FontFamily TextIconFontFamily => TextIconFonts.Resolve(Model.TextIcon?.FontFamily);
+    public FontFamily TextIconFontFamily => TextIconFonts.Resolve(DrawnTextIcon?.FontFamily);
 
-    public double TextIconFontSize => Model.TextIcon?.FontSize ?? TextIcon.DefaultFontSize;
+    public double TextIconFontSize => DrawnTextIcon?.FontSize ?? TextIcon.DefaultFontSize;
 
-    public FontWeight TextIconFontWeight => Model.TextIcon?.Bold == true ? FontWeights.Bold : FontWeights.Normal;
+    public FontWeight TextIconFontWeight => DrawnTextIcon?.Bold == true ? FontWeights.Bold : FontWeights.Normal;
 
-    public bool HasTextIconColor => Model.TextIcon?.Color is not null;
+    public bool HasTextIconColor => DrawnTextIcon?.Color is not null;
 
-    public Brush? TextIconBrush => Model.TextIcon?.Color is { } color ? ThemeManager.ToBrush(color) : null;
+    public Brush? TextIconBrush => DrawnTextIcon?.Color is { } color ? ThemeManager.ToBrush(color) : null;
 
     /// <summary>True when files dropped on this icon are handled by it: opened with a shortcut's program, or taken by a special icon.</summary>
     public bool AcceptsDroppedFiles => Model switch

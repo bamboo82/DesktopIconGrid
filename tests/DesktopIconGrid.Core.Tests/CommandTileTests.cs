@@ -214,6 +214,39 @@ public sealed class CommandTileTests : IDisposable
     }
 
     [Fact]
+    public void An_approval_taken_back_is_gone_from_the_file_and_only_on_this_PC()
+    {
+        // Review 27 S3: a Send to PC icon's box unticked takes its mark away.
+        var path = Path.Combine(_directory, CommandTrust.FileName);
+        var hash = new string('b', 64);
+        ThisDevice.Id = "pc-b";
+        new CommandTrust(path).Approve(hash);
+        ThisDevice.Id = "pc-a";
+        var trust = new CommandTrust(path);
+        trust.Approve(hash);
+        var changes = 0;
+        trust.Changed += (_, _) => changes++;
+
+        Assert.True(trust.Revoke(hash));
+        Assert.False(trust.IsApproved(hash));
+        Assert.False(new CommandTrust(path).IsApproved(hash)); // read back
+        Assert.Equal(1, changes);
+        Assert.True(trust.Revoke(hash)); // nothing left to take back: no change
+        Assert.Equal(1, changes);
+
+        ThisDevice.Id = "pc-b";
+        Assert.True(new CommandTrust(path).IsApproved(hash)); // another PC's approval stays
+
+        ThisDevice.IsOfThisMachine = false; // only this run's approval is taken back
+        var session = new CommandTrust(path);
+        session.Approve(hash);
+        session.Revoke(hash);
+        Assert.False(session.IsApproved(hash));
+        ThisDevice.IsOfThisMachine = true;
+        Assert.True(new CommandTrust(path).IsApproved(hash));
+    }
+
+    [Fact]
     public void A_damaged_file_approves_nothing_and_the_oldest_approvals_go_first()
     {
         ThisDevice.Id = "pc-a";

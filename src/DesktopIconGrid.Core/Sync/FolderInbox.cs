@@ -35,10 +35,16 @@ public sealed class InboxSendException(SendProblem problem, string message) : IO
 /// </summary>
 public interface IInbox
 {
-    /// <summary>Creates this PC's inbox and says its name there.</summary>
+    /// <summary>Creates this PC's inbox and says its name there. Only while this PC receives (review 27 S1).</summary>
     Task AnnounceAsync(CancellationToken cancellationToken);
 
-    /// <summary>The other PCs with an inbox, by name.</summary>
+    /// <summary>
+    /// Takes this PC's name out of its inbox when receiving was turned off (review 27 S1): the other PCs no longer offer
+    /// it or send to it. Files waiting there stay. True when a name was there and is gone.
+    /// </summary>
+    Task<bool> WithdrawAsync(CancellationToken cancellationToken);
+
+    /// <summary>The other PCs that say their name in their inbox (they receive), by name.</summary>
     Task<IReadOnlyList<InboxDevice>> DevicesAsync(CancellationToken cancellationToken);
 
     /// <summary>Puts a file into the inbox of <paramref name="targetId"/>; the name it has there. Throws <see cref="InboxSendException"/> for the known refusals.</summary>
@@ -141,7 +147,24 @@ public sealed class FolderInbox : IInbox
         }
     }
 
-    /// <summary>The other PCs with an inbox in this folder, by name.</summary>
+    /// <summary>Takes this PC's name out of its inbox (see <see cref="IInbox.WithdrawAsync"/>); the folder and what waits there stay.</summary>
+    public bool Withdraw()
+    {
+        var file = Path.Combine(_root, _deviceId, DeviceFile);
+        if (!File.Exists(file))
+        {
+            return false;
+        }
+
+        File.SetAttributes(file, FileAttributes.Normal);
+        File.Delete(file);
+        return true;
+    }
+
+    /// <summary>
+    /// The other PCs that say their name in this folder, by name. A folder without its <c>device.json</c> is a PC that
+    /// does not receive (now): it is not offered (review 27 S1).
+    /// </summary>
     public IReadOnlyList<InboxDevice> Devices()
     {
         var devices = new List<InboxDevice>();
@@ -155,7 +178,7 @@ public sealed class FolderInbox : IInbox
             foreach (var folder in Directory.EnumerateDirectories(_root))
             {
                 var id = Path.GetFileName(folder);
-                if (IsDeviceId(id) && !string.Equals(id, _deviceId, StringComparison.OrdinalIgnoreCase))
+                if (IsDeviceId(id) && !string.Equals(id, _deviceId, StringComparison.OrdinalIgnoreCase) && File.Exists(Path.Combine(folder, DeviceFile)))
                 {
                     devices.Add(new InboxDevice(id.ToLowerInvariant(), NameOf(folder, id)));
                 }
@@ -178,9 +201,10 @@ public sealed class FolderInbox : IInbox
         }
 
         var target = Path.Combine(_root, targetId.ToLowerInvariant());
-        if (!Directory.Exists(target))
+        if (!File.Exists(Path.Combine(target, DeviceFile)))
         {
-            throw new InboxSendException(SendProblem.NoInbox, "That PC has no inbox in the sync folder (yet).");
+            // No inbox, or one whose PC took its name back when it stopped receiving: nothing sent there would arrive.
+            throw new InboxSendException(SendProblem.NoInbox, "That PC is not receiving files.");
         }
 
         var source = new FileInfo(filePath);
@@ -463,6 +487,8 @@ public sealed class FolderInbox : IInbox
         Announce();
         return Task.CompletedTask;
     }
+
+    Task<bool> IInbox.WithdrawAsync(CancellationToken cancellationToken) => Task.FromResult(Withdraw());
 
     Task<IReadOnlyList<InboxDevice>> IInbox.DevicesAsync(CancellationToken cancellationToken) => Task.FromResult(Devices());
 

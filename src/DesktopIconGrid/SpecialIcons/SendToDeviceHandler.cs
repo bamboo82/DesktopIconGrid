@@ -13,13 +13,17 @@ using DesktopIconGrid.Views;
 namespace DesktopIconGrid.SpecialIcons;
 
 /// <summary>
-/// "Send to PC": drop files on it (or paste them) and they go to another PC that shares the sync folder, which puts
-/// them in its Downloads folder (<see cref="InboxService"/>). Only with a sync folder.
+/// "Send to PC": drop files on it (or paste them) and they go to another PC that shares the sync folder or the Google
+/// account, which puts them in its Downloads folder (<see cref="InboxService"/>). Its properties also say whether this
+/// PC receives: the icon's local mark, set or taken away there on OK and never synced.
 /// </summary>
-public sealed class SendToDeviceHandler(Func<IInbox?> inbox, IDialogService dialogs, Func<Window?> ownerProvider, string pasteDirectory, CommandTrust trust) : ISpecialIconHandler
+public sealed class SendToDeviceHandler(IReceiving receiving, IDialogService dialogs, Func<Window?> ownerProvider, string pasteDirectory, CommandTrust trust) : ISpecialIconHandler
 {
     public const string DeviceIdKey = "deviceId";
     public const string DeviceNameKey = "deviceName";
+
+    /// <summary>The outbox tray, as the Voice icon has the microphone (review 27 S5).</summary>
+    public static TextIcon Glyph => new("\U0001F4E4", "Segoe UI Emoji", 22);
 
     public string Kind => SpecialIconKinds.SendToDevice;
 
@@ -27,7 +31,10 @@ public sealed class SendToDeviceHandler(Func<IInbox?> inbox, IDialogService dial
 
     public string Description => Strings.SendTo_Desc;
 
-    public SpecialIconItem CreateItem() => new() { Name = Strings.SendTo_Name, Kind = Kind };
+    public SpecialIconItem CreateItem() => new() { Name = Strings.SendTo_Name, Kind = Kind, TextIcon = Glyph };
+
+    /// <summary>An icon made before it had the glyph is drawn with it too, without changing the layout.</summary>
+    public TextIcon? DefaultTextIcon => Glyph;
 
     public GaugeState? CreateState(SpecialIconItem item) => null;
 
@@ -93,7 +100,7 @@ public sealed class SendToDeviceHandler(Func<IInbox?> inbox, IDialogService dial
             return LaunchResult.Failure(Strings.SendTo_NoDevice);
         }
 
-        if (inbox() is not { } mine)
+        if (receiving.Current() is not { } mine)
         {
             return LaunchResult.Failure(Strings.SendTo_NeedsFolder);
         }
@@ -153,45 +160,24 @@ public sealed class SendToDeviceHandler(Func<IInbox?> inbox, IDialogService dial
         return (sent, problems);
     }
 
+    /// <summary>
+    /// The dialog opens at once and lists the other PCs after it shows (review 27 S2). Nothing is announced or changed
+    /// before OK; then the box "This PC also receives files" sets this icon's mark on this PC or takes it away (S3, the
+    /// answer to entry 55: an icon that arrived turns receiving on only when the user ticks the box), and the inbox
+    /// service says this PC's name or takes it back (S1).
+    /// </summary>
     public bool ShowProperties(SpecialIconItem item, bool isNew)
     {
         ArgumentNullException.ThrowIfNull(item);
-        if (inbox() is not { } mine)
+        if (receiving.Current() is not { } mine)
         {
             dialogs.Notify(DisplayName, Strings.SendTo_NeedsFolder);
             return false;
         }
 
-        // This PC takes part from the moment it gets the icon, so the other PCs can pick it too; then the list of the
-        // others. Through Drive these are network calls: off the UI thread, and given up after a while.
-        IReadOnlyList<InboxDevice> devices = [];
-        var listing = Task.Run(async () =>
-        {
-            await mine.AnnounceAsync(CancellationToken.None).ConfigureAwait(false);
-            return await mine.DevicesAsync(CancellationToken.None).ConfigureAwait(false);
-        });
-        try
-        {
-            System.Windows.Input.Mouse.OverrideCursor = System.Windows.Input.Cursors.Wait;
-            if (listing.Wait(TimeSpan.FromSeconds(20)))
-            {
-                devices = listing.Result;
-            }
-            else
-            {
-                AppLog.Default.Warning("Inbox", "The other PCs could not be listed in time");
-            }
-        }
-        catch (AggregateException ex) when (ex.InnerException is IOException or UnauthorizedAccessException or DriveException or System.Net.Http.HttpRequestException or InvalidOperationException)
-        {
-            AppLog.Default.Warning("Inbox", $"The other PCs could not be listed: {ex.InnerException.Message}");
-        }
-        finally
-        {
-            System.Windows.Input.Mouse.OverrideCursor = null;
-        }
-
-        var viewModel = new SendToDeviceViewModel(item, devices);
+        receiving.Opened();
+        var mark = FolderInbox.IconMark(item.Id);
+        var viewModel = new SendToDeviceViewModel(item, receives: isNew || trust.IsApproved(mark), receivesByMenu: receiving.ReceiveSetting, mine.DevicesAsync);
         var window = new SendToDeviceWindow { DataContext = viewModel, Owner = ownerProvider() };
         if (window.ShowDialog() != true)
         {
@@ -199,7 +185,20 @@ public sealed class SendToDeviceHandler(Func<IInbox?> inbox, IDialogService dial
         }
 
         viewModel.Apply(item);
-        trust.Approve(FolderInbox.IconMark(item.Id)); // saved on this PC: this icon turns receiving on here, a synced copy elsewhere does not
+        if (!viewModel.ReceivesByMenu)
+        {
+            // While the menu turns receiving on, the box only shows that, and the icon's mark stays as it was.
+            if (viewModel.Receives)
+            {
+                trust.Approve(mark); // kept on this PC: a synced copy of the icon elsewhere does not receive
+            }
+            else
+            {
+                trust.Revoke(mark);
+            }
+        }
+
+        receiving.Changed();
         return true;
     }
 }

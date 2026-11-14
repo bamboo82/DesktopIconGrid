@@ -214,7 +214,7 @@ public partial class App : Application
             new VolumeHandler(_monitor, owner),
             new DriveBucketHandler(syncService, dialogs, owner, icons, cacheDirectory, Dispatcher),
             new SoundReplayerHandler(owner, AppPaths.SoundsDirectory, Dispatcher),
-            new SendToDeviceHandler(_inbox.Current, dialogs, owner, Path.Combine(cacheDirectory, "pasted"), trust),
+            new SendToDeviceHandler(_inbox, dialogs, owner, Path.Combine(cacheDirectory, "pasted"), trust),
             new ClockTileHandler(dialogs.Notify, owner, Dispatcher),
             new CommandTileHandler(trust, owner, Dispatcher),
             new VoiceHandler(() => (MainWindow as MainWindow)?.ListenForVoice(), () => (MainWindow as MainWindow)?.VoiceLanguageInUse),

@@ -7,19 +7,45 @@ using DesktopIconGrid.Resources;
 
 namespace DesktopIconGrid.Services;
 
+/// <summary>What a Send to PC icon's properties need of the receiving side.</summary>
+public interface IReceiving
+{
+    /// <summary>This PC's inbox, or <see langword="null"/> without a sync folder or a Google sign-in.</summary>
+    IInbox? Current();
+
+    /// <summary>The menu's <em>Receive files from my other PCs</em>.</summary>
+    bool ReceiveSetting { get; }
+
+    /// <summary>The user opened the properties: a look that waits after failures is due again (review 27 S4).</summary>
+    void Opened();
+
+    /// <summary>A Send to PC icon's mark changed: says this PC's name when that turned receiving on, takes it back when off.</summary>
+    void Changed();
+}
+
 /// <summary>
-/// Receives files other PCs sent to this one through the sync folder (<see cref="FolderInbox"/>): once a minute while
-/// the bar runs, what waits is moved to the Downloads folder, marked as downloaded from elsewhere (so SmartScreen and
-/// Office's Protected View treat it so), and announced. Nothing is opened. Only with a sync folder, not with Google Drive.
+/// Receives files other PCs sent to this one through the sync folder (<see cref="FolderInbox"/>) or Google Drive
+/// (<see cref="DriveInbox"/>): once a minute while the bar runs and this PC receives, what waits is moved to the
+/// Downloads folder, marked as downloaded from elsewhere (so SmartScreen and Office's Protected View treat it so), and
+/// announced. Nothing is opened.
 /// </summary>
-public sealed class InboxService : IDisposable
+public sealed class InboxService : IDisposable, IReceiving
 {
     private static readonly Guid DownloadsFolder = new("374DE290-123F-4565-9164-39C4925E467B");
 
     private readonly SyncService _sync;
     private readonly Action<string, string> _notify;
+    private readonly Dispatcher _dispatcher;
     private readonly DispatcherTimer _timer;
+    private readonly InboxBackOff _backOff = new();
     private bool _busy;
+    private bool _lookAgain;
+
+    /// <summary>
+    /// Whether this PC's name is in its inbox, as far as this run knows; <see langword="null"/> until the first look,
+    /// which takes it back when this PC does not receive (left by an earlier run, or receiving was turned off meanwhile).
+    /// </summary>
+    private bool? _announced;
 
     /// <summary>Inbox files that were delivered but could be neither deleted nor set aside: never delivered twice by this run.</summary>
     private static readonly HashSet<string> Delivered = new(StringComparer.OrdinalIgnoreCase);
@@ -31,6 +57,7 @@ public sealed class InboxService : IDisposable
     {
         _sync = sync;
         _notify = notify;
+        _dispatcher = dispatcher;
         _timer = new DispatcherTimer(TimeSpan.FromMinutes(1), DispatcherPriority.Background, (_, _) => Look(), dispatcher);
         _timer.Stop();
     }
@@ -55,10 +82,7 @@ public sealed class InboxService : IDisposable
                 _sync.Settings.ReceiveFiles = value;
                 _sync.SaveSettings();
                 AppLog.Default.Info("Inbox", value ? "Receiving files from other PCs turned on" : "Receiving files from other PCs turned off");
-                if (value)
-                {
-                    Look();
-                }
+                Look(); // says this PC's name, or takes it back when no marked icon keeps receiving on
             }
         }
     }
@@ -109,17 +133,62 @@ public sealed class InboxService : IDisposable
 
     public void Dispose() => _timer.Stop();
 
+    void IReceiving.Opened() => _backOff.Reset();
+
+    /// <summary>After the dialog's caller has put a new icon on the bar, so that it counts.</summary>
+    void IReceiving.Changed() => _dispatcher.InvokeAsync(Look, DispatcherPriority.Background);
+
+    /// <summary>
+    /// Once a minute, and when receiving may have been turned on or off. While this PC receives: says its name and takes
+    /// what waits. While it does not: takes its name back once (review 27 S1), so the other PCs no longer offer it;
+    /// nothing else is made or taken. Through Google Drive a failed look waits 1, 2, 5, then 15 minutes (S4).
+    /// </summary>
     private async void Look()
     {
-        if (_busy || !IsReceiving || Current() is not { } inbox)
+        if (_busy)
+        {
+            _lookAgain = true; // a change while a look runs: looked at again when it ends
+            return;
+        }
+
+        if (Current() is not { } inbox || (inbox is DriveInbox && !_backOff.IsDue(DateTime.UtcNow)))
+        {
+            return;
+        }
+
+        var receiving = IsReceiving;
+        if (!receiving && _announced == false)
         {
             return; // off unless the user asked for it: no folder is made in the sync folder and nothing is taken
         }
 
         _busy = true;
+        var started = DateTime.UtcNow;
         try
         {
-            var (received, waiting) = await Task.Run(() => TakeAsync(inbox));
+            if (!receiving)
+            {
+                if (await Task.Run(() => inbox.WithdrawAsync(CancellationToken.None)))
+                {
+                    AppLog.Default.Info("Inbox", "This PC does not receive files now: its name is taken out of its inbox, so the other PCs no longer offer it");
+                }
+
+                _announced = false;
+                _backOff.Reset();
+                return;
+            }
+
+            var (received, waiting, announced, failure) = await Task.Run(() => TakeAsync(inbox));
+            _announced = announced || _announced == true;
+            if (failure is null)
+            {
+                _backOff.Reset();
+            }
+            else
+            {
+                Failed(failure, started);
+            }
+
             foreach (var (name, sender, size, free) in waiting)
             {
                 _notify(
@@ -140,22 +209,43 @@ public sealed class InboxService : IDisposable
         }
         catch (Exception ex) when (ex is not OutOfMemoryException)
         {
-            // async void: nothing may escape to the dispatcher.
-            AppLog.Default.Warning("Inbox", $"Looking for sent files failed: {ex.Message}");
+            // async void: nothing may escape to the dispatcher. Taking the name back failed too: tried at the next look.
+            Failed(ex, started);
         }
         finally
         {
             _busy = false;
+            if (_lookAgain)
+            {
+                _lookAgain = false;
+                Look();
+            }
         }
     }
 
-    private static async Task<(List<(string Name, string Sender, bool Marked)> Received, List<(string Name, string Sender, long Size, long Free)> Waiting)> TakeAsync(IInbox inbox)
+    /// <summary>The first failure since a look worked is a warning in the log, the repeats are debug lines; Drive waits longer each time.</summary>
+    private void Failed(Exception failure, DateTime started)
+    {
+        var message = $"The inbox could not be used: {failure.Message}";
+        if (_backOff.Failed(started))
+        {
+            AppLog.Default.Warning("Inbox", message);
+        }
+        else
+        {
+            AppLog.Default.Debug("Inbox", $"{message} (failed {_backOff.Failures} times in a row)");
+        }
+    }
+
+    private static async Task<(List<(string Name, string Sender, bool Marked)> Received, List<(string Name, string Sender, long Size, long Free)> Waiting, bool Announced, Exception? Failure)> TakeAsync(IInbox inbox)
     {
         var received = new List<(string, string, bool)>();
         var waiting = new List<(string, string, long, long)>();
+        var announced = false;
         try
         {
             await inbox.AnnounceAsync(CancellationToken.None).ConfigureAwait(false);
+            announced = true;
             var downloads = DownloadsPath();
             foreach (var file in await inbox.PendingAsync(WasDelivered, CancellationToken.None).ConfigureAwait(false))
             {
@@ -201,11 +291,11 @@ public sealed class InboxService : IDisposable
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or DriveException or System.Net.Http.HttpRequestException or InvalidOperationException)
         {
-            // The folder is not there, Drive did not answer, or the sign-in has lapsed: tried again at the next look.
-            AppLog.Default.Warning("Inbox", $"The inbox could not be used: {ex.Message}");
+            // The folder is not there, Drive did not answer, or the sign-in has lapsed: tried again at a later look.
+            return (received, waiting, announced, ex);
         }
 
-        return (received, waiting);
+        return (received, waiting, announced, null);
     }
 
     private static long? FreeBytes(string folder)

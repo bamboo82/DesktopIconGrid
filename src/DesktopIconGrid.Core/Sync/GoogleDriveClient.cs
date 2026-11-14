@@ -52,7 +52,7 @@ public sealed class GoogleDriveClient : IDriveClient, IDriveFiles
     private const string FolderMimeType = DriveEntry.FolderMimeType;
     private const string JsonMimeType = "application/json";
     private const string FileFields = "id,name,modifiedTime,size,appProperties";
-    private const string EntryFields = "id,name,mimeType,size,modifiedTime,md5Checksum";
+    private const string EntryFields = "id,name,mimeType,size,modifiedTime,md5Checksum,createdTime";
     private const int MaxChunkAttempts = 4;
 
     /// <summary>
@@ -801,7 +801,8 @@ public sealed class GoogleDriveClient : IDriveClient, IDriveFiles
         dto.MimeType ?? MimeTypes.Binary,
         long.TryParse(dto.Size, out var size) ? size : null,
         dto.ModifiedTime,
-        dto.Md5Checksum);
+        dto.Md5Checksum,
+        dto.CreatedTime);
 
     private sealed class FileListDto
     {

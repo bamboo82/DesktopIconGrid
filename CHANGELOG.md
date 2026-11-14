@@ -27,11 +27,17 @@ Google Drive, voice launch), and the fixes the review of 0.10.0 placed after the
 - Folder stacks: drop a file onto a program or shortcut inside a stack to open the file with it (not onto a
   shortcut to a folder).
 - Send to PC through Google Drive: PCs signed in to the same Google account (Sync across PCs) can send each
-  other files without a sync folder. The rules are the same: receiving is off until you add a Send to PC icon
-  on that PC or tick *Receive files from my other PCs*; files land in Downloads, marked as downloaded.
+  other files without a sync folder. The rules are the same: receiving is off until you tick *This PC also
+  receives files* in a Send to PC icon on that PC or tick *Receive files from my other PCs*; files land in
+  Downloads, marked as downloaded. A look that fails waits 1, 2, 5, then 15 minutes before the next.
 
 ### Changed
 
+- Send to PC: the properties open at once and look for your other PCs in the background, with ↻ to look again,
+  instead of freezing the bar for up to 20 seconds. Whether this PC receives is the box *This PC also receives
+  files*, ticked for a new icon: an icon that came with a synced bar turns receiving on only when you tick it. A PC
+  tells the others its name only while it receives, and takes it back when receiving is turned off, so nothing is
+  sent to a PC that does not take it; files already waiting for it stay. The icon shows an outbox tray.
 - Settings has tabs: Appearance, Window, Keys, Voice and General. A tab with something to fix is marked, and the
   line beside Save says which one. (The voice settings were drawn on top of the keys of the bar's window.)
 

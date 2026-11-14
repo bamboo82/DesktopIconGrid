@@ -9,6 +9,106 @@ The owner relays replies.
 
 ---
 
+## 2026-11-14 (72) — WP6: Send to PC, pairing that says what it does (S1–S5)
+
+Run 169 (`50e1ea9`, WP5) is green. Your acceptance of WP4 arrived: the W2 reading stays as it is. This entry claims no
+run for its own commit.
+
+### The dialog (S2, S3), as designed
+
+- `SendToDeviceWindow`: name; *Send to* with the list and ↻ (tooltip and accessible name *Look again*); one status
+  line; the box *This PC also receives files (into Downloads)*, with *Turned on in the bar's menu.* under it while
+  the menu is on; OK and Cancel.
+- `SendToDeviceViewModel` takes a `look` function and starts it on `Loaded`, on the thread pool. While it runs, the
+  list and ↻ are disabled and the status reads *Looking for your other PCs…*. No wait cursor and no blocking wait.
+- **Nearest thing:** I start the look on `Loaded`, not `ContentRendered`. The look is off the UI thread either way,
+  so the window paints at once, and `Loaded` also fires in a CI session that may never render.
+- The look gives up after 20 s with *no answer within 20 seconds*: a sleeping share does not watch the token.
+  - A failure shows `SendTo_LookFailed` ("Your other PCs could not be listed: {0}") with the reason, in the warning
+    colour.
+  - These two texts are new, in all three languages; the plan said "its reason" without a text.
+  - A newer look (↻), or closing the window, makes an older answer be ignored.
+- Found: `SendTo_Hint`. Empty: `SendTo_NoOtherPcs` with the plan's new text, in the warning colour as before; zh-Hans
+  is mine.
+- **Please look:** the PC stored with the icon is a choice from the start, under its stored name. When the list
+  lacks it, it stays a choice after the listed PCs. Otherwise OK during a slow look, after a failed one, or while
+  that PC does not receive would clear the icon's target.
+- The list's first answer selects a PC without renaming the icon, as before. Choosing a PC by hand renames an icon
+  whose name was automatic, as before.
+- The box: a new icon is ticked; an existing icon is ticked when it carries this PC's mark. While the menu is on, it
+  shows ticked and is disabled.
+- OK needs a name and either a PC or the box (as shown) ticked.
+- On OK the handler `Approve`s or `Revoke`s the mark (`CommandTrust.Revoke` is new), and then calls
+  `IReceiving.Changed`.
+  - **Please look:** while the menu is on, OK leaves the mark as it was. The box then only shows the menu's state,
+    and marking the icon would keep this PC receiving after the menu is turned off, which nobody chose in the dialog.
+- `Changed` runs a look at background priority, after the caller has put a new icon on the bar, so the new mark
+  counts.
+
+### S1: announce only while receiving
+
+- The properties no longer announce anything. The inbox service's look decides:
+  - while this PC receives, it says its name (as before) and takes what waits;
+  - while it does not, and the name may still be there (`_announced` not false: the first look of a run, or receiving
+    was just turned off), it calls `IInbox.WithdrawAsync`, which deletes this PC's `device.json` (folder or Drive) and
+    leaves the files waiting there.
+- A look is started when the menu item changes either way, and on OK. A look asked for while one runs runs again
+  when that one ends. Removing the last marked icon from the bar is seen by the next minute's look.
+- `Devices()` and `DevicesAsync` list only device folders with a `device.json`. `Send`/`SendAsync` to a folder
+  without one is `NoInbox`.
+- **Please look:** a PC that never received now finds no `device.json` on the first look of each run, and stops
+  there. With Drive that costs one or two listings per run.
+
+### S4: Drive
+
+- `Core/Sync/InboxBackOff`: after a failed look 1, 2, 5, then 15 minutes, counted from the look's start, with 5 s of
+  slack for the minute timer. A look that works, or opening the properties (`IReceiving.Opened`), ends the wait.
+- The first failure since then is a warning in the log, the repeats are debug lines.
+- The waiting applies to Drive only. The log rule applies to the folder inbox too, which wrote a warning every
+  minute as well.
+- Every public `DriveInbox` call forgets the remembered folder ids (and what was announced) on a `DriveException`
+  with 404. That look fails; the next one looks them up again, or makes them.
+- Announce reads `device.json` once per run, writes it only when its text differs, then remembers what it says.
+  The same-length rename is in a test.
+- Of several `inbox` folders the oldest is used (by `createdTime`, then id), with a warning in the log.
+  - `DriveEntry` got `CreatedTime`, and `GoogleDriveClient` asks for `createdTime` in its entry fields.
+  - A PC that made an `inbox` folder looks again right after, and deletes its own when an older one is there (as
+    the app folder already does).
+  - Device folders also take the oldest.
+
+### S5
+
+- A new icon gets `TextIcon("\U0001F4E4", "Segoe UI Emoji", 22)`.
+- `ISpecialIconHandler.DefaultTextIcon` (default null) is drawn for a special icon without its own picture or text
+  icon. `SendToDeviceHandler` returns the same glyph, so an icon from 0.10.0 shows it without the layout changing.
+
+### Tests
+
+- **Core:**
+  - `CommandTrust.Revoke`: gone from the file, not another PC's, only the run's approval without a machine key.
+  - The folder inbox: withdraw and say again; a folder without `device.json` is not offered or sent to.
+  - The Drive inbox:
+    - withdraw;
+    - announce read once and rewritten for a same-length name;
+    - the older of two `inbox` folders, and a just-made one deleted when another PC made one first;
+    - a folder deleted on Drive: one failed look, then made again.
+  - The back-off schedule.
+- **App, CI only:**
+  - The view model: the look after opening; empty; failed; silent (timeout); the stored PC kept and renamed; the
+    box under the menu.
+  - The glyph, for a new icon and for one from 0.10.0.
+  - The window built from its markup: *Looking…* while the look runs, then the hint, the list enabled, OK enabled,
+    the long box label inside the window; and the menu's state disabled with its hint.
+- **Not tested:**
+  - `InboxService` itself (it needs the sync service): the withdraw on a turn-off, the look asked for again, and the
+    Drive waiting in the service.
+  - Real Drive; two PCs racing for real.
+
+### For the reviewer
+
+- `Menu_ReceiveFilesToolTip` still says "A PC with a Send to PC icon added there receives too." That holds for a new
+  icon, whose box is ticked. I left it; say if it should name the box.
+
 ## 2026-11-14 (71) — WP5: volume and the slow reads (B6, G1, G2 and the small items)
 
 Run 168 (`1f60d84`, WP4) is green. This entry claims no run for its own commit.

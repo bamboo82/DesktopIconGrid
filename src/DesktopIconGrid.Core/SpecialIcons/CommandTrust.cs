@@ -91,6 +91,35 @@ public sealed class CommandTrust
         return saved;
     }
 
+    /// <summary>
+    /// Takes back an approval on this PC and saves (a Send to PC icon whose box "This PC also receives files" was unticked,
+    /// review 27); false when the file could not be written. Without this PC's own id only this run's approval is taken
+    /// back, as only such an approval was given (<see cref="ThisDevice.IsOfThisMachine"/>).
+    /// </summary>
+    public bool Revoke(string hash)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(hash);
+        var device = Device;
+        var changed = false;
+        var saved = true;
+        lock (_gate)
+        {
+            changed = _session.Remove(hash);
+            if (ThisDevice.IsOfThisMachine && _entries.RemoveAll(e => e.Device == device && string.Equals(e.Hash, hash, StringComparison.OrdinalIgnoreCase)) > 0)
+            {
+                changed = true;
+                saved = Save();
+            }
+        }
+
+        if (changed)
+        {
+            Changed?.Invoke(this, EventArgs.Empty);
+        }
+
+        return saved;
+    }
+
     private static string Device => ThisDevice.Id ?? string.Empty;
 
     private static List<Entry> Load(string? filePath)

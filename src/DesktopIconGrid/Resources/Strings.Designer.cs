@@ -4578,6 +4578,33 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Look again.
+        /// </summary>
+        public static string SendTo_LookAgain {
+            get {
+                return ResourceManager.GetString("SendTo_LookAgain", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Your other PCs could not be listed: {0}.
+        /// </summary>
+        public static string SendTo_LookFailed {
+            get {
+                return ResourceManager.GetString("SendTo_LookFailed", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Looking for your other PCs….
+        /// </summary>
+        public static string SendTo_Looking {
+            get {
+                return ResourceManager.GetString("SendTo_Looking", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Send to PC.
         /// </summary>
         public static string SendTo_Name {
@@ -4605,6 +4632,15 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to no answer within 20 seconds..
+        /// </summary>
+        public static string SendTo_NoAnswer {
+            get {
+                return ResourceManager.GetString("SendTo_NoAnswer", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to No PC is chosen yet. Open Properties to choose one..
         /// </summary>
         public static string SendTo_NoDevice {
@@ -4614,7 +4650,7 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to No other PC is receiving files yet. On the other PC, with Desktop Icon Grid 0.10 [rest of string was truncated]";.
+        ///   Looks up a localized string similar to No other PC is receiving files yet. On the other PC, open this window and tick “ [rest of string was truncated]";.
         /// </summary>
         public static string SendTo_NoOtherPcs {
             get {
@@ -4655,6 +4691,24 @@ namespace DesktopIconGrid.Resources {
         public static string SendTo_ProblemTooLarge {
             get {
                 return ResourceManager.GetString("SendTo_ProblemTooLarge", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to This PC also receives files (into Downloads).
+        /// </summary>
+        public static string SendTo_Receives {
+            get {
+                return ResourceManager.GetString("SendTo_Receives", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Turned on in the bar's menu..
+        /// </summary>
+        public static string SendTo_ReceivesByMenu {
+            get {
+                return ResourceManager.GetString("SendTo_ReceivesByMenu", resourceCulture);
             }
         }
 

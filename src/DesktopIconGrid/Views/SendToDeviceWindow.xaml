@@ -10,12 +10,16 @@
         ShowInTaskbar="False"
         Icon="{StaticResource AppIconImage}"
         FocusManager.FocusedElement="{Binding ElementName=NameBox}">
+  <!-- Review 27 S2/S3: opens at once, looks for the other PCs after it shows (↻ again), changes nothing until OK. -->
   <Grid Margin="14">
     <Grid.ColumnDefinitions>
       <ColumnDefinition Width="Auto" MinWidth="80" />
       <ColumnDefinition Width="*" />
+      <ColumnDefinition Width="Auto" />
     </Grid.ColumnDefinitions>
     <Grid.RowDefinitions>
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="Auto" />
       <RowDefinition Height="Auto" />
       <RowDefinition Height="Auto" />
       <RowDefinition Height="Auto" />
@@ -23,23 +27,41 @@
     </Grid.RowDefinitions>
 
     <TextBlock Grid.Row="0" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Common_NameLabel}" Margin="0,0,12,8" />
-    <TextBox x:Name="NameBox" Grid.Row="0" Grid.Column="1" Style="{StaticResource DialogTextBox}"
+    <TextBox x:Name="NameBox" Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="2" Style="{StaticResource DialogTextBox}"
              Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" />
 
     <TextBlock Grid.Row="1" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.SendTo_Device}" Margin="0,0,12,8" />
     <ComboBox Grid.Row="1" Grid.Column="1" Margin="0,0,0,8" VerticalContentAlignment="Center"
               ItemsSource="{Binding Devices}" SelectedItem="{Binding SelectedDevice}" DisplayMemberPath="Name"
-              IsEnabled="{Binding HasDevices}"
+              IsEnabled="{Binding CanChooseDevice}"
               AutomationProperties.Name="{x:Static r:Strings.SendTo_Device}" />
+    <Button x:Name="LookAgainButton" Grid.Row="1" Grid.Column="2" Content="↻" Width="32" Margin="6,0,0,8" Padding="0,3"
+            IsEnabled="{Binding CanLook}" Click="LookAgain_Click"
+            ToolTip="{x:Static r:Strings.SendTo_LookAgain}"
+            AutomationProperties.Name="{x:Static r:Strings.SendTo_LookAgain}" />
 
-    <TextBlock Grid.Row="2" Grid.ColumnSpan="2" TextWrapping="Wrap" Margin="0,0,0,8"
-               Foreground="{DynamicResource WarningBrush}" Text="{x:Static r:Strings.SendTo_NoOtherPcs}"
-               Visibility="{Binding HasNoDevices, Converter={StaticResource BoolToVisibility}}" />
-    <TextBlock Grid.Row="2" Grid.ColumnSpan="2" Style="{StaticResource DialogHint}" Margin="0,0,0,8"
-               Text="{x:Static r:Strings.SendTo_Hint}"
-               Visibility="{Binding HasDevices, Converter={StaticResource BoolToVisibility}}" />
+    <!-- One status line: looking, the hint, why no PC is listed, or why the list could not be made (in the warning colour). -->
+    <TextBlock x:Name="StatusLine" Grid.Row="2" Grid.ColumnSpan="3" TextWrapping="Wrap" Margin="0,0,0,8" Text="{Binding Status}">
+      <TextBlock.Style>
+        <Style TargetType="TextBlock">
+          <Setter Property="Foreground" Value="{DynamicResource DialogHintBrush}" />
+          <Style.Triggers>
+            <DataTrigger Binding="{Binding StatusIsWarning}" Value="True">
+              <Setter Property="Foreground" Value="{DynamicResource WarningBrush}" />
+            </DataTrigger>
+          </Style.Triggers>
+        </Style>
+      </TextBlock.Style>
+    </TextBlock>
 
-    <StackPanel Grid.Row="3" Grid.ColumnSpan="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,8,0,0">
+    <CheckBox Grid.Row="3" Grid.ColumnSpan="3" Margin="0,4,0,8"
+              Content="{x:Static r:Strings.SendTo_Receives}" ContentTemplate="{StaticResource WrappingLabel}"
+              IsChecked="{Binding ReceivesShown}" IsEnabled="{Binding CanChangeReceives}" />
+    <TextBlock Grid.Row="4" Grid.ColumnSpan="3" Style="{StaticResource DialogHint}" Margin="22,-4,0,8"
+               Text="{x:Static r:Strings.SendTo_ReceivesByMenu}"
+               Visibility="{Binding ReceivesByMenu, Converter={StaticResource BoolToVisibility}}" />
+
+    <StackPanel Grid.Row="5" Grid.ColumnSpan="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,8,0,0">
       <Button Content="{x:Static r:Strings.Common_OK}" Style="{StaticResource DialogButton}" IsDefault="True" IsEnabled="{Binding CanSave}" Click="Ok_Click" />
       <Button Content="{x:Static r:Strings.Common_Cancel}" Style="{StaticResource DialogButton}" IsCancel="True" />
     </StackPanel>

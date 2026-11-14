@@ -88,6 +88,38 @@ public sealed class FolderInboxTests : IDisposable
     }
 
     [Fact]
+    public void A_PC_that_takes_its_name_back_is_no_longer_offered_or_sent_to_and_its_waiting_files_stay()
+    {
+        // Review 27 S1.
+        var laptop = new FolderInbox(Sync, Laptop, "Laptop");
+        var desktop = new FolderInbox(Sync, Desktop, "Desktop");
+        desktop.Announce();
+        laptop.Send(Desktop, MakeFile("a.txt"));
+
+        Assert.True(desktop.Withdraw());
+        Assert.False(desktop.Withdraw()); // nothing left to take back
+
+        Assert.Empty(laptop.Devices());
+        Assert.Equal(SendProblem.NoInbox, Assert.Throws<InboxSendException>(() => laptop.Send(Desktop, MakeFile("b.txt"))).Problem);
+        Assert.Equal("a.txt", Assert.Single(desktop.Pending()).Name); // taken when it receives again
+        Assert.False(new FolderInbox(Path.Combine(_folder, "elsewhere"), Laptop, "Laptop").Withdraw()); // no inbox at all
+
+        desktop.Announce();
+        Assert.Equal([new InboxDevice(Desktop, "Desktop")], laptop.Devices());
+    }
+
+    [Fact]
+    public void A_folder_without_a_name_file_is_not_a_PC_to_send_to()
+    {
+        // An inbox left by a PC that never said its name, or by an earlier version that made the folder early.
+        Directory.CreateDirectory(Path.Combine(Sync, FolderInbox.FolderName, Desktop));
+        var laptop = new FolderInbox(Sync, Laptop, "Laptop");
+
+        Assert.Empty(laptop.Devices());
+        Assert.Equal(SendProblem.NoInbox, Assert.Throws<InboxSendException>(() => laptop.Send(Desktop, MakeFile("a.txt"))).Problem);
+    }
+
+    [Fact]
     public void A_read_only_hidden_file_arrives_once_as_a_plain_marked_file()
     {
         // Review 24 R1: copy-then-delete left a read-only file unmarked, unannounced, and delivered again every minute.
