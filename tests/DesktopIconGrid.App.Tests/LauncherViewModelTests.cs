@@ -738,6 +738,81 @@ public sealed class LauncherViewModelTests : IDisposable
         Assert.True(timer.Elapsed >= viewModel.WorkspaceWindowWait);
     }
 
+    /// <summary>One workspace member on "app.exe" with a remembered position, its window gone and a process 41 waiting for one.</summary>
+    private (LauncherViewModel ViewModel, FakeSwitcher Switcher, SavedWindow Remembered) OneMemberWorkspace(bool running)
+    {
+        var switcher = new FakeSwitcher { Answer = false };
+        var (viewModel, model, _) = Create(switcher);
+        viewModel.WorkspaceStep = TimeSpan.FromMilliseconds(5);
+        viewModel.WorkspaceWindowWait = TimeSpan.FromSeconds(2);
+        _launcher.Result = LaunchResult.Started;
+        var exe = Program("app.exe");
+        var member = (ShortcutItem)model.Items[0];
+        member.Location = exe;
+        viewModel.Tracker.Watch(member);
+        DesktopIconGrid.Core.Launching.Workspaces.SetMember(member, "Work", true);
+        var remembered = new SavedWindow(100, 100, 700, 500, false);
+        switcher.Shown.Add(FakeSwitcher.Window(1, 40));
+        switcher.Positions[new IntPtr(1)] = remembered;
+        viewModel.Tracker.ApplySnapshot(Running((exe, [40])));
+        Assert.Equal(1, viewModel.CaptureWorkspace("Work"));
+        if (!running)
+        {
+            switcher.Shown.Clear();
+            viewModel.Tracker.ApplySnapshot(Running((exe, [41])));
+        }
+
+        return (viewModel, switcher, remembered);
+    }
+
+    /// <summary>Review 27 W3, and the splash-then-main case through the bar's own loop (owed from WP7).</summary>
+    [Fact]
+    public async Task A_member_whose_window_closes_while_it_starts_takes_the_next_one_and_is_placed_again()
+    {
+        var (viewModel, switcher, _) = OneMemberWorkspace(running: false);
+
+        // A splash screen with a title bar (window 2) shows at the first look after the start and closes at the next,
+        // when the main window (3) shows. Look 1 is the one before anything is started.
+        switcher.OnLook = look =>
+        {
+            if (look == 2)
+            {
+                switcher.Shown.Insert(0, FakeSwitcher.Window(2, 41));
+            }
+            else if (look == 3)
+            {
+                switcher.Shown.RemoveAll(window => window.Handle == new IntPtr(2));
+                switcher.Shown.Insert(0, FakeSwitcher.Window(3, 41));
+            }
+        };
+        await viewModel.StartWorkspaceAsync("Work");
+
+        var order = switcher.Placed.Select(p => (int)p.Window).ToList();
+        Assert.Equal(2, order[0]); // the splash, as it was the window then
+        Assert.Contains(3, order); // then the main window
+        Assert.Equal(3, order[^1]); // last, the main window's late pass
+        Assert.True(order.LastIndexOf(2) < order.IndexOf(3)); // the splash is never placed again after the main window
+    }
+
+    /// <summary>Review 27 W2: once more 2 s after the member's own placement, but not over the user's minimise.</summary>
+    [Fact]
+    public async Task The_late_pass_leaves_alone_a_window_the_user_minimised_meanwhile()
+    {
+        var (viewModel, switcher, remembered) = OneMemberWorkspace(running: true);
+        switcher.OnLook = look =>
+        {
+            if (look == 2)
+            {
+                switcher.Shown[0] = switcher.Shown[0] with { IsMinimized = true };
+            }
+        };
+
+        await viewModel.StartWorkspaceAsync("Work");
+
+        Assert.Equal([(new IntPtr(1), remembered)], switcher.Placed); // placed at once; the late pass was skipped
+        Assert.Empty(_launcher.Launches); // it runs: only moved
+    }
+
     [Fact]
     public void The_command_line_adds_into_a_named_group_once_and_launches_by_name()
     {

@@ -76,10 +76,13 @@ public sealed class WorkspaceWindows
     }
 
     /// <summary>
-    /// Takes the windows of members that run already, in two rounds so that no member takes another one's own window:
-    /// first every member's own processes' windows, then the rest of its program's, for a member without parameters or,
-    /// with <paramref name="anyOfTheProgram"/> (a capture), for every member. Topmost first, and a window with a title
-    /// bar or a sizing border before one with neither. Returns the members that have a window.
+    /// Takes the windows of members that run already, in rounds so that no member takes another one's window: first
+    /// every member's own processes' windows, then the rest of its program's for members without parameters. With
+    /// <paramref name="anyOfTheProgram"/> (a capture), a member with parameters that has no window of its own then takes
+    /// its program's free window, but only when it is the one such member of that program and there is exactly one such
+    /// window (review 27 W4): with two "putty -load" members and two windows, which is which would be a guess that
+    /// overwrites good positions. Topmost first, and a window with a title bar or a sizing border before one with
+    /// neither. Returns the members that have a window.
     /// </summary>
     public IReadOnlySet<Guid> TakeRunning(IReadOnlyList<WorkspaceMember> members, bool anyOfTheProgram)
     {
@@ -89,16 +92,29 @@ public sealed class WorkspaceWindows
             Take(member, Free(member.Own, packageFamily: null), bareToo: true);
         }
 
-        foreach (var member in members)
+        foreach (var member in members.Where(member => !member.HasParameters))
         {
-            if (anyOfTheProgram || !member.HasParameters)
+            Take(member, Free(member.Program, member.PackageFamily), bareToo: true);
+        }
+
+        if (anyOfTheProgram)
+        {
+            var unowned = members.Where(member => member.HasParameters && !_taken.ContainsKey(member.Id)).ToList();
+            foreach (var member in unowned)
             {
-                Take(member, Free(member.Program, member.PackageFamily), bareToo: true);
+                var free = Free(member.Program, member.PackageFamily);
+                if (free.Count == 1 && unowned.Count(other => other.Program.SetEquals(member.Program)) == 1)
+                {
+                    Take(member, free, bareToo: true);
+                }
             }
         }
 
         return members.Where(member => _taken.ContainsKey(member.Id)).Select(member => member.Id).ToHashSet();
     }
+
+    /// <summary>The window as the last snapshot saw it, or <see langword="null"/> when it is not there.</summary>
+    public WindowInfo? Current(IntPtr window) => _windows.FirstOrDefault(candidate => candidate.Handle == window);
 
     /// <summary>
     /// Takes windows for members the bar has just started, given in the order they were started: windows that were not

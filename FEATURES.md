@@ -444,9 +444,13 @@ Multi Launch group is the built-in one (its flag is unchanged, so older versions
   window (closed to the tray, a start-up boost) does not count as running, and a member with parameters
   counts only what the bar started for it, so two members on one program both start.
 - *Remember window positions of "X"* records each running member's window: its rectangle in
-  screen pixels and whether it is maximised. Starting the workspace then moves each member's window
-  there: at once when it runs already, when a window of its own shows (up to 15 s) when it was just
-  started, and once more 2 seconds later for programs that restore their own position late. A member
+  screen pixels and whether it is maximised (also when it is minimised from maximised); a window snapped
+  to a half or into a snap layout is remembered where it is on the screen, not at its rectangle from before
+  the snap (0.11.0). Starting the workspace then moves each member's window there: at once when it runs
+  already, when a window of its own shows (up to 15 s) when it was just started, and once more 2 seconds
+  after its own placement for programs that restore their own position late, unless it was minimised or
+  maximised or restored meanwhile. A window without a sizing border (a dialog-like main window) is moved and
+  keeps its size. A member
   that is closed when positions are remembered keeps the place it had. A window remembered on a monitor
   that is no longer there is put on the first monitor instead.
 - Which window is whose (0.11.0): a window belongs to one member at most, so two members on one program
@@ -456,8 +460,9 @@ Multi Launch group is the built-in one (its flag is unchanged, so older versions
   the same program. A window with neither a title bar nor a sizing border (a splash screen, as a rule) is
   not moved while the program starts; it is taken only when the 15 s are over and nothing else showed. A
   member whose window closes during the start (a splash screen that made way for the main window) takes
-  the next one. When remembering, a member with parameters that the bar did not start takes a window of
-  its program that no other member has; which one, among several, is a guess.
+  the next one, and is placed again. When remembering, a member with parameters that the bar did not start
+  takes its program's free window only when it is the one such member of that program and exactly one such
+  window is left; otherwise it keeps the place it had (0.11.0).
 - Positions are kept in `workspaces.json` in the local data folder and are never synced: they belong to
   this PC's monitors. Membership is part of the layout and syncs.
 - Limits: one window per member (one the taskbar would show); a window of an elevated program cannot be

@@ -9,6 +9,61 @@ The owner relays replies.
 
 ---
 
+## 2026-11-14 (70) — WP4: workspaces (B5, W1–W4 and the small items)
+
+Run 166 (`7736e0a`, WP3) is green, and your check of WP1–WP3 arrived. Your three notes, per machine in
+`this-pc.json`, `Fold` without spaces, and `.` where the placeholder ends a host name, go into WP7. No pipe fallback,
+as you answered. This entry claims no run for its own commit.
+
+### B5: snapped windows
+
+- `SavedWindow` gets `Screen` (written only when true, so older files read unchanged; Core test).
+- `WindowSwitcher.Capture`: a window that is neither minimised nor maximised and `IsArranged` saves `GetWindowRect`
+  with `Screen: true`.
+  - `IsArranged` is user32's `IsWindowArranged`. Where that entry point is missing (`EntryPointNotFoundException`,
+    remembered), the fallback compares `GetWindowRect` with the normal rectangle, moved from workspace to screen
+    coordinates by its monitor's work-area offset.
+- `Place` for a `Screen` position: `SetWindowPlacement(SW_SHOWNORMAL, WPF_ASYNCWINDOWPLACEMENT)` first when the window
+  is minimised or maximised, then `SetWindowPos(SWP_ASYNCWINDOWPOS | SWP_NOZORDER | SWP_NOACTIVATE)`. `OnScreen` applies
+  as before.
+- **Not tried:** a real snap. CI cannot snap a window. It is on your list.
+
+### W1–W4
+
+- **W1.** No `WS_THICKFRAME`: the window keeps its current size. In the normal rectangle for `SetWindowPlacement`;
+  `SWP_NOSIZE` for a screen position.
+- **W2: a nearest thing, please look.** The late pass is per member, 2 s (`min(2 s, 7 steps)` in tests) after its own
+  placement.
+  - "Skipped when the window's placement is no longer what the bar set": I read placement as the window's state.
+    The pass is skipped when the window is minimised now, or its maximised state differs from what was set, or it is
+    no longer the member's.
+  - A moved rectangle alone does not skip it. A program that restores its own position late moves exactly that
+    rectangle, within those 2 s, and that is what the pass is for. Reading it as the rectangle would make the pass do
+    nothing for any window.
+  - Say if you want the rectangle reading anyway, or a check for the user's own input.
+- **W3.** Every round passes every started member to `TakeNew`. A member whose window differs from the one placed is
+  placed again, and its late pass is counted from then. The loop ends when nothing with a position waits and every
+  late pass is done, or at the wait's end plus those passes.
+- **W4.** `TakeRunning(anyOfTheProgram: true)`: members without parameters take their program's window first. A
+  member with parameters without its own window takes its program's free window only when it is the only such member
+  with that program set (`SetEquals`), and that program has exactly one free window.
+- **Small.**
+  - Minimised from maximised (`WPF_RESTORETOMAXIMIZED`) is saved as maximised.
+  - A `Place` that returns false joins the "No window to place for" line.
+
+### Tests
+
+- **Core:** W4 (two members and two windows: none; one owned: the other takes the one left; a plain member takes it
+  first), and the `screen` flag in and out of the file.
+- **App, CI only:**
+  - a framed splash at the first look that closes at the next, when the main window shows (W3, and the
+    splash-then-main case WP7 owed): the splash is placed, then the main window, then its late pass, and never the
+    splash after the main window;
+  - a running member's late pass is skipped after the user minimised it (W2).
+
+  The fake switcher has an `OnLook` hook for both.
+- Not tested: `IsWindowArranged`, its fallback, `SetWindowPos` and a fixed-size window: real windows.
+
 ## 2026-11-14 (69) — WP3: voice (B3, B4, V1–V3 and the small items)
 
 Run 165 (`2367f4f`, WP2) is green. This entry claims no run for its own commit.

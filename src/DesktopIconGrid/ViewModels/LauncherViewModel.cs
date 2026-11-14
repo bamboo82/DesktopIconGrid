@@ -1506,41 +1506,66 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
             return;
         }
 
-        var placed = new List<(ShortcutItem Member, SavedWindow Target)>();
-        foreach (var member in members)
+        var placed = new Dictionary<Guid, WorkspacePlacement>();
+        var failed = new List<string>();
+        SavedWindow? Position(ShortcutItem member) => _workspacePositions.Get(name, member.Id);
+        void Place(ShortcutItem member, IntPtr window, SavedWindow target)
         {
-            if (running.Contains(member.Id) && _workspacePositions.Get(name, member.Id) is { } target
-                && windows.WindowOf(member.Id) is { } window && _windows.Place(window, target))
+            if (_windows.Place(window, target))
             {
-                placed.Add((member, target));
+                placed[member.Id] = new WorkspacePlacement(window, target, DateTime.UtcNow);
+            }
+            else if (!failed.Contains(member.Name))
+            {
+                failed.Add(member.Name);
             }
         }
 
-        // The members just started: each takes a window that was not there before, as soon as one shows. Members without
-        // a remembered position take theirs too, so that a later member of the same program does not take it, but the
-        // wait is only for the ones that have a position.
-        var waiting = started.ToList();
+        foreach (var member in members)
+        {
+            if (running.Contains(member.Id) && Position(member) is { } target && windows.WindowOf(member.Id) is { } window)
+            {
+                Place(member, window, target);
+            }
+        }
+
+        // The members just started: each takes a window that was not there before, as soon as one shows. Every started
+        // member is looked at in every round (review 27 W3): one whose window closed (a splash screen that made way for
+        // the main window) takes the next one and is placed again. Members without a remembered position take theirs too,
+        // so that a later member of the same program cannot take it, but the wait is only for the ones that have one.
+        // Each placed window is placed once more 2 s after its own placement, for programs that restore their own
+        // position late (W2), unless the user has minimised it or changed whether it is maximised meanwhile.
+        var latePause = TimeSpan.FromMilliseconds(Math.Min(2000, WorkspaceStep.TotalMilliseconds * 7));
         var waited = System.Diagnostics.Stopwatch.StartNew();
-        while (waiting.Any(member => _workspacePositions.Get(name, member.Id) is not null))
+        List<ShortcutItem> waiting;
+        while (true)
         {
             var waitIsOver = waited.Elapsed >= WorkspaceWindowWait;
             windows.Look(_windows.Windows(withAppIds));
-            windows.TakeNew(waiting.Select(WorkspaceMemberOf).ToList(), waitIsOver);
-            foreach (var member in waiting.ToList())
+            windows.TakeNew(started.Select(WorkspaceMemberOf).ToList(), waitIsOver);
+            foreach (var member in started)
             {
-                if (windows.WindowOf(member.Id) is not { } window)
+                if (Position(member) is { } target && windows.WindowOf(member.Id) is { } window
+                    && (!placed.TryGetValue(member.Id, out var earlier) || earlier.Window != window))
                 {
-                    continue;
-                }
-
-                waiting.Remove(member);
-                if (_workspacePositions.Get(name, member.Id) is { } target && _windows.Place(window, target))
-                {
-                    placed.Add((member, target));
+                    Place(member, window, target);
                 }
             }
 
-            if (waitIsOver)
+            var now = DateTime.UtcNow;
+            foreach (var (id, placement) in placed.Where(entry => !entry.Value.LateDone && now - entry.Value.At >= latePause).ToList())
+            {
+                placed[id] = placement with { LateDone = true };
+                if (windows.WindowOf(id) == placement.Window
+                    && windows.Current(placement.Window) is { IsMinimized: false }
+                    && _windows.Capture(placement.Window) is { } where && where.Maximized == placement.Target.Maximized)
+                {
+                    _windows.Place(placement.Window, placement.Target);
+                }
+            }
+
+            waiting = started.Where(member => Position(member) is not null && !placed.ContainsKey(member.Id)).ToList();
+            if ((waiting.Count == 0 || waitIsOver) && placed.Values.All(placement => placement.LateDone))
             {
                 break;
             }
@@ -1548,25 +1573,14 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
             await Task.Delay(WorkspaceStep).ConfigureAwait(true);
         }
 
-        if (waiting.Where(member => _workspacePositions.Get(name, member.Id) is not null).Select(member => member.Name).ToList() is { Count: > 0 } missed)
+        if (waiting.Select(member => member.Name).Concat(failed).Distinct().ToList() is { Count: > 0 } missed)
         {
-            AppLog.Default.Warning("Workspaces", $"No window to place for: {string.Join(", ", missed)}");
-        }
-
-        // Once more a little later, for programs that restore their own position late. A member whose window closed
-        // meanwhile (a splash screen that made way for the main window) takes the window that is there now.
-        await Task.Delay(TimeSpan.FromMilliseconds(Math.Min(2000, WorkspaceStep.TotalMilliseconds * 7))).ConfigureAwait(true);
-        windows.Look(_windows.Windows(withAppIds));
-        var startedIds = started.Select(member => member.Id).ToHashSet();
-        windows.TakeNew(placed.Where(entry => startedIds.Contains(entry.Member.Id)).Select(entry => WorkspaceMemberOf(entry.Member)).ToList(), waitIsOver: true);
-        foreach (var (member, target) in placed)
-        {
-            if (windows.WindowOf(member.Id) is { } window)
-            {
-                _windows.Place(window, target);
-            }
+            AppLog.Default.Warning("Workspaces", $"No window to place for: {string.Join(", ", missed)}"); // also the ones Windows refused to move
         }
     }
+
+    /// <summary>Where the bar put a member's window, when, and whether the late pass has been.</summary>
+    private sealed record WorkspacePlacement(IntPtr Window, SavedWindow Target, DateTime At, bool LateDone = false);
 
     /// <summary>
     /// What a workspace needs to find the member's window: the processes the bar started for it, its program's processes,

@@ -5,7 +5,12 @@ using DesktopIconGrid.Core.Models;
 namespace DesktopIconGrid.Core.Launching;
 
 /// <summary>Where a workspace member's window goes: its rectangle in device pixels (the restored one when maximised).</summary>
-public sealed record SavedWindow(int Left, int Top, int Width, int Height, bool Maximized)
+/// <param name="Screen">
+/// The rectangle is the window's own on the screen, in screen pixels, not its normal (restored) one in workspace
+/// coordinates: a window snapped to a half or a snap layout (review 27 B5), whose normal rectangle is the one from before
+/// the snap. Files written before 0.11.0 have none, which reads as false.
+/// </param>
+public sealed record SavedWindow(int Left, int Top, int Width, int Height, bool Maximized, [property: System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)] bool Screen = false)
 {
     /// <summary>The least of a window that has to be on a monitor for it to count as visible there (enough to grab its title bar).</summary>
     public const int MinVisibleWidth = 120;

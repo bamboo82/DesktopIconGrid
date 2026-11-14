@@ -22,6 +22,9 @@ internal static partial class NativeMethods
     public const uint SWP_NOZORDER = 0x0004;
     public const uint SWP_NOACTIVATE = 0x0010;
 
+    /// <summary>Posts the change to the window's thread instead of waiting for it: a hung program cannot block the bar.</summary>
+    public const uint SWP_ASYNCWINDOWPOS = 0x4000;
+
     public const uint GA_ROOTOWNER = 3;
     public const uint MONITOR_DEFAULTTONEAREST = 2;
 
@@ -128,6 +131,14 @@ internal static partial class NativeMethods
 
     /// <summary>Does not wait for the window's thread: a hung program cannot block the bar.</summary>
     public const int WPF_ASYNCWINDOWPLACEMENT = 0x0004;
+
+    /// <summary>In a minimised window's placement: it comes back maximised.</summary>
+    public const int WPF_RESTORETOMAXIMIZED = 0x0002;
+
+    /// <summary>Whether the window is snapped to a half or into a snap layout (Windows 10 1903 and later).</summary>
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static extern bool IsWindowArranged(IntPtr hwnd);
 
     public const int SW_SHOWNORMAL = 1;
 

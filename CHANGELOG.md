@@ -90,7 +90,10 @@ Google Drive, voice launch), and the fixes the review of 0.10.0 placed after the
   says nothing; a second press of the hotkey stops a listening.
 - Workspaces: two members on one program (two documents, two servers) get a window each instead of both moving
   the same one; a member that was just started takes a window that opened for it, never the user's other window
-  of that program; a splash screen is no longer resized in place of the main window.
+  of that program; a splash screen is no longer resized in place of the main window. A window snapped to half the
+  screen or into a snap layout is remembered where it is, not where it was before the snap; a window that cannot be
+  resized is only moved; the second placement comes 2 seconds after each window's own, and leaves alone a window
+  minimised or maximised meanwhile; a guess between two windows of one program is no longer made when remembering.
 - The microphone and volume tiles tell "no device" apart from "Windows' audio could not be reached" (and log
   the reason once). The Sound Replayer reads `REC` over `SOUND` instead of `REC` twice. A folder stack lists
   files whose names start with a dot, as Explorer does, so its "N more" matches the folder.

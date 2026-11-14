@@ -224,8 +224,16 @@ internal sealed class FakeSwitcher : IWindowSwitcher
 
     public List<(IntPtr Window, DesktopIconGrid.Core.Launching.SavedWindow Target)> Placed { get; } = [];
 
+    /// <summary>How many times the windows were looked at.</summary>
+    public int Looks { get; private set; }
+
+    /// <summary>Called with the number of each look before it is answered, so a test can change the screen at a given look.</summary>
+    public Action<int>? OnLook { get; set; }
+
     public IReadOnlyList<WindowInfo> Windows(bool withAppIds = false)
     {
+        Looks++;
+        OnLook?.Invoke(Looks);
         var still = new List<(WindowInfo Window, int Looks)>();
         foreach (var (window, looks) in Coming)
         {

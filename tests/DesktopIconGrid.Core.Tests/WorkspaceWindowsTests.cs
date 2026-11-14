@@ -124,4 +124,41 @@ public class WorkspaceWindowsTests
         Assert.Null(windows.WindowOf(A)); // an owned dialog is not the program's window
         Assert.Equal(new IntPtr(21), windows.WindowOf(B));
     }
+    /// <summary>Review 27 W4.</summary>
+    [Fact]
+    public void A_capture_guesses_a_window_only_when_one_member_and_one_window_of_the_program_are_left()
+    {
+        // Two "putty -load" members that the bar did not start, and two PuTTY windows: which is which is unknown.
+        WindowInfo[] screen = [Window(1, 10), Window(2, 11)];
+        var work = Member(A, own: [], program: [10, 11], parameters: true);
+        var home = Member(B, own: [], program: [10, 11], parameters: true);
+
+        var two = new WorkspaceWindows(screen);
+        Assert.Empty(two.TakeRunning([work, home], anyOfTheProgram: true));
+
+        // One of them was started by the bar: the other is the one left, with the one window left.
+        var started = Member(A, own: [10], program: [10, 11], parameters: true);
+        var one = new WorkspaceWindows(screen);
+        Assert.Equal(new HashSet<Guid> { A, B }, one.TakeRunning([home, started], anyOfTheProgram: true));
+        Assert.Equal(new IntPtr(2), one.WindowOf(B));
+
+        // A member without parameters takes its program's window first; the member with parameters then has none to guess.
+        var plain = Member(C, own: [], program: [10, 11]);
+        var three = new WorkspaceWindows([Window(1, 10)]);
+        three.TakeRunning([home, plain], anyOfTheProgram: true);
+        Assert.Equal(new IntPtr(1), three.WindowOf(C));
+        Assert.Null(three.WindowOf(B));
+    }
+
+    [Fact]
+    public void A_snapped_position_is_marked_in_the_file_and_an_older_file_reads_as_normal_rectangles()
+    {
+        var json = System.Text.Json.JsonSerializer.Serialize(new SavedWindow(0, 0, 960, 1040, false, Screen: true), new System.Text.Json.JsonSerializerOptions(System.Text.Json.JsonSerializerDefaults.Web));
+        Assert.Contains("\"screen\":true", json);
+        Assert.DoesNotContain("screen", System.Text.Json.JsonSerializer.Serialize(new SavedWindow(0, 0, 960, 1040, false), new System.Text.Json.JsonSerializerOptions(System.Text.Json.JsonSerializerDefaults.Web)));
+
+        var old = System.Text.Json.JsonSerializer.Deserialize<SavedWindow>("""{"left":10,"top":20,"width":800,"height":600,"maximized":true}""", new System.Text.Json.JsonSerializerOptions(System.Text.Json.JsonSerializerDefaults.Web))!;
+        Assert.Equal(new SavedWindow(10, 20, 800, 600, true), old);
+        Assert.False(old.Screen);
+    }
 }
