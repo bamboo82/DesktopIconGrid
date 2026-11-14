@@ -64,7 +64,7 @@ public class WindowKeyTests
         Assert.Equal(TimeSpan.FromSeconds(4), CommandPipe.RetryDelay(2));
         Assert.Equal(TimeSpan.FromSeconds(8), CommandPipe.RetryDelay(3));
         Assert.Equal(TimeSpan.FromSeconds(10), CommandPipe.RetryDelay(6)); // review 27: at most 10 s
-        Assert.Equal(TimeSpan.FromSeconds(60), CommandPipe.RetryDelay(100000));
+        Assert.Equal(TimeSpan.FromSeconds(10), CommandPipe.RetryDelay(100000));
     }
 
     [Theory]

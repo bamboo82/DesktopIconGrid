@@ -11,7 +11,8 @@ The owner relays replies.
 
 ## 2026-11-14 (68) — WP2: scp placeholders (B2, C1, C2), the command line's small items and C4
 
-Run 163 (`96b45d1`, WP1) is green. This entry claims no run for its own commit.
+Run 163 (`96b45d1`, WP1) is green. Run 164 (`04ab58a`) failed on one test assertion I had not updated: the pipe's
+back-off after 100000 failures still expected 60 s. The next commit fixes the assertion only.
 
 ### B2: the colon rule is added to the line's reader
 
