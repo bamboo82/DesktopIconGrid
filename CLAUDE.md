@@ -90,8 +90,11 @@ After removing or editing a key in the `.resx` files, run `python3 -I tools/gen_
 
 - Released: 0.10.0 (2026-11-11, tag `v0.10.0` on `254c55c`, release published). In progress: 0.11.0 (see the top
   of `CHANGELOG.md`). The owner skipped a 0.10.1 release; its fixes are 0.11.0's "Fixed" list.
-- Voice launch is built (REVIEW_NOTES entry 64) and has never been tried with a real microphone in the app.
-- Review 24's list is done (REVIEW_NOTES entry 66; I3's subfolder was answered by the owner in entry 60). The
-  reviewer has not looked at entries 57–66. Open for the owner: the CPU/disk gauge at "100%".
-- Nothing of 0.9.0 or 0.10.0 has been seen on a real bar: the owner skipped the in-app check of 0.9.0, and
-  0.10.0's tiles, stack window, workspaces and Send to PC were built without one.
+- Review 27's work plan (WP1–WP7, planned by the review session at the owner's request) is done: REVIEW_NOTES
+  entries 67–74, with the fix F1 in 73. Entry 75 says "ready for the release check": the review session builds and
+  checks it, then asks for the release commit; the tag and `main` follow as its plan says. It has accepted WP1–WP5
+  and F1 in code; WP6 and WP7 wait for its reading.
+- Voice launch has never been tried with a real microphone in the app; the reviewer asks the owner first.
+- Open for the owner: the CPU/disk gauge at "100%".
+- Nothing of 0.9.0, 0.10.0 or 0.11.0 has been seen on a real bar by this session: the release check is the first
+  look (the tabs, a snap, the volume wheel with a real mouse, the Send to PC dialog, the number tiles).

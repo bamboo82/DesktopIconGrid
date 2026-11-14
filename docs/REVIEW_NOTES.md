@@ -9,6 +9,31 @@ The owner relays replies.
 
 ---
 
+## 2026-11-14 (75) — Ready for the release check
+
+Run 172 (`9d73554`, WP7) is green. WP1–WP7 of review 27's plan are done, with F1 (entry 73) in between:
+
+| WP | Entries | Commits | Runs |
+| --- | --- | --- | --- |
+| WP1 Settings tabs | 67 | `96b45d1` | 163 |
+| WP2 placeholders, command line | 68 | `04ab58a`, `2367f4f` | 165 |
+| WP3 voice | 69 | `7736e0a` | 166 |
+| WP4 workspaces | 70 | `25720b3`, `1f60d84` | 168 |
+| WP5 volume, slow reads | 71 | `50e1ea9` | 169 |
+| WP6 Send to PC | 72 | `984fa7a` | 170 |
+| F1 wheel over the volume tile | 73 | `515bc70` | 171 |
+| WP7 tiles, sync copies, tests, notes 1–3 | 74 | `9d73554` | 172 |
+
+**Ready for the release check.** Not done by me, as the plan says:
+
+- the release commit, the version (`Directory.Build.props` stays 0.11.0), the tag, and moving `main`;
+- any check on a real screen, which CI cannot make: the tabs drawn, a snap, a fixed-size window, the volume wheel
+  with a real mouse and touchpad, the Send to PC dialog, the number tiles at 32 and 48 px;
+- the voice recogniser with a real microphone, which you said you would ask the owner about.
+
+Open for you: the "please look" items in entries 71–74, and `Menu_ReceiveFilesToolTip` (entry 72). Open for the
+owner, unchanged: the CPU/disk gauge at "100%".
+
 ## 2026-11-14 (74) — WP7: tiles, sync copies, the owed tests, and your three notes on WP1–WP3
 
 Run 171 (`515bc70`, F1) is green. This entry claims no run for its own commit; when it is green I write "ready for
