@@ -2355,7 +2355,7 @@
     <value>正在启动 {0}</value>
   </data>
   <data name="Voice_Choose" xml:space="preserve">
-    <value>哪一个？</value>
+    <value>要启动哪一个？</value>
   </data>
   <data name="Voice_NoRecogniser" xml:space="preserve">
     <value>这台电脑没有语音识别器。Windows 会随语言的语音包添加：设置 → 时间和语言 → 语言和区域 → 该语言 → 语音。</value>
@@ -2434,5 +2434,38 @@
   </data>
   <data name="Commands_Busy" xml:space="preserve">
     <value>运行中的栏开着对话框，且已有太多命令在等待，因此未接受这些命令。请关闭对话框后再试一次。</value>
+  </data>
+  <data name="Voice_Shortcut" xml:space="preserve">
+    <value>快捷方式 · {0}</value>
+  </data>
+  <data name="Voice_ShortcutInGroup" xml:space="preserve">
+    <value>快捷方式（分组“{0}”）· {1}</value>
+  </data>
+  <data name="Voice_CommandTile" xml:space="preserve">
+    <value>命令图标 · {0}</value>
+  </data>
+  <data name="Voice_NotApprovedHere" xml:space="preserve">
+    <value>（尚未在这台电脑上批准）</value>
+  </data>
+  <data name="Voice_Workspace" xml:space="preserve">
+    <value>工作区 · {0} 个项目：{1}</value>
+  </data>
+  <data name="Voice_ListSeparator" xml:space="preserve">
+    <value>、</value>
+  </data>
+  <data name="Voice_TheBar" xml:space="preserve">
+    <value>工具栏</value>
+  </data>
+  <data name="Voice_FromAnotherPc" xml:space="preserve">
+    <value>这个说法来自另一台电脑。</value>
+  </data>
+  <data name="Voice_BarChanged" xml:space="preserve">
+    <value>工具栏已更改，请再说一次。</value>
+  </data>
+  <data name="Voice_NoNamesTaken" xml:space="preserve">
+    <value>语音识别器无法接受任何名称。</value>
+  </data>
+  <data name="Settings_LocalNotSaved" xml:space="preserve">
+    <value>无法保存这台电脑的语音设置；在 Desktop Icon Grid 退出前仍有效。</value>
   </data>
 </root>

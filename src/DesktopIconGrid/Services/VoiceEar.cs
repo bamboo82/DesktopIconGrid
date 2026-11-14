@@ -14,8 +14,11 @@ public interface IVoiceEar
     /// <summary>The culture names (<c>zh-TW</c>) of the recognisers this PC has.</summary>
     IReadOnlyList<string> InstalledLanguages();
 
-    /// <summary>Listens for one of <paramref name="phrases"/>, once, until something was said, the silence limit, or <paramref name="cancellation"/>.</summary>
-    Task<VoiceListenResult> ListenAsync(string language, IReadOnlyCollection<string> phrases, CancellationToken cancellation);
+    /// <summary>
+    /// Listens for one of <paramref name="phrases"/>, once, until something was said, the silence limit, or
+    /// <paramref name="cancellation"/>; each answer names its phrase by its index in <paramref name="phrases"/>.
+    /// </summary>
+    Task<VoiceListenResult> ListenAsync(string language, IReadOnlyList<string> phrases, CancellationToken cancellation);
 }
 
 /// <summary>
@@ -64,14 +67,14 @@ public sealed class VoiceEar : IVoiceEar
         }
     }
 
-    public Task<VoiceListenResult> ListenAsync(string language, IReadOnlyCollection<string> phrases, CancellationToken cancellation)
+    public Task<VoiceListenResult> ListenAsync(string language, IReadOnlyList<string> phrases, CancellationToken cancellation)
     {
         ArgumentNullException.ThrowIfNull(language);
         ArgumentNullException.ThrowIfNull(phrases);
         return Task.Run(() => ListenCoreAsync(language, phrases, cancellation), CancellationToken.None);
     }
 
-    private static async Task<VoiceListenResult> ListenCoreAsync(string language, IReadOnlyCollection<string> phrases, CancellationToken cancellation)
+    private static async Task<VoiceListenResult> ListenCoreAsync(string language, IReadOnlyList<string> phrases, CancellationToken cancellation)
     {
         try
         {
@@ -80,7 +83,7 @@ public sealed class VoiceEar : IVoiceEar
             var loaded = Load(engine, culture, phrases);
             if (loaded == 0)
             {
-                return new VoiceListenResult([], "The recogniser took none of the names.");
+                return new VoiceListenResult([], DesktopIconGrid.Resources.Strings.Voice_NoNamesTaken);
             }
 
             engine.SetInputToDefaultAudioDevice();
@@ -120,12 +123,13 @@ public sealed class VoiceEar : IVoiceEar
                 return new VoiceListenResult([]);
             }
 
-            // The alternates include the best answer; without any, the answer itself.
+            // The alternates include the best answer; without any, the answer itself. Each names its phrase by the
+            // semantic value it was loaded with, its index: how the recogniser writes the words does not matter.
             var answers = result.Alternates.Count > 0
-                ? result.Alternates.Select(a => new VoiceHeard(a.Text, a.Confidence))
-                : [new VoiceHeard(result.Text, result.Confidence)];
+                ? result.Alternates.Select(a => new VoiceHeard(IndexOf(a), a.Confidence))
+                : [new VoiceHeard(IndexOf(result), result.Confidence)];
             var heard = answers
-                .GroupBy(a => a.Phrase, StringComparer.OrdinalIgnoreCase)
+                .GroupBy(a => a.Phrase)
                 .Select(group => new VoiceHeard(group.Key, group.Max(a => a.Confidence)))
                 .OrderByDescending(a => a.Confidence)
                 .ToList();
@@ -141,12 +145,15 @@ public sealed class VoiceEar : IVoiceEar
         }
     }
 
+    /// <summary>The index a phrase was loaded with (<see cref="Load"/>), or -1 for an answer without one.</summary>
+    private static int IndexOf(RecognizedPhrase phrase) => phrase.Semantics?.Value is int index ? index : -1;
+
     /// <summary>
-    /// Gives the recogniser the phrases as one list; when it refuses the list (a phrase it has no pronunciation for, as
-    /// a recogniser of one language may with another language's words), each phrase on its own, leaving out the ones it
-    /// refuses. Returns how many it took.
+    /// Gives the recogniser the phrases as one list, each with its index as its semantic value (review 27 B3a); when it
+    /// refuses the list (a phrase it has no pronunciation for, as a recogniser of one language may with another
+    /// language's words), each phrase on its own, leaving out the ones it refuses. Returns how many it took.
     /// </summary>
-    private static int Load(SpeechRecognitionEngine engine, CultureInfo culture, IReadOnlyCollection<string> phrases)
+    private static int Load(SpeechRecognitionEngine engine, CultureInfo culture, IReadOnlyList<string> phrases)
     {
         if (phrases.Count == 0)
         {
@@ -155,7 +162,13 @@ public sealed class VoiceEar : IVoiceEar
 
         try
         {
-            engine.LoadGrammar(new Grammar(new GrammarBuilder(new Choices([.. phrases])) { Culture = culture }));
+            var choices = new Choices();
+            for (var i = 0; i < phrases.Count; i++)
+            {
+                choices.Add(new SemanticResultValue(phrases[i], i).ToGrammarBuilder());
+            }
+
+            engine.LoadGrammar(new Grammar(new GrammarBuilder(choices) { Culture = culture }));
             return phrases.Count;
         }
         catch (Exception ex) when (ex is InvalidOperationException or FormatException or ArgumentException or System.Runtime.InteropServices.COMException)
@@ -165,11 +178,11 @@ public sealed class VoiceEar : IVoiceEar
 
         engine.UnloadAllGrammars();
         var taken = 0;
-        foreach (var phrase in phrases)
+        for (var i = 0; i < phrases.Count; i++)
         {
             try
             {
-                engine.LoadGrammar(new Grammar(new GrammarBuilder(phrase) { Culture = culture }));
+                engine.LoadGrammar(new Grammar(new GrammarBuilder(new SemanticResultValue(phrases[i], i)) { Culture = culture }));
                 taken++;
             }
             catch (Exception ex) when (ex is InvalidOperationException or FormatException or ArgumentException or System.Runtime.InteropServices.COMException)

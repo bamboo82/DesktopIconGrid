@@ -233,6 +233,7 @@ public partial class App : Application
             _windows,
             trust: trust,
             workspacePositions: new WorkspacePositions(Path.Combine(AppPaths.DataDirectory, WorkspacePositions.FileName)));
+        viewModel.UseLocalSettings(new LocalSettingsStore(Path.Combine(AppPaths.DataDirectory, LocalSettings.FileName))); // before the window registers hotkeys
 
         // First paint; the bar window refines this once it has a handle (backdrop, High Contrast, settings changes).
         ThemeManager.Apply(ThemeManager.EffectivePalette(viewModel.Palette));

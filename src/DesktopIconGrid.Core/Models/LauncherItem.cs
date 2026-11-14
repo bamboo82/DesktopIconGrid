@@ -36,7 +36,13 @@ public abstract class LauncherItem
     /// Other phrases voice launch takes for this item besides <see cref="Name"/> (0.11.0), joined by "; "
     /// (<see cref="Voice.VoiceVocabulary.NormalizeAlsoSay"/>); <see langword="null"/> for none.
     /// </summary>
-    public string? AlsoSay { get; set; }
+    public string? AlsoSay
+    {
+        get => _alsoSay;
+        set => _alsoSay = Voice.VoiceVocabulary.NormalizeAlsoSay(value); // tidied on every load and copy (review 27 V3)
+    }
+
+    private string? _alsoSay;
 
     [JsonIgnore]
     public bool HasCustomIcon => !string.IsNullOrWhiteSpace(IconPath);

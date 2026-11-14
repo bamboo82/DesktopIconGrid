@@ -11,7 +11,8 @@ public interface IDialogService
     bool ShowItemProperties(LauncherItem item, bool isNew);
 
     /// <summary>Shows the Settings dialog; returns the edited settings or <see langword="null"/> on cancel.</summary>
-    LauncherSettings? ShowSettings(LauncherSettings current);
+    /// <summary>The Settings dialog over copies of the bar's settings and this PC's own; what was saved, or <see langword="null"/>.</summary>
+    SettingsResult? ShowSettings(LauncherSettings current, DesktopIconGrid.Core.Storage.LocalSettings local);
 
     bool Confirm(string title, string message);
 
@@ -76,3 +77,6 @@ public interface IDialogService
     /// </summary>
     Core.Storage.LayoutHistoryEntry? ShowLayoutHistory(Func<IReadOnlyList<Core.Storage.LayoutHistoryEntry>> list);
 }
+
+/// <summary>What the Settings dialog saved: the bar's settings, which travel with it, and this PC's own, which do not.</summary>
+public sealed record SettingsResult(LauncherSettings Settings, DesktopIconGrid.Core.Storage.LocalSettings Local);

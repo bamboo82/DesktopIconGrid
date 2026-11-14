@@ -5064,6 +5064,15 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to This PC's voice settings could not be saved; they hold until Desktop Icon Grid e [rest of string was truncated]";.
+        /// </summary>
+        public static string Settings_LocalNotSaved {
+            get {
+                return ResourceManager.GetString("Settings_LocalNotSaved", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to opaque.
         /// </summary>
         public static string Settings_Opaque {
@@ -6864,6 +6873,15 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to The bar changed. Say it again..
+        /// </summary>
+        public static string Voice_BarChanged {
+            get {
+                return ResourceManager.GetString("Voice_BarChanged", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Which one?.
         /// </summary>
         public static string Voice_Choose {
@@ -6873,11 +6891,38 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Command tile · {0}.
+        /// </summary>
+        public static string Voice_CommandTile {
+            get {
+                return ResourceManager.GetString("Voice_CommandTile", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to This phrase came from another PC..
+        /// </summary>
+        public static string Voice_FromAnotherPc {
+            get {
+                return ResourceManager.GetString("Voice_FromAnotherPc", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Hide bar;Hide the bar.
         /// </summary>
         public static string Voice_HideBarPhrases {
             get {
                 return ResourceManager.GetString("Voice_HideBarPhrases", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to , .
+        /// </summary>
+        public static string Voice_ListSeparator {
+            get {
+                return ResourceManager.GetString("Voice_ListSeparator", resourceCulture);
             }
         }
 
@@ -6900,11 +6945,29 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to The recogniser took none of the names..
+        /// </summary>
+        public static string Voice_NoNamesTaken {
+            get {
+                return ResourceManager.GetString("Voice_NoNamesTaken", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to This PC has no speech recogniser. Windows adds one with a language's speech pack [rest of string was truncated]";.
         /// </summary>
         public static string Voice_NoRecogniser {
             get {
                 return ResourceManager.GetString("Voice_NoRecogniser", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to  (not approved on this PC).
+        /// </summary>
+        public static string Voice_NotApprovedHere {
+            get {
+                return ResourceManager.GetString("Voice_NotApprovedHere", resourceCulture);
             }
         }
 
@@ -6936,6 +6999,24 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Shortcut · {0}.
+        /// </summary>
+        public static string Voice_Shortcut {
+            get {
+                return ResourceManager.GetString("Voice_Shortcut", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Shortcut (in group “{0}”) · {1}.
+        /// </summary>
+        public static string Voice_ShortcutInGroup {
+            get {
+                return ResourceManager.GetString("Voice_ShortcutInGroup", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Show bar;Show the bar.
         /// </summary>
         public static string Voice_ShowBarPhrases {
@@ -6954,6 +7035,15 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to The bar.
+        /// </summary>
+        public static string Voice_TheBar {
+            get {
+                return ResourceManager.GetString("Voice_TheBar", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Voice launch.
         /// </summary>
         public static string Voice_Title {
@@ -6968,6 +7058,15 @@ namespace DesktopIconGrid.Resources {
         public static string Voice_ToolTip {
             get {
                 return ResourceManager.GetString("Voice_ToolTip", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Workspace · {0} items: {1}.
+        /// </summary>
+        public static string Voice_Workspace {
+            get {
+                return ResourceManager.GetString("Voice_Workspace", resourceCulture);
             }
         }
 

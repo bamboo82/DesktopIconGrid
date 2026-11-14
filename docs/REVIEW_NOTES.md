@@ -9,6 +9,108 @@ The owner relays replies.
 
 ---
 
+## 2026-11-14 (69) — WP3: voice (B3, B4, V1–V3 and the small items)
+
+Run 165 (`2367f4f`, WP2) is green. This entry claims no run for its own commit.
+
+### B4: this PC's settings
+
+- A new local file, `this-pc.json` (`Core/Storage/LocalSettings.cs`: `LocalSettings`, `LocalSettingsStore`), holds
+  `voiceHotkey` and `voiceLanguage`. It sits next to the layout and is not read past 64 KB. Unknown properties are
+  kept, and saves go through a temp file. No sync, restore, import or layout history touches it.
+- `LauncherSettings.VoiceHotkey` and `VoiceLanguage` are gone, without migration. A layout that still carries them
+  keeps them as unknown properties that nothing reads (Core test).
+- I chose a file of its own over `sync.json`, where `ReceiveFiles` lives: the sync settings are the sync service's
+  to hold, and voice has no business there.
+- **Plumbing.**
+  - `LauncherViewModel.Local`, read at start through `UseLocalSettings` (App).
+  - `ShowSettings(current, local)` returns `SettingsResult(Settings, Local)`, and `ApplyLocalSettings` saves.
+  - `MainWindow.ApplyHotkeys` takes the voice hotkey from `Local`; `VoiceLaunch.Language` takes the language from
+    it.
+  - A failed save is a notice (`Settings_LocalNotSaved`).
+- **To look at:** a portable copy keeps the file in its folder, so a voice hotkey goes with the drive. That is the
+  user's own drive, not something that arrived; say if it should be per machine within the file.
+
+### B3a: folded keys, answers by index
+
+- `VoiceVocabulary.Fold`: NFKC, `ToLowerInvariant`, letters and digits only, one space between words. Keys,
+  approvals and the built-in check use it.
+- `Phrases` is a list now. Each phrase is loaded with its index as a `SemanticResultValue`, also in the one-by-one
+  fallback, and `VoiceHeard` is `(int Phrase, double Confidence)`, -1 for an answer without one. That ends V2's text
+  matching.
+- `Speakable` refuses `"`. An *Also say* phrase that folds to a built-in phrase of the language listened in is left
+  out of the vocabulary. It stays in the item's text; the names table does not know the listening language.
+
+### B3b: which phrases may start at once
+
+- Each phrase–target entry carries `MayStart`: true for an item's name, a workspace and the built-in phrases; for
+  an *Also say* phrase, `CommandTrust.IsApproved(VoiceVocabulary.ApprovalHash(id, phrase))`. The hash is SHA-256 of
+  `voice-phrase/1`, the id and the folded phrase.
+- **Approvals.**
+  - `LauncherViewModel.SetAlsoSay`, the names table's save, approves the phrases that were not there before. A phrase
+    that was there keeps what it had, which is the tile rule.
+  - `VoiceLaunch.Pick` approves a candidate marked unapproved when it is picked.
+
+### B3c: Decide
+
+- It is coded as the plan states it, with `CloseCall = 0.10`.
+- Offered choices are those of the answers at 0.40 or more, best first, three at most. A choice window with no
+  buttons cannot happen: no candidate is `NotHeard`, and the App also says "not heard" when every candidate is gone
+  from the bar.
+- Tests: Word 0.85 / WordPad 0.84; an unknown best answer with a lower known one; an unapproved phrase at 0.95, and
+  the same phrase approved.
+
+### The choice window
+
+- **As designed.**
+  - Title *Which one?* (zh-Hant 要啟動哪一個？, both Chinese titles changed).
+  - Each button has the name in bold, the detail line, and a warning line "⚠ This phrase came from another PC.".
+    The texts are TextBlocks, so an underscore is shown, not taken as an access key.
+  - No default button.
+  - A 3 px bar empties over the 20 s (a `DoubleAnimation` on the `ProgressBar`).
+- **Detail lines** (`VoiceLaunch.Show`): every name and location goes through `IsShowable`, else "(…)".
+  - Shortcut: location trimmed in the middle at 60, with the group's name when it is in one.
+  - Special icon: its kind's `DisplayName`.
+  - Command tile: program and arguments, cut at 80, plus *(not approved on this PC)* while its hash is not approved.
+  - Workspace: the count and the first three names.
+  - Built-in: *The bar*.
+- **Snapshot.** On a click, `Show` runs again for the same choice. If the item is gone, or the name or detail differ,
+  nothing starts and the window says `Voice_BarChanged`.
+
+### V1, V3 and the small items
+
+- **V1.** The press time is taken first in `ListenWhileVoiceHotkeyIsHeld`. A press while listening calls
+  `VoiceLaunch.Cancel()`, which is quiet.
+- **V3.**
+  - `LauncherItem.AlsoSay` tidies on every set, so on load, copy and edit alike: at most 8 phrases, 60 characters
+    each, no folded repeats.
+  - When the 2000 cap cuts, the built-in phrases go in first, then names and workspaces, then *Also say*.
+    `LeftOut` is logged in one line.
+- **Small.**
+  - Cancel (the window's, a second press, the app closing through `CloseForGood`) shows nothing, and an answer that
+    arrives after it is dropped (the `_cancelled` flag).
+  - "Starting X" comes after `ActivateAndReport`, which is `Activate` returning its outcome, returned `Started`. A
+    switch to a running window counts as started.
+  - `VoiceEar`'s English text is `Voice_NoNamesTaken`.
+  - System.Speech 10.0.15 restored and builds, the probe tool too.
+
+### Tests
+
+- **Core:**
+  - `VoiceVocabularyTests`: folding, built-ins, approvals, Decide, the cap, the 8 phrases;
+  - `LocalSettingsTests`: round trip, a bad or oversized file, a layout with `voiceHotkey`.
+- **App, CI only (`VoiceLaunchTests`, now in the "Shared icon worker" collection with `LauncherViewModelTests`,
+  which sets `ThisDevice.Id` for a moment, since approvals are per device):**
+  - started and said after; a failed start not announced;
+  - offered with details;
+  - the plan's three: an arrived phrase picked and then starting at once; an unapproved command tile asking its
+    approval and running nothing; a workspace by voice;
+  - the bar changed while the choice waited;
+  - Cancel racing an answer;
+  - the names table approving only typed phrases;
+  - the settings saved as this PC's.
+- Not tested: the real recogniser with semantic values (no microphone in CI), the window's look, and the hold timer.
+
 ## 2026-11-14 (68) — WP2: scp placeholders (B2, C1, C2), the command line's small items and C4
 
 Run 163 (`96b45d1`, WP1) is green. Run 164 (`04ab58a`) failed on one test assertion I had not updated: the pipe's

@@ -570,23 +570,29 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
 
     public void Activate(ItemViewModel item, object? anchor) => Activate(item, anchor, ActivationModifiers.None);
 
-    public void Activate(ItemViewModel item, object? anchor, ActivationModifiers modifiers)
+    public void Activate(ItemViewModel item, object? anchor, ActivationModifiers modifiers) => ActivateAndReport(item, anchor, modifiers);
+
+    /// <summary>
+    /// <see cref="Activate"/>, and whether something was started (or brought forward): voice launch says "Starting X"
+    /// only then (review 27), not before an approval window that may be cancelled.
+    /// </summary>
+    public LaunchOutcome ActivateAndReport(ItemViewModel item, object? anchor, ActivationModifiers modifiers)
     {
         if (item.IsSeparator)
         {
-            return; // a divider or caption does nothing when clicked
+            return LaunchOutcome.Cancelled; // a divider or caption does nothing when clicked
         }
 
         if (item.IsGroup)
         {
             ToggleGroupPopup(item, anchor);
-            return;
+            return LaunchOutcome.Cancelled;
         }
 
         var now = DateTime.UtcNow;
         if (item.Id == _lastLaunchedId && now - _lastLaunchedAt < LaunchDebounce)
         {
-            return; // a natural double-click in single-click mode
+            return LaunchOutcome.Cancelled; // a natural double-click in single-click mode
         }
 
         _lastLaunchedId = item.Id;
@@ -595,7 +601,7 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
         if (item.Model is UnknownItem)
         {
             _dialogs.Notify(item.Name, Strings.Launch_NewerVersionOpen);
-            return;
+            return LaunchOutcome.Cancelled;
         }
 
         if (item.Model is SpecialIconItem special)
@@ -608,12 +614,12 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
 
             IsGroupPopupOpen = false;
             ItemActivated?.Invoke(this, item);
-            return;
+            return specialResult.Outcome;
         }
 
         if (item.Model is not ShortcutItem shortcutToLaunch)
         {
-            return;
+            return LaunchOutcome.Cancelled;
         }
 
         if (item.IsMissing)
@@ -623,7 +629,7 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
             if (item.IsMissing)
             {
                 RepairItem(item);
-                return;
+                return LaunchOutcome.Cancelled;
             }
         }
 
@@ -642,7 +648,7 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
                 (program, files) => _launcher.LaunchWith(ShortcutItem.FromPath(program), files));
             IsGroupPopupOpen = false;
             ItemActivated?.Invoke(this, item);
-            return;
+            return LaunchOutcome.Started;
         }
 
         // The taskbar's keys: Shift or a middle click starts another instance, Ctrl+Shift starts one as administrator.
@@ -657,14 +663,14 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
         {
             IsGroupPopupOpen = false;
             ItemActivated?.Invoke(this, item);
-            return;
+            return LaunchOutcome.Started; // brought forward
         }
 
         var result = _launcher.Launch(shortcutToLaunch, asAdministrator);
         if (result.Outcome == LaunchOutcome.Failed)
         {
             _dialogs.Notify(string.Format(Strings.Launch_CantOpen, item.Name), $"{result.ErrorMessage}\n{item.Location}");
-            return;
+            return LaunchOutcome.Failed;
         }
 
         if (result.Outcome == LaunchOutcome.Started)
@@ -674,6 +680,7 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
 
         IsGroupPopupOpen = false;
         ItemActivated?.Invoke(this, item);
+        return result.Outcome;
     }
 
     // ----- launch feedback ----------------------------------------------------------------------
@@ -1646,10 +1653,41 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
 
     public void OpenSettings()
     {
-        var edited = _dialogs.ShowSettings(Model.Settings.Clone());
+        var edited = _dialogs.ShowSettings(Model.Settings.Clone(), Local.Clone());
         if (edited is not null)
         {
-            ApplySettings(edited);
+            ApplyLocalSettings(edited.Local); // first: ApplySettings' SettingsChanged registers the hotkeys from it
+            ApplySettings(edited.Settings);
+        }
+    }
+
+    // ----- this PC's own settings (review 27 B4) -------------------------------------------------------
+
+    private LocalSettingsStore? _localStore;
+
+    /// <summary>
+    /// The settings of this PC that never travel with the bar: the voice hotkey and language (<see cref="LocalSettings"/>).
+    /// Nothing that arrives (sync, restore, import) changes them.
+    /// </summary>
+    public LocalSettings Local { get; private set; } = new();
+
+    /// <summary>Reads this PC's settings from <paramref name="store"/>, where saves go too; App calls it once at start.</summary>
+    public void UseLocalSettings(LocalSettingsStore store)
+    {
+        ArgumentNullException.ThrowIfNull(store);
+        _localStore = store;
+        Local = store.Load();
+    }
+
+    /// <summary>Keeps <paramref name="local"/> as this PC's settings and saves them.</summary>
+    public void ApplyLocalSettings(LocalSettings local)
+    {
+        ArgumentNullException.ThrowIfNull(local);
+        local.Normalize();
+        Local = local;
+        if (_localStore?.Save(local) == false)
+        {
+            _dialogs.Notify(Strings.Settings_Title, Strings.Settings_LocalNotSaved);
         }
     }
 
@@ -1714,8 +1752,17 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
             return false;
         }
 
+        var before = Core.Voice.VoiceVocabulary.SplitAlsoSay(item.AlsoSay).Select(Core.Voice.VoiceVocabulary.Fold).ToHashSet(StringComparer.Ordinal);
         item.AlsoSay = phrases;
         item.ModifiedAt = DateTimeOffset.UtcNow;
+
+        // Saving here approves what was typed here, as for a command tile (review 27 B3b): a phrase that was not there
+        // before. One that was there keeps its approval, or the lack of one: it may have arrived with a synced bar.
+        foreach (var phrase in Core.Voice.VoiceVocabulary.SplitAlsoSay(phrases).Where(phrase => !before.Contains(Core.Voice.VoiceVocabulary.Fold(phrase))))
+        {
+            Trust.Approve(Core.Voice.VoiceVocabulary.ApprovalHash(id, phrase));
+        }
+
         return true;
     }
 

@@ -61,10 +61,13 @@ public sealed class SettingsViewModel : ObservableObject
     /// <summary>The settings as they were; <see cref="ToSettings"/> starts from them, so whatever the dialog does not show is kept.</summary>
     private readonly LauncherSettings _original;
 
-    public SettingsViewModel(LauncherSettings current)
+    /// <param name="current">The bar's settings, which travel with it.</param>
+    /// <param name="local">This PC's own (the voice hotkey and language, review 27 B4); none when not given (tests).</param>
+    public SettingsViewModel(LauncherSettings current, DesktopIconGrid.Core.Storage.LocalSettings? local = null)
     {
         ArgumentNullException.ThrowIfNull(current);
         _original = current.Clone();
+        _originalLocal = local?.Clone() ?? new DesktopIconGrid.Core.Storage.LocalSettings();
         _iconSize = current.IconSize;
         _cellPadding = current.CellPadding;
         _showLabels = current.ShowLabels;
@@ -73,9 +76,9 @@ public sealed class SettingsViewModel : ObservableObject
         _backgroundColor = current.BackgroundColor;
         _toggleHotkey = current.ToggleHotkey ?? string.Empty;
         _pointerHotkey = current.ShowAtPointerHotkey ?? string.Empty;
-        _voiceHotkey = current.VoiceHotkey ?? string.Empty;
-        VoiceLanguages = VoiceLanguageOptions(InstalledVoiceLanguages(), current.VoiceLanguage);
-        _selectedVoiceLanguage = VoiceLanguages.FirstOrDefault(l => string.Equals(l.Id, current.VoiceLanguage, StringComparison.OrdinalIgnoreCase)) ?? VoiceLanguages[0];
+        _voiceHotkey = _originalLocal.VoiceHotkey ?? string.Empty;
+        VoiceLanguages = VoiceLanguageOptions(InstalledVoiceLanguages(), _originalLocal.VoiceLanguage);
+        _selectedVoiceLanguage = VoiceLanguages.FirstOrDefault(l => string.Equals(l.Id, _originalLocal.VoiceLanguage, StringComparison.OrdinalIgnoreCase)) ?? VoiceLanguages[0];
         WindowKeyRows = Enum.GetValues<WindowKeyAction>().Select(action => new WindowKeyRow(action, WindowKeys.For(current, action))).ToList();
         _transparency = LauncherSettings.MaxOpacity - current.Opacity;
         _closeToTray = current.CloseToTray;
@@ -344,6 +347,16 @@ public sealed class SettingsViewModel : ObservableObject
 
     private string _voiceHotkey;
     private LanguageOption _selectedVoiceLanguage;
+    private readonly DesktopIconGrid.Core.Storage.LocalSettings _originalLocal;
+
+    /// <summary>This PC's settings with the dialog's voice hotkey and language (what else the file holds is kept).</summary>
+    public DesktopIconGrid.Core.Storage.LocalSettings ToLocalSettings()
+    {
+        var local = _originalLocal.Clone();
+        local.VoiceHotkey = IsVoiceHotkeyValid && HasVoiceHotkey ? _voiceHotkey : null;
+        local.VoiceLanguage = _selectedVoiceLanguage.Id.Length == 0 ? null : _selectedVoiceLanguage.Id;
+        return local;
+    }
 
     /// <summary>The recognisers of this PC; tests set their own list.</summary>
     internal static Func<IReadOnlyList<string>> InstalledVoiceLanguages { get; set; } = () => new VoiceEar().InstalledLanguages();
@@ -538,8 +551,6 @@ public sealed class SettingsViewModel : ObservableObject
         settings.FluentDialogs = _fluentDialogs;
         settings.ToggleHotkey = IsHotkeyValid && HasHotkey ? _toggleHotkey : null;
         settings.ShowAtPointerHotkey = IsPointerHotkeyValid && HasPointerHotkey ? _pointerHotkey : null;
-        settings.VoiceHotkey = IsVoiceHotkeyValid && HasVoiceHotkey ? _voiceHotkey : null;
-        settings.VoiceLanguage = _selectedVoiceLanguage.Id.Length == 0 ? null : _selectedVoiceLanguage.Id;
         settings.WindowKeys = WindowKeys.Overrides(WindowKeyRows.ToDictionary(row => row.Action, row => row.Text));
         if (_original.WindowKeys?.Where(pair => !Enum.TryParse<WindowKeyAction>(pair.Key, out _)).ToList() is { Count: > 0 } unknown)
         {

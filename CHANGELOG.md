@@ -82,6 +82,12 @@ Google Drive, voice launch), and the fixes the review of 0.10.0 placed after the
   sent them ends with code 3); a start that waited more than 30 s is dropped, and of show, hide and toggle only the
   last counts. `\\server\pipe/…` is refused as `\\server\pipe\…` is; a broken language in the layout file no longer
   stops a start's error message; the pipe listens again after at most 10 s.
+- Voice launch: the voice hotkey and language are kept on this PC and never travel with a synced, restored or
+  imported bar. A phrase under *Also say* starts its item at once only when it was typed here or picked here once;
+  one that came with the bar is offered first, marked as coming from another PC. A clearly heard name close to
+  another one (Word and WordPad) is offered instead of started. The choice window says what each button starts, and
+  starts nothing when the bar changed while it waited. "Starting …" is said only after something started; Cancel
+  says nothing; a second press of the hotkey stops a listening.
 - Workspaces: two members on one program (two documents, two servers) get a window each instead of both moving
   the same one; a member that was just started takes a window that opened for it, never the user's other window
   of that program; a splash screen is no longer resized in place of the main window.

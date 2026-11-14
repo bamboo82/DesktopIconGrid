@@ -490,25 +490,42 @@ to sort; *Use original name*
 resets the selected rows, *Use original names for all* resets everything; *Save* applies all
 changes at once. The given names are the captions on the bar and the phrases voice launch listens for; the
 *Also say (voice)* column (0.11.0) gives a shortcut or special icon more phrases, separated by `;`, `；`, `、` or
-`|`, stored tidied as `alsoSay` with the item.
+`|`, stored tidied as `alsoSay` with the item (at most 8, each at most 60 characters, tidied on every load). Saving
+the table approves, on this PC, the phrases typed or changed here; one that came with a synced bar stays unapproved
+until it is picked in the voice window.
 
-**Voice launch (0.11.0).** The voice hotkey (Settings, system-wide, none by default), a click on a *Voice* icon,
+**Voice launch (0.11.0).** The voice hotkey (Settings ▸ Voice, system-wide, none by default; kept on this PC in
+`this-pc.json` and never synced, restored or imported, like the voice language), a click on a *Voice* icon,
 or `--voice` makes the bar listen for one utterance and start what is called so, as a click on it would (so a
 paused command tile still asks, and a shortcut's questions still come).
 
 - The hotkey is push to talk: listening starts when it goes down and ends 0.7 seconds after it is let go, so
   the end of the word is still heard. What was heard by then is acted on; when nothing was, the window just
   goes away (letting go is how one cancels). A tap shorter than 0.4 seconds is a plain trigger instead:
-  listening then lasts until a name was said or the limits below.
+  listening then lasts until a name was said or the limits below; a second press stops it without a word.
 - What is listened for: the names and *Also say* phrases of shortcuts and special icons (also inside groups),
   the workspace names, and "Show bar" / "Hide bar" in the language listened in. Groups and the Voice icon are
-  not started by voice. A phrase must have a letter or digit, at most 60 characters, and pass the same
-  "shown as written" rule as command tiles.
-- How sure: the recogniser's best answer at 0.80 or more that belongs to one item starts it. Otherwise the items
-  of the answers at 0.40 or more are offered as up to three buttons (also when two items share a phrase heard
-  clearly). Below that nothing starts and the window says so. Starting a program is never a guess.
-- A small window near the bottom of the main screen shows *Listening…* with Cancel, then what is started or why
-  nothing is; it never takes the keyboard. Listening ends with the utterance, after 6 seconds of silence, or
+  not started by voice. A phrase must have a letter or digit, no `"`, at most 60 characters, and pass the same
+  "shown as written" rule as command tiles. Phrases are compared folded (full-width letters as plain ones, any
+  case, punctuation dropped), so "Hide bar." is "Hide bar"; an *Also say* phrase may not be a built-in one. The
+  recogniser answers with the phrase's number, not its text. At most 2000 phrases: the built-in ones and the names
+  go in first, and the log says how many were left out.
+- Which phrases may start at once: an item's own name, a workspace's name and the built-in phrases; an *Also say*
+  phrase only when it is approved on this PC (typed in the names table here, or picked once in the window after it
+  was heard).
+- How sure: the best answer starts its item only at 0.80 or more, by a phrase with that one item that may start at
+  once, and with no answer for another item within 0.10 of it (Word 0.85 next to WordPad 0.84 is a choice).
+  Otherwise the items of the answers at 0.40 or more are offered as up to three buttons. Below that nothing starts
+  and the window says so. Starting a program is never a guess, and there is never a choice without buttons.
+- The choice (*Which one?*): one button per candidate with its name in bold, a line saying what it is and starts
+  (*Shortcut · location*, also *in group “X”*; a special icon's kind; *Command tile · program arguments*, with
+  *(not approved on this PC)* while it waits for that; *Workspace · N items: A, B, C…*; *The bar*), and, for a phrase
+  that came from another PC, a warning line. A bar along the bottom empties over the 20 seconds the choice waits. No
+  button is the default; Cancel closes without a word. A button whose item is gone or now reads differently (a sync
+  load meanwhile) starts nothing and the window says *The bar changed. Say it again.*
+- A small window near the bottom of the main screen shows *Listening…* with Cancel, then what was started (only
+  once it did start: an approval may be declined) or why nothing is; it never takes the keyboard. Cancel says
+  nothing, and an answer that arrives after it is dropped. Listening ends with the utterance, after 6 seconds of silence, or
   after 15 seconds at most. One listening at a time.
 - Language: *Voice language* in Settings lists the recognisers this PC has; *Same as the bar* takes the bar's
   language (zh-Hant: zh-TW, then zh-HK; zh-Hans: zh-CN, then zh-SG; else another region of the language), and
@@ -656,6 +673,7 @@ warnings and errors. The last 2000 entries stay in memory and all of them are ap
 | Start hidden | off (with Start with Windows: only the tray icon until shown) |
 | Show/hide hotkey | none (set in Settings; needs Ctrl, Alt or Win) |
 | Show-at-pointer hotkey | none (needs Ctrl, Alt or Win, and a combination other than the show/hide one) |
+| Voice hotkey and voice language | none, and the bar's language (0.11.0); kept on this PC in `this-pc.json`, never in the layout, so a synced, restored or imported bar cannot set them |
 | Keys in the bar | New shortcut Ctrl+N, New group Ctrl+G, Settings Ctrl+, , Find Ctrl+F, Undo remove Ctrl+Z, Remove (the focused icon) Delete, Properties (the focused icon) F2; each can be changed or turned off (Backspace), with Ctrl, Alt or Win unless it is an F-key, Delete or Insert, and no two actions or a system-wide hotkey may share one; menus show the current key; Escape stays fixed (0.9.0) |
 | Transparency | 0 % (opaque) |
 | Close button hides to tray | on |

@@ -2355,7 +2355,7 @@
     <value>正在啟動 {0}</value>
   </data>
   <data name="Voice_Choose" xml:space="preserve">
-    <value>哪一個？</value>
+    <value>要啟動哪一個？</value>
   </data>
   <data name="Voice_NoRecogniser" xml:space="preserve">
     <value>這部電腦沒有語音辨識器。Windows 會隨語言的語音套件加入：設定 → 時間與語言 → 語言與地區 → 該語言 → 語音。</value>
@@ -2434,5 +2434,38 @@
   </data>
   <data name="Commands_Busy" xml:space="preserve">
     <value>執行中的列開著對話方塊，且已有太多命令在等待，因此未接受這些命令。請關閉對話方塊後再試一次。</value>
+  </data>
+  <data name="Voice_Shortcut" xml:space="preserve">
+    <value>捷徑 · {0}</value>
+  </data>
+  <data name="Voice_ShortcutInGroup" xml:space="preserve">
+    <value>捷徑（群組「{0}」）· {1}</value>
+  </data>
+  <data name="Voice_CommandTile" xml:space="preserve">
+    <value>命令圖示 · {0}</value>
+  </data>
+  <data name="Voice_NotApprovedHere" xml:space="preserve">
+    <value>（尚未在這台電腦上核准）</value>
+  </data>
+  <data name="Voice_Workspace" xml:space="preserve">
+    <value>工作區 · {0} 個項目：{1}</value>
+  </data>
+  <data name="Voice_ListSeparator" xml:space="preserve">
+    <value>、</value>
+  </data>
+  <data name="Voice_TheBar" xml:space="preserve">
+    <value>工具列</value>
+  </data>
+  <data name="Voice_FromAnotherPc" xml:space="preserve">
+    <value>這個說法來自另一台電腦。</value>
+  </data>
+  <data name="Voice_BarChanged" xml:space="preserve">
+    <value>工具列已變更，請再說一次。</value>
+  </data>
+  <data name="Voice_NoNamesTaken" xml:space="preserve">
+    <value>語音辨識器無法接受任何名稱。</value>
+  </data>
+  <data name="Settings_LocalNotSaved" xml:space="preserve">
+    <value>無法儲存這台電腦的語音設定；在 Desktop Icon Grid 結束前仍有效。</value>
   </data>
 </root>

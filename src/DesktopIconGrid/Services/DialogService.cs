@@ -64,11 +64,11 @@ public sealed class DialogService(IIconProvider icons) : IDialogService, ILaunch
         return window.ShowDialog() == true;
     }
 
-    public LauncherSettings? ShowSettings(LauncherSettings current)
+    public SettingsResult? ShowSettings(LauncherSettings current, DesktopIconGrid.Core.Storage.LocalSettings local)
     {
-        var viewModel = new SettingsViewModel(current);
+        var viewModel = new SettingsViewModel(current, local);
         var window = new SettingsWindow { DataContext = viewModel, Owner = Owner };
-        return window.ShowDialog() == true ? viewModel.ToSettings() : null;
+        return window.ShowDialog() == true ? new SettingsResult(viewModel.ToSettings(), viewModel.ToLocalSettings()) : null;
     }
 
     public void ShowNameTable(LauncherViewModel launcher)

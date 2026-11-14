@@ -311,6 +311,7 @@ public partial class MainWindow : Window
         _pointerHotkey = null;
         _voiceHotkey?.Dispose();
         _voiceHotkey = null;
+        _voice?.Cancel(); // the app is closing: a listening stops, and nothing it brings is started (review 27)
         _voiceWindow?.CloseForGood();
         _voiceWindow = null;
         _pointerWindow?.CloseForGood();
@@ -579,7 +580,7 @@ public partial class MainWindow : Window
         }
 
         var settings = _viewModel.Model.Settings;
-        var refusals = _hotkeys.Apply([settings.ToggleHotkey, settings.ShowAtPointerHotkey, settings.VoiceHotkey]);
+        var refusals = _hotkeys.Apply([settings.ToggleHotkey, settings.ShowAtPointerHotkey, _viewModel.Local.VoiceHotkey]); // the voice hotkey is this PC's (review 27 B4)
         var toggleError = refusals[0];
         var pointerError = refusals[1];
         var voiceError = refusals[2];
@@ -631,10 +632,12 @@ public partial class MainWindow : Window
     /// </summary>
     private void ListenWhileVoiceHotkeyIsHeld()
     {
+        var pressed = DateTime.UtcNow; // before anything else runs, so a short hold is not taken for a tap (review 27 V1)
         var voice = Voice();
         if (voice.IsListening)
         {
-            return; // a second press while a tapped listening goes on
+            voice.Cancel(); // a second press stops a tapped listening, without a word
+            return;
         }
 
         ListenForVoice();
@@ -644,7 +647,6 @@ public partial class MainWindow : Window
         }
 
         var key = KeyInterop.VirtualKeyFromKey(gesture.Key);
-        var pressed = DateTime.UtcNow;
         _voiceHoldTimer?.Stop();
         _voiceHoldTimer = new DispatcherTimer(TimeSpan.FromMilliseconds(50), DispatcherPriority.Input, (sender, _) =>
         {

@@ -26,7 +26,7 @@ public partial class VoiceWindow : Window, IVoiceView
 
     private readonly DispatcherTimer _timer;
     private Action? _cancel;
-    private TaskCompletionSource<VoiceTarget?>? _choice;
+    private TaskCompletionSource<VoiceChoiceView?>? _choice;
     private bool _closing;
 
     public VoiceWindow()
@@ -64,14 +64,16 @@ public partial class VoiceWindow : Window, IVoiceView
         Hide();
     }
 
-    public Task<VoiceTarget?> ChooseAsync(IReadOnlyList<VoiceTarget> targets)
+    public Task<VoiceChoiceView?> ChooseAsync(IReadOnlyList<VoiceChoiceView> choices)
     {
         Reset();
-        _choice = new TaskCompletionSource<VoiceTarget?>();
+        _choice = new TaskCompletionSource<VoiceChoiceView?>();
         MessageText.Text = Strings.Voice_Choose;
-        Choices.ItemsSource = targets;
+        Choices.ItemsSource = choices;
         Choices.Visibility = Visibility.Visible;
         CancelButton.Visibility = Visibility.Visible;
+        Countdown.Visibility = Visibility.Visible;
+        Countdown.BeginAnimation(System.Windows.Controls.Primitives.RangeBase.ValueProperty, new System.Windows.Media.Animation.DoubleAnimation(1, 0, ChooseFor));
         Present();
         _timer.Interval = ChooseFor;
         _timer.Start();
@@ -97,6 +99,8 @@ public partial class VoiceWindow : Window, IVoiceView
         Choices.Visibility = Visibility.Collapsed;
         Choices.ItemsSource = null;
         CancelButton.Visibility = Visibility.Collapsed;
+        Countdown.BeginAnimation(System.Windows.Controls.Primitives.RangeBase.ValueProperty, null);
+        Countdown.Visibility = Visibility.Collapsed;
     }
 
     /// <summary>Shows the window without activating it, centred near the bottom of the main screen's work area.</summary>
@@ -123,7 +127,7 @@ public partial class VoiceWindow : Window, IVoiceView
 
     private void Choice_Click(object sender, RoutedEventArgs e)
     {
-        var picked = (sender as FrameworkElement)?.Tag as VoiceTarget;
+        var picked = (sender as FrameworkElement)?.Tag as VoiceChoiceView;
         var choice = _choice;
         _choice = null;
         Reset();

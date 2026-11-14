@@ -37,7 +37,10 @@ internal sealed class RecordingDialogs : IDialogService
         return true;
     }
 
-    public LauncherSettings? ShowSettings(LauncherSettings current) => null;
+    /// <summary>What "the user" saves in Settings; <see langword="null"/> cancels.</summary>
+    public Func<LauncherSettings, LocalSettings, SettingsResult?> SettingsAnswer { get; set; } = (_, _) => null;
+
+    public SettingsResult? ShowSettings(LauncherSettings current, LocalSettings local) => SettingsAnswer(current, local);
 
     /// <summary>The text of the last question asked.</summary>
     public string? LastMessage { get; private set; }
@@ -267,7 +270,14 @@ internal sealed class FakeSwitcher : IWindowSwitcher
 /// </summary>
 internal sealed class TestBar : IDisposable
 {
-    public TestBar(string directory, LauncherModel model, ILaunchService? launcher = null, IWindowSwitcher? windows = null, Func<ShortcutItem, bool>? isMissing = null)
+    public TestBar(
+        string directory,
+        LauncherModel model,
+        ILaunchService? launcher = null,
+        IWindowSwitcher? windows = null,
+        Func<ShortcutItem, bool>? isMissing = null,
+        IEnumerable<ISpecialIconHandler>? handlers = null,
+        DesktopIconGrid.Core.SpecialIcons.CommandTrust? trust = null)
     {
         Model = model;
         Tracker = new ProcessTracker(Dispatcher.CurrentDispatcher, Path.Combine(directory, "logs"));
@@ -278,10 +288,11 @@ internal sealed class TestBar : IDisposable
             Dialogs,
             launcher ?? new RecordingLauncher(),
             Tracker,
-            new SpecialIconRegistry([]),
+            new SpecialIconRegistry(handlers ?? []),
             action => action(),
             windows,
-            isMissing ?? (_ => false));
+            isMissing ?? (_ => false),
+            trust: trust);
     }
 
     public LauncherModel Model { get; }
