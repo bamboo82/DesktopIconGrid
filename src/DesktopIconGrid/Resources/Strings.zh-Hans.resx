@@ -2286,7 +2286,7 @@
     <value>接收来自我其他电脑的文件</value>
   </data>
   <data name="Menu_ReceiveFilesToolTip" xml:space="preserve">
-    <value>其他电脑通过同步文件夹或 Google 云端硬盘发送到这台电脑的文件会存入“下载”文件夹。在该电脑上添加了“发送到电脑”图标的电脑也会接收。</value>
+    <value>其他电脑通过同步文件夹或 Google 云端硬盘发送到这台电脑的文件会存入“下载”文件夹。“发送到电脑”图标勾选了“这台电脑也接收文件”的电脑也会接收。</value>
   </data>
   <data name="Inbox_WaitingTitle" xml:space="preserve">
     <value>来自 {0} 的文件正在等待</value>

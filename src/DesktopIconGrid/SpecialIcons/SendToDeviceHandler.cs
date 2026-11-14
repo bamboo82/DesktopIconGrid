@@ -44,7 +44,7 @@ public sealed class SendToDeviceHandler(IReceiving receiving, IDialogService dia
     /// <summary>A click sends nothing: it says what the icon is for (a hint, not a failure).</summary>
     public LaunchResult Activate(SpecialIconItem item, ActivationModifiers modifiers)
     {
-        dialogs.Notify(item.Name, item.GetSetting(DeviceIdKey) is { } id ? string.Format(Strings.SendTo_ToolTip, StoredName(item, id)) : Strings.SendTo_NoDevice);
+        dialogs.Inform(item.Name, item.GetSetting(DeviceIdKey) is { } id ? string.Format(Strings.SendTo_ToolTip, StoredName(item, id)) : Strings.SendTo_NoDevice);
         return LaunchResult.Started;
     }
 
@@ -123,7 +123,7 @@ public sealed class SendToDeviceHandler(IReceiving receiving, IDialogService dia
         });
         if (sent > 0)
         {
-            dialogs.Notify(item.Name, string.Format(Strings.SendTo_Sent, sent, name));
+            dialogs.Inform(item.Name, string.Format(Strings.SendTo_Sent, sent, name));
         }
 
         return problems.Count == 0 ? LaunchResult.Started : LaunchResult.Failure(string.Join("\n", problems));

@@ -81,6 +81,15 @@ internal sealed class RecordingDialogs : IDialogService
 
     public void Notify(string title, string message) => Notices.Add(title);
 
+    /// <summary>The notices that report no failure; they are in <see cref="Notices"/> too.</summary>
+    public List<string> Informed { get; } = [];
+
+    public void Inform(string title, string message)
+    {
+        Notices.Add(title);
+        Informed.Add(title);
+    }
+
     public void ShowSync()
     {
     }

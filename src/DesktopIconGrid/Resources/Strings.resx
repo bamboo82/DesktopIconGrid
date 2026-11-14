@@ -2286,7 +2286,7 @@ Details are in {1}.</value>
     <value>Receive files from my other PCs</value>
   </data>
   <data name="Menu_ReceiveFilesToolTip" xml:space="preserve">
-    <value>Files other PCs send to this one through the sync folder or Google Drive are put in Downloads. A PC with a Send to PC icon added there receives too.</value>
+    <value>Files other PCs send to this one through the sync folder or Google Drive are put in Downloads. A PC also receives while a Send to PC icon there has “This PC also receives files” ticked.</value>
   </data>
   <data name="Inbox_WaitingTitle" xml:space="preserve">
     <value>File from {0} is waiting</value>

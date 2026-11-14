@@ -203,7 +203,7 @@ public partial class App : Application
         Func<Window?> owner = () => Current?.MainWindow;
         var cacheDirectory = AppPaths.DriveCacheDirectory;
         var trust = new CommandTrust(Path.Combine(AppPaths.DataDirectory, CommandTrust.FileName)); // command tiles and health checks
-        _inbox = new InboxService(syncService, dialogs.Notify, Dispatcher);
+        _inbox = new InboxService(syncService, dialogs.Notify, dialogs.Inform, Dispatcher);
         var specialIcons = new SpecialIconRegistry([
             new CpuUsageHandler(_monitor, owner),
             new DiskUsageHandler(_monitor, owner),
@@ -215,7 +215,7 @@ public partial class App : Application
             new DriveBucketHandler(syncService, dialogs, owner, icons, cacheDirectory, Dispatcher),
             new SoundReplayerHandler(owner, AppPaths.SoundsDirectory, Dispatcher),
             new SendToDeviceHandler(_inbox, dialogs, owner, Path.Combine(cacheDirectory, "pasted"), trust),
-            new ClockTileHandler(dialogs.Notify, owner, Dispatcher),
+            new ClockTileHandler(dialogs.Inform, owner, Dispatcher), // a timer's phases are notices, not failures
             new CommandTileHandler(trust, owner, Dispatcher),
             new VoiceHandler(() => (MainWindow as MainWindow)?.ListenForVoice(), () => (MainWindow as MainWindow)?.VoiceLanguageInUse),
         ]);
@@ -282,7 +282,7 @@ public partial class App : Application
 
             if (change == StartupChange.LeftToAnotherCopy)
             {
-                dialogs.Notify(Strings.Settings_StartWithWindows, string.Format(Strings.Startup_AnotherCopy, startup?.RegisteredExecutable));
+                dialogs.Inform(Strings.Settings_StartWithWindows, string.Format(Strings.Startup_AnotherCopy, startup?.RegisteredExecutable));
             }
         };
 

@@ -25,7 +25,7 @@ public sealed class HealthLight : ObservableObject
     private readonly string _name;
     private readonly HealthCheck _check;
     private readonly bool _notify;
-    private readonly Action<string, string>? _notifier;
+    private readonly Action<string, string, bool>? _notifier;
     private readonly DispatcherTimer _timer;
     private readonly CancellationTokenSource _stop = new();
     private HealthStatus _status;
@@ -38,8 +38,9 @@ public sealed class HealthLight : ObservableObject
     private bool _paused;
     private bool _stopped;
 
+    /// <param name="notifier">Shows a notice: the title, the text, and whether it reports a problem (the check went down).</param>
     /// <param name="trust">Where approvals are kept: the light contacts nothing until <see cref="HealthCheck.Hash"/> is approved there.</param>
-    public HealthLight(string name, HealthCheck check, int intervalSeconds, bool notify, Action<string, string>? notifier, Dispatcher dispatcher, CommandTrust trust)
+    public HealthLight(string name, HealthCheck check, int intervalSeconds, bool notify, Action<string, string, bool>? notifier, Dispatcher dispatcher, CommandTrust trust)
     {
         _name = name;
         _check = check;
@@ -184,7 +185,8 @@ public sealed class HealthLight : ObservableObject
 
             if (_notify && before != HealthStatus.Unknown)
             {
-                _notifier?.Invoke(_name, _status == HealthStatus.Up ? Strings.Health_NowUp : string.Format(Strings.Health_NowDown, _check.Shown, _detail ?? Strings.Health_Down));
+                var up = _status == HealthStatus.Up;
+                _notifier?.Invoke(_name, up ? Strings.Health_NowUp : string.Format(Strings.Health_NowDown, _check.Shown, _detail ?? Strings.Health_Down), !up);
             }
         }
 

@@ -9,6 +9,29 @@ The owner relays replies.
 
 ---
 
+## 2026-11-14 (76) — Your two items from the release check
+
+Run 173 (`f9669a6`) is green. Your release check of it arrived: no release commit until your word, as you wrote.
+This entry claims no run for its own commit.
+
+1. `Menu_ReceiveFilesToolTip` names the box, in your words; zh-Hans is mine ("“发送到电脑”图标勾选了“这台电脑也接收文件”的电脑也会接收。").
+2. Notices that report no failure are logged at Info.
+   - `IDialogService.Inform` is new. It shows a notice as `Notify` does (the balloon, else a box with the
+     information icon) and logs it as `Info`. `Notify` stays `Warning`, for failures and problems.
+   - Moved to `Inform`:
+     - a file received;
+     - the Send to PC icon's click hint, and "N file(s) on the way";
+     - a clock's phases (the handler gets `Inform`);
+     - "positions of N windows remembered" (nothing found, or not saved, stays `Notify`);
+     - "Start with Windows is left to another copy";
+     - a health check that is up again. The light's notifier now says whether its notice is a problem: down is a
+       warning, up is not.
+   - Left as warnings, since each reports that something did not happen: a file waiting for disk space; every
+     launch, save and layout failure; "nothing to start" for a multi-launch or workspace; a bad workspace name; the
+     read-only portable folder; sync's warnings and errors; a bucket's errors.
+   - **Test (App, CI only):** `Inform` writes an `Info` entry, `Notify` a `Warning`. The health light's two kinds
+     are not tested.
+
 ## 2026-11-14 (75) — Ready for the release check
 
 Run 172 (`9d73554`, WP7) is green. WP1–WP7 of review 27's plan are done, with F1 (entry 73) in between:

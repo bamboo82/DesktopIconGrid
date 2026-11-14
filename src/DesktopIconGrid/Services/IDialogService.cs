@@ -32,8 +32,17 @@ public interface IDialogService
 
     void ShowInfo(string title, string message);
 
-    /// <summary>A notice that needs no decision: shown without interrupting (tray balloon), and logged.</summary>
+    /// <summary>
+    /// A notice that needs no decision and reports a failure or a problem: shown without interrupting (tray balloon), and
+    /// logged as a warning.
+    /// </summary>
     void Notify(string title, string message);
+
+    /// <summary>
+    /// A notice that reports no failure (a file received, a timer's phase): shown as <see cref="Notify"/> shows it, and
+    /// logged as information, not as a warning (the release check of 0.11.0).
+    /// </summary>
+    void Inform(string title, string message);
 
     /// <summary>Shows the Google Drive sync dialog.</summary>
     void ShowSync();

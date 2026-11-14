@@ -35,6 +35,7 @@ public sealed class InboxService : IDisposable, IReceiving
 
     private readonly SyncService _sync;
     private readonly Action<string, string> _notify;
+    private readonly Action<string, string> _inform;
     private readonly Dispatcher _dispatcher;
     private readonly DispatcherTimer _timer;
     private readonly InboxBackOff _backOff = new();
@@ -53,10 +54,13 @@ public sealed class InboxService : IDisposable, IReceiving
     /// <summary>Inbox files the user was told are waiting for disk space: told once, not every minute.</summary>
     private static readonly HashSet<string> ToldWaiting = new(StringComparer.OrdinalIgnoreCase);
 
-    public InboxService(SyncService sync, Action<string, string> notify, Dispatcher dispatcher)
+    /// <param name="notify">Shows a notice of a problem: a file that waits for disk space.</param>
+    /// <param name="inform">Shows a notice of no problem: a file received (logged as information, not as a warning).</param>
+    public InboxService(SyncService sync, Action<string, string> notify, Action<string, string> inform, Dispatcher dispatcher)
     {
         _sync = sync;
         _notify = notify;
+        _inform = inform;
         _dispatcher = dispatcher;
         _timer = new DispatcherTimer(TimeSpan.FromMinutes(1), DispatcherPriority.Background, (_, _) => Look(), dispatcher);
         _timer.Stop();
@@ -204,7 +208,7 @@ public sealed class InboxService : IDisposable, IReceiving
             foreach (var (name, sender, marked) in received)
             {
                 var message = string.Format(Strings.Inbox_Received, name);
-                _notify(string.Format(Strings.Inbox_ReceivedTitle, sender), marked ? message : $"{message}\n{Strings.Inbox_NotMarked}");
+                _inform(string.Format(Strings.Inbox_ReceivedTitle, sender), marked ? message : $"{message}\n{Strings.Inbox_NotMarked}");
             }
         }
         catch (Exception ex) when (ex is not OutOfMemoryException)

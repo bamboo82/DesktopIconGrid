@@ -31,6 +31,15 @@ public sealed class DialogService(IIconProvider icons) : IDialogService, ILaunch
         }
     }
 
+    public void Inform(string title, string message)
+    {
+        AppLog.Default.Info("App", $"{title}: {message.ReplaceLineEndings(" ")}");
+        if (Notifier is null || !Notifier(title, message))
+        {
+            Show(message, title, MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+    }
+
     public void ShowAppLog()
     {
         if (_logWindow is { IsLoaded: true })

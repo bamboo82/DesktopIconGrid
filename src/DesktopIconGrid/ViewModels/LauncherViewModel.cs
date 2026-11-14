@@ -409,6 +409,19 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
     /// <summary>A notification (a health light that changed), as the app shows them.</summary>
     internal void Notify(string title, string message) => _dialogs.Notify(title, message);
 
+    /// <summary>A notice: of a failure or problem (logged as a warning), or of none (logged as information).</summary>
+    internal void Notify(string title, string message, bool failure)
+    {
+        if (failure)
+        {
+            _dialogs.Notify(title, message);
+        }
+        else
+        {
+            _dialogs.Inform(title, message);
+        }
+    }
+
     public ItemViewModel GetOrCreateViewModel(LauncherItem item)
     {
         if (!_viewModels.TryGetValue(item.Id, out var viewModel))
@@ -1625,11 +1638,14 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
 
         // A member that is closed right now keeps the place it had (review 24 W7); one that left the workspace does not.
         var saved = found.Count == 0 || _workspacePositions.Set(workspace, found, keep: members.Select(member => member.Id).ToList());
-        _dialogs.Notify(
-            WorkspaceLabel(workspace),
-            found.Count == 0 ? Strings.Workspace_NothingCaptured
-            : saved ? string.Format(Strings.Workspace_Captured, found.Count)
-            : Strings.Workspace_NotSaved);
+        if (found.Count > 0 && saved)
+        {
+            _dialogs.Inform(WorkspaceLabel(workspace), string.Format(Strings.Workspace_Captured, found.Count));
+        }
+        else
+        {
+            _dialogs.Notify(WorkspaceLabel(workspace), found.Count == 0 ? Strings.Workspace_NothingCaptured : Strings.Workspace_NotSaved);
+        }
         return found.Count;
     }
 
