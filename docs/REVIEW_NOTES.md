@@ -9,6 +9,63 @@ The owner relays replies.
 
 ---
 
+## 2026-11-14 (67) — WP1: Settings as tabs (review 27 B1)
+
+Review 27 and its work plan arrived in two messages, and both are taken as the plan for 0.11.0. Run 162 (`d53640d`)
+is green. This entry claims no run for its own commit.
+
+Process, as I read your message:
+- I code WP1–WP7 in order, one entry each, and write "ready for the release check" after WP7.
+- `main` and the tags are not touched by this session; the release is between you and the owner.
+- My replies to you are refused from this cloud session (HTTP 401), so this file stays the channel.
+
+### B1
+
+- **Layout.** A `TabControl` with the five tabs of the design, in its order, opening on Appearance. Width 520.
+  Save and Cancel sit under the tabs, with the problem line to their left.
+- **Nearest thing to the design.** The tab strip only chooses. The five pages lie in one cell under it, and the
+  hidden ones keep their place in the layout. So the page area is as tall as the tallest page, the window does not
+  change height between tabs, and nothing has to be measured in code. Each page is a `ScrollViewer` with
+  `MaxHeight="560"` and its own `Grid`. On a screen too short for 560, the window's existing work-area limit
+  shrinks the page area, and the page scrolls.
+- **Pages.**
+  - *Appearance*: theme, background, bar background, icon size, spacing, labels, transparency.
+  - *Window*: open with, the window check boxes with start with Windows and start hidden, dock and auto-hide.
+  - *Keys*: the two hotkeys, then the keys of the bar's window. Their table spans both columns, so a long Chinese
+    label keeps its room next to the 140 px box.
+  - *Voice*: hotkey, language, then the design's paragraph. It replaces the two old hints
+    (`Settings_VoiceHotkeyHint`, `Settings_VoiceLanguageHint`, now removed). Its last sentence, "kept on this PC
+    and not synced", becomes true with WP3 (B4). Until then the hotkey still travels with the layout.
+  - *General*: language.
+- **Problems.** `AppearanceTab`, `KeysTab` and `VoiceTab` put "⚠ " before the name while a value cannot be saved:
+  - Appearance: a custom background that is no colour;
+  - Keys: a hotkey a window key has, or show-at-pointer equal to show/hide;
+  - Voice: the voice hotkey clashing with a window key or another hotkey.
+
+  `ProblemText` names the first such tab (`Settings_FixOnTab`). `CanSave` is made of the same three, so the two
+  cannot disagree. Changing the theme now refreshes Save too: leaving Custom with a bad colour re-enables it,
+  which it did not before.
+- **Keyboard.** Ctrl+Tab and Ctrl+Shift+Tab, handled on the window, change the tab from anywhere and put the focus
+  on the new page's first control. The arrow keys on the tab strip change the tab and leave the focus on the strip,
+  so they can go on; the design's "first control" rule is applied to Ctrl+Tab only. Enter and Esc are the default
+  and cancel buttons, as before.
+- **Not done:** the optional "open on Voice" from the voice icon's no-recogniser message. It needs a way for that
+  message to open Settings, which the plan does not describe.
+- **Strings:** seven new (the tab names, `Settings_FixOnTab`, `Settings_VoiceTabHint`), two removed: 794 in each
+  file. zh-Hans 常规 for General (Windows' word for that tab).
+
+### Tests (App, CI only)
+
+- `Every_tab_of_Settings_gives_each_control_a_cell_of_its_own`: each grid on each page; a child outside the grid's
+  rows or columns, or two children on one cell (spans included), fails.
+- `Settings_show_one_page_at_a_time_in_the_height_of_the_tallest`: one page visible, and the same window height on
+  the shortest page. It does not press Ctrl+Tab: a simulated key does not carry the modifier state the handler reads.
+- `A_tab_with_a_value_that_cannot_be_saved_is_marked_and_named_beside_Save` (view model).
+- **Changed:** `Settings_scroll_on_a_short_screen…` now chooses the Keys tab, the tallest page, before checking that
+  the body scrolls. Appearance alone is too close to the 400-unit screen for that test to mean anything.
+- Not tested: 150 % scaling, and how the tab strip looks under the Windows 11 dialog style. Both are for your look
+  in the release check.
+
 ## 2026-11-12 (66) — Review 24's leftovers: W3, L5 and the rest of the minor list
 
 What entry 60 left of review 24. Run 159 (`569202c`) is green. Run 160 (`87d1b0d`, the change) failed on two

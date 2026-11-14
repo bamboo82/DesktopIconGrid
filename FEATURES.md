@@ -663,6 +663,14 @@ warnings and errors. The last 2000 entries stay in memory and all of them are ap
 
 Settings live in the same JSON file as the layout and apply immediately on *Save*.
 
+The dialog (0.11.0) has five tabs: *Appearance* (theme, background, bar background, icon size, spacing, labels,
+transparency), *Window* (open with, the window check boxes, start with Windows, dock to an edge), *Keys* (the
+show/hide and show-at-pointer hotkeys, the keys in the bar), *Voice* (the voice hotkey and language, one hint) and
+*General* (language). Save and Cancel stay under every tab. A tab with a value that cannot be saved shows ⚠ before
+its name, and the line beside Save names the first such tab. Ctrl+Tab and Ctrl+Shift+Tab change the tab and put the
+focus on its first control; Enter saves and Esc cancels. The page area is as tall as the tallest page, at most 560,
+and each page scrolls on a screen too short for it.
+
 ## 8. Persistence
 
 - File: `%LocalAppData%\DesktopIconGrid\layout.json`, written atomically

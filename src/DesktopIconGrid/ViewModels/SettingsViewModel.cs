@@ -185,6 +185,7 @@ public sealed class SettingsViewModel : ObservableObject
             {
                 OnPropertyChanged(nameof(IsCustomTheme));
                 OnPropertyChanged(nameof(PreviewBrush));
+                OnProblemsChanged(); // leaving the custom theme settles an unreadable colour
             }
         }
     }
@@ -200,7 +201,7 @@ public sealed class SettingsViewModel : ObservableObject
             {
                 OnPropertyChanged(nameof(IsColorValid));
                 OnPropertyChanged(nameof(PreviewBrush));
-                OnPropertyChanged(nameof(CanSave));
+                OnProblemsChanged();
             }
         }
     }
@@ -431,7 +432,47 @@ public sealed class SettingsViewModel : ObservableObject
     public string? WindowKeyUsing(string hotkey) =>
         string.IsNullOrWhiteSpace(hotkey) ? null : WindowKeyRows.FirstOrDefault(row => HotkeyGesture.SameCombination(row.Text, hotkey))?.Label;
 
-    public bool CanSave => (!IsCustomTheme || IsColorValid) && IsHotkeyValid && IsPointerHotkeyValid && IsVoiceHotkeyValid;
+    public bool CanSave => !HasAppearanceProblem && !HasKeysProblem && !HasVoiceProblem;
+
+    // ----- tabs (review 27 B1) -----------------------------------------------------------------------
+
+    /// <summary>The Appearance tab holds a value that cannot be saved: a custom background that is no colour.</summary>
+    private bool HasAppearanceProblem => IsCustomTheme && !IsColorValid;
+
+    /// <summary>The Keys tab: a hotkey a window key has, or the show-at-pointer hotkey equal to the show/hide one.</summary>
+    private bool HasKeysProblem => !IsHotkeyValid || !IsPointerHotkeyValid;
+
+    /// <summary>The Voice tab: its hotkey is a window key's or one of the other two hotkeys.</summary>
+    private bool HasVoiceProblem => !IsVoiceHotkeyValid;
+
+    public string AppearanceTab => TabHeader(Strings.Settings_TabAppearance, HasAppearanceProblem);
+
+    public string WindowTab => Strings.Settings_TabWindow;
+
+    public string KeysTab => TabHeader(Strings.Settings_TabKeys, HasKeysProblem);
+
+    public string VoiceTab => TabHeader(Strings.Settings_TabVoice, HasVoiceProblem);
+
+    public string GeneralTab => Strings.Settings_TabGeneral;
+
+    /// <summary>The line beside Save: which tab, the first in the tab order, has something to fix; empty when none has.</summary>
+    public string ProblemText =>
+        HasAppearanceProblem ? string.Format(Strings.Settings_FixOnTab, Strings.Settings_TabAppearance)
+        : HasKeysProblem ? string.Format(Strings.Settings_FixOnTab, Strings.Settings_TabKeys)
+        : HasVoiceProblem ? string.Format(Strings.Settings_FixOnTab, Strings.Settings_TabVoice)
+        : string.Empty;
+
+    /// <summary>A tab's name, with a warning sign before it while one of its values cannot be saved.</summary>
+    private static string TabHeader(string name, bool hasProblem) => hasProblem ? "\u26A0 " + name : name;
+
+    private void OnProblemsChanged()
+    {
+        OnPropertyChanged(nameof(AppearanceTab));
+        OnPropertyChanged(nameof(KeysTab));
+        OnPropertyChanged(nameof(VoiceTab));
+        OnPropertyChanged(nameof(ProblemText));
+        OnPropertyChanged(nameof(CanSave));
+    }
 
     private void OnHotkeysChanged()
     {
@@ -446,7 +487,7 @@ public sealed class SettingsViewModel : ObservableObject
         OnPropertyChanged(nameof(HasVoiceHotkeyClash));
         OnPropertyChanged(nameof(IsVoiceHotkeySame));
         OnPropertyChanged(nameof(IsVoiceHotkeyValid));
-        OnPropertyChanged(nameof(CanSave));
+        OnProblemsChanged();
     }
 
     public RelayCommand<string> SelectPresetCommand { get; }

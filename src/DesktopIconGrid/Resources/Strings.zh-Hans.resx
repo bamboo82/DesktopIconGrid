@@ -2381,9 +2381,6 @@
   <data name="Settings_VoiceHotkeyName" xml:space="preserve">
     <value>语音快捷键</value>
   </data>
-  <data name="Settings_VoiceHotkeyHint" xml:space="preserve">
-    <value>在任何地方按住并说出图标（或工作区）的名称即可启动；松开即结束聆听。短按一下则会聆听到说出名称为止。工具栏不会自行聆听。</value>
-  </data>
   <data name="Settings_VoiceHotkeySame" xml:space="preserve">
     <value>请使用与另外两个快捷键不同的组合。</value>
   </data>
@@ -2395,9 +2392,6 @@
   </data>
   <data name="Settings_VoiceLanguageAuto" xml:space="preserve">
     <value>与工具栏相同</value>
-  </data>
-  <data name="Settings_VoiceLanguageHint" xml:space="preserve">
-    <value>这台电脑拥有的语音识别器。其他语言的名称不容易听懂：请在“编辑名称”→“也可以说”中为它们添加另一种说法。</value>
   </data>
   <data name="Settings_VoiceLanguageNone" xml:space="preserve">
     <value>这台电脑没有语音识别器。</value>
@@ -2416,5 +2410,26 @@
   </data>
   <data name="Volume_Unreachable" xml:space="preserve">
     <value>无法访问扬声器；原因写在 app.log。</value>
+  </data>
+  <data name="Settings_TabAppearance" xml:space="preserve">
+    <value>外观</value>
+  </data>
+  <data name="Settings_TabWindow" xml:space="preserve">
+    <value>窗口</value>
+  </data>
+  <data name="Settings_TabKeys" xml:space="preserve">
+    <value>按键</value>
+  </data>
+  <data name="Settings_TabVoice" xml:space="preserve">
+    <value>语音</value>
+  </data>
+  <data name="Settings_TabGeneral" xml:space="preserve">
+    <value>常规</value>
+  </data>
+  <data name="Settings_FixOnTab" xml:space="preserve">
+    <value>“{0}”页有需要修正的项目。</value>
+  </data>
+  <data name="Settings_VoiceTabHint" xml:space="preserve">
+    <value>按住快捷键并说出图标或工作区的名称。工具栏只在您要求时聆听，只在这台电脑上，且只听工具栏上的名称。此快捷键只保存在这台电脑，不会同步。</value>
   </data>
 </root>

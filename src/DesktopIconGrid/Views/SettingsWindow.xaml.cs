@@ -1,6 +1,7 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Threading;
 using DesktopIconGrid.Resources;
 using DesktopIconGrid.Services;
 using DesktopIconGrid.ViewModels;
@@ -17,6 +18,46 @@ public partial class SettingsWindow : Window
     }
 
     private SettingsViewModel? ViewModel => DataContext as SettingsViewModel;
+
+    /// <summary>The five pages, in the order of the tabs.</summary>
+    internal IReadOnlyList<ScrollViewer> PageList => [.. Pages.Children.OfType<ScrollViewer>()];
+
+    /// <summary>The page of the chosen tab, which scrolls when the screen is too short for it.</summary>
+    internal ScrollViewer Body => PageList[Math.Max(0, Tabs.SelectedIndex)];
+
+    /// <summary>Shows the chosen tab's page; the others stay in the layout, hidden, so the page area keeps its height.</summary>
+    private void Tabs_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (!ReferenceEquals(e.OriginalSource, Tabs))
+        {
+            return;
+        }
+
+        var pages = PageList;
+        for (var i = 0; i < pages.Count; i++)
+        {
+            pages[i].Visibility = i == Tabs.SelectedIndex ? Visibility.Visible : Visibility.Hidden;
+        }
+    }
+
+    /// <summary>
+    /// Ctrl+Tab and Ctrl+Shift+Tab change the tab from anywhere in the window and put the focus on the first control of
+    /// the new page. (The arrow keys on the tab strip change it too and leave the focus there, so they can go on.)
+    /// </summary>
+    private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key != Key.Tab || (Keyboard.Modifiers & ModifierKeys.Control) == 0 || (Keyboard.Modifiers & ModifierKeys.Alt) != 0)
+        {
+            return;
+        }
+
+        var count = Tabs.Items.Count;
+        var step = (Keyboard.Modifiers & ModifierKeys.Shift) != 0 ? count - 1 : 1;
+        Tabs.SelectedIndex = (Math.Max(0, Tabs.SelectedIndex) + step) % count;
+        e.Handled = true;
+        var page = Body;
+        Dispatcher.BeginInvoke(DispatcherPriority.Input, () => page.MoveFocus(new TraversalRequest(FocusNavigationDirection.First)));
+    }
 
     private void Save_Click(object sender, RoutedEventArgs e) => DialogResult = true;
 

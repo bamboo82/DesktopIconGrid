@@ -65,7 +65,97 @@ public sealed class DialogFitTests(WpfThread wpf)
         wpf.Invoke(() =>
         {
             var window = new SettingsWindow { DataContext = new SettingsViewModel(new LauncherSettings()) };
+            window.Tabs.SelectedIndex = 2; // Keys, the tallest page since Settings has tabs
             FitsAShortScreen(window, window.Body, 400, Strings.Common_Save, Strings.Common_Cancel);
+        });
+    }
+
+    /// <summary>
+    /// Review 27 B1: the voice rows had Grid.Row 14 and 15 in a grid of 14 rows, so WPF drew them on row 13, over the
+    /// window keys. Every grid on every tab: each child inside the grid's rows and columns, and no two children on one cell.
+    /// </summary>
+    [Fact]
+    public void Every_tab_of_Settings_gives_each_control_a_cell_of_its_own()
+    {
+        wpf.Invoke(() =>
+        {
+            var window = new SettingsWindow { DataContext = new SettingsViewModel(new LauncherSettings()) };
+            try
+            {
+                Assert.Equal(5, window.Tabs.Items.Count);
+                Assert.Equal(5, window.PageList.Count);
+                foreach (var page in window.PageList)
+                {
+                    var grids = (page.Content is Grid root ? [root] : Array.Empty<Grid>()).Concat(LogicalDescendants<Grid>(page)).Distinct().ToList();
+                    Assert.NotEmpty(grids);
+                    foreach (var grid in grids)
+                    {
+                        EachChildHasItsOwnCell(grid, (string)page.GetValue(System.Windows.Automation.AutomationProperties.NameProperty));
+                    }
+                }
+            }
+            finally
+            {
+                window.Close();
+            }
+        });
+    }
+
+    private static void EachChildHasItsOwnCell(Grid grid, string tab)
+    {
+        var rows = Math.Max(1, grid.RowDefinitions.Count);
+        var columns = Math.Max(1, grid.ColumnDefinitions.Count);
+        var taken = new Dictionary<(int Row, int Column), UIElement>();
+        foreach (UIElement child in grid.Children)
+        {
+            var row = Grid.GetRow(child);
+            var column = Grid.GetColumn(child);
+            Assert.True(row < rows, $"{tab}: {Describe(child)} is in row {row} of a grid with {rows}");
+            Assert.True(column < columns, $"{tab}: {Describe(child)} is in column {column} of a grid with {columns}");
+            for (var r = row; r < Math.Min(rows, row + Grid.GetRowSpan(child)); r++)
+            {
+                for (var c = column; c < Math.Min(columns, column + Grid.GetColumnSpan(child)); c++)
+                {
+                    Assert.True(taken.TryAdd((r, c), child), $"{tab}: {Describe(child)} and {Describe(taken.GetValueOrDefault((r, c))!)} share row {r}, column {c}");
+                }
+            }
+        }
+    }
+
+    private static string Describe(UIElement element) => element switch
+    {
+        TextBlock text => $"\"{text.Text}\"",
+        FrameworkElement { Name.Length: > 0 } named => named.Name,
+        _ => element.GetType().Name,
+    };
+
+    [Fact]
+    public void Settings_show_one_page_at_a_time_in_the_height_of_the_tallest()
+    {
+        wpf.Invoke(() =>
+        {
+            var window = new SettingsWindow { DataContext = new SettingsViewModel(new LauncherSettings()) };
+            try
+            {
+                window.Show();
+                window.UpdateLayout();
+                Assert.Equal(0, window.Tabs.SelectedIndex); // opens on Appearance
+                var height = window.ActualHeight;
+
+                window.Tabs.SelectedIndex = 4; // General, the shortest page
+                window.UpdateLayout();
+                Assert.Equal([false, false, false, false, true], window.PageList.Select(page => page.IsVisible));
+                Assert.Equal(height, window.ActualHeight, 1); // the page area keeps the tallest page's height
+
+                window.Tabs.SelectedIndex = 0;
+                window.UpdateLayout();
+                Assert.Same(window.PageList[0], window.Body);
+                Assert.True(window.PageList[0].IsVisible);
+            }
+            finally
+            {
+                window.Close();
+            }
         });
     }
 

@@ -2381,9 +2381,6 @@
   <data name="Settings_VoiceHotkeyName" xml:space="preserve">
     <value>語音快速鍵</value>
   </data>
-  <data name="Settings_VoiceHotkeyHint" xml:space="preserve">
-    <value>在任何地方按住並說出圖示（或工作區）的名稱即可啟動；放開即結束聆聽。短按一下則會聆聽到說出名稱為止。工具列不會自行聆聽。</value>
-  </data>
   <data name="Settings_VoiceHotkeySame" xml:space="preserve">
     <value>請使用與另外兩個快速鍵不同的組合。</value>
   </data>
@@ -2395,9 +2392,6 @@
   </data>
   <data name="Settings_VoiceLanguageAuto" xml:space="preserve">
     <value>與工具列相同</value>
-  </data>
-  <data name="Settings_VoiceLanguageHint" xml:space="preserve">
-    <value>這部電腦擁有的語音辨識器。其他語言的名稱不容易聽懂：請在「編輯名稱」→「也可以說」為它們加上另一個說法。</value>
   </data>
   <data name="Settings_VoiceLanguageNone" xml:space="preserve">
     <value>這部電腦沒有語音辨識器。</value>
@@ -2416,5 +2410,26 @@
   </data>
   <data name="Volume_Unreachable" xml:space="preserve">
     <value>無法存取喇叭；原因寫在 app.log。</value>
+  </data>
+  <data name="Settings_TabAppearance" xml:space="preserve">
+    <value>外觀</value>
+  </data>
+  <data name="Settings_TabWindow" xml:space="preserve">
+    <value>視窗</value>
+  </data>
+  <data name="Settings_TabKeys" xml:space="preserve">
+    <value>按鍵</value>
+  </data>
+  <data name="Settings_TabVoice" xml:space="preserve">
+    <value>語音</value>
+  </data>
+  <data name="Settings_TabGeneral" xml:space="preserve">
+    <value>一般</value>
+  </data>
+  <data name="Settings_FixOnTab" xml:space="preserve">
+    <value>「{0}」頁有需要修正的項目。</value>
+  </data>
+  <data name="Settings_VoiceTabHint" xml:space="preserve">
+    <value>按住快速鍵並說出圖示或工作區的名稱。工具列只在您要求時聆聽，只在這台電腦上，且只聽工具列上的名稱。此快速鍵只保存在這台電腦，不會同步。</value>
   </data>
 </root>

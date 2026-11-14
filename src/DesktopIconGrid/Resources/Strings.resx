@@ -2381,9 +2381,6 @@ Details are in {1}.</value>
   <data name="Settings_VoiceHotkeyName" xml:space="preserve">
     <value>Voice hotkey</value>
   </data>
-  <data name="Settings_VoiceHotkeyHint" xml:space="preserve">
-    <value>Hold it anywhere and say the name of an icon (or a workspace) to start it; letting go ends the listening. A short tap listens until a name was said. The bar never listens on its own.</value>
-  </data>
   <data name="Settings_VoiceHotkeySame" xml:space="preserve">
     <value>Use a different combination from the other two hotkeys.</value>
   </data>
@@ -2395,9 +2392,6 @@ Details are in {1}.</value>
   </data>
   <data name="Settings_VoiceLanguageAuto" xml:space="preserve">
     <value>Same as the bar</value>
-  </data>
-  <data name="Settings_VoiceLanguageHint" xml:space="preserve">
-    <value>The speech recognisers this PC has. Names in another language are heard badly: give them another phrase under Edit names → Also say.</value>
   </data>
   <data name="Settings_VoiceLanguageNone" xml:space="preserve">
     <value>This PC has no speech recogniser.</value>
@@ -2416,5 +2410,26 @@ Details are in {1}.</value>
   </data>
   <data name="Volume_Unreachable" xml:space="preserve">
     <value>The speakers could not be reached; app.log says why.</value>
+  </data>
+  <data name="Settings_TabAppearance" xml:space="preserve">
+    <value>Appearance</value>
+  </data>
+  <data name="Settings_TabWindow" xml:space="preserve">
+    <value>Window</value>
+  </data>
+  <data name="Settings_TabKeys" xml:space="preserve">
+    <value>Keys</value>
+  </data>
+  <data name="Settings_TabVoice" xml:space="preserve">
+    <value>Voice</value>
+  </data>
+  <data name="Settings_TabGeneral" xml:space="preserve">
+    <value>General</value>
+  </data>
+  <data name="Settings_FixOnTab" xml:space="preserve">
+    <value>There is something to fix on the “{0}” tab.</value>
+  </data>
+  <data name="Settings_VoiceTabHint" xml:space="preserve">
+    <value>Hold the hotkey and say the name of an icon or a workspace. The bar listens only while you ask it to, on this PC, and only for the names on the bar. This hotkey is kept on this PC and is not synced.</value>
   </data>
 </root>

@@ -28,6 +28,11 @@ Google Drive, voice launch), and the fixes the review of 0.10.0 placed after the
   other files without a sync folder. The rules are the same: receiving is off until you add a Send to PC icon
   on that PC or tick *Receive files from my other PCs*; files land in Downloads, marked as downloaded.
 
+### Changed
+
+- Settings has tabs: Appearance, Window, Keys, Voice and General. A tab with something to fix is marked, and the
+  line beside Save says which one. (The voice settings were drawn on top of the keys of the bar's window.)
+
 ### Fixed
 
 - The network, disk and microphone tiles read their values off the UI thread, so a slow adapter list, a sleeping

@@ -4920,6 +4920,15 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to There is something to fix on the “{0}” tab..
+        /// </summary>
+        public static string Settings_FixOnTab {
+            get {
+                return ResourceManager.GetString("Settings_FixOnTab", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Windows 11 style dialogs that follow light or dark mode (applies to dialogs open [rest of string was truncated]";.
         /// </summary>
         public static string Settings_FluentDialogs {
@@ -5163,6 +5172,51 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Appearance.
+        /// </summary>
+        public static string Settings_TabAppearance {
+            get {
+                return ResourceManager.GetString("Settings_TabAppearance", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to General.
+        /// </summary>
+        public static string Settings_TabGeneral {
+            get {
+                return ResourceManager.GetString("Settings_TabGeneral", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Keys.
+        /// </summary>
+        public static string Settings_TabKeys {
+            get {
+                return ResourceManager.GetString("Settings_TabKeys", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Voice.
+        /// </summary>
+        public static string Settings_TabVoice {
+            get {
+                return ResourceManager.GetString("Settings_TabVoice", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Window.
+        /// </summary>
+        public static string Settings_TabWindow {
+            get {
+                return ResourceManager.GetString("Settings_TabWindow", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Theme:.
         /// </summary>
         public static string Settings_Theme {
@@ -5235,15 +5289,6 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Hold it anywhere and say the name of an icon (or a workspace) to start it; letti [rest of string was truncated]";.
-        /// </summary>
-        public static string Settings_VoiceHotkeyHint {
-            get {
-                return ResourceManager.GetString("Settings_VoiceHotkeyHint", resourceCulture);
-            }
-        }
-
-        /// <summary>
         ///   Looks up a localized string similar to Voice hotkey.
         /// </summary>
         public static string Settings_VoiceHotkeyName {
@@ -5280,15 +5325,6 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to The speech recognisers this PC has. Names in another language are heard badly: g [rest of string was truncated]";.
-        /// </summary>
-        public static string Settings_VoiceLanguageHint {
-            get {
-                return ResourceManager.GetString("Settings_VoiceLanguageHint", resourceCulture);
-            }
-        }
-
-        /// <summary>
         ///   Looks up a localized string similar to Voice language.
         /// </summary>
         public static string Settings_VoiceLanguageName {
@@ -5303,6 +5339,15 @@ namespace DesktopIconGrid.Resources {
         public static string Settings_VoiceLanguageNone {
             get {
                 return ResourceManager.GetString("Settings_VoiceLanguageNone", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Hold the hotkey and say the name of an icon or a workspace. The bar listens only [rest of string was truncated]";.
+        /// </summary>
+        public static string Settings_VoiceTabHint {
+            get {
+                return ResourceManager.GetString("Settings_VoiceTabHint", resourceCulture);
             }
         }
 

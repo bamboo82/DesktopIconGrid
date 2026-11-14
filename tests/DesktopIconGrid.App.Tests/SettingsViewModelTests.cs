@@ -52,4 +52,34 @@ public class SettingsViewModelTests
         Assert.True(viewModel.CanSave);
         Assert.Null(viewModel.ToSettings().ShowAtPointerHotkey);
     }
+    [Fact]
+    public void A_tab_with_a_value_that_cannot_be_saved_is_marked_and_named_beside_Save()
+    {
+        var viewModel = new SettingsViewModel(new LauncherSettings { ToggleHotkey = "Ctrl+Alt+Space" });
+        Assert.Equal(string.Empty, viewModel.ProblemText);
+        Assert.Equal(DesktopIconGrid.Resources.Strings.Settings_TabAppearance, viewModel.AppearanceTab);
+
+        viewModel.SelectedTheme = viewModel.Themes.First(theme => theme.IsCustom);
+        viewModel.BackgroundColor = "no colour";
+        Assert.Equal("\u26A0 " + DesktopIconGrid.Resources.Strings.Settings_TabAppearance, viewModel.AppearanceTab);
+        Assert.Equal(string.Format(DesktopIconGrid.Resources.Strings.Settings_FixOnTab, DesktopIconGrid.Resources.Strings.Settings_TabAppearance), viewModel.ProblemText);
+        Assert.False(viewModel.CanSave);
+
+        viewModel.SelectedTheme = viewModel.Themes.First(theme => !theme.IsCustom); // the colour no longer matters
+        Assert.Equal(string.Empty, viewModel.ProblemText);
+        Assert.True(viewModel.CanSave);
+
+        viewModel.ShowAtPointerHotkey = "Control+Alt+Space"; // the show/hide hotkey, spelled differently
+        Assert.StartsWith("\u26A0 ", viewModel.KeysTab);
+        Assert.Equal(string.Format(DesktopIconGrid.Resources.Strings.Settings_FixOnTab, DesktopIconGrid.Resources.Strings.Settings_TabKeys), viewModel.ProblemText);
+
+        viewModel.ShowAtPointerHotkey = string.Empty;
+        viewModel.VoiceHotkey = "Ctrl+Alt+Space";
+        Assert.Equal(DesktopIconGrid.Resources.Strings.Settings_TabKeys, viewModel.KeysTab);
+        Assert.StartsWith("\u26A0 ", viewModel.VoiceTab);
+        Assert.Equal(string.Format(DesktopIconGrid.Resources.Strings.Settings_FixOnTab, DesktopIconGrid.Resources.Strings.Settings_TabVoice), viewModel.ProblemText);
+        Assert.False(viewModel.CanSave);
+        Assert.Equal(DesktopIconGrid.Resources.Strings.Settings_TabWindow, viewModel.WindowTab);
+        Assert.Equal(DesktopIconGrid.Resources.Strings.Settings_TabGeneral, viewModel.GeneralTab);
+    }
 }
