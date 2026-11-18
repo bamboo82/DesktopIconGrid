@@ -2,6 +2,7 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:r="clr-namespace:DesktopIconGrid.Resources"
+        xmlns:views="clr-namespace:DesktopIconGrid.Views"
         Title="{Binding Title}"
         Width="500"
         SizeToContent="Height"
@@ -210,17 +211,11 @@
                      Stretch="Uniform"
                      RenderOptions.BitmapScalingMode="HighQuality"
                      Visibility="{Binding ShowsImagePreview, Converter={StaticResource BoolToVisibility}}" />
-              <Border Width="34" Height="34" CornerRadius="5" ClipToBounds="True"
-                      Background="{DynamicResource Theme.Background}"
-                      BorderBrush="{DynamicResource Theme.Border}" BorderThickness="1"
+              <!-- The tile as the bar draws it at 32 px, on the bar's background (0.12.0 WP3) -->
+              <Border CornerRadius="5" Background="{DynamicResource Theme.Background}"
                       Visibility="{Binding HasTextIcon, Converter={StaticResource BoolToVisibility}}">
-                <TextBlock Text="{Binding PreviewText}"
-                           FontFamily="{Binding PreviewFontFamily}"
-                           FontSize="{Binding PreviewFontSize}"
-                           FontWeight="{Binding PreviewFontWeight}"
-                           Foreground="{Binding PreviewTextBrush}"
-                           TextAlignment="Center" TextWrapping="Wrap"
-                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                <views:TextIconTile x:Name="TextIconPreview" Icon="{Binding TextIcon}" TileSize="32" MaxFontSize="28"
+                                    Width="32" Height="32" />
               </Border>
             </Grid>
           </Border>

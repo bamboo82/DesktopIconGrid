@@ -13,12 +13,22 @@ namespace DesktopIconGrid.Core.Models;
 /// <param name="FontSize">Font size in device-independent pixels.</param>
 /// <param name="Bold">Draw bold.</param>
 /// <param name="Color"><c>#RRGGBB</c> text colour; <see langword="null"/> uses the theme's text colour.</param>
+/// <param name="Fit">
+/// Scale the text to the tile instead of drawing it at <paramref name="FontSize"/>, so it grows with the icon size (a
+/// symbol always has it). Written only when set: 0.11.0 and older keep it unread and draw the text at its size.
+/// </param>
+/// <param name="Background">
+/// <c>#RRGGBB</c> tile colour, a filled square behind the text in place of the theme's hover fill and border;
+/// <see langword="null"/> for the theme's look. Written only when set.
+/// </param>
 public sealed record TextIcon(
     string Text,
     string? FontFamily = null,
     double FontSize = TextIcon.DefaultFontSize,
     bool Bold = false,
-    string? Color = null)
+    string? Color = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] bool Fit = false,
+    string? Background = null)
 {
     public const int MaxTextLength = 12;
     public const double DefaultFontSize = 14;
@@ -63,6 +73,7 @@ public sealed record TextIcon(
             FontFamily = string.IsNullOrWhiteSpace(FontFamily) ? null : FontFamily.Trim(),
             FontSize = size,
             Color = LauncherSettings.IsValidColor(Color) ? Color!.ToUpperInvariant() : null,
+            Background = LauncherSettings.IsValidColor(Background) ? Background!.ToUpperInvariant() : null,
         };
     }
 }

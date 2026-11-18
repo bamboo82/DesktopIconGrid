@@ -58,6 +58,18 @@ public class ThemeCatalogTests
     }
 
     [Theory]
+    [InlineData("#FFFFFF", "#202020")]
+    [InlineData("#F3F3F3", "#202020")]
+    [InlineData("#2D4A6E", "#FFFFFF")]
+    [InlineData("#5B6B3A", "#FFFFFF")]
+    public void A_tile_colour_gets_the_text_colour_a_custom_background_would(string tile, string text)
+    {
+        // 0.12.0 WP3: a symbol on a tile colour and with no colour of its own.
+        Assert.Equal(text, ThemeCatalog.ForegroundOn(tile));
+        Assert.Equal(ThemeCatalog.CreateCustom(tile).Foreground, ThemeCatalog.ForegroundOn(tile));
+    }
+
+    [Theory]
     [InlineData("#000000", 0.0)]
     [InlineData("#FFFFFF", 1.0)]
     [InlineData("#FF0000", 0.299)]

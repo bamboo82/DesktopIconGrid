@@ -392,7 +392,7 @@
     <value>更改图标…</value>
   </data>
   <data name="Props_TextIcon" xml:space="preserve">
-    <value>文字图标…</value>
+    <value>文字或符号图标…</value>
   </data>
   <data name="Props_UseDefault" xml:space="preserve">
     <value>使用默认</value>
@@ -2503,5 +2503,53 @@
   </data>
   <data name="Props_ParametersRule4" xml:space="preserve">
     <value>在其他程序的代码中（python -c、node -e、bash -c），或含有命令或文件的 ssh 选项中（-o、-F、-proxycmd、-m），值就是代码：请勿在其中使用占位符。</value>
+  </data>
+  <data name="TextIcon_ModeText" xml:space="preserve">
+    <value>文字</value>
+  </data>
+  <data name="TextIcon_ModeSymbol" xml:space="preserve">
+    <value>符号</value>
+  </data>
+  <data name="TextIcon_Search" xml:space="preserve">
+    <value>搜索：</value>
+  </data>
+  <data name="TextIcon_NoSymbol" xml:space="preserve">
+    <value>没有匹配的符号。</value>
+  </data>
+  <data name="TextIcon_TileColour" xml:space="preserve">
+    <value>方块颜色：</value>
+  </data>
+  <data name="TextIcon_TileColourNone" xml:space="preserve">
+    <value>无</value>
+  </data>
+  <data name="TextIcon_TileColourHint" xml:space="preserve">
+    <value>未指定颜色时，文字会依方块颜色自动用白或黑。</value>
+  </data>
+  <data name="Symbol_GroupCommon" xml:space="preserve">
+    <value>常用</value>
+  </data>
+  <data name="Symbol_GroupFilesAndFolders" xml:space="preserve">
+    <value>文件和文件夹</value>
+  </data>
+  <data name="Symbol_GroupCommunication" xml:space="preserve">
+    <value>通讯</value>
+  </data>
+  <data name="Symbol_GroupMedia" xml:space="preserve">
+    <value>媒体</value>
+  </data>
+  <data name="Symbol_GroupDevices" xml:space="preserve">
+    <value>设备</value>
+  </data>
+  <data name="Symbol_GroupNetwork" xml:space="preserve">
+    <value>网络</value>
+  </data>
+  <data name="Symbol_GroupToolsAndSettings" xml:space="preserve">
+    <value>工具和设置</value>
+  </data>
+  <data name="Symbol_GroupPeopleAndPlaces" xml:space="preserve">
+    <value>人和地点</value>
+  </data>
+  <data name="Symbol_GroupArrowsAndMarks" xml:space="preserve">
+    <value>箭头和标记</value>
   </data>
 </root>

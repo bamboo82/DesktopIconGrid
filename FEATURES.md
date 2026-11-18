@@ -54,7 +54,7 @@ A launchable entry. Fields come straight from the *Shortcut Properties* dialog:
 | Name | Caption (shown as tooltip, and as label when labels are enabled). Pre-filled from the file name. |
 | Location | A file, a folder or a URL. `%ENV%` variables are expanded at launch. The `…` button opens a file picker. |
 | Parameters | Command-line arguments passed to the program. `{file}`/`{files}` take dropped files; a click leaves them out, so write them last: an option before them (`--open {file} --wait`) would take the next word on a click (0.8.1). `{clipboard}` inserts the clipboard text and `{ask:Question}` asks for a value when the shortcut is started (Cancel cancels the launch). Each value is quoted as one argument, so write a placeholder as an argument of its own, as part of an unquoted word (`--name={clipboard}`) or alone in quotes (`"{file}"`): inside quotes with other text (`"--in={file}"`, WSL's `'…'` too), or right next to a quote or another placeholder, it is refused, since its quotes would end the template's; in a quoted command for ssh's remote shell or PowerShell (`ssh host "tail {ask:File}"`), which take bare words anyway, it goes in as it is (0.8.1). All of them go in with one pass, so a value that holds a placeholder keeps it as text, and dropped files are judged where the template puts them, `{files}` as two `{file}` (0.8.1). A value is refused, before anything starts, when the program could run it: through cmd.exe (a batch file, also one found for a command without an extension, or cmd.exe itself) `" % ! ^ & | < >`, and `%` or `!` in a dropped file's name (0.8.1); as PowerShell script text anything but letters, digits, spaces and `. _ - \ / :`, and a word that starts with `-` (a parameter there); the same for the command ssh or plink sends after its destination; in ssh's destination, `-l` and `-J` (and a host written before the colon of scp's or sftp's `host:path`), only what `user@host`, `[v6]:port` and `ssh://` need, with no `-` to start the name or a part of it (0.8.1); where the template writes more of that destination around the placeholder (`{ask:User}@server2:/tmp/`, `scp://server2:{ask:Port}/x`, `scp://host{x}`), only letters, digits and `. _ -`, so the value completes a name and cannot move the host, and no `.` where the value ends a host name the template begins (`scp://host{x}/p`, `user@srv.{x}:/p`), which would move it to another domain (0.11.0); an scp operand written without a colon may not get one from the value (no `host:path`, no `scp://`), checked on top of whatever reads the line (cmd.exe, WSL, the remote shell), and an scp line whose operands name no other computer is read as cmd.exe reads it, since Windows' scp copies from here to here through cmd.exe (0.11.0); in ssh's `-o` nothing at the start of the value or in the setting's name, nor after a setting that runs or loads something (`ProxyCommand`, `PKCS11Provider`, `Include`…), nothing in `-F` or `-I`, scp's `-S`, sftp's `-D` or `-b`, plink's `-proxycmd` or `-m`, and nothing among an option's letters, before or after the host (0.8.1); PuTTY's options after the host are its own, and a bare word there is the port (0.8.1); through a Linux shell in WSL (`wsl.exe` without `-e`/`--exec` or `--shell-type none`, System32's `bash.exe`) also `$` and `` ` ``; each placeholder is judged where it stands (0.8.1); through Windows Terminal (`wt`) also `;`; after Windows Terminal, conhost, sudo or gsudo, which hand arguments on without quotes when they hold no space, a placeholder that cmd.exe or WSL's shell reads is refused, and elsewhere a value with a quote or a tab, or one with a space that ends in `\`, and a batch file such a relay (or runas) starts is read as cmd.exe reads it (0.8.1); for cmd.exe itself, the command after `/c` (also `/d/c`, `/V:ON/C`) keeps its values' quotes, and a value before it is refused (0.8.1). A placeholder inside code for another program (`python -c`, `node -e`, `bash -c`) is code there: the template's choice. For every program, a value is refused when it has more than one line, holds `＂`, or begins with `-` where an argument starts with no `--` of the program that reads it before it (0.8.0; a wrapper's `--`, as in `wsl -- python3 {x}`, ends only the wrapper's options, 0.8.1), or there begins with `/`, except for a shell (0.8.1). Under the box, Properties shows two lines on what the placeholders do; *More* lists the rules above (0.12.0), and they open by themselves while the parameters are refused. |
-| Icon | Default = extracted from the Location. *Change icon…* picks a `.png/.jpg/.ico/.bmp` image or an `.exe/.dll/.ico` resource (`path,index` is accepted). *Text icon…* draws text instead (see below). *From a web address…* downloads an image once, scales it to 256 px, centres it on a transparent square and keeps it as a local PNG. *Use default* clears the override. |
+| Icon | Default = extracted from the Location. *Change icon…* picks a `.png/.jpg/.ico/.bmp` image or an `.exe/.dll/.ico` resource (`path,index` is accepted). *Text or symbol icon…* draws text or a symbol instead (see below). *From a web address…* downloads an image once, scales it to 256 px, centres it on a transparent square and keeps it as a local PNG. *Use default* clears the override. |
 
 **Running badge and output log.** A green dot in the corner of a shortcut shows that a program
 started from it is still running (processes started from the bar are followed until they exit;
@@ -70,6 +70,23 @@ the command line, start time, output, errors and exit code.
 weight and colour. The default family is 宋體 (SimSun), falling back to 新細明體 (PMingLiU) and
 Segoe UI when it is not installed; the colour defaults to the theme's text colour. Hovering an
 icon shows its name and location in a tooltip regardless of how the icon is drawn.
+
+**Symbol icons** (0.12.0). The same window has two sides, *Text* and *Symbol*. *Symbol* offers 197 symbols that
+Segoe Fluent Icons (Windows 11) and Segoe MDL2 Assets (Windows 10) both have, in nine groups (Common, Files and
+folders, Communication, Media, Devices, Network, Tools and settings, People and places, Arrows and marks), in a grid
+of twelve to a row; the table is the review session's design. A search filters it as you type: every word must
+begin a word of a symbol's English name or keywords (names are English only; the group headings are translated). A
+click chooses, a double-click is OK, the arrow keys, Home and End move. A symbol is stored as a text icon of one
+character in "Segoe Fluent Icons, Segoe MDL2 Assets" with `fit`: it is scaled to 68 % of the tile, centred, so it
+grows with the icon size, and has no frame. Both sides have a *Tile colour*: the swatches of Settings > Appearance,
+a `#RRGGBB` box and *None*. A tile colour is a filled square over the whole tile (corner 6 at 32 px, growing with
+the tile, no border); with no text colour the text on it is white or near-black, whichever shows better (the rule
+of a custom background). Text drawn at its size keeps the frame text icons always had. A symbol neither font of the
+PC has (an old Windows 10) is drawn as the placeholder icon. The preview is drawn at the bar's icon size. Send to PC
+shows the Send symbol and Voice the Microphone symbol; an icon that still has the emoji 0.10.0 or 0.11.0 gave it is
+drawn with the symbol, and its layout is not changed. `fit` and `background` are written only when set: 0.11.0 and
+older keep them unread and draw a symbol as text of size 26. The bar, a group's popup, the pointer window and both
+previews draw text icons with one control.
 
 **Advanced** (0.7.0), the options a Windows `.lnk` has:
 
@@ -822,7 +839,15 @@ Keeps named copies of the settings and icons where several PCs can share them: o
 
 ## 10. Icon extraction
 
-Order of attempts, with an in-memory cache keyed by path and size:
+What a tile shows, the first that applies (0.12.0 adds symbols to the second):
+
+1. An image chosen in Properties (*Change icon…*, *From a web address…*).
+2. A text icon or symbol; for Send to PC and Voice without one (or with the emoji an older version gave them),
+   their symbol.
+3. A special icon's live drawing (gauges, the clock, the volume).
+4. The icon of the Location, extracted as below.
+
+Order of attempts for that icon, with an in-memory cache keyed by path and size:
 
 1. Explicit image file (`.png`, `.jpg`, `.bmp`, `.gif`, `.ico` — largest matching frame).
 2. `path,index` icon resources via `SHDefExtractIcon` (any size up to 256 px).

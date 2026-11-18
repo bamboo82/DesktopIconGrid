@@ -890,7 +890,7 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
     public void NewShortcut(ItemListViewModel list, int index)
     {
         var draft = new ShortcutItem();
-        if (!_dialogs.ShowItemProperties(draft, isNew: true))
+        if (!_dialogs.ShowItemProperties(draft, isNew: true, IconSize))
         {
             return;
         }
@@ -917,7 +917,7 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
         }
 
         var draft = new GroupItem { Name = Strings.Common_Group };
-        if (!_dialogs.ShowItemProperties(draft, isNew: true))
+        if (!_dialogs.ShowItemProperties(draft, isNew: true, IconSize))
         {
             return;
         }
@@ -1150,7 +1150,7 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
         var hadCheckBefore = item.Model is ShortcutItem { HealthCheck: { } textBefore } && !string.IsNullOrWhiteSpace(textBefore);
         var saved = draft is SpecialIconItem specialDraft
             ? item.SpecialHandler.ShowProperties(specialDraft, isNew: false)
-            : _dialogs.ShowItemProperties(draft, isNew: false);
+            : _dialogs.ShowItemProperties(draft, isNew: false, IconSize);
         if (!saved)
         {
             return;

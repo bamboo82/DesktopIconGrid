@@ -22,8 +22,8 @@ public sealed class SendToDeviceHandler(IReceiving receiving, IDialogService dia
     public const string DeviceIdKey = "deviceId";
     public const string DeviceNameKey = "deviceName";
 
-    /// <summary>The outbox tray, as the Voice icon has the microphone (review 27 S5).</summary>
-    public static TextIcon Glyph => new("\U0001F4E4", "Segoe UI Emoji", 22);
+    /// <summary>The paper plane symbol, one colour like the bar (0.12.0 A3; 0.11.0 had the outbox emoji, review 27 S5).</summary>
+    public static TextIcon Glyph => BuiltInTextIcons.SendToDevice;
 
     public string Kind => SpecialIconKinds.SendToDevice;
 

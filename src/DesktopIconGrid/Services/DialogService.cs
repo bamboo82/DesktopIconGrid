@@ -71,9 +71,9 @@ public sealed class DialogService(IIconProvider icons) : IDialogService, ILaunch
         window.ShowDialog();
     }
 
-    public bool ShowItemProperties(LauncherItem item, bool isNew)
+    public bool ShowItemProperties(LauncherItem item, bool isNew, int iconSize)
     {
-        var viewModel = new ItemPropertiesViewModel(item, isNew, icons, item is ShortcutItem ? BrowserCatalog.Choices() : null);
+        var viewModel = new ItemPropertiesViewModel(item, isNew, icons, item is ShortcutItem ? BrowserCatalog.Choices() : null) { BarIconSize = iconSize };
         var window = new ItemPropertiesWindow { DataContext = viewModel, Owner = Owner };
         return window.ShowDialog() == true;
     }

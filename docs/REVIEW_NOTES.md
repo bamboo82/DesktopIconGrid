@@ -9,6 +9,114 @@ The owner relays replies.
 
 ---
 
+## 2026-11-18 (82) — 0.12.0 WP3: symbol icons (G1–G4, addendum A1–A4)
+
+Run 181 (`be2ba25`, the pipe tests on their own) is green, so WP2 is green too. This entry claims no run for its own
+commit. Thank you for the review of WP1 and WP2. The owner's answer on WP1 (toasts stay with 1.0.0) is noted: WP1
+stays as written.
+
+**Order from here.** F1–F3 come in the next commit. Then WP5, the owner's request of today, which you asked for
+after the package I was on, and then WP4. Say if you want WP4 first.
+
+**Where the design came from (A4).** The symbol table and the tile look are the review session's design, sent as
+an addendum to the plan, not mine. A later reader should not "improve" the table from memory. `SymbolCatalog`
+says so too.
+
+### As designed
+
+- **G1, model.** `TextIcon` has `Fit` and `Background`, written only when set. `Normalized()` checks the tile
+  colour as it checks the text colour. A symbol is one character in `"Segoe Fluent Icons, Segoe MDL2 Assets"`,
+  `Fit`, size 26 (what an older version draws).
+- **A1, the catalogue.** `SymbolCatalog` holds your table exactly: 197 entries, in your order. It also has
+  `Find`, `IsSymbol`, `Icon` and `Matches`: every word of the search must begin a word of the name or keywords.
+  - I checked every code point against Microsoft's published Segoe MDL2 Assets list too. All 197 are in it.
+  - The comment after each entry is Microsoft's glyph name. Several differ from your names, for example F158 is
+    `DialShape3` where you saw a cube. I kept your names, which come from the pictures.
+- **A2, the tile.** `TextIconTile` is one control that draws text icons everywhere: the bar, a group's popup and
+  the pointer window (all `IconGridControl`), the Properties preview and the picker's preview.
+  - A tile colour fills the whole tile: corner 6 × size / 32, no border.
+  - Without a tile colour, fitted text has no frame. Text drawn at its size keeps the old frame.
+  - Fitted text is in a `Viewbox` with a margin of 16 % on every side.
+  - A symbol that neither installed font has is drawn as the placeholder icon. Each character is checked once
+    with `GlyphTypeface` of an installed family only (a family that is not installed must not resolve to a
+    fallback font) and cached.
+- **A2, white or black.** I used the theme's own rule, `ThemeCatalog.ForegroundOn`: it is what a custom background
+  uses, now shared. Its weights are 0.299/0.587/0.114, its threshold 0.6, and its dark text is #202020.
+  - On all ten swatches it chooses the same side as your 0.2126/0.7152/0.0722 rule. A test checks this.
+  - For other colours near the threshold the two rules can differ.
+- **A2, the preview.** The picker draws its preview at the bar's icon size. `IDialogService.ShowItemProperties`
+  now takes the icon size, and Properties hands it on.
+- **A3, the built-in tiles.**
+  - Send to PC is the Send symbol (E724), for new icons and as `DefaultTextIcon`.
+  - Voice is the Microphone symbol (E720) as `DefaultTextIcon`.
+  - An icon whose stored text icon is exactly the old emoji (that text, Segoe UI Emoji, 22, not bold, no colour)
+    is drawn with the symbol. The layout keeps the emoji: `BuiltInTextIcons.IsOlderDefault` is checked in
+    `ItemViewModel.DrawnTextIcon`, and nothing is rewritten on load.
+- **G2, the window.**
+  - The *Text* / *Symbol* switch.
+  - On *Text*, the old fields.
+  - On *Symbol*, a search box and the grid. The grid is a `ListBox` grouped by heading (`DialogHint`), with a
+    `WrapPanel` of 12 cells of 36 × 36, about six rows tall. A cell draws its symbol at 20, has an accent border
+    when chosen, and has its English name as tooltip and automation name. A double-click is OK. "No symbol
+    matches." shows when the search hides everything.
+  - Both sides have *Colour* and *Tile colour*: the swatches, a `#RRGGBB` box and *None*. Under them is the hint
+    in your words.
+  - A symbol icon opens on *Symbol* with its cell chosen and scrolled into view.
+  - Switching sides keeps both sides' values.
+  - The Properties button reads "Text or symbol icon…" / 「文字或符號圖示…」.
+
+### Nearest things, and my choices (please look)
+
+- **Voice's new icons store the microphone** (`CreateItem`), as Send to PC's do, so 0.11.0 on another PC draws
+  it too. A3 named only `DefaultTextIcon` for Voice. The rule for the old emoji covers Voice's emoji of 0.11.0
+  too, as A3 says it for Send to PC.
+- **"Use default" for a built-in tile (A3, last point).** Special icons do not open Properties. Voice has no
+  dialog and Send to PC has its pairing window, so neither has an icon button. Their picture is always the
+  default (or the kept emoji, drawn as the default). There was nothing to add.
+- **Same swatches, same control.** The swatch row of Settings > Appearance is now `ColourSwatches`, used there and
+  in the picker.
+- **The window is 620 wide** (was 470): twelve cells, the scroll bar and the preview need it.
+- **Two small things you did not ask for:**
+  - A tile colour that is not `#RRGGBB` shows Settings' "Use #RRGGBB" beside the box. OK stays disabled, as for
+    the text colour.
+  - The Down key in the search box moves into the grid.
+- **The search keeps a hidden choice.** A choice the search hides stays chosen: the preview keeps it, OK keeps it,
+  and the grid shows it again when the search lets it through.
+- **Fitted text on the Text side.** The *Text* side keeps the `fit` its icon came with, and has no control for
+  it. With the built-in glyphs now symbols, only an icon written elsewhere (a newer version) can have it.
+
+### Tests
+
+- **Core:**
+  - `TextIcon` round trip with and without the new properties.
+  - An older reader's view: 0.11.0's record keeps `fit` and `background` as unknown properties through its save.
+  - `Normalized` and the tile colour.
+  - The catalogue: 197 entries, first Home E80F, last Dislike E8E0, Microphone E720, Send E724, the group sizes,
+    no repeated code point or name, all in E700–F8FF, groups in order.
+  - The search, including keywords, every word, and not inside a word.
+  - The built-in symbols, and the old emoji recognised but not rewritten on load.
+  - `ForegroundOn`.
+- **App, CI only:**
+  - Every code point is in Segoe MDL2 Assets.
+  - The two-family chain draws the same glyph as the first symbol font installed. CI may have MDL2 only.
+  - A fitted symbol is drawn more than 1.8 times wider at 64 px than at 32 px. Text at its size is not.
+  - The tile colour: fill, no border, corner 12 at 64, white or #202020 text, its own colour winning.
+  - No frame for a symbol without a tile colour; the old frame for text at its size.
+  - The swatch rule agreement.
+  - The placeholder for a missing glyph, with a stand-in for an older Windows.
+  - The bar and the Properties preview both use the control.
+  - "mail" finds Mail and Mail open and shows only *Communication*; "zzz" shows none.
+  - Switching sides and saving.
+  - The window opened on the last symbol: *Symbol* shown, the cell chosen, scrolled into view and named, twelve to
+    a row, the preview at 48 when the bar is 48.
+  - Send to PC and Voice drawn with their symbols, and the emoji kept in the layout.
+- **Not tested:** how it all looks on a screen, which I cannot see. Also not tested:
+  - the arrow keys, Home and End across group headings (the `ListBox`'s own);
+  - a double-click;
+  - the accent colour of the chosen cell;
+  - High Contrast;
+  - a real Windows 10 that lacks a glyph.
+
 ## 2026-11-18 (81) — 0.12.0 WP2: the Parameters hint (P)
 
 Run 179 (`26ee643`, WP1) is green. This entry claims no run for its own commit.

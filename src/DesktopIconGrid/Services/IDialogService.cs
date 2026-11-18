@@ -7,8 +7,11 @@ namespace DesktopIconGrid.Services;
 
 public interface IDialogService
 {
-    /// <summary>Shows the Shortcut/Group Properties dialog. On Save the edits are written into <paramref name="item"/>.</summary>
-    bool ShowItemProperties(LauncherItem item, bool isNew);
+    /// <summary>
+    /// Shows the Shortcut/Group Properties dialog. On Save the edits are written into <paramref name="item"/>.
+    /// <paramref name="iconSize"/> is the bar's, which the Text icon window's preview is drawn at (0.12.0 A2).
+    /// </summary>
+    bool ShowItemProperties(LauncherItem item, bool isNew, int iconSize);
 
     /// <summary>Shows the Settings dialog; returns the edited settings or <see langword="null"/> on cancel.</summary>
     /// <summary>The Settings dialog over copies of the bar's settings and this PC's own; what was saved, or <see langword="null"/>.</summary>

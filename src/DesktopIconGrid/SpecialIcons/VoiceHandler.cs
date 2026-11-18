@@ -17,7 +17,10 @@ public sealed class VoiceHandler(Action listen, Func<string?> language) : ISpeci
 
     public string Description => Strings.Special_Voice_Desc;
 
-    public SpecialIconItem CreateItem() => new() { Name = Strings.Special_Voice_Name, Kind = Kind, TextIcon = new TextIcon("\U0001F3A4", "Segoe UI Emoji", 22) };
+    public SpecialIconItem CreateItem() => new() { Name = Strings.Special_Voice_Name, Kind = Kind, TextIcon = BuiltInTextIcons.Voice };
+
+    /// <summary>The microphone symbol (0.12.0 A3); a Voice icon without a picture of its own showed the placeholder.</summary>
+    public TextIcon? DefaultTextIcon => BuiltInTextIcons.Voice;
 
     public GaugeState? CreateState(SpecialIconItem item) => null;
 

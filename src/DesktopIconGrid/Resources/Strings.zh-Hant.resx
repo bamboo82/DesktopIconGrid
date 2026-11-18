@@ -392,7 +392,7 @@
     <value>變更圖示…</value>
   </data>
   <data name="Props_TextIcon" xml:space="preserve">
-    <value>文字圖示…</value>
+    <value>文字或符號圖示…</value>
   </data>
   <data name="Props_UseDefault" xml:space="preserve">
     <value>使用預設</value>
@@ -2503,5 +2503,53 @@
   </data>
   <data name="Props_ParametersRule4" xml:space="preserve">
     <value>在其他程式的程式碼中（python -c、node -e、bash -c），或含有命令或檔案的 ssh 選項中（-o、-F、-proxycmd、-m），值就是程式碼：請勿在其中使用預留位置。</value>
+  </data>
+  <data name="TextIcon_ModeText" xml:space="preserve">
+    <value>文字</value>
+  </data>
+  <data name="TextIcon_ModeSymbol" xml:space="preserve">
+    <value>符號</value>
+  </data>
+  <data name="TextIcon_Search" xml:space="preserve">
+    <value>搜尋：</value>
+  </data>
+  <data name="TextIcon_NoSymbol" xml:space="preserve">
+    <value>沒有符合的符號。</value>
+  </data>
+  <data name="TextIcon_TileColour" xml:space="preserve">
+    <value>方塊顏色：</value>
+  </data>
+  <data name="TextIcon_TileColourNone" xml:space="preserve">
+    <value>無</value>
+  </data>
+  <data name="TextIcon_TileColourHint" xml:space="preserve">
+    <value>未指定顏色時，文字會依方塊顏色自動用白或黑。</value>
+  </data>
+  <data name="Symbol_GroupCommon" xml:space="preserve">
+    <value>常用</value>
+  </data>
+  <data name="Symbol_GroupFilesAndFolders" xml:space="preserve">
+    <value>檔案與資料夾</value>
+  </data>
+  <data name="Symbol_GroupCommunication" xml:space="preserve">
+    <value>通訊</value>
+  </data>
+  <data name="Symbol_GroupMedia" xml:space="preserve">
+    <value>媒體</value>
+  </data>
+  <data name="Symbol_GroupDevices" xml:space="preserve">
+    <value>裝置</value>
+  </data>
+  <data name="Symbol_GroupNetwork" xml:space="preserve">
+    <value>網路</value>
+  </data>
+  <data name="Symbol_GroupToolsAndSettings" xml:space="preserve">
+    <value>工具與設定</value>
+  </data>
+  <data name="Symbol_GroupPeopleAndPlaces" xml:space="preserve">
+    <value>人與地點</value>
+  </data>
+  <data name="Symbol_GroupArrowsAndMarks" xml:space="preserve">
+    <value>箭頭與記號</value>
   </data>
 </root>

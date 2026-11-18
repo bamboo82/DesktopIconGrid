@@ -159,26 +159,34 @@ public sealed class SendToDeviceTests : IDisposable
     }
 
     [Fact]
-    public void A_new_Send_to_PC_icon_has_the_outbox_glyph_and_an_older_one_is_drawn_with_it()
+    public void A_new_Send_to_PC_icon_has_the_send_symbol_and_older_ones_are_drawn_with_it_without_a_change_to_the_layout()
     {
         if (!OperatingSystem.IsWindows())
         {
             return;
         }
 
-        // Review 27 S5.
+        // Review 27 S5, and the review session's design for 0.12.0 (A3): the paper plane symbol, one colour like the bar.
         var handler = new SendToDeviceHandler(new NoReceiving(), new RecordingDialogs(), () => null, _folder, new CommandTrust(null));
-        Assert.Equal("\U0001F4E4", handler.CreateItem().TextIcon!.Text);
+        Assert.Equal(BuiltInTextIcons.SendToDevice, handler.CreateItem().TextIcon);
+        Assert.Equal("\uE724", BuiltInTextIcons.SendToDevice.Text);
 
+        var outbox = new TextIcon("\U0001F4E4", "Segoe UI Emoji", 22);
+        var chosen = new TextIcon("送", "Segoe UI", 20);
         var model = new LauncherModel();
-        var older = new SpecialIconItem { Name = "To the den", Kind = SpecialIconKinds.SendToDevice }; // made by 0.10.0
-        model.Add(older);
+        var withoutPicture = new SpecialIconItem { Name = "To the den", Kind = SpecialIconKinds.SendToDevice }; // made by 0.10.0
+        var withEmoji = new SpecialIconItem { Name = "To the study", Kind = SpecialIconKinds.SendToDevice, TextIcon = outbox }; // made by 0.11.0
+        var withOwn = new SpecialIconItem { Name = "To the attic", Kind = SpecialIconKinds.SendToDevice, TextIcon = chosen };
+        model.Add(withoutPicture);
+        model.Add(withEmoji);
+        model.Add(withOwn);
         using var bar = new TestBar(_folder, model, handlers: [handler]);
-        var drawn = bar.ViewModel.RootItems.Items.Single();
+        var drawn = bar.ViewModel.RootItems.Items.ToList();
 
-        Assert.True(drawn.HasTextIcon);
-        Assert.Equal("\U0001F4E4", drawn.TextIconText);
-        Assert.Null(older.TextIcon); // the layout is not changed for it
+        Assert.All(drawn, item => Assert.True(item.HasTextIcon));
+        Assert.Equal([BuiltInTextIcons.SendToDevice, BuiltInTextIcons.SendToDevice, chosen], drawn.Select(item => item.DrawnTextIcon));
+        Assert.Null(withoutPicture.TextIcon); // the layout is not changed for them
+        Assert.Equal(outbox, withEmoji.TextIcon);
     }
 
     [Fact]

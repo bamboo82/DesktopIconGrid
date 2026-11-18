@@ -516,6 +516,9 @@ public sealed class ItemPropertiesViewModel : ObservableObject
         }
     }
 
+    /// <summary>The bar's icon size: the Text icon window draws its preview at it (0.12.0 A2).</summary>
+    public int BarIconSize { get; init; } = LauncherSettings.DefaultIconSize;
+
     /// <summary>Text drawn instead of an image. Setting it clears a custom image.</summary>
     public TextIcon? TextIcon
     {
@@ -542,18 +545,6 @@ public sealed class ItemPropertiesViewModel : ObservableObject
     public bool HasTextIcon => _iconPath is null && _textIcon is not null;
 
     public bool ShowsImagePreview => !HasTextIcon;
-
-    public string PreviewText => _textIcon?.Text ?? string.Empty;
-
-    public FontFamily PreviewFontFamily => TextIconFonts.Resolve(_textIcon?.FontFamily);
-
-    public double PreviewFontSize => Math.Min(_textIcon?.FontSize ?? TextIcon.DefaultFontSize, 28);
-
-    public FontWeight PreviewFontWeight => _textIcon?.Bold == true ? FontWeights.Bold : FontWeights.Normal;
-
-    public Brush PreviewTextBrush => _textIcon?.Color is { } color
-        ? ThemeManager.ToBrush(color)
-        : Application.Current?.TryFindResource(ThemeManager.ForegroundKey) as Brush ?? Brushes.White;
 
     public ImageSource? Preview
     {
@@ -592,11 +583,6 @@ public sealed class ItemPropertiesViewModel : ObservableObject
         OnPropertyChanged(nameof(HasCustomIcon));
         OnPropertyChanged(nameof(HasTextIcon));
         OnPropertyChanged(nameof(ShowsImagePreview));
-        OnPropertyChanged(nameof(PreviewText));
-        OnPropertyChanged(nameof(PreviewFontFamily));
-        OnPropertyChanged(nameof(PreviewFontSize));
-        OnPropertyChanged(nameof(PreviewFontWeight));
-        OnPropertyChanged(nameof(PreviewTextBrush));
         RefreshPreviewAndWarning();
     }
 

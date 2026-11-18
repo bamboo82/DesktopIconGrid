@@ -8,6 +8,14 @@ version numbers follow [Semantic Versioning](https://semver.org/).
 "Find it, see it": notices that say what they are and lead somewhere, a Parameters hint you can read, symbol icons,
 and how often each shortcut is used.
 
+### Added
+
+- **Symbol icons**: *Text or symbol icon…* in Properties has a *Symbol* side with 197 symbols of Windows' own icon
+  font (Segoe Fluent Icons, or Segoe MDL2 Assets on Windows 10) in nine groups, with a search by their English
+  names. A symbol is scaled to its tile, so it grows with the icon size, and stands on the bar without a frame.
+- **Tile colour** for text and symbol icons: one of the Appearance swatches, any `#RRGGBB`, or none; without a text
+  colour of its own the text is white or black, whichever shows better on it.
+
 ### Changed
 
 - Notices: a notice that reports no problem (a file received, a timer's phase, files sent) shows the information
@@ -17,6 +25,9 @@ and how often each shortcut is used.
   log. A notice too long for the balloon is cut after a whole line.
 - Properties: the hint under *Parameters* is two lines; the rules for placeholder values are behind *More*, as a
   list, and open by themselves while the parameters are refused.
+- Send to PC shows a one-colour Send symbol instead of the outbox emoji, and Voice the Microphone symbol (it showed
+  the placeholder); both grow with the icon size. Icons that still have the emoji of 0.11.0 are drawn with the
+  symbol; their layout is not changed.
 
 ## [0.11.0] – 2026-11-18
 

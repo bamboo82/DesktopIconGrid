@@ -4317,7 +4317,7 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Text icon….
+        ///   Looks up a localized string similar to Text or symbol icon….
         /// </summary>
         public static string Props_TextIcon {
             get {
@@ -5811,6 +5811,87 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Arrows and marks.
+        /// </summary>
+        public static string Symbol_GroupArrowsAndMarks {
+            get {
+                return ResourceManager.GetString("Symbol_GroupArrowsAndMarks", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Common.
+        /// </summary>
+        public static string Symbol_GroupCommon {
+            get {
+                return ResourceManager.GetString("Symbol_GroupCommon", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Communication.
+        /// </summary>
+        public static string Symbol_GroupCommunication {
+            get {
+                return ResourceManager.GetString("Symbol_GroupCommunication", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Devices.
+        /// </summary>
+        public static string Symbol_GroupDevices {
+            get {
+                return ResourceManager.GetString("Symbol_GroupDevices", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Files and folders.
+        /// </summary>
+        public static string Symbol_GroupFilesAndFolders {
+            get {
+                return ResourceManager.GetString("Symbol_GroupFilesAndFolders", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Media.
+        /// </summary>
+        public static string Symbol_GroupMedia {
+            get {
+                return ResourceManager.GetString("Symbol_GroupMedia", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Network.
+        /// </summary>
+        public static string Symbol_GroupNetwork {
+            get {
+                return ResourceManager.GetString("Symbol_GroupNetwork", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to People and places.
+        /// </summary>
+        public static string Symbol_GroupPeopleAndPlaces {
+            get {
+                return ResourceManager.GetString("Symbol_GroupPeopleAndPlaces", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Tools and settings.
+        /// </summary>
+        public static string Symbol_GroupToolsAndSettings {
+            get {
+                return ResourceManager.GetString("Symbol_GroupToolsAndSettings", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Google account.
         /// </summary>
         public static string Sync_Account {
@@ -6693,6 +6774,42 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Symbol.
+        /// </summary>
+        public static string TextIcon_ModeSymbol {
+            get {
+                return ResourceManager.GetString("TextIcon_ModeSymbol", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Text.
+        /// </summary>
+        public static string TextIcon_ModeText {
+            get {
+                return ResourceManager.GetString("TextIcon_ModeText", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to No symbol matches..
+        /// </summary>
+        public static string TextIcon_NoSymbol {
+            get {
+                return ResourceManager.GetString("TextIcon_NoSymbol", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Search:.
+        /// </summary>
+        public static string TextIcon_Search {
+            get {
+                return ResourceManager.GetString("TextIcon_Search", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Size:.
         /// </summary>
         public static string TextIcon_Size {
@@ -6707,6 +6824,33 @@ namespace DesktopIconGrid.Resources {
         public static string TextIcon_Text {
             get {
                 return ResourceManager.GetString("TextIcon_Text", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Tile colour:.
+        /// </summary>
+        public static string TextIcon_TileColour {
+            get {
+                return ResourceManager.GetString("TextIcon_TileColour", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to With no colour given, the symbol is white or black, whichever shows better on th [rest of string was truncated]";.
+        /// </summary>
+        public static string TextIcon_TileColourHint {
+            get {
+                return ResourceManager.GetString("TextIcon_TileColourHint", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to None.
+        /// </summary>
+        public static string TextIcon_TileColourNone {
+            get {
+                return ResourceManager.GetString("TextIcon_TileColourNone", resourceCulture);
             }
         }
 

@@ -168,7 +168,7 @@ public partial class ItemPropertiesWindow : Window
             return;
         }
 
-        var editor = new TextIconViewModel(viewModel.TextIcon, viewModel.Name);
+        var editor = new TextIconViewModel(viewModel.TextIcon, viewModel.Name) { PreviewSize = viewModel.BarIconSize };
         var window = new TextIconWindow { DataContext = editor, Owner = this };
         if (window.ShowDialog() == true)
         {

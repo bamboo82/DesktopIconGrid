@@ -392,7 +392,7 @@ Made by a newer version of Desktop Icon Grid; kept as a placeholder.</value>
     <value>Change icon…</value>
   </data>
   <data name="Props_TextIcon" xml:space="preserve">
-    <value>Text icon…</value>
+    <value>Text or symbol icon…</value>
   </data>
   <data name="Props_UseDefault" xml:space="preserve">
     <value>Use default</value>
@@ -2503,5 +2503,53 @@ Details are in {1}.</value>
   </data>
   <data name="Props_ParametersRule4" xml:space="preserve">
     <value>Inside code for another program (python -c, node -e, bash -c) or an ssh option that holds a command or a file (-o, -F, -proxycmd, -m), a value is code: keep placeholders out of it.</value>
+  </data>
+  <data name="TextIcon_ModeText" xml:space="preserve">
+    <value>Text</value>
+  </data>
+  <data name="TextIcon_ModeSymbol" xml:space="preserve">
+    <value>Symbol</value>
+  </data>
+  <data name="TextIcon_Search" xml:space="preserve">
+    <value>Search:</value>
+  </data>
+  <data name="TextIcon_NoSymbol" xml:space="preserve">
+    <value>No symbol matches.</value>
+  </data>
+  <data name="TextIcon_TileColour" xml:space="preserve">
+    <value>Tile colour:</value>
+  </data>
+  <data name="TextIcon_TileColourNone" xml:space="preserve">
+    <value>None</value>
+  </data>
+  <data name="TextIcon_TileColourHint" xml:space="preserve">
+    <value>With no colour given, the symbol is white or black, whichever shows better on the tile.</value>
+  </data>
+  <data name="Symbol_GroupCommon" xml:space="preserve">
+    <value>Common</value>
+  </data>
+  <data name="Symbol_GroupFilesAndFolders" xml:space="preserve">
+    <value>Files and folders</value>
+  </data>
+  <data name="Symbol_GroupCommunication" xml:space="preserve">
+    <value>Communication</value>
+  </data>
+  <data name="Symbol_GroupMedia" xml:space="preserve">
+    <value>Media</value>
+  </data>
+  <data name="Symbol_GroupDevices" xml:space="preserve">
+    <value>Devices</value>
+  </data>
+  <data name="Symbol_GroupNetwork" xml:space="preserve">
+    <value>Network</value>
+  </data>
+  <data name="Symbol_GroupToolsAndSettings" xml:space="preserve">
+    <value>Tools and settings</value>
+  </data>
+  <data name="Symbol_GroupPeopleAndPlaces" xml:space="preserve">
+    <value>People and places</value>
+  </data>
+  <data name="Symbol_GroupArrowsAndMarks" xml:space="preserve">
+    <value>Arrows and marks</value>
   </data>
 </root>

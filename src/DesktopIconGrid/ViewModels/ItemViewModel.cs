@@ -3,6 +3,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using DesktopIconGrid.Core.Launching;
 using DesktopIconGrid.Core.Models;
+using DesktopIconGrid.Core.SpecialIcons;
 using DesktopIconGrid.Infrastructure;
 using DesktopIconGrid.Resources;
 using DesktopIconGrid.Services;
@@ -127,8 +128,16 @@ public sealed class ItemViewModel : ObservableObject
 
     public bool ShowsGauge => _gauge is { IsVisible: true } && !Model.HasCustomIcon && DrawnTextIcon is null;
 
-    /// <summary>The text icon drawn: the item's own, else for a special icon its kind's glyph (review 27 S5).</summary>
-    private TextIcon? DrawnTextIcon => Model.TextIcon ?? (Model is SpecialIconItem ? SpecialHandler.DefaultTextIcon : null);
+    /// <summary>
+    /// The text icon drawn: the item's own, else for a special icon its kind's picture (review 27 S5). A special icon
+    /// that still has the emoji an older version gave it is drawn with today's picture; the layout keeps the emoji (0.12.0 A3).
+    /// </summary>
+    public TextIcon? DrawnTextIcon => Model switch
+    {
+        SpecialIconItem special when special.TextIcon is null || BuiltInTextIcons.IsOlderDefault(special.Kind, special.TextIcon)
+            => SpecialHandler.DefaultTextIcon ?? special.TextIcon,
+        _ => Model.TextIcon,
+    };
 
     public string Name => Model.Name;
 
@@ -169,18 +178,6 @@ public sealed class ItemViewModel : ObservableObject
     public bool HasTextIcon => !Model.HasCustomIcon && DrawnTextIcon is not null;
 
     public bool ShowsImage => !HasTextIcon && !ShowsGauge;
-
-    public string TextIconText => DrawnTextIcon?.Text ?? string.Empty;
-
-    public FontFamily TextIconFontFamily => TextIconFonts.Resolve(DrawnTextIcon?.FontFamily);
-
-    public double TextIconFontSize => DrawnTextIcon?.FontSize ?? TextIcon.DefaultFontSize;
-
-    public FontWeight TextIconFontWeight => DrawnTextIcon?.Bold == true ? FontWeights.Bold : FontWeights.Normal;
-
-    public bool HasTextIconColor => DrawnTextIcon?.Color is not null;
-
-    public Brush? TextIconBrush => DrawnTextIcon?.Color is { } color ? ThemeManager.ToBrush(color) : null;
 
     /// <summary>True when files dropped on this icon are handled by it: opened with a shortcut's program, or taken by a special icon.</summary>
     public bool AcceptsDroppedFiles => Model switch

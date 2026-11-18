@@ -26,7 +26,7 @@ internal sealed class RecordingDialogs : IDialogService
     /// <summary>What "the user" does in Properties before OK; <see langword="null"/> cancels.</summary>
     public Action<LauncherItem>? PropertiesEdit { get; set; }
 
-    public bool ShowItemProperties(LauncherItem item, bool isNew)
+    public bool ShowItemProperties(LauncherItem item, bool isNew, int iconSize)
     {
         if (PropertiesEdit is not { } edit)
         {

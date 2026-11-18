@@ -224,8 +224,8 @@ folder.
   keep them as unknown items.
 - Colour tags per item (corner or tint), filterable in the names table.
 - Launch feedback: the clicked icon pulses until the bar loses the foreground or 5 s pass.
-- Glyph icons: a picker over Segoe Fluent Icons (Segoe MDL2 Assets on Windows 10) with a tile colour,
-  through the text-icon renderer.
+- Glyph icons *(done in 0.12.0, as symbol icons: 197 symbols, a search and a tile colour)*: a picker over Segoe
+  Fluent Icons (Segoe MDL2 Assets on Windows 10) with a tile colour, through the text-icon renderer.
 - Paste to a bucket: select a bucket, `Ctrl+V` uploads files, an image (`Screenshot 2026-11-06 143005.png`)
   or text (`.txt`).
 - More gauges: memory (`GlobalMemoryStatusEx`), network down/up (`NetworkInterface.GetIPStatistics`
@@ -266,5 +266,4 @@ folder.
 - **1.0.0 "Ship it"**: the existing backlog — installer (MSIX/winget), code signing, toast notifications with
   actions.
 
-Not yet placed in a release: glyph icons, usage columns, the accent theme, spring-loaded groups and the
-Windows menu.
+Not yet placed in a release: the accent theme, spring-loaded groups and the Windows menu.

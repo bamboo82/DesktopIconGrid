@@ -71,29 +71,9 @@
                    RenderOptions.BitmapScalingMode="HighQuality"
                    SnapsToDevicePixels="True"
                    Visibility="{Binding ShowsImage, Converter={StaticResource BoolToVisibility}}" />
-            <Border CornerRadius="6" ClipToBounds="True"
-                    Background="{DynamicResource Theme.Hover}"
-                    BorderBrush="{DynamicResource Theme.HoverBorder}" BorderThickness="1"
-                    Visibility="{Binding HasTextIcon, Converter={StaticResource BoolToVisibility}}">
-              <TextBlock Text="{Binding TextIconText}"
-                         FontFamily="{Binding TextIconFontFamily}"
-                         FontSize="{Binding TextIconFontSize}"
-                         FontWeight="{Binding TextIconFontWeight}"
-                         TextAlignment="Center" TextWrapping="Wrap"
-                         HorizontalAlignment="Center" VerticalAlignment="Center"
-                         Margin="1">
-                <TextBlock.Style>
-                  <Style TargetType="TextBlock">
-                    <Setter Property="Foreground" Value="{DynamicResource Theme.Foreground}" />
-                    <Style.Triggers>
-                      <DataTrigger Binding="{Binding HasTextIconColor}" Value="True">
-                        <Setter Property="Foreground" Value="{Binding TextIconBrush}" />
-                      </DataTrigger>
-                    </Style.Triggers>
-                  </Style>
-                </TextBlock.Style>
-              </TextBlock>
-            </Border>
+            <!-- One drawing of text icons everywhere (0.12.0 WP3): fit, tile colour, a missing symbol -->
+            <views:TextIconTile Icon="{Binding DrawnTextIcon}" TileSize="{Binding Root.IconSize}"
+                                Visibility="{Binding HasTextIcon, Converter={StaticResource BoolToVisibility}}" />
             <Viewbox Stretch="Uniform" Visibility="{Binding ShowsGauge, Converter={StaticResource BoolToVisibility}}">
               <Grid Width="100" Height="100" DataContext="{Binding Gauge}">
                 <!-- Ring -->

@@ -92,13 +92,13 @@ public static class ThemeCatalog
         var background = LauncherSettings.IsValidColor(backgroundHex)
             ? backgroundHex!.ToUpperInvariant()
             : LauncherSettings.DefaultBackgroundColor;
-        var light = Luminance(background) > 0.6;
+        var light = IsLight(background);
 
         return new ThemePalette(
             CustomId, "Custom",
             Background: background,
             Border: Darken(background, 0.5),
-            Foreground: light ? "#202020" : "#FFFFFF",
+            Foreground: ForegroundOn(background),
             Hover: light ? "#14000000" : "#2EFFFFFF",
             HoverBorder: light ? "#30000000" : "#50FFFFFF",
             Pressed: light ? "#24000000" : "#50FFFFFF",
@@ -106,6 +106,15 @@ public static class ThemeCatalog
             Accent: light ? "#2563EB" : "#4C8BF5",
             DropTarget: light ? "#402563EB" : "#4A4C8BF5");
     }
+
+    /// <summary>Whether text on <paramref name="hex"/> should be dark: the rule of a custom background.</summary>
+    public static bool IsLight(string hex) => Luminance(hex) > 0.6;
+
+    /// <summary>
+    /// Near-black or white, whichever shows better on <paramref name="hex"/>: the text of a custom background, and of a
+    /// text icon that has a tile colour and no colour of its own.
+    /// </summary>
+    public static string ForegroundOn(string hex) => IsLight(hex) ? "#202020" : "#FFFFFF";
 
     /// <summary>Relative brightness of a <c>#RRGGBB</c> colour, 0 (black) to 1 (white).</summary>
     public static double Luminance(string hex)
