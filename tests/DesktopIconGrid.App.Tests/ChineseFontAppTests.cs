@@ -41,7 +41,7 @@ public sealed class ChineseFontAppTests(WpfThread wpf)
 
                     break;
                 case GlyphRunDrawing glyphs:
-                    runs.Add((new string([.. glyphs.GlyphRun.Characters]), glyphs.GlyphRun.GlyphTypeface));
+                    runs.Add((new string([.. glyphs.GlyphRun.Characters ?? []]), glyphs.GlyphRun.GlyphTypeface));
                     break;
             }
         }
@@ -176,15 +176,16 @@ public sealed class ChineseFontAppTests(WpfThread wpf)
     }
 
     [Fact]
-    public void Bold_Chinese_is_the_Light_face_with_simulated_bold()
+    public void Bold_Chinese_is_the_Light_face_without_a_simulated_bold()
     {
         if (!OperatingSystem.IsWindows())
         {
             return;
         }
 
-        // What WPF does where the app asks for bold (the voice window's names) or SemiBold (headings): only the Light
-        // face is there, so it emboldens it. Recorded here for the review, which decides after looking.
+        // What WPF does where the app asks for bold (the voice window's names) or SemiBold (headings) and only the Light
+        // face is there: it draws Light, without emboldening it (CI run 185 showed it; the guess had been the opposite),
+        // so nothing is smeared and the Chinese of those texts is Light while their Latin stays bold.
         wpf.Invoke(() =>
         {
             UiFonts.Configure(TestFont);
@@ -197,7 +198,7 @@ public sealed class ChineseFontAppTests(WpfThread wpf)
                 Settle(window);
                 var font = FontOf(label, '設');
                 Assert.True(IsTestFont(font));
-                Assert.Equal(StyleSimulations.BoldSimulation, font.StyleSimulations & StyleSimulations.BoldSimulation);
+                Assert.Equal(StyleSimulations.None, font.StyleSimulations & StyleSimulations.BoldSimulation);
             }
             finally
             {

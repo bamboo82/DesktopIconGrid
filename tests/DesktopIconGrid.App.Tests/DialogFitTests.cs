@@ -33,6 +33,20 @@ public sealed class DialogFitTests(WpfThread wpf)
     }
 
     /// <summary>Shows <paramref name="window"/> on a "screen" <paramref name="height"/> units tall and checks that its buttons are in sight and its body scrolls.</summary>
+    /// <summary>Whether neither the element nor anything around it is collapsed or hidden.</summary>
+    private static bool IsShown(FrameworkElement element)
+    {
+        for (DependencyObject? node = element; node is not null; node = LogicalTreeHelper.GetParent(node))
+        {
+            if (node is UIElement { Visibility: not Visibility.Visible })
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     private static void FitsAShortScreen(Window window, ScrollViewer body, double height, params string[] buttons)
     {
         try
@@ -46,7 +60,8 @@ public sealed class DialogFitTests(WpfThread wpf)
             var client = ((FrameworkElement)window.Content).ActualHeight;
             foreach (var label in buttons)
             {
-                var button = LogicalDescendants<Button>(window).Single(b => Equals(b.Content, label));
+                // The one in sight: Settings also has a Cancel for a font download, collapsed until one runs (0.12.0 WP5).
+                var button = LogicalDescendants<Button>(window).Single(b => Equals(b.Content, label) && IsShown(b));
                 var bottom = button.TranslatePoint(new Point(0, button.ActualHeight), window).Y;
                 Assert.True(button.IsVisible && bottom <= client + 0.5, $"{label} ends at {bottom}, below the window's {client}");
             }

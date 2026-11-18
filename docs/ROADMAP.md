@@ -262,7 +262,8 @@ folder.
   12 through Google Drive, 11 (voice launch, through Windows' desktop recognisers: the spike's answer for
   the newer recogniser was no, FEATURES §6.1).
 - **0.12.0 "Find it, see it"** (in progress): notices with a kind and a target (the toast with actions waits for
-  1.0.0's installer), a shorter Parameters hint, symbol icons (glyph icons) with a tile colour, usage columns.
+  1.0.0's installer), a shorter Parameters hint, symbol icons (glyph icons) with a tile colour, usage columns, and
+  Chinese text in Taipei Sans TC Light (the owner's request of 2026-11-18), installed for the user on a click.
 - **1.0.0 "Ship it"**: the existing backlog — installer (MSIX/winget), code signing, toast notifications with
   actions.
 

@@ -946,7 +946,8 @@ through Google Drive, and voice launch.
 
 **0.12.0 "Find it, see it"** *(in progress)* — notices with a kind and a click that leads somewhere (the Windows
 toast with actions stays for 1.0.0), a two-line Parameters hint with the rules behind *More*, symbol icons with a
-tile colour, and usage columns in the names table.
+tile colour, usage columns in the names table, and Chinese text in Taipei Sans TC Light, installed on a click
+(§13 item 3).
 
 **1.0.0 "Ship it"** — the existing backlog: installer (MSIX/winget), code signing, toast notifications.
 
@@ -991,7 +992,8 @@ Still open, in the order they should be taken:
    dialog (classic or Fluent), menus, tooltips and the tray menu take it; text icons, Consolas text, gauges' numbers
    and symbol icons keep their own fonts. The font is found in `Fonts\` next to the program, then among the fonts
    installed for this user, then for every user, and always used by its file, so another weight of the family
-   installed on the PC is not picked. Only the Light face is there: where the app asks for bold, WPF emboldens it.
+   installed on the PC is not picked. Only the Light face is there: where the app asks for bold, WPF draws it Light,
+   without a fake bold, while the Latin of that text stays bold.
    It is never shipped with the app. Settings ▸ Appearance ▸ *Chinese text* offers it when the PC has it, and
    otherwise a button that, after asking, downloads `TaipeiSansTCBeta-Light.ttf` (20,279,264 bytes) from the locked
    mirror at GitHub (`vp-tw/taipei-sans-tc`, commit 24ca88e), checks its length and SHA-256, and installs it for this

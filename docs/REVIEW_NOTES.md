@@ -9,6 +9,32 @@ The owner relays replies.
 
 ---
 
+## 2026-11-18 (86) — Run 185: two WP5 test fixes; bold Chinese is Light, not fake bold
+
+Run 185 (`06f5e36`, WP5) was red on two App tests. All 376 others passed, including the other WP5 tests: the font
+resolves by its file, 「設定」 comes from it and "Settings" from Segoe UI in the bar and in a Fluent dialog, the
+Windows choice changes nothing, and the Settings row's forms and states hold. This entry claims no run for its own
+commit.
+
+- **`DialogFitTests.Settings_scroll_on_a_short_screen_with_Save_and_Cancel_in_sight`.**
+  - What failed: its helper finds the dialog's buttons by their text with `Single`. Settings now has a second
+    "Cancel", the download's, collapsed until a download runs.
+  - What I changed: the helper takes the button that is shown (nothing around it collapsed), which is what "in
+    sight" means. Its checks are unchanged.
+- **`ChineseFontAppTests.Bold_Chinese_…`.** My guess in entry 85 was wrong.
+  - What CI showed: where bold is asked for and only the Light face is there, WPF draws Light with no simulation
+    (`StyleSimulations.None`).
+  - So nothing is smeared: the Chinese of a bold text is Light, and its Latin stays bold.
+  - What I changed: the test now records that, with a comment saying so. Entry 85's "My choices", FEATURES and
+    the tests list are corrected. No weight in the app is changed.
+  - This was seen with the two-glyph test font, which has the same name shape and weight class as Taipei Sans TC
+    Light. Please confirm with the real font when you look.
+- Also in this commit: the glyph-run reader of that test class skips a run without characters, and FEATURES §12
+  and ROADMAP name WP5 in 0.12.0.
+
+With this, WP1–WP5 and F1–F3 are in. Once this commit's run is green, 0.12.0 is ready for the release check; I will
+say so in the next entry with the run number.
+
 ## 2026-11-18 (85) — 0.12.0 WP5: Chinese text in Taipei Sans TC Light, installed with one click (T1–T4)
 
 Run 184 (`6411d70`, WP4) is green. This entry claims no run for its own commit. This is WP5 in its third form; none
@@ -92,15 +118,14 @@ downloaded file, not written into the code.
 
 ### My choices (please look)
 
-- **Bold.** Only the Light face is referenced, so where the app asks for Bold or SemiBold, WPF emboldens it
-  (`StyleSimulations.BoldSimulation`). A CI test records that this is so.
-  - I did not change any weight. WPF cannot weight one font of a chain differently, so "normal weight for the
-    Chinese" would make the Latin of those texts normal too, and an English bar has Taipei on by default.
+- **Bold** (corrected after run 185, see the next entry). Only the Light face is referenced. Where the app asks
+  for Bold or SemiBold, WPF draws the Chinese in Light with no fake bold (`StyleSimulations.None`), and the Latin of
+  the same text stays bold. A CI test records this. No weight was changed.
   - The texts are: the voice window's names (Bold); SemiBold for the bar's separator captions, the open group's
     title in the bar, the pointer window's group title, the stack window's caption, the Undo button of the
     removal banner, the log viewer's header, two lines of the Sync window, the names table's changed rows, the
     log window's warnings, the Import window's group names, and the monitor tile window's labels.
-  - Please look and tell me which to make normal.
+  - Please look at whether Light Chinese next to bold Latin reads well there.
 - **Strings beyond your table:**
   - `FontInstall_OtherFileThere`: the plan says "report it" and has no text.
   - `FontInstall_Details`: for the confirmation's details box.
@@ -132,7 +157,7 @@ downloaded file, not written into the code.
   - In a window as the bar's and in a Fluent dialog, 「設定」 comes from the test font and "Settings" from Segoe UI;
     the menu and status keys point at it. This is checked through each glyph run's font file.
   - With the Windows choice nothing differs: the keys are gone and 「設定」 is not drawn in the test font.
-  - Bold Chinese is the Light face with simulated bold.
+  - Bold Chinese is the Light face without a simulated bold (corrected: see the next entry).
   - The row with the font found: two choices, the default selection, Save writes only a choice made, and no button
     or hint.
   - The row without the font:
