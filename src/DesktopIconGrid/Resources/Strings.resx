@@ -2499,7 +2499,7 @@ Details are in {1}.</value>
     <value>Where the program could run a value as a command, what would make it one is refused: for a batch file or cmd.exe " % ! ^ &amp; | &lt; &gt;, through WSL also $ and `, for Windows Terminal ;, and for the host of ssh anything that user@host and a port do not need. In PowerShell script text and the command ssh or plink sends, a value may hold only letters, digits, spaces and . _ - \ / :.</value>
   </data>
   <data name="Props_ParametersRule3" xml:space="preserve">
-    <value>A value that begins with “-” where an argument starts, with no “--” before it, would be read as an option and is refused.</value>
+    <value>A value the program would read as an option is refused: one that begins with “-” where an argument starts (unless “--” stands before it), or with “/” (except in a command for a Linux shell, a remote computer or PowerShell, where a path may begin with it). A value of more than one line is refused too.</value>
   </data>
   <data name="Props_ParametersRule4" xml:space="preserve">
     <value>Inside code for another program (python -c, node -e, bash -c) or an ssh option that holds a command or a file (-o, -F, -proxycmd, -m), a value is code: keep placeholders out of it.</value>
@@ -2551,5 +2551,11 @@ Details are in {1}.</value>
   </data>
   <data name="Symbol_GroupArrowsAndMarks" xml:space="preserve">
     <value>Arrows and marks</value>
+  </data>
+  <data name="Inbox_ReceivedMany" xml:space="preserve">
+    <value>{0} files received:</value>
+  </data>
+  <data name="Inbox_AndMore" xml:space="preserve">
+    <value>and {0} more</value>
   </data>
 </root>

@@ -1,6 +1,7 @@
 using System.IO;
 using DesktopIconGrid.Core.Models;
 using DesktopIconGrid.Core.SpecialIcons;
+using DesktopIconGrid.Resources;
 using DesktopIconGrid.Services;
 using DesktopIconGrid.SpecialIcons;
 using DesktopIconGrid.ViewModels;
@@ -74,6 +75,50 @@ public class NoticeTargetTests
     }
 
     private static (NoticeKind, NoticeTarget) Of(Notice notice) => (notice.Kind, notice.Target);
+
+    [Fact]
+    public void Files_received_in_one_look_make_one_notice_per_sender_and_one_file_is_as_before()
+    {
+        // Review of WP1, F1: twenty files in one look were twenty balloons, each replacing the last.
+        (string, string, bool)[] received =
+        [
+            (@"C:\Users\me\Downloads\a.pdf", "Den", true),
+            (@"C:\Users\me\Downloads\b (2).pdf", "Den", false),
+            (@"C:\Users\me\Downloads\c.txt", "Den", true),
+            (@"C:\Users\me\Downloads\d.png", "Study", true),
+        ];
+
+        var notices = InboxService.Notices(received, []);
+
+        Assert.Equal(2, notices.Count);
+        var den = notices[0];
+        Assert.Equal((NoticeKind.Information, NoticeTarget.Folder, @"C:\Users\me\Downloads\a.pdf"), (den.Kind, den.Target, den.Path));
+        Assert.Equal(string.Format(Strings.Inbox_ReceivedTitle, "Den"), den.Title);
+        Assert.Equal(
+            [string.Format(Strings.Inbox_ReceivedMany, 3), Strings.Inbox_NotMarked, "a.pdf", "b (2).pdf", "c.txt"],
+            den.Message.Split('\n'));
+
+        // One file from the other sender: exactly the notice of one file.
+        Assert.Equal(InboxService.ReceivedNotice(@"C:\Users\me\Downloads\d.png", "Study", marked: true), notices[1]);
+
+        // All marked: no line on the mark.
+        var marked = InboxService.Notices([(@"C:\x\a.txt", "Den", true), (@"C:\x\b.txt", "Den", true)], []);
+        Assert.Equal([string.Format(Strings.Inbox_ReceivedMany, 2), "a.txt", "b.txt"], Assert.Single(marked).Message.Split('\n'));
+    }
+
+    [Fact]
+    public void Files_waiting_for_space_make_one_warning_per_sender_for_the_first_and_how_many_more()
+    {
+        var notices = InboxService.Notices(
+            [],
+            [("big.iso", "Den", 5_000_000_000, 1_000_000), ("bigger.iso", "Den", 6_000_000_000, 1_000_000), ("huge.iso", "Den", 7_000_000_000, 1_000_000), ("one.iso", "Study", 5_000_000_000, 1_000_000)]);
+
+        Assert.Equal(2, notices.Count);
+        var first = InboxService.WaitingNotice("big.iso", "Den", 5_000_000_000, 1_000_000);
+        Assert.Equal(first with { Message = $"{first.Message}\n{string.Format(Strings.Inbox_AndMore, 2)}" }, notices[0]);
+        Assert.Equal((NoticeKind.Warning, NoticeTarget.Sync), Of(notices[0]));
+        Assert.Equal(InboxService.WaitingNotice("one.iso", "Study", 5_000_000_000, 1_000_000), notices[1]);
+    }
 
     /// <summary>The receiving side without a sync folder or a Google sign-in.</summary>
     private sealed class NoReceiving : IReceiving

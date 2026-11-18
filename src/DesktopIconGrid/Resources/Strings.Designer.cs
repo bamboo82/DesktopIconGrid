@@ -1941,6 +1941,15 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to and {0} more.
+        /// </summary>
+        public static string Inbox_AndMore {
+            get {
+                return ResourceManager.GetString("Inbox_AndMore", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to It could not be marked as downloaded from another computer (this drive keeps no [rest of string was truncated]";.
         /// </summary>
         public static string Inbox_NotMarked {
@@ -1955,6 +1964,15 @@ namespace DesktopIconGrid.Resources {
         public static string Inbox_Received {
             get {
                 return ResourceManager.GetString("Inbox_Received", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to {0} files received:.
+        /// </summary>
+        public static string Inbox_ReceivedMany {
+            get {
+                return ResourceManager.GetString("Inbox_ReceivedMany", resourceCulture);
             }
         }
 
@@ -4173,7 +4191,7 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to A value that begins with “-” where an argument starts, with no “--” before it, w [rest of string was truncated]";.
+        ///   Looks up a localized string similar to A value the program would read as an option is refused: one that begins with “-” [rest of string was truncated]";.
         /// </summary>
         public static string Props_ParametersRule3 {
             get {

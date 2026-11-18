@@ -9,6 +9,78 @@ The owner relays replies.
 
 ---
 
+## 2026-11-18 (83) — Review of WP1: F1–F3, and the fix for run 182
+
+Run 182 (`c108e32`, WP3) was red on one test; this commit fixes it (below). This entry claims no run for its own
+commit.
+
+**Order from here.** WP5 as first written (新細明體, no ClearType) was not started, and none of it is built. Your
+redefined WP5, the Chinese text in Taipei Sans TC Light, comes last, as you asked. So WP4 is next and WP5 follows
+it. This corrects the order in entry 82.
+
+### Run 182
+
+- **What failed:** `SymbolIconTests.The_window_opens_a_symbol_on_Symbol_scrolled_to_its_cell_twelve_to_a_row`.
+  The window was opened on the last symbol (Dislike). Its cell was 971.6 px below the top of a 250 px viewport,
+  so `ScrollIntoView`, called from `Loaded`, had not moved the grouped list.
+- **The rest of WP3 passed** (354 App tests): all 197 code points in Segoe MDL2 Assets, the font chain, the growth
+  of fitted text, the tile colour and no frame, the placeholder, the bar and the Properties preview, the search,
+  the sides, Send to PC and Voice.
+- **What I changed** (the window, not the test):
+  - After layout, the window sets the grid's offset itself from where the cell is: centred, or as near as the end
+    of the list allows.
+  - The grid scrolls by pixels (`ScrollViewer.CanContentScroll="False"`), so the wheel no longer jumps a whole
+    group at a time.
+  - The test is unchanged; the next run shows whether it passes.
+
+### F1: one notice per look and per sender
+
+- `InboxService.Notices(received, waiting)` makes the notices of one look.
+- **Received files:**
+  - One file from a sender: exactly the notice of one file, as before.
+  - Two or more: the title as before, then the lines "{0} files received:" (`Inbox_ReceivedMany`); then
+    `Inbox_NotMarked` when any file lacks the mark; then the names, one per line. It is information, its target
+    is Folder, and its path is the first file as saved.
+- **Files waiting for disk space:** one warning per sender for the first file, with "and {0} more"
+  (`Inbox_AndMore`) as the last line when there are more. Its target is Sync.
+- Senders keep the order in which they first appear. As before, the waiting notices come before the received
+  ones.
+
+### F2: rule 3 says all of it
+
+Your text, with one change after checking `TakesSwitch`. A value that begins with "/" is let through for three
+readers only:
+
+- `PosixShell`: a Linux shell through WSL;
+- `RemoteShell`: the command ssh, plink or PuTTY sends, and scp's or sftp's other side;
+- `PowerShellCommand`: PowerShell script text.
+
+It is refused for cmd.exe, which is also a shell, so "except in a shell command" said more than the code. Rule 3
+now reads:
+
+> A value the program would read as an option is refused: one that begins with "-" where an argument starts
+> (unless "--" stands before it), or with "/" (except in a command for a Linux shell, a remote computer or
+> PowerShell, where a path may begin with it). A value of more than one line is refused too.
+
+The zh-Hant text is yours with the same change: 「Linux 殼層、遠端電腦或 PowerShell 的命令除外，其中路徑可以用它開頭」.
+FEATURES had the same "except for a shell"; it now names the three.
+
+### F3: quiet time
+
+The comments on `NiifRespectQuietTime` and `NoticeBalloon.Flags` now say that during quiet time Windows does not
+show an information notice at all, and that it is then only in the log. FEATURES and CHANGELOG said "waits";
+both now say it is not shown.
+
+### Tests
+
+- **App, CI only:**
+  - Three files from one sender make one notice with the count, the mark line and three names, and the first
+    file's path. Without a missing mark there is no mark line.
+  - A second sender's single file is exactly the notice of one file.
+  - Three waiting files from one sender make one warning for the first, with "and 2 more". One waiting file from
+    another sender is unchanged.
+- **Not tested:** the balloon with a list on a real Windows (where it cuts the names).
+
 ## 2026-11-18 (82) — 0.12.0 WP3: symbol icons (G1–G4, addendum A1–A4)
 
 Run 181 (`be2ba25`, the pipe tests on their own) is green, so WP2 is green too. This entry claims no run for its own

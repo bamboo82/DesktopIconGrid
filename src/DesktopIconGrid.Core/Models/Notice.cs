@@ -49,7 +49,10 @@ public static class NoticeBalloon
     public const uint NiifInfo = 0x01;
     public const uint NiifWarning = 0x02;
 
-    /// <summary>Windows holds the balloon back in quiet time (the first hour of a new account, a presentation).</summary>
+    /// <summary>
+    /// In quiet time (the first hour of a new account, a presentation) Windows does not show the balloon at all: it is
+    /// dropped, not held back.
+    /// </summary>
     public const uint NiifRespectQuietTime = 0x80;
 
     /// <summary>The most characters of the text <c>szInfo</c> takes.</summary>
@@ -59,8 +62,9 @@ public static class NoticeBalloon
     private const int LineSearch = 80;
 
     /// <summary>
-    /// The balloon's icon by kind. Information waits for the end of quiet time, as a "received" notice can; a warning
-    /// always shows at once, as every notice did before 0.12.0.
+    /// The balloon's icon by kind. Information respects quiet time: during it Windows does not show the notice at all,
+    /// and it is only in the log, which a "received" notice can afford. A warning always shows at once, as every notice
+    /// did before 0.12.0 (review of WP1, F3).
     /// </summary>
     public static uint Flags(NoticeKind kind) => kind == NoticeKind.Information ? NiifInfo | NiifRespectQuietTime : NiifWarning;
 

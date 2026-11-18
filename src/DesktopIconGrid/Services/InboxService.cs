@@ -191,14 +191,9 @@ public sealed class InboxService : IDisposable, IReceiving
                 Failed(failure, started);
             }
 
-            foreach (var (name, sender, size, free) in waiting)
+            foreach (var notice in Notices(received, waiting))
             {
-                _show(WaitingNotice(name, sender, size, free));
-            }
-
-            foreach (var (path, sender, marked) in received)
-            {
-                _show(ReceivedNotice(path, sender, marked));
+                _show(notice);
             }
         }
         catch (Exception ex) when (ex is not OutOfMemoryException)
@@ -215,6 +210,53 @@ public sealed class InboxService : IDisposable, IReceiving
                 Look();
             }
         }
+    }
+
+    /// <summary>
+    /// The notices of one look, per sender: one for the files that wait for disk space, then one for the files
+    /// received. Twenty files in one look were twenty balloons, each replacing the last (review of WP1, F1).
+    /// </summary>
+    internal static IReadOnlyList<Notice> Notices(
+        IEnumerable<(string Path, string Sender, bool Marked)> received,
+        IEnumerable<(string Name, string Sender, long Size, long Free)> waiting)
+    {
+        var notices = new List<Notice>();
+        foreach (var fromOne in waiting.GroupBy(file => file.Sender, StringComparer.Ordinal))
+        {
+            var first = fromOne.First();
+            var notice = WaitingNotice(first.Name, first.Sender, first.Size, first.Free);
+            var more = fromOne.Count() - 1;
+            notices.Add(more == 0 ? notice : notice with { Message = $"{notice.Message}\n{string.Format(Strings.Inbox_AndMore, more)}" });
+        }
+
+        foreach (var fromOne in received.GroupBy(file => file.Sender, StringComparer.Ordinal))
+        {
+            var files = fromOne.ToList();
+            notices.Add(files.Count == 1 ? ReceivedNotice(files[0].Path, files[0].Sender, files[0].Marked) : ReceivedNotice(files));
+        }
+
+        return notices;
+    }
+
+    /// <summary>
+    /// Two or more files from one sender in one look: how many, the line on the mark when any lacks it, then the names
+    /// one per line (the balloon cuts the list at a line end). A click shows the first in its folder.
+    /// </summary>
+    internal static Notice ReceivedNotice(IReadOnlyList<(string Path, string Sender, bool Marked)> files)
+    {
+        var lines = new List<string> { string.Format(Strings.Inbox_ReceivedMany, files.Count) };
+        if (files.Any(file => !file.Marked))
+        {
+            lines.Add(Strings.Inbox_NotMarked);
+        }
+
+        lines.AddRange(files.Select(file => Path.GetFileName(file.Path)));
+        return new Notice(
+            string.Format(Strings.Inbox_ReceivedTitle, files[0].Sender),
+            string.Join("\n", lines),
+            NoticeKind.Information,
+            NoticeTarget.Folder,
+            files[0].Path);
     }
 
     /// <summary>A file received: information, and a click shows it in its folder, under the name it was saved as (WP1 N3).</summary>

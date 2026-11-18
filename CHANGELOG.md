@@ -19,10 +19,11 @@ and how often each shortcut is used.
 ### Changed
 
 - Notices: a notice that reports no problem (a file received, a timer's phase, files sent) shows the information
-  icon instead of the warning icon, and waits while Windows holds notifications back (quiet time); a warning shows
-  at once as before. A click on a notice goes where it is about: a received file is selected in its folder, a
-  problem with Google Drive or receiving opens the Sync window, a timer's phase shows the bar, a failure opens the
-  log. A notice too long for the balloon is cut after a whole line.
+  icon instead of the warning icon, and is not shown while Windows holds notifications back (quiet time; it is in
+  the log); a warning shows at once as before. A click on a notice goes where it is about: a received file is
+  selected in its folder, a problem with Google Drive or receiving opens the Sync window, a timer's phase shows the
+  bar, a failure opens the log. A notice too long for the balloon is cut after a whole line. Files received from
+  one PC in one look make one notice that lists them, not one notice each.
 - Properties: the hint under *Parameters* is two lines; the rules for placeholder values are behind *More*, as a
   list, and open by themselves while the parameters are refused.
 - Send to PC shows a one-colour Send symbol instead of the outbox emoji, and Voice the Microphone symbol (it showed

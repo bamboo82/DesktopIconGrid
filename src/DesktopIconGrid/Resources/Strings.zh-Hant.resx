@@ -2499,7 +2499,7 @@
     <value>程式可能把值當成命令執行時，會讓值變成命令的字元會被拒絕：批次檔或 cmd.exe 的 " % ! ^ &amp; | &lt; &gt;，經由 WSL 另加 $ 與 `，Windows 終端機的 ;，ssh 的主機則是 user@host 與連接埠用不到的字元。在 PowerShell 指令碼文字與 ssh 或 plink 送出的命令中，值只能含字母、數字、空格與 . _ - \ / :。</value>
   </data>
   <data name="Props_ParametersRule3" xml:space="preserve">
-    <value>值若在引數開頭以「-」開始，且前面沒有「--」，會被當成選項而拒絕。</value>
+    <value>程式會當成選項的值會被拒絕：在引數開頭以「-」開始（除非前面有「--」），或以「/」開始（Linux 殼層、遠端電腦或 PowerShell 的命令除外，其中路徑可以用它開頭）。超過一行的值也會被拒絕。</value>
   </data>
   <data name="Props_ParametersRule4" xml:space="preserve">
     <value>在其他程式的程式碼中（python -c、node -e、bash -c），或含有命令或檔案的 ssh 選項中（-o、-F、-proxycmd、-m），值就是程式碼：請勿在其中使用預留位置。</value>
@@ -2551,5 +2551,11 @@
   </data>
   <data name="Symbol_GroupArrowsAndMarks" xml:space="preserve">
     <value>箭頭與記號</value>
+  </data>
+  <data name="Inbox_ReceivedMany" xml:space="preserve">
+    <value>收到 {0} 個檔案：</value>
+  </data>
+  <data name="Inbox_AndMore" xml:space="preserve">
+    <value>以及另外 {0} 個</value>
   </data>
 </root>
