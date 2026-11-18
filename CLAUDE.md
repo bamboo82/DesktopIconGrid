@@ -88,11 +88,21 @@ After removing or editing a key in the `.resx` files, run `python3 -I tools/gen_
 
 ## State
 
-- Released: 0.11.0 (2026-11-14; release commit in REVIEW_NOTES entry 78, which the review session tags `v0.11.0`
-  and fast-forwards `main` to, as the owner gave it the release). Before it 0.10.0 (tag `v0.10.0` on `254c55c`).
-  Nothing is in progress: the next release is not planned yet (FEATURES §12).
-- The review session checked 0.11.0 in the app before the release (entries 76–77): the Settings tabs, the Send to PC
-  dialog, the voice window, the number tiles, the volume wheel and workspaces with real input. Not seen anywhere:
-  a real Windows snap, maximise on a second monitor, the recogniser with a microphone (the reviewer asks the owner
-  before it opens one).
-- Open for the owner: the CPU/disk gauge at "100%".
+- Released: 0.11.0 on 2026-11-18 (tag `v0.11.0` on `10dec5a`, where `main` is; release commit `296283c`). Before it
+  0.10.0 (tag `v0.10.0` on `254c55c`).
+- In progress: 0.12.0 "Find it, see it" (version 0.12.0, CHANGELOG `Unreleased`), as the review session planned it:
+  WP1 notices, WP2 the Parameters hint, WP3 symbol icons, F1–F3, WP4 usage counts, WP5 Chinese text in Taipei Sans
+  TC Light. All of it is in and green (run 187). REVIEW_NOTES entry 87 says it is ready for the release check, which
+  is the review session's. No release commit until the owner asks.
+- Keep as designed:
+  - the symbol table (`SymbolCatalog`, 197 entries) and the tile look are the review session's design (entry 82);
+  - usage counts stay in the local `usage.json`, never synced;
+  - the Taipei Sans TC font is never committed or shipped, and it is installed only when its button is clicked
+    (entry 85).
+  - WP5's earlier forms (新細明體 without ClearType, a bundled font) were withdrawn by the owner.
+- Not seen anywhere:
+  - a real Windows snap, maximise on a second monitor, and the recogniser with a microphone (the reviewer asks the
+    owner before it opens one);
+  - for 0.12.0 also the real font download and install (with the owner's leave), and how the new windows look. The
+    review session checks them.
+- Nothing is open for the owner from this session. The CPU/disk gauge at "100%" was fixed in 0.11.0 (the release check's N1, entry 77).

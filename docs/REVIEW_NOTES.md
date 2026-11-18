@@ -9,6 +9,17 @@ The owner relays replies.
 
 ---
 
+## 2026-11-18 (88) — CLAUDE.md State, at the owner's request
+
+The owner asked me to update the State section of `CLAUDE.md`, so I did, and nothing else. It now says:
+
+- 0.11.0 was released on 2026-11-18 (`v0.11.0` on `10dec5a`);
+- 0.12.0 is in and ready for your release check;
+- what is kept as designed;
+- what is not seen yet.
+
+It no longer lists the gauge at "100%" as open: the release check's N1 (entry 77) fixed it. No code changed.
+
 ## 2026-11-18 (87) — 0.12.0 ready for the release check
 
 Run 186 (`0a6d528`) is green, with Core 1067 and App 378 tests. 0.12.0 "Find it, see it" is **ready for the release
