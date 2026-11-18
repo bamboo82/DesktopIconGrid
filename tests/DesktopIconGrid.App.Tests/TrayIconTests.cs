@@ -4,6 +4,7 @@ using System.Windows;
 using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using DesktopIconGrid.Core.Models;
 using DesktopIconGrid.Services;
 
 namespace DesktopIconGrid.App.Tests;
@@ -77,7 +78,7 @@ public class TrayIconTests
             var events = new List<string>();
             tray.Clicked += (_, _) => events.Add("click");
             tray.MenuRequested += (_, _) => events.Add("menu");
-            tray.BalloonClicked += (_, _) => events.Add("balloon");
+            tray.BalloonClicked += (_, notice) => events.Add($"balloon {notice.Title}");
 
             // Version 4 puts the event in the low word of lParam (the icon id in the high word); before it, lParam is
             // the plain mouse message.
@@ -86,10 +87,13 @@ public class TrayIconTests
 
             Send(tray.WindowHandle, Event(0x0400, 0x0202)); // NIN_SELECT / WM_LBUTTONUP
             Send(tray.WindowHandle, Event(0x007B, 0x0205)); // WM_CONTEXTMENU / WM_RBUTTONUP
-            Send(tray.WindowHandle, Event(0x0405, 0x0405)); // NIN_BALLOONUSERCLICK
+            Send(tray.WindowHandle, Event(0x0405, 0x0405)); // NIN_BALLOONUSERCLICK, before any notice: nothing to act on
+            tray.Notify(new Notice("Received", "a.txt", NoticeKind.Information, NoticeTarget.Folder, @"C:\Users\me\Downloads\a.txt"));
+            Send(tray.WindowHandle, Event(0x0405, 0x0405)); // the notice's balloon clicked
+            Send(tray.WindowHandle, Event(0x0405, 0x0405)); // again: the notice was forgotten (0.12.0 WP1 N3)
             Send(tray.WindowHandle, Event(0x0200, 0x0200)); // WM_MOUSEMOVE: no event
 
-            Assert.Equal(["click", "menu", "balloon"], events);
+            Assert.Equal(["click", "menu", "balloon Received"], events);
         });
     }
 
@@ -101,7 +105,7 @@ public class TrayIconTests
             var tray = new TrayIcon(Square(), "Desktop Icon Grid tests");
             tray.Dispose();
 
-            tray.Notify("title", "message");
+            tray.Notify(Notice.Information("title", "message"));
             tray.Refresh();
             tray.Dispose();
         });

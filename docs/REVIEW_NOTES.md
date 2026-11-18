@@ -9,6 +9,79 @@ The owner relays replies.
 
 ---
 
+## 2026-11-18 (80) — 0.12.0 WP1: notices (N1–N4)
+
+Run 177 (`10dec5a`) is green, and v0.11.0 is tagged on it. Your 0.12.0 plan arrived; this is WP1. The version
+(0.12.0) and the changelog's "[0.12.0] – Unreleased" section open with it. This entry claims no run for its own commit.
+
+### N1, as designed
+
+- `Core/Models/Notice.cs` holds `NoticeKind`, `NoticeTarget` and `Notice` as you wrote them.
+- `Notice.Warning` (target `Log`) and `Notice.Information` (`None`) are what `Notify` and `Inform` build.
+- `IDialogService.Show(Notice)` is new. The log line and its level are unchanged.
+- `DialogService.Notifier` is a `Func<Notice, bool>`. The message box it falls back to has the kind's icon.
+
+### N2
+
+- `TrayIcon.Notify(Notice)` takes its flags from `NoticeBalloon.Flags`: `NIIF_INFO | NIIF_RESPECT_QUIET_TIME` for
+  information, `NIIF_WARNING` for a warning.
+- Its text comes from `NoticeBalloon.Text`:
+  - with a line end in the last 80 of the 254 characters kept: the whole lines, then "…" on a line of its own;
+  - otherwise: 254 characters and "…", never cutting a surrogate pair in half.
+- **Please look:** I put the "…" on its own line, under the last whole line. Say if you want it at that line's end.
+
+### N3
+
+- `NoticeMemory` (Core) keeps the last notice. `TrayIcon.BalloonClicked` now carries that notice and fires once for
+  it. A click when there is none fires nothing.
+- `NoticeActions` (App) acts on the notice's target:
+  - `Log`, `Sync` and `Settings` run the bar's own commands. `Bar` calls `ShowBar`, which is what the tray icon's
+    click uses to show the bar.
+  - `Folder` goes through `NoticeFolder.Resolve`: an existing file is selected with
+    `ShellHelper.SelectInExplorer`; else an existing folder is opened; else nothing happens.
+  - `SelectInExplorer` is new. It goes through `ProcessLauncher` like the other helpers, but does not expand `%…%`
+    as `RevealInExplorer` does, since a received file may have such a name.
+- The callers, as in your table:
+
+| Notice | Kind | Target |
+| --- | --- | --- |
+| A file received (`InboxService`) | Information | `Folder`, with the path it was saved under |
+| A file waiting for disk space | Warning | `Sync` |
+| Send to PC's properties without a sync folder or Google sign-in | Warning | `Sync` |
+| "N files on the way" (`Inform`) | Information | `None` |
+| A clock's phase (the handler now takes an `Action<Notice>`) | Information | `Bar` |
+| A health light down | Warning | `Log` |
+| A health light up again | Information | `Log` |
+| Positions remembered (`Inform`) | Information | `None` |
+| This PC's settings not saved; the read-only portable folder (`Notify`) | Warning | `Log` |
+| The Drive bucket's upload errors, "not available", access | Warning | `Sync` |
+
+- **Nearest things, please look:**
+  - The inbox shows one notice per received file, as it has since 0.10.0. So each notice's `Path` is its own file;
+    I did not merge them into one notice for the "first file".
+  - A drop on a Send to PC icon without a sync folder fails through the bar's launch path, as a `LaunchResult`. Its
+    notice is the bar's generic failure (Warning, `Log`), and only the properties' notice leads to Sync. Giving it
+    `Sync` needs a target on `LaunchResult`; say if you want that.
+  - The bucket's "paste from the menu failed" (nothing to paste, and the like) keeps `Log`, as it is no Drive
+    problem.
+  - Sync's own warnings (`SyncCoordinator`) keep the default `Log`, as your table does not list them.
+
+### Tests
+
+- **Core (`NoticeTests`):**
+  - the defaults and the flags;
+  - the cut: a list of `\r\n` lines, prose, a surrogate pair at the cut;
+  - `NoticeMemory`: no notice, the last of two, forgotten after a click;
+  - `NoticeFolder`: the file, the file moved, a folder path, both gone, a blank path.
+- **App, CI only:**
+  - `NoticeActions` per target;
+  - the received notice: the file selected, its folder opened, nothing when both are gone, a `None` notice;
+  - each caller's kind and target: waiting, clock, health down and up, Drive problem, and Send to PC without a
+    sync folder (through `RecordingDialogs`);
+  - `DialogService`: `Notify`, `Inform` and `Show` reach the notifier whole;
+  - the tray: a balloon click before any notice fires nothing; one after a notice fires once.
+- **Not tested:** a real balloon's icon and its quiet time, and Explorer opening.
+
 ## 2026-11-18 (79) — N4 and the release date
 
 Runs 175 (`0bebdd3`) and 176 (`296283c`, the release commit of entry 78) are green. Your check of 296283c in the app

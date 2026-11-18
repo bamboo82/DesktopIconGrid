@@ -12,7 +12,7 @@ public class ClockTileTests
     [Fact]
     public void A_click_starts_the_countdown_and_another_brings_the_time_back()
     {
-        var handler = new ClockTileHandler((_, _) => { }, () => null, Dispatcher.CurrentDispatcher);
+        var handler = new ClockTileHandler(_ => { }, () => null, Dispatcher.CurrentDispatcher);
         var item = handler.CreateItem();
         (ClockTileSettings.Default with { Timer = ClockTimerKind.Countdown, Minutes = 10 }).ApplyTo(item);
         var state = handler.CreateState(item)!;

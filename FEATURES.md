@@ -905,8 +905,9 @@ another PC through a sync folder.
 not released on its own), a volume tile, dropping a file onto a program inside a folder stack, Send to PC
 through Google Drive, and voice launch.
 
-**Next** — not planned yet. The review's outline after 0.11.0: toast notifications in place of tray balloons, a
-shorter Parameters hint in Properties, glyph icons for tiles, usage columns.
+**0.12.0 "Find it, see it"** *(in progress)* — notices with a kind and a click that leads somewhere (the Windows
+toast with actions stays for 1.0.0), a two-line Parameters hint with the rules behind *More*, symbol icons with a
+tile colour, and usage columns in the names table.
 
 **1.0.0 "Ship it"** — the existing backlog: installer (MSIX/winget), code signing, toast notifications.
 
@@ -946,7 +947,14 @@ Still open, in the order they should be taken:
    text-icon default font by UI language). By design the log and the error texts from Google and
    Windows stay in English.
 4. **Non-modal errors** — done in 0.4.0 (tray notifications with the log viewer one click away;
-   Undo for Remove). Still open: a toast with actions instead of the classic balloon (planned for 1.0.0).
+   Undo for Remove). Since 0.12.0 a notice has a kind and a target: information (a file received, a timer's
+   phase, files sent) shows the information icon and waits for the end of Windows' quiet time, a warning shows
+   the warning icon at once; a click on the balloon goes where the notice is about (the received file selected in
+   its folder, the Sync window for a problem with Google Drive or receiving, the bar for a timer, the log for a
+   failure) and only for the last notice, once. A text too long for the balloon (255 characters) is cut after a
+   whole line when there is one in its last 80 characters. Still open: a toast with actions instead of the
+   classic balloon (planned for 1.0.0: it needs the app registered with Windows, which the installer does and a
+   portable copy must not).
 5. **Table stakes** — installer (MSIX/winget), signed releases (planned for 1.0.0); versioning from the
    tag is done by the release workflow, start with Windows and dock/auto-hide are done (0.4.0).
 6. **Engineering** — done in 0.6.0: the tray icon is a `Shell_NotifyIcon` on a hidden window of its own

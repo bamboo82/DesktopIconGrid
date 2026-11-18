@@ -79,15 +79,24 @@ internal sealed class RecordingDialogs : IDialogService
 
     public void ShowInfo(string title, string message) => Modals.Add(title);
 
-    public void Notify(string title, string message) => Notices.Add(title);
+    public void Notify(string title, string message) => Show(Notice.Warning(title, message));
 
     /// <summary>The notices that report no failure; they are in <see cref="Notices"/> too.</summary>
     public List<string> Informed { get; } = [];
 
-    public void Inform(string title, string message)
+    /// <summary>Every notice as it was shown, with its kind and target.</summary>
+    public List<Notice> Shown { get; } = [];
+
+    public void Inform(string title, string message) => Show(Notice.Information(title, message));
+
+    public void Show(Notice notice)
     {
-        Notices.Add(title);
-        Informed.Add(title);
+        Shown.Add(notice);
+        Notices.Add(notice.Title);
+        if (notice.Kind == NoticeKind.Information)
+        {
+            Informed.Add(notice.Title);
+        }
     }
 
     public void ShowSync()

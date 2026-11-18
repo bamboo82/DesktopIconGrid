@@ -14,7 +14,7 @@ public class NoticeLogTests
             return;
         }
 
-        var dialogs = new DialogService(new NoIcons()) { Notifier = (_, _) => true }; // shown as a balloon: no box
+        var dialogs = new DialogService(new NoIcons()) { Notifier = _ => true }; // shown as a balloon: no box
         var mark = Guid.NewGuid().ToString("N"); // the log is shared with tests running at the same time
 
         dialogs.Inform("File from Den", $"{mark} is in your Downloads folder");

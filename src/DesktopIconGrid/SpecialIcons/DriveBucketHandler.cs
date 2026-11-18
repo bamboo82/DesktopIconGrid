@@ -29,6 +29,9 @@ public sealed class DriveBucketHandler : ISpecialIconHandler
 
     private readonly SyncService _sync;
     private readonly IDialogService _dialogs;
+
+    /// <summary>A problem with Google Drive: a warning, and a click opens the Sync window, where the sign-in is (0.12.0 WP1 N3).</summary>
+    internal static Notice DriveProblem(string title, string message) => new(title, message, NoticeKind.Warning, NoticeTarget.Sync);
     private readonly Func<Window?> _owner;
     private readonly IIconProvider _icons;
     private readonly string _cacheDirectory;
@@ -175,7 +178,7 @@ public sealed class DriveBucketHandler : ISpecialIconHandler
     {
         if (!_uploaders.TryGetValue(item.Id, out var uploader))
         {
-            uploader = new DriveBucketUploader(_sync, (title, message) => _dialogs.Notify(title, message));
+            uploader = new DriveBucketUploader(_sync, (title, message) => _dialogs.Show(DriveProblem(title, message)));
             _uploaders[item.Id] = uploader;
         }
 
@@ -206,7 +209,7 @@ public sealed class DriveBucketHandler : ISpecialIconHandler
     {
         if (_sync.Files is null)
         {
-            _dialogs.Notify(Strings.Bucket_GoogleDrive, Strings.Bucket_NotAvailable);
+            _dialogs.Show(DriveProblem(Strings.Bucket_GoogleDrive, Strings.Bucket_NotAvailable));
             return false;
         }
 
@@ -234,7 +237,7 @@ public sealed class DriveBucketHandler : ISpecialIconHandler
         }
         catch (Exception ex) when (SyncCoordinator.IsSyncError(ex))
         {
-            _dialogs.Notify(Strings.Bucket_AccessTitle, ex.Message);
+            _dialogs.Show(DriveProblem(Strings.Bucket_AccessTitle, ex.Message));
             return false;
         }
     }

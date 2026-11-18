@@ -20,23 +20,28 @@ public sealed class DialogService(IIconProvider icons) : IDialogService, ILaunch
     public Func<SyncViewModel>? SyncViewModelFactory { get; set; }
 
     /// <summary>Shows a notice without interrupting (the tray balloon); returns false when it cannot, so a message box is used instead.</summary>
-    public Func<string, string, bool>? Notifier { get; set; }
+    public Func<Notice, bool>? Notifier { get; set; }
 
-    public void Notify(string title, string message)
+    public void Notify(string title, string message) => Show(Notice.Warning(title, message));
+
+    public void Inform(string title, string message) => Show(Notice.Information(title, message));
+
+    public void Show(Notice notice)
     {
-        AppLog.Default.Warning("App", $"{title}: {message.ReplaceLineEndings(" ")}");
-        if (Notifier is null || !Notifier(title, message))
+        ArgumentNullException.ThrowIfNull(notice);
+        var line = $"{notice.Title}: {notice.Message.ReplaceLineEndings(" ")}";
+        if (notice.Kind == NoticeKind.Warning)
         {
-            Show(message, title, MessageBoxButton.OK, MessageBoxImage.Warning);
+            AppLog.Default.Warning("App", line);
         }
-    }
-
-    public void Inform(string title, string message)
-    {
-        AppLog.Default.Info("App", $"{title}: {message.ReplaceLineEndings(" ")}");
-        if (Notifier is null || !Notifier(title, message))
+        else
         {
-            Show(message, title, MessageBoxButton.OK, MessageBoxImage.Information);
+            AppLog.Default.Info("App", line);
+        }
+
+        if (Notifier is null || !Notifier(notice))
+        {
+            Show(notice.Message, notice.Title, MessageBoxButton.OK, notice.Kind == NoticeKind.Warning ? MessageBoxImage.Warning : MessageBoxImage.Information);
         }
     }
 

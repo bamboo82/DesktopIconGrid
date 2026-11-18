@@ -171,7 +171,7 @@ public sealed class SendToDeviceHandler(IReceiving receiving, IDialogService dia
         ArgumentNullException.ThrowIfNull(item);
         if (receiving.Current() is not { } mine)
         {
-            dialogs.Notify(DisplayName, Strings.SendTo_NeedsFolder);
+            dialogs.Show(new Notice(DisplayName, Strings.SendTo_NeedsFolder, NoticeKind.Warning, NoticeTarget.Sync)); // where it is set up
             return false;
         }
 

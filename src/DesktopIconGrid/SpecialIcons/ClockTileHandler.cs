@@ -14,7 +14,7 @@ namespace DesktopIconGrid.SpecialIcons;
 /// The clock tile: the time here or in another zone; a click starts a countdown or a Pomodoro (or stops it), and the
 /// end of a phase is a notification. All of it stays on this PC and contacts nothing.
 /// </summary>
-public sealed class ClockTileHandler(Action<string, string> notify, Func<Window?> ownerProvider, Dispatcher dispatcher) : ISpecialIconHandler
+public sealed class ClockTileHandler(Action<Notice> notify, Func<Window?> ownerProvider, Dispatcher dispatcher) : ISpecialIconHandler
 {
     private readonly ConditionalWeakTable<SpecialIconItem, ClockSession> _sessions = [];
 
@@ -71,10 +71,10 @@ internal sealed class ClockSession
     private readonly ClockTileSettings _settings;
     private readonly ClockTimer _timer;
     private readonly GaugeState _state;
-    private readonly Action<string, string> _notify;
+    private readonly Action<Notice> _notify;
     private readonly DispatcherTimer _tick;
 
-    public ClockSession(string name, ClockTileSettings settings, GaugeState state, Action<string, string> notify, Dispatcher dispatcher)
+    public ClockSession(string name, ClockTileSettings settings, GaugeState state, Action<Notice> notify, Dispatcher dispatcher)
     {
         _name = name;
         _settings = settings;
@@ -92,19 +92,22 @@ internal sealed class ClockSession
         Draw(DateTimeOffset.Now);
     }
 
+    /// <summary>A timer's phase ended: information, and a click shows the bar with the tile (0.12.0 WP1 N3).</summary>
+    internal static Notice PhaseNotice(string name, string text) => new(name, text, NoticeKind.Information, NoticeTarget.Bar);
+
     private void Tick()
     {
         var now = DateTimeOffset.Now;
         switch (_timer.Tick(now))
         {
             case ClockEvent.CountdownEnded:
-                _notify(_name, string.Format(Strings.Clock_CountdownEnded, _settings.Minutes));
+                _notify(PhaseNotice(_name, string.Format(Strings.Clock_CountdownEnded, _settings.Minutes)));
                 break;
             case ClockEvent.BreakStarted:
-                _notify(_name, string.Format(Strings.Clock_BreakStarted, _settings.BreakMinutes));
+                _notify(PhaseNotice(_name, string.Format(Strings.Clock_BreakStarted, _settings.BreakMinutes)));
                 break;
             case ClockEvent.WorkStarted:
-                _notify(_name, string.Format(Strings.Clock_WorkStarted, _settings.Minutes));
+                _notify(PhaseNotice(_name, string.Format(Strings.Clock_WorkStarted, _settings.Minutes)));
                 break;
         }
 

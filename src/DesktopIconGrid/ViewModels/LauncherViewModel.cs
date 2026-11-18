@@ -409,18 +409,8 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
     /// <summary>A notification (a health light that changed), as the app shows them.</summary>
     internal void Notify(string title, string message) => _dialogs.Notify(title, message);
 
-    /// <summary>A notice: of a failure or problem (logged as a warning), or of none (logged as information).</summary>
-    internal void Notify(string title, string message, bool failure)
-    {
-        if (failure)
-        {
-            _dialogs.Notify(title, message);
-        }
-        else
-        {
-            _dialogs.Inform(title, message);
-        }
-    }
+    /// <summary>A notice from a caller that knows its kind and where a click on it leads (0.12.0 WP1).</summary>
+    internal void Show(Notice notice) => _dialogs.Show(notice);
 
     public ItemViewModel GetOrCreateViewModel(LauncherItem item)
     {

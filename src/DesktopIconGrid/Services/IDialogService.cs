@@ -33,16 +33,22 @@ public interface IDialogService
     void ShowInfo(string title, string message);
 
     /// <summary>
-    /// A notice that needs no decision and reports a failure or a problem: shown without interrupting (tray balloon), and
-    /// logged as a warning.
+    /// A notice that needs no decision and reports a failure or a problem: <see cref="Notice.Warning"/> (a click opens the
+    /// log), shown without interrupting (tray balloon), and logged as a warning.
     /// </summary>
     void Notify(string title, string message);
 
     /// <summary>
-    /// A notice that reports no failure (a file received, a timer's phase): shown as <see cref="Notify"/> shows it, and
-    /// logged as information, not as a warning (the release check of 0.11.0).
+    /// A notice that reports no failure (a file received, a timer's phase): <see cref="Notice.Information"/> (a click
+    /// leads nowhere), logged as information (the release check of 0.11.0).
     /// </summary>
     void Inform(string title, string message);
+
+    /// <summary>
+    /// A notice from a caller that knows where a click on it should lead (0.12.0 WP1): shown without interrupting, and
+    /// logged by its kind, a warning as a warning and information as information.
+    /// </summary>
+    void Show(Notice notice);
 
     /// <summary>Shows the Google Drive sync dialog.</summary>
     void ShowSync();

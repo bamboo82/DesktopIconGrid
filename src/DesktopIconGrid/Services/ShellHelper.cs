@@ -26,6 +26,13 @@ public static class ShellHelper
         return LaunchResult.Failure(Strings.Shell_NotLocal);
     }
 
+    /// <summary>
+    /// Opens Explorer with <paramref name="path"/> selected, taken as it is: a received file may be called
+    /// <c>%USERNAME%.txt</c>, which <see cref="RevealInExplorer"/> would expand. A Windows path holds no <c>"</c>.
+    /// </summary>
+    public static LaunchResult SelectInExplorer(string path) =>
+        ProcessLauncher.Start(new ProcessStartInfo("explorer.exe", $"/select,\"{path}\"") { UseShellExecute = true });
+
     public static LaunchResult OpenFolder(string directory) =>
         ProcessLauncher.Start(new ProcessStartInfo("explorer.exe", $"\"{directory}\"") { UseShellExecute = true });
 }

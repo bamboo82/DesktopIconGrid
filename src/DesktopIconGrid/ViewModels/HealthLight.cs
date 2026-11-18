@@ -3,6 +3,7 @@ using System.Windows.Media;
 using System.Windows.Threading;
 using DesktopIconGrid.Core.Diagnostics;
 using DesktopIconGrid.Core.Health;
+using DesktopIconGrid.Core.Models;
 using DesktopIconGrid.Core.SpecialIcons;
 using DesktopIconGrid.Infrastructure;
 using DesktopIconGrid.Resources;
@@ -25,7 +26,7 @@ public sealed class HealthLight : ObservableObject
     private readonly string _name;
     private readonly HealthCheck _check;
     private readonly bool _notify;
-    private readonly Action<string, string, bool>? _notifier;
+    private readonly Action<Notice>? _notifier;
     private readonly DispatcherTimer _timer;
     private readonly CancellationTokenSource _stop = new();
     private HealthStatus _status;
@@ -38,9 +39,9 @@ public sealed class HealthLight : ObservableObject
     private bool _paused;
     private bool _stopped;
 
-    /// <param name="notifier">Shows a notice: the title, the text, and whether it reports a problem (the check went down).</param>
+    /// <param name="notifier">Shows a notice when the check goes down (a warning) or is up again (information).</param>
     /// <param name="trust">Where approvals are kept: the light contacts nothing until <see cref="HealthCheck.Hash"/> is approved there.</param>
-    public HealthLight(string name, HealthCheck check, int intervalSeconds, bool notify, Action<string, string, bool>? notifier, Dispatcher dispatcher, CommandTrust trust)
+    public HealthLight(string name, HealthCheck check, int intervalSeconds, bool notify, Action<Notice>? notifier, Dispatcher dispatcher, CommandTrust trust)
     {
         _name = name;
         _check = check;
@@ -51,6 +52,10 @@ public sealed class HealthLight : ObservableObject
         _timer = new DispatcherTimer(TimeSpan.FromSeconds(HealthCheck.NormalizeInterval(intervalSeconds)), DispatcherPriority.Background, (_, _) => CheckNow(), dispatcher);
         _timer.Stop(); // this constructor starts it; it starts in Start, once approved
     }
+
+    /// <summary>The check went down (a warning) or is up again (information); a click opens the log with the checks (WP1 N3).</summary>
+    internal static Notice ChangeNotice(string name, bool up, string text) =>
+        new(name, text, up ? NoticeKind.Information : NoticeKind.Warning, NoticeTarget.Log);
 
     public HealthStatus Status => _status;
 
@@ -186,7 +191,7 @@ public sealed class HealthLight : ObservableObject
             if (_notify && before != HealthStatus.Unknown)
             {
                 var up = _status == HealthStatus.Up;
-                _notifier?.Invoke(_name, up ? Strings.Health_NowUp : string.Format(Strings.Health_NowDown, _check.Shown, _detail ?? Strings.Health_Down), !up);
+                _notifier?.Invoke(ChangeNotice(_name, up, up ? Strings.Health_NowUp : string.Format(Strings.Health_NowDown, _check.Shown, _detail ?? Strings.Health_Down)));
             }
         }
 

@@ -4,6 +4,7 @@ using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using DesktopIconGrid.Core.Diagnostics;
+using DesktopIconGrid.Core.Models;
 
 namespace DesktopIconGrid.Services;
 
@@ -41,7 +42,6 @@ public sealed class TrayIcon : IDisposable
     private const uint NifTip = 0x04;
     private const uint NifInfo = 0x10;
     private const uint NifShowTip = 0x80;
-    private const uint NiifWarning = 0x02;
     private const uint NotifyIconVersion4 = 4;
     private const int WsPopup = unchecked((int)0x80000000);
     private const int WsExToolWindow = 0x00000080;
@@ -51,6 +51,7 @@ public sealed class TrayIcon : IDisposable
     private readonly string _text;
     private readonly HwndSource _source;
     private readonly uint _taskbarCreated;
+    private readonly NoticeMemory _lastNotice = new();
     private IntPtr _icon;
     private bool _version4;
     private bool _disposed;
@@ -84,22 +85,30 @@ public sealed class TrayIcon : IDisposable
     /// <summary>Right click on the icon (or Shift+F10); the owner shows its menu at the pointer.</summary>
     public event EventHandler? MenuRequested;
 
-    /// <summary>The user clicked a balloon shown by <see cref="Notify"/>.</summary>
-    public event EventHandler? BalloonClicked;
+    /// <summary>
+    /// The user clicked the balloon of the last notice <see cref="Notify"/> showed: that notice, once (0.12.0 WP1 N3). A
+    /// click after it, on the same or an older balloon, raises nothing.
+    /// </summary>
+    public event EventHandler<Notice>? BalloonClicked;
 
-    /// <summary>Shows a balloon/toast from the icon (Windows caps the title at 63 and the text at 255 characters).</summary>
-    public void Notify(string title, string message)
+    /// <summary>
+    /// Shows a balloon/toast from the icon, with the icon of its kind (Windows caps the title at 63 and the text at 255
+    /// characters; <see cref="NoticeBalloon.Text"/> cuts a longer text at a line end), and keeps it for a click on it.
+    /// </summary>
+    public void Notify(Notice notice)
     {
+        ArgumentNullException.ThrowIfNull(notice);
         if (_disposed)
         {
             return;
         }
 
-        var text = string.IsNullOrWhiteSpace(message) ? title : message;
+        var text = string.IsNullOrWhiteSpace(notice.Message) ? notice.Title : notice.Message;
         var data = Data(NifInfo);
-        data.szInfoTitle = Clip(title, 63);
-        data.szInfo = text.Length > 255 ? text[..252] + "…" : text;
-        data.dwInfoFlags = NiifWarning;
+        data.szInfoTitle = Clip(notice.Title, 63);
+        data.szInfo = NoticeBalloon.Text(text);
+        data.dwInfoFlags = NoticeBalloon.Flags(notice.Kind);
+        _lastNotice.Shown(notice);
         NativeMethods.Shell_NotifyIcon(NimModify, ref data);
     }
 
@@ -208,8 +217,8 @@ public sealed class TrayIcon : IDisposable
                 case WmRButtonUp when !_version4:
                     MenuRequested?.Invoke(this, EventArgs.Empty);
                     break;
-                case NinBalloonUserClick:
-                    BalloonClicked?.Invoke(this, EventArgs.Empty);
+                case NinBalloonUserClick when _lastNotice.Clicked() is { } notice:
+                    BalloonClicked?.Invoke(this, notice);
                     break;
             }
 

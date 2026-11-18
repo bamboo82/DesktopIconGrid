@@ -367,7 +367,7 @@ public sealed class ItemViewModel : ObservableObject
                 check,
                 Core.Health.HealthCheck.NormalizeInterval(shortcut.HealthInterval),
                 shortcut.HealthNotify,
-                Root.Notify,
+                Root.Show,
                 System.Windows.Threading.Dispatcher.CurrentDispatcher,
                 Root.Trust);
             _health.PropertyChanged += (_, _) =>

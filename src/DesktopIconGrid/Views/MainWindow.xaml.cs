@@ -102,7 +102,14 @@ public partial class MainWindow : Window
 
         _tray.Clicked += (_, _) => ToggleVisibility();
         _tray.MenuRequested += (_, _) => (_trayMenu ??= new TrayMenuHost()).Open(BuildTrayMenu());
-        _tray.BalloonClicked += (_, _) => _viewModel.OpenLogViewerCommand.Execute(null);
+        var notices = new NoticeActions(
+            () => _viewModel.OpenLogViewerCommand.Execute(null),
+            () => _viewModel.OpenSyncCommand.Execute(null),
+            () => _viewModel.OpenSettingsCommand.Execute(null),
+            ShowBar,
+            path => ShellHelper.SelectInExplorer(path),
+            folder => ShellHelper.OpenFolder(folder));
+        _tray.BalloonClicked += (_, notice) => notices.Act(notice); // where the notice leads (0.12.0 WP1)
         SystemEvents.DisplaySettingsChanged += OnDisplaySettingsChanged;
         AppLog.Default.Debug("App", "Tray icon created");
         TrayReady?.Invoke(this, EventArgs.Empty);
@@ -111,15 +118,15 @@ public partial class MainWindow : Window
     /// <summary>Raised once the tray icon exists, so notices can go there instead of message boxes.</summary>
     public event EventHandler? TrayReady;
 
-    /// <summary>Shows a balloon from the tray icon; false when there is none.</summary>
-    public bool TryNotify(string title, string message)
+    /// <summary>Shows a notice's balloon from the tray icon; false when there is none.</summary>
+    public bool TryNotify(Notice notice)
     {
         if (_tray is null)
         {
             return false;
         }
 
-        _tray.Notify(title, message);
+        _tray.Notify(notice);
         return true;
     }
 

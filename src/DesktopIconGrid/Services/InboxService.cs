@@ -2,6 +2,7 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Windows.Threading;
 using DesktopIconGrid.Core.Diagnostics;
+using DesktopIconGrid.Core.Models;
 using DesktopIconGrid.Core.Sync;
 using DesktopIconGrid.Resources;
 
@@ -34,8 +35,7 @@ public sealed class InboxService : IDisposable, IReceiving
     private static readonly Guid DownloadsFolder = new("374DE290-123F-4565-9164-39C4925E467B");
 
     private readonly SyncService _sync;
-    private readonly Action<string, string> _notify;
-    private readonly Action<string, string> _inform;
+    private readonly Action<Notice> _show;
     private readonly Dispatcher _dispatcher;
     private readonly DispatcherTimer _timer;
     private readonly InboxBackOff _backOff = new();
@@ -54,13 +54,11 @@ public sealed class InboxService : IDisposable, IReceiving
     /// <summary>Inbox files the user was told are waiting for disk space: told once, not every minute.</summary>
     private static readonly HashSet<string> ToldWaiting = new(StringComparer.OrdinalIgnoreCase);
 
-    /// <param name="notify">Shows a notice of a problem: a file that waits for disk space.</param>
-    /// <param name="inform">Shows a notice of no problem: a file received (logged as information, not as a warning).</param>
-    public InboxService(SyncService sync, Action<string, string> notify, Action<string, string> inform, Dispatcher dispatcher)
+    /// <param name="show">Shows a notice: a file received (its click shows the file), one that waits for disk space.</param>
+    public InboxService(SyncService sync, Action<Notice> show, Dispatcher dispatcher)
     {
         _sync = sync;
-        _notify = notify;
-        _inform = inform;
+        _show = show;
         _dispatcher = dispatcher;
         _timer = new DispatcherTimer(TimeSpan.FromMinutes(1), DispatcherPriority.Background, (_, _) => Look(), dispatcher);
         _timer.Stop();
@@ -195,20 +193,12 @@ public sealed class InboxService : IDisposable, IReceiving
 
             foreach (var (name, sender, size, free) in waiting)
             {
-                _notify(
-                    string.Format(Strings.Inbox_WaitingTitle, sender),
-                    string.Format(
-                        Strings.Inbox_WaitingForSpace,
-                        name,
-                        SpecialIcons.SystemMonitor.FormatBytes(size),
-                        SpecialIcons.SystemMonitor.FormatBytes(free),
-                        SpecialIcons.SystemMonitor.FormatBytes(FolderInbox.FreeSpaceFloor)));
+                _show(WaitingNotice(name, sender, size, free));
             }
 
-            foreach (var (name, sender, marked) in received)
+            foreach (var (path, sender, marked) in received)
             {
-                var message = string.Format(Strings.Inbox_Received, name);
-                _inform(string.Format(Strings.Inbox_ReceivedTitle, sender), marked ? message : $"{message}\n{Strings.Inbox_NotMarked}");
+                _show(ReceivedNotice(path, sender, marked));
             }
         }
         catch (Exception ex) when (ex is not OutOfMemoryException)
@@ -227,6 +217,30 @@ public sealed class InboxService : IDisposable, IReceiving
         }
     }
 
+    /// <summary>A file received: information, and a click shows it in its folder, under the name it was saved as (WP1 N3).</summary>
+    internal static Notice ReceivedNotice(string savedPath, string sender, bool marked)
+    {
+        var message = string.Format(Strings.Inbox_Received, Path.GetFileName(savedPath));
+        return new Notice(
+            string.Format(Strings.Inbox_ReceivedTitle, sender),
+            marked ? message : $"{message}\n{Strings.Inbox_NotMarked}",
+            NoticeKind.Information,
+            NoticeTarget.Folder,
+            savedPath);
+    }
+
+    /// <summary>A file that waits for disk space: a problem of receiving, so a click opens the Sync window (WP1 N3).</summary>
+    internal static Notice WaitingNotice(string name, string sender, long size, long free) => new(
+        string.Format(Strings.Inbox_WaitingTitle, sender),
+        string.Format(
+            Strings.Inbox_WaitingForSpace,
+            name,
+            SpecialIcons.SystemMonitor.FormatBytes(size),
+            SpecialIcons.SystemMonitor.FormatBytes(free),
+            SpecialIcons.SystemMonitor.FormatBytes(FolderInbox.FreeSpaceFloor)),
+        NoticeKind.Warning,
+        NoticeTarget.Sync);
+
     /// <summary>The first failure since a look worked is a warning in the log, the repeats are debug lines; Drive waits longer each time.</summary>
     private void Failed(Exception failure, DateTime started)
     {
@@ -241,7 +255,7 @@ public sealed class InboxService : IDisposable, IReceiving
         }
     }
 
-    private static async Task<(List<(string Name, string Sender, bool Marked)> Received, List<(string Name, string Sender, long Size, long Free)> Waiting, bool Announced, Exception? Failure)> TakeAsync(IInbox inbox)
+    private static async Task<(List<(string Path, string Sender, bool Marked)> Received, List<(string Name, string Sender, long Size, long Free)> Waiting, bool Announced, Exception? Failure)> TakeAsync(IInbox inbox)
     {
         var received = new List<(string, string, bool)>();
         var waiting = new List<(string, string, long, long)>();
@@ -284,7 +298,7 @@ public sealed class InboxService : IDisposable, IReceiving
                     }
 
                     AppLog.Default.Info("Inbox", $"Received \"{Path.GetFileName(path)}\" ({file.Size} bytes) from {file.SenderName}{(marked ? string.Empty : ", not marked as downloaded")}");
-                    received.Add((Path.GetFileName(path), file.SenderName, marked));
+                    received.Add((path, file.SenderName, marked)); // where it was saved: the notice's click shows it
                 }
                 catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or DriveException or System.Net.Http.HttpRequestException)
                 {

@@ -261,7 +261,10 @@ folder.
 - **0.11.0** (released 2026-11-18): the review fixes after 0.10.0, a volume tile, drop onto a program inside a stack,
   12 through Google Drive, 11 (voice launch, through Windows' desktop recognisers: the spike's answer for
   the newer recogniser was no, FEATURES §6.1).
-- **1.0.0 "Ship it"**: the existing backlog — installer (MSIX/winget), code signing, toast notifications.
+- **0.12.0 "Find it, see it"** (in progress): notices with a kind and a target (the toast with actions waits for
+  1.0.0's installer), a shorter Parameters hint, symbol icons (glyph icons) with a tile colour, usage columns.
+- **1.0.0 "Ship it"**: the existing backlog — installer (MSIX/winget), code signing, toast notifications with
+  actions.
 
 Not yet placed in a release: glyph icons, usage columns, the accent theme, spring-loaded groups and the
 Windows menu.
