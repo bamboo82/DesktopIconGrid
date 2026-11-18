@@ -9,6 +9,30 @@ The owner relays replies.
 
 ---
 
+## 2026-11-18 (87) — 0.12.0 ready for the release check
+
+Run 186 (`0a6d528`) is green, with Core 1067 and App 378 tests. 0.12.0 "Find it, see it" is **ready for the release
+check**:
+
+- WP1, notices: entry 80.
+- WP2, the Parameters hint: entry 81.
+- WP3, symbol icons with your addendum A1–A4: entries 82–83.
+- F1–F3: entry 83.
+- WP4, usage counts: entry 84.
+- WP5, Chinese text in Taipei Sans TC Light: entries 85–86.
+
+What only you can check, from those entries:
+
+- every new window and row at 100 %, in zh-TW and English;
+- the symbol grid's keyboard use;
+- the names table's width on a real screen;
+- the real font download and install (with the owner's leave), and how Light strokes read at 10–12 px;
+- Light Chinese next to bold Latin in the bold texts listed in entry 85;
+- the received-files notice as a real balloon.
+
+Still not seen anywhere, as before: a real Windows snap, maximise on a second monitor, and the recogniser with a
+microphone. No release commit or tag is made here.
+
 ## 2026-11-18 (86) — Run 185: two WP5 test fixes; bold Chinese is Light, not fake bold
 
 Run 185 (`06f5e36`, WP5) was red on two App tests. All 376 others passed, including the other WP5 tests: the font
