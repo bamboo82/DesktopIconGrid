@@ -2558,4 +2558,28 @@
   <data name="Inbox_AndMore" xml:space="preserve">
     <value>以及另外 {0} 個</value>
   </data>
+  <data name="Names_Uses" xml:space="preserve">
+    <value>次數</value>
+  </data>
+  <data name="Names_LastUsed" xml:space="preserve">
+    <value>上次使用</value>
+  </data>
+  <data name="Names_Today" xml:space="preserve">
+    <value>今天</value>
+  </data>
+  <data name="Names_Yesterday" xml:space="preserve">
+    <value>昨天</value>
+  </data>
+  <data name="Names_DaysAgo" xml:space="preserve">
+    <value>{0} 天前</value>
+  </data>
+  <data name="Names_NotUsed90" xml:space="preserve">
+    <value>90 天未使用</value>
+  </data>
+  <data name="Names_UsageSince" xml:space="preserve">
+    <value>自 {0} 起在這台電腦上計數。</value>
+  </data>
+  <data name="Names_UsagePartial" xml:space="preserve">
+    <value>「90 天未使用」要到 {0} 才完整。</value>
+  </data>
 </root>

@@ -7,8 +7,8 @@ using DesktopIconGrid.Services;
 namespace DesktopIconGrid.Views;
 
 /// <summary>
-/// Keeps a dialog that sizes itself to its content inside the work area of the screen it opens on: never taller than
-/// that work area (its body scrolls instead, with its buttons still in sight), and moved back inside it when it opened
+/// Keeps a dialog that sizes itself to its content inside the work area of the screen it opens on: never taller or
+/// wider than that work area (its body scrolls instead, with its buttons still in sight), and moved back inside it when it opened
 /// partly off it, as a tall dialog centred on a bar near the edge of the screen would, or when it grew past an edge
 /// afterwards (Advanced opened in Properties, a hint appeared).
 /// </summary>
@@ -21,7 +21,7 @@ internal static class WorkAreaFit
     public static void Attach(Window window)
     {
         ArgumentNullException.ThrowIfNull(window);
-        window.SourceInitialized += (_, _) => LimitHeight(window);
+        window.SourceInitialized += (_, _) => LimitSize(window);
         window.Loaded += (_, _) =>
         {
             MoveInside(window);
@@ -46,11 +46,12 @@ internal static class WorkAreaFit
             : null;
     }
 
-    private static void LimitHeight(Window window)
+    private static void LimitSize(Window window)
     {
         if (AreaOf(window) is { WorkArea.Height: > 0 } area)
         {
             window.MaxHeight = Math.Max(240, (area.WorkArea.Height / area.Scale) - (2 * Gap));
+            window.MaxWidth = Math.Max(320, (area.WorkArea.Width / area.Scale) - (2 * Gap)); // the names table opens 1,060 wide (0.12.0 WP4)
         }
     }
 

@@ -187,10 +187,13 @@ internal sealed class RecordingLauncher : ILaunchService
 
     public List<(string Location, IReadOnlyList<string> Paths)> OpenedWith { get; } = [];
 
+    /// <summary>What a drop answers (a failure unless a test says otherwise).</summary>
+    public LaunchResult WithResult { get; set; } = LaunchResult.Failure("nope");
+
     public LaunchResult LaunchWith(ShortcutItem shortcut, IReadOnlyList<string> paths)
     {
         OpenedWith.Add((shortcut.Location, paths));
-        return LaunchResult.Failure("nope");
+        return WithResult;
     }
 }
 

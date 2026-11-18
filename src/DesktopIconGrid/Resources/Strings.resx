@@ -2558,4 +2558,28 @@ Details are in {1}.</value>
   <data name="Inbox_AndMore" xml:space="preserve">
     <value>and {0} more</value>
   </data>
+  <data name="Names_Uses" xml:space="preserve">
+    <value>Uses</value>
+  </data>
+  <data name="Names_LastUsed" xml:space="preserve">
+    <value>Last used</value>
+  </data>
+  <data name="Names_Today" xml:space="preserve">
+    <value>Today</value>
+  </data>
+  <data name="Names_Yesterday" xml:space="preserve">
+    <value>Yesterday</value>
+  </data>
+  <data name="Names_DaysAgo" xml:space="preserve">
+    <value>{0} days ago</value>
+  </data>
+  <data name="Names_NotUsed90" xml:space="preserve">
+    <value>Not used in 90 days</value>
+  </data>
+  <data name="Names_UsageSince" xml:space="preserve">
+    <value>Counted on this PC since {0}.</value>
+  </data>
+  <data name="Names_UsagePartial" xml:space="preserve">
+    <value>“Not used in 90 days” is complete from {0}.</value>
+  </data>
 </root>

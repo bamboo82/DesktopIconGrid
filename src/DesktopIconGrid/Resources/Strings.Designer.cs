@@ -3597,6 +3597,15 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to {0} days ago.
+        /// </summary>
+        public static string Names_DaysAgo {
+            get {
+                return ResourceManager.GetString("Names_DaysAgo", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Given name.
         /// </summary>
         public static string Names_Given {
@@ -3660,11 +3669,29 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Last used.
+        /// </summary>
+        public static string Names_LastUsed {
+            get {
+                return ResourceManager.GetString("Names_LastUsed", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Missing on this PC.
         /// </summary>
         public static string Names_MissingHere {
             get {
                 return ResourceManager.GetString("Names_MissingHere", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Not used in 90 days.
+        /// </summary>
+        public static string Names_NotUsed90 {
+            get {
+                return ResourceManager.GetString("Names_NotUsed90", resourceCulture);
             }
         }
 
@@ -3714,11 +3741,38 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Today.
+        /// </summary>
+        public static string Names_Today {
+            get {
+                return ResourceManager.GetString("Names_Today", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Without a colour tag.
         /// </summary>
         public static string Names_Untagged {
             get {
                 return ResourceManager.GetString("Names_Untagged", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to “Not used in 90 days” is complete from {0}..
+        /// </summary>
+        public static string Names_UsagePartial {
+            get {
+                return ResourceManager.GetString("Names_UsagePartial", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Counted on this PC since {0}..
+        /// </summary>
+        public static string Names_UsageSince {
+            get {
+                return ResourceManager.GetString("Names_UsageSince", resourceCulture);
             }
         }
 
@@ -3737,6 +3791,24 @@ namespace DesktopIconGrid.Resources {
         public static string Names_UseOriginalAll {
             get {
                 return ResourceManager.GetString("Names_UseOriginalAll", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Uses.
+        /// </summary>
+        public static string Names_Uses {
+            get {
+                return ResourceManager.GetString("Names_Uses", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Yesterday.
+        /// </summary>
+        public static string Names_Yesterday {
+            get {
+                return ResourceManager.GetString("Names_Yesterday", resourceCulture);
             }
         }
 

@@ -540,6 +540,18 @@ changes at once. The given names are the captions on the bar and the phrases voi
 the table approves, on this PC, the phrases typed or changed here; one that came with a synced bar stays unapproved
 until it is picked in the voice window.
 
+**Usage (0.12.0).** Two read-only columns after *Colour tag*: *Uses* (how often a shortcut was started or brought
+forward by the bar on this PC, sorted as a number) and *Last used* (today, yesterday, so many days ago up to 30,
+then the date; "—" when never; the tooltip has the full date and time; a never-used shortcut sorts before any date).
+A use is a click or key on the shortcut, a drop onto it, `--launch`, voice, its start in a workspace or Multi Launch,
+or its folder stack opened, when the start succeeded (a window brought forward counts; a failure or a cancelled
+approval does not), once per activation however many files it opens. Special icons, groups and separators have no
+count, and a program opened inside a folder stack counts for nothing. *Show:* has a last entry, *Not used in 90
+days*: shortcuts last used longer ago, or never used once this PC has counted for 90 days. The line under the table
+says since when this PC counts, and until then when *Not used in 90 days* is complete. The counts are read when the
+window opens; Save does not touch them. The window opens 1,060 wide (never wider than the work area), *Location*
+keeps at least 160 and the grid scrolls sideways instead of squeezing it.
+
 **Voice launch (0.11.0).** The voice hotkey (Settings ▸ Voice, system-wide, none by default; kept on this PC in
 `this-pc.json` and never synced, restored or imported, like the voice language; a portable copy keeps one set
 for each PC it is used on, and none on a PC whose own id cannot be read), a click on a *Voice* icon,
@@ -723,6 +735,7 @@ warnings and errors. The last 2000 entries stay in memory and all of them are ap
 | Show/hide hotkey | none (set in Settings; needs Ctrl, Alt or Win) |
 | Show-at-pointer hotkey | none (needs Ctrl, Alt or Win, and a combination other than the show/hide one) |
 | Voice hotkey and voice language | none, and the bar's language (0.11.0); kept on this PC in `this-pc.json`, never in the layout, so a synced, restored or imported bar cannot set them |
+| Usage counts | kept on this PC in `usage.json` next to the layout (0.12.0): one block per PC, item ids and UTC times only, written at most every 10 s and at exit; never synced, restored, imported or exported, and a removed item's count goes 400 days after its last use |
 | Keys in the bar | New shortcut Ctrl+N, New group Ctrl+G, Settings Ctrl+, , Find Ctrl+F, Undo remove Ctrl+Z, Remove (the focused icon) Delete, Properties (the focused icon) F2; each can be changed or turned off (Backspace), with Ctrl, Alt or Win unless it is an F-key, Delete or Insert, and no two actions or a system-wide hotkey may share one; menus show the current key; Escape stays fixed (0.9.0) |
 | Transparency | 0 % (opaque) |
 | Close button hides to tray | on |

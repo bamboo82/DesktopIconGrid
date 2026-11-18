@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:r="clr-namespace:DesktopIconGrid.Resources"
         Title="{x:Static r:Strings.Names_Title}"
-        Width="860"
+        Width="1060"
         Height="520"
         MinWidth="520"
         MinHeight="300"
@@ -41,6 +41,10 @@
       </StackPanel>
     </DockPanel>
 
+    <!-- Since when the uses are counted, and when "Not used in 90 days" is complete (0.12.0 WP4) -->
+    <TextBlock x:Name="UsageLine" DockPanel.Dock="Bottom" Text="{Binding UsageLine}" Style="{StaticResource DialogHint}"
+               TextWrapping="Wrap" Margin="0,8,0,0" />
+
     <DataGrid x:Name="Grid"
               ItemsSource="{Binding RowsView}"
               AutoGenerateColumns="False"
@@ -74,9 +78,27 @@
             </DataTemplate>
           </DataGridTemplateColumn.CellTemplate>
         </DataGridTemplateColumn>
-        <DataGridTextColumn Header="{x:Static r:Strings.Common_Modified}" Width="140" IsReadOnly="True" SortMemberPath="ModifiedAt"
+        <!-- Uses on this PC (0.12.0 WP4): read-only, a number and a time to sort by; empty for what is not a shortcut -->
+        <DataGridTextColumn x:Name="UsesColumn" Header="{x:Static r:Strings.Names_Uses}" Width="60" IsReadOnly="True" SortMemberPath="Uses"
+                            Binding="{Binding Uses}">
+          <DataGridTextColumn.ElementStyle>
+            <Style TargetType="TextBlock" BasedOn="{x:Static DataGridTextColumn.DefaultElementStyle}">
+              <Setter Property="HorizontalAlignment" Value="Right" />
+              <Setter Property="Margin" Value="2,0,6,0" />
+            </Style>
+          </DataGridTextColumn.ElementStyle>
+        </DataGridTextColumn>
+        <DataGridTextColumn x:Name="LastUsedColumn" Header="{x:Static r:Strings.Names_LastUsed}" Width="110" IsReadOnly="True" SortMemberPath="LastUsed"
+                            Binding="{Binding LastUsedText}">
+          <DataGridTextColumn.ElementStyle>
+            <Style TargetType="TextBlock" BasedOn="{x:Static DataGridTextColumn.DefaultElementStyle}">
+              <Setter Property="ToolTip" Value="{Binding LastUsedToolTip}" />
+            </Style>
+          </DataGridTextColumn.ElementStyle>
+        </DataGridTextColumn>
+        <DataGridTextColumn Header="{x:Static r:Strings.Common_Modified}" Width="120" IsReadOnly="True" SortMemberPath="ModifiedAt"
                             Binding="{Binding ModifiedAt, StringFormat=g}" />
-        <DataGridTextColumn Header="{x:Static r:Strings.Common_Location}" Width="*" IsReadOnly="True" Binding="{Binding Location}" />
+        <DataGridTextColumn Header="{x:Static r:Strings.Common_Location}" Width="*" MinWidth="160" IsReadOnly="True" Binding="{Binding Location}" />
       </DataGrid.Columns>
       <DataGrid.RowStyle>
         <Style TargetType="DataGridRow">

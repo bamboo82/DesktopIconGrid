@@ -15,6 +15,8 @@ and how often each shortcut is used.
   names. A symbol is scaled to its tile, so it grows with the icon size, and stands on the bar without a frame.
 - **Tile colour** for text and symbol icons: one of the Appearance swatches, any `#RRGGBB`, or none; without a text
   colour of its own the text is white or black, whichever shows better on it.
+- **Usage in *Edit names***: how often each shortcut was used on this PC and when last, in two columns that sort,
+  and *Not used in 90 days* in *Show*. Counted only on this PC, in `usage.json`, which is never synced.
 
 ### Changed
 
@@ -24,6 +26,7 @@ and how often each shortcut is used.
   selected in its folder, a problem with Google Drive or receiving opens the Sync window, a timer's phase shows the
   bar, a failure opens the log. A notice too long for the balloon is cut after a whole line. Files received from
   one PC in one look make one notice that lists them, not one notice each.
+- *Edit names* opens 1,060 wide (never wider than the screen) and scrolls sideways instead of squeezing *Location*.
 - Properties: the hint under *Parameters* is two lines; the rules for placeholder values are behind *More*, as a
   list, and open by themselves while the parameters are refused.
 - Send to PC shows a one-colour Send symbol instead of the outbox emoji, and Voice the Microphone symbol (it showed

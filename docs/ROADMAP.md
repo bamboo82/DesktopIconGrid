@@ -234,8 +234,8 @@ folder.
   elsewhere; a Volume tile that takes the mouse wheel.
 - Clock and timer tile: time in another zone (`TimeZoneInfo`); a click starts a countdown or a 25/5
   Pomodoro with a tray notification at the end.
-- Usage columns in the names table (launch count, last used, *Not used in 90 days*), kept per device in
-  `usage.json` — never in the synced layout, or every click would trigger an upload.
+- Usage columns in the names table *(done in 0.12.0)* (launch count, last used, *Not used in 90 days*), kept per
+  device in `usage.json` — never in the synced layout, or every click would trigger an upload.
 - Layout history: the last 20 saves in `history\`, *Restore…* with a one-line summary per entry; linked
   Drive copies can list Drive `revisions` the same way.
 - Command line and Send To *(done in 0.9.0; `--workspace <name>` in 0.10.0)*: `--add <path> [--group Tools]`,

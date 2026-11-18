@@ -234,6 +234,10 @@ public partial class App : Application
             trust: trust,
             workspacePositions: new WorkspacePositions(Path.Combine(AppPaths.DataDirectory, WorkspacePositions.FileName)));
         viewModel.UseLocalSettings(new LocalSettingsStore(Path.Combine(AppPaths.DataDirectory, LocalSettings.FileName))); // before the window registers hotkeys
+        var usage = new UsageLog(Path.Combine(AppPaths.DataDirectory, UsageLog.FileName)); // this PC's own: never synced (0.12.0 WP4)
+        usage.Load();
+        viewModel.UseUsage(usage);
+        var usageSaver = new UsageSaver(usage, viewModel.ShortcutIds, read => Dispatcher.InvokeAsync(read).Task);
 
         // First paint; the bar window refines this once it has a handle (backdrop, High Contrast, settings changes).
         ThemeManager.Apply(ThemeManager.EffectivePalette(viewModel.Palette));
@@ -244,7 +248,7 @@ public partial class App : Application
 
         _sync = new SyncCoordinator(syncService, viewModel, dialogs.Confirm) { Notify = dialogs.Notify };
         dialogs.SyncViewModelFactory = () => new SyncViewModel(_sync, dialogs);
-        viewModel.FlushBeforeExit = () => _sync.FlushPendingAsync(TimeSpan.FromSeconds(5));
+        viewModel.FlushBeforeExit = () => Task.WhenAll(_sync.FlushPendingAsync(TimeSpan.FromSeconds(5)), usageSaver.FlushAsync());
         _ = Task.Run(() => DriveCache.Purge(cacheDirectory, TimeSpan.FromDays(1)));
 
         // A portable copy never adds a Run entry by itself on the PCs it visits: only when the option is turned on there.

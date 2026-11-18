@@ -1,15 +1,23 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Globalization;
 using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
 using DesktopIconGrid.Core.Launching;
 using DesktopIconGrid.Core.Models;
+using DesktopIconGrid.Core.Storage;
 using DesktopIconGrid.Infrastructure;
 using DesktopIconGrid.Resources;
 using DesktopIconGrid.Services;
 
 namespace DesktopIconGrid.ViewModels;
+
+/// <summary>A shortcut's uses on this PC as the names table shows them (0.12.0 WP4).</summary>
+/// <param name="Count">How many.</param>
+/// <param name="Last">The last one, worded.</param>
+/// <param name="Unused">Whether it is "not used in 90 days".</param>
+public sealed record RowUsage(int Count, LastUse Last, bool Unused);
 
 /// <summary>One row of the name table: an item with its original (derived) name and the name the user gave it.</summary>
 public sealed class NameRowViewModel : ObservableObject
@@ -17,7 +25,7 @@ public sealed class NameRowViewModel : ObservableObject
     private string _givenName;
     private bool _isMissing;
 
-    public NameRowViewModel(LauncherItem item, string originalName, string kind, string? groupName, string location)
+    public NameRowViewModel(LauncherItem item, string originalName, string kind, string? groupName, string location, RowUsage? usage = null)
     {
         Id = item.Id;
         OriginalName = originalName;
@@ -33,7 +41,38 @@ public sealed class NameRowViewModel : ObservableObject
         ColorTag = ColorTags.Find(item.ColorTag)?.Name;
         ColorTagName = ColorTagNames.Of(item.ColorTag);
         ColorTagBrush = ColorTags.Find(item.ColorTag) is { } tag ? ThemeManager.ToBrush(tag.Color) : null;
+        if (usage is not null)
+        {
+            Uses = usage.Count;
+            var used = usage.Last.Kind != LastUseKind.Never;
+            LastUsed = used ? usage.Last.Local : DateTime.MinValue; // never used: older than any date
+            LastUsedText = usage.Last.Kind switch
+            {
+                LastUseKind.Today => Strings.Names_Today,
+                LastUseKind.Yesterday => Strings.Names_Yesterday,
+                LastUseKind.DaysAgo => string.Format(CultureInfo.CurrentCulture, Strings.Names_DaysAgo, usage.Last.Days),
+                LastUseKind.Date => usage.Last.Local.ToString("d", CultureInfo.CurrentCulture),
+                _ => "—",
+            };
+            LastUsedToolTip = used ? usage.Last.Local.ToString("F", CultureInfo.CurrentCulture) : null;
+            IsUnused = usage.Unused;
+        }
     }
+
+    /// <summary>How often the shortcut was used on this PC; <see langword="null"/> (an empty cell) for what is not a shortcut.</summary>
+    public int? Uses { get; }
+
+    /// <summary>The last use in local time, to sort by: a shortcut never used has the earliest date; other items none.</summary>
+    public DateTime? LastUsed { get; }
+
+    /// <summary>Today, yesterday, so many days ago up to 30, then the date; "—" when never used; empty for other items.</summary>
+    public string LastUsedText { get; } = string.Empty;
+
+    /// <summary>The last use's full local date and time.</summary>
+    public string? LastUsedToolTip { get; }
+
+    /// <summary>A shortcut "not used in 90 days" (<see cref="UsageRules.IsUnused"/>).</summary>
+    public bool IsUnused { get; }
 
     /// <summary>
     /// A shortcut whose target is not on this PC (see <see cref="LocationProbe"/>): the bar's own answer, and then its
@@ -130,13 +169,24 @@ public sealed class NameTableViewModel : ObservableObject
     /// <summary>The filter that shows the shortcuts whose target is not on this PC.</summary>
     public const string MissingHere = "?";
 
+    /// <summary>The filter that shows the shortcuts not used in 90 days on this PC (0.12.0 WP4).</summary>
+    public const string NotUsed90 = "-90";
+
     private readonly LauncherViewModel _root;
+    private readonly DateTimeOffset _now;
+    private readonly IReadOnlyDictionary<Guid, ItemUse> _uses;
+    private readonly DateTimeOffset _since;
     private readonly TaskScheduler _uiScheduler = SynchronizationContext.Current is null ? TaskScheduler.Default : TaskScheduler.FromCurrentSynchronizationContext();
     private TagFilterOption _selectedTagFilter;
 
-    public NameTableViewModel(LauncherViewModel root)
+    /// <param name="root">The bar.</param>
+    /// <param name="now">The time the counts are read at (tests); now by default. The counts do not tick while the window is open.</param>
+    public NameTableViewModel(LauncherViewModel root, DateTimeOffset? now = null)
     {
         _root = root;
+        _now = now ?? DateTimeOffset.UtcNow;
+        _uses = root.Usage.Snapshot();
+        _since = root.Usage.Since;
         foreach (var item in root.Model.Items)
         {
             if (item is not SeparatorItem)
@@ -159,6 +209,7 @@ public sealed class NameTableViewModel : ObservableObject
             .. ColorTags.All.Select(t => new TagFilterOption(t.Name, ColorTagNames.Of(t.Name), ThemeManager.ToBrush(t.Color))),
             new TagFilterOption(NoTag, Strings.Names_Untagged, null),
             new TagFilterOption(MissingHere, Strings.Names_MissingHere, null),
+            new TagFilterOption(NotUsed90, Strings.Names_NotUsed90, null),
         ];
         _selectedTagFilter = TagFilters[0];
         RowsView = CollectionViewSource.GetDefaultView(Rows);
@@ -239,11 +290,32 @@ public sealed class NameTableViewModel : ObservableObject
             AllTags => true,
             NoTag => row.ColorTag is null,
             MissingHere => row.IsMissing,
+            NotUsed90 => row.IsUnused,
             _ => string.Equals(row.ColorTag, tag, StringComparison.Ordinal),
         };
     }
 
     public string Hint => Strings.Names_Hint;
+
+    /// <summary>
+    /// Since when this PC counts, and while that is less than 90 days, from when "Not used in 90 days" is complete: so
+    /// nobody takes the counts for more than they are, or for something that left this PC.
+    /// </summary>
+    public string UsageLine
+    {
+        get
+        {
+            var since = string.Format(CultureInfo.CurrentCulture, Strings.Names_UsageSince, _since.ToLocalTime().ToString("d", CultureInfo.CurrentCulture));
+            var complete = UsageRules.CompleteFrom(_since);
+            if (_now >= complete)
+            {
+                return since;
+            }
+
+            var partial = string.Format(CultureInfo.CurrentCulture, Strings.Names_UsagePartial, complete.ToLocalTime().ToString("d", CultureInfo.CurrentCulture));
+            return since.EndsWith('。') ? since + partial : $"{since} {partial}";
+        }
+    }
 
     public int ChangedCount => Rows.Count(r => (r.IsNameChanged && r.GivenName.Trim().Length > 0) || r.IsAlsoSayChanged);
 
@@ -273,11 +345,18 @@ public sealed class NameTableViewModel : ObservableObject
         return renamed;
     }
 
+    /// <summary>A shortcut's uses as read when the window opened.</summary>
+    private RowUsage UsageOf(ShortcutItem shortcut)
+    {
+        var use = _uses.GetValueOrDefault(shortcut.Id);
+        return new RowUsage(use?.Count ?? 0, LastUse.Of(use?.Last, _now, TimeZoneInfo.Local), UsageRules.IsUnused(use, _since, _now));
+    }
+
     private NameRowViewModel CreateRow(LauncherItem item, string? groupName)
     {
         return item switch
         {
-            ShortcutItem shortcut => new NameRowViewModel(item, ShortcutItem.SuggestName(shortcut.EffectiveLocation), Strings.Names_KindShortcut, groupName, shortcut.EffectiveLocation),
+            ShortcutItem shortcut => new NameRowViewModel(item, ShortcutItem.SuggestName(shortcut.EffectiveLocation), Strings.Names_KindShortcut, groupName, shortcut.EffectiveLocation, UsageOf(shortcut)),
             GroupItem group => new NameRowViewModel(item, Strings.Common_Group, Strings.Common_Group, groupName, string.Format(Strings.Names_GroupItems, group.Items.Count(i => i is not SeparatorItem))),
             SpecialIconItem special => new NameRowViewModel(item, _root.SpecialIcons.Resolve(special.Kind).DisplayName, _root.SpecialIcons.Resolve(special.Kind).DisplayName, groupName, special.GetSetting("folderName") ?? special.GetSetting("drive") ?? string.Empty),
             _ => new NameRowViewModel(item, item.Name, Strings.Names_KindItem, groupName, string.Empty),

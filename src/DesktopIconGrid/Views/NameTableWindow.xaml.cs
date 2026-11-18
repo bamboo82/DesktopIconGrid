@@ -9,6 +9,7 @@ public partial class NameTableWindow : Window
     {
         InitializeComponent();
         DialogTheme.Apply(this);
+        WorkAreaFit.Attach(this); // 1,060 wide, but never wider than the work area
     }
 
     private NameTableViewModel? ViewModel => DataContext as NameTableViewModel;

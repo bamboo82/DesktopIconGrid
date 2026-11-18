@@ -9,6 +9,91 @@ The owner relays replies.
 
 ---
 
+## 2026-11-18 (84) — 0.12.0 WP4: usage in the names table (U1–U4)
+
+Run 183 (`6d8eb0e`) is green: the fix for run 182 holds, and F1–F3 pass. This entry claims no run for its own
+commit. WP5 in its third form (Taipei Sans TC Light, found on the PC, with an install button) comes next. Nothing
+of the earlier two forms was built.
+
+### As designed
+
+- **U1, what is counted.** One call, `CountUse(item, outcome)`, counts when `UsageRules.IsCounted` says so: a
+  shortcut, and `Started`. It is called in four places:
+  - `ActivateAndReport`, for a click, a key, voice and `--launch` (`LaunchByName` goes through it). It counts three
+    outcomes: the folder stack opened, the window brought forward, and the start.
+  - `OpenWith`, once per drop however many files it starts.
+  - Each workspace or Multi Launch member that was started.
+  - It is not called for anything else. So failed and cancelled starts, the debounced second click, special icons,
+    groups and separators have no count. A program opened inside a stack (`ShortcutItem.FromPath`) is not an item
+    of the bar and counts for nothing.
+- **U2, `usage.json`** (`Core/Storage/UsageLog.cs`):
+  - The form is yours: `version` and `pcs`; each block has `since` and `items` by item id, with `count` and `last`
+    written as UTC with `Z`. Only ids and times are stored. Other PCs' blocks and unknown properties at every level
+    are kept.
+  - It is read once at start. A file over 1 MB, or one that cannot be read, is left alone (byte for byte), and
+    counting goes on in memory with one Info line. Without this PC's own id it also counts in memory, with one Info
+    line, as for `this-pc.json`.
+  - It is written by `UsageSaver`: at most once every 10 s after a count, and at exit through the existing
+    `FlushBeforeExit` wait (with the sync flush), always in `Task.Run`. The shortcut ids are read on the bar's
+    thread first.
+  - Each save re-reads the file for the other PCs' blocks; our own counts are read only at start. Then it writes
+    through `.tmp` and a move.
+  - At a save, the entries of items no longer on the bar and last used more than 400 days ago are dropped.
+  - A folder that cannot be written keeps the counts in memory for the session, with a Debug line and no notice.
+  - "Add it to whatever list keeps `this-pc.json` and `command-trust.json` out": there is no such list. Sync,
+    restore, import, layout history and export read and write their own files by name, and `usage.json` is none of
+    them.
+- **U3, the table.**
+  - *Uses* (60, right-aligned) and *Last used* (110) come after *Colour tag*.
+    - *Uses* sorts by `int?`: other items' cells are empty, and 0 is written "0".
+    - *Last used* sorts by `DateTime?`: a shortcut never used sorts as `DateTime.MinValue`, before any date.
+    - The text is Today, Yesterday, N days ago up to 30, then the short date of the UI culture; "—" when never used.
+      The tooltip is the full local date and time ("F").
+  - *Modified* is 120, and *Location* has `MinWidth="160"`, so the grid scrolls sideways.
+  - The window is 1,060 wide. `WorkAreaFit` now limits the width as well as the height (work area − 16) for every
+    dialog it serves: Properties, Settings, Sync and now the names table.
+  - *Show* has *Not used in 90 days* at its end.
+  - The line under the table is `Names_UsageSince`, plus `Names_UsagePartial` while counting is under 90 days. In
+    English the two are joined with a space, in Chinese without one.
+  - The counts are read when the window opens. Save does not touch them.
+
+### My choices (please look)
+
+- **`since` is the first start of 0.12.0 on this PC.** `Load` finds no block, so counting begins then. The block
+  is written at the first save after that: the first use, or the exit.
+- **A workspace member that is already running** has only its window moved and is not counted. Only the members
+  it starts count. Say if moving should count as "brought forward".
+- **Where the U1 cases are tested.** The counting happens in the bar's view model, so they are App tests with a
+  fake launcher. Core has the rule (`IsCounted`) and its cases.
+
+### Tests
+
+- **Core:**
+  - The file form, with UTC `Z` and only ids. It is read back at the next start, and nothing is written when
+    nothing changed.
+  - Another PC's block and unknown properties are kept.
+  - The 1 MB and unreadable files are untouched, and counting goes on in memory.
+  - With no PC id, nothing is written.
+  - The 400-day prune: kept on the bar, dropped when gone and old, kept when gone but recent.
+  - `IsCounted` for each kind of item and outcome.
+  - "Not used in 90 days" on both sides of `since` + 90 days and of a last use exactly 90 days ago.
+  - Today, yesterday, 2, 30 and 31 days at local-day borders in a UTC+8 zone, a clock set back, and never.
+- **App, CI only:**
+  - A click counts once, the double-click does not count again, and a failure or cancel does not count.
+  - A window brought forward counts, and an opened stack counts. A drop on a program inside the stack does not.
+  - A drop of three files counts once, and a refused drop does not. `LaunchByName` counts.
+  - Multi Launch counts each member once.
+  - Special icons and groups count nothing.
+  - The columns sort as numbers and times; the texts and tooltips.
+  - The filter and the line before and after 90 days.
+  - The saver writes the first count at once and waits within the interval; the flush at exit writes the rest.
+  - The window: 1,060 wide or the work area, the two columns after *Colour tag*, *Location*'s minimum, *Modified*
+    at 120, and the line.
+- **Not tested:**
+  - A read-only folder: tests run as root here, which ignores permissions.
+  - The window on a real screen.
+  - A daylight-saving change inside the "N days ago" range.
+
 ## 2026-11-18 (83) — Review of WP1: F1–F3, and the fix for run 182
 
 Run 182 (`c108e32`, WP3) was red on one test; this commit fixes it (below). This entry claims no run for its own

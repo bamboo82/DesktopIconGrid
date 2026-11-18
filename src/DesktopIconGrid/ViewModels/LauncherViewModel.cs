@@ -654,7 +654,8 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
                 item.Name,
                 stackFolder,
                 shortcutToLaunch.StackNewestFirst,
-                (program, files) => _launcher.LaunchWith(ShortcutItem.FromPath(program), files));
+                (program, files) => _launcher.LaunchWith(ShortcutItem.FromPath(program), files)); // a program in the stack is no item of the bar: not counted
+            CountUse(shortcutToLaunch, LaunchOutcome.Started);
             IsGroupPopupOpen = false;
             ItemActivated?.Invoke(this, item);
             return LaunchOutcome.Started;
@@ -670,12 +671,14 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
                 ? _windows.TrySwitch(Tracker.ProcessIdsOf(shortcutToLaunch.Id), Tracker.PackageFamilyOf(shortcutToLaunch.Id))
                 : _windows.TrySwitch(Tracker.LaunchedProcessIdsOf(shortcutToLaunch.Id)))) // with parameters: only the copies it started
         {
+            CountUse(shortcutToLaunch, LaunchOutcome.Started);
             IsGroupPopupOpen = false;
             ItemActivated?.Invoke(this, item);
             return LaunchOutcome.Started; // brought forward
         }
 
         var result = _launcher.Launch(shortcutToLaunch, asAdministrator);
+        CountUse(shortcutToLaunch, result.Outcome);
         if (result.Outcome == LaunchOutcome.Failed)
         {
             _dialogs.Notify(string.Format(Strings.Launch_CantOpen, item.Name), $"{result.ErrorMessage}\n{item.Location}");
@@ -835,6 +838,7 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
         }
 
         var result = _launcher.LaunchWith(shortcut, paths);
+        CountUse(shortcut, result.Outcome); // once, however many files it starts the program for
         if (result.Outcome == LaunchOutcome.Failed)
         {
             _dialogs.Notify(string.Format(Strings.Launch_CantOpenWith, target.Name), $"{result.ErrorMessage}\n{shortcut.EffectiveLocation}");
@@ -1493,6 +1497,7 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
             }
 
             var result = _launcher.Launch(member);
+            CountUse(member, result.Outcome);
             if (result.Outcome == LaunchOutcome.Failed)
             {
                 failures.Add($"{member.Name}: {result.ErrorMessage}");
@@ -1698,6 +1703,30 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
     public LocalSettings Local { get; private set; } = new();
 
     /// <summary>Reads this PC's settings from <paramref name="store"/>, where saves go too; App calls it once at start.</summary>
+    /// <summary>
+    /// How often each shortcut was used on this PC (0.12.0 WP4). In memory until the host gives the log of
+    /// <c>usage.json</c> (<see cref="UseUsage"/>); the names table reads it when it opens.
+    /// </summary>
+    public UsageLog Usage { get; private set; } = new(null);
+
+    /// <summary>Counts uses into <paramref name="usage"/> from now on.</summary>
+    public void UseUsage(UsageLog usage) => Usage = usage ?? throw new ArgumentNullException(nameof(usage));
+
+    /// <summary>
+    /// Counts a use when <see cref="UsageRules.IsCounted"/> says so: a shortcut started or brought forward, by a click, a
+    /// key, a drop, <c>--launch</c>, voice, a workspace or Multi Launch, or its folder stack opened.
+    /// </summary>
+    private void CountUse(LauncherItem item, LaunchOutcome outcome)
+    {
+        if (UsageRules.IsCounted(item, outcome))
+        {
+            Usage.Count(item.Id);
+        }
+    }
+
+    /// <summary>The ids of the shortcuts on the bar, groups included: the counts the usage file keeps whatever their age.</summary>
+    public IReadOnlySet<Guid> ShortcutIds() => Model.AllShortcuts().Select(shortcut => shortcut.Id).ToHashSet();
+
     public void UseLocalSettings(LocalSettingsStore store)
     {
         ArgumentNullException.ThrowIfNull(store);
