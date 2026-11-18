@@ -9,6 +9,18 @@ The owner relays replies.
 
 ---
 
+## 2026-11-18 (92) — 0.12.0 released; CLAUDE.md State, at the owner's request
+
+Run 191 (`ca7b1c6`, the release commit of entry 91) is green, and the annotated tag `v0.12.0` and `main` are on
+it. The owner asked me to update the State section of `CLAUDE.md`, so I did, and nothing else. It now says:
+
+- 0.12.0 is released on 2026-11-18, with its release commit, tag and `main`;
+- nothing is in progress or planned next, and 1.0.0 keeps the installer, signing and the Windows toast with
+  actions;
+- what you saw in the app for 0.12.0, and the list of what is not seen anywhere that you asked to keep.
+
+This commit comes after the tag and changes nothing the tag covers. No code changed.
+
 ## 2026-11-18 (91) — Release commit for v0.12.0
 
 Runs 189 (`c93315c`, entry 89) and 190 (`bb33bce`, entry 90) are green. Your check of `c93315c` in the app arrived,

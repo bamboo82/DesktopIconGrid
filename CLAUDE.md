@@ -88,16 +88,12 @@ After removing or editing a key in the `.resx` files, run `python3 -I tools/gen_
 
 ## State
 
-- Released: 0.11.0 on 2026-11-18 (tag `v0.11.0` on `10dec5a`, where `main` is; release commit `296283c`). Before it
-  0.10.0 (tag `v0.10.0` on `254c55c`).
-- In progress: 0.12.0 "Find it, see it" (version 0.12.0, CHANGELOG `Unreleased`), as the review session planned it:
-  WP1 notices, WP2 the Parameters hint, WP3 symbol icons, F1–F3, WP4 usage counts, WP5 Chinese text in Taipei Sans
-  TC Light. All of it is in.
-  - The review session's release check (of `0cee147`) asked for twelve fixes, V1–V4, U1–U4 and S1–S4. They are in
-    `c93315c` (REVIEW_NOTES entry 89), green in run 189 (Core 1076, App 390 tests).
-  - Next: the review session builds it and looks at V1, V3 and V4 in the app, then gives its word for the release
-    commit. No release commit until the owner asks.
-- Keep as designed:
+- Released: 0.12.0 "Find it, see it" on 2026-11-18 (release commit `ca7b1c6`, run 191; annotated tag `v0.12.0` on
+  it, where `main` is). REVIEW_NOTES entry 91 has its table of entries, commits and runs. Before it 0.11.0 (tag
+  `v0.11.0` on `10dec5a`), and 0.10.0 (tag `v0.10.0` on `254c55c`).
+- In progress: nothing. FEATURES §12 says nothing is planned next; 1.0.0 keeps the installer, code signing and the
+  Windows toast with actions. A new version starts with the review session's plan and the owner's word.
+- Keep as designed (0.12.0):
   - the symbol table (`SymbolCatalog`, 197 entries) and the tile look are the review session's design (entry 82);
   - usage counts stay in the local `usage.json`, never synced. Only a folder that cannot be written keeps them in
     memory; a failed write is tried again (entry 89, U1);
@@ -106,10 +102,12 @@ After removing or editing a key in the `.resx` files, run `python3 -I tools/gen_
   - the Taipei Sans TC font is never committed or shipped, and it is installed only when its button is clicked
     (entry 85);
   - WP5's earlier forms (新細明體 without ClearType, a bundled font) were withdrawn by the owner.
-- Seen in the app by the review session: WP3, WP4, F1, and WP5 with the real font download and install (with the
-  owner's leave).
+- Seen in the app by the review session, for 0.12.0:
+  - WP3, WP4, F1, and WP5 with the real font download and install (with the owner's leave);
+  - the release check's fixes V1, V3 and V4, and S1 with real keys.
 - Not seen anywhere:
-  - a real Windows snap, maximise on a second monitor, and the recogniser with a microphone (the reviewer asks the
-    owner before it opens one);
-  - for 0.12.0 also a notice as a real Windows banner, and a real lock on `usage.json` (a scanner, a sync client).
-- Nothing is open for the owner from this session. The CPU/disk gauge at "100%" was fixed in 0.11.0 (the release check's N1, entry 77).
+  - a real notification banner, a real Windows snap, and maximise on a second monitor;
+  - the recogniser with a microphone (the reviewer asks the owner before it opens one);
+  - Windows 10 (the symbol font fallback), another DPI scale, and a real lock on `usage.json` (a scanner, a sync
+    client).
+- Nothing is open for the owner from this session.
