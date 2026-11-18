@@ -20,7 +20,7 @@ public sealed class TileDrawingTests(WpfThread wpf) : IDisposable
 
     public void Dispose() => Directory.Delete(_directory, recursive: true);
 
-    /// <summary>A tile drawn in the number style with a fixed text, as a gauge at 100 % or the network tile at 999K.</summary>
+    /// <summary>A tile drawn in the number style with a fixed text: a gauge at 100 %, the network tile at 999K, a command tile's line.</summary>
     private sealed class NumberTile(string kind, string label) : ISpecialIconHandler
     {
         public string Kind => kind;
@@ -73,7 +73,7 @@ public sealed class TileDrawingTests(WpfThread wpf) : IDisposable
             return;
         }
 
-        ISpecialIconHandler[] handlers = [new NumberTile("hundred", "100%"), new NumberTile("rate", "999K")];
+        ISpecialIconHandler[] handlers = [new NumberTile("hundred", "100%"), new NumberTile("rate", "999K"), new NumberTile("line", "a rather long line of output")];
         var model = new LauncherModel();
         model.Add(new ShortcutItem { Name = "Tool", Location = @"C:\tool.exe" });
         foreach (var handler in handlers)
@@ -107,10 +107,16 @@ public sealed class TileDrawingTests(WpfThread wpf) : IDisposable
                     Assert.True(fit.ActualWidth < text.DesiredSize.Width, $"{label}: not shrunk ({fit.ActualWidth} of {text.DesiredSize.Width})");
                 }
 
+                // N4: a line of ten or more characters (a command tile's) is cut at full size, not shrunk until it cannot be read.
+                var line = Descendants(window).OfType<TextBlock>().Single(block => block.Name == "NumberText" && block.Text.StartsWith("a rather", StringComparison.Ordinal));
+                var lineFit = Ancestor<Viewbox>(line);
+                Assert.True(line.DesiredSize.Width <= 98.5, $"the line: {line.DesiredSize.Width} wide");
+                Assert.True(lineFit.ActualWidth >= line.DesiredSize.Width - 0.5, $"the line: shrunk to {lineFit.ActualWidth} of {line.DesiredSize.Width}");
+
                 // N3: UI Automation's items are named after the tiles, not after the view model's type.
                 var host = Descendants(window).OfType<ItemsControl>().Single(control => control.Name == "ItemsHost");
                 var items = UIElementAutomationPeer.CreatePeerForElement(host).GetChildren();
-                Assert.Equal(["Tool", "hundred", "rate"], items.Select(peer => peer.GetName()));
+                Assert.Equal(["Tool", "hundred", "rate", "line"], items.Select(peer => peer.GetName()));
             });
         }
         finally

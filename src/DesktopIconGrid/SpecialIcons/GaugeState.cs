@@ -71,6 +71,7 @@ public sealed class GaugeState : ObservableObject
             {
                 OnPropertyChanged(nameof(Label));
                 OnPropertyChanged(nameof(LabelFontSize));
+                OnPropertyChanged(nameof(LabelMaxWidth));
             }
         }
     }
@@ -85,6 +86,13 @@ public sealed class GaugeState : ObservableObject
         <= 9 => 24,
         _ => 18,
     };
+
+    /// <summary>
+    /// How wide the number style's text may be before it is cut with "…", in the tile's 100 units. A value of up to nine
+    /// characters may be up to 160 wide and is then made smaller to fit ("100%" is 109 wide at 42, release check N1); a
+    /// longer text, already at the smallest size, is cut at 98 rather than shrunk until it cannot be read (N4).
+    /// </summary>
+    public double LabelMaxWidth => Label.Length <= 9 ? 160 : 98;
 
     /// <summary>
     /// The colour from something other than the percentage (a command tile's exit code); <see langword="null"/> uses the

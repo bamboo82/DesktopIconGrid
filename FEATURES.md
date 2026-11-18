@@ -253,6 +253,8 @@ All of these draw the value in a design you pick (ring, bar or number) with gree
 their tooltips end with a line of the last 60 samples (`▁▂▃▅▇█`; the network's against its own peak). The
 number design writes the tile's name under the number from 48 px icons on, cut at its end with `…` when it is
 too long; at smaller sizes the name is left out and the number is centred (the tooltip names the tile, 0.11.0).
+A value of up to nine characters is made smaller to fit the tile ("100%"); a longer text, such as a command tile's
+first line, is cut with `…` at its own size (0.11.0).
 
 - **Google Drive Bucket** — a Google Drive folder. Drop files or folders on it to upload them
   (progress ring on the icon; same-name policy: keep both, replace or skip); click to open the
@@ -899,7 +901,7 @@ gauges (memory, battery, network) with a sparkline, the clock and timer tile, fo
 bucket, the microphone tile. Then workspaces (Multi Launch that puts windows back) and sending a file to
 another PC through a sync folder.
 
-**0.11.0** *(done, released 2026-11-14)* — the fixes the review of 0.10.0 placed after the release (0.10.1 was
+**0.11.0** *(done, released 2026-11-18)* — the fixes the review of 0.10.0 placed after the release (0.10.1 was
 not released on its own), a volume tile, dropping a file onto a program inside a folder stack, Send to PC
 through Google Drive, and voice launch.
 
