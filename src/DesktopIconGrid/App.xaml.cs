@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.IO;
 using System.Net.Http;
 using System.Reflection;
@@ -238,6 +239,18 @@ public partial class App : Application
         usage.Load();
         viewModel.UseUsage(usage);
         var usageSaver = new UsageSaver(usage, viewModel.ShortcutIds, read => Dispatcher.InvokeAsync(read).Task);
+
+        // Chinese in Taipei Sans TC Light where this PC has it (0.12.0 WP5): now, and again after each Save.
+        var chineseFonts = new ChineseFontService(Http);
+        dialogs.ChineseFonts = chineseFonts;
+        void ApplyChineseFont()
+        {
+            var file = chineseFonts.Find();
+            UiFonts.Configure(ChineseFonts.UsesTaipei(viewModel.Model.Settings.ChineseFont, CultureInfo.CurrentUICulture, file is not null) ? file : null);
+        }
+
+        ApplyChineseFont();
+        viewModel.SettingsChanged += (_, _) => ApplyChineseFont();
 
         // First paint; the bar window refines this once it has a handle (backdrop, High Contrast, settings changes).
         ThemeManager.Apply(ThemeManager.EffectivePalette(viewModel.Palette));

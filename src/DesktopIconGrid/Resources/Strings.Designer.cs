@@ -1509,6 +1509,114 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to From: {0} [rest of string was truncated]";.
+        /// </summary>
+        public static string FontInstall_Details {
+            get {
+                return ResourceManager.GetString("FontInstall_Details", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Installed..
+        /// </summary>
+        public static string FontInstall_Done {
+            get {
+                return ResourceManager.GetString("FontInstall_Done", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The font could not be downloaded: {0}.
+        /// </summary>
+        public static string FontInstall_DownloadFailed {
+            get {
+                return ResourceManager.GetString("FontInstall_DownloadFailed", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Install.
+        /// </summary>
+        public static string FontInstall_Install {
+            get {
+                return ResourceManager.GetString("FontInstall_Install", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The font could not be installed: {0}.
+        /// </summary>
+        public static string FontInstall_InstallFailed {
+            get {
+                return ResourceManager.GetString("FontInstall_InstallFailed", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Install it by hand….
+        /// </summary>
+        public static string FontInstall_Manual {
+            get {
+                return ResourceManager.GetString("FontInstall_Manual", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The downloaded file is not the expected one; nothing was installed..
+        /// </summary>
+        public static string FontInstall_Mismatch {
+            get {
+                return ResourceManager.GetString("FontInstall_Mismatch", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Your font folder already has a different file named {0}; it was left as it is an [rest of string was truncated]";.
+        /// </summary>
+        public static string FontInstall_OtherFileThere {
+            get {
+                return ResourceManager.GetString("FontInstall_OtherFileThere", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Downloading… {0} / {1} MB.
+        /// </summary>
+        public static string FontInstall_Progress {
+            get {
+                return ResourceManager.GetString("FontInstall_Progress", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to TaipeiSansTCBeta-Light.ttf (20.3 MB) will be downloaded from GitHub (vp-tw/taipe [rest of string was truncated]";.
+        /// </summary>
+        public static string FontInstall_Text {
+            get {
+                return ResourceManager.GetString("FontInstall_Text", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to it took longer than 10 minutes.
+        /// </summary>
+        public static string FontInstall_TimedOut {
+            get {
+                return ResourceManager.GetString("FontInstall_TimedOut", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Install Taipei Sans TC Light?.
+        /// </summary>
+        public static string FontInstall_Title {
+            get {
+                return ResourceManager.GetString("FontInstall_Title", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Drag shortcuts here.
         /// </summary>
         public static string Grid_EmptyGroup {
@@ -5024,6 +5132,51 @@ namespace DesktopIconGrid.Resources {
         public static string Settings_BarBackgroundToolTip {
             get {
                 return ResourceManager.GetString("Settings_BarBackgroundToolTip", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Chinese text:.
+        /// </summary>
+        public static string Settings_ChineseFont {
+            get {
+                return ResourceManager.GetString("Settings_ChineseFont", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Install Taipei Sans TC….
+        /// </summary>
+        public static string Settings_ChineseFontInstall {
+            get {
+                return ResourceManager.GetString("Settings_ChineseFontInstall", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to This PC does not have Taipei Sans TC Light. Once installed, Chinese on the bar a [rest of string was truncated]";.
+        /// </summary>
+        public static string Settings_ChineseFontMissing {
+            get {
+                return ResourceManager.GetString("Settings_ChineseFontMissing", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The Windows font for Chinese.
+        /// </summary>
+        public static string Settings_ChineseFontSystem {
+            get {
+                return ResourceManager.GetString("Settings_ChineseFontSystem", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Taipei Sans TC Light.
+        /// </summary>
+        public static string Settings_ChineseFontTaipei {
+            get {
+                return ResourceManager.GetString("Settings_ChineseFontTaipei", resourceCulture);
             }
         }
 

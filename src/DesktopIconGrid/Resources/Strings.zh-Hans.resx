@@ -2582,4 +2582,58 @@
   <data name="Names_UsagePartial" xml:space="preserve">
     <value>“90 天未使用”要到 {0} 才完整。</value>
   </data>
+  <data name="Settings_ChineseFont" xml:space="preserve">
+    <value>中文字体：</value>
+  </data>
+  <data name="Settings_ChineseFontTaipei" xml:space="preserve">
+    <value>台北黑体 Light</value>
+  </data>
+  <data name="Settings_ChineseFontSystem" xml:space="preserve">
+    <value>Windows 的中文字体</value>
+  </data>
+  <data name="Settings_ChineseFontInstall" xml:space="preserve">
+    <value>安装台北黑体…</value>
+  </data>
+  <data name="Settings_ChineseFontMissing" xml:space="preserve">
+    <value>这台电脑没有台北黑体 Light。安装后，栏与对话框的中文会以它显示。</value>
+  </data>
+  <data name="FontInstall_Title" xml:space="preserve">
+    <value>安装台北黑体 Light？</value>
+  </data>
+  <data name="FontInstall_Text" xml:space="preserve">
+    <value>会从 GitHub（vp-tw/taipei-sans-tc）下载 TaipeiSansTCBeta-Light.ttf（20.3 MB），并为您的 Windows 账户安装这个字体；其他程序也能使用它。字体由翰字铸造发行，采用 SIL Open Font License 1.1 授权。</value>
+  </data>
+  <data name="FontInstall_Details" xml:space="preserve">
+    <value>来源：{0}
+文件：{1}，{2:N0} 字节
+SHA-256：{3}
+安装到：{4}</value>
+  </data>
+  <data name="FontInstall_Install" xml:space="preserve">
+    <value>安装</value>
+  </data>
+  <data name="FontInstall_Progress" xml:space="preserve">
+    <value>下载中… {0} / {1} MB</value>
+  </data>
+  <data name="FontInstall_Done" xml:space="preserve">
+    <value>已安装。</value>
+  </data>
+  <data name="FontInstall_DownloadFailed" xml:space="preserve">
+    <value>无法下载字体：{0}</value>
+  </data>
+  <data name="FontInstall_Mismatch" xml:space="preserve">
+    <value>下载的文件与预期不符，没有安装。</value>
+  </data>
+  <data name="FontInstall_InstallFailed" xml:space="preserve">
+    <value>无法安装字体：{0}</value>
+  </data>
+  <data name="FontInstall_OtherFileThere" xml:space="preserve">
+    <value>您的字体文件夹已有另一个名为 {0} 的文件；已保留原状，没有安装。</value>
+  </data>
+  <data name="FontInstall_TimedOut" xml:space="preserve">
+    <value>超过 10 分钟仍未完成</value>
+  </data>
+  <data name="FontInstall_Manual" xml:space="preserve">
+    <value>改为手动安装…</value>
+  </data>
 </root>

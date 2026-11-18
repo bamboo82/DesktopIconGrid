@@ -2582,4 +2582,58 @@ Details are in {1}.</value>
   <data name="Names_UsagePartial" xml:space="preserve">
     <value>“Not used in 90 days” is complete from {0}.</value>
   </data>
+  <data name="Settings_ChineseFont" xml:space="preserve">
+    <value>Chinese text:</value>
+  </data>
+  <data name="Settings_ChineseFontTaipei" xml:space="preserve">
+    <value>Taipei Sans TC Light</value>
+  </data>
+  <data name="Settings_ChineseFontSystem" xml:space="preserve">
+    <value>The Windows font for Chinese</value>
+  </data>
+  <data name="Settings_ChineseFontInstall" xml:space="preserve">
+    <value>Install Taipei Sans TC…</value>
+  </data>
+  <data name="Settings_ChineseFontMissing" xml:space="preserve">
+    <value>This PC does not have Taipei Sans TC Light. Once installed, Chinese on the bar and in the dialogs is drawn with it.</value>
+  </data>
+  <data name="FontInstall_Title" xml:space="preserve">
+    <value>Install Taipei Sans TC Light?</value>
+  </data>
+  <data name="FontInstall_Text" xml:space="preserve">
+    <value>TaipeiSansTCBeta-Light.ttf (20.3 MB) will be downloaded from GitHub (vp-tw/taipei-sans-tc) and installed for your Windows account; other programs can use it too. The font is published by JT Foundry under the SIL Open Font License 1.1.</value>
+  </data>
+  <data name="FontInstall_Details" xml:space="preserve">
+    <value>From: {0}
+File: {1}, {2:N0} bytes
+SHA-256: {3}
+Installed to: {4}</value>
+  </data>
+  <data name="FontInstall_Install" xml:space="preserve">
+    <value>Install</value>
+  </data>
+  <data name="FontInstall_Progress" xml:space="preserve">
+    <value>Downloading… {0} / {1} MB</value>
+  </data>
+  <data name="FontInstall_Done" xml:space="preserve">
+    <value>Installed.</value>
+  </data>
+  <data name="FontInstall_DownloadFailed" xml:space="preserve">
+    <value>The font could not be downloaded: {0}</value>
+  </data>
+  <data name="FontInstall_Mismatch" xml:space="preserve">
+    <value>The downloaded file is not the expected one; nothing was installed.</value>
+  </data>
+  <data name="FontInstall_InstallFailed" xml:space="preserve">
+    <value>The font could not be installed: {0}</value>
+  </data>
+  <data name="FontInstall_OtherFileThere" xml:space="preserve">
+    <value>Your font folder already has a different file named {0}; it was left as it is and nothing was installed.</value>
+  </data>
+  <data name="FontInstall_TimedOut" xml:space="preserve">
+    <value>it took longer than 10 minutes</value>
+  </data>
+  <data name="FontInstall_Manual" xml:space="preserve">
+    <value>Install it by hand…</value>
+  </data>
 </root>

@@ -49,6 +49,7 @@ public static class DialogTheme
     public static void Apply(Window window)
     {
         ArgumentNullException.ThrowIfNull(window);
+        Services.UiFonts.Apply(window); // Chinese in Taipei Sans TC Light where this PC has it (0.12.0 WP5)
 #pragma warning disable WPF0001 // ThemeMode is marked experimental in the WPF reference assemblies
         window.ThemeMode = UseFluent ? ThemeMode.System : ThemeMode.None;
 #pragma warning restore WPF0001

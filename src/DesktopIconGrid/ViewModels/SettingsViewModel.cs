@@ -15,7 +15,7 @@ public sealed record DockEdgeOption(string Id, string Name);
 /// <summary>One choice in the language list; the name is written in its own language.</summary>
 public sealed record LanguageOption(string Id, string Name);
 
-public sealed class SettingsViewModel : ObservableObject
+public sealed partial class SettingsViewModel : ObservableObject
 {
     public static readonly IReadOnlyList<string> ColorPresets =
     [
@@ -549,6 +549,7 @@ public sealed class SettingsViewModel : ObservableObject
         settings.BackgroundColor = IsColorValid ? _backgroundColor : LauncherSettings.DefaultBackgroundColor;
         settings.BarBackdrop = _selectedBackdrop.Id;
         settings.FluentDialogs = _fluentDialogs;
+        settings.ChineseFont = ChineseFontToSave;
         settings.ToggleHotkey = IsHotkeyValid && HasHotkey ? _toggleHotkey : null;
         settings.ShowAtPointerHotkey = IsPointerHotkeyValid && HasPointerHotkey ? _pointerHotkey : null;
         settings.WindowKeys = WindowKeys.Overrides(WindowKeyRows.ToDictionary(row => row.Action, row => row.Text));

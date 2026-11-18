@@ -9,6 +9,147 @@ The owner relays replies.
 
 ---
 
+## 2026-11-18 (85) — 0.12.0 WP5: Chinese text in Taipei Sans TC Light, installed with one click (T1–T4)
+
+Run 184 (`6411d70`, WP4) is green. This entry claims no run for its own commit. This is WP5 in its third form; none
+of the first two forms was built.
+
+### The file, checked here (not committed)
+
+I downloaded it once into this session's scratch folder:
+
+- the server answered 200, with 20,279,264 bytes;
+- the SHA-256 is `d69a9ea6…f2bb662`, as you gave it;
+- nothing in it differs from your figures.
+
+Its own names:
+
+| Name | Value |
+| --- | --- |
+| Family (1) | Taipei Sans TC Beta Light |
+| Subfamily (2) | Regular |
+| Full name (4) | Taipei Sans TC Beta Light |
+| PostScript (6) | TaipeiSansTCBeta-Light |
+| Typographic family (16) | Taipei Sans TC Beta |
+| Typographic subfamily (17) | Light |
+| `usWeightClass` | 300 |
+| Maker and designer | JT Foundry |
+| Licence | the OFL 1.1 text and its URL |
+
+So the registry value the install writes is "Taipei Sans TC Beta Light (TrueType)". The name is read from the
+downloaded file, not written into the code.
+
+### As designed
+
+- **T1, finding it** (`Core/Fonts/FontFiles.cs`, `FontLocator`):
+  - It looks in `Fonts\` next to the program first, then HKCU, then HKLM.
+  - A registry value counts when the file name of its data is `TaipeiSansTCBeta-Light.ttf`. A bare name is in
+    the user's or Windows' font folder, and the first that exists wins.
+  - `IFontRegistry` keeps it testable; `WindowsFontRegistry` is the real registry.
+  - `FontNames.FullName` reads name 4 from the file's `name` table.
+- **T2, using it** (`Services/UiFonts.cs`):
+  - The font is referred to by its file: `file:///…/TaipeiSansTCBeta-Light.ttf#<family>`. The family name comes
+    from `Fonts.GetFontFamilies(file)`. A comma in the path is escaped, since it would end a reference in a chain.
+  - The chain is `<the window's Latin font>, <that>`. For every window it is the font `SystemFonts.MessageFontFamily`
+    gives today (Segoe UI).
+  - Windows take it from a dynamic resource, `App.UiFontFamily`:
+    - every dialog through `DialogTheme.Apply`, which all of them call;
+    - the bar, the pointer window and the stack window in their constructors.
+  - **Fluent keys.** I read the resource keys of the Fluent theme's assembly (`PresentationFramework.Fluent`
+    10.0.15) and found no font-family resource for controls. It has only `SymbolThemeFontFamily`, for icon glyphs,
+    and the system font keys. So a Fluent dialog's controls inherit the window's font.
+  - **Popups.** Menus, context menus, the tray menu and tooltips are windows of their own. Their styles, classic
+    and Fluent, read `SystemFonts.MenuFontFamilyKey`, `SystemFonts.StatusFontFamilyKey` and
+    `SystemFonts.MessageFontFamilyKey`. I set those three in the app's resources, each as its own Latin font
+    followed by the font.
+  - With "system", or without the file, the three keys are removed and `App.UiFontFamily` is the message font, so
+    nothing differs from before.
+  - The bar follows at Save. A dialog takes it when it is next opened.
+- **T3, the setting and the button:**
+  - `chineseFont` sits with the appearance settings, written only when set. An unknown value becomes the default.
+    `ChineseFonts.UsesTaipei` gives the default: on when found, except for zh-Hans.
+  - The row is as in your drawing.
+    - The list offers the font only when the PC has it.
+    - Save writes `chineseFont` only when it was chosen in the row, so the default stays the default.
+    - A value that came through sync to a PC without the font is shown as the Windows font and kept as it was.
+  - The question is the app's own confirmation window (`CommandApprovalWindow`, Cancel by default). Your title
+    and text are on it, with an *Install* button, and its details box shows the address, the file, the size, the
+    SHA-256 and the folder it goes to.
+  - While it downloads, a progress bar, "Downloading… 7.4 / 20.3 MB" (decimal MB) and *Cancel* take the hint's
+    place.
+  - On success the list gets the font and selects it; Save writes `taipei-sans-light`; the row says "Installed.".
+  - On failure the row shows your texts in the error colour, with *Install it by hand…* opening the author's page.
+- **The install** (`Core/Fonts/FontInstaller.cs`):
+  - It downloads to `.part` in the data folder. It stops when `Content-Length` differs, or when more bytes arrive
+    than 20,279,264, and then checks the SHA-256.
+  - It moves the file into `%LOCALAPPDATA%\Microsoft\Windows\Fonts` and writes the HKCU value.
+  - It calls `AddFontResourceW`, then `SendMessageTimeoutW(HWND_BROADCAST, WM_FONTCHANGE, SMTO_ABORTIFHUNG,
+    1000 ms)`, on a worker thread.
+  - A file of that name already there with the right digest is used without a download. One with another digest
+    is reported and left alone, also without a download.
+  - Every failure leaves no part file, no font file and no registry value. When the registry refuses after the
+    move, the moved file is deleted.
+
+### My choices (please look)
+
+- **Bold.** Only the Light face is referenced, so where the app asks for Bold or SemiBold, WPF emboldens it
+  (`StyleSimulations.BoldSimulation`). A CI test records that this is so.
+  - I did not change any weight. WPF cannot weight one font of a chain differently, so "normal weight for the
+    Chinese" would make the Latin of those texts normal too, and an English bar has Taipei on by default.
+  - The texts are: the voice window's names (Bold); SemiBold for the bar's separator captions, the open group's
+    title in the bar, the pointer window's group title, the stack window's caption, the Undo button of the
+    removal banner, the log viewer's header, two lines of the Sync window, the names table's changed rows, the
+    log window's warnings, the Import window's group names, and the monitor tile window's labels.
+  - Please look and tell me which to make normal.
+- **Strings beyond your table:**
+  - `FontInstall_OtherFileThere`: the plan says "report it" and has no text.
+  - `FontInstall_Details`: for the confirmation's details box.
+  - `FontInstall_TimedOut`: the app's HTTP client has no time limit, so a download is given up after 10 minutes.
+    That shows as "The font could not be downloaded: it took longer than 10 minutes".
+- **Closing Settings.** Closing it cancels a download under way, Save as well as Cancel. The row that would show
+  the outcome goes with the window.
+
+### Tests
+
+- **Core:**
+  - The three places and their order; bare names and full paths; a value naming a missing file; another file whose
+    name only ends the same.
+  - The full name, read from a hand-built minimal font.
+  - The installer, against a fake HTTP handler and temporary folders:
+    - The right bytes are installed, listed under their full name, announced, with progress reported and no part
+      file left.
+    - Another `Content-Length`, one byte too many without a length, and another digest at the same length each
+      install nothing.
+    - A 404 (with "404" in the message), no connection and a cancel each install nothing.
+    - A refused registry write removes the moved file; a font folder that cannot be made installs nothing.
+    - An existing different file is not overwritten or downloaded; an existing same file is registered without a
+      download.
+  - The built-in source's figures.
+  - The default per language and the setting's round trip, an older reader keeping it, normalising and `CopyFrom`.
+- **App, CI only.** These use a two-glyph test font I made, `Assets/DigTestCjk-Light.ttf` (1.2 KB, same name
+  shape as the real one, weight 300):
+  - The family is named from the file and referred to by the file.
+  - In a window as the bar's and in a Fluent dialog, 「設定」 comes from the test font and "Settings" from Segoe UI;
+    the menu and status keys point at it. This is checked through each glyph run's font file.
+  - With the Windows choice nothing differs: the keys are gone and 「設定」 is not drawn in the test font.
+  - Bold Chinese is the Light face with simulated bold.
+  - The row with the font found: two choices, the default selection, Save writes only a choice made, and no button
+    or hint.
+  - The row without the font:
+    - a synced value is shown as the Windows font and kept;
+    - the button and hint show; asking and declining does nothing;
+    - while downloading the progress text shows and the button is off;
+    - "Installed." comes with the font chosen and written at Save.
+  - Each failure (download, mismatch, install, other file there, cancel) gives its message, the manual link, and
+    no change. The error colour is checked in the window.
+  - Closing Settings cancels the download.
+- **Not tested:**
+  - the real download and install (yours, with the owner's leave);
+  - how Light strokes read at 10–12 px;
+  - High Contrast;
+  - the tray menu in a real tray;
+  - another DPI.
+
 ## 2026-11-18 (84) — 0.12.0 WP4: usage in the names table (U1–U4)
 
 Run 183 (`6d8eb0e`) is green: the fix for run 182 holds, and F1–F3 pass. This entry claims no run for its own

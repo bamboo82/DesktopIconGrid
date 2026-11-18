@@ -123,6 +123,18 @@ internal static partial class NativeMethods
     [DllImport("shell32.dll", CharSet = CharSet.Unicode)]
     public static extern int SHDefExtractIcon(string pszIconFile, int iIndex, uint uFlags, out IntPtr phiconLarge, out IntPtr phiconSmall, uint nIconSize);
 
+    /// <summary>Makes a font file available to the programs of this session (0.12.0 WP5).</summary>
+    [DllImport("gdi32.dll", CharSet = CharSet.Unicode)]
+    public static extern int AddFontResourceW(string lpFileName);
+
+    public const int WM_FONTCHANGE = 0x001D;
+    public const uint SMTO_ABORTIFHUNG = 0x0002;
+    public static readonly IntPtr HWND_BROADCAST = new(0xFFFF);
+
+    /// <summary>Sends a message and gives up on a window that does not answer in <paramref name="uTimeout"/> ms.</summary>
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+    public static extern IntPtr SendMessageTimeoutW(IntPtr hWnd, int Msg, IntPtr wParam, IntPtr lParam, uint fuFlags, uint uTimeout, out IntPtr lpdwResult);
+
     [DllImport("gdi32.dll")]
     public static extern int GetObject(IntPtr hgdiobj, int cbBuffer, ref BITMAP lpvObject);
 

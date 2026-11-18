@@ -71,6 +71,9 @@ public sealed class DialogService(IIconProvider icons) : IDialogService, ILaunch
         window.ShowDialog();
     }
 
+    /// <summary>Taipei Sans TC Light on this PC, for the Settings row (0.12.0 WP5); none in tests.</summary>
+    public IChineseFontInstall? ChineseFonts { get; set; }
+
     public bool ShowItemProperties(LauncherItem item, bool isNew, int iconSize)
     {
         var viewModel = new ItemPropertiesViewModel(item, isNew, icons, item is ShortcutItem ? BrowserCatalog.Choices() : null) { BarIconSize = iconSize };
@@ -81,6 +84,7 @@ public sealed class DialogService(IIconProvider icons) : IDialogService, ILaunch
     public SettingsResult? ShowSettings(LauncherSettings current, DesktopIconGrid.Core.Storage.LocalSettings local)
     {
         var viewModel = new SettingsViewModel(current, local);
+        viewModel.UseChineseFont(ChineseFonts);
         var window = new SettingsWindow { DataContext = viewModel, Owner = Owner };
         return window.ShowDialog() == true ? new SettingsResult(viewModel.ToSettings(), viewModel.ToLocalSettings()) : null;
     }

@@ -25,4 +25,9 @@
     <Using Include="Xunit" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- Two plain glyphs (設, 定) at weight 300, made for the tests of the Chinese text font (0.12.0 WP5). -->
+    <None Update="Assets/DigTestCjk-Light.ttf" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>

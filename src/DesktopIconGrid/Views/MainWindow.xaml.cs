@@ -40,6 +40,7 @@ public partial class MainWindow : Window
         _viewModel = viewModel;
         DataContext = viewModel;
         InitializeComponent();
+        UiFonts.Apply(this); // Chinese in Taipei Sans TC Light where this PC has it (0.12.0 WP5)
 
         viewModel.GroupActivated += OnGroupActivated;
         viewModel.ItemActivated += (_, _) => CloseSearch();

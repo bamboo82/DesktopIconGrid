@@ -740,6 +740,7 @@ warnings and errors. The last 2000 entries stay in memory and all of them are ap
 | Transparency | 0 % (opaque) |
 | Close button hides to tray | on |
 | Language | same as Windows (English, 繁體中文 or 简体中文; applies at the next start) |
+| Chinese text | Taipei Sans TC Light when this PC has it, for every UI language but Simplified Chinese, where it is the Windows font (0.12.0); stored as `chineseFont` with the appearance settings, so it syncs, and a PC without the font draws Chinese as before whatever it says |
 
 Settings live in the same JSON file as the layout and apply immediately on *Save*.
 
@@ -983,7 +984,22 @@ Still open, in the order they should be taken:
    fallback for older files and for a monitor that is gone.
 3. **Localisation** — done in 0.5.0 (`.resx` tables with zh-Hant/zh-Hans, a Language setting, the
    text-icon default font by UI language). By design the log and the error texts from Google and
-   Windows stay in English.
+   Windows stay in English. Since 0.12.0 the app's Chinese text can be Taipei Sans TC Light (台北黑體,
+   JT Foundry, SIL Open Font License 1.1): every window's font is its Latin font as before (Segoe UI), then that
+   font from its file for what the Latin font lacks (Chinese, full-width punctuation, bopomofo, kana), so Latin
+   letters and digits and all sizes stay as they were. The bar, its popups, the pointer and stack windows, every
+   dialog (classic or Fluent), menus, tooltips and the tray menu take it; text icons, Consolas text, gauges' numbers
+   and symbol icons keep their own fonts. The font is found in `Fonts\` next to the program, then among the fonts
+   installed for this user, then for every user, and always used by its file, so another weight of the family
+   installed on the PC is not picked. Only the Light face is there: where the app asks for bold, WPF emboldens it.
+   It is never shipped with the app. Settings ▸ Appearance ▸ *Chinese text* offers it when the PC has it, and
+   otherwise a button that, after asking, downloads `TaipeiSansTCBeta-Light.ttf` (20,279,264 bytes) from the locked
+   mirror at GitHub (`vp-tw/taipei-sans-tc`, commit 24ca88e), checks its length and SHA-256, and installs it for this
+   user without an administrator: into `%LOCALAPPDATA%\Microsoft\Windows\Fonts`, listed under the user's fonts in
+   the registry, announced to the running programs. Anything else (another length or digest, no connection, a folder
+   or registry that cannot be written, a different file of that name already there) installs nothing and offers
+   the author's page to install it by hand. The button never runs by itself, and nothing uninstalls the font:
+   Windows Settings ▸ Fonts does.
 4. **Non-modal errors** — done in 0.4.0 (tray notifications with the log viewer one click away;
    Undo for Remove). Since 0.12.0 a notice has a kind and a target: information (a file received, a timer's
    phase, files sent) shows the information icon and is not shown at all during Windows' quiet time (it is

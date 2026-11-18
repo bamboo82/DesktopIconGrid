@@ -17,6 +17,10 @@ and how often each shortcut is used.
   colour of its own the text is white or black, whichever shows better on it.
 - **Usage in *Edit names***: how often each shortcut was used on this PC and when last, in two columns that sort,
   and *Not used in 90 days* in *Show*. Counted only on this PC, in `usage.json`, which is never synced.
+- **Chinese text in Taipei Sans TC Light** (台北黑體, SIL Open Font License 1.1) when the PC has it: Latin letters,
+  digits and sizes stay as they were. Settings ▸ Appearance ▸ *Chinese text* chooses it or the Windows font; on a PC
+  without it, a button downloads it from GitHub after asking, checks it, and installs it for your Windows account.
+  The font is not part of the download of the app.
 
 ### Changed
 

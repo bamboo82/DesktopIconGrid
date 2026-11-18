@@ -72,6 +72,19 @@ public sealed partial class LauncherSettings
     /// <summary>Dialogs use the Windows 11 (Fluent) look and follow the system light/dark mode.</summary>
     public bool FluentDialogs { get; set; } = true;
 
+    /// <summary>Chinese text in Taipei Sans TC Light when this PC has it (0.12.0 WP5).</summary>
+    public const string ChineseFontTaipei = "taipei-sans-light";
+
+    /// <summary>Chinese text in the font Windows gives it, as before 0.12.0.</summary>
+    public const string ChineseFontSystem = "system";
+
+    /// <summary>
+    /// The font of Chinese text: <see cref="ChineseFontTaipei"/>, <see cref="ChineseFontSystem"/>, or
+    /// <see langword="null"/> for the default (<see cref="ChineseFonts.UsesTaipei"/>). It syncs with the other
+    /// appearance settings; a PC without the font draws Chinese as before whatever it says.
+    /// </summary>
+    public string? ChineseFont { get; set; }
+
     /// <summary>The close button hides the bar to the notification area instead of exiting.</summary>
     public bool CloseToTray { get; set; } = true;
 
@@ -132,6 +145,7 @@ public sealed partial class LauncherSettings
         BackgroundColor = source.BackgroundColor;
         BarBackdrop = source.BarBackdrop;
         FluentDialogs = source.FluentDialogs;
+        ChineseFont = source.ChineseFont;
         ToggleHotkey = source.ToggleHotkey;
         ShowAtPointerHotkey = source.ShowAtPointerHotkey;
         WindowKeys = source.WindowKeys is null ? null : new Dictionary<string, string>(source.WindowKeys);
@@ -191,6 +205,17 @@ public sealed partial class LauncherSettings
         {
             BarBackdrop = BackdropSolid;
             changed = true;
+        }
+
+        var chinese = ChineseFont?.Trim().ToLowerInvariant();
+        if (chinese is not null && chinese is not (ChineseFontTaipei or ChineseFontSystem))
+        {
+            ChineseFont = null; // no such choice: the default
+            changed = true;
+        }
+        else if (chinese != ChineseFont)
+        {
+            ChineseFont = chinese;
         }
 
         var edge = DockEdge?.Trim().ToLowerInvariant() ?? string.Empty;

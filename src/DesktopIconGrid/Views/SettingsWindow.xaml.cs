@@ -15,6 +15,41 @@ public partial class SettingsWindow : Window
         InitializeComponent();
         DialogTheme.Apply(this);
         WorkAreaFit.Attach(this);
+        DataContextChanged += (_, _) =>
+        {
+            if (ViewModel is { } viewModel)
+            {
+                viewModel.ConfirmInstall ??= AskToInstallFont;
+            }
+        };
+        Closed += (_, _) => ViewModel?.CancelInstall(); // Cancel, and Save too: a download does not outlive the window
+    }
+
+    /// <summary>
+    /// The question before the font is downloaded (0.12.0 WP5): the app's own confirmation window, whose default is
+    /// Cancel, with where it comes from, what it must be, and where it goes.
+    /// </summary>
+    private bool AskToInstallFont()
+    {
+        var source = Core.Fonts.TaipeiSans.Light;
+        var details = string.Format(
+            System.Globalization.CultureInfo.CurrentCulture,
+            Strings.FontInstall_Details,
+            source.Url,
+            source.FileName,
+            source.Size,
+            source.Sha256,
+            ChineseFontService.UserFontsDirectory);
+        return new CommandApprovalWindow(Strings.FontInstall_Title, Strings.FontInstall_Text, details, Strings.FontInstall_Install) { Owner = this }.ShowDialog() == true;
+    }
+
+    /// <summary>The author's page, where the font can be installed by hand.</summary>
+    private void ManualInstall_Click(object sender, RoutedEventArgs e)
+    {
+        if (ViewModel is { } viewModel)
+        {
+            Core.Launching.ProcessLauncher.Start(new System.Diagnostics.ProcessStartInfo(viewModel.ManualInstallPage.AbsoluteUri) { UseShellExecute = true });
+        }
     }
 
     private SettingsViewModel? ViewModel => DataContext as SettingsViewModel;
