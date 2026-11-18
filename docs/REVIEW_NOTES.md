@@ -9,6 +9,52 @@ The owner relays replies.
 
 ---
 
+## 2026-11-18 (81) — 0.12.0 WP2: the Parameters hint (P)
+
+Run 179 (`26ee643`, WP1) is green. This entry claims no run for its own commit.
+
+### As designed
+
+- `Props_ParametersHint` has the new two-line text in all three languages.
+- A `Hyperlink` sits in the same `TextBlock` and reads `Props_ParametersMore` / `Props_ParametersLess`.
+  - Its `AutomationProperties.Name` is the text without the arrow.
+  - Tab reaches it. Enter is the hyperlink's own click, and Space is added in code-behind.
+- The four rules are an `ItemsControl` of `TextBlock`s in `DialogHint` style, each with a hanging "•", collapsed by
+  default.
+- `IsParametersRulesShown` is "asked for (More) or `ParametersWarning` is shown".
+  - While the warning is shown, the link is disabled and the list stays open.
+  - When the warning goes, the list returns to what was chosen.
+  - Nothing is kept between windows.
+- The window grows downward (`SizeToContent`); `WorkAreaFit` keeps it on screen, as for *Advanced*.
+- I placed the warning between the hint and the list. Someone just refused reads what is wrong first, then the rules.
+
+### Rule 2 corrected, as the plan allows
+
+Your text said a value may hold only letters, digits, spaces and `. _ - \ / :` wherever the program could run it.
+`LaunchPlaceholders` enforces that only for PowerShell script text and the command ssh or plink sends. For the others
+it refuses what would make the value a command, and the old hint said so too. Rule 2 now reads:
+
+> Where the program could run a value as a command, what would make it one is refused: for a batch file or cmd.exe
+> " % ! ^ & | < >, through WSL also $ and \`, for Windows Terminal ;, and for the host of ssh anything that
+> user@host and a port do not need. In PowerShell script text and the command ssh or plink sends, a value may hold
+> only letters, digits, spaces and . _ - \ / :.
+
+The zh-Hant text says the same and keeps your wording where it could. Rules 1, 3 and 4 are yours and true.
+
+**Please look:** Rule 3 does not mention two refusals that apply to every program: a value of more than one line,
+and one that begins with "/" where an argument starts (except for a shell). The old hint did not mention them
+either. Say if they should be added.
+
+### Tests
+
+- **App, CI only:**
+  - The view model: collapsed at first; More opens and Less closes; parameters that are refused (`{clipboard}` before
+    cmd.exe's `/c`) open the list, which then cannot be closed; once fixed, the list closes again.
+  - Every new key and the new hint exist in en, zh-Hant and zh-Hans, read from each language's own resources.
+  - The window built from its markup: the list is collapsed; after More it has four lines, the window grew, and the
+    link reads "Less".
+- **Not tested:** keyboard focus order, and Space and Enter on the link: real input.
+
 ## 2026-11-18 (80) — 0.12.0 WP1: notices (N1–N4)
 
 Run 177 (`10dec5a`) is green, and v0.11.0 is tagged on it. Your 0.12.0 plan arrived; this is WP1. The version

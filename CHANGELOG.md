@@ -15,6 +15,8 @@ and how often each shortcut is used.
   at once as before. A click on a notice goes where it is about: a received file is selected in its folder, a
   problem with Google Drive or receiving opens the Sync window, a timer's phase shows the bar, a failure opens the
   log. A notice too long for the balloon is cut after a whole line.
+- Properties: the hint under *Parameters* is two lines; the rules for placeholder values are behind *More*, as a
+  list, and open by themselves while the parameters are refused.
 
 ## [0.11.0] – 2026-11-18
 

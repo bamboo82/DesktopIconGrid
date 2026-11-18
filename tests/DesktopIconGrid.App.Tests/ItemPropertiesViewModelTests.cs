@@ -118,6 +118,50 @@ public class ItemPropertiesViewModelTests
             viewModel.ParametersWarning);
     }
 
+    /// <summary>0.12.0 WP2: the rules under the Parameters hint.</summary>
+    [Fact]
+    public void The_parameter_rules_open_on_More_and_by_themselves_while_the_parameters_are_refused()
+    {
+        var viewModel = new ItemPropertiesViewModel(new ShortcutItem { Name = "Tool", Location = "cmd.exe" }, isNew: false, new CountingIcons());
+        Assert.False(viewModel.IsParametersRulesShown); // two lines only
+        Assert.Equal((Strings.Props_ParametersMore, true), (viewModel.ParametersRulesLinkText, viewModel.CanToggleParametersRules));
+        Assert.DoesNotContain("▾", viewModel.ParametersRulesLinkName, StringComparison.Ordinal);
+
+        viewModel.ToggleParametersRules();
+        Assert.True(viewModel.IsParametersRulesShown);
+        Assert.Equal(Strings.Props_ParametersLess, viewModel.ParametersRulesLinkText);
+        viewModel.ToggleParametersRules();
+        Assert.False(viewModel.IsParametersRulesShown);
+
+        viewModel.Parameters = "{clipboard}"; // before cmd.exe's /c: refused
+        Assert.NotNull(viewModel.ParametersWarning);
+        Assert.True(viewModel.IsParametersRulesShown);
+        Assert.False(viewModel.CanToggleParametersRules);
+        viewModel.ToggleParametersRules();
+        Assert.True(viewModel.IsParametersRulesShown); // stays open while refused
+
+        viewModel.Parameters = "/c echo {clipboard}";
+        Assert.Null(viewModel.ParametersWarning);
+        Assert.False(viewModel.IsParametersRulesShown); // back to what was chosen
+    }
+
+    [Theory]
+    [InlineData("Props_ParametersHint")]
+    [InlineData("Props_ParametersMore")]
+    [InlineData("Props_ParametersLess")]
+    [InlineData("Props_ParametersRule1")]
+    [InlineData("Props_ParametersRule2")]
+    [InlineData("Props_ParametersRule3")]
+    [InlineData("Props_ParametersRule4")]
+    public void The_hint_and_its_rules_are_in_every_language(string key)
+    {
+        foreach (var culture in new[] { "en", "zh-Hant", "zh-Hans" })
+        {
+            var set = Strings.ResourceManager.GetResourceSet(new System.Globalization.CultureInfo(culture), createIfNotExists: true, tryParents: culture == "en");
+            Assert.False(string.IsNullOrWhiteSpace(set?.GetString(key)), $"{key} in {culture}");
+        }
+    }
+
     [Fact]
     public void A_path_pasted_with_quotes_is_stored_without_them()
     {

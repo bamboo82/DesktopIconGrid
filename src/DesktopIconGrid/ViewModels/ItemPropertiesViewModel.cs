@@ -142,6 +142,49 @@ public sealed class ItemPropertiesViewModel : ObservableObject
 
     public string ParametersHint => Strings.Props_ParametersHint;
 
+    private bool _parametersRulesOpen;
+
+    /// <summary>
+    /// The rules under the Parameters hint (0.12.0 WP2): two lines are always there, the rest behind <em>More</em>. They are
+    /// open while the parameters are refused (<see cref="ParametersWarning"/>), since that is who needs them; the choice
+    /// is not kept between windows.
+    /// </summary>
+    public bool IsParametersRulesShown => _parametersRulesOpen || ParametersWarning is not null;
+
+    /// <summary>The list cannot be closed while the parameters are refused.</summary>
+    public bool CanToggleParametersRules => ParametersWarning is null;
+
+    public string ParametersRulesLinkText => IsParametersRulesShown ? Strings.Props_ParametersLess : Strings.Props_ParametersMore;
+
+    /// <summary>The link's name for a screen reader: its text without the arrow.</summary>
+    public string ParametersRulesLinkName => ParametersRulesLinkText.TrimEnd('▾', '▴').TrimEnd();
+
+    /// <summary><em>More</em> or <em>Less</em> under the Parameters box.</summary>
+    public void ToggleParametersRules()
+    {
+        if (!CanToggleParametersRules)
+        {
+            return;
+        }
+
+        _parametersRulesOpen = !_parametersRulesOpen;
+        NotifyParametersRules();
+    }
+
+    private void NotifyParametersWarning()
+    {
+        OnPropertyChanged(nameof(ParametersWarning));
+        NotifyParametersRules();
+    }
+
+    private void NotifyParametersRules()
+    {
+        OnPropertyChanged(nameof(IsParametersRulesShown));
+        OnPropertyChanged(nameof(CanToggleParametersRules));
+        OnPropertyChanged(nameof(ParametersRulesLinkText));
+        OnPropertyChanged(nameof(ParametersRulesLinkName));
+    }
+
     public string Name
     {
         get => _name;
@@ -182,7 +225,7 @@ public sealed class ItemPropertiesViewModel : ObservableObject
             }
 
             OnPropertyChanged(nameof(CanSave));
-            OnPropertyChanged(nameof(ParametersWarning)); // who reads the placeholders
+            NotifyParametersWarning(); // who reads the placeholders
             RefreshPreviewAndWarning();
         }
     }
@@ -195,7 +238,7 @@ public sealed class ItemPropertiesViewModel : ObservableObject
             if (SetProperty(ref _parameters, value ?? string.Empty))
             {
                 FollowDefaultWhenRunning(); // parameters turn the default from "switch" to "start another"
-                OnPropertyChanged(nameof(ParametersWarning));
+                NotifyParametersWarning();
             }
         }
     }
@@ -380,7 +423,7 @@ public sealed class ItemPropertiesViewModel : ObservableObject
         {
             if (SetProperty(ref _startIn, value ?? string.Empty))
             {
-                OnPropertyChanged(nameof(ParametersWarning)); // a bare name may be a batch file in this folder
+                NotifyParametersWarning(); // a bare name may be a batch file in this folder
             }
         }
     }

@@ -4128,11 +4128,65 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Files dropped onto the icon replace {file} (one launch per file) or {files} (all [rest of string was truncated]";.
+        ///   Looks up a localized string similar to Dropped files replace {file} (one launch per file) or {files} (all at once); {cl [rest of string was truncated]";.
         /// </summary>
         public static string Props_ParametersHint {
             get {
                 return ResourceManager.GetString("Props_ParametersHint", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Less ▴.
+        /// </summary>
+        public static string Props_ParametersLess {
+            get {
+                return ResourceManager.GetString("Props_ParametersLess", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to More ▾.
+        /// </summary>
+        public static string Props_ParametersMore {
+            get {
+                return ResourceManager.GetString("Props_ParametersMore", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Without a placeholder, dropped files are added after the parameters..
+        /// </summary>
+        public static string Props_ParametersRule1 {
+            get {
+                return ResourceManager.GetString("Props_ParametersRule1", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Where the program could run a value as a command, what would make it one is refu [rest of string was truncated]";.
+        /// </summary>
+        public static string Props_ParametersRule2 {
+            get {
+                return ResourceManager.GetString("Props_ParametersRule2", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to A value that begins with “-” where an argument starts, with no “--” before it, w [rest of string was truncated]";.
+        /// </summary>
+        public static string Props_ParametersRule3 {
+            get {
+                return ResourceManager.GetString("Props_ParametersRule3", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Inside code for another program (python -c, node -e, bash -c) or an ssh option t [rest of string was truncated]";.
+        /// </summary>
+        public static string Props_ParametersRule4 {
+            get {
+                return ResourceManager.GetString("Props_ParametersRule4", resourceCulture);
             }
         }
 

@@ -178,6 +178,19 @@ public partial class ItemPropertiesWindow : Window
 
     private void UseDefaultIcon_Click(object sender, RoutedEventArgs e) => ViewModel?.UseDefaultIcon();
 
+    /// <summary><em>More</em> / <em>Less</em> under the Parameters box (0.12.0 WP2); Enter is the link's own click.</summary>
+    private void ParametersRules_Click(object sender, RoutedEventArgs e) => ViewModel?.ToggleParametersRules();
+
+    /// <summary>Space toggles the link too, as it does a button.</summary>
+    private void ParametersRules_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+    {
+        if (e.Key == System.Windows.Input.Key.Space)
+        {
+            ViewModel?.ToggleParametersRules();
+            e.Handled = true;
+        }
+    }
+
     private void Save_Click(object sender, RoutedEventArgs e)
     {
         if (ViewModel?.Apply() == true)

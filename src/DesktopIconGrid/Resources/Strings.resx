@@ -365,7 +365,7 @@ Made by a newer version of Desktop Icon Grid; kept as a placeholder.</value>
     <value>The location may be a file, a folder or a URL.</value>
   </data>
   <data name="Props_ParametersHint" xml:space="preserve">
-    <value>Files dropped onto the icon replace {file} (one launch per file) or {files} (all at once); without a placeholder they are appended. {clipboard} inserts the clipboard text, {ask:Question} asks for a value. A value is refused when the program could run it as a command (a batch file, cmd.exe, WSL, Windows Terminal, the host for ssh; PowerShell script text and the command ssh or plink sends, where only letters, digits, spaces and . _ - \ / : pass) or take it as an option (it begins with “-” where an argument starts, with no “--” before it). Inside code for another program (python -c, node -e, bash -c), or an ssh option that holds a command or a file (-o, -F, -proxycmd, -m), a value is code: keep placeholders out of it.</value>
+    <value>Dropped files replace {file} (one launch per file) or {files} (all at once); {clipboard} inserts the clipboard text, {ask:Question} asks for a value.</value>
   </data>
   <data name="Props_LogHint" xml:space="preserve">
     <value>Console programs and batch files only: the program runs without its own window, its output goes to a log file and the icon's Show log command displays it live.</value>
@@ -2485,5 +2485,23 @@ Details are in {1}.</value>
   </data>
   <data name="SendTo_ReceivesByMenu" xml:space="preserve">
     <value>Turned on in the bar's menu.</value>
+  </data>
+  <data name="Props_ParametersMore" xml:space="preserve">
+    <value>More ▾</value>
+  </data>
+  <data name="Props_ParametersLess" xml:space="preserve">
+    <value>Less ▴</value>
+  </data>
+  <data name="Props_ParametersRule1" xml:space="preserve">
+    <value>Without a placeholder, dropped files are added after the parameters.</value>
+  </data>
+  <data name="Props_ParametersRule2" xml:space="preserve">
+    <value>Where the program could run a value as a command, what would make it one is refused: for a batch file or cmd.exe " % ! ^ &amp; | &lt; &gt;, through WSL also $ and `, for Windows Terminal ;, and for the host of ssh anything that user@host and a port do not need. In PowerShell script text and the command ssh or plink sends, a value may hold only letters, digits, spaces and . _ - \ / :.</value>
+  </data>
+  <data name="Props_ParametersRule3" xml:space="preserve">
+    <value>A value that begins with “-” where an argument starts, with no “--” before it, would be read as an option and is refused.</value>
+  </data>
+  <data name="Props_ParametersRule4" xml:space="preserve">
+    <value>Inside code for another program (python -c, node -e, bash -c) or an ssh option that holds a command or a file (-o, -F, -proxycmd, -m), a value is code: keep placeholders out of it.</value>
   </data>
 </root>

@@ -84,14 +84,38 @@
 
         <StackPanel Grid.Row="4" Grid.Column="1" Grid.ColumnSpan="2"
                     Visibility="{Binding IsShortcut, Converter={StaticResource BoolToVisibility}}">
-          <TextBlock Style="{StaticResource DialogHint}"
-                     Text="{Binding ParametersHint}"
-                     IsEnabled="{Binding IsShortcut}" />
+          <!-- 0.12.0 WP2: two lines, the rules behind More (open by themselves while the parameters are refused). -->
+          <TextBlock Style="{StaticResource DialogHint}" IsEnabled="{Binding IsShortcut}">
+            <Run Text="{Binding ParametersHint, Mode=OneWay}" />
+            <Hyperlink x:Name="ParametersRulesLink" Click="ParametersRules_Click" KeyDown="ParametersRules_KeyDown"
+                       IsEnabled="{Binding CanToggleParametersRules}"
+                       AutomationProperties.Name="{Binding ParametersRulesLinkName}"><Run Text="{Binding ParametersRulesLinkText, Mode=OneWay}" /></Hyperlink>
+          </TextBlock>
           <TextBlock Text="{Binding ParametersWarning}"
                      Foreground="{DynamicResource WarningBrush}"
                      TextWrapping="Wrap"
                      Margin="0,0,0,8"
                      Visibility="{Binding ParametersWarning, Converter={StaticResource NullToCollapsed}}" />
+          <ItemsControl x:Name="ParametersRules" Margin="0,-2,0,8" IsTabStop="False" Focusable="False"
+                        Visibility="{Binding IsParametersRulesShown, Converter={StaticResource BoolToVisibility}}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <!-- A hanging bullet: a rule's second line starts under its first word. -->
+                <Grid Margin="0,0,0,2">
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                  </Grid.ColumnDefinitions>
+                  <TextBlock Style="{StaticResource DialogHint}" Margin="0,0,6,0" Text="•" />
+                  <TextBlock Grid.Column="1" Style="{StaticResource DialogHint}" Margin="0" Text="{Binding}" />
+                </Grid>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+            <x:Static Member="r:Strings.Props_ParametersRule1" />
+            <x:Static Member="r:Strings.Props_ParametersRule2" />
+            <x:Static Member="r:Strings.Props_ParametersRule3" />
+            <x:Static Member="r:Strings.Props_ParametersRule4" />
+          </ItemsControl>
         </StackPanel>
 
         <!-- Output log -->

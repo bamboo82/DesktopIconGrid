@@ -365,7 +365,7 @@
     <value>位置可以是文件、文件夹或网址。</value>
   </data>
   <data name="Props_ParametersHint" xml:space="preserve">
-    <value>拖放到图标上的文件会替换 {file}（每个文件启动一次）或 {files}（一次全部）；没有占位符时则附加在参数后面。{clipboard} 插入剪贴板文字，{ask:问题} 会询问一个值。若程序可能把值当成命令执行（批处理文件、cmd.exe、WSL、Windows 终端、ssh 的主机；PowerShell 脚本文字与 ssh 或 plink 发送的命令，其中只接受字母、数字、空格与 . _ - \ / :），或当成选项（在参数开头以“-”开始，且前面没有“--”），这个值会被拒绝。在其他程序的代码中（python -c、node -e、bash -c），或在含有命令或文件的 ssh 选项中（-o、-F、-proxycmd、-m），值就是代码：请勿在其中使用占位符。</value>
+    <value>拖放的文件替换 {file}（每个文件启动一次）或 {files}（一次全部）；{clipboard} 插入剪贴板文字，{ask:问题} 会询问一个值。</value>
   </data>
   <data name="Props_LogHint" xml:space="preserve">
     <value>仅适用于控制台程序和批处理文件：程序在没有自己窗口的情况下运行，输出写入日志文件，图标的“显示日志”命令可实时显示。</value>
@@ -2485,5 +2485,23 @@
   </data>
   <data name="SendTo_ReceivesByMenu" xml:space="preserve">
     <value>已在工具栏菜单中开启。</value>
+  </data>
+  <data name="Props_ParametersMore" xml:space="preserve">
+    <value>更多说明 ▾</value>
+  </data>
+  <data name="Props_ParametersLess" xml:space="preserve">
+    <value>收起说明 ▴</value>
+  </data>
+  <data name="Props_ParametersRule1" xml:space="preserve">
+    <value>没有占位符时，拖放的文件附加在参数后面。</value>
+  </data>
+  <data name="Props_ParametersRule2" xml:space="preserve">
+    <value>程序可能把值当成命令执行时，会让值变成命令的字符会被拒绝：批处理文件或 cmd.exe 的 " % ! ^ &amp; | &lt; &gt;，经由 WSL 另加 $ 与 `，Windows 终端的 ;，ssh 的主机则是 user@host 与端口用不到的字符。在 PowerShell 脚本文字与 ssh 或 plink 发送的命令中，值只能含字母、数字、空格与 . _ - \ / :。</value>
+  </data>
+  <data name="Props_ParametersRule3" xml:space="preserve">
+    <value>值若在参数开头以“-”开始，且前面没有“--”，会被当成选项而拒绝。</value>
+  </data>
+  <data name="Props_ParametersRule4" xml:space="preserve">
+    <value>在其他程序的代码中（python -c、node -e、bash -c），或含有命令或文件的 ssh 选项中（-o、-F、-proxycmd、-m），值就是代码：请勿在其中使用占位符。</value>
   </data>
 </root>

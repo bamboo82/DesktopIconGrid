@@ -231,6 +231,35 @@ public sealed class DialogFitTests(WpfThread wpf)
         });
     }
 
+    [Fact]
+    public void The_parameter_rules_are_collapsed_until_More_and_then_four_lines_under_the_hint()
+    {
+        // 0.12.0 WP2, from the markup: the link, its bindings and the list of rules.
+        wpf.Invoke(() =>
+        {
+            var viewModel = new ItemPropertiesViewModel(new ShortcutItem { Name = "Tool", Location = @"C:\Tools\tool.exe" }, isNew: false, new NoIcons());
+            var window = new ItemPropertiesWindow { DataContext = viewModel };
+            try
+            {
+                window.Show();
+                Settle(window);
+                Assert.Equal(Visibility.Collapsed, window.ParametersRules.Visibility);
+                var collapsed = window.ActualHeight;
+
+                viewModel.ToggleParametersRules();
+                Settle(window);
+                Assert.Equal(Visibility.Visible, window.ParametersRules.Visibility);
+                Assert.Equal(4, window.ParametersRules.Items.Count);
+                Assert.True(window.ActualHeight > collapsed, $"the window did not grow ({window.ActualHeight} after {collapsed})");
+                Assert.Equal(Strings.Props_ParametersLess, string.Concat(window.ParametersRulesLink.Inlines.OfType<System.Windows.Documents.Run>().Select(run => run.Text)));
+            }
+            finally
+            {
+                window.Close();
+            }
+        });
+    }
+
     /// <summary>Lets the window take the size and place its last change asks for.</summary>
     private static void Settle(Window window)
     {
