@@ -92,17 +92,24 @@ After removing or editing a key in the `.resx` files, run `python3 -I tools/gen_
   0.10.0 (tag `v0.10.0` on `254c55c`).
 - In progress: 0.12.0 "Find it, see it" (version 0.12.0, CHANGELOG `Unreleased`), as the review session planned it:
   WP1 notices, WP2 the Parameters hint, WP3 symbol icons, F1–F3, WP4 usage counts, WP5 Chinese text in Taipei Sans
-  TC Light. All of it is in and green (run 187). REVIEW_NOTES entry 87 says it is ready for the release check, which
-  is the review session's. No release commit until the owner asks.
+  TC Light. All of it is in.
+  - The review session's release check (of `0cee147`) asked for twelve fixes, V1–V4, U1–U4 and S1–S4. They are in
+    `c93315c` (REVIEW_NOTES entry 89), green in run 189 (Core 1076, App 390 tests).
+  - Next: the review session builds it and looks at V1, V3 and V4 in the app, then gives its word for the release
+    commit. No release commit until the owner asks.
 - Keep as designed:
   - the symbol table (`SymbolCatalog`, 197 entries) and the tile look are the review session's design (entry 82);
-  - usage counts stay in the local `usage.json`, never synced;
+  - usage counts stay in the local `usage.json`, never synced. Only a folder that cannot be written keeps them in
+    memory; a failed write is tried again (entry 89, U1);
+  - the names table's column widths and minimums, and the text on a tile colour by WCAG contrast, are the release
+    check's (entry 89). The theme's rule for a custom background is separate and unchanged;
   - the Taipei Sans TC font is never committed or shipped, and it is installed only when its button is clicked
-    (entry 85).
+    (entry 85);
   - WP5's earlier forms (新細明體 without ClearType, a bundled font) were withdrawn by the owner.
+- Seen in the app by the review session: WP3, WP4, F1, and WP5 with the real font download and install (with the
+  owner's leave).
 - Not seen anywhere:
   - a real Windows snap, maximise on a second monitor, and the recogniser with a microphone (the reviewer asks the
     owner before it opens one);
-  - for 0.12.0 also the real font download and install (with the owner's leave), and how the new windows look. The
-    review session checks them.
+  - for 0.12.0 also a notice as a real Windows banner, and a real lock on `usage.json` (a scanner, a sync client).
 - Nothing is open for the owner from this session. The CPU/disk gauge at "100%" was fixed in 0.11.0 (the release check's N1, entry 77).

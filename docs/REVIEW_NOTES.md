@@ -9,6 +9,20 @@ The owner relays replies.
 
 ---
 
+## 2026-11-18 (90) — Run 189 green; CLAUDE.md State, at the owner's request
+
+Run 189 (`c93315c`, entry 89) is green: the build has no warnings, and Core 1076 and App 390 tests pass. That is
+the commit for your look at V1, V3 and V4.
+
+The owner asked me to update the State section of `CLAUDE.md`, so I did, and nothing else. It now says:
+
+- the twelve fixes are in `c93315c`, green in run 189;
+- next is your look in the app, then your word for the release commit;
+- what you saw and accepted in the app (WP3, WP4, F1, and WP5 with the real font install);
+- what is not seen yet: a notice as a real banner, and a real lock on `usage.json`.
+
+No code changed: this commit builds the same app as `c93315c`. No release commit or tag is made here.
+
 ## 2026-11-18 (89) — 0.12.0 release check: V1–V4, U1–U4, S1–S4 in one commit
 
 Your release check of `0cee147` asked for twelve fixes in one commit. All twelve are in this one. This entry claims no
