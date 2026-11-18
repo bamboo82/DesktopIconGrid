@@ -3,7 +3,7 @@
 All notable changes to Desktop Icon Grid. The format follows [Keep a Changelog](https://keepachangelog.com/);
 version numbers follow [Semantic Versioning](https://semver.org/).
 
-## [0.12.0] – Unreleased
+## [0.12.0] – 2026-11-18
 
 "Find it, see it": notices that say what they are and lead somewhere, a Parameters hint you can read, symbol icons,
 and how often each shortcut is used.
@@ -12,15 +12,18 @@ and how often each shortcut is used.
 
 - **Symbol icons**: *Text or symbol icon…* in Properties has a *Symbol* side with 197 symbols of Windows' own icon
   font (Segoe Fluent Icons, or Segoe MDL2 Assets on Windows 10) in nine groups, with a search by their English
-  names. A symbol is scaled to its tile, so it grows with the icon size, and stands on the bar without a frame.
+  names (Down chooses the first one found; Enter takes it when it is the only one). A symbol is scaled to its tile,
+  so it grows with the icon size, and stands on the bar without a frame.
 - **Tile colour** for text and symbol icons: one of the Appearance swatches, any `#RRGGBB`, or none; without a text
   colour of its own the text is white or near-black, whichever has the higher contrast with it.
 - **Usage in *Edit names***: how often each shortcut was used on this PC and when last, in two columns that sort,
   and *Not used in 90 days* in *Show*. Counted only on this PC, in `usage.json`, which is never synced.
 - **Chinese text in Taipei Sans TC Light** (台北黑體, SIL Open Font License 1.1) when the PC has it: Latin letters,
-  digits and sizes stay as they were. Settings ▸ Appearance ▸ *Chinese text* chooses it or the Windows font; on a PC
-  without it, a button downloads it from GitHub after asking, checks it, and installs it for your Windows account.
-  The font is not part of the download of the app.
+  digits and sizes stay as they were. Settings ▸ Appearance ▸ *Chinese text* chooses it or the Windows font. On a PC
+  without it, a button asks first, then downloads the one font file, `TaipeiSansTCBeta-Light.ttf` (20.3 MB), from
+  the font's own GitHub repository, checks its SHA-256, and installs it for your Windows account only. The font is
+  not part of the download of the app. In text the app draws bold, the Latin stays bold and the Chinese is Light,
+  the one weight installed.
 
 ### Changed
 
@@ -29,7 +32,8 @@ and how often each shortcut is used.
   the log); a warning shows at once as before. A click on a notice goes where it is about: a received file is
   selected in its folder, a problem with Google Drive or receiving opens the Sync window, a timer's phase shows the
   bar, a failure opens the log. A notice too long for the balloon is cut after a whole line. Files received from
-  one PC in one look make one notice that lists them, not one notice each.
+  one PC in one look make one notice that lists them, not one notice each; files that wait for disk space make one
+  warning per PC, with how many more wait, after the notice of the files received.
 - *Edit names* opens 1,160 wide (or as wide as the screen) and can then be sized and maximised freely; every column
   keeps a width it can be read at, and a narrow window scrolls sideways instead of squeezing one.
 - Properties: the hint under *Parameters* is two lines; the rules for placeholder values are behind *More*, as a
@@ -37,6 +41,13 @@ and how often each shortcut is used.
 - Send to PC shows a one-colour Send symbol instead of the outbox emoji, and Voice the Microphone symbol (it showed
   the placeholder); both grow with the icon size. Icons that still have the emoji of 0.11.0 are drawn with the
   symbol; their layout is not changed.
+- With labels shown, a number tile shows the number alone: the label under it names the tile, which the caption
+  inside it said a second time.
+
+### Fixed
+
+- A screen reader read the details box of a health check's approval as the command tile's question; it now reads
+  the health check's own.
 
 ## [0.11.0] – 2026-11-18
 

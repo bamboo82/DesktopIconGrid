@@ -9,6 +9,61 @@ The owner relays replies.
 
 ---
 
+## 2026-11-18 (91) — Release commit for v0.12.0
+
+Runs 189 (`c93315c`, entry 89) and 190 (`bb33bce`, entry 90) are green. Your check of `c93315c` in the app arrived,
+so this is the release commit you gave your word for, made on the owner's go-ahead.
+
+- **`CHANGELOG.md`:** "[0.12.0] – Unreleased" becomes "[0.12.0] – 2026-11-18" (UTC). I checked the section against
+  entries 80–89 and added what it lacked:
+  - the warning for files that wait for disk space: one per PC, with how many more, after the received-files
+    notice (F1, U4);
+  - what the font button downloads: the one file, `TaipeiSansTCBeta-Light.ttf` (20.3 MB), from the font's own
+    GitHub repository, checked by its SHA-256, installed for the Windows account only;
+  - that bold text keeps its Latin bold and its Chinese Light (entry 86);
+  - the search keys of the symbol picker (S1);
+  - under *Changed*, a number tile with labels shown (V4);
+  - a *Fixed* section with the health check's approval box (V2).
+- **`FEATURES.md` §12:**
+  - 0.12.0 is done, released 2026-11-18;
+  - *Next*: nothing planned yet;
+  - 1.0.0 keeps the installer, signing and the Windows toast with actions;
+  - "Not yet placed in a release" no longer lists glyph icons and usage columns, which 0.12.0 has.
+- **`docs/ROADMAP.md`:** 0.12.0 released 2026-11-18, and *Next*: nothing planned yet. Its 1.0.0 line already named
+  the toast with actions.
+- **The version:**
+  - `Directory.Build.props` says 0.12.0. No project file or workflow names another.
+  - `app.manifest` has `assemblyIdentity version="1.0.0.0"`, unchanged since 2026-11-04. That is the manifest's
+    own identity, not the app's version. I leave it, as for 0.11.0; entry 78 should have named it.
+- **Not in this commit:** `CLAUDE.md` (the owner's and mine; you ask nothing there), the tag `v0.12.0` and `main`,
+  as you wrote.
+- **Not seen anywhere, kept listed:**
+  - a real notification banner;
+  - a real Windows snap;
+  - maximise on a second monitor;
+  - the recogniser with a microphone;
+  - Windows 10 (the symbol font fallback);
+  - another DPI scale.
+
+The runs of 0.12.0's work since the 0.11.0 release:
+
+| What | Entry | Commits | Run |
+| --- | --- | --- | --- |
+| WP1 notices | 80 | `26ee643` | 179 |
+| WP2 the Parameters hint | 81 | `3672ce3` | 180, red (an older pipe test) |
+| The pipe tests on their own | 81 | `be2ba25` | 181 |
+| WP3 symbol icons | 82 | `c108e32` | 182, red (the picker's scroll) |
+| F1–F3, and the fix for run 182 | 83 | `6d8eb0e` | 183 |
+| WP4 usage counts | 84 | `6411d70` | 184 |
+| WP5 Chinese text in Taipei Sans TC Light | 85 | `06f5e36` | 185, red (two tests) |
+| Run 185's two test fixes | 86 | `0a6d528` | 186 |
+| Ready for the release check | 87 | `0cee147` | 187 |
+| `CLAUDE.md` State | 88 | `62fecfd` | 188 |
+| Release check V1–V4, U1–U4, S1–S4 | 89 | `c93315c` | 189 |
+| Run 189 green; `CLAUDE.md` State | 90 | `bb33bce` | 190 |
+
+This entry claims no run for its own commit.
+
 ## 2026-11-18 (90) — Run 189 green; CLAUDE.md State, at the owner's request
 
 Run 189 (`c93315c`, entry 89) is green: the build has no warnings, and Core 1076 and App 390 tests pass. That is

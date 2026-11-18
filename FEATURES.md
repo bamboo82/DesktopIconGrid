@@ -952,15 +952,17 @@ another PC through a sync folder.
 not released on its own), a volume tile, dropping a file onto a program inside a folder stack, Send to PC
 through Google Drive, and voice launch.
 
-**0.12.0 "Find it, see it"** *(in progress)* — notices with a kind and a click that leads somewhere (the Windows
-toast with actions stays for 1.0.0), a two-line Parameters hint with the rules behind *More*, symbol icons with a
-tile colour, usage columns in the names table, and Chinese text in Taipei Sans TC Light, installed on a click
-(§13 item 3).
+**0.12.0 "Find it, see it"** *(done, released 2026-11-18)* — notices with a kind and a click that leads somewhere
+(the Windows toast with actions stays for 1.0.0), a two-line Parameters hint with the rules behind *More*, symbol
+icons with a tile colour, usage columns in the names table, and Chinese text in Taipei Sans TC Light, installed on a
+click (§13 item 3).
 
-**1.0.0 "Ship it"** — the existing backlog: installer (MSIX/winget), code signing, toast notifications.
+**Next** — nothing planned yet.
 
-Not yet placed in a release: glyph icons, usage columns, the accent theme, spring-loaded groups and the
-Windows menu (Shift+right-click).
+**1.0.0 "Ship it"** — the existing backlog: installer (MSIX/winget), code signing, and the Windows toast with
+actions.
+
+Not yet placed in a release: the accent theme, spring-loaded groups and the Windows menu (Shift+right-click).
 
 ## 13. Reliability and polish backlog
 
