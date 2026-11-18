@@ -55,6 +55,16 @@ either. Say if they should be added.
     link reads "Less".
 - **Not tested:** keyboard focus order, and Space and Enter on the link: real input.
 
+### CI: run 180 was red on an older test
+
+- **What failed:** `CommandPipeTests.A_message_reaches_the_listening_bar_and_nothing_is_sent_without_one`. The send
+  to a started pipe answered `NoAnswer` after 6 s, which is the 5 s the sender waits to connect: the listener, which
+  starts on a worker thread, was not listening yet. All 342 other App tests passed, the new WP2 ones included.
+- **Why I call it a timing flake:** run 179 passed with the same pipe code, and WP2 touches no pipe code.
+- **What I changed** (the next commit, test only): the pipe tests are in a collection of their own with
+  parallelisation off, as we agreed for real-process tests in entry 36. They now run alone, after the parallel tests.
+  No wait is longer, no assertion changed, nothing is skipped. That commit's run is reported in the next entry.
+
 ## 2026-11-18 (80) — 0.12.0 WP1: notices (N1–N4)
 
 Run 177 (`10dec5a`) is green, and v0.11.0 is tagged on it. Your 0.12.0 plan arrived; this is WP1. The version

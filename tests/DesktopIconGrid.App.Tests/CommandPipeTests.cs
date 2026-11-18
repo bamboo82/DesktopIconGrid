@@ -8,6 +8,7 @@ namespace DesktopIconGrid.App.Tests;
 /// A second start hands its command line to the running bar through the session's pipe. Each test uses a pipe of its
 /// own, so a bar running on the same PC is neither shown nor in the way (review 21 C4).
 /// </summary>
+[Collection(CommandPipeCollection.Name)]
 public class CommandPipeTests
 {
     private static string NewName() => "DesktopIconGrid.Tests." + Guid.NewGuid().ToString("N");
@@ -88,4 +89,15 @@ public class CommandPipeTests
 
         Assert.Equal(CommandPipe.SendResult.Busy, CommandPipe.Send([new BarCommand(BarCommandKind.Launch, "Mail")], TimeSpan.FromSeconds(5), name));
     }
+}
+
+/// <summary>
+/// The pipe tests send within a few seconds of starting a listener on a worker thread. Among the parallel tests that
+/// once took longer than the sender's 5 s (run 180), so they run on their own, after the parallel ones, with their
+/// waits unchanged.
+/// </summary>
+[CollectionDefinition(Name, DisableParallelization = true)]
+public sealed class CommandPipeCollection
+{
+    public const string Name = "Command pipe";
 }
