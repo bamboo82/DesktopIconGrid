@@ -46,13 +46,38 @@ internal static class WorkAreaFit
             : null;
     }
 
+    /// <summary>
+    /// A dialog of a fixed size, or one that sizes itself to its content, is kept within the work area for good
+    /// (<c>MaxHeight</c>, <c>MaxWidth</c>). A window the user sizes (the names table, which opens 1,160 wide) only opens
+    /// within it: limits would stop Maximise from filling the screen and keep it from growing on a larger monitor
+    /// (0.12.0 release check U3).
+    /// </summary>
     private static void LimitSize(Window window)
     {
-        if (AreaOf(window) is { WorkArea.Height: > 0 } area)
+        if (AreaOf(window) is not { WorkArea.Height: > 0 } area)
         {
-            window.MaxHeight = Math.Max(240, (area.WorkArea.Height / area.Scale) - (2 * Gap));
-            window.MaxWidth = Math.Max(320, (area.WorkArea.Width / area.Scale) - (2 * Gap)); // the names table opens 1,060 wide (0.12.0 WP4)
+            return;
         }
+
+        var height = Math.Max(240, (area.WorkArea.Height / area.Scale) - (2 * Gap));
+        var width = Math.Max(320, (area.WorkArea.Width / area.Scale) - (2 * Gap));
+        if (window.ResizeMode is ResizeMode.CanResize or ResizeMode.CanResizeWithGrip && window.SizeToContent == SizeToContent.Manual)
+        {
+            if (window.Width > width)
+            {
+                window.Width = width;
+            }
+
+            if (window.Height > height)
+            {
+                window.Height = height;
+            }
+
+            return;
+        }
+
+        window.MaxHeight = height;
+        window.MaxWidth = width;
     }
 
     private static void MoveInside(Window window)

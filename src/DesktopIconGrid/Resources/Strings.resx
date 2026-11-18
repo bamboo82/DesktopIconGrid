@@ -2292,7 +2292,7 @@ Details are in {1}.</value>
     <value>File from {0} is waiting</value>
   </data>
   <data name="Inbox_WaitingForSpace" xml:space="preserve">
-    <value>“{0}” ({1}) cannot be received yet: the drive of your Downloads folder has {2} free, and receiving always leaves {3} free. Free up some space; the file stays where it was sent and is taken automatically within a minute of there being room.</value>
+    <value>“{0}” ({1}) cannot be received yet: your Downloads drive has {2} free and receiving always leaves {3} free. Free up space; it is taken within a minute of there being room.</value>
   </data>
   <data name="SendTo_ProblemNoInbox" xml:space="preserve">
     <value>that PC is not receiving files. On that PC, add a Send to PC icon or tick “Receive files from my other PCs”, and give it a minute.</value>
@@ -2635,5 +2635,8 @@ Installed to: {4}</value>
   </data>
   <data name="FontInstall_Manual" xml:space="preserve">
     <value>Install it by hand…</value>
+  </data>
+  <data name="FontInstall_DetailsName" xml:space="preserve">
+    <value>What is installed</value>
   </data>
 </root>

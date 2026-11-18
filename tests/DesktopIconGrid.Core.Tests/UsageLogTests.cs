@@ -87,7 +87,7 @@ public sealed class UsageLogTests : IDisposable
     }
 
     [Fact]
-    public void A_file_over_1_MB_or_one_that_cannot_be_read_is_left_alone_and_counting_goes_on_in_memory()
+    public void A_file_over_1_MB_or_one_that_is_not_this_apps_is_left_alone_and_counting_goes_on_in_memory()
     {
         var item = Guid.NewGuid();
         foreach (var bytes in new[] { new byte[UsageLog.MaxFileBytes + 1], "{ not json"u8.ToArray() })
@@ -102,6 +102,111 @@ public sealed class UsageLogTests : IDisposable
             Assert.Equal(bytes, File.ReadAllBytes(FilePath)); // untouched
         }
     }
+
+    [Fact]
+    public void A_write_that_fails_keeps_the_counts_for_the_next_save_and_exit()
+    {
+        // Release check U1: usage.json.tmp held for a moment (a scanner, a sync client) must not lose the session's counts.
+        var item = Guid.NewGuid();
+        var log = Log();
+        log.Count(item);
+        var temporary = FilePath + ".tmp";
+        Directory.CreateDirectory(temporary); // the temporary file cannot be written
+
+        Assert.False(log.Save(Everything));
+        Assert.False(log.IsMemoryOnly);
+        Assert.False(File.Exists(FilePath));
+
+        Directory.Delete(temporary);
+        Assert.True(log.Save(Everything)); // no use since: still to be written, as at exit
+        Assert.Equal(new ItemUse(1, Start), Log().Of(item));
+    }
+
+    [Fact]
+    public void A_file_that_cannot_be_read_at_the_start_is_read_again_at_the_first_save_and_its_counts_joined()
+    {
+        var item = Guid.NewGuid();
+        var other = Guid.NewGuid();
+        File.WriteAllText(FilePath, """{"version":1,"pcs":{"pc-a":{"since":"2026-11-01T00:00:00Z","items":{"ITEM":{"count":3,"last":"2026-11-10T00:00:00Z"},"OTHER":{"count":2,"last":"2026-11-12T00:00:00Z"}}}}}"""
+            .Replace("ITEM", item.ToString("D"), StringComparison.Ordinal).Replace("OTHER", other.ToString("D"), StringComparison.Ordinal));
+
+        UsageLog log;
+        using (Hold(FilePath))
+        {
+            log = Log(); // locked: counted in memory meanwhile
+            Assert.False(log.IsMemoryOnly);
+            log.Count(item);
+            Assert.Equal(1, log.Of(item)!.Count);
+        }
+
+        Assert.True(log.Save(Everything));
+        Assert.False(log.IsMemoryOnly);
+        Assert.Equal(new DateTimeOffset(2026, 11, 1, 0, 0, 0, TimeSpan.Zero), log.Since); // the file's, not this start's
+        Assert.Equal(new ItemUse(4, Start), log.Of(item)); // 3 from the file, 1 since
+        Assert.Equal(new ItemUse(2, new DateTimeOffset(2026, 11, 12, 0, 0, 0, TimeSpan.Zero)), log.Of(other));
+
+        var again = Log();
+        Assert.Equal(new ItemUse(4, Start), again.Of(item));
+        Assert.Equal(2, again.Of(other)!.Count);
+    }
+
+    [Fact]
+    public void A_file_still_unreadable_at_the_first_save_is_left_alone_and_counting_goes_on_in_memory()
+    {
+        var item = Guid.NewGuid();
+        var text = """{"version":1,"pcs":{"pc-a":{"since":"2026-11-01T00:00:00Z","items":{"ITEM":{"count":3,"last":"2026-11-10T00:00:00Z"}}}}}"""
+            .Replace("ITEM", item.ToString("D"), StringComparison.Ordinal);
+        File.WriteAllText(FilePath, text);
+
+        UsageLog log;
+        using (Hold(FilePath))
+        {
+            log = Log();
+            log.Count(item);
+            Assert.Equal(1, log.Of(item)!.Count); // the uses counted here go on
+            Assert.False(log.Save(Everything));
+            Assert.True(log.IsMemoryOnly); // tried once more, then given up
+        }
+
+        log.Count(item);
+        Assert.Equal(2, log.Of(item)!.Count);
+        Assert.False(log.Save(Everything)); // free again, but left alone for this session
+        Assert.Equal(text, File.ReadAllText(FilePath));
+    }
+
+    [Fact]
+    public void A_folder_that_cannot_be_written_at_the_start_keeps_the_counts_in_memory()
+    {
+        var blocker = Path.Combine(_folder, "portable");
+        File.WriteAllText(blocker, "a file where the data folder would be");
+        var log = new UsageLog(Path.Combine(blocker, UsageLog.FileName), () => _now);
+        log.Load();
+
+        Assert.True(log.IsMemoryOnly);
+        log.Count(Guid.NewGuid());
+        Assert.False(log.Save(Everything));
+        Assert.Equal(["portable"], Directory.EnumerateFileSystemEntries(_folder).Select(Path.GetFileName)); // no probe left
+    }
+
+    [Fact]
+    public void A_file_replaced_by_one_that_is_not_this_apps_after_the_start_is_not_overwritten_and_the_counts_wait()
+    {
+        var item = Guid.NewGuid();
+        var log = Log();
+        log.Count(item);
+        File.WriteAllText(FilePath, "{ not json");
+
+        Assert.False(log.Save(Everything));
+        Assert.False(log.IsMemoryOnly);
+        Assert.Equal("{ not json", File.ReadAllText(FilePath));
+
+        File.Delete(FilePath);
+        Assert.True(log.Save(Everything));
+        Assert.Equal(1, Log().Of(item)!.Count);
+    }
+
+    /// <summary>Opens <paramref name="path"/> so that nothing else can read it (on Linux .NET takes an exclusive lock).</summary>
+    private static FileStream Hold(string path) => new(path, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
 
     [Fact]
     public void Without_this_PCs_own_id_nothing_is_read_or_written()

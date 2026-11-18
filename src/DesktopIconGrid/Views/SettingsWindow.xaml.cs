@@ -40,7 +40,7 @@ public partial class SettingsWindow : Window
             source.Size,
             source.Sha256,
             ChineseFontService.UserFontsDirectory);
-        return new CommandApprovalWindow(Strings.FontInstall_Title, Strings.FontInstall_Text, details, Strings.FontInstall_Install) { Owner = this }.ShowDialog() == true;
+        return new CommandApprovalWindow(Strings.FontInstall_Title, Strings.FontInstall_Text, details, Strings.FontInstall_Install, Strings.FontInstall_DetailsName) { Owner = this }.ShowDialog() == true;
     }
 
     /// <summary>The author's page, where the font can be installed by hand.</summary>

@@ -15,8 +15,8 @@ namespace DesktopIconGrid.Views;
 /// <item>Without one, text that fits the tile (a symbol, a built-in glyph) has no frame at all; text drawn at its size
 /// keeps the frame text icons always had, the theme's hover fill and border with a corner of 6.</item>
 /// <item>Fitted text is 68 % of the tile, a margin of 16 % on every side, centred; other text is drawn at its size.</item>
-/// <item>The text's colour is the icon's own, else on a tile colour white or near-black (the rule of a custom
-/// background, <see cref="ThemeCatalog.ForegroundOn"/>), else the theme's text colour.</item>
+/// <item>The text's colour is the icon's own, else on a tile colour white or near-black, whichever has the higher WCAG
+/// contrast (<see cref="ThemeCatalog.TextOnTile"/>), else the theme's text colour.</item>
 /// <item>A symbol the symbol fonts of this PC do not have is the placeholder icon, not an empty box.</item>
 /// </list>
 /// </summary>
@@ -154,7 +154,7 @@ public sealed class TextIconTile : Decorator
         }
         else if (icon.Background is { } tile && LauncherSettings.IsValidColor(tile))
         {
-            _text.Foreground = ThemeManager.ToBrush(ThemeCatalog.ForegroundOn(tile));
+            _text.Foreground = ThemeManager.ToBrush(ThemeCatalog.TextOnTile(tile));
         }
         else
         {

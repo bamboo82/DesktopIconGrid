@@ -4,6 +4,7 @@ using System.Windows;
 using System.Windows.Automation;
 using System.Windows.Controls;
 using System.Windows.Data;
+using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
 using DesktopIconGrid.Core;
@@ -106,6 +107,9 @@ public sealed class SymbolIconTests(WpfThread wpf) : IDisposable
             tile.Icon = SymbolCatalog.Icon(Mail, background: "#F3F3F3");
             Assert.Equal(ColorOf("#202020"), ((SolidColorBrush)tile.TextElement.Foreground).Color);
 
+            tile.Icon = SymbolCatalog.Icon(Mail, background: "#00FF00"); // dark by contrast (release check S2)
+            Assert.Equal(ColorOf("#202020"), ((SolidColorBrush)tile.TextElement.Foreground).Color);
+
             tile.Icon = SymbolCatalog.Icon(Mail, color: "#FF0000", background: "#F3F3F3"); // a colour of its own wins
             Assert.Equal(ColorOf("#FF0000"), ((SolidColorBrush)tile.TextElement.Foreground).Color);
 
@@ -126,16 +130,13 @@ public sealed class SymbolIconTests(WpfThread wpf) : IDisposable
     }
 
     [Fact]
-    public void On_the_ten_swatches_the_custom_themes_rule_puts_the_text_on_the_side_of_the_designs_rule()
+    public void On_the_ten_swatches_the_contrast_rule_gives_the_text_colour_of_before()
     {
-        // A2 asks for black when (0.2126 R + 0.7152 G + 0.0722 B) / 255 > 0.6, else white, or for the theme's own rule
-        // where it agrees on the ten swatches. ThemeCatalog.ForegroundOn (0.299, 0.587, 0.114; near-black #202020) does.
+        // Release check S2 changed the rule to the higher WCAG contrast; on the ten swatches nothing changes.
         Assert.Equal(10, SettingsViewModel.ColorPresets.Count);
         foreach (var swatch in SettingsViewModel.ColorPresets)
         {
-            var color = ColorOf(swatch);
-            var light = ((0.2126 * color.R) + (0.7152 * color.G) + (0.0722 * color.B)) / 255 > 0.6;
-            Assert.Equal(light ? "#202020" : "#FFFFFF", ThemeCatalog.ForegroundOn(swatch));
+            Assert.Equal(ThemeCatalog.ForegroundOn(swatch), ThemeCatalog.TextOnTile(swatch));
         }
     }
 
@@ -402,6 +403,258 @@ public sealed class SymbolIconTests(WpfThread wpf) : IDisposable
                 window.Close();
             }
         });
+    }
+
+    [Fact]
+    public void The_two_sides_sit_side_by_side_and_the_tile_colour_code_is_under_its_swatches_on_both_sides()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        wpf.Invoke(() =>
+        {
+            var viewModel = new TextIconViewModel(null, "Notes");
+            var window = new TextIconWindow { DataContext = viewModel };
+            try
+            {
+                window.Show();
+                Settle(window);
+
+                // Release check V3 (a): next to each other, 24 apart (the Fluent MinWidth set them 140 apart).
+                var textRight = window.TextMode.TranslatePoint(new Point(window.TextMode.ActualWidth, 0), window).X;
+                Assert.Equal(24, window.SymbolMode.TranslatePoint(new Point(), window).X - textRight, 0.5);
+
+                // (b) The swatches on the row, then the code, None and the warning on a line of their own, inside the
+                // window; the colour boxes show a whole #RRGGBB. The colour rows are the same on both sides.
+                var content = (FrameworkElement)window.Content;
+                var warning = (FrameworkElement)window.TileColourCode.Children[^1];
+                foreach (var symbol in new[] { false, true })
+                {
+                    viewModel.IsSymbol = symbol;
+                    viewModel.TileColor = "#12"; // not a colour: the warning shows
+                    Settle(window);
+                    var swatches = window.TileSwatches.TranslatePoint(new Point(0, window.TileSwatches.ActualHeight), window);
+                    var code = window.TileColourCode.TranslatePoint(new Point(), window);
+                    Assert.True(code.Y >= swatches.Y - 0.5, $"symbol {symbol}: the code at {code.Y}, the swatches end at {swatches.Y}");
+                    Assert.Equal(swatches.X, code.X, 0.5);
+                    Assert.Equal(Visibility.Visible, warning.Visibility);
+                    var right = warning.TranslatePoint(new Point(warning.ActualWidth, 0), content).X;
+                    Assert.True(right <= content.ActualWidth + 0.5, $"symbol {symbol}: the warning ends at {right} of {content.ActualWidth}");
+                    Assert.Equal(110, window.TileColourBox.ActualWidth, 0.5);
+                    Assert.Equal(110, window.ColourBox.ActualWidth, 0.5);
+                }
+            }
+            finally
+            {
+                window.Close();
+            }
+        });
+    }
+
+    [Fact]
+    public void A_tile_colour_that_is_a_swatch_shows_that_swatch_chosen()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        wpf.Invoke(() =>
+        {
+            var viewModel = new TextIconViewModel(SymbolCatalog.Icon(Mail, background: "#2d4a6e"), "Mail");
+            var window = new TextIconWindow { DataContext = viewModel };
+            try
+            {
+                window.Show();
+                Settle(window);
+
+                // Release check V3 (c): in any case, and drawn with the ring.
+                Assert.Equal(["#2D4A6E"], Chosen());
+                var ring = Descendants(window.TileSwatches).OfType<Border>().Single(border => border.DataContext is Swatch { IsSelected: true } && border.Name == "Swatch");
+                Assert.Equal(new Thickness(3), ring.BorderThickness);
+
+                viewModel.TileColor = "#123456";
+                Assert.Empty(Chosen());
+                viewModel.SelectTileColorCommand.Execute("#5B6B3A");
+                Assert.Equal(["#5B6B3A"], Chosen());
+                viewModel.ClearTileColorCommand.Execute(null);
+                Assert.Empty(Chosen());
+            }
+            finally
+            {
+                window.Close();
+            }
+
+            IEnumerable<string> Chosen() => window.TileSwatches.Items.Where(swatch => swatch.IsSelected).Select(swatch => swatch.Color);
+        });
+    }
+
+    [Fact]
+    public void Down_from_the_search_box_chooses_the_first_symbol_found()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        wpf.Invoke(() =>
+        {
+            var viewModel = new TextIconViewModel(SymbolCatalog.Icon(Mail), "Mail");
+            var window = new TextIconWindow { DataContext = viewModel };
+            try
+            {
+                window.Show();
+                Settle(window);
+                viewModel.SearchText = "arrow";
+                Settle(window);
+                Assert.True(window.SymbolList.Items.Count > 1);
+
+                // Release check S1: "arrow", Down, Enter kept the symbol chosen before (Mail).
+                Press(window.SearchBox, Key.Down);
+                Settle(window);
+                Assert.Same(window.SymbolList.Items[0], viewModel.SelectedSymbol);
+                Assert.Same(viewModel.SelectedSymbol, window.SymbolList.SelectedItem);
+                Assert.True(SymbolCatalog.Matches(viewModel.SelectedSymbol!.Entry, "arrow"));
+                Assert.Equal(viewModel.SelectedSymbol.Text, viewModel.ToTextIcon()!.Text);
+            }
+            finally
+            {
+                window.Close();
+            }
+        });
+    }
+
+    [Fact]
+    public void Enter_in_the_search_box_with_one_symbol_found_chooses_it_and_closes_as_OK_does()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        wpf.Invoke(() =>
+        {
+            var unique = SymbolCatalog.All.First(entry => SymbolCatalog.All.Count(other => SymbolCatalog.Matches(other, entry.Name)) == 1 && entry != Mail);
+            var viewModel = new TextIconViewModel(SymbolCatalog.Icon(Mail), "Mail");
+            var window = new TextIconWindow { DataContext = viewModel };
+            var listed = -1;
+
+            var result = ShowDialogAndDo(window, () =>
+            {
+                viewModel.SearchText = unique.Name;
+                window.UpdateLayout();
+                listed = window.SymbolList.Items.Count;
+                Press(window.SearchBox, Key.Enter);
+            });
+
+            Assert.Equal(1, listed);
+            Assert.True(result);
+            Assert.Equal(SymbolCatalog.Icon(unique).Normalized(), viewModel.ToTextIcon());
+        });
+    }
+
+    [Fact]
+    public void A_double_click_takes_the_symbol_with_the_left_button_only()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        wpf.Invoke(() =>
+        {
+            var viewModel = new TextIconViewModel(SymbolCatalog.Icon(Mail), "Mail");
+            var window = new TextIconWindow { DataContext = viewModel };
+            var openAfterRight = false;
+
+            var result = ShowDialogAndDo(window, () =>
+            {
+                // Release check S4: a right double-click closed the window as OK does.
+                var cell = Container(window, viewModel.SelectedSymbol!);
+                DoubleClick(cell, MouseButton.Right);
+                openAfterRight = window.IsVisible;
+                DoubleClick(cell, MouseButton.Left);
+            });
+
+            Assert.True(openAfterRight);
+            Assert.True(result);
+        });
+    }
+
+    [Fact]
+    public void A_symbol_the_catalogue_does_not_have_opens_on_Symbol_and_is_kept_until_another_is_chosen()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        wpf.Invoke(() =>
+        {
+            // Release check S3: one that a later version adds, come through sync. It opened on Text with OK off.
+            var text = Enumerable.Range(0xE700, 0x900).Select(code => ((char)code).ToString()).First(candidate => SymbolCatalog.All.All(entry => entry.Text != candidate));
+            var later = new TextIcon(text, SymbolCatalog.FontFamily, SymbolCatalog.FontSize, Bold: false, "#FFCC00", Fit: true, "#2D4A6E");
+            var viewModel = new TextIconViewModel(later, "Later");
+
+            Assert.True(viewModel.IsSymbol);
+            Assert.Null(viewModel.SelectedSymbol);
+            Assert.True(viewModel.CanSave);
+            Assert.Equal(later.Normalized(), viewModel.PreviewIcon);
+            Assert.Equal(later.Normalized(), viewModel.ToTextIcon()); // unchanged
+
+            viewModel.TileColor = "#5B6B3A"; // its colours change, its character stays
+            Assert.Equal((later with { Background = "#5B6B3A" }).Normalized(), viewModel.ToTextIcon());
+
+            viewModel.SelectedSymbol = viewModel.Symbols.Single(choice => choice.Entry == Mail);
+            Assert.Equal(SymbolCatalog.Icon(Mail, "#FFCC00", "#5B6B3A").Normalized(), viewModel.ToTextIcon());
+        });
+    }
+
+    /// <summary>A key pressed in <paramref name="element"/>, as far as its PreviewKeyDown handlers see it.</summary>
+    private static void Press(UIElement element, Key key) =>
+        element.RaiseEvent(new KeyEventArgs(Keyboard.PrimaryDevice, PresentationSource.FromVisual(element)!, 0, key) { RoutedEvent = Keyboard.PreviewKeyDownEvent });
+
+    private static void DoubleClick(Control element, MouseButton button) =>
+        element.RaiseEvent(new MouseButtonEventArgs(Mouse.PrimaryDevice, 0, button) { RoutedEvent = Control.MouseDoubleClickEvent });
+
+    /// <summary>
+    /// Shows <paramref name="window"/> as a dialog (only one can take a DialogResult), runs <paramref name="act"/> once
+    /// it is laid out, and returns how it closed; it is closed after 10 s when nothing closes it.
+    /// </summary>
+    private static bool? ShowDialogAndDo(Window window, Action act)
+    {
+        Exception? failure = null;
+        window.Loaded += (_, _) => window.Dispatcher.BeginInvoke(DispatcherPriority.ContextIdle, () =>
+        {
+            try
+            {
+                act();
+            }
+            catch (Exception ex)
+            {
+                failure = ex;
+                window.Close();
+            }
+        });
+        var fallback = new DispatcherTimer(TimeSpan.FromSeconds(10), DispatcherPriority.Normal, (_, _) => window.Close(), window.Dispatcher);
+        bool? result;
+        try
+        {
+            result = window.ShowDialog();
+        }
+        finally
+        {
+            fallback.Stop();
+        }
+
+        if (failure is not null)
+        {
+            System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(failure).Throw();
+        }
+
+        return result;
     }
 
     private static ListBoxItem Container(TextIconWindow window, SymbolChoice choice) =>

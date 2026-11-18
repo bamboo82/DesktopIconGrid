@@ -9,6 +9,186 @@ The owner relays replies.
 
 ---
 
+## 2026-11-18 (89) — 0.12.0 release check: V1–V4, U1–U4, S1–S4 in one commit
+
+Your release check of `0cee147` asked for twelve fixes in one commit. All twelve are in this one. This entry claims no
+run for its own commit. I wait for that run; if it is red, the fix comes in its own commit and entry. No release
+commit or tag is made here.
+
+### V1, the names table
+
+- Width and minimum of each column, as you gave them:
+
+  | Column | Width | Minimum |
+  | --- | --- | --- |
+  | Name | 160 | 120 |
+  | Also say | 120 | 90 |
+  | Original | 120 | 90 |
+  | Kind | 72 | 60 |
+  | In group | 72 | 60 |
+  | Colour tag | 72 | 60 |
+  | Uses | 48 | 48 |
+  | Last used | 80 | 80 |
+  | Modified | 170 | 170 |
+  | Location | * | 160 |
+
+- The window opens 1,160 wide. The grid has `ScrollViewer.HorizontalScrollBarVisibility="Auto"`, now set explicitly.
+  Before, WPF squeezed the columns down to their default minimum of 20 before it scrolled. With these minimums it
+  scrolls.
+- Test, `NameTableWindowTests.Every_column_keeps_its_minimum_and_a_narrow_table_scrolls_sideways`:
+  - it checks the widths and minimums;
+  - at 1,160 and at 700, no column is narrower than its minimum;
+  - at 700, the grid scrolls sideways and its horizontal bar is shown.
+- A CI screen narrower than 1,160 holds the window to its width; the minimums are checked at whatever width it gets.
+
+### V2, the approval's details box
+
+- `CommandApprovalWindow` names its details box per use:
+  - the font install passes "What is installed" / 「安裝內容」 / 「安装内容」;
+  - without a name, the box takes the window's own question, so the command tile's stays "Run this command on this
+    PC?";
+  - a health check's box is now "Check this address from this PC?". Before, it also said the command tile's
+    question.
+- The constructor sets the name; the fixed name in the XAML is gone.
+- Test: `ChineseFontAppTests.The_details_box_of_an_approval_is_named_for_its_use` checks all three.
+
+### V3, the picker
+
+- **(a)** Both radio buttons have `MinWidth="0"`, with 24 between them. The test checks the 24.
+- **(b)** The swatches are on the tile-colour row. Under them, on a line of their own, come the `#RRGGBB` box (110
+  wide), *None*, and the "Use #RRGGBB" warning.
+  - How I read "same for the Text side": the colour rows are one block, shown under both sides, so the Text side has
+    the same layout. The text-colour box is 110 wide too, so a whole code shows next to the Fluent clear button. If
+    you meant something else, say so.
+  - The test checks both sides: the code line starts under the swatches at their left edge; the warning (shown for
+    "#12") ends inside the window; both boxes are 110 wide.
+- **(c)** `ColourSwatches` has a `Selected` property (`#RRGGBB`, any case). The swatch equal to it gets a 3 px ring
+  in the accent colour (`SystemColors.AccentColorBrushKey`).
+  - Only the Text icon window binds it. Settings ▸ Appearance does not; that was not asked.
+  - Test: `A_tile_colour_that_is_a_swatch_shows_that_swatch_chosen` covers a lower-case code, a colour that is no
+    swatch, a swatch click and *None*, and checks the ring is 3 px.
+
+### V4, number tiles with labels on
+
+- `ShowsNumberCaptions` is now `IconSize >= 40 && !ShowLabels`. With labels on, a number tile is drawn as it is
+  below 40 px: no caption, and the number centred over the whole height; the tooltip names it.
+- `LauncherViewModelTests` covers labels on, and the change notice when labels are turned on.
+
+### U1, usage counts that could not be written
+
+- **`Save`:**
+  - A write that fails (an `IOException` or `UnauthorizedAccessException` on `usage.json.tmp` or the move) keeps
+    the counts to be written, logs a debug line and returns false. It is tried again at the next save and at exit.
+  - The same happens when the file cannot be read at that moment, or has been replaced by something that is not
+    this app's. Such a file is never written over.
+- **`Load`:**
+  - The counts stay in memory only when the folder cannot be written. That is found by writing and deleting a probe
+    file, `usage.json.<guid>.probe`, next to it. It stays silent (a debug line), as for a read-only portable copy
+    before.
+  - They also stay in memory when the file is not this app's (over 1 MB, or not its JSON). It is left alone, as WP4
+    designed it.
+  - The probe also makes the data folder when it is missing. Before, `Save` made it.
+- **A file that cannot be read at the start** (an I/O error, a lock): counting starts in memory, and the first save
+  reads the file once more.
+  - If it reads, its block is joined: *Since* from the file, the counts added, the later of the two last uses. Then
+    it is written.
+  - If it still cannot be read (or is no longer this app's), the counts stay in memory, with one line in the log,
+    and the file is not touched.
+- **Tests (Core), five new:**
+  - a write that fails is written at the next save;
+  - a file locked at the start is joined at the first save;
+  - a file still locked then is left alone;
+  - a folder that cannot be written keeps the counts in memory, with no probe left behind;
+  - a file replaced after the start is not written over, and the counts wait.
+- The locks are a `FileShare.None` stream. On Windows that is a real sharing lock; on Linux .NET takes an exclusive
+  `flock` for it, so the tests run here too.
+
+### U2, the waiting-for-space notice
+
+- **The English text is shorter than yours.** Your text comes to **273** characters at the worst case: a name of
+  60 characters, sizes of nine ("1023.9 GB") and "and 99 more". That is over the balloon's 255. I took out "the
+  file … automatically":
+  > "“{0}” ({1}) cannot be received yet: your Downloads drive has {2} free and receiving always leaves {3} free.
+  > Free up space; it is taken within a minute of there being room."
+
+  That comes to 253 at the same worst case. If you would rather cut elsewhere, give me the words.
+- The Chinese texts are unchanged; they come to 170 at the same worst case.
+- Test, `NoticeTargetTests.A_waiting_notice_with_a_long_name_and_the_more_line_fits_the_balloon`:
+  - it runs in all three languages, setting the UI culture of the test thread only;
+  - it checks the length, and that `NoticeBalloon.Text` does not cut the text.
+
+### U3, how a window fits the work area
+
+- `WorkAreaFit.LimitSize` now treats two kinds of window apart:
+  - **A window the user sizes** (`CanResize` or `CanResizeWithGrip`, and `SizeToContent.Manual`; today only the
+    names table) has only its opening `Width` and `Height` clamped, to the work area − 16. No `Max*` is set, so
+    Maximise fills the screen and it can grow on a larger monitor.
+  - **Fixed-size dialogs and those that size to their content** (Settings, Properties, Sync; all `NoResize`) keep
+    `MaxWidth` and `MaxHeight`.
+- I added the `SizeToContent` condition. A resizable window that sizes to its content would otherwise grow past the
+  screen.
+- Test: the names table opens at the smaller of 1,160 and the work area − 16, and `MaxWidth` and `MaxHeight` stay
+  unlimited.
+
+### U4, the order of notices
+
+- `InboxService.Notices` makes the received-files notices first and the waiting ones last, so the warning is the
+  balloon that stays.
+- Test: `Received_files_come_first_and_the_warning_last_so_the_balloon_that_stays_is_the_warning`.
+
+### S1, picker keys
+
+- Down in the search box chooses the first symbol listed and focuses its cell.
+- Enter there, with exactly one symbol listed, chooses it and closes as OK does (when OK is enabled). With more
+  listed, Enter is OK for the symbol chosen, as before.
+- Tests:
+  - `Down_from_the_search_box_chooses_the_first_symbol_found`;
+  - `Enter_in_the_search_box_with_one_symbol_found_chooses_it_and_closes_as_OK_does`. It shows the window as a
+    dialog, sends Enter through `PreviewKeyDown`, and checks the result and the symbol.
+
+### S2, the text colour on a tile colour
+
+- `ThemeCatalog.TextOnTile` picks white or `#202020`, whichever has the higher WCAG contrast. It uses the sRGB
+  relative luminance with the standard's figures. `TextIconTile` uses it.
+- The theme's rule for a custom background (`ForegroundOn`) is unchanged.
+- Tests:
+  - Core: #00FF00 and #FFFF00 give `#202020`; #0000FF and #2D4A6E give white;
+  - App: the ten swatches give the text colour they gave before.
+
+### S3, a symbol the catalogue lacks
+
+- A symbol icon (fit, in the symbol fonts) whose character is not in the catalogue opens on *Symbol* with nothing
+  chosen in the grid and its character kept:
+  - the preview shows it and OK is enabled;
+  - OK returns it unchanged, with its colours as edited, unless another symbol is chosen.
+- Test: `A_symbol_the_catalogue_does_not_have_opens_on_Symbol_and_is_kept_until_another_is_chosen`.
+
+### S4, double-click
+
+- A double-click on a cell accepts only with the left button.
+- Test: a right double-click leaves the window open; a left one closes it with OK.
+
+### What to look at
+
+As you said, V1, V3 and V4, at 100 % in zh-TW and English:
+
+- **V1:**
+  - the names table at 1,160;
+  - the table narrowed until it scrolls;
+  - Maximise.
+- **V3:**
+  - the two radio buttons;
+  - the tile-colour block on both sides, with the warning shown;
+  - the ring, light and dark.
+- **V4:** a number tile at 48 px with labels on and off.
+
+### Not tested
+
+- A real scanner or sync client holding `usage.json`.
+- Maximise on a real screen, and a second monitor.
+- The ring in High Contrast.
+- The balloon's real cut on Windows (the 255 is the documented limit, which `NoticeBalloon` keeps).
+
 ## 2026-11-18 (88) — CLAUDE.md State, at the owner's request
 
 The owner asked me to update the State section of `CLAUDE.md`, so I did, and nothing else. It now says:

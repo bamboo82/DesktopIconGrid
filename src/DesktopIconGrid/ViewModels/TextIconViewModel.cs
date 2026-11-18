@@ -46,6 +46,12 @@ public sealed class TextIconViewModel : ObservableObject
     private string _search = string.Empty;
     private SymbolChoice? _symbol;
 
+    /// <summary>
+    /// A symbol icon whose character the catalogue does not have (one a later version adds, come through sync): kept as
+    /// it is until another symbol is chosen (release check S3).
+    /// </summary>
+    private readonly TextIcon? _keptSymbol;
+
     public TextIconViewModel(TextIcon? current, string suggestedText)
     {
         // An icon that is a symbol opens on Symbol with its symbol chosen; the Text side then starts as for a new icon.
@@ -65,6 +71,7 @@ public sealed class TextIconViewModel : ObservableObject
         view.Filter = item => SymbolCatalog.Matches(((SymbolChoice)item).Entry, _search);
         SymbolsView = view;
         _symbol = _isSymbol ? Symbols.FirstOrDefault(choice => choice.Text == current!.Text) : null;
+        _keptSymbol = _isSymbol && _symbol is null ? current : null;
 
         SelectTileColorCommand = new RelayCommand<string>(color => TileColor = color ?? string.Empty);
         ClearTileColorCommand = new RelayCommand(() => TileColor = string.Empty);
@@ -243,7 +250,7 @@ public sealed class TextIconViewModel : ObservableObject
     public ICommand ClearTileColorCommand { get; }
 
     public bool CanSave => IsColorValid && IsTileColorValid
-                           && (_isSymbol ? _symbol is not null : _text.Trim().Length > 0 && IsFontSizeValid);
+                           && (_isSymbol ? _symbol is not null || _keptSymbol is not null : _text.Trim().Length > 0 && IsFontSizeValid);
 
     /// <summary>The icon as OK would save it, for the preview; "Aa" while the text is empty, nothing before a symbol is chosen.</summary>
     public TextIcon? PreviewIcon => Build(_text.Trim().Length == 0 ? "Aa" : null);
@@ -272,7 +279,9 @@ public sealed class TextIconViewModel : ObservableObject
         var tile = _tileColor.Length == 0 ? null : _tileColor;
         if (_isSymbol)
         {
-            return _symbol is null ? null : SymbolCatalog.Icon(_symbol.Entry, color, tile).Normalized();
+            return _symbol is not null ? SymbolCatalog.Icon(_symbol.Entry, color, tile).Normalized()
+                : _keptSymbol is not null ? (_keptSymbol with { Color = color, Background = tile }).Normalized() // its own character, as it came
+                : null;
         }
 
         TryParseFontSize(out var size);

@@ -116,6 +116,33 @@ public static class ThemeCatalog
     /// </summary>
     public static string ForegroundOn(string hex) => IsLight(hex) ? "#202020" : "#FFFFFF";
 
+    /// <summary>
+    /// White or near-black (#202020), whichever has the higher WCAG contrast ratio against <paramref name="hex"/>: the
+    /// text of a text icon on a tile colour with no colour of its own (0.12.0 release check S2). The custom
+    /// background keeps its own rule (<see cref="ForegroundOn"/>), which gave #00FF00 a white symbol at about 1.4:1.
+    /// </summary>
+    public static string TextOnTile(string hex)
+    {
+        var tile = RelativeLuminance(hex);
+        return ContrastRatio(1.0, tile) >= ContrastRatio(RelativeLuminance("#202020"), tile) ? "#FFFFFF" : "#202020";
+    }
+
+    /// <summary>The WCAG relative luminance of a <c>#RRGGBB</c> colour: its channels through the sRGB curve, 0 to 1.</summary>
+    public static double RelativeLuminance(string hex)
+    {
+        var (r, g, b) = ParseRgb(hex);
+        return (0.2126 * Linear(r)) + (0.7152 * Linear(g)) + (0.0722 * Linear(b));
+
+        static double Linear(int channel)
+        {
+            var value = channel / 255.0;
+            return value <= 0.04045 ? value / 12.92 : Math.Pow((value + 0.055) / 1.055, 2.4);
+        }
+    }
+
+    /// <summary>The WCAG contrast ratio of two relative luminances, 1 to 21.</summary>
+    public static double ContrastRatio(double first, double second) => (Math.Max(first, second) + 0.05) / (Math.Min(first, second) + 0.05);
+
     /// <summary>Relative brightness of a <c>#RRGGBB</c> colour, 0 (black) to 1 (white).</summary>
     public static double Luminance(string hex)
     {

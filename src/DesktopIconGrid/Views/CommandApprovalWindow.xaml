@@ -14,8 +14,7 @@
     <!-- Everything that runs, wrapped and scrollable: a long field cannot hide its end past the edge. -->
     <TextBox x:Name="Command" IsReadOnly="True" TextWrapping="Wrap" AcceptsReturn="True"
              FontFamily="Consolas, Courier New" MaxHeight="280" MinHeight="80"
-             VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
-             AutomationProperties.Name="{x:Static r:Strings.Command_ApproveTitle}" />
+             VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" />
     <TextBlock x:Name="ScrollHint" Text="{x:Static r:Strings.Command_ScrollToApprove}" TextWrapping="Wrap"
                Foreground="{DynamicResource DialogHintBrush}" Margin="0,6,0,0" Visibility="Collapsed" />
     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">

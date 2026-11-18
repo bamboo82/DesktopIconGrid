@@ -2636,4 +2636,7 @@ SHA-256：{3}
   <data name="FontInstall_Manual" xml:space="preserve">
     <value>改为手动安装…</value>
   </data>
+  <data name="FontInstall_DetailsName" xml:space="preserve">
+    <value>安装内容</value>
+  </data>
 </root>

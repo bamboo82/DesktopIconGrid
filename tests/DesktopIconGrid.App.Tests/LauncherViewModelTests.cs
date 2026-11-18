@@ -66,6 +66,14 @@ public sealed class LauncherViewModelTests : IDisposable
 
         Assert.True(viewModel.ShowsNumberCaptions);
         Assert.Contains(nameof(LauncherViewModel.ShowsNumberCaptions), changed);
+
+        // 0.12.0 release check V4: with labels on, the label under the tile names it; no caption inside as well.
+        var labelled = bigger.Clone();
+        labelled.ShowLabels = true;
+        changed.Clear();
+        viewModel.ApplySettings(labelled);
+        Assert.False(viewModel.ShowsNumberCaptions);
+        Assert.Contains(nameof(LauncherViewModel.ShowsNumberCaptions), changed);
     }
 
     [Fact]

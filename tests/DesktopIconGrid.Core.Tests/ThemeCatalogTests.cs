@@ -58,15 +58,30 @@ public class ThemeCatalogTests
     }
 
     [Theory]
+    [InlineData("#00FF00", "#202020")] // the theme's rule gave white, about 1.4:1
+    [InlineData("#FFFF00", "#202020")]
+    [InlineData("#0000FF", "#FFFFFF")]
+    [InlineData("#2D4A6E", "#FFFFFF")]
     [InlineData("#FFFFFF", "#202020")]
     [InlineData("#F3F3F3", "#202020")]
-    [InlineData("#2D4A6E", "#FFFFFF")]
     [InlineData("#5B6B3A", "#FFFFFF")]
-    public void A_tile_colour_gets_the_text_colour_a_custom_background_would(string tile, string text)
+    public void A_tile_colour_gets_white_or_near_black_by_the_higher_WCAG_contrast(string tile, string text)
     {
-        // 0.12.0 WP3: a symbol on a tile colour and with no colour of its own.
-        Assert.Equal(text, ThemeCatalog.ForegroundOn(tile));
-        Assert.Equal(ThemeCatalog.CreateCustom(tile).Foreground, ThemeCatalog.ForegroundOn(tile));
+        // 0.12.0 release check S2: a symbol on a tile colour and with no colour of its own.
+        Assert.Equal(text, ThemeCatalog.TextOnTile(tile));
+    }
+
+    [Fact]
+    public void The_WCAG_figures_are_those_of_the_standard()
+    {
+        Assert.Equal(0.0, ThemeCatalog.RelativeLuminance("#000000"), 6);
+        Assert.Equal(1.0, ThemeCatalog.RelativeLuminance("#FFFFFF"), 6);
+        Assert.Equal(21.0, ThemeCatalog.ContrastRatio(1.0, 0.0), 6);
+        Assert.Equal(1.37, ThemeCatalog.ContrastRatio(1.0, ThemeCatalog.RelativeLuminance("#00FF00")), 2);
+
+        // The theme's own rule for a custom background is left as it was.
+        Assert.Equal("#FFFFFF", ThemeCatalog.ForegroundOn("#00FF00"));
+        Assert.Equal(ThemeCatalog.CreateCustom("#2D4A6E").Foreground, ThemeCatalog.ForegroundOn("#2D4A6E"));
     }
 
     [Theory]

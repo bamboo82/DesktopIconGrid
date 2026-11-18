@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.IO;
 using DesktopIconGrid.Core.Models;
 using DesktopIconGrid.Core.SpecialIcons;
@@ -118,6 +119,48 @@ public class NoticeTargetTests
         Assert.Equal(first with { Message = $"{first.Message}\n{string.Format(Strings.Inbox_AndMore, 2)}" }, notices[0]);
         Assert.Equal((NoticeKind.Warning, NoticeTarget.Sync), Of(notices[0]));
         Assert.Equal(InboxService.WaitingNotice("one.iso", "Study", 5_000_000_000, 1_000_000), notices[1]);
+    }
+
+    [Fact]
+    public void Received_files_come_first_and_the_warning_last_so_the_balloon_that_stays_is_the_warning()
+    {
+        // Release check U4: each balloon replaces the one before.
+        var notices = InboxService.Notices(
+            [(@"C:\x\a.txt", "Den", true), (@"C:\x\b.txt", "Study", true)],
+            [("big.iso", "Den", 5_000_000_000, 1_000_000)]);
+
+        Assert.Equal([NoticeKind.Information, NoticeKind.Information, NoticeKind.Warning], notices.Select(notice => notice.Kind));
+    }
+
+    [Theory]
+    [InlineData("en")]
+    [InlineData("zh-Hant")]
+    [InlineData("zh-Hans")]
+    public void A_waiting_notice_with_a_long_name_and_the_more_line_fits_the_balloon(string language)
+    {
+        // Release check U2: a name of 60 characters, sizes of nine characters and "and 99 more" within the 255 a balloon
+        // takes. The UI culture is the test thread's own.
+        var before = CultureInfo.CurrentUICulture;
+        CultureInfo.CurrentUICulture = CultureInfo.GetCultureInfo(language);
+        try
+        {
+            var name = new string('n', 56) + ".iso";
+            const long size = 1_099_404_000_000;
+            var waiting = Enumerable.Range(0, 100).Select(i => (i == 0 ? name : $"{i}.iso", "Den", size, size - 1)).ToList();
+
+            var notice = Assert.Single(InboxService.Notices([], waiting));
+
+            var shown = SystemMonitor.FormatBytes(size);
+            Assert.Equal(9, shown.Length); // "1023.9 GB"
+            Assert.Contains(shown, notice.Message, StringComparison.Ordinal);
+            Assert.EndsWith(string.Format(Strings.Inbox_AndMore, 99), notice.Message, StringComparison.Ordinal);
+            Assert.True(notice.Message.Length <= NoticeBalloon.MaxText, $"{language}: {notice.Message.Length} characters");
+            Assert.Equal(notice.Message, NoticeBalloon.Text(notice.Message)); // not cut
+        }
+        finally
+        {
+            CultureInfo.CurrentUICulture = before;
+        }
     }
 
     /// <summary>The receiving side without a sync folder or a Google sign-in.</summary>

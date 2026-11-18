@@ -1,11 +1,13 @@
 using System.Globalization;
 using System.IO;
 using System.Windows;
+using System.Windows.Automation;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Threading;
 using DesktopIconGrid.Core.Fonts;
 using DesktopIconGrid.Core.Models;
+using DesktopIconGrid.Core.SpecialIcons;
 using DesktopIconGrid.Resources;
 using DesktopIconGrid.Services;
 using DesktopIconGrid.ViewModels;
@@ -21,6 +23,35 @@ namespace DesktopIconGrid.App.Tests;
 public sealed class ChineseFontAppTests(WpfThread wpf)
 {
     private static string TestFont => Path.Combine(AppContext.BaseDirectory, "Assets", "DigTestCjk-Light.ttf");
+
+    [Fact]
+    public void The_details_box_of_an_approval_is_named_for_its_use()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        wpf.Invoke(() =>
+        {
+            // Release check V2: the font install's box was read out as the command tile's question.
+            var font = new CommandApprovalWindow(Strings.FontInstall_Title, Strings.FontInstall_Text, "details", Strings.FontInstall_Install, Strings.FontInstall_DetailsName);
+            var health = new CommandApprovalWindow(Strings.Health_ApproveTitle, "intro", "details", Strings.Health_ApproveButton);
+            var tile = new CommandApprovalWindow("Backup", new CommandTileSettings(@"C:\Tools\check.exe", null, null, 60, 30, CommandTileDisplay.Ring, 60, 85, CommandTileClick.Open, @"C:\Work"));
+            try
+            {
+                Assert.Equal(Strings.FontInstall_DetailsName, AutomationProperties.GetName(font.Command));
+                Assert.Equal(Strings.Health_ApproveTitle, AutomationProperties.GetName(health.Command));
+                Assert.Equal(Strings.Command_ApproveTitle, AutomationProperties.GetName(tile.Command));
+            }
+            finally
+            {
+                font.Close();
+                health.Close();
+                tile.Close();
+            }
+        });
+    }
 
     /// <summary>Each glyph run of what <paramref name="text"/> draws: its characters and the font file they come from.</summary>
     private static List<(string Characters, GlyphTypeface Font)> Runs(TextBlock text)

@@ -5,7 +5,7 @@
              IsTabStop="False">
   <!-- The colour swatches of Settings > Appearance, also the tile colours of a text icon (0.12.0 WP3) -->
   <ItemsControl x:Name="Swatches" IsTabStop="False"
-                ItemsSource="{Binding Colours, RelativeSource={RelativeSource AncestorType=views:ColourSwatches}}">
+                ItemsSource="{Binding Items, RelativeSource={RelativeSource AncestorType=views:ColourSwatches}}">
     <ItemsControl.ItemsPanel>
       <ItemsPanelTemplate>
         <WrapPanel Orientation="Horizontal" />
@@ -14,18 +14,25 @@
     <ItemsControl.ItemTemplate>
       <DataTemplate>
         <Button Width="24" Height="24" Margin="0,0,6,6" Padding="0"
-                Background="{Binding}"
+                Background="{Binding Color}"
                 BorderBrush="{DynamicResource SwatchBorderBrush}"
-                ToolTip="{Binding}"
-                AutomationProperties.Name="{Binding}"
+                ToolTip="{Binding Color}"
+                AutomationProperties.Name="{Binding Color}"
                 Command="{Binding Command, RelativeSource={RelativeSource AncestorType=views:ColourSwatches}}"
-                CommandParameter="{Binding}">
+                CommandParameter="{Binding Color}">
           <Button.Template>
             <ControlTemplate TargetType="Button">
-              <Border Background="{TemplateBinding Background}"
+              <Border x:Name="Swatch" Background="{TemplateBinding Background}"
                       BorderBrush="{TemplateBinding BorderBrush}"
                       BorderThickness="1"
                       CornerRadius="3" />
+              <ControlTemplate.Triggers>
+                <!-- The colour in use (release check V3): a ring in the accent colour -->
+                <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                  <Setter TargetName="Swatch" Property="BorderBrush" Value="{DynamicResource {x:Static SystemColors.AccentColorBrushKey}}" />
+                  <Setter TargetName="Swatch" Property="BorderThickness" Value="3" />
+                </DataTrigger>
+              </ControlTemplate.Triggers>
             </ControlTemplate>
           </Button.Template>
         </Button>

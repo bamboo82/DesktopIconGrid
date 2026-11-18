@@ -186,10 +186,12 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
     public int IconSize => Model.Settings.IconSize;
 
     /// <summary>
-    /// Whether a number tile draws its caption under the number: from 40 px icons on. Below, the caption is a few pixels
-    /// high and unreadable, the number takes the whole height, and the tooltip names the tile (review 27 T1).
+    /// Whether a number tile draws its caption under the number: from 40 px icons on, and only while labels are off.
+    /// Below 40 px the caption is a few pixels high and unreadable (review 27 T1); with labels on, the label under the
+    /// tile already names it, and a caption inside it said it twice ("CPU" over "CPU", 0.12.0 release check V4). Then
+    /// the number takes the whole height, and the tooltip names the tile.
     /// </summary>
-    public bool ShowsNumberCaptions => IconSize >= 40;
+    public bool ShowsNumberCaptions => IconSize >= 40 && !ShowLabels;
 
     public int CellPadding => Model.Settings.CellPadding;
 

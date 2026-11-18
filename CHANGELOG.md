@@ -14,7 +14,7 @@ and how often each shortcut is used.
   font (Segoe Fluent Icons, or Segoe MDL2 Assets on Windows 10) in nine groups, with a search by their English
   names. A symbol is scaled to its tile, so it grows with the icon size, and stands on the bar without a frame.
 - **Tile colour** for text and symbol icons: one of the Appearance swatches, any `#RRGGBB`, or none; without a text
-  colour of its own the text is white or black, whichever shows better on it.
+  colour of its own the text is white or near-black, whichever has the higher contrast with it.
 - **Usage in *Edit names***: how often each shortcut was used on this PC and when last, in two columns that sort,
   and *Not used in 90 days* in *Show*. Counted only on this PC, in `usage.json`, which is never synced.
 - **Chinese text in Taipei Sans TC Light** (台北黑體, SIL Open Font License 1.1) when the PC has it: Latin letters,
@@ -30,7 +30,8 @@ and how often each shortcut is used.
   selected in its folder, a problem with Google Drive or receiving opens the Sync window, a timer's phase shows the
   bar, a failure opens the log. A notice too long for the balloon is cut after a whole line. Files received from
   one PC in one look make one notice that lists them, not one notice each.
-- *Edit names* opens 1,060 wide (never wider than the screen) and scrolls sideways instead of squeezing *Location*.
+- *Edit names* opens 1,160 wide (or as wide as the screen) and can then be sized and maximised freely; every column
+  keeps a width it can be read at, and a narrow window scrolls sideways instead of squeezing one.
 - Properties: the hint under *Parameters* is two lines; the rules for placeholder values are behind *More*, as a
   list, and open by themselves while the parameters are refused.
 - Send to PC shows a one-colour Send symbol instead of the outbox emoji, and Voice the Microphone symbol (it showed

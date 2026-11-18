@@ -18,13 +18,19 @@ public partial class CommandApprovalWindow : Window
     }
 
     /// <summary>Any approval of something that came with the bar (a health check too): the full details, Cancel the default.</summary>
-    public CommandApprovalWindow(string title, string intro, string details, string approveText)
+    /// <param name="detailsName">
+    /// What a screen reader calls the details box; when not given, the question of this use, its title (the command
+    /// tile's, a health check's). The font install names it "What is installed" (0.12.0 release check V2).
+    /// </param>
+    public CommandApprovalWindow(string title, string intro, string details, string approveText, string? detailsName = null)
     {
         InitializeComponent();
         DialogTheme.Apply(this);
         Title = title;
         Intro.Text = intro;
         Command.Text = details;
+        System.Windows.Automation.AutomationProperties.SetName(Command, detailsName ?? title);
+
         ApproveButton.Content = approveText;
         Command.AddHandler(System.Windows.Controls.ScrollViewer.ScrollChangedEvent, new System.Windows.Controls.ScrollChangedEventHandler((_, _) => UpdateApprovable()));
         Loaded += (_, _) => UpdateApprovable();

@@ -76,13 +76,18 @@ Segoe Fluent Icons (Windows 11) and Segoe MDL2 Assets (Windows 10) both have, in
 folders, Communication, Media, Devices, Network, Tools and settings, People and places, Arrows and marks), in a grid
 of twelve to a row; the table is the review session's design. A search filters it as you type: every word must
 begin a word of a symbol's English name or keywords (names are English only; the group headings are translated). A
-click chooses, a double-click is OK, the arrow keys, Home and End move. A symbol is stored as a text icon of one
+click chooses, a double-click with the left button is OK, the arrow keys, Home and End move; Down in the search box
+chooses the first symbol found, and Enter there with exactly one found chooses it and closes as OK does. A symbol is
+stored as a text icon of one
 character in "Segoe Fluent Icons, Segoe MDL2 Assets" with `fit`: it is scaled to 68 % of the tile, centred, so it
 grows with the icon size, and has no frame. Both sides have a *Tile colour*: the swatches of Settings > Appearance,
-a `#RRGGBB` box and *None*. A tile colour is a filled square over the whole tile (corner 6 at 32 px, growing with
-the tile, no border); with no text colour the text on it is white or near-black, whichever shows better (the rule
-of a custom background). Text drawn at its size keeps the frame text icons always had. A symbol neither font of the
-PC has (an old Windows 10) is drawn as the placeholder icon. The preview is drawn at the bar's icon size. Send to PC
+with a ring on the tile colour in use, and on a line under them a `#RRGGBB` box and *None*. A tile colour is a filled square
+over the whole tile (corner 6 at 32 px, growing with the tile, no border); with no text colour the text on it is
+white or `#202020`, whichever has the higher WCAG contrast with it (the theme's rule for a custom background is
+unchanged). Text drawn at its size keeps the frame text icons always had. A symbol neither font of the PC has (an
+old Windows 10) is drawn as the placeholder icon. A symbol icon whose character the catalogue lacks (one a later
+version adds, come through sync) opens on *Symbol* with that character kept: the preview shows it, and OK keeps it
+unless another symbol is chosen. The preview is drawn at the bar's icon size. Send to PC
 shows the Send symbol and Voice the Microphone symbol; an icon that still has the emoji 0.10.0 or 0.11.0 gave it is
 drawn with the symbol, and its layout is not changed. `fit` and `background` are written only when set: 0.11.0 and
 older keep them unread and draw a symbol as text of size 26. The bar, a group's popup, the pointer window and both
@@ -269,7 +274,8 @@ and a kind-specific properties dialog. Available now from *Add special icon ▸*
 All of these draw the value in a design you pick (ring, bar or number) with green/amber/red levels, and
 their tooltips end with a line of the last 60 samples (`▁▂▃▅▇█`; the network's against its own peak). The
 number design writes the tile's name under the number from 48 px icons on, cut at its end with `…` when it is
-too long; at smaller sizes the name is left out and the number is centred (the tooltip names the tile, 0.11.0).
+too long; at smaller sizes, and when the bar shows labels (the label names the tile), the name is left out and the
+number is centred (the tooltip names the tile, 0.11.0 and 0.12.0).
 A value of up to nine characters is made smaller to fit the tile ("100%"); a longer text, such as a command tile's
 first line, is cut with `…` at its own size (0.11.0).
 
@@ -331,7 +337,8 @@ first line, is cut with `…` at its own size (0.11.0).
   shows its new name, and a folder deleted on Drive is made again. A sent file is copied into the target's inbox
   (up to 2 GB; folders are not sent). The receiving PC looks once a minute while the bar runs, moves
   what waits (at most 20 files and 4 GB per look, and never leaving less than 1 GB free on that drive; a
-  file that has to wait for space is announced once, with its size and the space there is) into its
+  file that has to wait for space is announced once, with its size and the space there is, after the notice of
+  the files received in the same look) into its
   Downloads folder under a free name, marks it as downloaded from another computer
   (so SmartScreen and Protected View apply), and shows a notification. Nothing received is opened. A file
   arrives once, as a plain file: read-only and hidden attributes do not travel, it is marked before it
@@ -549,8 +556,9 @@ approval does not), once per activation however many files it opens. Special ico
 count, and a program opened inside a folder stack counts for nothing. *Show:* has a last entry, *Not used in 90
 days*: shortcuts last used longer ago, or never used once this PC has counted for 90 days. The line under the table
 says since when this PC counts, and until then when *Not used in 90 days* is complete. The counts are read when the
-window opens; Save does not touch them. The window opens 1,060 wide (never wider than the work area), *Location*
-keeps at least 160 and the grid scrolls sideways instead of squeezing it.
+window opens; Save does not touch them. The window opens 1,160 wide, or as wide as the work area, and can then be
+sized and maximised freely. Every column keeps a width it can be read at (*Uses*, *Last used* and *Modified* their
+whole width, *Location* 160) and a narrower window scrolls the grid sideways instead of squeezing one.
 
 **Voice launch (0.11.0).** The voice hotkey (Settings ▸ Voice, system-wide, none by default; kept on this PC in
 `this-pc.json` and never synced, restored or imported, like the voice language; a portable copy keeps one set
@@ -735,7 +743,7 @@ warnings and errors. The last 2000 entries stay in memory and all of them are ap
 | Show/hide hotkey | none (set in Settings; needs Ctrl, Alt or Win) |
 | Show-at-pointer hotkey | none (needs Ctrl, Alt or Win, and a combination other than the show/hide one) |
 | Voice hotkey and voice language | none, and the bar's language (0.11.0); kept on this PC in `this-pc.json`, never in the layout, so a synced, restored or imported bar cannot set them |
-| Usage counts | kept on this PC in `usage.json` next to the layout (0.12.0): one block per PC, item ids and UTC times only, written at most every 10 s and at exit; never synced, restored, imported or exported, and a removed item's count goes 400 days after its last use |
+| Usage counts | kept on this PC in `usage.json` next to the layout (0.12.0): one block per PC, item ids and UTC times only, written at most every 10 s and at exit; never synced, restored, imported or exported, and a removed item's count goes 400 days after its last use. A write that fails (the file held for a moment) is tried again at the next save and at exit; a file that cannot be read at the start is read again at the first save and its counts joined; only a folder that cannot be written keeps the counts in memory for the session |
 | Keys in the bar | New shortcut Ctrl+N, New group Ctrl+G, Settings Ctrl+, , Find Ctrl+F, Undo remove Ctrl+Z, Remove (the focused icon) Delete, Properties (the focused icon) F2; each can be changed or turned off (Backspace), with Ctrl, Alt or Win unless it is an F-key, Delete or Insert, and no two actions or a system-wide hotkey may share one; menus show the current key; Escape stays fixed (0.9.0) |
 | Transparency | 0 % (opaque) |
 | Close button hides to tray | on |

@@ -213,26 +213,27 @@ public sealed class InboxService : IDisposable, IReceiving
     }
 
     /// <summary>
-    /// The notices of one look, per sender: one for the files that wait for disk space, then one for the files
-    /// received. Twenty files in one look were twenty balloons, each replacing the last (review of WP1, F1).
+    /// The notices of one look, per sender: one for the files received, then one for the files that wait for disk
+    /// space. Twenty files in one look were twenty balloons, each replacing the last (review of WP1, F1). The warning
+    /// comes last, so it is the balloon that stays (release check U4).
     /// </summary>
     internal static IReadOnlyList<Notice> Notices(
         IEnumerable<(string Path, string Sender, bool Marked)> received,
         IEnumerable<(string Name, string Sender, long Size, long Free)> waiting)
     {
         var notices = new List<Notice>();
+        foreach (var fromOne in received.GroupBy(file => file.Sender, StringComparer.Ordinal))
+        {
+            var files = fromOne.ToList();
+            notices.Add(files.Count == 1 ? ReceivedNotice(files[0].Path, files[0].Sender, files[0].Marked) : ReceivedNotice(files));
+        }
+
         foreach (var fromOne in waiting.GroupBy(file => file.Sender, StringComparer.Ordinal))
         {
             var first = fromOne.First();
             var notice = WaitingNotice(first.Name, first.Sender, first.Size, first.Free);
             var more = fromOne.Count() - 1;
             notices.Add(more == 0 ? notice : notice with { Message = $"{notice.Message}\n{string.Format(Strings.Inbox_AndMore, more)}" });
-        }
-
-        foreach (var fromOne in received.GroupBy(file => file.Sender, StringComparer.Ordinal))
-        {
-            var files = fromOne.ToList();
-            notices.Add(files.Count == 1 ? ReceivedNotice(files[0].Path, files[0].Sender, files[0].Marked) : ReceivedNotice(files));
         }
 
         return notices;

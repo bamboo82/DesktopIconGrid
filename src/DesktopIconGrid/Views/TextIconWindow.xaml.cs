@@ -71,27 +71,42 @@ public partial class TextIconWindow : Window
         return null;
     }
 
-    /// <summary>Down from the search box goes into the grid: to the chosen symbol, else the first one listed.</summary>
+    /// <summary>
+    /// Down from the search box chooses the first symbol listed and goes to it; Enter with exactly one symbol listed
+    /// chooses it and closes as OK does. Before, Down only went to a cell, so "mail", Down, Enter kept the symbol chosen
+    /// earlier (release check S1). With more symbols listed, Enter is OK for the one chosen.
+    /// </summary>
     private void SearchBox_PreviewKeyDown(object sender, KeyEventArgs e)
     {
-        if (e.Key != Key.Down || SymbolList.Items.Count == 0)
+        if (SymbolList.Items.Count == 0)
         {
             return;
         }
 
-        var target = SymbolList.SelectedItem ?? SymbolList.Items[0];
-        SymbolList.ScrollIntoView(target);
-        SymbolList.UpdateLayout();
-        if (SymbolList.ItemContainerGenerator.ContainerFromItem(target) is ListBoxItem cell)
+        if (e.Key == Key.Down)
         {
-            cell.Focus();
+            var first = SymbolList.Items[0];
+            SymbolList.SelectedItem = first;
+            SymbolList.ScrollIntoView(first);
+            SymbolList.UpdateLayout();
+            (SymbolList.ItemContainerGenerator.ContainerFromItem(first) as ListBoxItem)?.Focus();
             e.Handled = true;
+        }
+        else if (e.Key == Key.Enter && SymbolList.Items.Count == 1)
+        {
+            SymbolList.SelectedItem = SymbolList.Items[0];
+            e.Handled = true;
+            if (ViewModel?.CanSave == true)
+            {
+                DialogResult = true;
+            }
         }
     }
 
+    /// <summary>A double-click with the left button takes the symbol, as OK does (not the right one: release check S4).</summary>
     private void Symbol_DoubleClick(object sender, MouseButtonEventArgs e)
     {
-        if (ViewModel?.CanSave == true)
+        if (e.ChangedButton == MouseButton.Left && ViewModel?.CanSave == true)
         {
             DialogResult = true;
         }

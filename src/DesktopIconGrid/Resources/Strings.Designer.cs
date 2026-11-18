@@ -1518,6 +1518,15 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to What is installed.
+        /// </summary>
+        public static string FontInstall_DetailsName {
+            get {
+                return ResourceManager.GetString("FontInstall_DetailsName", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Installed..
         /// </summary>
         public static string FontInstall_Done {
@@ -2094,7 +2103,7 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to “{0}” ({1}) cannot be received yet: the drive of your Downloads folder has {2} f [rest of string was truncated]";.
+        ///   Looks up a localized string similar to “{0}” ({1}) cannot be received yet: your Downloads drive has {2} free and receiv [rest of string was truncated]";.
         /// </summary>
         public static string Inbox_WaitingForSpace {
             get {
