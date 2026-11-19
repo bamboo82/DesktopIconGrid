@@ -22,7 +22,7 @@ public sealed class NameTableWindowTests(WpfThread wpf) : IDisposable
     public void Dispose() => Directory.Delete(_directory, recursive: true);
 
     [Fact]
-    public void The_table_opens_1160_wide_within_the_work_area_with_the_usage_columns_and_the_line_under_it()
+    public void The_table_opens_1230_wide_within_the_work_area_with_the_usage_columns_and_the_line_under_it()
     {
         if (!OperatingSystem.IsWindows())
         {
@@ -35,7 +35,7 @@ public sealed class NameTableWindowTests(WpfThread wpf) : IDisposable
             try
             {
                 // Release check U3: a window the user sizes only opens within the work area; no limit stays on it.
-                var expected = Math.Min(1160, Math.Max(320, SystemParameters.WorkArea.Width - 16));
+                var expected = Math.Min(1230, Math.Max(320, SystemParameters.WorkArea.Width - 16));
                 Assert.Equal(expected, window.ActualWidth, 1.0);
                 Assert.True(double.IsPositiveInfinity(window.MaxWidth), $"MaxWidth {window.MaxWidth}");
                 Assert.True(double.IsPositiveInfinity(window.MaxHeight), $"MaxHeight {window.MaxHeight}");
@@ -43,6 +43,11 @@ public sealed class NameTableWindowTests(WpfThread wpf) : IDisposable
                 var headers = window.Grid.Columns.Select(column => column.Header as string).ToList();
                 var colourTag = headers.IndexOf(Strings.Names_ColorTag);
                 Assert.Equal([Strings.Names_Uses, Strings.Names_LastUsed], headers.Skip(colourTag + 1).Take(2));
+
+                // Review 28 A3: Modified is the row's text in Windows' regional format, not a StringFormat of the
+                // interface language.
+                var modified = Assert.IsType<DataGridTextColumn>(window.Grid.Columns.Single(column => (column.Header as string) == Strings.Common_Modified));
+                Assert.Equal(nameof(NameRowViewModel.ModifiedText), Assert.IsType<System.Windows.Data.Binding>(modified.Binding).Path.Path);
 
                 Assert.Equal(Visibility.Visible, window.UsageLine.Visibility);
                 Assert.StartsWith(Strings.Names_UsageSince[..Strings.Names_UsageSince.IndexOf('{', StringComparison.Ordinal)], window.UsageLine.Text, StringComparison.Ordinal);
@@ -67,14 +72,15 @@ public sealed class NameTableWindowTests(WpfThread wpf) : IDisposable
             var window = Open();
             try
             {
-                // Release check V1: widths and minimums, Location last taking the rest.
+                // Release check V1: widths and minimums, Location last taking the rest; Kind and Colour tag as English
+                // needs them (0.12.1, review 28 A1).
                 Assert.Equal(
-                    [(160.0, 120.0), (120.0, 90.0), (120.0, 90.0), (72.0, 60.0), (72.0, 60.0), (72.0, 60.0), (48.0, 48.0), (80.0, 80.0), (170.0, 170.0)],
+                    [(160.0, 120.0), (120.0, 90.0), (120.0, 90.0), (110.0, 72.0), (72.0, 60.0), (96.0, 72.0), (48.0, 48.0), (80.0, 80.0), (170.0, 170.0)],
                     window.Grid.Columns.Take(9).Select(column => (column.Width.Value, column.MinWidth)));
                 Assert.True(window.Grid.Columns[^1].Width.IsStar);
                 Assert.Equal(160, window.Grid.Columns[^1].MinWidth);
 
-                foreach (var width in new[] { 1160.0, 700 })
+                foreach (var width in new[] { 1230.0, 700 })
                 {
                     window.Width = width;
                     Settle(window);

@@ -48,7 +48,7 @@ internal static class WorkAreaFit
 
     /// <summary>
     /// A dialog of a fixed size, or one that sizes itself to its content, is kept within the work area for good
-    /// (<c>MaxHeight</c>, <c>MaxWidth</c>). A window the user sizes (the names table, which opens 1,160 wide) only opens
+    /// (<c>MaxHeight</c>, <c>MaxWidth</c>). A window the user sizes (the names table, which opens 1,230 wide) only opens
     /// within it: limits would stop Maximise from filling the screen and keep it from growing on a larger monitor
     /// (0.12.0 release check U3).
     /// </summary>

@@ -203,8 +203,8 @@
 
         <!-- Icon -->
         <TextBlock Grid.Row="7" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Props_Icon}" VerticalAlignment="Top" Margin="0,6,12,0" />
-        <StackPanel Grid.Row="7" Grid.Column="1" Grid.ColumnSpan="2" Orientation="Horizontal" Margin="0,0,0,8">
-          <Border Width="36" Height="36" Margin="0,0,10,0" VerticalAlignment="Center">
+        <DockPanel Grid.Row="7" Grid.Column="1" Grid.ColumnSpan="2" Margin="0,0,0,8">
+          <Border DockPanel.Dock="Left" Width="36" Height="36" Margin="0,0,10,0" VerticalAlignment="Center">
             <Grid>
               <Image Source="{Binding Preview, TargetNullValue={StaticResource PlaceholderIconImage}}"
                      Width="32" Height="32"
@@ -219,7 +219,9 @@
               </Border>
             </Grid>
           </Border>
-          <Button Content="{x:Static r:Strings.Props_ChangeIcon}" Padding="10,3" VerticalAlignment="Center" Click="ChangeIcon_Click">
+          <!-- The buttons wrap beside the preview: in English the three did not fit on one line (0.12.1, review 28 A2) -->
+          <WrapPanel x:Name="IconButtons" VerticalAlignment="Center">
+          <Button Content="{x:Static r:Strings.Props_ChangeIcon}" Padding="10,3" Margin="0,2,8,2" VerticalAlignment="Center" Click="ChangeIcon_Click">
             <Button.ContextMenu>
               <ContextMenu>
                 <MenuItem Header="{x:Static r:Strings.Props_BrowseImage}" Click="ChangeIconFile_Click" />
@@ -227,11 +229,12 @@
               </ContextMenu>
             </Button.ContextMenu>
           </Button>
-          <Button Content="{x:Static r:Strings.Props_TextIcon}" Padding="10,3" Margin="8,0,0,0" VerticalAlignment="Center" Click="TextIcon_Click"
+          <Button Content="{x:Static r:Strings.Props_TextIcon}" Padding="10,3" Margin="0,2,8,2" VerticalAlignment="Center" Click="TextIcon_Click"
                   ToolTip="{x:Static r:Strings.Props_TextIconToolTip}" />
-          <Button Content="{x:Static r:Strings.Props_UseDefault}" Padding="10,3" Margin="8,0,0,0" VerticalAlignment="Center"
+          <Button Content="{x:Static r:Strings.Props_UseDefault}" Padding="10,3" Margin="0,2,0,2" VerticalAlignment="Center"
                   IsEnabled="{Binding HasCustomIcon}" Click="UseDefaultIcon_Click" />
-        </StackPanel>
+          </WrapPanel>
+        </DockPanel>
 
         <!-- Warning -->
         <TextBlock Grid.Row="8" Grid.Column="0" Grid.ColumnSpan="3"

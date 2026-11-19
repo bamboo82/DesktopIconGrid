@@ -190,6 +190,40 @@ public sealed class DialogFitTests(WpfThread wpf)
     }
 
     [Fact]
+    public void The_icon_buttons_of_Properties_wrap_beside_the_preview_and_none_is_cut_in_English()
+    {
+        // Review 28 A2: "Change icon…", "Text or symbol icon…" and "Use default" did not fit; "Use default" was cut.
+        wpf.Invoke(() =>
+        {
+            var before = System.Threading.Thread.CurrentThread.CurrentUICulture;
+            System.Threading.Thread.CurrentThread.CurrentUICulture = System.Globalization.CultureInfo.GetCultureInfo("en-US");
+            var window = new ItemPropertiesWindow
+            {
+                DataContext = new ItemPropertiesViewModel(new ShortcutItem { Name = "Tool", Location = @"C:\Tools\tool.exe" }, isNew: false, new NoIcons()),
+            };
+            try
+            {
+                window.Show();
+                Settle(window);
+                var row = window.IconButtons;
+                var buttons = row.Children.OfType<Button>().ToList();
+                Assert.Equal([Strings.Props_ChangeIcon, Strings.Props_TextIcon, Strings.Props_UseDefault], buttons.Select(button => (string)button.Content));
+                foreach (var button in buttons)
+                {
+                    var right = button.TranslatePoint(new Point(button.ActualWidth, 0), row).X;
+                    Assert.True(right <= row.ActualWidth + 0.5, $"{button.Content} ends at {right} of {row.ActualWidth}");
+                    Assert.True(button.ActualWidth + button.Margin.Left + button.Margin.Right >= button.DesiredSize.Width - 0.5, $"{button.Content} is squeezed");
+                }
+            }
+            finally
+            {
+                window.Close();
+                System.Threading.Thread.CurrentThread.CurrentUICulture = before;
+            }
+        });
+    }
+
+    [Fact]
     public void Send_to_PC_opens_at_once_lists_the_PCs_after_it_shows_and_shows_the_menus_choice()
     {
         // Review 27 S2/S3, from the markup: the bindings, styles and resources the dialog uses are all there.

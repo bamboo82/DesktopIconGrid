@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:r="clr-namespace:DesktopIconGrid.Resources"
         Title="{x:Static r:Strings.Names_Title}"
-        Width="1160"
+        Width="1230"
         Height="520"
         MinWidth="520"
         MinHeight="300"
@@ -46,7 +46,9 @@
                TextWrapping="Wrap" Margin="0,8,0,0" />
 
     <!-- Every column keeps a minimum it can be read at; a narrow window scrolls sideways instead of squeezing one
-         below it (release check V1: the widths of WP4 added up to 1,330, and WPF squeezed Uses to about 20 px). -->
+         below it (release check V1: the widths of WP4 added up to 1,330, and WPF squeezed Uses to about 20 px).
+         Kind and Colour tag are as wide as their English texts need (0.12.1, review 28 A1: "Memory usage",
+         "Colour tag"); the widths of V1 were sized on Chinese. -->
     <DataGrid x:Name="Grid"
               ScrollViewer.HorizontalScrollBarVisibility="Auto"
               ItemsSource="{Binding RowsView}"
@@ -68,9 +70,9 @@
         <DataGridTextColumn Header="{x:Static r:Strings.Names_AlsoSay}" Width="120" MinWidth="90" SortMemberPath="AlsoSay"
                             Binding="{Binding AlsoSay, UpdateSourceTrigger=PropertyChanged}" />
         <DataGridTextColumn Header="{x:Static r:Strings.Names_Original}" Width="120" MinWidth="90" IsReadOnly="True" Binding="{Binding OriginalName}" />
-        <DataGridTextColumn Header="{x:Static r:Strings.Names_Kind}" Width="72" MinWidth="60" IsReadOnly="True" Binding="{Binding Kind}" />
+        <DataGridTextColumn Header="{x:Static r:Strings.Names_Kind}" Width="110" MinWidth="72" IsReadOnly="True" Binding="{Binding Kind}" />
         <DataGridTextColumn Header="{x:Static r:Strings.Names_InGroup}" Width="72" MinWidth="60" IsReadOnly="True" Binding="{Binding GroupName}" />
-        <DataGridTemplateColumn Header="{x:Static r:Strings.Names_ColorTag}" Width="72" MinWidth="60" IsReadOnly="True" SortMemberPath="ColorTagName">
+        <DataGridTemplateColumn Header="{x:Static r:Strings.Names_ColorTag}" Width="96" MinWidth="72" IsReadOnly="True" SortMemberPath="ColorTagName">
           <DataGridTemplateColumn.CellTemplate>
             <DataTemplate>
               <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="4,0">
@@ -100,7 +102,7 @@
           </DataGridTextColumn.ElementStyle>
         </DataGridTextColumn>
         <DataGridTextColumn Header="{x:Static r:Strings.Common_Modified}" Width="170" MinWidth="170" IsReadOnly="True" SortMemberPath="ModifiedAt"
-                            Binding="{Binding ModifiedAt, StringFormat=g}" />
+                            Binding="{Binding ModifiedText}" />
         <DataGridTextColumn Header="{x:Static r:Strings.Common_Location}" Width="*" MinWidth="160" IsReadOnly="True" Binding="{Binding Location}" />
       </DataGrid.Columns>
       <DataGrid.RowStyle>

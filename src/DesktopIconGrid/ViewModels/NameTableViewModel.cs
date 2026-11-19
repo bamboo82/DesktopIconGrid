@@ -33,6 +33,7 @@ public sealed class NameRowViewModel : ObservableObject
         GroupName = groupName ?? string.Empty;
         Location = location;
         ModifiedAt = item.ModifiedAt?.LocalDateTime;
+        ModifiedText = ModifiedAt?.ToString("g", CultureInfo.CurrentCulture) ?? string.Empty;
         InitialName = item.Name;
         _givenName = item.Name;
         InitialAlsoSay = item.AlsoSay ?? string.Empty;
@@ -103,6 +104,13 @@ public sealed class NameRowViewModel : ObservableObject
     public string Location { get; }
 
     public DateTime? ModifiedAt { get; }
+
+    /// <summary>
+    /// <see cref="ModifiedAt"/> in Windows' regional format, as every date of the window. A binding's StringFormat
+    /// followed the interface language, so an English bar on a zh-TW Windows showed 11/19/2026 12:33 AM beside
+    /// 2026/11/18 (0.12.1, review 28 A3).
+    /// </summary>
+    public string ModifiedText { get; }
 
     public string InitialName { get; }
 

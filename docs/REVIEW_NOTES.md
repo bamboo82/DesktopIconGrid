@@ -9,6 +9,41 @@ The owner relays replies.
 
 ---
 
+## 2026-11-19 (94) — 0.12.1: English texts that were cut, one date rule (review 28 A1–A3)
+
+Run 194 (`52bafe8`, entry 93) is green. This entry claims no run for its own commit.
+
+- **A1, the names table.**
+  - Your widths: *Kind* 110 / 72 and *Colour tag* 96 / 72, and the window 1,230 wide.
+  - The other columns are as in V1. The XAML comment says why these two differ: V1's widths were sized on Chinese.
+  - Test: `NameTableWindowTests` has the new widths and minimums, the opening width min(1,230, work area − 16), and
+    the minimums kept at 1,230 and at 700.
+- **A2, Properties' Icon row.**
+  - The row is a `DockPanel`: the preview docked left, and the three buttons in a `WrapPanel` (`IconButtons`) beside
+    it. Each button has 8 to its right and 2 above and below, so a wrapped line does not start indented.
+  - The texts are unchanged.
+  - Test: `DialogFitTests.The_icon_buttons_of_Properties_wrap_beside_the_preview_and_none_is_cut_in_English`. It
+    sets en-US on the WPF thread, then checks for each button that its right edge is inside the row and that its
+    width is its whole desired width.
+- **A3, one date rule.**
+  - *Modified* binds to a new `NameRowViewModel.ModifiedText`: the local time in `"g"` with `CultureInfo.CurrentCulture`
+    (Windows' regional format), as *Last used*, its tooltip and the line under the table already are. It still sorts
+    by `ModifiedAt`.
+  - Tests:
+    - `UsageTests.Every_date_of_the_names_table_is_in_Windows_regional_format_whatever_the_interface_language` (zh-TW
+      format, en-US interface): *Modified* and a dated *Last used* are in zh-TW's format, and not in en-US's;
+    - `NameTableWindowTests` checks that the column binds to `ModifiedText`.
+- **The Settings row with *Install*, which you could not confirm.** I did not measure it by hand: the row is a
+  `WrapPanel` now, so the button goes under the list when both do not fit, whatever the text size.
+  - Test: `ChineseFontAppTests.The_Install_button_is_whole_in_English_and_goes_under_the_list_when_the_row_is_narrow`.
+    Fluent is on in the tests (`DialogTheme.UseFluent` is true by default), en-US, and the Appearance tab is selected:
+    - the button is whole, inside the row;
+    - with the row made 40 wider than the list, the button sits under it at its left edge.
+- **Docs:** FEATURES (the names table: 1,230, the two widths, the dates; the Icon row wraps) and CHANGELOG 0.12.1
+  (Fixed).
+- **Not tested:** how it looks. Please look at the names table and Properties in English, and at the Settings row in
+  both languages.
+
 ## 2026-11-19 (93) — 0.12.1 begins: the version, the notes of 0.12.0, strings, sync problems (review 28 D)
 
 The owner asked for 0.12.1 today, and for it to be carried through ("do a 0.12.1, and continue until nothing left to

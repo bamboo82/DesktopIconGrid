@@ -19,6 +19,11 @@ said more, or other, than 0.12.0 does.
   colour says the text is white or near-black (it said the symbol, white or black).
 - Chinese wording: 工具列 / 工具栏 in the Settings line about the Chinese font, and 电脑 in a placeholder rule
   (Simplified Chinese).
+- English texts that were cut: *Edit names* opens 1,230 wide and shows *Kind* ("Memory usage") and *Colour tag*
+  whole; the three buttons of Properties' Icon row wrap beside the preview; the *Install* button of Settings'
+  *Chinese text* row goes under the list when the row is too narrow for both.
+- *Edit names* shows every date in Windows' regional format: *Modified* followed the interface language, so an
+  English bar on a zh-TW Windows showed two formats side by side.
 
 ## [0.12.0] – 2026-11-18
 

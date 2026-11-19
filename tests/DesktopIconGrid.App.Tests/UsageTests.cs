@@ -153,6 +153,43 @@ public sealed class UsageTests : IDisposable
     }
 
     [Fact]
+    public void Every_date_of_the_names_table_is_in_Windows_regional_format_whatever_the_interface_language()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        // Review 28 A3: an English bar on a zh-TW Windows showed 2026/11/18 beside 11/19/2026 12:33 AM.
+        var culture = System.Globalization.CultureInfo.CurrentCulture;
+        var uiCulture = System.Globalization.CultureInfo.CurrentUICulture;
+        var taiwan = System.Globalization.CultureInfo.GetCultureInfo("zh-TW");
+        System.Globalization.CultureInfo.CurrentCulture = taiwan;
+        System.Globalization.CultureInfo.CurrentUICulture = System.Globalization.CultureInfo.GetCultureInfo("en-US");
+        try
+        {
+            var now = DateTimeOffset.UtcNow;
+            var usage = new UsageLog(null, () => now.AddDays(-45));
+            var (viewModel, model, _) = Create();
+            viewModel.UseUsage(usage);
+            usage.Count(model.Items[0].Id); // A: 45 days ago, so its date is shown
+            var modified = new DateTimeOffset(2026, 11, 18, 16, 33, 0, TimeSpan.Zero);
+            model.Items[0].ModifiedAt = modified;
+
+            var row = new NameTableViewModel(viewModel, now).Rows.Single(row => row.InitialName == "A");
+
+            Assert.Equal(modified.LocalDateTime.ToString("g", taiwan), row.ModifiedText);
+            Assert.Equal(now.AddDays(-45).LocalDateTime.ToString("d", taiwan), row.LastUsedText);
+            Assert.NotEqual(modified.LocalDateTime.ToString("g", System.Globalization.CultureInfo.GetCultureInfo("en-US")), row.ModifiedText);
+        }
+        finally
+        {
+            System.Globalization.CultureInfo.CurrentCulture = culture;
+            System.Globalization.CultureInfo.CurrentUICulture = uiCulture;
+        }
+    }
+
+    [Fact]
     public void The_usage_columns_sort_as_numbers_and_times_and_never_used_comes_before_any_date()
     {
         if (!OperatingSystem.IsWindows())

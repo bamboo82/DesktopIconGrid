@@ -25,6 +25,57 @@ public sealed class ChineseFontAppTests(WpfThread wpf)
     private static string TestFont => Path.Combine(AppContext.BaseDirectory, "Assets", "DigTestCjk-Light.ttf");
 
     [Fact]
+    public void The_Install_button_is_whole_in_English_and_goes_under_the_list_when_the_row_is_narrow()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        // Review 28: the row had about 9 px to spare in English, unconfirmed at Fluent's text size (Fluent is on here).
+        wpf.Invoke(() =>
+        {
+            var before = System.Threading.Thread.CurrentThread.CurrentUICulture;
+            System.Threading.Thread.CurrentThread.CurrentUICulture = CultureInfo.GetCultureInfo("en-US");
+            var viewModel = new SettingsViewModel(new LauncherSettings());
+            viewModel.UseChineseFont(new FakeFonts());
+            Assert.True(viewModel.IsChineseFontMissing);
+            var window = new SettingsWindow { DataContext = viewModel };
+            try
+            {
+                window.Show();
+                DependencyObject? node = window.ChineseFontList;
+                while (node is not null and not TabItem)
+                {
+                    node = LogicalTreeHelper.GetParent(node);
+                }
+
+                Assert.IsType<TabItem>(node).IsSelected = true;
+                Settle(window);
+                var row = window.ChineseFontRow;
+                var button = window.InstallFontButton;
+                Assert.Equal(Strings.Settings_ChineseFontInstall, button.Content);
+                Assert.Equal(Visibility.Visible, button.Visibility);
+                var right = button.TranslatePoint(new Point(button.ActualWidth, 0), row).X;
+                Assert.True(right <= row.ActualWidth + 0.5, $"the button ends at {right} of {row.ActualWidth}");
+                Assert.True(button.ActualWidth + button.Margin.Left + button.Margin.Right >= button.DesiredSize.Width - 0.5, "the button is squeezed");
+
+                // Narrower than the list and the button together: the button goes under the list, whole.
+                row.Width = window.ChineseFontList.ActualWidth + 40;
+                Settle(window);
+                var top = button.TranslatePoint(new Point(), row);
+                Assert.True(top.Y >= window.ChineseFontList.ActualHeight - 0.5, $"the button is at {top.Y}, beside the list");
+                Assert.Equal(0, top.X, 0.5);
+            }
+            finally
+            {
+                window.Close();
+                System.Threading.Thread.CurrentThread.CurrentUICulture = before;
+            }
+        });
+    }
+
+    [Fact]
     public void The_details_box_of_an_approval_is_named_for_its_use()
     {
         if (!OperatingSystem.IsWindows())
