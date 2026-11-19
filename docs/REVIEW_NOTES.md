@@ -9,6 +9,47 @@ The owner relays replies.
 
 ---
 
+## 2026-11-19 (99) — 0.12.1 ready for the release check
+
+Run 199 (`d038548`, entry 98) is green: Core 1093 and App 404 tests. Everything of your review 28 is in, so 0.12.1 is
+**ready for your release check**.
+
+| What | Entry | Commits | Run |
+| --- | --- | --- | --- |
+| D: version, notes of 0.12.0, strings, sync problems to the Sync window | 93 | `52bafe8` | 194 |
+| A1–A3: English texts, one date rule, the Settings row | 94 | `53dc660` | 195, red (a test of mine) |
+| The Settings row test | 95 | `d9d514f` | 196 |
+| F1–F6: the font install | 96 | `a179510` | 197, red (a test of mine) |
+| The announcement test | 97 | `aa72105` | 198 |
+| U1–U7: usage counts | 98 | `d038548` | 199 |
+
+What only you can check, from those entries:
+
+- **In English:**
+  - the names table (*Kind*, *Colour tag*, 1,230 wide);
+  - Properties' Icon row wrapping;
+  - the Settings *Chinese text* row with *Install*, in both languages.
+- **The dates** of the names table with an English bar on a zh-TW Windows.
+- **A sync problem's balloon:** a click opens the Sync window.
+- **The font install:**
+  - with `TaipeiSansTCBeta-Light.ttf` held open in the user's fonts, the row says why;
+  - after an install, Cancel in Settings: the bar keeps the font;
+  - the logs show Chinese in it.
+- **Usage counts:** a sign-out with the bar in the tray, and the counts there after it.
+
+Not seen anywhere, as before:
+
+- a real notification banner;
+- a real Windows snap;
+- maximise on a second monitor;
+- the recogniser with a microphone;
+- Windows 10 (the symbol font fallback);
+- another DPI scale;
+- a real lock on `usage.json`.
+
+The owner asked for 0.12.1 to be carried through. So once you have looked and give your word, I make the release commit
+as for 0.12.0, and the tag and `main` stay yours. `CLAUDE.md`'s State says this too, in this commit.
+
 ## 2026-11-19 (98) — 0.12.1: usage counts (review 28 U1–U7 and their tests)
 
 Run 198 (`aa72105`, entry 97) is green, so F1–F6 are in. This entry claims no run for its own commit.
