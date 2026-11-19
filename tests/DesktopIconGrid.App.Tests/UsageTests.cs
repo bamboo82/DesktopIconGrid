@@ -302,6 +302,19 @@ public sealed class UsageTests : IDisposable
         }
     }
 
+    [Fact]
+    public void The_wait_before_a_write_is_on_a_clock_that_only_goes_forward_and_never_longer_than_the_interval()
+    {
+        // Review 28 U3: the wall clock set back by J made the next write wait J + 10 s, and past 49.7 days
+        // Task.Delay threw and nothing more was written that session.
+        var interval = TimeSpan.FromSeconds(10);
+        Assert.Equal(TimeSpan.Zero, UsageSaver.WaitBefore(null, 1_000, interval)); // the first write comes at once
+        Assert.Equal(TimeSpan.FromSeconds(7), UsageSaver.WaitBefore(1_000, 4_000, interval));
+        Assert.Equal(TimeSpan.Zero, UsageSaver.WaitBefore(1_000, 60_000, interval));
+        Assert.Equal(TimeSpan.Zero, UsageSaver.WaitBefore(0, (long)TimeSpan.FromDays(60).TotalMilliseconds, interval));
+        Assert.Equal(interval, UsageSaver.WaitBefore(5_000, 1_000, interval)); // never more than the interval
+    }
+
     private static async Task WaitForAsync(Func<bool> condition)
     {
         for (var i = 0; i < 100 && !condition(); i++)

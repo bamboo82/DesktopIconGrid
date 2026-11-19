@@ -32,6 +32,7 @@ public partial class MainWindow : Window
     private TrayIcon? _tray;
     private TrayMenuHost? _trayMenu;
     private bool _exiting;
+    private bool _sessionEnded;
     private bool _closing;
     private bool _backdropActive;
 
@@ -195,6 +196,25 @@ public partial class MainWindow : Window
         Left = area.Left + Math.Max(0, (area.Width - Width) / 2);
         Top = area.Top + Math.Max(0, (area.Height - Height) / 2);
         Activate();
+    }
+
+    /// <summary>
+    /// Windows is signing out or shutting down (<see cref="Application.SessionEnding"/>): what waits is written now,
+    /// bounded as at Exit, shown or in the tray. With Close to tray, closing hid the bar and returned before that, so the
+    /// counts of the last seconds, a write that waited and a pending upload were lost (0.12.1, review 28 U1). The window
+    /// then closes as at Exit, not into the tray.
+    /// </summary>
+    internal void EndSession()
+    {
+        if (_closing || _sessionEnded)
+        {
+            return;
+        }
+
+        _sessionEnded = true;
+        _exiting = true;
+        SavePlacement();
+        WaitForPendingWork();
     }
 
     public void ExitApplication()

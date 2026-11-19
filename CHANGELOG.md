@@ -33,6 +33,15 @@ said more, or other, than 0.12.0 does.
   - a font of that name already listed for another file is no longer written over: nothing is installed, and the
     row says why;
   - the logs and an approval's details box (Consolas) draw Chinese with the font too.
+- Usage counts:
+  - signing out or shutting down Windows while the bar was in the tray lost the uses of the last seconds and a
+    write that waited, and a layout upload that was still pending; they are written first now;
+  - a `usage.json` that was not the JSON this app writes (empty, NUL bytes after a power cut, one bad value) meant
+    no counts written again; it is kept as `usage.json.corrupt-<date>` and this PC counts anew, and a bad value in
+    another PC's block harms nothing;
+  - the clock set back (or by more than 49 days) could stop the writes for the session;
+  - entries and properties this version does not read are written back as they were; the file is never written
+    over 1 MB; two copies on one portable folder no longer write over each other's block.
 
 ## [0.12.0] – 2026-11-18
 

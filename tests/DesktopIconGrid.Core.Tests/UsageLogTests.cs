@@ -87,39 +87,230 @@ public sealed class UsageLogTests : IDisposable
     }
 
     [Fact]
-    public void A_file_over_1_MB_or_one_that_is_not_this_apps_is_left_alone_and_counting_goes_on_in_memory()
+    public void A_file_over_1_MB_is_left_alone_and_counting_goes_on_in_memory()
     {
         var item = Guid.NewGuid();
-        foreach (var bytes in new[] { new byte[UsageLog.MaxFileBytes + 1], "{ not json"u8.ToArray() })
-        {
-            File.WriteAllBytes(FilePath, bytes);
-            var log = Log();
-            Assert.True(log.IsMemoryOnly);
+        var bytes = new byte[UsageLog.MaxFileBytes + 1];
+        File.WriteAllBytes(FilePath, bytes);
+        var log = Log();
+        Assert.True(log.IsMemoryOnly);
 
-            log.Count(item);
-            Assert.Equal(1, log.Of(item)!.Count);
-            Assert.False(log.Save(Everything));
-            Assert.Equal(bytes, File.ReadAllBytes(FilePath)); // untouched
-        }
+        log.Count(item);
+        Assert.Equal(1, log.Of(item)!.Count);
+        Assert.False(log.Save(Everything));
+        Assert.Equal(bytes, File.ReadAllBytes(FilePath)); // untouched
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("\0\0\0\0")]
+    [InlineData("{ not json")]
+    [InlineData("[1, 2]")]
+    [InlineData("""{"version":1,"pcs":7}""")]
+    [InlineData("""{"version":1,"pcs":{"pc-a":{"items":{}},"pc-a":{"items":{}}}}""")]
+    public void A_file_that_is_not_the_json_this_app_writes_is_kept_beside_it_and_this_PC_counts_anew(string text)
+    {
+        // 0.12.1, review 28 U2: such a file (an empty one, NUL bytes after a power cut) meant memory only at every start,
+        // for good.
+        var item = Guid.NewGuid();
+        var bytes = System.Text.Encoding.UTF8.GetBytes(text);
+        File.WriteAllBytes(FilePath, bytes);
+
+        var log = Log();
+        Assert.False(log.IsMemoryOnly);
+        var aside = Assert.Single(Directory.GetFiles(_folder, UsageLog.FileName + ".corrupt-*"));
+        Assert.Equal(bytes, File.ReadAllBytes(aside));
+
+        log.Count(item);
+        Assert.True(log.Save(Everything));
+        Assert.Equal(new ItemUse(1, Start), Log().Of(item));
+        Assert.Equal(bytes, File.ReadAllBytes(aside)); // kept as it was
+    }
+
+    [Fact]
+    public void A_bad_date_in_another_PCs_block_harms_nothing_and_this_PCs_block_that_is_no_block_is_kept_beside_it()
+    {
+        // Review 28 U2: one bad date in another PC's block, or this PC's block a number, made the whole file unreadable.
+        var item = Guid.NewGuid();
+        const string other = """{"since":"not a date","items":{"5b0f8c1e-2f39-4c35-9a33-2d0c9e3f7a11":{"count":"many","last":"yesterday"}}}""";
+        File.WriteAllText(FilePath, """{"version":1,"pcs":{"pc-b":""" + other + ""","pc-a":{"since":"2026-11-01T00:00:00Z","items":{}}}}""");
+
+        var log = Log();
+        Assert.Equal(new DateTimeOffset(2026, 11, 1, 0, 0, 0, TimeSpan.Zero), log.Since); // this PC's block is read
+        Assert.Empty(Directory.GetFiles(_folder, UsageLog.FileName + ".corrupt-*"));
+        log.Count(item);
+        Assert.True(log.Save(Everything));
+        Assert.True(System.Text.Json.Nodes.JsonNode.DeepEquals(System.Text.Json.Nodes.JsonNode.Parse(other), System.Text.Json.Nodes.JsonNode.Parse(Block("pc-b").GetRawText())));
+
+        // This PC's block a number: the file is kept beside it, the other blocks are written back with a new one.
+        File.WriteAllText(FilePath, """{"version":1,"pcs":{"pc-b":""" + other + ""","pc-a":42}}""");
+        var again = Log();
+        Assert.Single(Directory.GetFiles(_folder, UsageLog.FileName + ".corrupt-*"));
+        Assert.Equal(Start, again.Since);
+        again.Count(item);
+        Assert.True(again.Save(Everything));
+        Assert.Equal(1, Block("pc-a").GetProperty("items").GetProperty(item.ToString("D")).GetProperty("count").GetInt32());
+        Assert.Equal("not a date", Block("pc-b").GetProperty("since").GetString());
     }
 
     [Fact]
     public void A_write_that_fails_keeps_the_counts_for_the_next_save_and_exit()
     {
-        // Release check U1: usage.json.tmp held for a moment (a scanner, a sync client) must not lose the session's counts.
+        // Release check U1: the temporary file held for a moment (a scanner, a sync client) must not lose the session's
+        // counts. The temporary file is this instance's own (review 28 U6).
         var item = Guid.NewGuid();
         var log = Log();
         log.Count(item);
-        var temporary = FilePath + ".tmp";
-        Directory.CreateDirectory(temporary); // the temporary file cannot be written
+        Assert.NotEqual(log.TemporaryPath, Log().TemporaryPath);
+        Directory.CreateDirectory(log.TemporaryPath); // the temporary file cannot be written
 
         Assert.False(log.Save(Everything));
         Assert.False(log.IsMemoryOnly);
         Assert.False(File.Exists(FilePath));
 
-        Directory.Delete(temporary);
+        Directory.Delete(log.TemporaryPath);
         Assert.True(log.Save(Everything)); // no use since: still to be written, as at exit
         Assert.Equal(new ItemUse(1, Start), Log().Of(item));
+    }
+
+    [Fact]
+    public void A_replace_that_fails_keeps_the_counts_and_leaves_no_temporary_file()
+    {
+        // Review 28: only the temporary file's write was failed, never the move.
+        var item = Guid.NewGuid();
+        var log = Log();
+        log.Count(item);
+        Directory.CreateDirectory(FilePath); // usage.json cannot be replaced
+
+        Assert.False(log.Save(Everything));
+        Assert.False(File.Exists(log.TemporaryPath));
+        Assert.Empty(Directory.GetFiles(_folder, "*.tmp"));
+
+        Directory.Delete(FilePath);
+        Assert.True(log.Save(Everything));
+        Assert.Equal(new ItemUse(1, Start), Log().Of(item));
+    }
+
+    [Fact]
+    public void A_block_another_copy_writes_just_before_the_replace_is_kept()
+    {
+        // Review 28 U6: two copies on one portable folder replaced the file without reading it again.
+        var item = Guid.NewGuid();
+        var log = Log();
+        log.Count(item);
+        Assert.True(log.Save(Everything));
+
+        log.Count(item);
+        var writes = 0;
+        log.BeforeReplace = () =>
+        {
+            if (writes++ == 0)
+            {
+                // Another PC's copy writes its block in the meantime, as this app would.
+                var other = System.Text.Json.Nodes.JsonNode.Parse(File.ReadAllText(FilePath))!;
+                other["pcs"]!["pc-b"] = System.Text.Json.Nodes.JsonNode.Parse("""{"since":"2026-01-01T00:00:00Z","items":{}}""");
+                File.WriteAllText(FilePath, other.ToJsonString());
+                File.SetLastWriteTimeUtc(FilePath, DateTime.UtcNow.AddSeconds(5));
+            }
+        };
+
+        Assert.True(log.Save(Everything));
+        Assert.Equal(2, writes); // written again with what the other copy wrote
+        Assert.Equal("2026-01-01T00:00:00Z", Block("pc-b").GetProperty("since").GetString());
+        Assert.Equal(2, Log().Of(item)!.Count);
+    }
+
+    [Fact]
+    public void No_probe_is_left_in_a_folder_that_can_be_written()
+    {
+        // Review 28 U4: the probe was deleted by hand, and a failed delete meant memory only and a probe left for ever.
+        var log = Log();
+        Assert.False(log.IsMemoryOnly);
+        Assert.Empty(Directory.GetFiles(_folder, "*.probe"));
+    }
+
+    [Fact]
+    public void Entries_this_version_cannot_read_and_unknown_properties_are_kept_through_saves_and_a_join()
+    {
+        // Review 28 U7: they were dropped at the next save; nothing checked them through a join.
+        var item = Guid.NewGuid();
+        File.WriteAllText(FilePath, """{"version":1,"pcs":{"pc-a":{"since":"2026-11-01T00:00:00Z","items":{"not-an-id":{"count":4,"last":"2026-11-02T00:00:00Z"},"ZERO":{"count":0,"last":"2026-11-02T00:00:00Z"},"NOLAST":{"count":2},"ITEM":{"count":3,"last":"2026-11-10T00:00:00Z","pinned":true}},"future":1}}}"""
+            .Replace("ZERO", Guid.NewGuid().ToString("D"), StringComparison.Ordinal)
+            .Replace("NOLAST", Guid.NewGuid().ToString("D"), StringComparison.Ordinal)
+            .Replace("ITEM", item.ToString("D"), StringComparison.Ordinal));
+        string before;
+        using (var document = JsonDocument.Parse(File.ReadAllText(FilePath)))
+        {
+            before = document.RootElement.GetProperty("pcs").GetProperty("pc-a").GetProperty("items").ToString();
+        }
+
+        UsageLog log;
+        using (Hold(FilePath))
+        {
+            log = Log(); // read at the first save, and joined
+            log.Count(item);
+        }
+
+        Assert.True(log.Save(Everything));
+        Assert.Equal(new ItemUse(4, Start), log.Of(item));
+        var items = Block("pc-a").GetProperty("items");
+        Assert.Equal(4, items.EnumerateObject().Count());
+        Assert.Equal(4, items.GetProperty("not-an-id").GetProperty("count").GetInt32());
+        Assert.True(items.GetProperty(item.ToString("D")).GetProperty("pinned").GetBoolean());
+        Assert.Equal(1, Block("pc-a").GetProperty("future").GetInt32());
+        Assert.Equal(4, items.GetProperty(item.ToString("D")).GetProperty("count").GetInt32()); // the counted one changed
+        using var read = JsonDocument.Parse(before);
+        foreach (var entry in read.RootElement.EnumerateObject().Where(entry => entry.Name != item.ToString("D")))
+        {
+            Assert.True(JsonElement.DeepEquals(entry.Value, items.GetProperty(entry.Name)), entry.Name); // the others did not
+        }
+    }
+
+    [Fact]
+    public void A_clock_set_back_does_not_move_a_last_use_back()
+    {
+        var item = Guid.NewGuid();
+        var log = Log();
+        log.Count(item);
+        _now = Start.AddDays(-30); // the clock set back a month
+        log.Count(item);
+        Assert.Equal(new ItemUse(2, Start), log.Of(item));
+    }
+
+    [Fact]
+    public void No_file_over_the_limit_is_written_the_oldest_uses_of_items_gone_from_the_bar_go_first()
+    {
+        // Review 28 U5: past 1 MB every later start took the file as not this app's.
+        var onBar = new HashSet<Guid>();
+        var log = new UsageLog(FilePath, () => _now) { MaxBytes = 4096 };
+        log.Load();
+        var gone = new List<Guid>();
+        for (var i = 0; i < 60; i++)
+        {
+            _now = Start.AddMinutes(i);
+            var id = Guid.NewGuid();
+            (i % 10 == 0 ? (ICollection<Guid>)onBar : gone).Add(id);
+            log.Count(id);
+        }
+
+        Assert.True(log.Save(onBar.Contains));
+        Assert.True(new FileInfo(FilePath).Length <= 4096);
+        var kept = new UsageLog(FilePath, () => _now) { MaxBytes = 4096 };
+        kept.Load();
+        Assert.All(onBar, id => Assert.NotNull(kept.Of(id)));
+        var keptGone = gone.Where(id => kept.Of(id) is not null).ToList();
+        Assert.NotEmpty(keptGone);
+        Assert.Equal(gone.TakeLast(keptGone.Count), keptGone); // the newest of them stay
+
+        // Other PCs' blocks alone near the limit: this PC's would make it too large, so nothing is written.
+        var big = "{\"version\":1,\"pcs\":{\"pc-b\":{\"since\":\"2026-01-01T00:00:00Z\",\"items\":{},\"note\":\"" + new string('x', 5000) + "\"}}}";
+        File.WriteAllText(FilePath, big);
+        var full = new UsageLog(FilePath, () => _now) { MaxBytes = new FileInfo(FilePath).Length + 40 }; // it can be read
+        full.Load();
+        Assert.False(full.IsMemoryOnly);
+        full.Count(Guid.NewGuid());
+        Assert.False(full.Save(Everything)); // on the bar, so nothing to drop
+        Assert.Equal(big, File.ReadAllText(FilePath));
     }
 
     [Fact]
@@ -189,20 +380,35 @@ public sealed class UsageLogTests : IDisposable
     }
 
     [Fact]
-    public void A_file_replaced_by_one_that_is_not_this_apps_after_the_start_is_not_overwritten_and_the_counts_wait()
+    public void A_file_damaged_after_the_start_is_kept_beside_it_before_the_counts_are_written()
     {
+        // Review 28 U2, at a save: a file that is not the JSON this app writes is not lost, and the counts are written.
         var item = Guid.NewGuid();
         var log = Log();
         log.Count(item);
         File.WriteAllText(FilePath, "{ not json");
 
-        Assert.False(log.Save(Everything));
+        Assert.True(log.Save(Everything));
         Assert.False(log.IsMemoryOnly);
-        Assert.Equal("{ not json", File.ReadAllText(FilePath));
+        Assert.Equal("{ not json", File.ReadAllText(Assert.Single(Directory.GetFiles(_folder, UsageLog.FileName + ".corrupt-*"))));
+        Assert.Equal(1, Log().Of(item)!.Count);
 
+        // A file over the limit is not this app's: never written over, and the counts wait.
+        var big = new byte[UsageLog.MaxFileBytes + 1];
+        File.WriteAllBytes(FilePath, big);
+        log.Count(item);
+        Assert.False(log.Save(Everything));
+        Assert.Equal(big, File.ReadAllBytes(FilePath));
         File.Delete(FilePath);
         Assert.True(log.Save(Everything));
-        Assert.Equal(1, Log().Of(item)!.Count);
+        Assert.Equal(2, Log().Of(item)!.Count);
+    }
+
+    /// <summary>The block of <paramref name="pc"/> in the file as it is now.</summary>
+    private JsonElement Block(string pc)
+    {
+        using var document = JsonDocument.Parse(File.ReadAllText(FilePath));
+        return document.RootElement.GetProperty("pcs").GetProperty(pc).Clone();
     }
 
     /// <summary>Opens <paramref name="path"/> so that nothing else can read it (on Linux .NET takes an exclusive lock).</summary>

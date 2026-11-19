@@ -1,3 +1,4 @@
+using DesktopIconGrid.Core.Diagnostics;
 using DesktopIconGrid.Core.Storage;
 
 namespace DesktopIconGrid.Services;
@@ -13,7 +14,8 @@ public sealed class UsageSaver
     private readonly UsageLog _log;
     private readonly Func<IReadOnlySet<Guid>> _shortcutsOnBar;
     private readonly Func<Func<IReadOnlySet<Guid>>, Task<IReadOnlySet<Guid>>> _onBarThread;
-    private DateTime _lastWrite = DateTime.MinValue;
+    /// <summary>When the last write began, on <see cref="Environment.TickCount64"/>; none yet.</summary>
+    private long? _lastWrite;
     private bool _scheduled;
 
     /// <param name="log">The counts.</param>
@@ -48,21 +50,50 @@ public sealed class UsageSaver
             }
 
             _scheduled = true;
-            wait = _lastWrite + Interval - DateTime.UtcNow;
+            wait = WaitBefore(_lastWrite, Environment.TickCount64, Interval);
         }
 
-        _ = WriteAfterAsync(wait > TimeSpan.Zero ? wait : TimeSpan.Zero);
+        _ = WriteAfterAsync(wait);
+    }
+
+    /// <summary>
+    /// How long the next write waits: the rest of the interval since the last one, never more than the interval and
+    /// never less than nothing, on a clock that only goes forward. The wall clock set back by J made it wait J + 10 s,
+    /// and past 49.7 days <see cref="Task.Delay(TimeSpan)"/> threw, so nothing more was written (0.12.1, review 28 U3).
+    /// </summary>
+    internal static TimeSpan WaitBefore(long? lastWriteMilliseconds, long nowMilliseconds, TimeSpan interval)
+    {
+        if (lastWriteMilliseconds is not { } last)
+        {
+            return TimeSpan.Zero;
+        }
+
+        var elapsed = TimeSpan.FromMilliseconds(Math.Max(0, nowMilliseconds - last));
+        return elapsed >= interval ? TimeSpan.Zero : interval - elapsed;
     }
 
     private async Task WriteAfterAsync(TimeSpan wait)
     {
-        await Task.Delay(wait).ConfigureAwait(false);
-        lock (_gate)
+        try
         {
-            _scheduled = false;
-            _lastWrite = DateTime.UtcNow;
+            await Task.Delay(wait).ConfigureAwait(false);
+        }
+        finally
+        {
+            lock (_gate)
+            {
+                _scheduled = false; // whatever happened, the next use schedules a write again
+                _lastWrite = Environment.TickCount64;
+            }
         }
 
-        await FlushAsync().ConfigureAwait(false);
+        try
+        {
+            await FlushAsync().ConfigureAwait(false);
+        }
+        catch (Exception ex) when (ex is not OutOfMemoryException)
+        {
+            AppLog.Default.Debug("Usage", $"The uses could not be written: {ex.Message}");
+        }
     }
 }

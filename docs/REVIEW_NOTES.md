@@ -9,6 +9,76 @@ The owner relays replies.
 
 ---
 
+## 2026-11-19 (98) — 0.12.1: usage counts (review 28 U1–U7 and their tests)
+
+Run 198 (`aa72105`, entry 97) is green, so F1–F6 are in. This entry claims no run for its own commit.
+
+### U1, sign-out and shutdown
+
+`App` handles `SessionEnding` and calls a new `MainWindow.EndSession()`. That saves the placement, sets `_exiting`
+(the window then closes as at Exit, not into the tray), and runs `WaitForPendingWork()`: the same flush as Exit, the
+layout upload and the usage counts, bounded at 6 s and pumping messages. Once only.
+
+### U2–U7, `UsageLog`: the file is read and written as a JSON tree
+
+`JsonNode`, so what this version does not read goes back as it was at every level.
+
+- **U2:**
+  - **The cases:**
+    - a file that is not the JSON this app writes: not JSON at all (empty, NUL bytes), a root that is no object,
+      `pcs` that is no object, or a property named twice (`Read` walks the tree, so that is found there);
+    - such a file at a start is moved to `usage.json.corrupt-yyyyMMdd-HHmmss`, as the layout does, with one Info
+      line, and this PC counts anew;
+    - this PC's block that is no object (a number): the file is copied there, and the other blocks are written back
+      with a new block;
+    - a bad value in another PC's block is not read at all, so it harms nothing.
+  - **At a save:** a file found damaged is copied aside first, once per save, and not written over when the copy
+    fails.
+  - **The write:** the temporary file is flushed to the disk (`Flush(true)`) before it replaces the file.
+  - **Over 1 MB:** still "not this app's": left alone, the counts in memory.
+- **U3, `UsageSaver`:**
+  - the throttle is on `Environment.TickCount64`. `WaitBefore` is never more than the interval and never less than
+    nothing;
+  - the delayed write resets `_scheduled` in a `finally`, so a failure cannot stop the writes;
+  - a failed flush is a debug line, not an unobserved exception.
+- **U4:** the probe is opened with `FileOptions.DeleteOnClose`, as `DataLocation`'s is, so no probe is left and no
+  delete can fail.
+- **U5:**
+  - before writing, a file over the limit drops the uses of items gone from the bar, oldest first, in steps measured
+    from the bytes over, until it fits;
+  - if it still does not fit (other PCs' blocks), nothing is written, with one warning, and the counts wait;
+  - `MaxBytes` (internal) is the limit, smaller in tests.
+- **U6:**
+  - the temporary file's name is this instance's own, `usage.json.<12 hex>.tmp`, and it is deleted when the replace
+    fails;
+  - just before the replace, the file's length and time are compared with those of the read. If another copy wrote
+    meanwhile, the file is read again and composed again, once.
+- **U7:**
+  - entries with an id that is no id, a count of 0 or none, or no last use stay in the tree and are written back
+    unchanged. So do unknown properties of a counted entry, and they survive a join (`ReadAgain`);
+  - `Since` is read under the lock;
+  - a use counted after the clock was set back keeps the later last use.
+
+### Tests (Core 1093, +13)
+
+- **Kept beside it and counted anew:** a theory of six damaged files, at a start. Also at a save, and a file over
+  1 MB at a save, which is not written over.
+- **A bad date in another PC's block** is written back the same (compared as JSON); this PC's block that is a number.
+- **The move** (`usage.json` a directory) fails with no temporary file left. The temporary file's own write fails
+  (now through `TemporaryPath`, as the name is per instance). Two logs have different temporary names.
+- **Another copy writes just before the replace** (an internal `BeforeReplace` hook): its block is kept, and the file
+  is written twice.
+- **No probe is left** in a folder that can be written. This one can fail, unlike the old check.
+- **Entries this version cannot read** and unknown properties, through a join.
+- **The clock set back.**
+- **The limit:** the newest gone uses stay and those on the bar all stay, and no write when other blocks fill it.
+- **App:** `UsageSaver.WaitBefore` for the first write, within, after, past 60 days, and a "last" in the future.
+- The four tests of release check U1 are unchanged, but for the per-instance temporary name. The test "a file
+  replaced by one that is not this app's … the counts wait" now expects what U2 asks: the damaged file is kept
+  beside it and the counts are written.
+- **Not tested:** a real sign-out (`EndSession` is the flush of Exit, called from `SessionEnding`), and two PCs at
+  once on one share.
+
 ## 2026-11-19 (97) — Run 197: the announcement test needs a font GDI takes
 
 Run 197 (`a179510`, entry 96) was red on one new App test. The other 402 passed, F1–F6's among them.

@@ -1,5 +1,5 @@
 using System.Text.Json;
-using System.Text.Json.Serialization;
+using System.Text.Json.Nodes;
 using DesktopIconGrid.Core.Diagnostics;
 using DesktopIconGrid.Core.Launching;
 using DesktopIconGrid.Core.Models;
@@ -16,12 +16,19 @@ public sealed record ItemUse(int Count, DateTimeOffset Last);
 /// layout history and export read and write their own files by name, and this is none of them. Only item ids and
 /// times (UTC) are stored, no path, name or parameter.
 /// <list type="bullet">
-/// <item>Read once, at start (<see cref="Load"/>). A file over <see cref="MaxFileBytes"/> or one that is not this
-/// app's is left alone, and counting goes on in memory, with one line in the log. One that cannot be read just then is
-/// read again at the first save, and its counts are joined to those counted meanwhile.</item>
+/// <item>Read once, at start (<see cref="Load"/>). A file over <see cref="MaxFileBytes"/> is not this app's: it is
+/// left alone, and counting goes on in memory, with one line in the log. One that is not JSON this app can read
+/// (empty, NUL bytes after a power cut, this PC's block not an object) is kept beside it as
+/// <c>usage.json.corrupt-&lt;date&gt;</c>, as the layout does, and this PC counts anew (0.12.1, review 28 U2). One
+/// that cannot be read just then is read again at the first save, and its counts are joined to those counted
+/// meanwhile.</item>
+/// <item>The file is read and written as a tree: other PCs' blocks, what a newer version wrote, and entries this
+/// version cannot read go back as they were, at every level (review 28 U7).</item>
 /// <item>Written by <see cref="Save"/> (the host calls it at most every 10 s after a change, and at exit, never on the
-/// UI thread), through a temporary file, beside the other PCs' blocks as the file has them then. A write that fails
-/// keeps the counts to be written at the next save (release check U1).</item>
+/// UI thread) through a temporary file of this instance's own, on the disk before it replaces the file, and read
+/// again just before that, so a copy on another PC that wrote meanwhile keeps its block (review 28 U6). A write that
+/// fails keeps the counts to be written at the next save. No file over <see cref="MaxFileBytes"/> is written: the
+/// oldest uses of items gone from the bar go first (review 28 U5).</item>
 /// <item>A folder that cannot be written at the start (a read-only portable copy) keeps the counts in memory for the
 /// session, without a notice.</item>
 /// </list>
@@ -30,7 +37,7 @@ public sealed class UsageLog
 {
     public const string FileName = "usage.json";
 
-    /// <summary>A larger file is not one of this app's: it is left alone.</summary>
+    /// <summary>A larger file is not one of this app's: it is left alone, and none is written.</summary>
     public const long MaxFileBytes = 1024 * 1024;
 
     /// <summary>The version written into the file.</summary>
@@ -39,25 +46,33 @@ public sealed class UsageLog
     /// <summary>How long after its last use the count of an item no longer on the bar is kept (an Undo, a sync that brings it back).</summary>
     public static readonly TimeSpan KeepRemoved = TimeSpan.FromDays(400);
 
-    private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web)
-    {
-        WriteIndented = true,
-        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-    };
+    private static readonly JsonSerializerOptions Json = new() { WriteIndented = true };
 
     private readonly object _gate = new();
     private readonly object _saving = new();
     private readonly Func<DateTimeOffset> _clock;
     private readonly Func<string?> _thisPc;
+
+    /// <summary>The temporary file's own part: two copies on one portable folder never share one (review 28 U6).</summary>
+    private readonly string _instance = Guid.NewGuid().ToString("N")[..12];
+
     private readonly Dictionary<Guid, ItemUse> _uses = [];
-    private Dictionary<Guid, Dictionary<string, JsonElement>?> _entryExtras = [];
-    private Dictionary<string, JsonElement>? _blockExtras;
+
+    /// <summary>The key each item had in the file, so it is written back under it.</summary>
+    private readonly Dictionary<Guid, string> _keys = [];
+
+    /// <summary>This PC's block as read: what it holds besides the counts read here, written back with them.</summary>
+    private JsonObject? _block;
+
+    private DateTimeOffset _since;
     private string? _pc;
     private bool _memoryOnly;
     private bool _dirty;
 
     /// <summary>The file could not be read at the start: read again, and joined, at the first save.</summary>
     private bool _readAgain;
+
+    private bool _tooLargeSaid;
 
     /// <param name="filePath">The file; <see langword="null"/> counts in memory only (tests, and a bar without a data folder).</param>
     /// <param name="clock">The time; UTC now by default.</param>
@@ -70,14 +85,32 @@ public sealed class UsageLog
         FilePath = filePath;
         _clock = clock ?? (() => DateTimeOffset.UtcNow);
         _thisPc = thisPc ?? (() => ThisDevice.IsOfThisMachine && !string.IsNullOrWhiteSpace(ThisDevice.Id) ? ThisDevice.Id : null);
-        Since = _clock();
+        _since = _clock();
         _memoryOnly = filePath is null;
     }
 
     public string? FilePath { get; }
 
+    /// <summary>The largest file read or written: <see cref="MaxFileBytes"/>, smaller in tests.</summary>
+    internal long MaxBytes { get; init; } = MaxFileBytes;
+
+    /// <summary>Runs after the temporary file is written and before it replaces the file (tests: another copy writes then).</summary>
+    internal Action? BeforeReplace { get; set; }
+
+    /// <summary>This instance's temporary file.</summary>
+    internal string TemporaryPath => $"{FilePath}.{_instance}.tmp";
+
     /// <summary>When counting began on this PC: the first start of 0.12.0 here (or of this run, in memory only).</summary>
-    public DateTimeOffset Since { get; private set; }
+    public DateTimeOffset Since
+    {
+        get
+        {
+            lock (_gate)
+            {
+                return _since; // a save or a join sets it on another thread (review 28 U7)
+            }
+        }
+    }
 
     /// <summary>Whether the counts live in memory only for this run.</summary>
     public bool IsMemoryOnly
@@ -100,17 +133,18 @@ public sealed class UsageLog
     /// Reads this PC's block. A PC without one starts counting now; its block, with <see cref="Since"/>, is written at
     /// the next save. Without this PC's own id (<see cref="ThisDevice.IsOfThisMachine"/> false) nothing is read or
     /// written, as for this PC's settings. Counting goes on in memory only when the folder cannot be written (a
-    /// read-only portable copy, silently) or the file is not this app's (left alone); a file that cannot be read just
-    /// now (a scanner, a sync client) is read again at the first save (release check U1).
+    /// read-only portable copy, silently) or the file is over <see cref="MaxFileBytes"/> (left alone); a file that is
+    /// not JSON this app can read is kept beside it and counting starts anew; one that cannot be read just now (a
+    /// scanner, a sync client) is read again at the first save.
     /// </summary>
     public void Load()
     {
         lock (_gate)
         {
             _uses.Clear();
-            _entryExtras = [];
-            _blockExtras = null;
-            Since = _clock();
+            _keys.Clear();
+            _block = null;
+            _since = _clock();
             _dirty = false;
             _readAgain = false;
             _pc = _thisPc() is { } pc && !string.IsNullOrWhiteSpace(pc) ? pc : null;
@@ -135,22 +169,35 @@ public sealed class UsageLog
             }
 
             _memoryOnly = false;
-            var (state, file) = Read(logProblems: true);
-            switch (state)
+            _dirty = true; // written at the first save unless the file has this PC's block as it is
+            var read = Read(logProblems: true);
+            switch (read.State)
             {
-                case FileState.NotOurs:
+                case FileState.TooLarge:
                     _memoryOnly = true; // left alone: counting goes on in memory
                     return;
                 case FileState.Unreadable:
                     _readAgain = true; // counted in memory meanwhile, and joined to the file's at the first save
-                    _dirty = true;
                     return;
-                case FileState.Read when file?.Pcs is not null && file.Pcs.TryGetValue(_pc, out var block) && block is not null:
-                    Adopt(block, merge: false);
+                case FileState.Corrupt:
+                    KeepAside(move: true); // a new file is written at the first save
                     return;
+                case FileState.Read:
+                    switch (BlockOf(read.Root!))
+                    {
+                        case JsonObject block:
+                            Adopt(block, merge: false);
+                            _dirty = false;
+                            return;
+                        case null:
+                            return; // this PC's block begins now
+                        default:
+                            KeepAside(move: false); // this PC's block is not one: kept beside it, the others are written back
+                            return;
+                    }
+
                 default:
-                    _dirty = true; // this PC's block begins now
-                    return;
+                    return; // no file yet
             }
         }
     }
@@ -160,8 +207,10 @@ public sealed class UsageLog
     {
         lock (_gate)
         {
-            var count = _uses.TryGetValue(id, out var use) ? use.Count : 0;
-            _uses[id] = new ItemUse(count == int.MaxValue ? count : count + 1, _clock());
+            var now = _clock();
+            _uses[id] = _uses.TryGetValue(id, out var use)
+                ? new ItemUse(use.Count == int.MaxValue ? use.Count : use.Count + 1, use.Last > now ? use.Last : now) // a clock set back does not move it back (U7)
+                : new ItemUse(1, now);
             _dirty = true;
         }
 
@@ -213,123 +262,271 @@ public sealed class UsageLog
                 return false;
             }
 
-            UsageBlock block;
             string pc;
             lock (_gate)
             {
                 var now = _clock();
                 foreach (var gone in _uses.Where(use => !isOnBar(use.Key) && now - use.Value.Last > KeepRemoved).Select(use => use.Key).ToList())
                 {
-                    _uses.Remove(gone);
-                    _entryExtras.Remove(gone);
+                    Forget(gone);
                 }
 
-                block = new UsageBlock
-                {
-                    Since = Since.UtcDateTime,
-                    Items = _uses.ToDictionary(
-                        use => use.Key.ToString("D"),
-                        use => (UsageEntry?)new UsageEntry { Count = use.Value.Count, Last = use.Value.Last.UtcDateTime, ExtensionData = _entryExtras.GetValueOrDefault(use.Key) },
-                        StringComparer.Ordinal),
-                    ExtensionData = _blockExtras,
-                };
                 pc = _pc;
                 _dirty = false;
             }
 
-            var (state, file) = Read(logProblems: false);
-            if (state is FileState.Unreadable or FileState.NotOurs)
+            var keptAside = false;
+            for (var attempt = 0; ; attempt++)
             {
-                MarkDirty(); // locked, or replaced, just now: never overwritten, tried again at the next save
-                return false;
-            }
+                var read = Read(logProblems: false);
+                if (read.State is FileState.Unreadable or FileState.TooLarge)
+                {
+                    MarkDirty(); // locked just now, or not this app's: never written over, tried again at the next save
+                    return false;
+                }
 
-            file ??= new UsageFile();
-            file.Version = Math.Max(file.Version, FormatVersion);
-            file.Pcs ??= new Dictionary<string, UsageBlock?>(StringComparer.Ordinal);
-            file.Pcs[pc] = block;
-            var temporary = FilePath + ".tmp";
-            try
-            {
-                File.WriteAllBytes(temporary, JsonSerializer.SerializeToUtf8Bytes(file, Json));
-                File.Move(temporary, FilePath, overwrite: true);
-                return true;
-            }
-            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-            {
-                // Locked by a scanner or a sync client for a moment: written at the next save, or at exit.
-                AppLog.Default.Debug("Usage", $"The uses could not be written yet: {ex.Message}");
-                MarkDirty();
-                return false;
+                if (read.State == FileState.Corrupt && !keptAside)
+                {
+                    if (!KeepAside(move: false))
+                    {
+                        MarkDirty(); // not written over before a copy of it is kept
+                        return false;
+                    }
+
+                    keptAside = true;
+                }
+
+                byte[] bytes;
+                lock (_gate)
+                {
+                    bytes = Compose(read.State == FileState.Read ? read.Root! : new JsonObject(), pc, isOnBar);
+                }
+
+                if (bytes.Length > MaxBytes)
+                {
+                    TooLarge(bytes.Length);
+                    MarkDirty();
+                    return false;
+                }
+
+                var temporary = TemporaryPath;
+                try
+                {
+                    using (var stream = new FileStream(temporary, FileMode.Create, FileAccess.Write, FileShare.None))
+                    {
+                        stream.Write(bytes);
+                        stream.Flush(flushToDisk: true); // on the disk before it replaces the file (U2: NUL bytes after a power cut)
+                    }
+
+                    BeforeReplace?.Invoke();
+                    if (attempt == 0 && Stamp() != read.Stamp)
+                    {
+                        Delete(temporary); // another copy wrote meanwhile: its block is read again, once
+                        continue;
+                    }
+
+                    File.Move(temporary, FilePath!, overwrite: true);
+                    return true;
+                }
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+                {
+                    // Locked by a scanner or a sync client for a moment: written at the next save, or at exit.
+                    Delete(temporary);
+                    AppLog.Default.Debug("Usage", $"The uses could not be written yet: {ex.Message}");
+                    MarkDirty();
+                    return false;
+                }
             }
         }
     }
 
     /// <summary>
     /// The first save after a start whose read failed: the file's block of this PC joined to what was counted since. False
-    /// when it still cannot be read (then counting goes on in memory only, with one line in the log) or is not this
-    /// app's.
+    /// when it still cannot be read (then counting goes on in memory only, with one line in the log) or is over the
+    /// limit.
     /// </summary>
     private bool ReadAgain()
     {
-        var (state, file) = Read(logProblems: true);
+        var read = Read(logProblems: true);
         lock (_gate)
         {
             _readAgain = false;
-            switch (state)
+            switch (read.State)
             {
-                case FileState.Unreadable or FileState.NotOurs:
+                case FileState.Unreadable or FileState.TooLarge:
                     _memoryOnly = true;
                     AppLog.Default.Info("Usage", "The usage file still cannot be read; it is left alone and uses are counted until the program ends");
                     return false;
-                case FileState.Read when file?.Pcs is not null && file.Pcs.TryGetValue(_pc!, out var block) && block is not null:
+                case FileState.Read when BlockOf(read.Root!) is JsonObject block:
                     Adopt(block, merge: true);
                     return true;
                 default:
-                    return true;
+                    return true; // none yet, or one the save keeps beside it
             }
         }
     }
 
-    /// <summary>Takes this PC's block as read: as the counts, or (<paramref name="merge"/>) added to those counted since the start.</summary>
-    private void Adopt(UsageBlock block, bool merge)
+    /// <summary>This PC's block in <paramref name="root"/>: an object, <see langword="null"/> when there is none, or what it is instead.</summary>
+    private JsonNode? BlockOf(JsonObject root) => root["pcs"] is JsonObject pcs ? pcs[_pc!] : null;
+
+    /// <summary>
+    /// Takes this PC's block as read: its counts (or, with <paramref name="merge"/>, those added to the ones counted
+    /// since the start) and the rest as it is. An entry this version cannot read (an id that is no id, no count, no last
+    /// use) stays in the block and is written back unchanged.
+    /// </summary>
+    private void Adopt(JsonObject block, bool merge)
     {
-        if (block.Since is { } since)
+        if (DateOf(block["since"]) is { } since)
         {
-            Since = Utc(since);
+            _since = since;
         }
 
-        foreach (var (key, entry) in block.Items ?? [])
+        if (block["items"] is JsonObject items)
         {
-            if (!Guid.TryParse(key, out var id) || entry is not { Count: > 0, Last: { } last })
+            foreach (var (key, node) in items)
             {
-                continue;
-            }
+                if (!Guid.TryParse(key, out var id) || node is not JsonObject entry || CountOf(entry["count"]) is not { } count || DateOf(entry["last"]) is not { } last)
+                {
+                    continue;
+                }
 
-            var read = new ItemUse(entry.Count, Utc(last));
-            _uses[id] = merge && _uses.TryGetValue(id, out var counted)
-                ? new ItemUse((int)Math.Min(int.MaxValue, (long)read.Count + counted.Count), counted.Last > read.Last ? counted.Last : read.Last)
-                : read;
-            _entryExtras[id] = entry.ExtensionData;
+                _uses[id] = merge && _uses.TryGetValue(id, out var counted)
+                    ? new ItemUse((int)Math.Min(int.MaxValue, (long)count + counted.Count), counted.Last > last ? counted.Last : last)
+                    : new ItemUse(count, last);
+                _keys[id] = key;
+            }
         }
 
-        _blockExtras = block.ExtensionData;
+        _block = (JsonObject)block.DeepClone();
     }
 
-    /// <summary>Whether the file's folder takes a file at all, tried with a probe that is deleted at once.</summary>
+    /// <summary>Drops an item's uses, here and in the block written back.</summary>
+    private void Forget(Guid id)
+    {
+        _uses.Remove(id);
+        if (_keys.Remove(id, out var key) && _block?["items"] is JsonObject items)
+        {
+            items.Remove(key);
+        }
+    }
+
+    /// <summary>
+    /// The file with this PC's block as counted here and the rest of <paramref name="root"/> as it was. Over the limit,
+    /// the oldest uses of items gone from the bar are dropped until it fits (review 28 U5).
+    /// </summary>
+    private byte[] Compose(JsonObject root, string pc, Func<Guid, bool> isOnBar)
+    {
+        var version = root["version"] is JsonValue value && value.TryGetValue<int>(out var number) ? number : 0;
+        root["version"] = Math.Max(version, FormatVersion);
+        if (root["pcs"] is not JsonObject pcs)
+        {
+            pcs = [];
+            root["pcs"] = pcs;
+        }
+
+        pcs[pc] = Block();
+        var bytes = JsonSerializer.SerializeToUtf8Bytes(root, Json);
+        var gone = new Queue<Guid>(_uses.Where(use => !isOnBar(use.Key)).OrderBy(use => use.Value.Last).Select(use => use.Key));
+        while (bytes.Length > MaxBytes && gone.Count > 0)
+        {
+            // About the bytes each entry takes, so the file is written again only a few times.
+            var over = bytes.Length - MaxBytes;
+            for (long freed = 0; freed < over && gone.Count > 0;)
+            {
+                var id = gone.Dequeue();
+                freed += 96 + (_keys.GetValueOrDefault(id) ?? id.ToString("D")).Length;
+                Forget(id);
+            }
+
+            pcs[pc] = Block();
+            bytes = JsonSerializer.SerializeToUtf8Bytes(root, Json);
+        }
+
+        return bytes;
+    }
+
+    /// <summary>This PC's block: what it held as read, with the counts and the start of counting of here.</summary>
+    private JsonObject Block()
+    {
+        var block = _block?.DeepClone() as JsonObject ?? [];
+        block["since"] = _since.UtcDateTime;
+        if (block["items"] is not JsonObject items)
+        {
+            items = [];
+            block["items"] = items;
+        }
+
+        foreach (var (id, use) in _uses)
+        {
+            var key = _keys.GetValueOrDefault(id) ?? id.ToString("D");
+            if (items[key] is not JsonObject entry)
+            {
+                entry = [];
+                items[key] = entry;
+            }
+
+            entry["count"] = use.Count;
+            entry["last"] = use.Last.UtcDateTime;
+        }
+
+        return block;
+    }
+
+    private void TooLarge(int length)
+    {
+        if (!_tooLargeSaid)
+        {
+            _tooLargeSaid = true;
+            AppLog.Default.Warning("Usage", $"The uses would take {length} bytes, more than {MaxBytes}; they are not written while that lasts");
+        }
+    }
+
+    /// <summary>
+    /// Whether the file's folder takes a file at all, with a probe the system deletes when it is closed, as
+    /// <see cref="DataLocation"/>'s: a delete that fails is not "cannot write", and no probe is left behind (review 28 U4).
+    /// </summary>
     private bool CanWriteFolder()
     {
         var folder = Path.GetDirectoryName(FilePath!)!;
-        var probe = Path.Combine(folder, $"{FileName}.{Guid.NewGuid():N}.probe");
         try
         {
             Directory.CreateDirectory(folder);
-            File.WriteAllBytes(probe, []);
-            File.Delete(probe);
+            using (new FileStream(Path.Combine(folder, $"{FileName}.{Guid.NewGuid():N}.probe"), FileMode.CreateNew, FileAccess.Write, FileShare.None, 1, FileOptions.DeleteOnClose))
+            {
+            }
+
             return true;
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Keeps the file beside it as <c>usage.json.corrupt-&lt;date&gt;</c>, as the layout does: moved when a new file
+    /// takes its place, copied when the rest of it is written back. False when that could not be done.
+    /// </summary>
+    private bool KeepAside(bool move)
+    {
+        var aside = $"{FilePath}.corrupt-{DateTime.Now:yyyyMMdd-HHmmss}";
+        try
+        {
+            if (move)
+            {
+                File.Move(FilePath!, aside);
+            }
+            else
+            {
+                File.Copy(FilePath!, aside);
+            }
+
+            AppLog.Default.Info("Usage", $"The usage file could not be read as this app's; it is kept as {Path.GetFileName(aside)} and this PC counts anew");
+            return true;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            AppLog.Default.Debug("Usage", $"The usage file could not be kept as {Path.GetFileName(aside)}: {ex.Message}");
             return false;
         }
     }
@@ -348,41 +545,98 @@ public sealed class UsageLog
         Missing,
         Read,
 
-        /// <summary>Too large, or not this app's JSON: left alone for good.</summary>
-        NotOurs,
+        /// <summary>Over the limit: not this app's, left alone for good.</summary>
+        TooLarge,
+
+        /// <summary>Not JSON this app can read: kept beside it, and a new one written.</summary>
+        Corrupt,
 
         /// <summary>There, but it could not be read just now (a lock).</summary>
         Unreadable,
     }
 
-    /// <summary>The file, if it is there and this app's.</summary>
-    private (FileState State, UsageFile? File) Read(bool logProblems)
+    /// <summary>A read: what it found, the tree when it is the app's, and the file's length and time then.</summary>
+    private readonly record struct ReadResult(FileState State, JsonObject? Root, (long Length, DateTime Written) Stamp);
+
+    private (long Length, DateTime Written) Stamp()
     {
+        var info = new FileInfo(FilePath!);
+        return info.Exists ? (info.Length, info.LastWriteTimeUtc) : default;
+    }
+
+    private ReadResult Read(bool logProblems)
+    {
+        (long Length, DateTime Written) stamp = default;
         try
         {
             var info = new FileInfo(FilePath!);
             if (!info.Exists)
             {
-                return (FileState.Missing, null);
+                return new ReadResult(FileState.Missing, null, default);
             }
 
-            if (info.Length > MaxFileBytes)
+            stamp = (info.Length, info.LastWriteTimeUtc);
+            if (info.Length > MaxBytes)
             {
                 Log(logProblems, $"The usage file is {info.Length} bytes, more than this app writes; it is left alone and uses are counted until the program ends");
-                return (FileState.NotOurs, null);
+                return new ReadResult(FileState.TooLarge, null, stamp);
             }
 
-            return (FileState.Read, JsonSerializer.Deserialize<UsageFile>(File.ReadAllBytes(FilePath!), Json));
+            if (JsonNode.Parse(File.ReadAllBytes(FilePath!)) is JsonObject root && root["pcs"] is null or JsonObject)
+            {
+                Walk(root); // every object built now, so a property named twice is found here, not later
+                return new ReadResult(FileState.Read, root, stamp);
+            }
+
+            Log(logProblems, "The usage file is not the JSON this app writes");
+            return new ReadResult(FileState.Corrupt, null, stamp);
         }
-        catch (Exception ex) when (ex is JsonException or NotSupportedException or InvalidOperationException)
+        catch (Exception ex) when (ex is JsonException or ArgumentException or InvalidOperationException or FormatException)
         {
-            Log(logProblems, $"The usage file is not this app's; it is left alone and uses are counted until the program ends: {ex.Message}");
-            return (FileState.NotOurs, null);
+            Log(logProblems, $"The usage file is not the JSON this app writes: {ex.Message}");
+            return new ReadResult(FileState.Corrupt, null, stamp);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
             Log(logProblems, $"The usage file could not be read just now: {ex.Message}");
-            return (FileState.Unreadable, null);
+            return new ReadResult(FileState.Unreadable, null, default);
+        }
+    }
+
+    private static void Walk(JsonNode? node)
+    {
+        switch (node)
+        {
+            case JsonObject members:
+                foreach (var (_, member) in members)
+                {
+                    Walk(member);
+                }
+
+                break;
+            case JsonArray items:
+                foreach (var item in items)
+                {
+                    Walk(item);
+                }
+
+                break;
+        }
+    }
+
+    private static int? CountOf(JsonNode? node) => node is JsonValue value && value.TryGetValue<int>(out var count) && count > 0 ? count : null;
+
+    private static DateTimeOffset? DateOf(JsonNode? node) => node is JsonValue value && value.TryGetValue<DateTime>(out var time) ? Utc(time) : null;
+
+    private static void Delete(string path)
+    {
+        try
+        {
+            File.Delete(path);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            AppLog.Default.Debug("Usage", $"{Path.GetFileName(path)} could not be deleted: {ex.Message}");
         }
     }
 
@@ -400,37 +654,6 @@ public sealed class UsageLog
         DateTimeKind.Local => new DateTimeOffset(time.ToUniversalTime(), TimeSpan.Zero),
         _ => new DateTimeOffset(DateTime.SpecifyKind(time, DateTimeKind.Utc), TimeSpan.Zero),
     };
-
-    /// <summary>The file: each PC's block by its id, and what a newer version wrote.</summary>
-    private sealed class UsageFile
-    {
-        public int Version { get; set; } = FormatVersion;
-
-        public Dictionary<string, UsageBlock?>? Pcs { get; set; }
-
-        [JsonExtensionData]
-        public Dictionary<string, JsonElement>? ExtensionData { get; set; }
-    }
-
-    private sealed class UsageBlock
-    {
-        public DateTime? Since { get; set; }
-
-        public Dictionary<string, UsageEntry?>? Items { get; set; }
-
-        [JsonExtensionData]
-        public Dictionary<string, JsonElement>? ExtensionData { get; set; }
-    }
-
-    private sealed class UsageEntry
-    {
-        public int Count { get; set; }
-
-        public DateTime? Last { get; set; }
-
-        [JsonExtensionData]
-        public Dictionary<string, JsonElement>? ExtensionData { get; set; }
-    }
 }
 
 /// <summary>What counts as a use, and what "not used in 90 days" means (0.12.0 WP4).</summary>

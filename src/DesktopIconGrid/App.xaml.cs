@@ -311,6 +311,7 @@ public partial class App : Application
         _inbox.HasSendIcon = () => viewModel.Model.SpecialIconsOf(SpecialIconKinds.SendToDevice).Any(icon => trust.IsApproved(FolderInbox.IconMark(icon.Id)));
         var window = new MainWindow(viewModel) { Inbox = _inbox };
         MainWindow = window;
+        SessionEnding += (_, _) => window.EndSession(); // sign-out or shutdown: what waits is written first (review 28 U1)
         window.TrayReady += (_, _) =>
         {
             dialogs.Notifier = window.TryNotify;
