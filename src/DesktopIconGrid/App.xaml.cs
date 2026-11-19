@@ -259,7 +259,7 @@ public partial class App : Application
         SystemEvents.UserPreferenceChanged += OnUserPreferenceChanged;
         SystemEvents.TimeChanged += OnTimeChanged;
 
-        _sync = new SyncCoordinator(syncService, viewModel, dialogs.Confirm) { Notify = dialogs.Notify };
+        _sync = new SyncCoordinator(syncService, viewModel, dialogs.Confirm) { Notify = dialogs.Show };
         dialogs.SyncViewModelFactory = () => new SyncViewModel(_sync, dialogs);
         viewModel.FlushBeforeExit = () => Task.WhenAll(_sync.FlushPendingAsync(TimeSpan.FromSeconds(5)), usageSaver.FlushAsync());
         _ = Task.Run(() => DriveCache.Purge(cacheDirectory, TimeSpan.FromDays(1)));

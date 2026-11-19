@@ -176,6 +176,24 @@ public class SyncCoordinatorTests
     }
 
     [Fact]
+    public async Task A_failed_upload_is_a_warning_whose_click_opens_the_Sync_window()
+    {
+        // 0.12.1 (review 28 D2): sync problems opened the log; the Sync window shows them and what to do.
+        var (coordinator, drive, host) = Create();
+        var notices = new List<Notice>();
+        coordinator.Notify = notices.Add;
+        drive.Gate = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        drive.Gate.SetException(new HttpRequestException("offline"));
+        host.Change();
+
+        await coordinator.UploadNowAsync();
+
+        var notice = Assert.Single(notices);
+        Assert.Equal((Strings.Sync_Notification, NoticeKind.Warning, NoticeTarget.Sync), (notice.Title, notice.Kind, notice.Target));
+        Assert.Equal(string.Format(Strings.Sync_UploadFailed, "offline"), notice.Message);
+    }
+
+    [Fact]
     public async Task Flush_with_nothing_pending_returns_at_once()
     {
         var (coordinator, drive, _) = Create();

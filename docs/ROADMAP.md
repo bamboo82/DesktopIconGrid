@@ -264,6 +264,7 @@ folder.
 - **0.12.0 "Find it, see it"** (released 2026-11-18): notices with a kind and a target (the toast with actions waits
   for 1.0.0's installer), a shorter Parameters hint, symbol icons (glyph icons) with a tile colour, usage columns,
   and Chinese text in Taipei Sans TC Light (the owner's request of 2026-11-18), installed for the user on a click.
+- **0.12.1** (in progress): the review fixes after 0.12.0.
 - **Next**: nothing planned yet.
 - **1.0.0 "Ship it"**: the existing backlog — installer (MSIX/winget), code signing, toast notifications with
   actions.

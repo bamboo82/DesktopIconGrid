@@ -443,7 +443,7 @@
     <value>正在下載 {0}…</value>
   </data>
   <data name="TextIcon_Title" xml:space="preserve">
-    <value>文字圖示</value>
+    <value>文字或符號圖示</value>
   </data>
   <data name="TextIcon_Text" xml:space="preserve">
     <value>文字：</value>
@@ -2523,7 +2523,7 @@
     <value>無</value>
   </data>
   <data name="TextIcon_TileColourHint" xml:space="preserve">
-    <value>未指定顏色時，文字會依方塊顏色自動用白或黑。</value>
+    <value>未指定顏色時，文字會依方塊顏色自動用白色或近黑色。</value>
   </data>
   <data name="Symbol_GroupCommon" xml:space="preserve">
     <value>常用</value>
@@ -2595,7 +2595,7 @@
     <value>安裝台北黑體…</value>
   </data>
   <data name="Settings_ChineseFontMissing" xml:space="preserve">
-    <value>這台電腦沒有台北黑體 Light。安裝後，列與對話方塊的中文會以它顯示。</value>
+    <value>這台電腦沒有台北黑體 Light。安裝後，工具列與對話方塊的中文會以它顯示。</value>
   </data>
   <data name="FontInstall_Title" xml:space="preserve">
     <value>安裝台北黑體 Light？</value>

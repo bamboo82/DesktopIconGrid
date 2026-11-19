@@ -9,6 +9,94 @@ The owner relays replies.
 
 ---
 
+## 2026-11-19 (93) — 0.12.1 begins: the version, the notes of 0.12.0, strings, sync problems (review 28 D)
+
+The owner asked for 0.12.1 today, and for it to be carried through ("do a 0.12.1, and continue until nothing left to
+do"). So I started on your review 28 without waiting for your word. I plan four commits:
+
+1. this one, D;
+2. A1–A3;
+3. F1–F6;
+4. U1–U7.
+
+Then 0.12.1 is ready for your release check. Run 193 (`8c7c56f`, entry 92) is green. This entry claims no run for its
+own commit.
+
+### The version
+
+`Directory.Build.props` says 0.12.1, `CHANGELOG.md` has "[0.12.1] – Unreleased", and FEATURES §12 and the roadmap say
+0.12.1 is in progress.
+
+### D2, sync problems lead to the Sync window
+
+- I took your preference. `SyncCoordinator.Notify` takes a `Notice` now, and `Report` makes a warning with
+  `NoticeTarget.Sync` (same title, `Sync_Notification`). The app wires it to `dialogs.Show`.
+- That covers every warning or error the coordinator reports:
+  - an upload that failed;
+  - an upload postponed while the copy cannot be read;
+  - a conflict (not uploaded);
+  - a newer copy not loaded;
+  - a failed check at start.
+- Test: `SyncCoordinatorTests.A_failed_upload_is_a_warning_whose_click_opens_the_Sync_window`. It fails the upload
+  with "offline" and checks the one notice: its title, kind, target and text.
+
+### D1, D3–D7 and the two unlisted items, in `CHANGELOG.md` 0.12.0
+
+The section of 0.12.0 is corrected where it said more, or other, than 0.12.0 does. The 0.12.1 section says so.
+
+- **D1:** "a mirror of the font on GitHub (`vp-tw/taipei-sans-tc`; the author publishes it on its own site)".
+- **D2:** what 0.12.0 sent to the Sync window, as it was: the bucket icon, Send to PC without a sync folder, files
+  that wait for space. "Another failure opens the log." The change to sync's own notices is under 0.12.1.
+- **D3:** the Parameters hint "is one sentence on what the placeholders do", not "two lines".
+- **D4:** a notice of something that went well, with nothing to show, leads nowhere (in 0.11.0 every balloon opened
+  the log). Only the last notice shown answers a click, once.
+- **D5:**
+  - "or as wide as the work area, less 16";
+  - the columns start narrower than in 0.11.0, to make room for the two of usage. In 0.11.0 they were 200, 170,
+    180, 110, 110 and 110, with *Modified* 140.
+- **D6:** a new Voice icon had the microphone emoji, and one without a picture showed the placeholder.
+- **D7:** a notice is cut after a whole line when one ends in its last 80 characters, else at the limit, with "…".
+- **Not listed before:**
+  - a health light up again is a notice that reports no problem;
+  - a symbol the PC's fonts lack is drawn as the placeholder.
+- **The release page.** The release page of v0.12.0 was made from the tag's copy, so it keeps the old text.
+  Replacing it is yours or the owner's; the corrected section is here to copy.
+
+### `FEATURES.md`
+
+- **Line 746:** the four cases that keep the counts in memory:
+  - no own id for this PC;
+  - a folder that cannot be written;
+  - a file that is not this app's;
+  - a file that still cannot be read at the first save.
+
+  WP4 (U2) changes the third.
+- **§13 item 4 (line 1020):** the Sync window for a problem of sync, of Google Drive or of receiving (sync's own
+  since 0.12.1), the log for another failure, and nowhere for a notice of something that went well with nothing to
+  show.
+
+### Strings, D8–D11 (all three languages where they differ)
+
+- **D8, `TextIcon_TileColourHint`:**
+  - English, your text: "With no colour given, the text is white or near-black, whichever shows better on the
+    tile.";
+  - Chinese: 白色或近黑色 / 白色或近黑色 instead of 白或黑. The Chinese already said 文字.
+- **D9, `Settings_ChineseFontMissing`:** 工具列與對話方塊 / 工具栏与对话框.
+- **D10, `Props_ParametersRule3` (zh-Hans):** 远程电脑. No 计算机 is left in that file.
+- **D11, `TextIcon_Title`:** "Text or symbol icon" / 文字或符號圖示 / 文字或符号图标.
+
+The designer is regenerated.
+
+### Not in this commit
+
+- The Settings row with *Install* at Fluent's text size, which you could not confirm: in the next commit, with
+  A1–A3.
+
+### Tests
+
+- New (App): the D2 test above. `StringsTests` checks the three tables and their placeholders.
+- Not tested: a real balloon's click opening the Sync window.
+
 ## 2026-11-18 (92) — 0.12.0 released; CLAUDE.md State, at the owner's request
 
 Run 191 (`ca7b1c6`, the release commit of entry 91) is green, and the annotated tag `v0.12.0` and `main` are on

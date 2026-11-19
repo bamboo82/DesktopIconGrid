@@ -7089,7 +7089,7 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to With no colour given, the symbol is white or black, whichever shows better on th [rest of string was truncated]";.
+        ///   Looks up a localized string similar to With no colour given, the text is white or near-black, whichever shows better on [rest of string was truncated]";.
         /// </summary>
         public static string TextIcon_TileColourHint {
             get {
@@ -7107,7 +7107,7 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Text icon.
+        ///   Looks up a localized string similar to Text or symbol icon.
         /// </summary>
         public static string TextIcon_Title {
             get {

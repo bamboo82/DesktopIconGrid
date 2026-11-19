@@ -3,6 +3,23 @@
 All notable changes to Desktop Icon Grid. The format follows [Keep a Changelog](https://keepachangelog.com/);
 version numbers follow [Semantic Versioning](https://semver.org/).
 
+## [0.12.1] – Unreleased
+
+What the review of 0.12.0 found after the release (review 28). The notes of 0.12.0 below are corrected where they
+said more, or other, than 0.12.0 does.
+
+### Changed
+
+- A sync problem's notice (an upload that failed or has to wait, a newer copy not loaded, the check at start) opens
+  the Sync window when clicked; it opened the log.
+
+### Fixed
+
+- The Text icon window is called *Text or symbol icon*, like the button that opens it, and its hint on the tile
+  colour says the text is white or near-black (it said the symbol, white or black).
+- Chinese wording: 工具列 / 工具栏 in the Settings line about the Chinese font, and 电脑 in a placeholder rule
+  (Simplified Chinese).
+
 ## [0.12.0] – 2026-11-18
 
 "Find it, see it": notices that say what they are and lead somewhere, a Parameters hint you can read, symbol icons,
@@ -13,7 +30,8 @@ and how often each shortcut is used.
 - **Symbol icons**: *Text or symbol icon…* in Properties has a *Symbol* side with 197 symbols of Windows' own icon
   font (Segoe Fluent Icons, or Segoe MDL2 Assets on Windows 10) in nine groups, with a search by their English
   names (Down chooses the first one found; Enter takes it when it is the only one). A symbol is scaled to its tile,
-  so it grows with the icon size, and stands on the bar without a frame.
+  so it grows with the icon size, and stands on the bar without a frame. A symbol the PC's fonts lack (an old
+  Windows 10) is drawn as the placeholder icon.
 - **Tile colour** for text and symbol icons: one of the Appearance swatches, any `#RRGGBB`, or none; without a text
   colour of its own the text is white or near-black, whichever has the higher contrast with it.
 - **Usage in *Edit names***: how often each shortcut was used on this PC and when last, in two columns that sort,
@@ -21,25 +39,30 @@ and how often each shortcut is used.
 - **Chinese text in Taipei Sans TC Light** (台北黑體, SIL Open Font License 1.1) when the PC has it: Latin letters,
   digits and sizes stay as they were. Settings ▸ Appearance ▸ *Chinese text* chooses it or the Windows font. On a PC
   without it, a button asks first, then downloads the one font file, `TaipeiSansTCBeta-Light.ttf` (20.3 MB), from
-  the font's own GitHub repository, checks its SHA-256, and installs it for your Windows account only. The font is
-  not part of the download of the app. In text the app draws bold, the Latin stays bold and the Chinese is Light,
+  a mirror of the font on GitHub (`vp-tw/taipei-sans-tc`; the author publishes it on its own site), checks its
+  SHA-256, and installs it for your Windows account only. The font is not part of the download of the app. In text the app draws bold, the Latin stays bold and the Chinese is Light,
   the one weight installed.
 
 ### Changed
 
-- Notices: a notice that reports no problem (a file received, a timer's phase, files sent) shows the information
-  icon instead of the warning icon, and is not shown while Windows holds notifications back (quiet time; it is in
-  the log); a warning shows at once as before. A click on a notice goes where it is about: a received file is
-  selected in its folder, a problem with Google Drive or receiving opens the Sync window, a timer's phase shows the
-  bar, a failure opens the log. A notice too long for the balloon is cut after a whole line. Files received from
-  one PC in one look make one notice that lists them, not one notice each; files that wait for disk space make one
-  warning per PC, with how many more wait, after the notice of the files received.
-- *Edit names* opens 1,160 wide (or as wide as the screen) and can then be sized and maximised freely; every column
-  keeps a width it can be read at, and a narrow window scrolls sideways instead of squeezing one.
-- Properties: the hint under *Parameters* is two lines; the rules for placeholder values are behind *More*, as a
-  list, and open by themselves while the parameters are refused.
-- Send to PC shows a one-colour Send symbol instead of the outbox emoji, and Voice the Microphone symbol (it showed
-  the placeholder); both grow with the icon size. Icons that still have the emoji of 0.11.0 are drawn with the
+- Notices: a notice that reports no problem (a file received, a timer's phase, files sent, a health light up
+  again) shows the information icon instead of the warning icon, and is not shown while Windows holds
+  notifications back (quiet time; it is in the log); a warning shows at once as before. A click on a notice goes
+  where it is about: a received file is selected in its folder; a problem of a bucket icon, of Send to PC without
+  a sync folder or of files that wait for disk space opens the Sync window; a timer's phase shows the bar; another
+  failure opens the log; a notice of something that went well, with nothing to show, leads nowhere (in 0.11.0
+  every balloon opened the log). Only the last notice shown answers a click, once. A notice too long for the
+  balloon is cut after a whole line when one ends in its last 80 characters, else at the limit, with "…". Files
+  received from one PC in one look make one notice that lists them, not one notice each; files that wait for disk
+  space make one warning per PC, with how many more wait, after the notice of the files received.
+- *Edit names* opens 1,160 wide (or as wide as the work area, less 16) and can then be sized and maximised freely.
+  Its columns start narrower, to make room for the two of usage; each keeps a width it can be read at, and a
+  narrow window scrolls sideways instead of squeezing one.
+- Properties: the hint under *Parameters* is one sentence on what the placeholders do; the rules for placeholder
+  values are behind *More*, as a list, and open by themselves while the parameters are refused.
+- Send to PC shows a one-colour Send symbol instead of the outbox emoji, and Voice the Microphone symbol (a new
+  Voice icon had the microphone emoji, and one without a picture showed the placeholder); both grow with the icon
+  size. Icons that still have the emoji of 0.11.0 are drawn with the
   symbol; their layout is not changed.
 - With labels shown, a number tile shows the number alone: the label under it names the tile, which the caption
   inside it said a second time.

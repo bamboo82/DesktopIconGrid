@@ -66,7 +66,11 @@ public sealed class SyncCoordinator : ObservableObject
         private set => Report(value, LogLevel.Info);
     }
 
-    /// <summary>Sets <see cref="Status"/>, logs it at <paramref name="level"/> and, for warnings and errors, raises <see cref="Notify"/>.</summary>
+    /// <summary>
+    /// Sets <see cref="Status"/>, logs it at <paramref name="level"/> and, for warnings and errors, raises <see cref="Notify"/>
+    /// with a warning whose click opens the Sync window, where the problem is shown and can be dealt with (0.12.1, review
+    /// 28 D2; before, it opened the log).
+    /// </summary>
     private void Report(string status, LogLevel level)
     {
         if (!SetProperty(ref _status, status, nameof(Status)) || status.Length == 0)
@@ -78,11 +82,11 @@ public sealed class SyncCoordinator : ObservableObject
         {
             case LogLevel.Error:
                 AppLog.Default.Error("Sync", status);
-                Notify?.Invoke(Strings.Sync_Notification, status);
+                Notify?.Invoke(Problem(status));
                 break;
             case LogLevel.Warning:
                 AppLog.Default.Warning("Sync", status);
-                Notify?.Invoke(Strings.Sync_Notification, status);
+                Notify?.Invoke(Problem(status));
                 break;
             default:
                 AppLog.Default.Info("Sync", status);
@@ -91,7 +95,10 @@ public sealed class SyncCoordinator : ObservableObject
     }
 
     /// <summary>Where failures and conflicts are announced without interrupting (the tray balloon); optional.</summary>
-    public Action<string, string>? Notify { get; set; }
+    public Action<Notice>? Notify { get; set; }
+
+    /// <summary>A problem of sync: a warning that leads to the Sync window.</summary>
+    internal static Notice Problem(string status) => new(Strings.Sync_Notification, status, NoticeKind.Warning, NoticeTarget.Sync);
 
     /// <summary>True while an upload is running.</summary>
     public bool IsUploading => _current is { IsCompleted: false };

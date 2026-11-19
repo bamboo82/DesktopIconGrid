@@ -443,7 +443,7 @@ Made by a newer version of Desktop Icon Grid; kept as a placeholder.</value>
     <value>Downloading {0}…</value>
   </data>
   <data name="TextIcon_Title" xml:space="preserve">
-    <value>Text icon</value>
+    <value>Text or symbol icon</value>
   </data>
   <data name="TextIcon_Text" xml:space="preserve">
     <value>Text:</value>
@@ -2523,7 +2523,7 @@ Details are in {1}.</value>
     <value>None</value>
   </data>
   <data name="TextIcon_TileColourHint" xml:space="preserve">
-    <value>With no colour given, the symbol is white or black, whichever shows better on the tile.</value>
+    <value>With no colour given, the text is white or near-black, whichever shows better on the tile.</value>
   </data>
   <data name="Symbol_GroupCommon" xml:space="preserve">
     <value>Common</value>

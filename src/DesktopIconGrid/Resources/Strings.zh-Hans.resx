@@ -443,7 +443,7 @@
     <value>正在下载 {0}…</value>
   </data>
   <data name="TextIcon_Title" xml:space="preserve">
-    <value>文字图标</value>
+    <value>文字或符号图标</value>
   </data>
   <data name="TextIcon_Text" xml:space="preserve">
     <value>文字：</value>
@@ -2499,7 +2499,7 @@
     <value>程序可能把值当成命令执行时，会让值变成命令的字符会被拒绝：批处理文件或 cmd.exe 的 " % ! ^ &amp; | &lt; &gt;，经由 WSL 另加 $ 与 `，Windows 终端的 ;，ssh 的主机则是 user@host 与端口用不到的字符。在 PowerShell 脚本文字与 ssh 或 plink 发送的命令中，值只能含字母、数字、空格与 . _ - \ / :。</value>
   </data>
   <data name="Props_ParametersRule3" xml:space="preserve">
-    <value>程序会当成选项的值会被拒绝：在参数开头以“-”开始（除非前面有“--”），或以“/”开始（Linux 外壳、远程计算机或 PowerShell 的命令除外，其中路径可以用它开头）。超过一行的值也会被拒绝。</value>
+    <value>程序会当成选项的值会被拒绝：在参数开头以“-”开始（除非前面有“--”），或以“/”开始（Linux 外壳、远程电脑或 PowerShell 的命令除外，其中路径可以用它开头）。超过一行的值也会被拒绝。</value>
   </data>
   <data name="Props_ParametersRule4" xml:space="preserve">
     <value>在其他程序的代码中（python -c、node -e、bash -c），或含有命令或文件的 ssh 选项中（-o、-F、-proxycmd、-m），值就是代码：请勿在其中使用占位符。</value>
@@ -2523,7 +2523,7 @@
     <value>无</value>
   </data>
   <data name="TextIcon_TileColourHint" xml:space="preserve">
-    <value>未指定颜色时，文字会依方块颜色自动用白或黑。</value>
+    <value>未指定颜色时，文字会依方块颜色自动用白色或近黑色。</value>
   </data>
   <data name="Symbol_GroupCommon" xml:space="preserve">
     <value>常用</value>
@@ -2595,7 +2595,7 @@
     <value>安装台北黑体…</value>
   </data>
   <data name="Settings_ChineseFontMissing" xml:space="preserve">
-    <value>这台电脑没有台北黑体 Light。安装后，栏与对话框的中文会以它显示。</value>
+    <value>这台电脑没有台北黑体 Light。安装后，工具栏与对话框的中文会以它显示。</value>
   </data>
   <data name="FontInstall_Title" xml:space="preserve">
     <value>安装台北黑体 Light？</value>

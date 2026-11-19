@@ -743,7 +743,7 @@ warnings and errors. The last 2000 entries stay in memory and all of them are ap
 | Show/hide hotkey | none (set in Settings; needs Ctrl, Alt or Win) |
 | Show-at-pointer hotkey | none (needs Ctrl, Alt or Win, and a combination other than the show/hide one) |
 | Voice hotkey and voice language | none, and the bar's language (0.11.0); kept on this PC in `this-pc.json`, never in the layout, so a synced, restored or imported bar cannot set them |
-| Usage counts | kept on this PC in `usage.json` next to the layout (0.12.0): one block per PC, item ids and UTC times only, written at most every 10 s and at exit; never synced, restored, imported or exported, and a removed item's count goes 400 days after its last use. A write that fails (the file held for a moment) is tried again at the next save and at exit; a file that cannot be read at the start is read again at the first save and its counts joined; only a folder that cannot be written keeps the counts in memory for the session |
+| Usage counts | kept on this PC in `usage.json` next to the layout (0.12.0): one block per PC, item ids and UTC times only, written at most every 10 s and at exit; never synced, restored, imported or exported, and a removed item's count goes 400 days after its last use. A write that fails (the file held for a moment) is tried again at the next save and at exit; a file that cannot be read at the start is read again at the first save and its counts joined. The counts stay in memory for the session when this PC's own id cannot be read, the folder cannot be written, the file is not this app's (over 1 MB, or not its JSON), or it still cannot be read at the first save |
 | Keys in the bar | New shortcut Ctrl+N, New group Ctrl+G, Settings Ctrl+, , Find Ctrl+F, Undo remove Ctrl+Z, Remove (the focused icon) Delete, Properties (the focused icon) F2; each can be changed or turned off (Backspace), with Ctrl, Alt or Win unless it is an F-key, Delete or Insert, and no two actions or a system-wide hotkey may share one; menus show the current key; Escape stays fixed (0.9.0) |
 | Transparency | 0 % (opaque) |
 | Close button hides to tray | on |
@@ -957,6 +957,10 @@ through Google Drive, and voice launch.
 icons with a tile colour, usage columns in the names table, and Chinese text in Taipei Sans TC Light, installed on a
 click (§13 item 3).
 
+**0.12.1** *(in progress)* — what the review of 0.12.0 found after the release: English texts that are cut, the
+font install, usage counts at sign-out and after a damaged file, sync problems that lead to the Sync window, and
+the notes of 0.12.0.
+
 **Next** — nothing planned yet.
 
 **1.0.0 "Ship it"** — the existing backlog: installer (MSIX/winget), code signing, and the Windows toast with
@@ -1017,8 +1021,9 @@ Still open, in the order they should be taken:
    phase, files sent) shows the information icon and is not shown at all during Windows' quiet time (it is
    only in the log then), a warning shows the warning icon at once; files received from one PC in one look make
    one notice that lists them; a click on the balloon goes where the notice is about (the received file, or the
-   first of several, selected in its folder, the Sync window for a problem with Google Drive or receiving, the
-   bar for a timer, the log for a failure) and only for the last notice, once. A text too long for the balloon (255 characters) is cut after a
+   first of several, selected in its folder; the Sync window for a problem of sync, of Google Drive or of
+   receiving, sync's own since 0.12.1; the bar for a timer; the log for another failure; nowhere for a notice of
+   something that went well, with nothing to show) and only for the last notice, once. A text too long for the balloon (255 characters) is cut after a
    whole line when there is one in its last 80 characters. Still open: a toast with actions instead of the
    classic balloon (planned for 1.0.0: it needs the app registered with Windows, which the installer does and a
    portable copy must not).
