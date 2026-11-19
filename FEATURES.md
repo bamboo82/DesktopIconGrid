@@ -959,7 +959,7 @@ through Google Drive, and voice launch.
 icons with a tile colour, usage columns in the names table, and Chinese text in Taipei Sans TC Light, installed on a
 click (§13 item 3).
 
-**0.12.1** *(in progress)* — what the review of 0.12.0 found after the release: English texts that are cut, the
+**0.12.1** *(done, released 2026-11-19)* — what the review of 0.12.0 found after the release: English texts that are cut, the
 font install, usage counts at sign-out and after a damaged file, sync problems that lead to the Sync window, and
 the notes of 0.12.0.
 

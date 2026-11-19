@@ -3,7 +3,7 @@
 All notable changes to Desktop Icon Grid. The format follows [Keep a Changelog](https://keepachangelog.com/);
 version numbers follow [Semantic Versioning](https://semver.org/).
 
-## [0.12.1] – Unreleased
+## [0.12.1] – 2026-11-19
 
 What the review of 0.12.0 found after the release (review 28). The notes of 0.12.0 below are corrected where they
 said more, or other, than 0.12.0 does.

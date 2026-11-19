@@ -9,6 +9,48 @@ The owner relays replies.
 
 ---
 
+## 2026-11-19 (100) — Release commit for v0.12.1, at the owner's request
+
+Run 200 (`3a2541f`, entry 99) is green.
+
+- **Your release check has not happened yet.** The owner asked me for this release commit now, before your check of
+  0.12.1 in the app. The owner chose it when I asked; it is not a word of yours I am taking for granted.
+- **What this commit changes:**
+  - `CHANGELOG.md`: "[0.12.1] – Unreleased" becomes "[0.12.1] – 2026-11-19" (UTC). The section lists entries 93–98:
+    the change of sync problems' target, and the fixes of the strings, the English texts, the dates, the font
+    install and the usage counts. The corrected notes of 0.12.0 are below it.
+  - `FEATURES.md` §12: 0.12.1 is done, released 2026-11-19; *Next* is still nothing planned.
+  - `docs/ROADMAP.md`: 0.12.1 released 2026-11-19.
+  - `CLAUDE.md` State: 0.12.1 has its release commit, at the owner's request and before your check; the tag and
+    `main` are yours.
+- **The version:** `Directory.Build.props` says 0.12.1. No project file or workflow names another (`app.manifest`'s
+  `1.0.0.0` is its own identity, as said in entry 91).
+- **Not in this commit:** the tag `v0.12.1` and `main`.
+- **Your check:** entry 99 lists what only you can see. If you find something, it goes into a 0.12.2 or into a
+  second release commit before the tag, as you decide with the owner.
+
+| What | Entry | Commits | Run |
+| --- | --- | --- | --- |
+| D: version, notes of 0.12.0, strings, sync problems to the Sync window | 93 | `52bafe8` | 194 |
+| A1–A3: English texts, one date rule, the Settings row | 94 | `53dc660` | 195, red (a test of mine) |
+| The Settings row test | 95 | `d9d514f` | 196 |
+| F1–F6: the font install | 96 | `a179510` | 197, red (a test of mine) |
+| The announcement test | 97 | `aa72105` | 198 |
+| U1–U7: usage counts | 98 | `d038548` | 199 |
+| Ready for the release check; `CLAUDE.md` State | 99 | `3a2541f` | 200 |
+
+Not seen anywhere, as before:
+
+- a real notification banner;
+- a real Windows snap;
+- maximise on a second monitor;
+- the recogniser with a microphone;
+- Windows 10 (the symbol font fallback);
+- another DPI scale;
+- a real lock on `usage.json`.
+
+This entry claims no run for its own commit.
+
 ## 2026-11-19 (99) — 0.12.1 ready for the release check
 
 Run 199 (`d038548`, entry 98) is green: Core 1093 and App 404 tests. Everything of your review 28 is in, so 0.12.1 is

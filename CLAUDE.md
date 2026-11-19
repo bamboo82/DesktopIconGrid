@@ -91,13 +91,12 @@ After removing or editing a key in the `.resx` files, run `python3 -I tools/gen_
 - Released: 0.12.0 "Find it, see it" on 2026-11-18 (release commit `ca7b1c6`, run 191; annotated tag `v0.12.0` on
   it, where `main` is). REVIEW_NOTES entry 91 has its table of entries, commits and runs. Before it 0.11.0 (tag
   `v0.11.0` on `10dec5a`), and 0.10.0 (tag `v0.10.0` on `254c55c`).
-- In progress: 0.12.1 (version 0.12.1, CHANGELOG `Unreleased`), the faults the review session found in 0.12.0 after
-  the release (review 28: A1–A3, F1–F6, U1–U7, D1–D11). The owner asked for it on 2026-11-19 and for it to be carried
-  through.
-  - All of review 28 is in, green in run 199 (Core 1093, App 404). REVIEW_NOTES entry 99 says it is ready for the
-    review session's release check.
-  - The release commit follows that session's word, as for 0.12.0; the tag and `main` stay with it.
-  - After 0.12.1 nothing is planned; 1.0.0 keeps the installer, code signing and the Windows toast with actions.
+- 0.12.1, the faults the review session found in 0.12.0 after the release (review 28: A1–A3, F1–F6, U1–U7, D1–D11),
+  has its release commit, dated 2026-11-19 (REVIEW_NOTES entry 100). The owner asked for it to be carried through and
+  for the release commit before the review session's release check.
+  - The tag `v0.12.1` and `main` are the review session's, as before; it has not checked 0.12.1 in the app yet.
+- In progress: nothing. After 0.12.1 nothing is planned; 1.0.0 keeps the installer, code signing and the Windows toast
+  with actions.
 - Keep as designed (0.12.0):
   - the symbol table (`SymbolCatalog`, 197 entries) and the tile look are the review session's design (entry 82);
   - usage counts stay in the local `usage.json`, never synced. Only a folder that cannot be written keeps them in
