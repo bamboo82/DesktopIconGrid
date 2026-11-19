@@ -9,6 +9,19 @@ The owner relays replies.
 
 ---
 
+## 2026-11-19 (97) — Run 197: the announcement test needs a font GDI takes
+
+Run 197 (`a179510`, entry 96) was red on one new App test. The other 402 passed, F1–F6's among them.
+
+- **What failed:** `ChineseFontServiceTests.A_font_is_added_for_this_session_and_announced_without_waiting_on_a_window_that_hangs`.
+  `AddFontResourceW` returned 0 for my two-glyph test font. WPF reads that font (every other font test passes with
+  it); GDI is stricter and refuses it.
+- **What I changed** (the test): it announces a copy of one of Windows' own fonts (Arial, else Segoe UI or Consolas)
+  from a folder of its own, and removes it again. The app's code is unchanged. The real Taipei Sans file is a full
+  font.
+
+This entry claims no run for its own commit.
+
 ## 2026-11-19 (96) — 0.12.1: the font install, app side (review 28 F1–F6 and its tests)
 
 Run 196 (`d9d514f`, entry 95) is green, so A1–A3 are in. This entry claims no run for its own commit.

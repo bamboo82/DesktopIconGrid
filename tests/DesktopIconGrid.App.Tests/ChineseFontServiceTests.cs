@@ -168,8 +168,11 @@ public sealed class ChineseFontServiceTests : IDisposable
             return;
         }
 
-        var font = Path.Combine(Folder("announce"), "DigTestCjk-Light.ttf");
-        File.Copy(TestFont, font);
+        // A copy of one of Windows' own fonts: GDI refuses the two-glyph test font, which WPF reads (run 197).
+        var windows = Environment.GetFolderPath(Environment.SpecialFolder.Fonts);
+        var real = new[] { "arial.ttf", "segoeui.ttf", "consola.ttf" }.Select(name => Path.Combine(windows, name)).First(File.Exists);
+        var font = Path.Combine(Folder("announce"), "DigAnnounceTest.ttf");
+        File.Copy(real, font);
         var watch = System.Diagnostics.Stopwatch.StartNew();
         try
         {
