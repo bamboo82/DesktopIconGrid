@@ -127,6 +127,11 @@ internal static partial class NativeMethods
     [DllImport("gdi32.dll", CharSet = CharSet.Unicode)]
     public static extern int AddFontResourceW(string lpFileName);
 
+    /// <summary>Takes a font file added with <see cref="AddFontResourceW"/> away again (tests).</summary>
+    [DllImport("gdi32.dll", CharSet = CharSet.Unicode)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static extern bool RemoveFontResourceW(string lpFileName);
+
     public const int WM_FONTCHANGE = 0x001D;
     public const uint SMTO_ABORTIFHUNG = 0x0002;
     public static readonly IntPtr HWND_BROADCAST = new(0xFFFF);

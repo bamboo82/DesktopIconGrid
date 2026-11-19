@@ -24,6 +24,15 @@ said more, or other, than 0.12.0 does.
   *Chinese text* row goes under the list when the row is too narrow for both.
 - *Edit names* shows every date in Windows' regional format: *Modified* followed the interface language, so an
   English bar on a zh-TW Windows showed two formats side by side.
+- The Chinese font's install:
+  - a font file of that name already there but held open or unreadable left the Settings row on "Downloading…
+    0.0 / 20.3 MB" with a Cancel that did nothing; it is said as a failure now;
+  - a file of that name that holds no font (empty, damaged) counted as the font found, so Settings showed it chosen
+    and no *Install* button while Windows' font was drawn;
+  - after an install, Cancel in Settings kept Windows' font until the next start; the bar takes the font at once;
+  - a font of that name already listed for another file is no longer written over: nothing is installed, and the
+    row says why;
+  - the logs and an approval's details box (Consolas) draw Chinese with the font too.
 
 ## [0.12.0] – 2026-11-18
 

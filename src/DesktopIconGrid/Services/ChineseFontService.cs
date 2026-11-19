@@ -22,37 +22,83 @@ public interface IChineseFontInstall
 }
 
 /// <summary>Taipei Sans TC Light on this PC: found as <see cref="FontLocator"/> says, installed by <see cref="FontInstaller"/>.</summary>
-public sealed class ChineseFontService(HttpClient http) : IChineseFontInstall
+/// <param name="http">The app's HTTP client.</param>
+/// <param name="registry">The registry's font lists (tests: a fake).</param>
+/// <param name="dataDirectory">Where the download is kept while it runs; the app's data folder by default.</param>
+/// <param name="userFontsDirectory">The user's font folder (<see cref="UserFontsDirectory"/> by default).</param>
+/// <param name="windowsFontsDirectory">Windows' font folder by default.</param>
+/// <param name="programDirectory">The program's folder, where a portable copy may carry the font.</param>
+/// <param name="source">The file to install; Taipei Sans TC Light by default.</param>
+/// <param name="announce">Tells the running programs about the new font; <see cref="FontAnnouncement.Announce"/> by default.</param>
+/// <param name="downloadLimit">How long a download may take in all; <see cref="DownloadLimit"/> by default.</param>
+public sealed class ChineseFontService(
+    HttpClient http,
+    IFontRegistry? registry = null,
+    string? dataDirectory = null,
+    string? userFontsDirectory = null,
+    string? windowsFontsDirectory = null,
+    string? programDirectory = null,
+    FontSource? source = null,
+    Action<string>? announce = null,
+    TimeSpan? downloadLimit = null) : IChineseFontInstall
 {
     /// <summary>How long a download may take in all before it is given up (the app's client has no limit of its own).</summary>
     public static readonly TimeSpan DownloadLimit = TimeSpan.FromMinutes(10);
 
-    private readonly WindowsFontRegistry _registry = new();
+    private readonly IFontRegistry _registry = registry ?? new WindowsFontRegistry();
+    private readonly string _userFonts = userFontsDirectory ?? UserFontsDirectory;
+    private readonly FontSource _source = source ?? TaipeiSans.Light;
 
     /// <summary><c>%LOCALAPPDATA%\Microsoft\Windows\Fonts</c>: where Windows itself puts a font installed for one user.</summary>
     public static string UserFontsDirectory => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Microsoft", "Windows", "Fonts");
 
-    public long Size => TaipeiSans.Light.Size;
+    /// <summary>
+    /// Raised, on the install's thread, once the font is installed: the bar takes it at once, whatever Save or Cancel in
+    /// Settings does then (0.12.1, review 28 F4: Cancel kept the Windows font for the run, and the next start used it).
+    /// </summary>
+    public event EventHandler<string>? Installed;
 
-    public string? Find() => new FontLocator(_registry, File.Exists, AppContext.BaseDirectory, UserFontsDirectory, Environment.GetFolderPath(Environment.SpecialFolder.Fonts))
-        .Find(TaipeiSans.FileName);
+    public long Size => _source.Size;
+
+    /// <summary>The font file, found by its name and readable as a font; a damaged or empty file of that name is not it (review 28 F3).</summary>
+    public string? Find()
+    {
+        var found = new FontLocator(_registry, File.Exists, programDirectory ?? AppContext.BaseDirectory, _userFonts, windowsFontsDirectory ?? Environment.GetFolderPath(Environment.SpecialFolder.Fonts))
+            .Find(_source.FileName);
+        if (found is null || FontNames.IsFont(found))
+        {
+            return found;
+        }
+
+        AppLog.Default.Info("Fonts", $"{found} has the name of {_source.FileName} but holds no font that can be read; Chinese is drawn as Windows draws it");
+        return null;
+    }
 
     public async Task<FontInstallResult> InstallAsync(IProgress<long> progress, CancellationToken cancel)
     {
         using var limit = CancellationTokenSource.CreateLinkedTokenSource(cancel);
-        limit.CancelAfter(DownloadLimit);
-        var installer = new FontInstaller(http, _registry, AppPaths.DataDirectory, UserFontsDirectory, FontAnnouncement.Announce);
-        var result = await installer.InstallAsync(TaipeiSans.Light, progress, limit.Token).ConfigureAwait(false);
-        return result.Outcome == FontInstallOutcome.Cancelled && !cancel.IsCancellationRequested
-            ? new FontInstallResult(FontInstallOutcome.DownloadFailed, Message: Strings.FontInstall_TimedOut) // the limit, not the user
-            : result;
+        limit.CancelAfter(downloadLimit ?? DownloadLimit);
+        var installer = new FontInstaller(http, _registry, dataDirectory ?? AppPaths.DataDirectory, _userFonts, announce ?? (file => FontAnnouncement.Announce(file)));
+        var result = await installer.InstallAsync(_source, progress, limit.Token).ConfigureAwait(false);
+        if (result.Outcome == FontInstallOutcome.Cancelled && !cancel.IsCancellationRequested)
+        {
+            return new FontInstallResult(FontInstallOutcome.DownloadFailed, Message: Strings.FontInstall_TimedOut); // the limit, not the user
+        }
+
+        if (result is { Outcome: FontInstallOutcome.Installed, Path: { } installed })
+        {
+            Installed?.Invoke(this, installed);
+        }
+
+        return result;
     }
 }
 
 /// <summary>The fonts in <c>…\Windows NT\CurrentVersion\Fonts</c> of the current user and of the machine.</summary>
-internal sealed class WindowsFontRegistry : IFontRegistry
+/// <param name="fontsKey">The key under HKCU and HKLM; tests give one of their own.</param>
+internal sealed class WindowsFontRegistry(string fontsKey = WindowsFontRegistry.FontsKey) : IFontRegistry
 {
-    private const string FontsKey = @"Software\Microsoft\Windows NT\CurrentVersion\Fonts";
+    public const string FontsKey = @"Software\Microsoft\Windows NT\CurrentVersion\Fonts";
 
     public IEnumerable<KeyValuePair<string, string>> UserFonts() => Values(Registry.CurrentUser);
 
@@ -60,21 +106,15 @@ internal sealed class WindowsFontRegistry : IFontRegistry
 
     public void AddUserFont(string name, string path)
     {
-        using var key = Registry.CurrentUser.CreateSubKey(FontsKey, writable: true);
+        using var key = Registry.CurrentUser.CreateSubKey(fontsKey, writable: true);
         key.SetValue(name, path, RegistryValueKind.String);
     }
 
-    public void RemoveUserFont(string name)
-    {
-        using var key = Registry.CurrentUser.OpenSubKey(FontsKey, writable: true);
-        key?.DeleteValue(name, throwOnMissingValue: false);
-    }
-
-    private static List<KeyValuePair<string, string>> Values(RegistryKey root)
+    private List<KeyValuePair<string, string>> Values(RegistryKey root)
     {
         try
         {
-            using var key = root.OpenSubKey(FontsKey);
+            using var key = root.OpenSubKey(fontsKey);
             return key is null
                 ? []
                 : key.GetValueNames().Select(name => (name, key.GetValue(name) as string)).Where(value => value.Item2 is not null)
@@ -91,13 +131,16 @@ internal sealed class WindowsFontRegistry : IFontRegistry
 /// <summary>Tells this session's programs about a font just installed, without waiting on one that hangs.</summary>
 internal static class FontAnnouncement
 {
-    public static void Announce(string fontFile)
+    /// <summary>Adds the font for this session and tells the programs; false when Windows would not add it now.</summary>
+    public static bool Announce(string fontFile)
     {
-        if (NativeMethods.AddFontResourceW(fontFile) == 0)
+        var added = NativeMethods.AddFontResourceW(fontFile) != 0;
+        if (!added)
         {
             AppLog.Default.Warning("Fonts", $"{fontFile} could not be added for this session; it is there from the next sign-in");
         }
 
         NativeMethods.SendMessageTimeoutW(NativeMethods.HWND_BROADCAST, NativeMethods.WM_FONTCHANGE, IntPtr.Zero, IntPtr.Zero, NativeMethods.SMTO_ABORTIFHUNG, 1000, out _);
+        return added;
     }
 }

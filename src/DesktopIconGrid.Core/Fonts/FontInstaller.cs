@@ -24,6 +24,12 @@ public enum FontInstallOutcome
 
     /// <summary>A file of that name with another digest is in the user's font folder: left alone.</summary>
     OtherFileThere,
+
+    /// <summary>
+    /// This user's fonts already list a font of that name for another file (<see cref="FontInstallResult.Path"/>): that
+    /// value is not overwritten, and nothing is installed (0.12.1, review 28 F6).
+    /// </summary>
+    NameTaken,
 }
 
 /// <summary>An install's outcome, the installed file, and the error's own words.</summary>
@@ -52,9 +58,7 @@ public sealed class FontInstaller(HttpClient http, IFontRegistry registry, strin
         var target = Path.Combine(userFontsDirectory, source.FileName);
         if (File.Exists(target))
         {
-            return await DigestOfAsync(target, cancel).ConfigureAwait(false) == source.Sha256
-                ? Register(source, target, movedHere: false)
-                : new FontInstallResult(FontInstallOutcome.OtherFileThere, target);
+            return await ExistingAsync(source, target, cancel).ConfigureAwait(false);
         }
 
         var part = Path.Combine(partDirectory, source.FileName + ".part");
@@ -72,9 +76,7 @@ public sealed class FontInstaller(HttpClient http, IFontRegistry registry, strin
             {
                 // Put there meanwhile, by hand or by another copy of the app.
                 Delete(part);
-                return await DigestOfAsync(target, cancel).ConfigureAwait(false) == source.Sha256
-                    ? Register(source, target, movedHere: false)
-                    : new FontInstallResult(FontInstallOutcome.OtherFileThere, target);
+                return await ExistingAsync(source, target, cancel).ConfigureAwait(false);
             }
 
             File.Move(part, target);
@@ -86,6 +88,29 @@ public sealed class FontInstaller(HttpClient http, IFontRegistry registry, strin
         }
 
         return Register(source, target, movedHere: true);
+    }
+
+    /// <summary>
+    /// A file of that name already in the user's fonts: used when it is the expected one, never overwritten. One that is
+    /// held open or cannot be read is a failure the row says, not an exception (0.12.1, review 28 F1: the row stayed on
+    /// "Downloading… 0.0 / 20.3 MB").
+    /// </summary>
+    private async Task<FontInstallResult> ExistingAsync(FontSource source, string target, CancellationToken cancel)
+    {
+        try
+        {
+            return await DigestOfAsync(target, cancel).ConfigureAwait(false) == source.Sha256
+                ? Register(source, target, movedHere: false)
+                : new FontInstallResult(FontInstallOutcome.OtherFileThere, target);
+        }
+        catch (OperationCanceledException) when (cancel.IsCancellationRequested)
+        {
+            return new FontInstallResult(FontInstallOutcome.Cancelled);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            return new FontInstallResult(FontInstallOutcome.InstallFailed, target, ex.Message);
+        }
     }
 
     /// <summary>The download into <paramref name="part"/>; <see langword="null"/> when it is the expected file, else why not.</summary>
@@ -176,6 +201,17 @@ public sealed class FontInstaller(HttpClient http, IFontRegistry registry, strin
         }
 
         var name = $"{fullName ?? Path.GetFileNameWithoutExtension(source.FileName)} (TrueType)";
+        if (OtherFileListedAs(name, target) is { } other)
+        {
+            if (movedHere)
+            {
+                Delete(target);
+            }
+
+            AppLog.Default.Warning("Fonts", $"{name} is already listed for {other}; that value is left as it is and nothing is installed");
+            return new FontInstallResult(FontInstallOutcome.NameTaken, other);
+        }
+
         try
         {
             registry.AddUserFont(name, target);
@@ -202,6 +238,28 @@ public sealed class FontInstaller(HttpClient http, IFontRegistry registry, strin
 
         AppLog.Default.Info("Fonts", $"{source.FileName} installed for this user as \"{name}\"");
         return new FontInstallResult(FontInstallOutcome.Installed, target);
+    }
+
+    /// <summary>
+    /// The file this user's fonts list under <paramref name="name"/>, when it is another than <paramref name="target"/>.
+    /// A bare file name is one in the user's or Windows' font folder: the same when it is the target's name.
+    /// </summary>
+    private string? OtherFileListedAs(string name, string target)
+    {
+        foreach (var (listed, file) in registry.UserFonts())
+        {
+            if (!string.Equals(listed, name, StringComparison.OrdinalIgnoreCase) || string.IsNullOrWhiteSpace(file))
+            {
+                continue;
+            }
+
+            var same = Path.IsPathRooted(file)
+                ? string.Equals(Path.GetFullPath(file), Path.GetFullPath(target), StringComparison.OrdinalIgnoreCase)
+                : string.Equals(file, Path.GetFileName(target), StringComparison.OrdinalIgnoreCase);
+            return same ? null : file;
+        }
+
+        return null;
     }
 
     private static async Task<string> DigestOfAsync(string path, CancellationToken cancel)

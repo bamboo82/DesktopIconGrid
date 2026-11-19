@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Windows.Input;
+using DesktopIconGrid.Core.Diagnostics;
 using DesktopIconGrid.Core.Fonts;
 using DesktopIconGrid.Core.Models;
 using DesktopIconGrid.Infrastructure;
@@ -132,6 +133,17 @@ public sealed partial class SettingsViewModel
                 OnPropertyChanged(nameof(InstallProgress));
             }), cancel.Token).ConfigureAwait(true);
         }
+        catch (OperationCanceledException)
+        {
+            result = new FontInstallResult(FontInstallOutcome.Cancelled);
+        }
+        catch (Exception ex) when (ex is not OutOfMemoryException)
+        {
+            // The installer says its own cases as results; anything else is a failure the row says, not a row left on
+            // "Downloading… 0.0 / 20.3 MB" with a Cancel that does nothing (0.12.1, review 28 F1).
+            AppLog.Default.Warning("Fonts", $"The font could not be installed: {ex.Message}");
+            result = new FontInstallResult(FontInstallOutcome.InstallFailed, Message: ex.Message);
+        }
         finally
         {
             _installCancel = null;
@@ -144,12 +156,14 @@ public sealed partial class SettingsViewModel
             FontInstallOutcome.DownloadFailed => (string.Format(CultureInfo.CurrentCulture, Strings.FontInstall_DownloadFailed, result.Message), FontInstallState.Failed),
             FontInstallOutcome.Mismatch => (Strings.FontInstall_Mismatch, FontInstallState.Failed),
             FontInstallOutcome.OtherFileThere => (string.Format(CultureInfo.CurrentCulture, Strings.FontInstall_OtherFileThere, TaipeiSans.FileName), FontInstallState.Failed),
+            FontInstallOutcome.NameTaken => (string.Format(CultureInfo.CurrentCulture, Strings.FontInstall_NameTaken, result.Path), FontInstallState.Failed),
             _ => (string.Format(CultureInfo.CurrentCulture, Strings.FontInstall_InstallFailed, result.Message), FontInstallState.Failed),
         };
 
         if (result.Outcome == FontInstallOutcome.Installed)
         {
-            // The found form, with the font chosen; it applies at Save.
+            // The found form, with the font chosen. The bar has already taken what the stored setting gives now that the
+            // font is here (ChineseFontService.Installed); a choice made here applies at Save.
             _fontFound = true;
             _chineseFontOptions = [TaipeiOption, SystemOption];
             _selectedChineseFont = TaipeiOption;

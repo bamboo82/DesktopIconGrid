@@ -18,13 +18,25 @@ namespace DesktopIconGrid.Services;
 /// read the system's menu, status and message font keys, which are set beside it in the app's resources.</item>
 /// <item>The font is referred to by its file, never by a family name: a PC that also has the Regular or Bold of the
 /// family installed would otherwise answer a normal-weight request with Regular.</item>
+/// <item>Consolas text (the logs, the details of an approval) takes the font after Consolas, from
+/// <see cref="CodeFamilyKey"/> and <see cref="LogFamilyKey"/> (0.12.1, review 28 F2: the plan said "the chain after it
+/// for Chinese", and their Chinese was Windows' font).</item>
 /// </list>
-/// Left alone: text icons, Consolas text, gauges' numbers and symbol icons, which set fonts of their own.
+/// Left alone: text icons, gauges' numbers and symbol icons, which set fonts of their own, and Windows' own message
+/// boxes, which the app does not draw.
 /// </summary>
 public static class UiFonts
 {
     /// <summary>The resource every window's font refers to.</summary>
     public const string FamilyKey = "App.UiFontFamily";
+
+    /// <summary>Consolas, then Courier New: commands and their details.</summary>
+    public const string CodeFamilyKey = "App.CodeFontFamily";
+
+    /// <summary>Consolas, then Segoe UI: the log's lines.</summary>
+    public const string LogFamilyKey = "App.LogFontFamily";
+
+    private static readonly FontFamily Consolas = new("Consolas");
 
     /// <summary>The Taipei Sans file in use, or <see langword="null"/> when Chinese is drawn as Windows draws it.</summary>
     public static string? ChineseFontFile { get; private set; }
@@ -47,7 +59,13 @@ public static class UiFonts
         Set(resources, SystemFonts.MessageFontFamilyKey, chinese is null ? null : Chain(SystemFonts.MessageFontFamily, chinese));
         Set(resources, SystemFonts.MenuFontFamilyKey, chinese is null ? null : Chain(SystemFonts.MenuFontFamily, chinese));
         Set(resources, SystemFonts.StatusFontFamilyKey, chinese is null ? null : Chain(SystemFonts.StatusFontFamily, chinese));
+        resources[CodeFamilyKey] = Monospaced(chinese, "Courier New");
+        resources[LogFamilyKey] = Monospaced(chinese, "Segoe UI");
     }
+
+    /// <summary>Consolas, the Chinese font for what Consolas lacks, then <paramref name="fallback"/> as before.</summary>
+    public static FontFamily Monospaced(FontFamily? chinese, string fallback) =>
+        new(chinese is null ? $"{Consolas.Source}, {fallback}" : $"{Consolas.Source}, {chinese.Source}, {fallback}");
 
     /// <summary>Gives <paramref name="window"/> (or any root element) the app's font; call it once, when it is made.</summary>
     public static void Apply(FrameworkElement window)

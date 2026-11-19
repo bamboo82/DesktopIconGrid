@@ -29,7 +29,7 @@
              IsReadOnlyCaretVisible="True"
              AcceptsReturn="True"
              TextWrapping="NoWrap"
-             FontFamily="Consolas, Courier New"
+             FontFamily="{DynamicResource App.CodeFontFamily}"
              FontSize="12"
              VerticalScrollBarVisibility="Auto"
              HorizontalScrollBarVisibility="Auto"

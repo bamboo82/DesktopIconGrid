@@ -41,8 +41,6 @@ public sealed class ChineseFontTests : IDisposable
 
             User[name] = path;
         }
-
-        public void RemoveUserFont(string name) => User.Remove(name);
     }
 
     // ----- T1: finding it ----------------------------------------------------------------------------
@@ -233,6 +231,160 @@ public sealed class ChineseFontTests : IDisposable
         var (hanging, hangingRegistry, _) = Installer(new FakeServer(HttpStatusCode.OK, Font, Font.Length) { Hang = true });
         Assert.Equal(FontInstallOutcome.Cancelled, (await hanging.InstallAsync(source, null, cancel.Token)).Outcome);
         AssertNothingLeft(hangingRegistry, source.FileName);
+    }
+
+    [Fact]
+    public async Task A_file_of_that_name_that_cannot_be_read_is_a_failure_said_and_a_cancel_while_it_is_hashed_is_a_cancel()
+    {
+        // 0.12.1, review 28 F1: hashing a file already there let IOException, UnauthorizedAccessException and
+        // OperationCanceledException out, and the Settings row stayed on "Downloading… 0.0 / 20.3 MB".
+        var source = SourceOf(Font);
+        var target = Path.Combine(Folder("user-fonts"), source.FileName);
+        Directory.CreateDirectory(Folder("user-fonts"));
+        File.WriteAllBytes(target, Font);
+        var server = new FakeServer(HttpStatusCode.OK, Font, Font.Length);
+        var (installer, registry, announced) = Installer(server);
+
+        FontInstallResult held;
+        using (new FileStream(target, FileMode.Open, FileAccess.ReadWrite, FileShare.None))
+        {
+            held = await installer.InstallAsync(source, null, CancellationToken.None);
+        }
+
+        Assert.Equal(FontInstallOutcome.InstallFailed, held.Outcome);
+        Assert.False(string.IsNullOrWhiteSpace(held.Message));
+        Assert.Equal(Font, File.ReadAllBytes(target)); // left as it was
+        Assert.Empty(registry.User);
+        Assert.Empty(announced);
+        Assert.Equal(0, server.Requests);
+
+        using var cancelled = new CancellationTokenSource();
+        await cancelled.CancelAsync();
+        Assert.Equal(FontInstallOutcome.Cancelled, (await installer.InstallAsync(source, null, cancelled.Token)).Outcome);
+        Assert.Empty(registry.User);
+    }
+
+    /// <summary>Sends the first part of a font, then holds the rest back until the request is cancelled.</summary>
+    private sealed class TrickleServer(byte[] body) : HttpMessageHandler
+    {
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            var content = new StreamContent(new Trickle(body[..(body.Length / 2)]));
+            content.Headers.ContentLength = body.Length;
+            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = content });
+        }
+
+        private sealed class Trickle(byte[] first) : Stream
+        {
+            private bool _sent;
+
+            public override bool CanRead => true;
+
+            public override bool CanSeek => false;
+
+            public override bool CanWrite => false;
+
+            public override long Length => throw new NotSupportedException();
+
+            public override long Position { get => throw new NotSupportedException(); set => throw new NotSupportedException(); }
+
+            public override async ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)
+            {
+                if (!_sent)
+                {
+                    _sent = true;
+                    first.CopyTo(buffer);
+                    return first.Length;
+                }
+
+                await Task.Delay(Timeout.Infinite, cancellationToken);
+                return 0;
+            }
+
+            public override int Read(byte[] buffer, int offset, int count) => throw new NotSupportedException();
+
+            public override void Flush()
+            {
+            }
+
+            public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
+
+            public override void SetLength(long value) => throw new NotSupportedException();
+
+            public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
+        }
+    }
+
+    /// <summary>Hears the first bytes of a download on the reading thread, while the part file is open.</summary>
+    private sealed class FirstBytes(string part) : IProgress<long>
+    {
+        public TaskCompletionSource<bool> Arrived { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        public void Report(long value) => Arrived.TrySetResult(File.Exists(part));
+    }
+
+    [Fact]
+    public async Task A_cancel_in_the_middle_of_the_body_leaves_no_part_file()
+    {
+        // Review 28: the test of a cancel cancelled before the response headers, so no part file was ever at risk.
+        var source = SourceOf(Font);
+        var part = Path.Combine(Folder("data"), source.FileName + ".part");
+        var (installer, registry, _) = Installer(new TrickleServer(Font));
+        var progress = new FirstBytes(part);
+        using var cancel = new CancellationTokenSource();
+
+        var install = installer.InstallAsync(source, progress, cancel.Token);
+        Assert.True(await progress.Arrived.Task.WaitAsync(TimeSpan.FromSeconds(10))); // half of it is in the part file
+        await cancel.CancelAsync();
+
+        Assert.Equal(FontInstallOutcome.Cancelled, (await install).Outcome);
+        Assert.False(File.Exists(part));
+        AssertNothingLeft(registry, source.FileName);
+    }
+
+    [Fact]
+    public async Task A_name_listed_for_another_file_is_not_written_over_and_nothing_is_installed()
+    {
+        // Review 28 F6: AddUserFont wrote over a value of that name that pointed at another file.
+        var source = SourceOf(Font);
+        var other = Path.Combine(Folder("elsewhere"), "TestSans-Light-1.0.ttf");
+        var (installer, registry, announced) = Installer(new FakeServer(HttpStatusCode.OK, Font, Font.Length));
+        registry.User["Test Sans Light (TrueType)"] = other;
+
+        var result = await installer.InstallAsync(source, null, CancellationToken.None);
+
+        Assert.Equal(new FontInstallResult(FontInstallOutcome.NameTaken, other), result);
+        Assert.Equal(other, registry.User["Test Sans Light (TrueType)"]);
+        Assert.False(File.Exists(Path.Combine(Folder("user-fonts"), source.FileName))); // the moved file is taken back
+        Assert.False(File.Exists(Path.Combine(Folder("data"), source.FileName + ".part")));
+        Assert.Empty(announced);
+
+        // The same file under that name, as a bare file name or its full path, is no other file.
+        foreach (var same in new[] { source.FileName, Path.Combine(Folder("user-fonts"), source.FileName) })
+        {
+            var (again, sameRegistry, _) = Installer(new FakeServer(HttpStatusCode.OK, Font, Font.Length));
+            sameRegistry.User["Test Sans Light (TrueType)"] = same;
+            Assert.Equal(FontInstallOutcome.Installed, (await again.InstallAsync(source, null, CancellationToken.None)).Outcome);
+            File.Delete(Path.Combine(Folder("user-fonts"), source.FileName));
+        }
+    }
+
+    [Fact]
+    public void A_file_is_a_font_when_its_name_table_gives_a_name()
+    {
+        // Review 28 F3: a file found by its name but empty or damaged is not "found".
+        Directory.CreateDirectory(Folder("files"));
+        var font = Path.Combine(Folder("files"), "font.ttf");
+        var empty = Path.Combine(Folder("files"), "empty.ttf");
+        var damaged = Path.Combine(Folder("files"), "damaged.ttf");
+        File.WriteAllBytes(font, Font);
+        File.WriteAllBytes(empty, []);
+        File.WriteAllBytes(damaged, Font[..20]);
+
+        Assert.True(FontNames.IsFont(font));
+        Assert.False(FontNames.IsFont(empty));
+        Assert.False(FontNames.IsFont(damaged));
+        Assert.False(FontNames.IsFont(Path.Combine(Folder("files"), "missing.ttf")));
     }
 
     [Fact]

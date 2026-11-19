@@ -38,11 +38,11 @@
     <!-- Status and details -->
     <TextBlock DockPanel.Dock="Bottom" Text="{Binding StatusText}" Margin="0,6,0,0" Style="{StaticResource DialogHint}" />
     <TextBox DockPanel.Dock="Bottom" Height="72" Margin="0,8,0,0" IsReadOnly="True" TextWrapping="Wrap"
-             VerticalScrollBarVisibility="Auto" FontFamily="Consolas, Segoe UI" FontSize="12" Padding="4"
+             VerticalScrollBarVisibility="Auto" FontFamily="{DynamicResource App.LogFontFamily}" FontSize="12" Padding="4"
              Text="{Binding DetailText, Mode=OneWay}" />
 
     <ListView x:Name="Entries" ItemsSource="{Binding Visible}" SelectedItem="{Binding Selected}"
-              SelectionMode="Extended" FontFamily="Consolas, Segoe UI" FontSize="12"
+              SelectionMode="Extended" FontFamily="{DynamicResource App.LogFontFamily}" FontSize="12"
               MouseDoubleClick="Entries_MouseDoubleClick" KeyDown="Entries_KeyDown">
       <ListView.ContextMenu>
         <ContextMenu>

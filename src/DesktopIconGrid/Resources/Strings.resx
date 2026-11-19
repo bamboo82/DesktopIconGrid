@@ -2639,4 +2639,7 @@ Installed to: {4}</value>
   <data name="FontInstall_DetailsName" xml:space="preserve">
     <value>What is installed</value>
   </data>
+  <data name="FontInstall_NameTaken" xml:space="preserve">
+    <value>Windows already lists a font of this name for another file: {0}. Nothing was installed.</value>
+  </data>
 </root>

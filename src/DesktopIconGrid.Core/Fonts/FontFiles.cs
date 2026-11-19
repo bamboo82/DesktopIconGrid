@@ -44,9 +44,6 @@ public interface IFontRegistry
 
     /// <summary>Lists a font installed for this user.</summary>
     void AddUserFont(string name, string path);
-
-    /// <summary>Takes a user font's value away again (an install that could not finish).</summary>
-    void RemoveUserFont(string name);
 }
 
 /// <summary>
@@ -103,6 +100,23 @@ public sealed class FontLocator(IFontRegistry registry, Func<string, bool> fileE
 /// <summary>Reads a TrueType or OpenType file's own names from its <c>name</c> table.</summary>
 public static class FontNames
 {
+    /// <summary>
+    /// Whether <paramref name="path"/> is a font file with a name: a file found by its name but damaged, empty or
+    /// unreadable is not "found" (0.12.1, review 28 F3: Settings showed the font chosen while Windows' font was drawn).
+    /// </summary>
+    public static bool IsFont(string path)
+    {
+        try
+        {
+            using var file = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
+            return FullName(file) is not null;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException)
+        {
+            return false;
+        }
+    }
+
     /// <summary>
     /// The font's full name (name 4) in US English where it has one, else in the first language it gives, or
     /// <see langword="null"/> when the file has no readable name table.

@@ -252,6 +252,10 @@ public partial class App : Application
         ApplyChineseFont();
         viewModel.SettingsChanged += (_, _) => ApplyChineseFont();
 
+        // An install from Settings applies at once, as the next start would, whatever Save or Cancel does then (0.12.1,
+        // review 28 F4: Cancel kept the Windows font for the run, the next start took the font).
+        chineseFonts.Installed += (_, _) => Dispatcher.BeginInvoke(ApplyChineseFont);
+
         // First paint; the bar window refines this once it has a handle (backdrop, High Contrast, settings changes).
         ThemeManager.Apply(ThemeManager.EffectivePalette(viewModel.Palette));
         _fluentDialogsSetting = () => viewModel.Model.Settings.FluentDialogs;

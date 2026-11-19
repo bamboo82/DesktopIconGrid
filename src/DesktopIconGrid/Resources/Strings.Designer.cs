@@ -1581,6 +1581,15 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Windows already lists a font of this name for another file: {0}. Nothing was ins [rest of string was truncated]";.
+        /// </summary>
+        public static string FontInstall_NameTaken {
+            get {
+                return ResourceManager.GetString("FontInstall_NameTaken", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Your font folder already has a different file named {0}; it was left as it is an [rest of string was truncated]";.
         /// </summary>
         public static string FontInstall_OtherFileThere {

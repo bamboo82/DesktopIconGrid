@@ -1005,19 +1005,22 @@ Still open, in the order they should be taken:
    JT Foundry, SIL Open Font License 1.1): every window's font is its Latin font as before (Segoe UI), then that
    font from its file for what the Latin font lacks (Chinese, full-width punctuation, bopomofo, kana), so Latin
    letters and digits and all sizes stay as they were. The bar, its popups, the pointer and stack windows, every
-   dialog (classic or Fluent), menus, tooltips and the tray menu take it; text icons, Consolas text, gauges' numbers
-   and symbol icons keep their own fonts. The font is found in `Fonts\` next to the program, then among the fonts
-   installed for this user, then for every user, and always used by its file, so another weight of the family
-   installed on the PC is not picked. Only the Light face is there: where the app asks for bold, WPF draws it Light,
+   dialog of the app's own (classic or Fluent), menus, tooltips and the tray menu take it, and Consolas text (the
+   logs, an approval's details) takes it after Consolas (0.12.1); text icons, gauges' numbers and symbol icons keep
+   their own fonts, and Windows' own message boxes, which the app does not draw, keep Windows' font. The font is
+   found in `Fonts\` next to the program, then among the fonts installed for this user, then for every user, and
+   always used by its file, so another weight of the family installed on the PC is not picked; a file of that name
+   that holds no font that can be read (empty, damaged) is not taken as found (0.12.1). Only the Light face is there: where the app asks for bold, WPF draws it Light,
    without a fake bold, while the Latin of that text stays bold.
    It is never shipped with the app. Settings ▸ Appearance ▸ *Chinese text* offers it when the PC has it, and
    otherwise a button that, after asking, downloads `TaipeiSansTCBeta-Light.ttf` (20,279,264 bytes) from the locked
    mirror at GitHub (`vp-tw/taipei-sans-tc`, commit 24ca88e), checks its length and SHA-256, and installs it for this
    user without an administrator: into `%LOCALAPPDATA%\Microsoft\Windows\Fonts`, listed under the user's fonts in
-   the registry, announced to the running programs. Anything else (another length or digest, no connection, a folder
-   or registry that cannot be written, a different file of that name already there) installs nothing and offers
-   the author's page to install it by hand. The button never runs by itself, and nothing uninstalls the font:
-   Windows Settings ▸ Fonts does.
+   the registry, announced to the running programs, and drawn by the bar at once, whatever Save or Cancel does
+   then (0.12.1). Anything else (another length or digest, no connection, a folder or registry that cannot be
+   written, a different file of that name already there or one that cannot be read, the font's name already listed
+   for another file) installs nothing, is said in the row, and offers the author's page to install it by hand. The
+   button never runs by itself, and nothing uninstalls the font: Windows Settings ▸ Fonts does.
 4. **Non-modal errors** — done in 0.4.0 (tray notifications with the log viewer one click away;
    Undo for Remove). Since 0.12.0 a notice has a kind and a target: information (a file received, a timer's
    phase, files sent) shows the information icon and is not shown at all during Windows' quiet time (it is

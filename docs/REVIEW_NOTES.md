@@ -9,6 +9,80 @@ The owner relays replies.
 
 ---
 
+## 2026-11-19 (96) — 0.12.1: the font install, app side (review 28 F1–F6 and its tests)
+
+Run 196 (`d9d514f`, entry 95) is green, so A1–A3 are in. This entry claims no run for its own commit.
+
+### F1–F6
+
+- **F1, the row stuck on "Downloading…".** Fixed in both places.
+  - **The installer** (`FontInstaller.ExistingAsync`): a file of that name already in the user's fonts is hashed
+    inside a try.
+    - Held open or unreadable: `InstallFailed` with the error's words, the file left as it is.
+    - A cancel while it is hashed: `Cancelled`.
+    - Both checks of an existing file (before the download, and after it when one was put there meanwhile) go through
+      it.
+  - **The view model** (`InstallFontAsync`): it catches what still comes out.
+    - `OperationCanceledException` is `Cancelled`.
+    - Any other exception but `OutOfMemoryException` is `FontInstall_InstallFailed` with the message, and a warning
+      in the log.
+- **F2, Consolas text.**
+  - Two resources, kept by `UiFonts.Configure`:
+    - `App.CodeFontFamily`: Consolas, then Courier New;
+    - `App.LogFontFamily`: Consolas, then Segoe UI.
+  - With the font, it goes after Consolas: "Consolas, \<the file\>#…, Courier New".
+  - The four boxes bind to them dynamically: the log window's details and list, the log viewer, and the approval's
+    details box. `Styles.xaml` has the plain values, so nothing changes before `Configure` runs or without the font.
+- **F3, "found".** `ChineseFontService.Find` takes the locator's file only when `FontNames.IsFont` reads a name from
+  its `name` table. If not, one Info line, and the row offers *Install*. If the damaged file is in the user's fonts,
+  the install then says "a different file of that name is already there", and that file is not written over.
+- **F4, the font at once.** `ChineseFontService` raises `Installed` once the font is installed, and the app calls
+  `ApplyChineseFont` on the bar's thread.
+  - What it applies is what the next start would apply: the stored setting with the font now found. For the default
+    that is the font (zh-Hans: Windows'), and a stored "Windows font" stays.
+  - So Cancel afterwards no longer leaves this run different from the next start. A choice made in the row still
+    applies at Save.
+  - I did not apply the font regardless of a stored "Windows font": that would make the run differ from the next
+    start again, the other way round. Say if you meant it so.
+- **F5.** FEATURES §13 item 3 says it now: "every dialog of the app's own", and Windows' own message boxes keep
+  Windows' font. The 24 message boxes are unchanged.
+- **F6.**
+  - `RemoveUserFont` is gone, from `IFontRegistry`, `WindowsFontRegistry` and the fake.
+  - Before `AddUserFont`, the installer looks for a value of that name. If it points at another file (a full path
+    that differs, or a bare name other than the file's), the result is a new outcome, `NameTaken`, with that file's
+    path:
+    - the value is not touched;
+    - the moved file is taken back;
+    - the row says `FontInstall_NameTaken`: "Windows already lists a font of this name for another file: {0}. Nothing
+      was installed." The new string is in all three languages.
+
+### Tests
+
+- **Core (+4):**
+  - an existing file held open is `InstallFailed`, with the file unchanged and no request made; a cancel while it is
+    hashed is `Cancelled`;
+  - **a cancel in the middle of the body:** the server sends half, the test waits until the first bytes are in the
+    part file, then cancels. The result is `Cancelled` and no part file is left;
+  - `NameTaken`, and the same file under that name (a bare name or its full path) installs;
+  - `FontNames.IsFont` for a font, an empty file, a damaged file and a missing one.
+- **App:**
+  - **`ChineseFontServiceTests`, new:**
+    - `Find` with nothing, an empty file, a damaged file, then the test font;
+    - the time limit: `DownloadLimit` is 10 minutes; with 200 ms a hanging server is `DownloadFailed` "timed out",
+      and the user's cancel is `Cancelled`;
+    - a finished install is listed, announced and raises `Installed`;
+    - `WindowsFontRegistry` under a key of the test's own (HKCU, deleted afterwards), and Windows' own font list read;
+    - `FontAnnouncement.Announce` adds the test font for the session within 30 s, and the test removes it again
+      (`RemoveFontResourceW`, new).
+  - **`ChineseFontAppTests`:**
+    - the Fluent test asserts `DialogTheme.UseFluent` and the dialog's `ThemeMode.System`. It also checks both Consolas
+      resources with and without the font, and the approval's details box;
+    - the install row test keeps Settings open the whole time and checks the window at each step: the progress
+      line, then the message, no button, and the font chosen in the list;
+    - a new theory: an install that throws `IOException`, `UnauthorizedAccessException` or a cancel;
+    - the failures theory has `NameTaken`.
+- **Not tested:** a real install with a real lock, and how Chinese reads in the logs.
+
 ## 2026-11-19 (95) — Run 195: the Settings row test looked for a tab that is not there
 
 Run 195 (`53dc660`, entry 94) was red on one App test of mine, the Settings row with *Install*. The other 393 passed,

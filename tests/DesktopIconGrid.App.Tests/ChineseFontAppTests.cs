@@ -197,10 +197,15 @@ public sealed class ChineseFontAppTests(WpfThread wpf)
                 Assert.False(IsTestFont(FontOf(label, 'S')));
                 Assert.Contains("Segoe UI", FontOf(label, 'S').FamilyNames.Values);
 
-                // A dialog takes it through DialogTheme.Apply, Fluent or not.
+                // A dialog takes it through DialogTheme.Apply; this one is Fluent (review 28: the test said so and did
+                // not set it up or check it).
+                Assert.True(DialogTheme.UseFluent);
                 dialog = new TextIconWindow { DataContext = new TextIconViewModel(null, "Notes") };
                 dialog.Show();
                 Settle(dialog);
+#pragma warning disable WPF0001 // ThemeMode is marked experimental in the WPF reference assemblies
+                Assert.Equal(ThemeMode.System, dialog.ThemeMode);
+#pragma warning restore WPF0001
                 var text = Descendants(dialog).OfType<TextBlock>().First(block => block.Text == Strings.TextIcon_Text);
                 text.Text = "設定 Settings";
                 Settle(dialog);
@@ -210,6 +215,22 @@ public sealed class ChineseFontAppTests(WpfThread wpf)
                 // Menus and tooltips are windows of their own: their font keys are set beside the window's.
                 Assert.Contains(new Uri(TestFont).AbsoluteUri, ((FontFamily)Application.Current.Resources[SystemFonts.MenuFontFamilyKey]).Source, StringComparison.OrdinalIgnoreCase);
                 Assert.Contains(new Uri(TestFont).AbsoluteUri, ((FontFamily)Application.Current.Resources[SystemFonts.StatusFontFamilyKey]).Source, StringComparison.OrdinalIgnoreCase);
+
+                // Consolas text takes the font after Consolas (review 28 F2), as the approval's details box shows.
+                var chinese = UiFonts.FromFile(TestFont)!;
+                Assert.Equal($"Consolas, {chinese.Source}, Courier New", ((FontFamily)Application.Current.Resources[UiFonts.CodeFamilyKey]).Source);
+                Assert.Equal($"Consolas, {chinese.Source}, Segoe UI", ((FontFamily)Application.Current.Resources[UiFonts.LogFamilyKey]).Source);
+                var approval = new CommandApprovalWindow("Approve", "intro", "設定 Settings", "Approve");
+                try
+                {
+                    approval.Show();
+                    Settle(approval);
+                    Assert.Equal($"Consolas, {chinese.Source}, Courier New", approval.Command.FontFamily.Source);
+                }
+                finally
+                {
+                    approval.Close();
+                }
             }
             finally
             {
@@ -217,6 +238,10 @@ public sealed class ChineseFontAppTests(WpfThread wpf)
                 dialog?.Close();
                 UiFonts.Configure(null);
             }
+
+            // Without the font, Consolas text is as before.
+            Assert.Equal("Consolas, Courier New", ((FontFamily)Application.Current.Resources[UiFonts.CodeFamilyKey]).Source);
+            Assert.Equal("Consolas, Segoe UI", ((FontFamily)Application.Current.Resources[UiFonts.LogFamilyKey]).Source);
         });
     }
 
@@ -292,6 +317,9 @@ public sealed class ChineseFontAppTests(WpfThread wpf)
     {
         public string? Found { get; set; }
 
+        /// <summary>When set, the install throws it instead of giving a result (review 28 F1).</summary>
+        public Exception? Throw { get; set; }
+
         public int Installs { get; private set; }
 
         public TaskCompletionSource<FontInstallResult> Result { get; private set; } = new();
@@ -309,6 +337,11 @@ public sealed class ChineseFontAppTests(WpfThread wpf)
             Installs++;
             Progress = progress;
             Cancel = cancel;
+            if (Throw is { } failure)
+            {
+                return Task.FromException<FontInstallResult>(failure);
+            }
+
             Result = new TaskCompletionSource<FontInstallResult>();
             return Result.Task;
         }
@@ -359,8 +392,11 @@ public sealed class ChineseFontAppTests(WpfThread wpf)
             return;
         }
 
+        // Review 28: the row's install ran on a view model whose window was closed; here the window stays open and shows
+        // each step.
         var fonts = new FakeFonts();
         SettingsViewModel? viewModel = null;
+        SettingsWindow? window = null;
         var asked = 0;
         var answer = false;
         wpf.Invoke(() =>
@@ -378,54 +414,116 @@ public sealed class ChineseFontAppTests(WpfThread wpf)
             Assert.True(viewModel.ShowsMissingHint);
             Assert.Equal(LauncherSettings.ChineseFontTaipei, viewModel.ToSettings().ChineseFont);
 
-            var window = new SettingsWindow { DataContext = viewModel };
-            try
-            {
-                window.Show();
-                Settle(window);
-                Assert.Equal(Visibility.Visible, window.InstallFontButton.Visibility);
-                Assert.Equal(Visibility.Visible, window.ChineseFontHint.Visibility);
-                Assert.Equal(Visibility.Collapsed, window.FontProgress.Visibility);
-            }
-            finally
-            {
-                window.Close();
-            }
+            window = new SettingsWindow { DataContext = viewModel };
+            window.Show();
+            Settle(window);
+            Assert.Equal(Visibility.Visible, window.InstallFontButton.Visibility);
+            Assert.Equal(Visibility.Visible, window.ChineseFontHint.Visibility);
+            Assert.Equal(Visibility.Collapsed, window.FontProgress.Visibility);
         });
 
-        // Asked, and Cancel: nothing happens.
-        Task? declined = null;
-        wpf.Invoke(() => declined = viewModel!.InstallFontAsync());
-        await declined!;
-        Assert.Equal((1, 0), (asked, fonts.Installs));
+        try
+        {
+            // Asked, and Cancel: nothing happens.
+            Task? declined = null;
+            wpf.Invoke(() => declined = viewModel!.InstallFontAsync());
+            await declined!;
+            Assert.Equal((1, 0), (asked, fonts.Installs));
 
-        answer = true;
+            answer = true;
+            Task? install = null;
+            wpf.Invoke(() =>
+            {
+                install = viewModel!.InstallFontAsync();
+                Assert.Equal(FontInstallState.Downloading, viewModel.InstallState);
+                Assert.False(viewModel.ShowsMissingHint);
+                Assert.False(viewModel.InstallFontCommand.CanExecute(null));
+                fonts.Progress!.Report(7_400_000);
+            });
+            wpf.Settle();
+            wpf.Invoke(() =>
+            {
+                var progress = string.Format(CultureInfo.CurrentCulture, Strings.FontInstall_Progress, (7.4).ToString("0.0", CultureInfo.CurrentCulture), (20.3).ToString("0.0", CultureInfo.CurrentCulture));
+                Assert.Equal(progress, viewModel!.InstallProgressText);
+                Settle(window!);
+                Assert.Equal(Visibility.Visible, window!.FontProgress.Visibility); // the bar, the bytes and Cancel
+                Assert.Equal(progress, window.FontProgressText.Text);
+                Assert.Equal(Visibility.Collapsed, window.ChineseFontHint.Visibility);
+                fonts.Result.SetResult(new FontInstallResult(FontInstallOutcome.Installed, @"C:\Users\me\AppData\Local\Microsoft\Windows\Fonts\TaipeiSansTCBeta-Light.ttf"));
+            });
+            await install!;
+
+            wpf.Invoke(() =>
+            {
+                Assert.Equal(FontInstallState.Done, viewModel!.InstallState);
+                Assert.Equal(Strings.FontInstall_Done, viewModel.InstallMessage);
+                Assert.False(viewModel.IsInstallFailed);
+                Assert.Equal([LauncherSettings.ChineseFontTaipei, LauncherSettings.ChineseFontSystem], viewModel.ChineseFontOptions.Select(option => option.Id));
+                Assert.Equal(LauncherSettings.ChineseFontTaipei, viewModel.SelectedChineseFont.Id);
+                Assert.False(viewModel.IsChineseFontMissing);
+                Assert.Equal(LauncherSettings.ChineseFontTaipei, viewModel.ToSettings().ChineseFont); // applies at Save
+
+                Settle(window!);
+                Assert.Equal(Visibility.Collapsed, window!.FontProgress.Visibility);
+                Assert.Equal(Visibility.Collapsed, window.InstallFontButton.Visibility);
+                Assert.Equal(Visibility.Visible, window.FontInstallMessage.Visibility);
+                Assert.Equal(Strings.FontInstall_Done, window.FontInstallMessage.Text);
+                Assert.Equal(LauncherSettings.ChineseFontTaipei, ((ChineseFontOption)window.ChineseFontList.SelectedItem).Id);
+            });
+        }
+        finally
+        {
+            wpf.Invoke(() => window?.Close());
+        }
+    }
+
+    [Theory]
+    [InlineData("io")]
+    [InlineData("denied")]
+    [InlineData("cancelled")]
+    public async Task An_install_that_throws_is_said_in_the_row_and_does_not_stay_downloading(string thrown)
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        // Review 28 F1: an exception out of the install left the row on "Downloading… 0.0 / 20.3 MB" until Settings was
+        // reopened, and its Cancel did nothing.
+        Exception failure = thrown switch
+        {
+            "io" => new IOException("The process cannot access the file because it is being used by another process."),
+            "denied" => new UnauthorizedAccessException("Access to the path is denied."),
+            _ => new OperationCanceledException(),
+        };
+        var fonts = new FakeFonts { Throw = failure };
+        SettingsViewModel? viewModel = null;
         Task? install = null;
         wpf.Invoke(() =>
         {
-            install = viewModel!.InstallFontAsync();
-            Assert.Equal(FontInstallState.Downloading, viewModel.InstallState);
-            Assert.False(viewModel.ShowsMissingHint);
-            Assert.False(viewModel.InstallFontCommand.CanExecute(null));
-            fonts.Progress!.Report(7_400_000);
-        });
-        wpf.Settle();
-        wpf.Invoke(() =>
-        {
-            Assert.Equal(string.Format(CultureInfo.CurrentCulture, Strings.FontInstall_Progress, (7.4).ToString("0.0", CultureInfo.CurrentCulture), (20.3).ToString("0.0", CultureInfo.CurrentCulture)), viewModel!.InstallProgressText);
-            fonts.Result.SetResult(new FontInstallResult(FontInstallOutcome.Installed, @"C:\Users\me\AppData\Local\Microsoft\Windows\Fonts\TaipeiSansTCBeta-Light.ttf"));
+            viewModel = new SettingsViewModel(new LauncherSettings());
+            viewModel.UseChineseFont(fonts);
+            viewModel.ConfirmInstall = () => true;
+            install = viewModel.InstallFontAsync();
         });
         await install!;
 
         wpf.Invoke(() =>
         {
-            Assert.Equal(FontInstallState.Done, viewModel!.InstallState);
-            Assert.Equal(Strings.FontInstall_Done, viewModel.InstallMessage);
-            Assert.False(viewModel.IsInstallFailed);
-            Assert.Equal([LauncherSettings.ChineseFontTaipei, LauncherSettings.ChineseFontSystem], viewModel.ChineseFontOptions.Select(option => option.Id));
-            Assert.Equal(LauncherSettings.ChineseFontTaipei, viewModel.SelectedChineseFont.Id);
-            Assert.False(viewModel.IsChineseFontMissing);
-            Assert.Equal(LauncherSettings.ChineseFontTaipei, viewModel.ToSettings().ChineseFont); // applies at Save
+            Assert.False(viewModel!.IsInstalling);
+            if (failure is OperationCanceledException)
+            {
+                Assert.Equal(FontInstallState.Idle, viewModel.InstallState);
+                Assert.Null(viewModel.InstallMessage);
+                Assert.True(viewModel.ShowsMissingHint);
+            }
+            else
+            {
+                Assert.Equal(FontInstallState.Failed, viewModel.InstallState);
+                Assert.Equal(string.Format(CultureInfo.CurrentCulture, Strings.FontInstall_InstallFailed, failure.Message), viewModel.InstallMessage);
+            }
+
+            Assert.True(viewModel.InstallFontCommand.CanExecute(null)); // it can be tried again
         });
     }
 
@@ -434,6 +532,7 @@ public sealed class ChineseFontAppTests(WpfThread wpf)
     [InlineData(FontInstallOutcome.Mismatch, null)]
     [InlineData(FontInstallOutcome.InstallFailed, "Access is denied.")]
     [InlineData(FontInstallOutcome.OtherFileThere, null)]
+    [InlineData(FontInstallOutcome.NameTaken, null)]
     [InlineData(FontInstallOutcome.Cancelled, null)]
     public async Task Each_failure_is_said_in_the_row_with_the_way_by_hand_and_installs_nothing(FontInstallOutcome outcome, string? message)
     {
@@ -451,7 +550,7 @@ public sealed class ChineseFontAppTests(WpfThread wpf)
             viewModel.UseChineseFont(fonts);
             viewModel.ConfirmInstall = () => true;
             install = viewModel.InstallFontAsync();
-            fonts.Result.SetResult(new FontInstallResult(outcome, Message: message));
+            fonts.Result.SetResult(new FontInstallResult(outcome, outcome == FontInstallOutcome.NameTaken ? @"C:\Fonts\TaipeiSansTC-Light-1.0.ttf" : null, message));
         });
         await install!;
 
@@ -463,6 +562,7 @@ public sealed class ChineseFontAppTests(WpfThread wpf)
                 FontInstallOutcome.Mismatch => Strings.FontInstall_Mismatch,
                 FontInstallOutcome.InstallFailed => string.Format(CultureInfo.CurrentCulture, Strings.FontInstall_InstallFailed, message),
                 FontInstallOutcome.OtherFileThere => string.Format(CultureInfo.CurrentCulture, Strings.FontInstall_OtherFileThere, TaipeiSans.FileName),
+                FontInstallOutcome.NameTaken => string.Format(CultureInfo.CurrentCulture, Strings.FontInstall_NameTaken, @"C:\Fonts\TaipeiSansTC-Light-1.0.ttf"),
                 _ => null,
             };
             Assert.Equal(expected, viewModel!.InstallMessage);

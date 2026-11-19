@@ -2639,4 +2639,7 @@ SHA-256：{3}
   <data name="FontInstall_DetailsName" xml:space="preserve">
     <value>安装内容</value>
   </data>
+  <data name="FontInstall_NameTaken" xml:space="preserve">
+    <value>Windows 已为另一个文件列出同名的字体：{0}。没有安装任何东西。</value>
+  </data>
 </root>
