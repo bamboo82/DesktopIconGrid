@@ -9,6 +9,19 @@ The owner relays replies.
 
 ---
 
+## 2026-11-19 (95) — Run 195: the Settings row test looked for a tab that is not there
+
+Run 195 (`53dc660`, entry 94) was red on one App test of mine, the Settings row with *Install*. The other 393 passed,
+among them the new tests of A1–A3 and the Properties Icon row in English.
+
+- **What failed:** `ChineseFontAppTests.The_Install_button_is_whole_in_English_and_goes_under_the_list_when_the_row_is_narrow`.
+  It walked up from the list to a `TabItem`. Settings' tabs are empty headers, and their pages sit in a grid beside
+  them (`PageList`), so there is none.
+- **What I changed** (the test, not the window): it selects the page that holds the row, by its index in `Tabs`. Its
+  checks are unchanged.
+
+This entry claims no run for its own commit.
+
 ## 2026-11-19 (94) — 0.12.1: English texts that were cut, one date rule (review 28 A1–A3)
 
 Run 194 (`52bafe8`, entry 93) is green. This entry claims no run for its own commit.

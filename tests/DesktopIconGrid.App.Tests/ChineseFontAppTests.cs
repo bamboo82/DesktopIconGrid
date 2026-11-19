@@ -44,13 +44,10 @@ public sealed class ChineseFontAppTests(WpfThread wpf)
             try
             {
                 window.Show();
-                DependencyObject? node = window.ChineseFontList;
-                while (node is not null and not TabItem)
-                {
-                    node = LogicalTreeHelper.GetParent(node);
-                }
-
-                Assert.IsType<TabItem>(node).IsSelected = true;
+                Settle(window);
+                var page = window.PageList.ToList().FindIndex(page => page.IsAncestorOf(window.ChineseFontList)); // the tabs' pages sit beside them
+                Assert.True(page >= 0);
+                window.Tabs.SelectedIndex = page;
                 Settle(window);
                 var row = window.ChineseFontRow;
                 var button = window.InstallFontButton;
