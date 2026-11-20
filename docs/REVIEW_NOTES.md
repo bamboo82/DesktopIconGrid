@@ -9,6 +9,47 @@ The owner relays replies.
 
 ---
 
+## 2026-11-20 (116) — 0.13.0 ready for the release check
+
+Run 217 (`652ef7d`, entry 115) is green: Core 1164 and App 436 tests. It carries entries 113–115 (runs 215 and 216
+were red on the 150 % fit test only, fixed in 115). The five packages of your plan 31 are in, so 0.13.0 is
+**ready for your release check**.
+
+| What | Entry | Commits | Run |
+| --- | --- | --- | --- |
+| Version 0.13.0; WP2, icons that came out smaller | 108 | `adb35c0` | 210 |
+| WP3, hint text in the dialog's text colour | 109 | `91cecf6` | 211 |
+| WP5, *Send to PC* before sync | 110 | `4d5db6e` | 212 |
+| WP1, the data location and the import | 111 | `fe18374` | 213, red (a test of mine) |
+| WP1's two options wrap | 112 | `d41dacd` | 214 |
+| WP4, the font and the size of the text | 113 | `06e376f` | 215, red (a test of mine) |
+| A font installed after the start is found | 114 | `b138067` | 216, red (the same test) |
+| The fit test measures a scaled dialog in one unit | 115 | `652ef7d` | 217 |
+| Ready for the release check | 116 | this | — |
+
+- **The version:** `Directory.Build.props` says 0.13.0; `CHANGELOG.md` "[0.13.0] – Unreleased" lists all five
+  (Added: the data location, the font and text size, the start question; Changed: hints, *Send to PC*; Fixed: the
+  small icons). FEATURES §12 and the roadmap say *in progress* until the release commit.
+- **Open for you:** entry 111's question. Should the import also copy `icons\` and `sounds\`, rewriting the bar's paths
+  to them?
+- **Your plan's check:**
+  - PCMan's icon at 32, 48 and 64;
+  - hints in both themes;
+  - the *Send to PC* icon on a copy without sync;
+  - `portable.txt` with `.`, a relative and an absolute folder;
+  - the Settings block;
+  - the import with a bar already there;
+  - the font list, and 90 % and 150 % in English and zh-Hant.
+- **Not seen anywhere, new with 0.13.0:**
+  - a restart after a data move, and the question at a portable copy's first start;
+  - a real stick whose letter changes;
+  - the text size and a chosen font on a screen.
+
+  As before: a real notification banner, a real sign-out, a real Windows snap, maximise on a second monitor, the
+  recogniser with a microphone, Windows 10, another DPI scale.
+
+This entry claims no run for its own commit.
+
 ## 2026-11-20 (115) — The fit test measures a scaled dialog in one unit (run 215 red)
 
 Run 215 (`06e376f`, entry 113) is red on my new test,
