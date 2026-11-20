@@ -54,6 +54,44 @@ public static class DialogTheme
 #pragma warning disable WPF0001 // ThemeMode is marked experimental in the WPF reference assemblies
         window.ThemeMode = UseFluent ? ThemeMode.System : ThemeMode.None;
 #pragma warning restore WPF0001
+        ScaleText(window, Services.UiFonts.TextFactor);
+    }
+
+    /// <summary>
+    /// A dialog at the text size chosen in Settings (0.13.0 WP4): its whole content is scaled as one (a
+    /// <see cref="FrameworkElement.LayoutTransform"/> on it), so what fits at 100 % fits at 150 % in proportion, logs and
+    /// code text with it; the width and height it sets, and their limits, grow by the same factor. A dialog that would be
+    /// taller or wider than the work area is held to it (<see cref="WorkAreaFit"/>) and its body scrolls, as before.
+    /// </summary>
+    internal static void ScaleText(Window window, double factor)
+    {
+        if (Math.Abs(factor - 1) < 0.001 || window.Content is not FrameworkElement root || !root.LayoutTransform.Value.IsIdentity)
+        {
+            return;
+        }
+
+        root.LayoutTransform = new ScaleTransform(factor, factor);
+        if (!double.IsNaN(window.Width))
+        {
+            window.Width *= factor;
+        }
+
+        if (!double.IsNaN(window.Height))
+        {
+            window.Height *= factor;
+        }
+
+        window.MinWidth *= factor;
+        window.MinHeight *= factor;
+        if (!double.IsPositiveInfinity(window.MaxWidth))
+        {
+            window.MaxWidth *= factor;
+        }
+
+        if (!double.IsPositiveInfinity(window.MaxHeight))
+        {
+            window.MaxHeight *= factor;
+        }
     }
 
     /// <summary>Windows' "Choose your default app mode" setting; dark when the value is 0.</summary>

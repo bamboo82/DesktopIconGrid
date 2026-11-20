@@ -211,7 +211,16 @@ public sealed partial class LauncherViewModel : ObservableObject, ISyncHost
 
     public double CellWidth => IconSize + 2 * CellPadding + (ShowLabels ? 24 : 0);
 
-    public double CellHeight => IconSize + 2 * CellPadding + (ShowLabels ? LabelHeight + 2 : 0);
+    public double CellHeight => IconSize + 2 * CellPadding + (ShowLabels ? NameHeight + 2 : 0);
+
+    /// <summary>The size of the names under the icons and of separators' captions: 11 at 100 %, by the text size (0.13.0 WP4).</summary>
+    public double NameFontSize => 11 * Model.Settings.TextFactor;
+
+    /// <summary>The height of the line of a name under an icon: 16 at 100 %, by the text size; icons keep theirs.</summary>
+    public double NameHeight => Math.Ceiling(LabelHeight * Model.Settings.TextFactor);
+
+    /// <summary>The size of the line an empty bar shows: 12 at 100 %, by the text size.</summary>
+    public double EmptyHintFontSize => 12 * Model.Settings.TextFactor;
 
     public bool AlwaysOnTop
     {
@@ -1943,6 +1952,9 @@ public sealed partial class LauncherViewModel : ObservableObject, ISyncHost
         OnPropertyChanged(nameof(DoubleClickToLaunch));
         OnPropertyChanged(nameof(CellWidth));
         OnPropertyChanged(nameof(CellHeight));
+        OnPropertyChanged(nameof(NameFontSize));
+        OnPropertyChanged(nameof(NameHeight));
+        OnPropertyChanged(nameof(EmptyHintFontSize));
         OnPropertyChanged(nameof(AlwaysOnTop));
         OnPropertyChanged(nameof(Opacity));
         OnPropertyChanged(nameof(Palette));

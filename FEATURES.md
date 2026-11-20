@@ -756,14 +756,16 @@ warnings and errors. The last 2000 entries stay in memory and all of them are ap
 | Transparency | 0 % (opaque) |
 | Close button hides to tray | on |
 | Language | same as Windows (English, 繁體中文 or 简体中文; applies at the next start) |
+| Font | Windows' own (0.13.0): the list offers it first, then the families installed on this PC by the name they have in the UI's language, drawn in the dialog's font. Stored as `uiFont` (a family's name; one with `,` `#` `/` `\` `:` or over 100 characters is not taken: a layout from elsewhere never makes the app load a font from a file); it syncs as `chineseFont` does. A PC without the family draws Windows' own, says so once in the log, and lists it as "… (not on this PC)", which Save keeps. The chain of every window, menu, tooltip and the tray menu is that font, then the Chinese font when it is used, then Windows' own; code and log text keep Consolas first |
 | Chinese text | Taipei Sans TC Light when this PC has it, for every UI language but Simplified Chinese, where it is the Windows font (0.12.0); stored as `chineseFont` with the appearance settings, so it syncs, and a PC without the font draws Chinese as before whatever it says |
+| Text size | 100 % (0.13.0; 90, 110, 125 or 150 %): stored as `textScale` in percent (nothing for 100; a value outside 90–150 is taken to its end), and it syncs. A dialog is scaled whole as it opens, its set sizes with it, so what fits at 100 % fits in proportion; one taller than the screen keeps to the work area and its body scrolls, as before. On the bar the names under the icons, separators' captions and the empty bar's line follow, with the name line's height; icons, gauges' numbers and symbol and text icons keep their sizes. Menus, tooltips and the tray menu take the size through Windows' menu, status and message font sizes. A sample beside the list shows the chosen font and size at once; the bar follows at Save, a dialog when it is next opened |
 
 Settings live in the same JSON file as the layout and apply immediately on *Save*.
 
 The dialog (0.11.0) has five tabs: *Appearance* (theme, background, bar background, icon size, spacing, labels,
-transparency), *Window* (open with, the window check boxes, start with Windows, dock to an edge), *Keys* (the
-show/hide and show-at-pointer hotkeys, the keys in the bar), *Voice* (the voice hotkey and language, one hint) and
-*General* (language). Save and Cancel stay under every tab. A tab with a value that cannot be saved shows ⚠ before
+font, Chinese text and text size since 0.13.0, transparency), *Window* (open with, the window check boxes, start with
+Windows, dock to an edge), *Keys* (the show/hide and show-at-pointer hotkeys, the keys in the bar), *Voice* (the voice
+hotkey and language, one hint) and *General* (language, and the data location since 0.13.0). Save and Cancel stay under every tab. A tab with a value that cannot be saved shows ⚠ before
 its name, and the line beside Save names the first such tab. Ctrl+Tab and Ctrl+Shift+Tab change the tab and put the
 focus on its first control; Enter saves and Esc cancels. The page area is as tall as the tallest page, at most 560,
 and each page scrolls on a screen too short for it.

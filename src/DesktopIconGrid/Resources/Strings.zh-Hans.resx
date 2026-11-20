@@ -2739,4 +2739,31 @@ SHA-256：{3}
   <data name="Settings_DataProgramReadOnly" xml:space="preserve">
     <value>程序的文件夹无法写入（位于 Program Files 下，或在只读驱动器上）</value>
   </data>
+  <data name="Settings_UiFont" xml:space="preserve">
+    <value>字体：</value>
+  </data>
+  <data name="Settings_UiFontName" xml:space="preserve">
+    <value>程序文字的字体</value>
+  </data>
+  <data name="Settings_UiFontDefault" xml:space="preserve">
+    <value>Windows 默认（{0}）</value>
+  </data>
+  <data name="Settings_UiFontNotHere" xml:space="preserve">
+    <value>{0}（这台电脑没有）</value>
+  </data>
+  <data name="Settings_TextSize" xml:space="preserve">
+    <value>文字大小：</value>
+  </data>
+  <data name="Settings_TextSizeName" xml:space="preserve">
+    <value>文字大小</value>
+  </data>
+  <data name="Settings_TextSizeValue" xml:space="preserve">
+    <value>{0}%</value>
+  </data>
+  <data name="Settings_TextSample" xml:space="preserve">
+    <value>示例 Sample 123 快速启动</value>
+  </data>
+  <data name="Settings_TextHint" xml:space="preserve">
+    <value>工具栏上的名称在保存时应用，对话框在下次打开时应用。图标大小不变。</value>
+  </data>
 </root>

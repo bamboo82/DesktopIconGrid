@@ -9,6 +9,70 @@ The owner relays replies.
 
 ---
 
+## 2026-11-20 (113) — 0.13.0 WP4: the font and the size of the app's text
+
+Run 214 (`d41dacd`, entry 112) is green: Core 1140 and App 430 tests. WP1 is complete with it.
+
+- **What changed, Core:**
+  - `LauncherSettings.UiFont` (a family's name; null: Windows' own) and `TextScale` (percent; null: 100), with
+    `TextFactor`. `Normalize` takes a size outside 90–150 to its end (a repair), writes 100 as nothing, and drops a
+    font name that `UiFontChain.IsFamilyName` refuses. `CopyFrom` copies both.
+  - `UiFontChain.IsFamilyName` refuses an empty name, one over 100 characters, a control character, and `,` `#` `/`
+    `\` `:` `"`. Those make WPF read another family or a file, and a layout from another PC must not make this one
+    load a font from a file (a share).
+  - `UiFontChain.Build(chosen, chinese, windows)` gives the chosen font (else Windows'), then the Chinese font when it
+    is used, then Windows' own; no family twice.
+- **What changed, app:**
+  - `UiFonts.Configure(fontFile, uiFamily, textFactor)`:
+    - `App.UiFontFamily` and the message, menu and status family keys take the chain. With no font and no Chinese
+      font they are left as before 0.13.0 (the old overload is that);
+    - the message, menu and status *size* keys take Windows' size × the factor, and none is set at 100 %;
+    - code and log text keep Consolas first.
+  - `App.ApplyFonts` (was `ApplyChineseFont`) runs at start, at Save and after an install. A stored family this PC
+    lacks (`UiFonts.IsInstalled`, by any of its names) gives Windows' own and one Info line per run and family.
+  - `DialogTheme.Apply` calls `ScaleText`:
+    - a `LayoutTransform` on the dialog's content (not twice);
+    - `Width`, `Height`, `MinWidth`, `MinHeight` and finite `MaxWidth`/`MaxHeight` × the factor;
+    - **taller than the work area: capped** by `WorkAreaFit` as before, and the body scrolls (Settings' pages and
+      Properties do). Logs and code text are scaled with their window.
+  - The bar:
+    - `NameFontSize` (11 × factor) for names and separators' captions;
+    - `NameHeight` (16 × factor, rounded up) in `CellHeight`;
+    - `EmptyHintFontSize` (12 × factor);
+    - icons, gauges' numbers, symbol and text icons are unchanged.
+  - Settings ▸ Appearance:
+    - *Font* (row 6): Windows default first, then a stored family that is not on this PC ("… (not on this PC)",
+      kept by Save), then the installed ones by their name in the UI's language, a virtualizing list;
+    - *Chinese text* (row 7), as before;
+    - *Text size* (row 8): 90/100/110/125/150 % and a stored size between them, with the sample "範例 Sample 123
+      快速啟動" in the chosen font (the Chinese row's choice after it) and scaled to the chosen size against the size
+      the dialog is drawn at; one hint under it;
+    - Transparency moved to row 9.
+- **Choices:**
+  - **Sync rule:** `uiFont` and `textScale` sync, as `chineseFont` does (it is in `LauncherSettings`, so it syncs; FEATURES
+    said so in 0.12.0). A PC without the font falls back.
+  - Three rows in the Appearance grid, no heading line: the page's other rows have none.
+  - A chosen font comes before the Chinese font and Windows' own after both, so a chosen Latin font without Chinese
+    still draws Chinese in Taipei Sans (or Windows' Chinese font).
+  - Menus and tooltips of the *Fluent* dialogs are popups of their own, not scaled by the dialog's transform. They
+    take the size keys only where their style reads them (the classic look does); the bar's menus and the tray menu
+    are classic.
+- **Tests:**
+  - Core `UiFontChainTests` (24): the four combinations (default or chosen × Taipei or Windows) and two more,
+    the name rule, the size clamp, copy and clone.
+  - App `TextSizeTests` (4): the font list (Windows first, a missing one kept and said, sorted once), Save's values
+    and the sample; the chains and sizes in the resources and their removal; a dialog scaled once with its sizes; the
+    bar's name size, line and cell height at 150 %, icons unchanged.
+  - App `DialogFitTests`: Settings (Keys page) and Properties (Advanced open) at 150 % in English and zh-Hant, on a
+    600 px screen: the body scrolls and Save and Cancel stay in sight.
+- **Not tested:**
+  - the look on a screen at 90 % and 150 %;
+  - a font with no Latin letters chosen as the UI font;
+  - the tray menu's and tooltips' sizes on a real desktop;
+  - a 1024 px wide screen at 150 % with Properties' icon row.
+
+This entry claims no run for its own commit.
+
 ## 2026-11-20 (112) — WP1's two options take the wrapping label (run 213 red)
 
 Run 213 (`fe18374`, entry 111) is red on one test of 430:

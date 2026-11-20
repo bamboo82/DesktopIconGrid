@@ -192,6 +192,39 @@ public sealed class DialogFitTests(WpfThread wpf)
     [Theory]
     [InlineData("en-US")]
     [InlineData("zh-Hant")]
+    public void Settings_and_Properties_at_150_percent_fit_a_short_screen_with_their_buttons_in_sight(string language)
+    {
+        // 0.13.0 WP4: the whole dialog is scaled; on a screen too short for it the body scrolls and the buttons stay.
+        wpf.Invoke(() =>
+        {
+            var before = System.Threading.Thread.CurrentThread.CurrentUICulture;
+            System.Threading.Thread.CurrentThread.CurrentUICulture = System.Globalization.CultureInfo.GetCultureInfo(language);
+            Services.UiFonts.Configure(null, null, 1.5);
+            try
+            {
+                var settings = new SettingsWindow { DataContext = new SettingsViewModel(new LauncherSettings()) };
+                Assert.Equal(1.5, ((FrameworkElement)settings.Content).LayoutTransform.Value.M11);
+                settings.Tabs.SelectedIndex = 2; // Keys, the tallest page
+                FitsAShortScreen(settings, settings.Body, 600, Strings.Common_Save, Strings.Common_Cancel);
+
+                var properties = new ItemPropertiesWindow
+                {
+                    DataContext = new ItemPropertiesViewModel(new ShortcutItem { Name = "Tool", Location = @"C:\Tools\tool.exe" }, isNew: false, new NoIcons()),
+                };
+                properties.Advanced.IsExpanded = true;
+                FitsAShortScreen(properties, properties.Body, 600, Strings.Common_Save, Strings.Common_Cancel);
+            }
+            finally
+            {
+                Services.UiFonts.Configure(null);
+                System.Threading.Thread.CurrentThread.CurrentUICulture = before;
+            }
+        });
+    }
+
+    [Theory]
+    [InlineData("en-US")]
+    [InlineData("zh-Hant")]
     [InlineData("zh-Hans")]
     public void The_headings_of_the_Sync_window_fit_it_and_the_Google_one_says_what_it_is_for_in_a_line_that_wraps(string language)
     {

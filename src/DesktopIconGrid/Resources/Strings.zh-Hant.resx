@@ -2739,4 +2739,31 @@ SHA-256：{3}
   <data name="Settings_DataProgramReadOnly" xml:space="preserve">
     <value>程式的資料夾無法寫入（位於 Program Files 下，或在唯讀磁碟機上）</value>
   </data>
+  <data name="Settings_UiFont" xml:space="preserve">
+    <value>字型：</value>
+  </data>
+  <data name="Settings_UiFontName" xml:space="preserve">
+    <value>程式文字的字型</value>
+  </data>
+  <data name="Settings_UiFontDefault" xml:space="preserve">
+    <value>Windows 預設（{0}）</value>
+  </data>
+  <data name="Settings_UiFontNotHere" xml:space="preserve">
+    <value>{0}（這台電腦沒有）</value>
+  </data>
+  <data name="Settings_TextSize" xml:space="preserve">
+    <value>文字大小：</value>
+  </data>
+  <data name="Settings_TextSizeName" xml:space="preserve">
+    <value>文字大小</value>
+  </data>
+  <data name="Settings_TextSizeValue" xml:space="preserve">
+    <value>{0}%</value>
+  </data>
+  <data name="Settings_TextSample" xml:space="preserve">
+    <value>範例 Sample 123 快速啟動</value>
+  </data>
+  <data name="Settings_TextHint" xml:space="preserve">
+    <value>工具列上的名稱在儲存時套用，對話方塊在下次開啟時套用。圖示大小不變。</value>
+  </data>
 </root>

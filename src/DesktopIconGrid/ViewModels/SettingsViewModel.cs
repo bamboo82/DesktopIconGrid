@@ -85,6 +85,7 @@ public sealed partial class SettingsViewModel : ObservableObject
         _fluentDialogs = current.FluentDialogs;
         _startWithWindows = current.StartWithWindows;
         _startHidden = current.StartHidden;
+        InitText(current);
 
         Themes = [.. ThemeCatalog.Builtin, ThemeCatalog.CreateCustom(current.BackgroundColor)];
         _selectedTheme = Themes.FirstOrDefault(t => string.Equals(t.Id, current.Theme, StringComparison.OrdinalIgnoreCase)) ?? Themes[0];
@@ -564,6 +565,8 @@ public sealed partial class SettingsViewModel : ObservableObject
             }
         }
         settings.Opacity = LauncherSettings.MaxOpacity - _transparency;
+        settings.UiFont = SelectedUiFont.Id;
+        settings.TextScale = SelectedTextScale.Percent == 100 ? null : SelectedTextScale.Percent;
         settings.CloseToTray = _closeToTray;
         settings.StartWithWindows = _startWithWindows;
         settings.StartHidden = _startHidden;

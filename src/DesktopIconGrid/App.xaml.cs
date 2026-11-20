@@ -242,21 +242,36 @@ public partial class App : Application
         viewModel.UseUsage(usage);
         var usageSaver = new UsageSaver(usage, viewModel.ShortcutIds, read => Dispatcher.InvokeAsync(read).Task);
 
-        // Chinese in Taipei Sans TC Light where this PC has it (0.12.0 WP5): now, and again after each Save.
+        // Chinese in Taipei Sans TC Light where this PC has it (0.12.0 WP5), the font and the size chosen for the app's
+        // text (0.13.0 WP4): now, and again after each Save.
         var chineseFonts = new ChineseFontService(Http);
         dialogs.ChineseFonts = chineseFonts;
-        void ApplyChineseFont()
+        string? toldMissingFont = null;
+        void ApplyFonts()
         {
+            var settings = viewModel.Model.Settings;
             var file = chineseFonts.Find();
-            UiFonts.Configure(ChineseFonts.UsesTaipei(viewModel.Model.Settings.ChineseFont, CultureInfo.CurrentUICulture, file is not null) ? file : null);
+            var family = settings.UiFont;
+            if (family is not null && !UiFonts.IsInstalled(family))
+            {
+                if (!string.Equals(toldMissingFont, family, StringComparison.OrdinalIgnoreCase))
+                {
+                    AppLog.Default.Info("Fonts", $"The font \"{family}\" chosen for the app's text is not on this PC; Windows' own is used");
+                    toldMissingFont = family; // once per run and family
+                }
+
+                family = null;
+            }
+
+            UiFonts.Configure(ChineseFonts.UsesTaipei(settings.ChineseFont, CultureInfo.CurrentUICulture, file is not null) ? file : null, family, settings.TextFactor);
         }
 
-        ApplyChineseFont();
-        viewModel.SettingsChanged += (_, _) => ApplyChineseFont();
+        ApplyFonts();
+        viewModel.SettingsChanged += (_, _) => ApplyFonts();
 
         // An install from Settings applies at once, as the next start would, whatever Save or Cancel does then (0.12.1,
         // review 28 F4: Cancel kept the Windows font for the run, the next start took the font).
-        chineseFonts.Installed += (_, _) => Dispatcher.BeginInvoke(ApplyChineseFont);
+        chineseFonts.Installed += (_, _) => Dispatcher.BeginInvoke(ApplyFonts);
 
         // First paint; the bar window refines this once it has a handle (backdrop, High Contrast, settings changes).
         ThemeManager.Apply(ThemeManager.EffectivePalette(viewModel.Palette));

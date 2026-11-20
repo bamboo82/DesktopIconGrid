@@ -52,6 +52,8 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
           </Grid.RowDefinitions>
 
           <!-- Theme -->
@@ -125,9 +127,21 @@
           <TextBlock Grid.Row="5" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Settings_Labels}" Margin="0,0,12,10" />
           <CheckBox ContentTemplate="{StaticResource WrappingLabel}" Grid.Row="5" Grid.Column="1" Content="{x:Static r:Strings.Settings_ShowLabels}" IsChecked="{Binding ShowLabels}" Margin="0,0,0,10" VerticalAlignment="Center" />
 
+          <!-- Text (0.13.0 WP4): the font of the app's text, the Chinese font after it, and the size, with a sample -->
+          <TextBlock x:Name="UiFontLabel" Grid.Row="6" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Settings_UiFont}" Margin="0,0,12,10" />
+          <ComboBox x:Name="UiFontList" Grid.Row="6" Grid.Column="1" MinWidth="220" HorizontalAlignment="Left" Margin="0,0,0,10" VerticalContentAlignment="Center"
+                    ItemsSource="{Binding UiFontOptions}" SelectedItem="{Binding SelectedUiFont}" DisplayMemberPath="Name"
+                    AutomationProperties.Name="{x:Static r:Strings.Settings_UiFontName}">
+            <ComboBox.ItemsPanel>
+              <ItemsPanelTemplate>
+                <VirtualizingStackPanel />
+              </ItemsPanelTemplate>
+            </ComboBox.ItemsPanel>
+          </ComboBox>
+
           <!-- Chinese text: Taipei Sans TC Light where this PC has it, else a button that installs it (0.12.0 WP5) -->
-          <TextBlock x:Name="ChineseFontLabel" Grid.Row="6" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Settings_ChineseFont}" Margin="0,0,12,10" VerticalAlignment="Top" />
-          <StackPanel Grid.Row="6" Grid.Column="1" Margin="0,0,0,10">
+          <TextBlock x:Name="ChineseFontLabel" Grid.Row="7" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Settings_ChineseFont}" Margin="0,0,12,10" VerticalAlignment="Top" />
+          <StackPanel Grid.Row="7" Grid.Column="1" Margin="0,0,0,10">
             <!-- The button goes under the list when the row is too narrow for both (0.12.1, review 28: about 9 px to spare in English) -->
             <WrapPanel x:Name="ChineseFontRow">
               <ComboBox x:Name="ChineseFontList" MinWidth="220" Margin="0,0,8,4" VerticalContentAlignment="Center"
@@ -162,9 +176,25 @@
             </TextBlock>
           </StackPanel>
 
+          <!-- Text size, with a sample in the chosen font and size at once -->
+          <TextBlock x:Name="TextSizeLabel" Grid.Row="8" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Settings_TextSize}" Margin="0,0,12,10" VerticalAlignment="Top" />
+          <StackPanel Grid.Row="8" Grid.Column="1" Margin="0,0,0,10">
+            <WrapPanel>
+              <ComboBox x:Name="TextSizeList" MinWidth="90" Margin="0,0,12,4" VerticalContentAlignment="Center" VerticalAlignment="Center"
+                        ItemsSource="{Binding TextScaleOptions}" SelectedItem="{Binding SelectedTextScale}" DisplayMemberPath="Name"
+                        AutomationProperties.Name="{x:Static r:Strings.Settings_TextSizeName}" />
+              <TextBlock x:Name="TextSample" Text="{x:Static r:Strings.Settings_TextSample}" FontFamily="{Binding SampleFontFamily}" VerticalAlignment="Center" Margin="0,0,0,4">
+                <TextBlock.LayoutTransform>
+                  <ScaleTransform ScaleX="{Binding SampleScale}" ScaleY="{Binding SampleScale}" />
+                </TextBlock.LayoutTransform>
+              </TextBlock>
+            </WrapPanel>
+            <TextBlock Style="{StaticResource DialogHint}" Margin="0,2,0,0" Text="{x:Static r:Strings.Settings_TextHint}" />
+          </StackPanel>
+
           <!-- Transparency -->
-          <TextBlock Grid.Row="7" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Settings_Transparency}" Margin="0,0,12,10" />
-          <DockPanel Grid.Row="7" Grid.Column="1" Margin="0,0,0,10">
+          <TextBlock Grid.Row="9" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Settings_Transparency}" Margin="0,0,12,10" />
+          <DockPanel Grid.Row="9" Grid.Column="1" Margin="0,0,0,10">
             <TextBlock DockPanel.Dock="Right" Text="{Binding TransparencyText}" MinWidth="52" TextAlignment="Right" VerticalAlignment="Center" />
             <Slider Minimum="0" Maximum="{Binding MaxTransparency}"
                     Value="{Binding Transparency}"

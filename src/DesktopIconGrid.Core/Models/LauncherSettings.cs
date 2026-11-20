@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
+using DesktopIconGrid.Core.Fonts;
 using DesktopIconGrid.Core.Storage;
 
 namespace DesktopIconGrid.Core.Models;
@@ -85,6 +86,29 @@ public sealed partial class LauncherSettings
     /// </summary>
     public string? ChineseFont { get; set; }
 
+    /// <summary>
+    /// The font of the app's own text, by family name (0.13.0 WP4); <see langword="null"/> for Windows' own. It syncs, as
+    /// <see cref="ChineseFont"/> does; a PC that does not have the family draws the text in Windows' own.
+    /// </summary>
+    public string? UiFont { get; set; }
+
+    /// <summary>The sizes Settings offers for the text, in percent.</summary>
+    public static readonly IReadOnlyList<int> TextScales = [90, 100, 110, 125, 150];
+
+    public const int MinTextScale = 90;
+
+    public const int MaxTextScale = 150;
+
+    /// <summary>
+    /// The size of the app's text in percent of Windows' (0.13.0 WP4): dialogs are scaled whole, the bar's labels and their
+    /// cells follow, icons keep their size. <see langword="null"/> is 100; a value outside 90–150 is taken to its end.
+    /// </summary>
+    public int? TextScale { get; set; }
+
+    /// <summary><see cref="TextScale"/> as a factor: 1 for 100 %.</summary>
+    [JsonIgnore]
+    public double TextFactor => (TextScale ?? 100) / 100.0;
+
     /// <summary>The close button hides the bar to the notification area instead of exiting.</summary>
     public bool CloseToTray { get; set; } = true;
 
@@ -146,6 +170,8 @@ public sealed partial class LauncherSettings
         BarBackdrop = source.BarBackdrop;
         FluentDialogs = source.FluentDialogs;
         ChineseFont = source.ChineseFont;
+        UiFont = source.UiFont;
+        TextScale = source.TextScale;
         ToggleHotkey = source.ToggleHotkey;
         ShowAtPointerHotkey = source.ShowAtPointerHotkey;
         WindowKeys = source.WindowKeys is null ? null : new Dictionary<string, string>(source.WindowKeys);
@@ -216,6 +242,20 @@ public sealed partial class LauncherSettings
         else if (chinese != ChineseFont)
         {
             ChineseFont = chinese;
+        }
+
+        if (UiFont is not null)
+        {
+            var family = UiFontChain.IsFamilyName(UiFont) ? UiFont.Trim() : null; // no family's name: Windows' own
+            changed |= family != UiFont;
+            UiFont = family;
+        }
+
+        if (TextScale is { } scale)
+        {
+            var clamped = Math.Clamp(scale, MinTextScale, MaxTextScale);
+            changed |= clamped != scale; // out of range: repaired; 100 is only the default written out
+            TextScale = clamped == 100 ? null : clamped;
         }
 
         var edge = DockEdge?.Trim().ToLowerInvariant() ?? string.Empty;

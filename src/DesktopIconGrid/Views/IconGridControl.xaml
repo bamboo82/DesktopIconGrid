@@ -167,7 +167,7 @@
           <TextBlock Grid.Row="1"
                      Text="{Binding Name}"
                      Foreground="{DynamicResource Theme.Foreground}"
-                     FontSize="11"
+                     FontSize="{Binding Root.NameFontSize}"
                      TextAlignment="Center"
                      TextTrimming="CharacterEllipsis"
                      Margin="2,1,2,0"
@@ -211,7 +211,7 @@
                              Visibility="{Binding IsLineSeparator, Converter={StaticResource BoolToVisibility}}" />
           <TextBlock Text="{Binding Name}"
                      Foreground="{DynamicResource Theme.Hint}"
-                     FontSize="11"
+                     FontSize="{Binding Root.NameFontSize}"
                      FontWeight="SemiBold"
                      VerticalAlignment="Center"
                      Margin="5,0"
@@ -282,7 +282,7 @@
 
     <TextBlock Text="{Binding EmptyHint}"
                Foreground="{DynamicResource Theme.Hint}"
-               FontSize="12"
+               FontSize="{Binding EmptyHintFontSize}"
                HorizontalAlignment="Center" VerticalAlignment="Center"
                TextWrapping="Wrap" TextAlignment="Center"
                Margin="12"

@@ -2739,4 +2739,31 @@ The place was not changed; what was copied stays there.</value>
   <data name="Settings_DataProgramReadOnly" xml:space="preserve">
     <value>the program's folder cannot be written (it is under Program Files, or on a read-only drive)</value>
   </data>
+  <data name="Settings_UiFont" xml:space="preserve">
+    <value>Font:</value>
+  </data>
+  <data name="Settings_UiFontName" xml:space="preserve">
+    <value>Font of the app's text</value>
+  </data>
+  <data name="Settings_UiFontDefault" xml:space="preserve">
+    <value>Windows default ({0})</value>
+  </data>
+  <data name="Settings_UiFontNotHere" xml:space="preserve">
+    <value>{0} (not on this PC)</value>
+  </data>
+  <data name="Settings_TextSize" xml:space="preserve">
+    <value>Text size:</value>
+  </data>
+  <data name="Settings_TextSizeName" xml:space="preserve">
+    <value>Text size</value>
+  </data>
+  <data name="Settings_TextSizeValue" xml:space="preserve">
+    <value>{0} %</value>
+  </data>
+  <data name="Settings_TextSample" xml:space="preserve">
+    <value>Sample 123 快速啟動</value>
+  </data>
+  <data name="Settings_TextHint" xml:space="preserve">
+    <value>The bar's names follow at Save, a dialog when it is next opened. Icons keep their size.</value>
+  </data>
 </root>

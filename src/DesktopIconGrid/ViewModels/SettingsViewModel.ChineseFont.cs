@@ -33,6 +33,7 @@ public sealed partial class SettingsViewModel
 
     private IChineseFontInstall? _fontInstall;
     private bool _fontFound;
+    private string? _fontFile;
     private IReadOnlyList<ChineseFontOption> _chineseFontOptions = [SystemOption];
     private ChineseFontOption _selectedChineseFont = SystemOption;
     private bool _chineseFontChosen;
@@ -49,7 +50,8 @@ public sealed partial class SettingsViewModel
     public void UseChineseFont(IChineseFontInstall? fonts)
     {
         _fontInstall = fonts;
-        _fontFound = fonts?.Find() is not null;
+        _fontFile = fonts?.Find();
+        _fontFound = _fontFile is not null;
         _chineseFontChosen = false;
         _chineseFontOptions = _fontFound ? [TaipeiOption, SystemOption] : [SystemOption];
         _selectedChineseFont = ChineseFonts.UsesTaipei(_original.ChineseFont, CultureInfo.CurrentUICulture, _fontFound) ? TaipeiOption : SystemOption;
@@ -72,6 +74,7 @@ public sealed partial class SettingsViewModel
             if (value is not null && SetProperty(ref _selectedChineseFont, value))
             {
                 _chineseFontChosen = true;
+                OnPropertyChanged(nameof(SampleFontFamily)); // the sample's Chinese follows the choice (0.13.0 WP4)
             }
         }
     }
@@ -165,11 +168,13 @@ public sealed partial class SettingsViewModel
             // The found form, with the font chosen. The bar has already taken what the stored setting gives now that the
             // font is here (ChineseFontService.Installed); a choice made here applies at Save.
             _fontFound = true;
+            _fontFile = result.Path ?? _fontFile;
             _chineseFontOptions = [TaipeiOption, SystemOption];
             _selectedChineseFont = TaipeiOption;
             _chineseFontChosen = true;
             OnPropertyChanged(nameof(ChineseFontOptions));
             OnPropertyChanged(nameof(SelectedChineseFont));
+            OnPropertyChanged(nameof(SampleFontFamily));
         }
 
         SetInstallState(state);

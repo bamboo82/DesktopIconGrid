@@ -5856,6 +5856,51 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to The bar's names follow at Save, a dialog when it is next opened. Icons keep thei [rest of string was truncated]";.
+        /// </summary>
+        public static string Settings_TextHint {
+            get {
+                return ResourceManager.GetString("Settings_TextHint", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Sample 123 快速啟動.
+        /// </summary>
+        public static string Settings_TextSample {
+            get {
+                return ResourceManager.GetString("Settings_TextSample", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Text size:.
+        /// </summary>
+        public static string Settings_TextSize {
+            get {
+                return ResourceManager.GetString("Settings_TextSize", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Text size.
+        /// </summary>
+        public static string Settings_TextSizeName {
+            get {
+                return ResourceManager.GetString("Settings_TextSizeName", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to {0} %.
+        /// </summary>
+        public static string Settings_TextSizeValue {
+            get {
+                return ResourceManager.GetString("Settings_TextSizeValue", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Theme:.
         /// </summary>
         public static string Settings_Theme {
@@ -5906,6 +5951,42 @@ namespace DesktopIconGrid.Resources {
         public static string Settings_TransparencyToolTip {
             get {
                 return ResourceManager.GetString("Settings_TransparencyToolTip", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Font:.
+        /// </summary>
+        public static string Settings_UiFont {
+            get {
+                return ResourceManager.GetString("Settings_UiFont", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Windows default ({0}).
+        /// </summary>
+        public static string Settings_UiFontDefault {
+            get {
+                return ResourceManager.GetString("Settings_UiFontDefault", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Font of the app's text.
+        /// </summary>
+        public static string Settings_UiFontName {
+            get {
+                return ResourceManager.GetString("Settings_UiFontName", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to {0} (not on this PC).
+        /// </summary>
+        public static string Settings_UiFontNotHere {
+            get {
+                return ResourceManager.GetString("Settings_UiFontNotHere", resourceCulture);
             }
         }
 
