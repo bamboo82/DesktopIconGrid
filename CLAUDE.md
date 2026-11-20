@@ -88,15 +88,21 @@ After removing or editing a key in the `.resx` files, run `python3 -I tools/gen_
 
 ## State
 
-- Released: 0.12.0 "Find it, see it" on 2026-11-18 (release commit `ca7b1c6`, run 191; annotated tag `v0.12.0` on
-  it, where `main` is). REVIEW_NOTES entry 91 has its table of entries, commits and runs. Before it 0.11.0 (tag
-  `v0.11.0` on `10dec5a`), and 0.10.0 (tag `v0.10.0` on `254c55c`).
-- 0.12.1, the faults the review session found in 0.12.0 after the release (review 28: A1–A3, F1–F6, U1–U7, D1–D11),
-  has its release commit, dated 2026-11-19 (REVIEW_NOTES entry 100). The owner asked for it to be carried through and
-  for the release commit before the review session's release check.
-  - The tag `v0.12.1` and `main` are the review session's, as before; it has not checked 0.12.1 in the app yet.
-- In progress: nothing. After 0.12.1 nothing is planned; 1.0.0 keeps the installer, code signing and the Windows toast
+- Released: 0.12.1 on 2026-11-19 (release commit `0326f82`; annotated tag `v0.12.1` on it, release run 14; REVIEW_NOTES
+  entry 100 has its table), the faults the review session found in 0.12.0 after the release (review 28). Before it
+  0.12.0 "Find it, see it" on 2026-11-18 (tag `v0.12.0` on `ca7b1c6`, entry 91), 0.11.0 (tag `v0.11.0` on
+  `10dec5a`), and 0.10.0 (tag `v0.10.0` on `254c55c`).
+- 0.12.2, the findings of the release check of 0.12.1 (review 29: N1–N5), has its release commit, dated 2026-11-20
+  (REVIEW_NOTES entry 107). It came after the review session's release check (review 30, no finding), on the owner's
+  word. The tag `v0.12.2` and `main` are the review session's, on the owner's word.
+- In progress: nothing. After 0.12.2 nothing is planned; 1.0.0 keeps the installer, code signing and the Windows toast
   with actions.
+- Keep as designed (0.12.1–0.12.2):
+  - `usage.json` is read and written as a JSON tree: what this version cannot read goes back as it was, a file that
+    is not the JSON this app writes is kept as `usage.json.corrupt-<date>`, and none over 1 MB is written (entry 98);
+  - a click that minimises the program in front is no use (`LaunchOutcome.Minimized`, entry 103);
+  - a sync problem's notice opens the Sync window (entry 93);
+  - the font is found at the first place that has a file of its name that is a font (entry 102).
 - Keep as designed (0.12.0):
   - the symbol table (`SymbolCatalog`, 197 entries) and the tile look are the review session's design (entry 82);
   - usage counts stay in the local `usage.json`, never synced. Only a folder that cannot be written keeps them in
@@ -106,11 +112,13 @@ After removing or editing a key in the `.resx` files, run `python3 -I tools/gen_
   - the Taipei Sans TC font is never committed or shipped, and it is installed only when its button is clicked
     (entry 85);
   - WP5's earlier forms (新細明體 without ClearType, a bundled font) were withdrawn by the owner.
-- Seen in the app by the review session, for 0.12.0:
-  - WP3, WP4, F1, and WP5 with the real font download and install (with the owner's leave);
-  - the release check's fixes V1, V3 and V4, and S1 with real keys.
+- Seen in the app by the review session:
+  - for 0.12.0: WP3, WP4, F1, and WP5 with the real font download and install (with the owner's leave); the release
+    check's fixes V1, V3 and V4, and S1 with real keys;
+  - for 0.12.1 (review 29): A1–A3 in English, the Install row, D2, F2, F3, and U1 with `WM_QUERYENDSESSION`;
+  - for 0.12.2 (review 30): N1–N4 (N3 in zh-Hant only; English and zh-Hans in `DialogFitTests`).
 - Not seen anywhere:
-  - a real notification banner, a real Windows snap, and maximise on a second monitor;
+  - a real notification banner, a real sign-out, a real Windows snap, and maximise on a second monitor;
   - the recogniser with a microphone (the reviewer asks the owner before it opens one);
   - Windows 10 (the symbol font fallback), another DPI scale, and a real lock on `usage.json` (a scanner, a sync
     client).

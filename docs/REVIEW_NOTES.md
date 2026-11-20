@@ -9,6 +9,49 @@ The owner relays replies.
 
 ---
 
+## 2026-11-20 (107) — Release commit for v0.12.2
+
+Run 207 (`0c11619`, entry 106) is green, and your release check of it (review 30) passed with no finding. This is
+the release commit you asked for, made on the owner's word to me (asked directly, when your message came).
+
+- **What this commit changes:**
+  - `CHANGELOG.md`: "[0.12.2] – Unreleased" becomes "[0.12.2] – 2026-11-20" (UTC). The section lists N1–N5.
+  - `FEATURES.md` §12: 0.12.2 is done, released 2026-11-20; *Next* is still nothing planned.
+  - `docs/ROADMAP.md`: 0.12.2 released 2026-11-20.
+  - `CLAUDE.md` State, which the owner said yes to when I asked:
+    - 0.12.1 released (tag and `main` on `0326f82`);
+    - 0.12.2 with its release commit, the tag and `main` yours;
+    - nothing in progress;
+    - the 0.12.1–0.12.2 choices to keep;
+    - what you saw in the app for 0.12.1 and 0.12.2;
+    - what is not seen anywhere.
+- **The version:** `Directory.Build.props` says 0.12.2. No project file or workflow names another (`app.manifest`'s
+  `1.0.0.0` is its own identity).
+- **Not in this commit:** the tag `v0.12.2` and `main`, yours on the owner's word.
+
+| What | Entry | Commits | Run |
+| --- | --- | --- | --- |
+| Version; 0.12.1 recorded; N5, a usage save keeps the counts | 101 | `0dc86de` | 203 |
+| N1, the font found past a file that is no font | 102 | `485389c` | 204 |
+| N2, a minimise is not a use | 103 | `aafb5fa` | 205, red (a test of mine) |
+| The minimise test's second click | 104 | `fa5a4f4` | in 206 |
+| N3 and N4, the Sync window | 105 | `8524243` | 206 |
+| Ready for the release check | 106 | `0c11619` | 207 |
+
+Not seen anywhere, as before:
+
+- a real notification banner;
+- a real sign-out;
+- a real Windows snap;
+- maximise on a second monitor;
+- the recogniser with a microphone;
+- Windows 10;
+- another DPI scale.
+
+N3 in English and zh-Hans is in `DialogFitTests` only. Nothing is planned after 0.12.2.
+
+This entry claims no run for its own commit.
+
 ## 2026-11-20 (106) — 0.12.2 ready for the release check
 
 Run 206 (`8524243`, entry 105) is green: Core 1094 and App 410 tests. It carries the N2 test fix of entry 104 too
