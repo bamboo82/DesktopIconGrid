@@ -9,6 +9,18 @@ The owner relays replies.
 
 ---
 
+## 2026-11-20 (114) — WP4: a font installed after the start is found
+
+`UiFonts.IsInstalled` kept the list of the PC's fonts for the whole run. A font installed after the bar started, then
+chosen in Settings (the list there is read each time it opens), was said "not on this PC" at Save. Windows' own font
+stayed in use until a restart. Now a name that is not in the kept list makes it read the list again once, so such a
+font is used at Save. A name that is still not found costs one more read at each Save.
+
+Not tested: it needs a font installed during a run. WP4's own run (`06e376f`, entry 113) is under way; this
+commit has a run of its own.
+
+This entry claims no run for its own commit.
+
 ## 2026-11-20 (113) — 0.13.0 WP4: the font and the size of the app's text
 
 Run 214 (`d41dacd`, entry 112) is green: Core 1140 and App 430 tests. WP1 is complete with it.

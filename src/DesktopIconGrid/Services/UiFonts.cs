@@ -102,25 +102,30 @@ public static class UiFonts
     /// <summary>The families installed on this PC.</summary>
     public static IReadOnlyList<FontFamily> InstalledFamilies() => [.. Fonts.SystemFontFamilies];
 
-    /// <summary>Whether this PC has the family <paramref name="name"/> (by its name in any language).</summary>
+    /// <summary>
+    /// Whether this PC has the family <paramref name="name"/> (by its name in any language). The list is kept, and read
+    /// again once when a name is not in it: a font installed since it was read is found.
+    /// </summary>
     public static bool IsInstalled(string name)
     {
-        if (_installed is null)
+        ArgumentNullException.ThrowIfNull(name);
+        if (_installed is { } known && known.Contains(name.Trim()))
         {
-            var names = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            foreach (var family in Fonts.SystemFontFamilies)
-            {
-                names.Add(family.Source);
-                foreach (var local in family.FamilyNames.Values)
-                {
-                    names.Add(local);
-                }
-            }
-
-            _installed = names;
+            return true;
         }
 
-        return _installed.Contains(name.Trim());
+        var names = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var family in Fonts.SystemFontFamilies)
+        {
+            names.Add(family.Source);
+            foreach (var local in family.FamilyNames.Values)
+            {
+                names.Add(local);
+            }
+        }
+
+        _installed = names;
+        return names.Contains(name.Trim());
     }
 
     /// <summary>Consolas, the Chinese font for what Consolas lacks, then <paramref name="fallback"/> as before.</summary>
