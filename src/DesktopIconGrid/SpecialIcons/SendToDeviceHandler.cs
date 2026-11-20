@@ -164,27 +164,63 @@ public sealed class SendToDeviceHandler(IReceiving receiving, IDialogService dia
     /// The dialog opens at once and lists the other PCs after it shows (review 27 S2). Nothing is announced or changed
     /// before OK; then the box "This PC also receives files" sets this icon's mark on this PC or takes it away (S3, the
     /// answer to entry 55: an icon that arrived turns receiving on only when the user ticks the box), and the inbox
-    /// service says this PC's name or takes it back (S1).
+    /// service says this PC's name or takes it back (S1). Without Sync across PCs a new icon is added all the same,
+    /// without a PC (<see cref="AddWithoutPc"/>), and an existing one's properties only say where sync is set up.
     /// </summary>
     public bool ShowProperties(SpecialIconItem item, bool isNew)
     {
         ArgumentNullException.ThrowIfNull(item);
         if (receiving.Current() is not { } mine)
         {
+            if (isNew)
+            {
+                AddWithoutPc(item);
+                return true;
+            }
+
             dialogs.Show(new Notice(DisplayName, Strings.SendTo_NeedsFolder, NoticeKind.Warning, NoticeTarget.Sync)); // where it is set up
             return false;
         }
 
         receiving.Opened();
-        var mark = FolderInbox.IconMark(item.Id);
-        var viewModel = new SendToDeviceViewModel(item, receives: isNew || trust.IsApproved(mark), receivesByMenu: receiving.ReceiveSetting, mine.DevicesAsync);
+        var viewModel = new SendToDeviceViewModel(item, receives: StartsTicked(item, isNew), receivesByMenu: receiving.ReceiveSetting, mine.DevicesAsync);
         var window = new SendToDeviceWindow { DataContext = viewModel, Owner = ownerProvider() };
         if (window.ShowDialog() != true)
         {
             return false;
         }
 
+        Saved(item, viewModel);
+        return true;
+    }
+
+    /// <summary>
+    /// A new icon while Sync across PCs is not set up (0.13.0 WP5; until then adding one added nothing): it goes on the
+    /// bar without a PC, and one notice, whose click opens the Sync window, says what comes next. Nothing is announced
+    /// and this PC does not receive (no <see cref="FolderInbox.IconMark"/>); <see cref="FolderInbox.AddedHereMark"/>
+    /// only remembers that it was added here. Its tooltip and a click say that no PC is chosen yet, and files dropped or
+    /// pasted on it are refused, as for any icon without a PC.
+    /// </summary>
+    internal void AddWithoutPc(SpecialIconItem item)
+    {
+        trust.Approve(FolderInbox.AddedHereMark(item.Id));
+        dialogs.Show(new Notice(DisplayName, Strings.SendTo_AddedWithoutSync, NoticeKind.Information, NoticeTarget.Sync));
+    }
+
+    /// <summary>
+    /// Whether "This PC also receives files" starts ticked: for a new icon, for one this PC receives through, and for one
+    /// added here before a PC could be chosen that has none yet (0.13.0 WP5); not for one that arrived (review 27 S3).
+    /// </summary>
+    internal bool StartsTicked(SpecialIconItem item, bool isNew) =>
+        isNew
+        || trust.IsApproved(FolderInbox.IconMark(item.Id))
+        || (item.GetSetting(DeviceIdKey) is null && trust.IsApproved(FolderInbox.AddedHereMark(item.Id)));
+
+    /// <summary>After OK: the PC and name go on the icon, the box sets or takes away its mark, and the note that it was added without a PC has done its work.</summary>
+    internal void Saved(SpecialIconItem item, SendToDeviceViewModel viewModel)
+    {
         viewModel.Apply(item);
+        var mark = FolderInbox.IconMark(item.Id);
         if (!viewModel.ReceivesByMenu)
         {
             // While the menu turns receiving on, the box only shows that, and the icon's mark stays as it was.
@@ -198,7 +234,7 @@ public sealed class SendToDeviceHandler(IReceiving receiving, IDialogService dia
             }
         }
 
+        trust.Revoke(FolderInbox.AddedHereMark(item.Id));
         receiving.Changed();
-        return true;
     }
 }

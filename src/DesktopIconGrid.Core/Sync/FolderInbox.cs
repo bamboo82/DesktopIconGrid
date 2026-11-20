@@ -132,6 +132,15 @@ public sealed class FolderInbox : IInbox
     public static string IconMark(Guid iconId) =>
         Convert.ToHexStringLower(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes($"send-to-device-icon/1\n{iconId:N}")));
 
+    /// <summary>
+    /// The local note that a Send to PC icon was put on the bar on this PC while Sync across PCs was not set up (0.13.0
+    /// WP5), kept like <see cref="IconMark"/> and never synced. It makes nothing receive: it only lets the icon's
+    /// properties start with "This PC also receives files" ticked, as for a new icon, once a PC can be chosen. An icon
+    /// with no PC that arrived from another PC has no such note here, so its box starts empty (review 27 S3).
+    /// </summary>
+    public static string AddedHereMark(Guid iconId) =>
+        Convert.ToHexStringLower(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes($"send-to-device-icon-added/1\n{iconId:N}")));
+
     /// <summary>A device id as the app makes them: 32 hex digits. Anything else is never used as a folder name.</summary>
     public static bool IsDeviceId(string? id) => id is { Length: 32 } && id.All(char.IsAsciiHexDigit);
 

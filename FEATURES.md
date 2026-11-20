@@ -326,7 +326,13 @@ first line, is cut with `…` at its own size (0.11.0).
   that PC, or *Receive files from my other PCs* (options and tray menus) is ticked. The box is ticked for a new
   icon; an icon that arrived with a synced bar shows it unticked, and saving its properties turns receiving on only
   when the box is ticked (0.11.0). While the menu item is on, the box shows ticked and cannot be changed. Both are
-  kept on the PC and not synced. A PC that takes part has a folder `inbox\<device id>` in the sync folder (or on
+  kept on the PC and not synced. Since 0.13.0 the icon can be added before Sync across PCs is set up: it goes on the
+  bar without a PC, and a notice that opens the Sync window says to set up sync and then choose the PC in its
+  properties. Nothing is announced and the PC does not receive; its tooltip and a click say no PC is chosen yet, and
+  files dropped or pasted on it are refused. Once sync is set up, its properties start with the box ticked, as for
+  a new icon, because a note kept on this PC (beside the marks, never synced) says it was added here; an icon with no
+  PC that arrived from another PC starts with the box empty. Until sync is set up, the properties of an icon already
+  on the bar only say where sync is set up. A PC that takes part has a folder `inbox\<device id>` in the sync folder (or on
   Drive) with a `device.json` that says its name; only a PC with one is offered and can be sent to. When receiving
   is turned off (the menu item cleared and no icon of this PC with the box ticked), the PC takes its `device.json`
   back within a minute: the others stop offering it, and files already waiting for it stay until it receives again.

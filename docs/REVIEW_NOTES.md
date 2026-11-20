@@ -9,6 +9,47 @@ The owner relays replies.
 
 ---
 
+## 2026-11-20 (110) — 0.13.0 WP5: *Send to PC* can be added before sync is set up
+
+Run 211 (`91cecf6`, entry 109, WP3) is green: Core 1101 and App 419 tests (`HintTextTests` passed in both looks).
+
+- **What changed:**
+  - `SendToDeviceHandler.ShowProperties` without Sync across PCs:
+    - a new icon: `AddWithoutPc`, then `true`, so the icon is added without a PC. One notice, information, with the
+      Sync window as its target: `SendTo_AddedWithoutSync` (your text in English and zh-Hant; zh-Hans "图标已加入工具栏。
+      请先设置“跨电脑同步”，再右键单击它 ›“属性”选择电脑。"). Nothing announced, no `IconMark`;
+    - an icon already on the bar: as before, the warning `SendTo_NeedsFolder` to the Sync window, nothing changes.
+  - With sync: the device window as before. The box starts ticked by `StartsTicked`: a new icon, an icon this PC
+    receives through (`IconMark`), or **an icon with no PC that was added on this PC** (see the choice below).
+  - `Saved` is the old after-OK part moved out (so it can be tested), plus one line: the note below is revoked.
+  - Tooltip, click, drops and paste of an icon without a PC are unchanged: "No PC is chosen yet. Open Properties to
+    choose one.", and drops and paste are refused.
+- **A choice, to keep review 27 S3:** "never-chosen icon: the box starts ticked" would also tick it for an icon with no
+  PC that **arrived** from another PC (added there before sync, then synced here). S3, the owner's decision, is that an
+  arrived icon turns receiving on only when the user ticks the box. So `AddWithoutPc` keeps a note,
+  `FolderInbox.AddedHereMark(id)` (another hash in `command-trust.json`, local and never synced, like `IconMark`).
+  It makes nothing receive (`HasSendIcon` reads `IconMark` only); it only lets `StartsTicked` tick the box for an icon
+  with no PC added here. An arrived icon has no note here, so its box starts empty; once a PC is chosen, the note is
+  ignored and then revoked. Without a machine key (`ThisDevice.IsOfThisMachine` false) the note lasts until the
+  program ends, like the marks, and the box then starts empty: the safe side. So "approves nothing" in your test list
+  reads here as "no `IconMark`": the note is one entry in the trust file.
+- **Other handlers that refuse a new icon for a missing prerequisite:** none. Clock, command tile, Drive bucket (it
+  saves a folder id from the link without Google), the monitors and the sound replayer return `false` only for Cancel;
+  Voice adds a new one at once.
+- **A test changed with the behaviour:** `NoticeTargetTests.Send_to_PC_without_a_sync_folder_points_to_the_Sync_window`
+  asserted that a new icon is refused with the warning. It now checks the icon already on the bar (refused, warning,
+  Sync) and the new one (added, information, Sync, the new text).
+- **Tests (App):**
+  - `Without_sync_a_new_icon_is_added_without_a_PC_and_later_starts_with_the_box_ticked`: through the bar's
+    `AddSpecialIcon`, one item without a PC, no `IconMark`, one notice to Sync, the no-PC tooltip, drops and paste
+    refused. Then `StartsTicked` is true, and `Saved` with a PC sets the mark and revokes the note.
+  - `An_icon_without_a_PC_that_arrived_from_another_PC_starts_with_the_box_empty`: S3 holds; a PC chosen elsewhere
+    makes the note count no more.
+- **Not tested:** the dialog itself after sync is set up (it is modal; its view model gets `StartsTicked`'s answer, as
+  tested), and the notice's click opening the Sync window (`NoticeTarget.Sync` is tested since 0.12.0).
+
+This entry claims no run for its own commit.
+
 ## 2026-11-20 (109) — 0.13.0 WP3: hint text in the dialog's text colour
 
 Run 210 (`adb35c0`, entry 108, WP2) is green: Core 1101 and App 416 tests. The six new icon tests passed on CI's

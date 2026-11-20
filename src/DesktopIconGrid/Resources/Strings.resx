@@ -2645,4 +2645,7 @@ Installed to: {4}</value>
   <data name="Sync_AccountForBucketsHint" xml:space="preserve">
     <value>For the copies on Google Drive and for Google Drive Buckets.</value>
   </data>
+  <data name="SendTo_AddedWithoutSync" xml:space="preserve">
+    <value>The icon is on the bar. Set up Sync across PCs, then right-click it › Properties to choose the PC.</value>
+  </data>
 </root>

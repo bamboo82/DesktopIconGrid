@@ -4821,6 +4821,15 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to The icon is on the bar. Set up Sync across PCs, then right-click it › Properties [rest of string was truncated]";.
+        /// </summary>
+        public static string SendTo_AddedWithoutSync {
+            get {
+                return ResourceManager.GetString("SendTo_AddedWithoutSync", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Drop files on it to send them to another of your PCs through your sync folder or [rest of string was truncated]";.
         /// </summary>
         public static string SendTo_Desc {

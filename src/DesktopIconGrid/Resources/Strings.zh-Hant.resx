@@ -2645,4 +2645,7 @@ SHA-256：{3}
   <data name="Sync_AccountForBucketsHint" xml:space="preserve">
     <value>用於 Google 雲端硬碟上的副本與 Google 雲端硬碟投遞箱。</value>
   </data>
+  <data name="SendTo_AddedWithoutSync" xml:space="preserve">
+    <value>圖示已加入工具列。請先設定「跨電腦同步」，再以滑鼠右鍵按一下它 ›「內容」選擇電腦。</value>
+  </data>
 </root>

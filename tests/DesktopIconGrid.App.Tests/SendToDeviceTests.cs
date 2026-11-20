@@ -159,6 +159,62 @@ public sealed class SendToDeviceTests : IDisposable
     }
 
     [Fact]
+    public async Task Without_sync_a_new_icon_is_added_without_a_PC_and_later_starts_with_the_box_ticked()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        // 0.13.0 WP5: adding the icon before Sync across PCs is set up used to add nothing.
+        var trust = new CommandTrust(null);
+        var dialogs = new RecordingDialogs();
+        var handler = new SendToDeviceHandler(new NoReceiving(), dialogs, () => null, _folder, trust);
+        using var bar = new TestBar(_folder, new LauncherModel(), handlers: [handler], trust: trust);
+
+        bar.ViewModel.AddSpecialIcon(handler, bar.ViewModel.RootItems, 0);
+
+        var item = Assert.IsType<SpecialIconItem>(Assert.Single(bar.ViewModel.RootItems.Items).Model);
+        Assert.Null(item.GetSetting(SendToDeviceHandler.DeviceIdKey));
+        Assert.False(trust.IsApproved(FolderInbox.IconMark(item.Id))); // nothing receives, nothing is announced
+        var notice = Assert.Single(dialogs.Shown);
+        Assert.Equal((NoticeKind.Information, NoticeTarget.Sync, Strings.SendTo_AddedWithoutSync), (notice.Kind, notice.Target, notice.Message));
+        Assert.Equal(Strings.SendTo_NoDevice, handler.GetToolTip(item));
+        Assert.False(handler.AcceptsFileDrops(item) || handler.AcceptsPaste(item));
+
+        // With sync set up, its properties start with "This PC also receives files" ticked, as for a new icon; OK with a
+        // PC sets the mark, and the note that it was added here goes.
+        Assert.True(handler.StartsTicked(item, isNew: false));
+        var viewModel = new SendToDeviceViewModel(item, receives: handler.StartsTicked(item, isNew: false), receivesByMenu: false, Listing(new InboxDevice(Desktop, "Desktop")));
+        await viewModel.LookAsync();
+        handler.Saved(item, viewModel);
+
+        Assert.Equal(Desktop, item.GetSetting(SendToDeviceHandler.DeviceIdKey));
+        Assert.True(trust.IsApproved(FolderInbox.IconMark(item.Id)));
+        Assert.False(trust.IsApproved(FolderInbox.AddedHereMark(item.Id)));
+    }
+
+    [Fact]
+    public void An_icon_without_a_PC_that_arrived_from_another_PC_starts_with_the_box_empty()
+    {
+        // Review 27 S3 stays: only an icon added or saved on this PC starts ticked.
+        var trust = new CommandTrust(null);
+        var handler = new SendToDeviceHandler(new NoReceiving(), new RecordingDialogs(), () => null, _folder, trust);
+        var arrived = NewIcon();
+
+        Assert.False(handler.StartsTicked(arrived, isNew: false));
+        Assert.True(handler.StartsTicked(arrived, isNew: true));
+
+        // Added here without a PC, then given one on another PC: the box follows this PC's mark again.
+        trust.Approve(FolderInbox.AddedHereMark(arrived.Id));
+        Assert.True(handler.StartsTicked(arrived, isNew: false));
+        arrived.SetSetting(SendToDeviceHandler.DeviceIdKey, Desktop);
+        Assert.False(handler.StartsTicked(arrived, isNew: false));
+        trust.Approve(FolderInbox.IconMark(arrived.Id));
+        Assert.True(handler.StartsTicked(arrived, isNew: false));
+    }
+
+    [Fact]
     public void A_new_Send_to_PC_icon_has_the_send_symbol_and_older_ones_are_drawn_with_it_without_a_change_to_the_layout()
     {
         if (!OperatingSystem.IsWindows())

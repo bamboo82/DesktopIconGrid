@@ -185,10 +185,15 @@ public class NoticeTargetTests
         var dialogs = new RecordingDialogs();
         var handler = new SendToDeviceHandler(new NoReceiving(), dialogs, () => null, Path.GetTempPath(), new CommandTrust(null));
 
-        Assert.False(handler.ShowProperties(handler.CreateItem(), isNew: true));
-
+        // An existing icon's properties: nothing changes, the warning leads to where sync is set up.
+        Assert.False(handler.ShowProperties(handler.CreateItem(), isNew: false));
         var notice = Assert.Single(dialogs.Shown);
         Assert.Equal((NoticeKind.Warning, NoticeTarget.Sync), Of(notice));
+
+        // 0.13.0 WP5: a new icon is added all the same, and its notice leads there too.
+        Assert.True(handler.ShowProperties(handler.CreateItem(), isNew: true));
+        Assert.Equal((NoticeKind.Information, NoticeTarget.Sync), Of(dialogs.Shown[^1]));
+        Assert.Equal(Strings.SendTo_AddedWithoutSync, dialogs.Shown[^1].Message);
     }
 
     [Fact]

@@ -14,6 +14,11 @@ version numbers follow [Semantic Versioning](https://semver.org/).
   tile's interval and approval lines, the approval window's line about scrolling, a monitor design's description,
   the voice window's details. A hint is still told apart by its place under what it explains; one in a disabled
   row is still faded with it, and warnings and errors keep their colours.
+- *Send to PC* can be added before Sync across PCs is set up (adding it added nothing). It goes on the bar without a
+  PC, and a notice, whose click opens the Sync window, says to set up sync and then choose the PC in its properties.
+  Nothing is announced and this PC does not receive until then; once sync is set up, the properties start with
+  *This PC also receives files* ticked, as for a new icon. An icon without a PC that came from another PC still starts
+  with the box empty.
 
 ### Fixed
 
