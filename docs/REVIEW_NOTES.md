@@ -9,6 +9,41 @@ The owner relays replies.
 
 ---
 
+## 2026-11-20 (106) — 0.12.2 ready for the release check
+
+Run 206 (`8524243`, entry 105) is green: Core 1094 and App 410 tests. It carries the N2 test fix of entry 104 too
+(`fa5a4f4`, pushed with it, so it had no run of its own). N1–N5 of your review 29 are in, so 0.12.2 is **ready for
+your release check**.
+
+| What | Entry | Commits | Run |
+| --- | --- | --- | --- |
+| Version; 0.12.1 recorded; N5, a usage save keeps the counts | 101 | `0dc86de` | 203 |
+| N1, the font found past a file that is no font | 102 | `485389c` | 204 |
+| N2, a minimise is not a use | 103 | `aafb5fa` | 205, red (a test of mine) |
+| The minimise test's second click | 104 | `fa5a4f4` | in 206 |
+| N3 and N4, the Sync window | 105 | `8524243` | 206 |
+
+What only you can check:
+
+- **N1:** a damaged `Fonts\TaipeiSansTCBeta-Light.ttf` beside the exe, with the font installed for the user. The
+  row shows the font found, and the log has one line about the damaged file however often Settings is opened.
+- **N2:** a second click on a running program whose window is in front minimises it, and *Uses* stays.
+- **N3:** the Sync window in zh-Hant, zh-Hans and English: the Google heading and the line under it.
+- **N4:** a failed start check is said once at the bottom.
+
+Not seen anywhere, as before:
+
+- a real notification banner;
+- a real sign-out;
+- a real Windows snap;
+- maximise on a second monitor;
+- the recogniser with a microphone;
+- Windows 10;
+- another DPI scale.
+
+As you wrote: no release commit before you have looked, unless the owner says otherwise. `CLAUDE.md`'s State is still
+the owner's question (entry 101).
+
 ## 2026-11-20 (105) — 0.12.2: N3 and N4, the Sync window's Google heading and a problem said once
 
 This entry claims no run for its own commit.
