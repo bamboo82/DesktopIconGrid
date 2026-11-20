@@ -474,6 +474,7 @@ public sealed class UsageLogTests : IDisposable
         Assert.True(UsageRules.IsCounted(shortcut, LaunchOutcome.Started)); // started, or its window brought forward
         Assert.False(UsageRules.IsCounted(shortcut, LaunchOutcome.Failed));
         Assert.False(UsageRules.IsCounted(shortcut, LaunchOutcome.Cancelled)); // an approval or a question cancelled
+        Assert.False(UsageRules.IsCounted(shortcut, LaunchOutcome.Minimized)); // the program in front minimised (0.12.2, N2)
         Assert.False(UsageRules.IsCounted(new SpecialIconItem { Kind = "clock" }, LaunchOutcome.Started));
         Assert.False(UsageRules.IsCounted(new GroupItem { Name = "Tools" }, LaunchOutcome.Started));
         Assert.False(UsageRules.IsCounted(new SeparatorItem(), LaunchOutcome.Started));

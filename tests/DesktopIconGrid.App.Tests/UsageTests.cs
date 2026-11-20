@@ -111,6 +111,24 @@ public sealed class UsageTests : IDisposable
     }
 
     [Fact]
+    public void A_click_that_minimises_the_program_in_front_is_no_use_and_says_so()
+    {
+        // 0.12.2, review 29 N2: a second click on a running program whose window was in front minimised it, nothing
+        // was started, and Uses went up by one.
+        var switcher = new FakeSwitcher { Kind = SwitchKind.Minimize };
+        var (viewModel, model, _) = Create(switcher);
+
+        Assert.Equal(LaunchOutcome.Minimized, viewModel.ActivateAndReport(Item(viewModel, "A"), anchor: null, ActivationModifiers.None));
+        Assert.Equal(1, switcher.Calls);
+        Assert.Empty(_launcher.Launches);
+        Assert.Equal(0, Uses(viewModel, model.Items[0]));
+
+        switcher.Kind = SwitchKind.Activate; // the next click brings it forward: that is a use
+        Assert.Equal(LaunchOutcome.Started, viewModel.ActivateAndReport(Item(viewModel, "A"), anchor: null, ActivationModifiers.None));
+        Assert.Equal(1, Uses(viewModel, model.Items[0]));
+    }
+
+    [Fact]
     public void A_drop_counts_once_whatever_the_number_of_files_and_launch_by_name_counts_like_a_click()
     {
         var (viewModel, model, _) = Create();

@@ -666,17 +666,19 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
         // The taskbar's keys: Shift or a middle click starts another instance, Ctrl+Shift starts one as administrator.
         var asAdministrator = modifiers.HasFlag(ActivationModifiers.Control) && modifiers.HasFlag(ActivationModifiers.Shift);
         var newInstance = asAdministrator || modifiers.HasFlag(ActivationModifiers.Shift) || modifiers.HasFlag(ActivationModifiers.NewInstance);
-        if (!newInstance
-            && _windows is not null
-            && LaunchPlanner.SwitchesWhenRunning(shortcutToLaunch)
-            && (string.IsNullOrWhiteSpace(shortcutToLaunch.Parameters)
+        var switched = !newInstance && _windows is not null && LaunchPlanner.SwitchesWhenRunning(shortcutToLaunch)
+            ? string.IsNullOrWhiteSpace(shortcutToLaunch.Parameters)
                 ? _windows.TrySwitch(Tracker.ProcessIdsOf(shortcutToLaunch.Id), Tracker.PackageFamilyOf(shortcutToLaunch.Id))
-                : _windows.TrySwitch(Tracker.LaunchedProcessIdsOf(shortcutToLaunch.Id)))) // with parameters: only the copies it started
+                : _windows.TrySwitch(Tracker.LaunchedProcessIdsOf(shortcutToLaunch.Id)) // with parameters: only the copies it started
+            : SwitchKind.Launch;
+        if (switched != SwitchKind.Launch)
         {
-            CountUse(shortcutToLaunch, LaunchOutcome.Started);
+            // Brought forward is a use; a click that minimised the program in front is none (0.12.2, review 29 N2).
+            var outcome = switched == SwitchKind.Minimize ? LaunchOutcome.Minimized : LaunchOutcome.Started;
+            CountUse(shortcutToLaunch, outcome);
             IsGroupPopupOpen = false;
             ItemActivated?.Invoke(this, item);
-            return LaunchOutcome.Started; // brought forward
+            return outcome;
         }
 
         var result = _launcher.Launch(shortcutToLaunch, asAdministrator);

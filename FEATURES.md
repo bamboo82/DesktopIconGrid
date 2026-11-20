@@ -552,7 +552,7 @@ forward by the bar on this PC, sorted as a number) and *Last used* (today, yeste
 then the date; "—" when never; the tooltip has the full date and time; a never-used shortcut sorts before any date).
 A use is a click or key on the shortcut, a drop onto it, `--launch`, voice, its start in a workspace or Multi Launch,
 or its folder stack opened, when the start succeeded (a window brought forward counts; a failure or a cancelled
-approval does not), once per activation however many files it opens. Special icons, groups and separators have no
+approval does not, nor does a click that minimises the program's window, which was in front: 0.12.2), once per activation however many files it opens. Special icons, groups and separators have no
 count, and a program opened inside a folder stack counts for nothing. *Show:* has a last entry, *Not used in 90
 days*: shortcuts last used longer ago, or never used once this PC has counted for 90 days. The line under the table
 says since when this PC counts, and until then when *Not used in 90 days* is complete. The counts are read when the

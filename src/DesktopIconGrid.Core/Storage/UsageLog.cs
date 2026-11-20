@@ -695,7 +695,8 @@ public static class UsageRules
 
     /// <summary>
     /// Whether a use is counted: a shortcut, started or brought forward. A failed or cancelled start (an approval or a
-    /// question cancelled) is none; special icons, groups and separators have no count.
+    /// question cancelled) is none, nor is a click that minimised the program in front (0.12.2, review 29 N2); special
+    /// icons, groups and separators have no count.
     /// </summary>
     public static bool IsCounted(LauncherItem item, LaunchOutcome outcome) => item is ShortcutItem && outcome == LaunchOutcome.Started;
 

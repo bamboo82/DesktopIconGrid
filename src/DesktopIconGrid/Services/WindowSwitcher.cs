@@ -8,10 +8,12 @@ public interface IWindowSwitcher
 {
     /// <summary>
     /// Activates, cycles or minimises a window of <paramref name="processIds"/>, or a Store app frame of
-    /// <paramref name="packageFamily"/> (see <see cref="WindowSwitching.WindowsOf"/> and <see cref="WindowSwitching.Decide"/>).
-    /// False when there is no window to switch to, so the caller starts the program.
+    /// <paramref name="packageFamily"/> (see <see cref="WindowSwitching.WindowsOf"/> and <see cref="WindowSwitching.Decide"/>),
+    /// and says which it did: <see cref="SwitchKind.Activate"/> (brought forward) or <see cref="SwitchKind.Minimize"/>.
+    /// <see cref="SwitchKind.Launch"/> when there is no window to switch to, so the caller starts the program. The caller
+    /// counts a use for a bring-forward only (0.12.2, review 29 N2).
     /// </summary>
-    bool TrySwitch(IReadOnlySet<int> processIds, string? packageFamily = null);
+    SwitchKind TrySwitch(IReadOnlySet<int> processIds, string? packageFamily = null);
 
     /// <summary>
     /// The top-level windows now, topmost first, for a workspace to tell its members' windows apart
@@ -61,12 +63,12 @@ public sealed class WindowSwitcher : IWindowSwitcher, IDisposable
         }
     }
 
-    public bool TrySwitch(IReadOnlySet<int> processIds, string? packageFamily = null)
+    public SwitchKind TrySwitch(IReadOnlySet<int> processIds, string? packageFamily = null)
     {
         ArgumentNullException.ThrowIfNull(processIds);
         if ((processIds.Count == 0 && packageFamily is null) || !OperatingSystem.IsWindows())
         {
-            return false;
+            return SwitchKind.Launch;
         }
 
         var windows = WindowSwitching.WindowsOf(Snapshot(withAppIds: packageFamily is not null), processIds, packageFamily);
@@ -85,13 +87,13 @@ public sealed class WindowSwitcher : IWindowSwitcher, IDisposable
                     AppLog.Default.Debug("Launch", "Windows refused to bring the program's window forward");
                 }
 
-                return true;
+                return SwitchKind.Activate;
             case SwitchKind.Minimize:
                 NativeMethods.ShowWindowAsync(action.Window, NativeMethods.SW_MINIMIZE);
                 _lastForeground = IntPtr.Zero; // until Windows reports the next window in front
-                return true;
+                return SwitchKind.Minimize;
             default:
-                return false;
+                return SwitchKind.Launch;
         }
     }
 

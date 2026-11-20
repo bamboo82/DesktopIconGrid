@@ -215,7 +215,11 @@ internal sealed class NoIcons : IIconProvider
 /// <summary>Stands in for the window switcher: records what it was asked and answers as told.</summary>
 internal sealed class FakeSwitcher : IWindowSwitcher
 {
+    /// <summary>True: a window is brought forward; false: there is none. <see cref="Kind"/> overrides it.</summary>
     public bool Answer { get; set; } = true;
+
+    /// <summary>What the switch does, when set (a minimise of the program in front).</summary>
+    public SwitchKind? Kind { get; set; }
 
     public int Calls { get; private set; }
 
@@ -223,12 +227,12 @@ internal sealed class FakeSwitcher : IWindowSwitcher
 
     public string? LastPackageFamily { get; private set; }
 
-    public bool TrySwitch(IReadOnlySet<int> processIds, string? packageFamily = null)
+    public SwitchKind TrySwitch(IReadOnlySet<int> processIds, string? packageFamily = null)
     {
         Calls++;
         LastProcessIds = processIds;
         LastPackageFamily = packageFamily;
-        return Answer;
+        return Kind ?? (Answer ? SwitchKind.Activate : SwitchKind.Launch);
     }
 
     /// <summary>The windows on the screen, topmost first.</summary>

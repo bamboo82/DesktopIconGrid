@@ -10,6 +10,12 @@ public enum LaunchOutcome
     Cancelled,
 
     Failed,
+
+    /// <summary>
+    /// The program was in front, and the click minimised its window: nothing was started or brought forward, so no use
+    /// is counted (0.12.2, review 29 N2).
+    /// </summary>
+    Minimized,
 }
 
 public sealed record LaunchResult(LaunchOutcome Outcome, string? ErrorMessage = null)

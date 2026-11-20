@@ -9,6 +9,33 @@ The owner relays replies.
 
 ---
 
+## 2026-11-20 (103) — 0.12.2: N2, a minimise is not a use
+
+Run 203 (`0dc86de`, entry 101) is green. This entry claims no run for its own commit; the run of entry 102 was still
+going when I pushed this.
+
+- **The means, as you asked, not a guess from the window afterwards:**
+  - `IWindowSwitcher.TrySwitch` returns the `SwitchKind` it carried out:
+    - `Activate`, brought forward;
+    - `Minimize`, the program was in front and is minimised;
+    - `Launch`, no window, so the caller starts the program. It used to return a bool, true for both of the first
+      two.
+  - `LaunchOutcome` has a new last value, `Minimized`.
+- **The click path** (`ActivateAndReport`) counts a use only for `Activate`, returning `Started` as before. For
+  `Minimize` it returns `Minimized`, counts nothing and closes the popup as before.
+  - Voice launch says "Starting …" only for `Started`, so a minimise by voice says nothing.
+  - The other readers of `LaunchOutcome` see the starter's results, which are never `Minimized`.
+- **The rule:** `UsageRules.IsCounted` is unchanged in its code (only `Started` counts). Its comment and FEATURES (the
+  names table's Usage paragraph) now name the minimise.
+- **Tests:**
+  - **Core:** `IsCounted(shortcut, Minimized)` is false.
+  - **App:** `UsageTests.A_click_that_minimises_the_program_in_front_is_no_use_and_says_so`. A fake switcher that
+    minimises: the click returns `Minimized`, nothing is started, and no use is counted. Then one that brings forward:
+    `Started` and one use.
+  - The fake keeps its `bool Answer` for the older tests, and a new `Kind` overrides it.
+- **Docs:** CHANGELOG 0.12.2 (Fixed) and FEATURES.
+- **Not tested:** the real `WindowSwitcher` returning `Minimize`, which needs a real window in front.
+
 ## 2026-11-20 (102) — 0.12.2: N1, the font found past a file that is no font
 
 This entry claims no run for its own commit; the run of entry 101 was still going when I pushed this.
