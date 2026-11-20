@@ -31,6 +31,7 @@ public sealed class SyncViewModel : ObservableObject
             if (e.PropertyName is null or nameof(SyncCoordinator.Status))
             {
                 OnPropertyChanged(nameof(BackgroundStatus));
+                NotifyStatusLines();
             }
         };
 
@@ -291,10 +292,44 @@ public sealed class SyncViewModel : ObservableObject
     public string StatusText
     {
         get => _statusText;
-        private set => SetProperty(ref _statusText, value);
+        private set
+        {
+            if (SetProperty(ref _statusText, value))
+            {
+                NotifyStatusLines();
+            }
+        }
     }
 
     public string BackgroundStatus => _sync.Status;
+
+    /// <summary>The window's status line: <see cref="StatusText"/>, unless the background line already says it.</summary>
+    public string ShownStatusText => StatusLines(StatusText, BackgroundStatus).Status;
+
+    /// <summary>The window's background line: <see cref="BackgroundStatus"/>, unless the status line already says it.</summary>
+    public string ShownBackgroundStatus => StatusLines(StatusText, BackgroundStatus).Background;
+
+    /// <summary>
+    /// The two lines under the window as shown: when one holds the other, only the fuller one, so a problem is said
+    /// once ("…" and then "Startup check failed: …" with the same sentence; 0.12.2, review 29 N4).
+    /// </summary>
+    internal static (string Status, string Background) StatusLines(string status, string background)
+    {
+        status ??= string.Empty;
+        background ??= string.Empty;
+        if (status.Length > 0 && background.Contains(status, StringComparison.Ordinal))
+        {
+            return (string.Empty, background);
+        }
+
+        return background.Length > 0 && status.Contains(background, StringComparison.Ordinal) ? (status, string.Empty) : (status, background);
+    }
+
+    private void NotifyStatusLines()
+    {
+        OnPropertyChanged(nameof(ShownStatusText));
+        OnPropertyChanged(nameof(ShownBackgroundStatus));
+    }
 
     public ICommand ConnectCommand { get; }
 

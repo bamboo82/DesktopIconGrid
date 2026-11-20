@@ -189,6 +189,62 @@ public sealed class DialogFitTests(WpfThread wpf)
         });
     }
 
+    [Theory]
+    [InlineData("en-US")]
+    [InlineData("zh-Hant")]
+    [InlineData("zh-Hans")]
+    public void The_headings_of_the_Sync_window_fit_it_and_the_Google_one_says_what_it_is_for_in_a_line_that_wraps(string language)
+    {
+        // 0.12.2, review 29 N3: "Google 帳戶（用於 Google 雲端硬碟上的副本與 Google 雲端硬…" was cut at the window's edge.
+        wpf.Invoke(() =>
+        {
+            var before = System.Threading.Thread.CurrentThread.CurrentUICulture;
+            System.Threading.Thread.CurrentThread.CurrentUICulture = System.Globalization.CultureInfo.GetCultureInfo(language);
+            var window = new SyncWindow();
+            try
+            {
+                window.Show();
+                Settle(window);
+                var content = (FrameworkElement)window.Content;
+                var headed = LogicalDescendants<HeaderedContentControl>(window).Where(control => control is GroupBox or Expander).ToList();
+                Assert.Equal(5, headed.Count); // four groups and the credentials
+                foreach (var control in headed)
+                {
+                    var header = Assert.IsType<string>(control.Header);
+                    var text = Visuals(control).OfType<TextBlock>().First(block => block.Text == header);
+                    var right = text.TranslatePoint(new Point(text.ActualWidth, 0), content).X;
+                    Assert.True(right <= content.ActualWidth + 0.5, $"{language}: \"{header}\" ends at {right} of {content.ActualWidth}");
+                    Assert.True(text.ActualWidth >= text.DesiredSize.Width - 0.5, $"{language}: \"{header}\" is squeezed");
+                }
+
+                var account = headed.OfType<GroupBox>().Single(box => (string)box.Header == Strings.Sync_AccountForBuckets);
+                Assert.True(Strings.Sync_AccountForBuckets.Length <= 14, Strings.Sync_AccountForBuckets); // a short heading
+                var hint = (TextBlock)window.FindName("AccountHint");
+                Assert.Equal(Strings.Sync_AccountForBucketsHint, hint.Text);
+                Assert.Equal(TextWrapping.Wrap, hint.TextWrapping);
+                Assert.True(hint.TranslatePoint(new Point(hint.ActualWidth, 0), account).X <= account.ActualWidth + 0.5);
+            }
+            finally
+            {
+                window.Close();
+                System.Threading.Thread.CurrentThread.CurrentUICulture = before;
+            }
+        });
+    }
+
+    private static IEnumerable<DependencyObject> Visuals(DependencyObject root)
+    {
+        for (var i = 0; i < System.Windows.Media.VisualTreeHelper.GetChildrenCount(root); i++)
+        {
+            var child = System.Windows.Media.VisualTreeHelper.GetChild(root, i);
+            yield return child;
+            foreach (var below in Visuals(child))
+            {
+                yield return below;
+            }
+        }
+    }
+
     [Fact]
     public void The_icon_buttons_of_Properties_wrap_beside_the_preview_and_none_is_cut_in_English()
     {

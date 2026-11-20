@@ -1533,7 +1533,7 @@
     <value>副本現在存放在 Google 雲端硬碟。</value>
   </data>
   <data name="Sync_AccountForBuckets" xml:space="preserve">
-    <value>Google 帳戶（用於 Google 雲端硬碟上的副本與 Google 雲端硬碟投遞箱）</value>
+    <value>Google 帳戶</value>
   </data>
   <data name="Item_MissingHere" xml:space="preserve">
     <value>在這部電腦上找不到：按一下即可尋找</value>
@@ -2641,5 +2641,8 @@ SHA-256：{3}
   </data>
   <data name="FontInstall_NameTaken" xml:space="preserve">
     <value>Windows 已為另一個檔案列出同名的字型：{0}。沒有安裝任何東西。</value>
+  </data>
+  <data name="Sync_AccountForBucketsHint" xml:space="preserve">
+    <value>用於 Google 雲端硬碟上的副本與 Google 雲端硬碟投遞箱。</value>
   </data>
 </root>

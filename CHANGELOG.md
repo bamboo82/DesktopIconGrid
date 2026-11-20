@@ -13,6 +13,9 @@ What the release check of 0.12.1 found (review 29).
   next use; they are written at the next save, and the failure is a warning in the log.
 - Usage counts: a click that minimised a program's window, which was in front, counted as a use; only a start or a
   window brought forward counts.
+- Sync window: the Google account's heading was cut at the window's edge in Chinese; it is short now, and what the
+  account is for is a line under it that wraps. A problem was said twice at the bottom (the status line, then
+  "Startup check failed:" with the same sentence); it is said once, in the fuller line.
 - The Chinese font: a damaged copy beside the program hid a good one installed for your account, so Settings said the
   PC had no font; the next place is looked at. A file of that name that holds no font is said once in the log, not at
   each start and each opening of Settings.

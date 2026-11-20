@@ -16,6 +16,19 @@ public sealed class SyncViewModelTests : IDisposable
 
     public void Dispose() => Directory.Delete(_folder, recursive: true);
 
+    [Fact]
+    public void A_problem_is_said_once_under_the_window_in_the_fuller_line()
+    {
+        // 0.12.2, review 29 N4: the status line, then "Startup check failed:" with the same sentence.
+        const string problem = "The sync folder cannot be found.";
+        var startup = string.Format(Strings.Sync_StartupCheckFailed, problem);
+        Assert.Equal((string.Empty, startup), SyncViewModel.StatusLines(problem, startup));
+        Assert.Equal((startup, string.Empty), SyncViewModel.StatusLines(startup, problem));
+        Assert.Equal(("Saved.", startup), SyncViewModel.StatusLines("Saved.", startup)); // two things: both
+        Assert.Equal((problem, string.Empty), SyncViewModel.StatusLines(problem, string.Empty));
+        Assert.Equal((string.Empty, startup), SyncViewModel.StatusLines(string.Empty, startup));
+    }
+
     private sealed class NoDrive : IDriveClient
     {
         public Task<DriveUser> GetUserAsync(CancellationToken cancellationToken) => throw new InvalidOperationException();

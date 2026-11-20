@@ -1533,7 +1533,7 @@
     <value>副本现在存放在 Google 云端硬盘。</value>
   </data>
   <data name="Sync_AccountForBuckets" xml:space="preserve">
-    <value>Google 账号（用于 Google 云端硬盘上的副本与 Google 云端硬盘投递箱）</value>
+    <value>Google 账户</value>
   </data>
   <data name="Item_MissingHere" xml:space="preserve">
     <value>在这台电脑上找不到：单击即可查找</value>
@@ -2641,5 +2641,8 @@ SHA-256：{3}
   </data>
   <data name="FontInstall_NameTaken" xml:space="preserve">
     <value>Windows 已为另一个文件列出同名的字体：{0}。没有安装任何东西。</value>
+  </data>
+  <data name="Sync_AccountForBucketsHint" xml:space="preserve">
+    <value>用于 Google 云端硬盘上的副本与 Google 云端硬盘投递箱。</value>
   </data>
 </root>

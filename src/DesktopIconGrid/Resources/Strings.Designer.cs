@@ -6162,11 +6162,20 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Google account (for copies on Google Drive and for Google Drive Buckets).
+        ///   Looks up a localized string similar to Google account.
         /// </summary>
         public static string Sync_AccountForBuckets {
             get {
                 return ResourceManager.GetString("Sync_AccountForBuckets", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to For the copies on Google Drive and for Google Drive Buckets..
+        /// </summary>
+        public static string Sync_AccountForBucketsHint {
+            get {
+                return ResourceManager.GetString("Sync_AccountForBucketsHint", resourceCulture);
             }
         }
 

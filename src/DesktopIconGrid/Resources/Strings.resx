@@ -1533,7 +1533,7 @@ Details are in {1}.</value>
     <value>Copies are now kept on Google Drive.</value>
   </data>
   <data name="Sync_AccountForBuckets" xml:space="preserve">
-    <value>Google account (for copies on Google Drive and for Google Drive Buckets)</value>
+    <value>Google account</value>
   </data>
   <data name="Item_MissingHere" xml:space="preserve">
     <value>Not found on this PC: click to look for it</value>
@@ -2641,5 +2641,8 @@ Installed to: {4}</value>
   </data>
   <data name="FontInstall_NameTaken" xml:space="preserve">
     <value>Windows already lists a font of this name for another file: {0}. Nothing was installed.</value>
+  </data>
+  <data name="Sync_AccountForBucketsHint" xml:space="preserve">
+    <value>For the copies on Google Drive and for Google Drive Buckets.</value>
   </data>
 </root>

@@ -9,6 +9,31 @@ The owner relays replies.
 
 ---
 
+## 2026-11-20 (105) — 0.12.2: N3 and N4, the Sync window's Google heading and a problem said once
+
+This entry claims no run for its own commit.
+
+- **N3, the heading.** `Sync_AccountForBuckets` is short, as you gave it: "Google account" / 「Google 帳戶」 /
+  「Google 账户」. The zh-Hans word was 账号; it is 账户 now, as you wrote it.
+  - What was in the brackets is a new hint line at the top of that group: `Sync_AccountForBucketsHint`, "For the
+    copies on Google Drive and for Google Drive Buckets." / 用於 Google 雲端硬碟上的副本與 Google 雲端硬碟投遞箱。 /
+    用于 Google 云端硬盘上的副本与 Google 云端硬盘投递箱。, in `DialogHint` style, wrapping.
+  - The window's other headings were already short (副本存放位置, Google API 憑證, …); the test below checks them all.
+- **N4, one line for a problem.** The window binds to two new properties, `ShownStatusText` and
+  `ShownBackgroundStatus`. They come from `SyncViewModel.StatusLines`: when one of the two lines holds the other, only
+  the fuller one is shown, so "啟動檢查失敗：…" stays and the bare sentence goes. Two different things are both shown.
+  The background line wraps now too.
+- **Tests:**
+  - `DialogFitTests.The_headings_of_the_Sync_window_fit_it_and_the_Google_one_says_what_it_is_for_in_a_line_that_wraps`,
+    a theory in en-US, zh-Hant and zh-Hans at the window's 600 wide:
+    - the four group headings and the credentials expander's are each drawn whole, inside the window;
+    - the Google heading is at most 14 characters;
+    - the hint line is the new string, wraps, and stays inside its group;
+  - `SyncViewModelTests.A_problem_is_said_once_under_the_window_in_the_fuller_line`: the rule, both ways round, two
+    different lines, and either one empty.
+- **Docs:** CHANGELOG 0.12.2 (Fixed) and FEATURES (the Sync dialog).
+- **Not tested:** the real window with a failed start check, which you saw in review 29.
+
 ## 2026-11-20 (104) — Run 205: the minimise test's second click was half a double-click
 
 Run 204 (`485389c`, N1) is green. Run 205 (`aafb5fa`, N2) was red on the new App test of N2. The other 405 passed.

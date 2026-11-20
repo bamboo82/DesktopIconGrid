@@ -843,7 +843,8 @@ Keeps named copies of the settings and icons where several PCs can share them: o
 - **Dialog** (options menu ▸ *Sync across PCs…*, called *Sync with Google Drive…* before 0.8.0):
   where the copies are kept, connect/disconnect the Google account, enter the device name, list the
   copies with their save time and device, *Save as* a new copy, *Overwrite* or *Load* the selected
-  copy, *Delete* a copy.
+  copy, *Delete* a copy. The Google account's group has a short heading and says what the account is for in a line
+  under it, and a problem is said once at the bottom of the dialog, in the fuller of its two lines (0.12.2).
 - **Linked copy**: saving or loading links the device to that copy. Changes are then uploaded
   automatically a few seconds after they happen, and at startup the app offers to load the
   copy when another device saved a newer version. Auto-upload never overwrites a newer copy

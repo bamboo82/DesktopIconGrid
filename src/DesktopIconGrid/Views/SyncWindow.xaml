@@ -42,9 +42,12 @@
           </StackPanel>
         </GroupBox>
 
-        <!-- Google account: copies on Google Drive, and buckets -->
+        <!-- Google account: copies on Google Drive, and buckets. A short heading, what it is for in a line that wraps:
+             the heading of one line was cut at the window's edge in zh-Hant (0.12.2, review 29 N3). -->
         <GroupBox Header="{x:Static r:Strings.Sync_AccountForBuckets}" Margin="0,10,0,0" Padding="8">
           <StackPanel>
+            <TextBlock x:Name="AccountHint" Style="{StaticResource DialogHint}" TextWrapping="Wrap" Margin="0,0,0,8"
+                       Text="{x:Static r:Strings.Sync_AccountForBucketsHint}" />
             <DockPanel>
               <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
                 <Button Content="{x:Static r:Strings.Sync_Connect}" Style="{StaticResource DialogButton}" Command="{Binding ConnectCommand}"
@@ -138,8 +141,9 @@
         <!-- Status -->
         <ProgressBar Height="4" Margin="0,10,0,0" IsIndeterminate="True"
                      Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}}" />
-        <TextBlock Text="{Binding StatusText}" Margin="0,8,0,0" TextWrapping="Wrap" MinHeight="18" />
-        <TextBlock Text="{Binding BackgroundStatus}" Style="{StaticResource DialogHint}" Margin="0,4,0,0" />
+        <!-- A problem is said once: the fuller of the two lines when one holds the other (0.12.2, review 29 N4) -->
+        <TextBlock Text="{Binding ShownStatusText}" Margin="0,8,0,0" TextWrapping="Wrap" MinHeight="18" />
+        <TextBlock Text="{Binding ShownBackgroundStatus}" Style="{StaticResource DialogHint}" TextWrapping="Wrap" Margin="0,4,0,0" />
 
       </StackPanel>
     </ScrollViewer>
