@@ -39,7 +39,7 @@
         <DataTemplate>
           <StackPanel Orientation="Horizontal">
             <TextBlock Text="{Binding Label}" FontWeight="SemiBold" MinWidth="64" />
-            <TextBlock Text="{Binding Description}" Foreground="{DynamicResource DialogHintBrush}" />
+            <TextBlock Text="{Binding Description}" />
           </StackPanel>
         </DataTemplate>
       </ComboBox.ItemTemplate>

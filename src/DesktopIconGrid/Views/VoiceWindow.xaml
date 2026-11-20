@@ -15,7 +15,7 @@
         Closing="Window_Closing">
   <StackPanel Margin="14">
     <TextBlock x:Name="MessageText" TextWrapping="Wrap" FontSize="15" />
-    <TextBlock x:Name="DetailText" TextWrapping="Wrap" Margin="0,4,0,0" Opacity="0.7" Visibility="Collapsed" />
+    <TextBlock x:Name="DetailText" TextWrapping="Wrap" Margin="0,4,0,0" Visibility="Collapsed" />
     <ProgressBar x:Name="Progress" IsIndeterminate="True" Height="6" Margin="0,10,0,0" Visibility="Collapsed" />
     <!-- Review 27, the choice window: each button names the item, says what it is and starts, and warns when the phrase
          came from another PC. The texts are TextBlocks, so an underscore in a name is shown, not taken as an access key.
@@ -27,7 +27,7 @@
                   AutomationProperties.Name="{Binding Name}" AutomationProperties.HelpText="{Binding Detail}">
             <StackPanel>
               <TextBlock Text="{Binding Name}" FontWeight="Bold" TextWrapping="Wrap" />
-              <TextBlock Text="{Binding Detail}" Opacity="0.8" TextWrapping="Wrap" Margin="0,2,0,0" />
+              <TextBlock Text="{Binding Detail}" TextWrapping="Wrap" Margin="0,2,0,0" />
               <TextBlock Foreground="{DynamicResource WarningBrush}" TextWrapping="Wrap" Margin="0,2,0,0"
                          Visibility="{Binding CameFromAnotherPc, Converter={StaticResource BoolToVisibility}}">
                 <Run Text="&#x26A0; " /><Run Text="{x:Static r:Strings.Voice_FromAnotherPc}" />

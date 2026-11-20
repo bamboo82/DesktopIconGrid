@@ -38,7 +38,9 @@
     </DrawingBrush.Drawing>
   </DrawingBrush>
 
-  <!-- Badge brushes sit on the bar and stay fixed; the three dialog brushes are recoloured by DialogTheme for dark mode -->
+  <!-- Badge brushes sit on the bar and stay fixed; the dialog brushes are recoloured by DialogTheme for dark mode.
+       DialogHintBrush stays grey where grey says something: the log's Debug lines (their level) and the Drive viewer's
+       path dividers (not text). -->
   <SolidColorBrush x:Key="BadgeBrush" Color="#FFF5A623" />
   <SolidColorBrush x:Key="RunningBadgeBrush" Color="#FF34C759" />
   <SolidColorBrush x:Key="DialogHintBrush" Color="#FF6E6E6E" />
@@ -378,8 +380,10 @@
     <TextBlock Text="{Binding}" TextWrapping="Wrap" />
   </DataTemplate>
 
+  <!-- A hint under a field or a choice: told apart by its place (close under what it explains, a negative top margin),
+       drawn in the dialog's own text colour, inherited, so it reads as well as a label in the classic and the Fluent
+       look, light or dark, and in High Contrast (0.13.0 WP3: it was grey). A disabled one is faded with its row. -->
   <Style x:Key="DialogHint" TargetType="TextBlock">
-    <Setter Property="Foreground" Value="{DynamicResource DialogHintBrush}" />
     <Setter Property="TextWrapping" Value="Wrap" />
     <Setter Property="Margin" Value="0,-4,0,8" />
     <Style.Triggers>

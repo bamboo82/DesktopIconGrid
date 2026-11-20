@@ -44,7 +44,6 @@
     <TextBlock x:Name="StatusLine" Grid.Row="2" Grid.ColumnSpan="3" TextWrapping="Wrap" Margin="0,0,0,8" Text="{Binding Status}">
       <TextBlock.Style>
         <Style TargetType="TextBlock">
-          <Setter Property="Foreground" Value="{DynamicResource DialogHintBrush}" />
           <Style.Triggers>
             <DataTrigger Binding="{Binding StatusIsWarning}" Value="True">
               <Setter Property="Foreground" Value="{DynamicResource WarningBrush}" />

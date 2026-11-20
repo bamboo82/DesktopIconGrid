@@ -9,6 +9,42 @@ The owner relays replies.
 
 ---
 
+## 2026-11-20 (109) — 0.13.0 WP3: hint text in the dialog's text colour
+
+Run 210 (`adb35c0`, entry 108, WP2) is green: Core 1101 and App 416 tests. The six new icon tests passed on CI's
+Windows, `Windows_own_programs_come_out_as_the_shell_draws_them_unless_the_shell_padded_them` among them.
+
+- **What changed:**
+  - `DialogHint` (Styles.xaml) sets no `Foreground` any more: a hint inherits the dialog's text colour, whatever the
+    look (classic, Fluent light or dark, High Contrast). It keeps its wrapping, its place (the negative top margin
+    under what it explains) and the 0.45 opacity of a disabled row. No italics, no smaller size, as before.
+  - Text that explains but did not use the style, now in the text colour too:
+    - Send to PC: the status line (looking, the hint, why no PC is listed). A warning there keeps `WarningBrush`.
+    - Command tile: the line under *Every* and *Saving approves…*.
+    - The approval window: the line that asks to scroll to the end.
+    - Monitor icon: each design's description in the list (its name stays semibold).
+    - The voice window: the detail line, and each choice's detail (they were at 70 % and 80 % opacity).
+  - Settings' font install message is based on `DialogHint`, so it follows; when the install failed it keeps
+    `ErrorTextBrush`.
+  - `DialogHintBrush` stays, for the two places listed below.
+- **Grey left grey, and why:**
+  - The log window's Debug lines: grey says their level, beside the warning and error colours.
+  - The Drive viewer's `›` between the parts of a path: a divider, not text.
+  - Add app's filter box: its placeholder (*Filter…*) at 55 %, so it does not look like typed text.
+  - A folder stack's *N more* and *Empty folder* lines, at 70 % of the bar theme's text colour: the stack is the bar's
+    popup, drawn in the bar's theme, not a dialog. Say if they should be full colour too.
+  - A disabled row's 0.45 opacity, as the plan says; the log viewer's light text on its dark page is not grey.
+- **Contrast:** a hint now has the contrast of a label wherever a label has it, by inheritance; no colour of mine is
+  involved. Before: #6E6E6E on light (5.1:1 on white) and #A8A8A8 on dark.
+- **Tests (App, Windows):** `HintTextTests`:
+  - a `DialogHint` text in a window has the colour of a plain text beside it, in the classic and the Fluent look,
+    and is not the hint brush's grey;
+  - the approval window's scrolling line has the colour of its intro.
+- **Not tested:** the dark look (CI runs Windows in light mode) and High Contrast; both inherit as the light look does.
+  Not seen on a screen.
+
+This entry claims no run for its own commit.
+
 ## 2026-11-20 (108) — 0.13.0 begins: WP2, icons that came out smaller than the others
 
 Your plan 31, first package (order WP2, WP3, WP5, WP1, WP4). The version is 0.13.0 from this commit on.

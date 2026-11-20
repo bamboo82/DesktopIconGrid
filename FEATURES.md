@@ -737,7 +737,7 @@ warnings and errors. The last 2000 entries stay in memory and all of them are ap
 | Always on top | off |
 | Theme | Classic (Graphite, Paper, Midnight, Sand, or Custom colour) |
 | Bar background | solid colour (Mica or Acrylic on Windows 11 22H2+, tinted with the theme) |
-| Windows 11 style dialogs | on (follow the system light/dark mode) |
+| Windows 11 style dialogs | on (follow the system light/dark mode). In both looks a hint under a field, and any other line that explains, is in the dialog's text colour, told apart by its place (0.13.0; it was grey); grey stays where it says something: the log's Debug lines and the Drive viewer's path dividers |
 | Dock to edge | not docked (top, bottom, left or right edge as a desktop toolbar) |
 | Auto-hide | off (with a dock edge: two-pixel strip until the pointer touches the edge) |
 | Start with Windows | off (current user's Run key; repaired when the program moves). One entry serves every copy: a copy changes it only when it names that copy, leaves another copy's alone (and says so), and a portable copy adds one on a PC only after asking (0.8.1) |

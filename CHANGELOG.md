@@ -7,6 +7,14 @@ version numbers follow [Semantic Versioning](https://semver.org/).
 
 "Where it lives, how it reads": the owner's requests after 0.12.2.
 
+### Changed
+
+- Hints under a field, and the other lines in dialogs that explain something, are in the dialog's text colour
+  instead of grey, in the classic and the Windows 11 look, light or dark: Send to PC's status line, a command
+  tile's interval and approval lines, the approval window's line about scrolling, a monitor design's description,
+  the voice window's details. A hint is still told apart by its place under what it explains; one in a disabled
+  row is still faded with it, and warnings and errors keep their colours.
+
 ### Fixed
 
 - An icon that came out smaller than the others now fills its place. Windows answers for a program with no image as

@@ -8,8 +8,9 @@ namespace DesktopIconGrid.Views;
 
 /// <summary>
 /// Gives dialogs the Windows 11 (Fluent) look that follows the system light/dark mode, when the setting asks
-/// for it. Applied per window, so the bar keeps its own themed chrome; the few fixed dialog brushes (hints,
-/// warnings, swatch borders) are recoloured for dark surfaces at the same time.
+/// for it. Applied per window, so the bar keeps its own themed chrome; the few fixed dialog brushes (the grey of the
+/// log's Debug lines and path dividers, warnings, errors, swatch borders) are recoloured for dark surfaces at the same time.
+/// Hints are not among them: they take the dialog's text colour (0.13.0 WP3).
 /// </summary>
 public static class DialogTheme
 {

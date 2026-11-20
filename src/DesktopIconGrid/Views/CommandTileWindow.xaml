@@ -53,7 +53,7 @@
     <StackPanel Grid.Row="4" Grid.Column="1" Grid.ColumnSpan="2" Margin="0,0,0,8">
       <TextBox Style="{StaticResource DialogTextBox}" Width="90" HorizontalAlignment="Left" Margin="0"
                Text="{Binding Interval, UpdateSourceTrigger=PropertyChanged}" />
-      <TextBlock Text="{x:Static r:Strings.Command_EveryHint}" Foreground="{DynamicResource DialogHintBrush}" TextWrapping="Wrap" Margin="0,2,0,0" />
+      <TextBlock Text="{x:Static r:Strings.Command_EveryHint}" TextWrapping="Wrap" Margin="0,2,0,0" />
     </StackPanel>
 
     <TextBlock Grid.Row="5" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Command_Timeout}" Margin="0,0,12,8" />
@@ -82,7 +82,7 @@
     </StackPanel>
 
     <TextBlock Grid.Row="9" Grid.ColumnSpan="3" Text="{x:Static r:Strings.Command_SaveApprovesNew}" TextWrapping="Wrap"
-               Foreground="{DynamicResource DialogHintBrush}" Margin="0,4,0,8" />
+               Margin="0,4,0,8" />
 
     <StackPanel Grid.Row="10" Grid.ColumnSpan="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,8,0,0">
       <Button Content="{x:Static r:Strings.Common_OK}" Style="{StaticResource DialogButton}" IsDefault="True" IsEnabled="{Binding CanSave}" Click="Ok_Click" />
