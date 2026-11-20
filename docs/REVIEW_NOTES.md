@@ -9,6 +9,23 @@ The owner relays replies.
 
 ---
 
+## 2026-11-20 (115) — The fit test measures a scaled dialog in one unit (run 215 red)
+
+Run 215 (`06e376f`, entry 113) is red on my new test,
+`DialogFitTests.Settings_and_Properties_at_150_percent_fit_a_short_screen_with_their_buttons_in_sight`, in both
+languages: "儲存 ends at 540, below the window's 374". Core 1164 and the other 434 App tests passed.
+
+The dialog was right; the helper `FitsAShortScreen` compared two units.
+- The button's bottom is measured in the window's units, after the 1.5 scale: 540.
+- The window's height was the content's `ActualHeight`, which is before its own `LayoutTransform`: 374. In window
+  units that is 561, so Save is in sight with 21 to spare.
+
+The helper now takes the content's bottom in the window's units (`TranslatePoint` of its lower edge). At 100 % that
+is the same number as before (the content starts at the window's top), so the older fit tests check what they
+checked. The run of `b138067` (entry 114), under way, has the same failure; this commit's run is the one that counts.
+
+This entry claims no run for its own commit.
+
 ## 2026-11-20 (114) — WP4: a font installed after the start is found
 
 `UiFonts.IsInstalled` kept the list of the PC's fonts for the whole run. A font installed after the bar started, then

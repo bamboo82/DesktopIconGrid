@@ -57,7 +57,10 @@ public sealed class DialogFitTests(WpfThread wpf)
             window.UpdateLayout();
 
             Assert.True(window.ActualHeight <= height + 0.5, $"{window.ActualHeight} units tall");
-            var client = ((FrameworkElement)window.Content).ActualHeight;
+            // The bottom of the content in the window's units, where the buttons are measured: a dialog scaled for the text
+            // size (0.13.0 WP4) has its content's ActualHeight before the scale. At 100 % it is that height.
+            var root = (FrameworkElement)window.Content;
+            var client = root.TranslatePoint(new Point(0, root.ActualHeight), window).Y;
             foreach (var label in buttons)
             {
                 // The one in sight: Settings also has a Cancel for a font download, collapsed until one runs (0.12.0 WP5).
