@@ -8,7 +8,11 @@ namespace DesktopIconGrid.Core.Storage;
 /// <param name="Portable"><c>portable.txt</c> is next to the program and the folder it names is used.</param>
 /// <param name="Unusable"><c>portable.txt</c> is there, but the folder it names cannot be used, so the data is in <c>%LocalAppData%</c>.</param>
 /// <param name="Named">The folder <c>portable.txt</c> names, in full, or its line as written when no folder can be made of it; <see langword="null"/> without the file.</param>
-public sealed record DataPlace(string Directory, bool Portable, bool Unusable, string? Named);
+/// <param name="KeptInProgramFolder">
+/// <c>portable.txt</c> names a folder without a bar (or no folder at all) while the program's folder has one: a note
+/// written in the file before 0.13.0, when any text meant the program's folder. That folder stays in use (review 33 R1).
+/// </param>
+public sealed record DataPlace(string Directory, bool Portable, bool Unusable, string? Named, bool KeptInProgramFolder = false);
 
 /// <summary>
 /// Where the app keeps its files: <c>%LocalAppData%\DesktopIconGrid</c>, or, in portable mode, the folder that
@@ -39,7 +43,8 @@ public static partial class DataLocation
         File.Exists,
         CanWriteTo,
         ReadMarker,
-        MakeFolder));
+        MakeFolder,
+        hasBar: folder => File.Exists(Path.Combine(folder, LayoutStorage.FileName))));
 
     /// <summary>The folder for <c>layout.json</c>, <c>sync.json</c>, logs and caches.</summary>
     public static string Directory => Here.Value.Directory;
@@ -63,6 +68,9 @@ public static partial class DataLocation
     /// <summary>What <c>portable.txt</c> names (<see cref="DataPlace.Named"/>).</summary>
     public static string? NamedFolder => Here.Value.Named;
 
+    /// <summary>The program's folder stayed in use though <c>portable.txt</c> names another (<see cref="DataPlace.KeptInProgramFolder"/>); the app says so.</summary>
+    public static bool KeptInProgramFolder => Here.Value.KeptInProgramFolder;
+
     /// <summary>The program's folder, without the separator at its end.</summary>
     public static string ProgramDirectory => Path.TrimEndingDirectorySeparator(AppContext.BaseDirectory);
 
@@ -83,6 +91,10 @@ public static partial class DataLocation
     /// <param name="readMarker">The start of <c>portable.txt</c> as text; none reads it as empty, the program's own folder.</param>
     /// <param name="makeFolder">Makes a missing folder; false when it cannot. None leaves folders as they are.</param>
     /// <param name="expand">Expands environment variables; by default this process's.</param>
+    /// <param name="hasBar">
+    /// Whether a folder holds a bar (<c>layout.json</c>). With it, a line naming a folder without a bar, or no folder,
+    /// leaves the data in the program's folder when that one has a bar (review 33 R1); without it, that is not looked at.
+    /// </param>
     public static DataPlace Resolve(
         string programDirectory,
         string localAppData,
@@ -90,7 +102,8 @@ public static partial class DataLocation
         Func<string, bool>? canWrite = null,
         Func<string, string?>? readMarker = null,
         Func<string, bool>? makeFolder = null,
-        Func<string, string>? expand = null)
+        Func<string, string>? expand = null,
+        Func<string, bool>? hasBar = null)
     {
         ArgumentNullException.ThrowIfNull(fileExists);
         var local = Path.Combine(localAppData ?? string.Empty, LayoutStorage.ApplicationFolderName);
@@ -101,7 +114,21 @@ public static partial class DataLocation
 
         var text = readMarker?.Invoke(Path.Combine(programDirectory, PortableMarker));
         var line = FirstLine(text);
-        if (line is null || FolderOf(line, programDirectory, expand) is not { } folder)
+        var folder = line is null ? null : FolderOf(line, programDirectory, expand);
+        var program = WithoutEndingSeparator(programDirectory);
+
+        // Before 0.13.0 any text meant the program's folder, and copies have notes in the file ("portable copy for the
+        // in-app check"). Read as a folder's name, such a note would start the bar empty in a new folder: while that
+        // folder has no bar and the program's folder has one, the program's folder stays in use, and nothing is made.
+        if (hasBar is not null && (folder is null || !SameFolder(folder, program)) && (folder is null || !hasBar(folder)) && hasBar(program))
+        {
+            var named = folder ?? Shown(line ?? text ?? string.Empty);
+            return canWrite is null || canWrite(program)
+                ? new DataPlace(program, true, false, named, KeptInProgramFolder: true)
+                : new DataPlace(local, false, true, program);
+        }
+
+        if (folder is null)
         {
             return new DataPlace(local, false, true, Shown(line ?? text ?? string.Empty));
         }

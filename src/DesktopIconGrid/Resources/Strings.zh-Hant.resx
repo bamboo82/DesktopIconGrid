@@ -2690,7 +2690,9 @@ SHA-256：{3}
   <data name="Data_CopyQuestion" xml:space="preserve">
     <value>要將工具列的資料從 {0} 複製到 {1} 嗎？
 
-「複製」會帶過工具列、工作區與使用次數；該處同名的檔案會保留在旁邊，名稱為「….before-import-&lt;日期&gt;」。「不複製」只變更位置：工具列會以該資料夾中已有的內容啟動。</value>
+「複製」會帶過工具列、工作區、使用次數，以及它所用的圖示與錄音；該處同名的檔案會保留在旁邊，名稱為「….before-import-&lt;日期&gt;」。「不複製」只變更位置：工具列會以該資料夾中已有的內容啟動，沒有則為空白。
+
+「跨電腦同步」需在該處重新設定，命令也需重新核准。</value>
   </data>
   <data name="Data_Copy" xml:space="preserve">
     <value>複製</value>
@@ -2701,12 +2703,12 @@ SHA-256：{3}
   <data name="Data_StartQuestion" xml:space="preserve">
     <value>要在這個可攜式複本中使用這台電腦的工具列嗎？
 
-「匯入」會從 {0} 複製工具列、工作區與使用次數。「從空白開始」會以空的工具列開始，之後不會再詢問。</value>
+「匯入」會從 {0} 複製工具列、工作區、使用次數，以及它所用的圖示與錄音。「從空白開始」會以空的工具列開始，之後不會再詢問。</value>
   </data>
   <data name="Data_ImportQuestion" xml:space="preserve">
     <value>要在這個可攜式複本中使用這台電腦的工具列嗎？
 
-「匯入」會從 {0} 複製工具列、工作區與使用次數；這裡的檔案會保留在旁邊，名稱為「….before-import-&lt;日期&gt;」。之後 Desktop Icon Grid 會重新啟動以載入它們。</value>
+「匯入」會從 {0} 複製工具列、工作區、使用次數，以及它所用的圖示與錄音；這裡的檔案會保留在旁邊，名稱為「….before-import-&lt;日期&gt;」。之後 Desktop Icon Grid 會重新啟動以載入它們。</value>
   </data>
   <data name="Data_Import" xml:space="preserve">
     <value>匯入</value>
@@ -2765,5 +2767,8 @@ SHA-256：{3}
   </data>
   <data name="Settings_TextHint" xml:space="preserve">
     <value>工具列上的名稱在儲存時套用，對話方塊在下次開啟時套用。圖示大小不變。</value>
+  </data>
+  <data name="App_PortableKeptInProgram" xml:space="preserve">
+    <value>portable.txt 指定的 {0} 沒有工具列，而程式的資料夾有；工具列仍將檔案保存在程式的資料夾。若要移動檔案，請使用「設定」›「一般」›「資料位置」。</value>
   </data>
 </root>

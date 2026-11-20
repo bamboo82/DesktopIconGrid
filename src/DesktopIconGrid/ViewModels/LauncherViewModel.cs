@@ -209,7 +209,13 @@ public sealed partial class LauncherViewModel : ObservableObject, ISyncHost
     /// <summary>Set by the host to flush pending background work (e.g. a debounced sync upload) before exiting.</summary>
     public Func<Task>? FlushBeforeExit { get; set; }
 
-    public double CellWidth => IconSize + 2 * CellPadding + (ShowLabels ? 24 : 0);
+    /// <summary>
+    /// A cell's width. With names shown it takes the text size as the name's line does (review 33 R3), never less than at
+    /// 100 %, so a name that fits at 100 % fits at 150 %; the icon keeps its size, centred.
+    /// </summary>
+    public double CellWidth => ShowLabels
+        ? Math.Ceiling((IconSize + 2 * CellPadding + 24) * Math.Max(1, Model.Settings.TextFactor))
+        : IconSize + 2 * CellPadding;
 
     public double CellHeight => IconSize + 2 * CellPadding + (ShowLabels ? NameHeight + 2 : 0);
 

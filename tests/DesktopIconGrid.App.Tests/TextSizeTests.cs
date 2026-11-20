@@ -123,6 +123,15 @@ public sealed class TextSizeTests(WpfThread wpf)
             Assert.Equal(18, bar.ViewModel.EmptyHintFontSize, 3);
             Assert.Equal(settings.IconSize + (2 * settings.CellPadding) + 24 + 2, bar.ViewModel.CellHeight);
             Assert.Equal(settings.IconSize, bar.ViewModel.IconSize);
+
+            // Review 33 R3: the width follows too, so a name that fits at 100 % fits at 150 %; at 90 % it keeps 100 %'s.
+            var atHundred = settings.IconSize + (2 * settings.CellPadding) + 24;
+            Assert.Equal(Math.Ceiling(atHundred * 1.5), bar.ViewModel.CellWidth);
+            settings.TextScale = 90;
+            Assert.Equal(atHundred, bar.ViewModel.CellWidth);
+            settings.ShowLabels = false;
+            settings.TextScale = 150;
+            Assert.Equal(settings.IconSize + (2 * settings.CellPadding), bar.ViewModel.CellWidth); // no names: the icon's width
         }
         finally
         {

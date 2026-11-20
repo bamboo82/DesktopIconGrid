@@ -2690,7 +2690,9 @@ Installed to: {4}</value>
   <data name="Data_CopyQuestion" xml:space="preserve">
     <value>Copy the bar's data from {0} to {1}?
 
-Copy brings the bar, its workspaces and its usage counts; files of the same name there are kept beside them as "….before-import-&lt;date&gt;". Don't copy changes only the place: the bar starts with what that folder has.</value>
+Copy brings the bar, its workspaces, its usage counts, and the icons and recordings it uses; files of the same name there are kept beside them as "….before-import-&lt;date&gt;". Don't copy changes only the place: the bar starts with what that folder has, or empty.
+
+Sync across PCs must be set up again there, and commands approved again.</value>
   </data>
   <data name="Data_Copy" xml:space="preserve">
     <value>Copy</value>
@@ -2701,12 +2703,12 @@ Copy brings the bar, its workspaces and its usage counts; files of the same name
   <data name="Data_StartQuestion" xml:space="preserve">
     <value>Use this PC's bar in this portable copy?
 
-Import copies the bar, its workspaces and its usage counts from {0}. Start empty begins with an empty bar, and this is not asked again.</value>
+Import copies the bar, its workspaces, its usage counts, and the icons and recordings it uses from {0}. Start empty begins with an empty bar, and this is not asked again.</value>
   </data>
   <data name="Data_ImportQuestion" xml:space="preserve">
     <value>Use this PC's bar in this portable copy?
 
-Import copies the bar, its workspaces and its usage counts from {0}; the files here are kept beside them as "….before-import-&lt;date&gt;". Desktop Icon Grid then restarts to load them.</value>
+Import copies the bar, its workspaces, its usage counts, and the icons and recordings it uses from {0}; the files here are kept beside them as "….before-import-&lt;date&gt;". Desktop Icon Grid then restarts to load them.</value>
   </data>
   <data name="Data_Import" xml:space="preserve">
     <value>Import</value>
@@ -2765,5 +2767,8 @@ The place was not changed; what was copied stays there.</value>
   </data>
   <data name="Settings_TextHint" xml:space="preserve">
     <value>The bar's names follow at Save, a dialog when it is next opened. Icons keep their size.</value>
+  </data>
+  <data name="App_PortableKeptInProgram" xml:space="preserve">
+    <value>portable.txt names {0}, which has no bar, while the program's folder has one; the bar keeps its files in the program's folder. To move them, use Settings › General › Data location.</value>
   </data>
 </root>

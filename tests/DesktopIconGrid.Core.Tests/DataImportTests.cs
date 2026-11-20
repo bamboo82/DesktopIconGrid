@@ -29,6 +29,9 @@ public sealed class DataImportTests : IDisposable
         File.WriteAllText(Path.Combine(folder, name), text);
     }
 
+    private const string ThisPc = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+    private const string OtherPc = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
+
     private static LauncherLayout Bar() => new()
     {
         Items =
@@ -45,7 +48,7 @@ public sealed class DataImportTests : IDisposable
                     {
                         Name = "Data",
                         Location = @"D:\Data",
-                        Locations = new Dictionary<string, string> { ["aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"] = @"E:\Data" },
+                        Locations = new Dictionary<string, string> { [ThisPc] = @"E:\Data", [OtherPc] = @"E:\Other" },
                     },
                 ],
             },
@@ -53,13 +56,15 @@ public sealed class DataImportTests : IDisposable
     };
 
     [Fact]
-    public void The_bar_its_workspaces_and_its_counts_are_copied_and_nothing_of_one_copy_or_one_PC()
+    public void The_bar_its_workspaces_counts_icons_and_recordings_are_copied_and_nothing_of_one_copy_or_one_PC()
     {
         var source = Folder("this-pc");
         new LayoutStorage(Path.Combine(source, LayoutStorage.FileName)).Save(Bar());
         Write(source, WorkspacePositions.FileName);
         Write(source, UsageLog.FileName);
-        foreach (var own in new[] { CommandTrust.FileName, SyncSettingsStore.FileName, LocalSettings.FileName, "google-token.bin", @"logs/app.log", "history/layout-20261120.json", "drive-cache/x", "icons/a.png", "sounds/s.wav" })
+        Write(source, Path.Combine("icons", "a.png"), "picture");
+        Write(source, Path.Combine("sounds", "s.wav"), "recording");
+        foreach (var own in new[] { CommandTrust.FileName, SyncSettingsStore.FileName, LocalSettings.FileName, "google-token.bin", @"logs/app.log", "history/layout-20261120.json", "drive-cache/x" })
         {
             Write(source, own);
         }
@@ -68,14 +73,39 @@ public sealed class DataImportTests : IDisposable
         var result = DataImport.Run(source, target, appDrive: null, Now);
 
         Assert.Null(result.Problem);
-        Assert.Equal([WorkspacePositions.FileName, UsageLog.FileName, LayoutStorage.FileName], result.Copied);
+        Assert.Equal(["icons", "sounds", WorkspacePositions.FileName, UsageLog.FileName, LayoutStorage.FileName], result.Copied);
         Assert.Empty(result.KeptAside);
         Assert.Equal(
-            [LayoutStorage.FileName, UsageLog.FileName, WorkspacePositions.FileName],
+            ["icons", LayoutStorage.FileName, "sounds", UsageLog.FileName, WorkspacePositions.FileName],
             Directory.EnumerateFileSystemEntries(target).Select(Path.GetFileName).Order(StringComparer.Ordinal));
-        Assert.Equal(File.ReadAllBytes(Path.Combine(source, LayoutStorage.FileName)), File.ReadAllBytes(Path.Combine(target, LayoutStorage.FileName))); // no drive: as it is
+        Assert.Equal("picture", File.ReadAllText(Path.Combine(target, "icons", "a.png")));
+        Assert.Equal("recording", File.ReadAllText(Path.Combine(target, "sounds", "s.wav"))); // named after its icon: nothing to rewrite
+        Assert.Equal(File.ReadAllBytes(Path.Combine(source, LayoutStorage.FileName)), File.ReadAllBytes(Path.Combine(target, LayoutStorage.FileName))); // nothing to change: as it is
         Assert.True(DataImport.HasBar(source));
         Assert.False(DataImport.HasBar(Folder("empty")));
+    }
+
+    [Fact]
+    public void An_icon_from_the_web_points_to_its_copy_and_one_in_the_way_is_kept_aside()
+    {
+        // Review 33 R4: a portable copy is made to travel, so the pictures go with the bar.
+        var source = Folder("this-pc");
+        var picture = Path.Combine(source, "icons", "site.png");
+        var bar = new LauncherLayout { Items = [new ShortcutItem { Name = "Site", Location = "https://example.org", IconPath = picture }, new ShortcutItem { Name = "Tool", Location = "x.exe", IconPath = Path.Combine(_root, "elsewhere.png") }] };
+        new LayoutStorage(Path.Combine(source, LayoutStorage.FileName)).Save(bar);
+        Write(source, Path.Combine("icons", "site.png"), "new picture");
+        var target = Folder("portable");
+        Write(target, Path.Combine("icons", "site.png"), "old picture");
+
+        var result = DataImport.Run(source, target, appDrive: null, Now);
+
+        var stamp = Now.ToLocalTime().ToString("yyyyMMdd-HHmmss", System.Globalization.CultureInfo.InvariantCulture);
+        Assert.Equal([Path.Combine("icons", $"site.png.before-import-{stamp}")], result.KeptAside);
+        Assert.Equal("old picture", File.ReadAllText(Path.Combine(target, "icons", $"site.png.before-import-{stamp}")));
+        Assert.Equal("new picture", File.ReadAllText(Path.Combine(target, "icons", "site.png")));
+        var copied = new LayoutStorage(Path.Combine(target, LayoutStorage.FileName)).Load().Layout;
+        Assert.Equal(Path.Combine(target, "icons", "site.png"), copied.Items[0].IconPath); // the target's copy
+        Assert.Equal(Path.Combine(_root, "elsewhere.png"), copied.Items[1].IconPath); // not in icons\: as it was
     }
 
     [Fact]
@@ -106,7 +136,7 @@ public sealed class DataImportTests : IDisposable
         new LayoutStorage(Path.Combine(source, LayoutStorage.FileName)).Save(Bar());
         var target = Folder("portable");
 
-        Assert.Null(DataImport.Run(source, target, appDrive: "E:", Now).Problem);
+        Assert.Null(DataImport.Run(source, target, appDrive: "E:", Now, deviceId: ThisPc).Problem);
 
         var copied = new LayoutStorage(Path.Combine(target, LayoutStorage.FileName)).Load().Layout;
         var pcman = Assert.IsType<ShortcutItem>(copied.Items[0]);
@@ -116,7 +146,8 @@ public sealed class DataImportTests : IDisposable
         Assert.Equal(@"%APPDRIVE%\Icons\work.ico", work.IconPath);
         var data = Assert.IsType<ShortcutItem>(Assert.Single(work.Items));
         Assert.Equal(@"D:\Data", data.Location);
-        Assert.Equal(@"%APPDRIVE%\Data", data.Locations!["aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"]);
+        Assert.Equal(@"%APPDRIVE%\Data", data.Locations![ThisPc]);
+        Assert.Equal(@"E:\Other", data.Locations[OtherPc]); // review 33 R6: another PC's own path on the same letter is that PC's
 
         // The source is only read.
         Assert.Equal(@"E:\Tools\PCMan\PCMan.exe", Assert.IsType<ShortcutItem>(new LayoutStorage(Path.Combine(source, LayoutStorage.FileName)).Load().Layout.Items[0]).Location);

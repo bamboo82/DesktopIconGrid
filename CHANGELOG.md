@@ -12,18 +12,21 @@ version numbers follow [Semantic Versioning](https://semver.org/).
 - `portable.txt` now says where the data is: its first line names the folder (`.` or nothing for the program's
   folder, as before; `data` or `..\DIG-data` from the program's folder; `\DIG-data` on the program's drive; a full
   name; environment variables and `%APPDRIVE%` work). The folder is made when missing; one that cannot be used
-  leaves the data in `%LocalAppData%`, and the notice at start names it.
+  leaves the data in `%LocalAppData%`, and the notice at start names it. A note written in the file before (any text
+  meant the program's folder) does not empty the bar: while the folder it names has no bar and the program's folder
+  has one, the program's folder stays in use, and the start says so once.
 - Settings ▸ General ▸ *Data location*: this PC's folder or a portable folder, with *Browse…*, where the data is now
-  and *Open folder*. Save checks the folder, asks once whether to copy the bar's data there, writes or removes
-  `portable.txt`, and offers to restart; the bar keeps its folder until then.
+  and *Open folder*. Save checks the folder, asks once whether to copy the bar's data there (and says that sync is
+  set up again there, and commands approved again), writes or removes `portable.txt`, and offers to restart; the bar
+  keeps its folder until then.
 - Settings ▸ Appearance: *Font* (Windows' own, or any font on the PC) and *Text size* (90 to 150 %), with a sample.
   The font comes first in every window, menu and tooltip, the Chinese font after it; the size scales dialogs whole
-  and the names on the bar, while icons keep their size. Both sync with the other appearance settings; a PC without
+  and the names on the bar, whose cells widen with them, while icons keep their size. Both sync with the other appearance settings; a PC without
   the font uses Windows' own.
 - A portable copy that starts without a bar of its own, on a PC whose `%LocalAppData%` has one, asks once whether to
-  use it (*Import* or *Start empty*); Settings ▸ General has *Import this PC's data…* too. The bar, its workspaces
-  and its usage counts are copied; approvals, the Google sign-in, sync settings, logs and history are not, and a
-  file already there is kept as `….before-import-<date>`.
+  use it (*Import* or *Start empty*); Settings ▸ General has *Import this PC's data…* too. The bar, its workspaces,
+  its usage counts, and the icons from the web and recordings it uses are copied; approvals, the Google sign-in, sync
+  settings, logs and history are not, and a file already there is kept as `….before-import-<date>`.
 
 ### Changed
 
@@ -40,12 +43,13 @@ version numbers follow [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
-- An icon that came out smaller than the others now fills its place. Windows answers for a program with no image as
-  large as the bar asks for (PCMan on a 48 px bar) with its small icon in the middle of a larger picture, sometimes
-  with a thin frame; the bar takes the program's own icon at the bar's size instead (for a shortcut, the icon it names
-  or its target's), or, for a file without icons of its own, cuts the drawn part out and scales it. An icon that fills
-  its picture, or is small by design in a corner or with margins of less than 30 %, is drawn as before, pixel for
-  pixel. The names table, Properties' preview and folder stacks show the same.
+- An icon that came out smaller than the others now fills its place, at every bar size. Windows answers for a program
+  with no image as large as the bar asks for (PCMan) with its small icon in the middle of a larger picture, inside a
+  thin frame; the bar knows that frame by its shape, and takes the program's own icon at the bar's size instead (for
+  a shortcut, the icon it names or its target's), or, for a file without icons of its own, cuts the drawn part out and
+  scales it. Without such a frame, only an icon on less than 70 % of its picture counts. An icon that fills its
+  picture, or is small by design in a corner or with margins of less than 30 %, is drawn as before, pixel for pixel.
+  The names table, Properties' preview and folder stacks show the same.
 
 ## [0.12.2] – 2026-11-20
 

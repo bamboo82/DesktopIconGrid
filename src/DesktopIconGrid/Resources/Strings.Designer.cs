@@ -240,6 +240,15 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to portable.txt names {0}, which has no bar, while the program's folder has one; th [rest of string was truncated]";.
+        /// </summary>
+        public static string App_PortableKeptInProgram {
+            get {
+                return ResourceManager.GetString("App_PortableKeptInProgram", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to portable.txt names {0} for the bar's files, but that folder cannot be used (the [rest of string was truncated]";.
         /// </summary>
         public static string App_PortableReadOnly {

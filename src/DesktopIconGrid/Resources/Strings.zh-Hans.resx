@@ -2690,7 +2690,9 @@ SHA-256：{3}
   <data name="Data_CopyQuestion" xml:space="preserve">
     <value>要将工具栏的数据从 {0} 复制到 {1} 吗？
 
-“复制”会带过工具栏、工作区与使用次数；该处同名的文件会保留在旁边，名称为“….before-import-&lt;日期&gt;”。“不复制”只更改位置：工具栏会以该文件夹中已有的内容启动。</value>
+“复制”会带过工具栏、工作区、使用次数，以及它所用的图标与录音；该处同名的文件会保留在旁边，名称为“….before-import-&lt;日期&gt;”。“不复制”只更改位置：工具栏会以该文件夹中已有的内容启动，没有则为空白。
+
+“跨电脑同步”需在该处重新设置，命令也需重新批准。</value>
   </data>
   <data name="Data_Copy" xml:space="preserve">
     <value>复制</value>
@@ -2701,12 +2703,12 @@ SHA-256：{3}
   <data name="Data_StartQuestion" xml:space="preserve">
     <value>要在这个便携副本中使用这台电脑的工具栏吗？
 
-“导入”会从 {0} 复制工具栏、工作区与使用次数。“从空白开始”会以空的工具栏开始，之后不会再询问。</value>
+“导入”会从 {0} 复制工具栏、工作区、使用次数，以及它所用的图标与录音。“从空白开始”会以空的工具栏开始，之后不会再询问。</value>
   </data>
   <data name="Data_ImportQuestion" xml:space="preserve">
     <value>要在这个便携副本中使用这台电脑的工具栏吗？
 
-“导入”会从 {0} 复制工具栏、工作区与使用次数；这里的文件会保留在旁边，名称为“….before-import-&lt;日期&gt;”。之后 Desktop Icon Grid 会重新启动以加载它们。</value>
+“导入”会从 {0} 复制工具栏、工作区、使用次数，以及它所用的图标与录音；这里的文件会保留在旁边，名称为“….before-import-&lt;日期&gt;”。之后 Desktop Icon Grid 会重新启动以加载它们。</value>
   </data>
   <data name="Data_Import" xml:space="preserve">
     <value>导入</value>
@@ -2765,5 +2767,8 @@ SHA-256：{3}
   </data>
   <data name="Settings_TextHint" xml:space="preserve">
     <value>工具栏上的名称在保存时应用，对话框在下次打开时应用。图标大小不变。</value>
+  </data>
+  <data name="App_PortableKeptInProgram" xml:space="preserve">
+    <value>portable.txt 指定的 {0} 没有工具栏，而程序的文件夹有；工具栏仍将文件保存在程序的文件夹。若要移动文件，请使用“设置”›“常规”›“数据位置”。</value>
   </data>
 </root>

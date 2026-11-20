@@ -42,12 +42,28 @@ public sealed partial class LauncherViewModel
         {
             await WriteWhatWaitsAsync();
             var appDrive = move.Portable ? folders.AppDrive : null;
-            var copied = await Task.Run(() => DataImport.Run(folders.Directory, move.Folder, appDrive, Now()));
+            var deviceId = Core.Models.ThisDevice.Id;
+            var copied = await Task.Run(() => DataImport.Run(folders.Directory, move.Folder, appDrive, Now(), deviceId));
             AppLog.Default.Info("App", $"The bar's data copied from {folders.Directory} to {move.Folder}: {string.Join(", ", copied.Copied)}{(copied.KeptAside.Count > 0 ? $"; kept aside: {string.Join(", ", copied.KeptAside)}" : string.Empty)}");
             if (copied.Problem is not null)
             {
                 AppLog.Default.Error("App", $"The bar's data could not be copied to {move.Folder}: {copied.Problem}");
                 _dialogs.ShowError(Strings.Data_Title, string.Format(Strings.Data_CopyFailed, move.Folder, copied.Problem));
+                return;
+            }
+        }
+
+        if (!move.Copy && move.Portable && !DataImport.HasBar(move.Folder))
+        {
+            // "Don't copy": the bar starts with what the folder has, which is nothing, so it gets an empty bar now. Without
+            // one, a start would take the folder for a note's and stay in the program's folder when that has a bar (R1).
+            try
+            {
+                new LayoutStorage(Path.Combine(move.Folder, LayoutStorage.FileName)).Save(new Core.Models.LauncherLayout());
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                _dialogs.ShowError(Strings.Data_Title, string.Format(Strings.Data_CopyFailed, move.Folder, ex.Message));
                 return;
             }
         }

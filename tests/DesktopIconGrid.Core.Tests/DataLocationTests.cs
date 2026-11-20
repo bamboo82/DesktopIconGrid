@@ -120,6 +120,48 @@ public class DataLocationTests
     }
 
     [Fact]
+    public void A_note_in_portable_txt_leaves_the_bar_in_the_program_folder_while_only_that_folder_has_one()
+    {
+        // Review 33 R1: a copy's portable.txt had said "portable copy for the in-app check" since 0.8; 0.13.0 read it as a
+        // folder, and the bar came up empty there.
+        const string program = @"E:\Tools\DesktopIconGrid";
+        const string note = "portable copy for the in-app check";
+        const string named = @"E:\Tools\DesktopIconGrid\portable copy for the in-app check";
+        var made = new List<string>();
+        DataPlace With(string marker, params string[] bars) => DataLocation.Resolve(
+            Program,
+            Local,
+            path => path.EndsWith(DataLocation.PortableMarker, StringComparison.Ordinal),
+            canWrite: _ => true,
+            readMarker: _ => marker,
+            makeFolder: folder =>
+            {
+                made.Add(folder);
+                return true;
+            },
+            hasBar: folder => bars.Any(bar => DataLocation.SameFolder(bar, folder)));
+
+        Assert.Equal(new DataPlace(program, true, false, named, KeptInProgramFolder: true), With(note, program));
+        Assert.Empty(made); // nothing is made for the note
+
+        // A line that names no folder at all: the same.
+        Assert.Equal(new DataPlace(program, true, false, "copy: test", KeptInProgramFolder: true), With("copy: test", program));
+
+        // The folder named has a bar (moved there in Settings): it is used.
+        Assert.Equal(new DataPlace(named, true, false, named), With(note, program, named));
+
+        // A new copy, no bar anywhere: the folder named, made.
+        made.Clear();
+        Assert.Equal(new DataPlace(named, true, false, named), With(note));
+        Assert.Equal([named], made);
+
+        // "." is the program's folder itself; a program folder that cannot be written sends the data to LocalAppData.
+        Assert.Equal(new DataPlace(program, true, false, program), With(".", program));
+        var readOnly = DataLocation.Resolve(Program, Local, _ => true, canWrite: _ => false, readMarker: _ => note, makeFolder: _ => true, hasBar: folder => DataLocation.SameFolder(folder, program));
+        Assert.Equal(new DataPlace(ThisPc, false, true, program), readOnly);
+    }
+
+    [Fact]
     public void A_program_on_a_share_has_no_drive_for_APPDRIVE_or_a_name_from_the_root()
     {
         const string share = @"\\nas\tools\DIG";

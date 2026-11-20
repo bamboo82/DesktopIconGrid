@@ -177,11 +177,16 @@ public partial class App : Application
             AppLog.Default.Warning("App", $"{DataLocation.PortableMarker} names \"{DataLocation.NamedFolder}\", which cannot be used; data in {DataLocation.Directory}");
         }
 
-        BringThisPcBar();
+        if (DataLocation.KeptInProgramFolder)
+        {
+            AppLog.Default.Warning("App", $"{DataLocation.PortableMarker} names \"{DataLocation.NamedFolder}\", which has no bar, while the program's folder has one; data stays in {DataLocation.Directory}");
+        }
 
         // The sync service sets ThisDevice.Id, which the load needs: a portable copy's repair of 0.8.0's paths gives this
-        // PC its own location, and does nothing without the id (review 18 D1).
+        // PC its own location, and does nothing without the id (review 18 D1). An import of this PC's bar needs it too:
+        // only this PC's own locations are written with %APPDRIVE% (review 33 R6).
         var syncService = CreateSyncService();
+        BringThisPcBar();
         var storage = new LayoutStorage(LayoutStorage.GetDefaultFilePath());
         var load = storage.Load();
         var model = LauncherModel.FromLayout(load.Layout);
@@ -336,6 +341,10 @@ public partial class App : Application
             if (DataLocation.PortableFolderIsUnusable)
             {
                 dialogs.Notify(Strings.App_Name, string.Format(Strings.App_PortableReadOnly, DataLocation.NamedFolder, DataLocation.Directory)); // once, at start
+            }
+            else if (DataLocation.KeptInProgramFolder)
+            {
+                dialogs.Notify(Strings.App_Name, string.Format(Strings.App_PortableKeptInProgram, DataLocation.NamedFolder)); // review 33 R1, once
             }
         };
         if (startHidden)
@@ -492,7 +501,7 @@ public partial class App : Application
             }
         }
 
-        var result = DataImport.Run(thisPc, data, DataLocation.StorageDrive(DataLocation.ProgramDirectory, Environment.GetEnvironmentVariable("SystemDrive")), DateTimeOffset.Now);
+        var result = DataImport.Run(thisPc, data, DataLocation.StorageDrive(DataLocation.ProgramDirectory, Environment.GetEnvironmentVariable("SystemDrive")), DateTimeOffset.Now, ThisDevice.Id);
         AppLog.Default.Info("App", $"This PC's bar brought from {thisPc}: {string.Join(", ", result.Copied)}{(result.KeptAside.Count > 0 ? $"; kept aside: {string.Join(", ", result.KeptAside)}" : string.Empty)}");
         if (result.Problem is not null)
         {

@@ -758,7 +758,7 @@ warnings and errors. The last 2000 entries stay in memory and all of them are ap
 | Language | same as Windows (English, 繁體中文 or 简体中文; applies at the next start) |
 | Font | Windows' own (0.13.0): the list offers it first, then the families installed on this PC by the name they have in the UI's language, drawn in the dialog's font. Stored as `uiFont` (a family's name; one with `,` `#` `/` `\` `:` or over 100 characters is not taken: a layout from elsewhere never makes the app load a font from a file); it syncs as `chineseFont` does. A PC without the family draws Windows' own, says so once in the log, and lists it as "… (not on this PC)", which Save keeps. The chain of every window, menu, tooltip and the tray menu is that font, then the Chinese font when it is used, then Windows' own; code and log text keep Consolas first |
 | Chinese text | Taipei Sans TC Light when this PC has it, for every UI language but Simplified Chinese, where it is the Windows font (0.12.0); stored as `chineseFont` with the appearance settings, so it syncs, and a PC without the font draws Chinese as before whatever it says |
-| Text size | 100 % (0.13.0; 90, 110, 125 or 150 %): stored as `textScale` in percent (nothing for 100; a value outside 90–150 is taken to its end), and it syncs. A dialog is scaled whole as it opens, its set sizes with it, so what fits at 100 % fits in proportion; one taller than the screen keeps to the work area and its body scrolls, as before. On the bar the names under the icons, separators' captions and the empty bar's line follow, with the name line's height; icons, gauges' numbers and symbol and text icons keep their sizes. Menus, tooltips and the tray menu take the size through Windows' menu, status and message font sizes. A sample beside the list shows the chosen font and size at once; the bar follows at Save, a dialog when it is next opened |
+| Text size | 100 % (0.13.0; 90, 110, 125 or 150 %): stored as `textScale` in percent (nothing for 100; a value outside 90–150 is taken to its end), and it syncs. A dialog is scaled whole as it opens, its set sizes with it, so what fits at 100 % fits in proportion; one taller than the screen keeps to the work area and its body scrolls, as before. On the bar the names under the icons, separators' captions and the empty bar's line follow, with the name line's height and, when names are shown, the cell's width (never narrower than at 100 %); icons, gauges' numbers and symbol and text icons keep their sizes. Menus, tooltips and the tray menu take the size through Windows' menu, status and message font sizes. A sample beside the list shows the chosen font and size at once; the bar follows at Save, a dialog when it is next opened |
 
 Settings live in the same JSON file as the layout and apply immediately on *Save*.
 
@@ -801,7 +801,10 @@ and each page scrolls on a screen too short for it.
   is made when it is missing. A line that names no folder (a variable not set here, a character Windows refuses,
   `E:data`, a stream's name, a full name over 248 characters, a line over 1,024 characters or with a NUL) or a
   folder that cannot be made or written sends the data to `%LocalAppData%`, as a read-only one did, and the notice
-  at start names that folder. Whatever the folder, a copy with `portable.txt` is a portable copy: it asks before it
+  at start names that folder. Before 0.13.0 any text meant the program's folder, and copies have notes in the file:
+  when the folder the line names has no bar (or the line names none) while the program's folder has one, the program's
+  folder stays in use, nothing is made, and the start says so once, in a notice and in the log, with the way to move
+  the data (Settings ▸ General ▸ *Data location*). Whatever the folder, a copy with `portable.txt` is a portable copy: it asks before it
   adds a Run entry, does not add itself to *Send to* (also when its folder could not be used), keeps a Google
   sign-in per PC, and writes the paths on its own drive with `%APPDRIVE%`.
   - Settings ▸ General ▸ *Data location*: *This PC* (`%LocalAppData%\DesktopIconGrid`) or *Portable: folder* with
@@ -809,17 +812,20 @@ and each page scrolls on a screen too short for it.
     `.` or `data`, any other in full); *Now:* is the folder in use, with *Open folder*. A changed folder is checked
     at Save: a name that is no folder's holds Save back, with ⚠ on the tab; one that cannot be made or written is
     said under the choice and nothing is written. Then, when there is a bar to copy and the folder is another, one
-    question: *Copy* (the bar, its workspaces and its usage counts), *Don't copy* (the default: only the place
-    changes) or *Cancel* (the dialog stays open). Once the dialog closes, what waits is written, the copy is made,
+    question: *Copy* (the bar, its workspaces, its usage counts and the icons and recordings it uses), *Don't copy*
+    (the default: only the place changes, and a folder without a bar gets an empty one) or *Cancel* (the dialog stays
+    open). It also says what stays behind: sync is set up again there, and commands approved again. Once the dialog closes, what waits is written, the copy is made,
     `portable.txt` is written (or taken away for *This PC*), and *Restart now* or *Later* is offered; until a
     restart the bar keeps its old folder. When `portable.txt` cannot be changed (the program under Program Files)
     or the copy fails, that is said and the place is not changed.
   - Bringing this PC's bar into a portable copy copies `layout.json` (written by the layout's own save, with the
-    paths on the program's drive as `%APPDRIVE%`), `workspaces.json` and `usage.json`. Not copied: the command and
-    health check approvals (`command-trust.json`), the Google sign-in, `sync.json` (its link to an account or a
-    folder, and its device id: two copies must not be one device), `this-pc.json`, the logs, the layout's history,
-    the Drive cache, and icons downloaded from the web and recordings, which the bar names where they are. A file
-    already there is first renamed `<name>.before-import-<date>`; nothing is written over. It is asked once at the
+    paths on the program's drive as `%APPDRIVE%`: the shared locations, start folders and icons, and of the locations
+    kept per PC only this PC's), `workspaces.json`, `usage.json`, and the folders `icons\` (pictures from the web, the
+    bar's paths to them made the target's) and `sounds\` (recordings, named after their icons). Not copied: the
+    command and health check approvals (`command-trust.json`), the Google sign-in, `sync.json` (its link to an
+    account or a folder, and its device id: two copies must not be one device), `this-pc.json`, the logs, the
+    layout's history and the Drive cache. A file already there is first renamed `<name>.before-import-<date>`;
+    nothing is written over. It is asked once at the
     start of a portable copy that has no bar of its own while `%LocalAppData%` has one (*Import* or *Start empty*,
     the default, which saves the empty bar so the question does not come again), and from *Import this PC's data…*
     in Settings ▸ General, shown in a portable copy whose data is not `%LocalAppData%`'s when this PC has a bar
@@ -916,9 +922,11 @@ Order of attempts for that icon, with an in-memory cache keyed by path and size:
 2. `path,index` icon resources via `SHDefExtractIcon` (any size up to 256 px).
 3. `IShellItemImageFactory` for files, folders, `.lnk` and CLSID parsing names — gives
    the same high-resolution icon Explorer shows. Since 0.13.0, a file's picture that comes back as a small icon in
-   the middle of a larger bitmap (drawn on less than 70 % of its width and of its height, centred within a tenth of
-   the side; a frame of 1 px per 48 px at the edge is left out of the measure), as the shell gives for a file with no
-   image as large as asked, is replaced: by the file's own icon at the size asked (`SHDefExtractIcon`, which scales
+   the middle of a larger bitmap, as the shell gives for a file with no image as large as asked, is replaced. It is
+   known by the shell's frame around it: the outermost rings of the bitmap drawn on nearly all of each side, at
+   most 4 % of the side wide, with an empty ring inside; then any centred icon inside it counts (PCMan's 48 px icon
+   in 64, 96 and 128). Without a frame, an icon drawn on less than 70 % of the width and of the height, centred within
+   a tenth of the side, counts. It is replaced by the file's own icon at the size asked (`SHDefExtractIcon`, which scales
    the best image the file has; for a `.lnk`, the icon it names, else its target when that holds icons), else by the
    drawn part cut out as a square, which the cell scales up. Any other picture is the shell's, pixel for pixel;
    folders and shell names are as before.

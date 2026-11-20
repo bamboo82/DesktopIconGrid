@@ -9,6 +9,66 @@ The owner relays replies.
 
 ---
 
+## 2026-11-20 (117) — Review 33: R1–R6 of the release check of 0.13.0
+
+Run 218 (`ed42012`, entry 116) was green; your release check of it did not pass. All six are in this commit.
+
+- **R1, a note in `portable.txt`** (must fix):
+  - `DataLocation.Resolve` takes `hasBar`. When the folder the line names has no `layout.json` (or the line names no
+    folder at all: a note with a `:` or `?` in it) and the program's folder has one, it returns the program's folder
+    (`Portable`) with `KeptInProgramFolder` and `Named` = that folder (or the line). Nothing is made. If the program's
+    folder cannot be written, the data goes to `%LocalAppData%` as before.
+  - At start: a Warning in the log and one notice, `App_PortableKeptInProgram`, your text in the three languages.
+  - Settings shows the program's folder under *Now:* and the line as written in the box. Saving another folder moves
+    it with the copy question. Saving `.` takes the note away and the notice stops.
+  - **One more thing it needed:** *Don't copy* to a folder without a bar leaves an empty `layout.json` there.
+    Otherwise the next start would take the new folder for a note's and stay in the program's folder whenever that
+    one has a bar, undoing the move the user chose.
+  - Test: `DataLocationTests.A_note_in_portable_txt_leaves_the_bar_in_the_program_folder_while_only_that_folder_has_one`.
+    It covers your case (nothing made), a line that names no folder, the folder named with a bar (used), a new copy
+    with no bar anywhere (the folder named, made), `.`, and a program folder that cannot be written.
+- **R2, the frame** (must fix):
+  - `IconBox.FrameInset` finds the frame by what it is:
+    - the outermost rings, each drawn on at least 90 % of each of its four sides;
+    - at most 4 % of the side wide, rounded: 3 px at 64, 4 at 96, 5 at 128;
+    - then a ring with nothing drawn on it, with at most one partly drawn ring before it (a soft edge).
+  - The icon is measured inside that. In a frame any centred icon is padded; without one, the 70 % rule stays.
+  - `FrameWidth` is gone. Without a frame the whole bitmap is measured, so `Drawn` of a full 96 is 96 × 96.
+  - I kept "centred" inside a frame too (an icon in a corner of a frame is left alone); say if you want any position.
+  - Tests:
+    - your three boxes: 64 (frame 2, icon 8..55), 96 (2, 24..71), and 128 (3, 40..87, the top row 126 of 128);
+    - notepad's 93 × 85 without a frame (stays the shell's);
+    - a full 96, and a 6 px border by design (wider than a frame: not one);
+    - a soft inner edge, and a 5 px frame at 256;
+    - a framed icon in a corner. `ShellIconProviderTests`' framed picture still passes on this rule.
+- **R3, the names at 150 %:** with names shown, `CellWidth` is the 100 % width × the factor, never below 1, rounded
+  up. At 90 % it is 100 %'s width, and without names the icon's width as before. The icon keeps its size, centred.
+  Test: the bar case in `TextSizeTests` at 150 %, 90 % and without names.
+- **R4, icons and recordings:**
+  - `DataImport.Folders` = `icons`, `sounds`, copied whole before the bar, files in the way kept aside like the
+    others (`icons\x.png.before-import-<date>`).
+  - An icon path under the source's `icons\` (variables and `%APPDRIVE%` expanded, either separator) becomes the
+    same file under the target's, then `%APPDRIVE%` by the usual rule for a portable target.
+  - Recordings need no path: their files are named after their icons (`<id>.wav`).
+  - A layout with nothing to change is still copied byte for byte.
+  - The three questions now name icons and recordings.
+  - Tests: what is copied (icons and sounds now in); an icon from the web pointed to its copy, one in the way kept
+    aside, one elsewhere left alone.
+- **R5, the copy question:** it ends with your sentence: "Sync across PCs must be set up again there, and commands
+  approved again." In zh-Hant I wrote 「跨電腦同步」需在該處重新設定，**命令**也需重新核准。: the app says 命令
+  for commands everywhere else (the command tile's texts), not 指令. Say if you want 指令. zh-Hans: "跨电脑同步"需在该处
+  重新设置，命令也需重新批准。
+- **R6, other PCs' locations:**
+  - `WithAppDrive(layout, drive, deviceId)` rewrites the shared location and only `Locations[deviceId]`.
+  - `Run` takes this PC's id (`ThisDevice.Id`) from both callers. For the start's import, `BringThisPcBar` now runs
+    after `CreateSyncService`, which sets the id (it touches no `sync.json` the import reads).
+  - Test: another PC's own `E:\Other` stays.
+- **Not tested:** R1's notice and R2's replacement on a screen (your re-check at 32/48/64); R3 on a screen.
+
+Core 1170 tests here (Linux); the App tests run in CI.
+
+This entry claims no run for its own commit.
+
 ## 2026-11-20 (116) — 0.13.0 ready for the release check
 
 Run 217 (`652ef7d`, entry 115) is green: Core 1164 and App 436 tests. It carries entries 113–115 (runs 215 and 216
