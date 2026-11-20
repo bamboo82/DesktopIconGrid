@@ -70,6 +70,11 @@ public sealed class ChineseFontTests : IDisposable
         var carried = Path.Combine(Folder("program"), "Fonts", name);
         files.Add(carried);
         Assert.Equal(carried, locator.Find(name));
+
+        // Every place that has it, in that order, each once (0.12.2, review 29 N1: the caller passes over one that is
+        // no font).
+        registry.User["Taipei Sans TC Beta Light copy (TrueType)"] = mine;
+        Assert.Equal([carried, mine, Path.Combine(Folder("windows-fonts"), name)], locator.Candidates(name));
     }
 
     [Fact]

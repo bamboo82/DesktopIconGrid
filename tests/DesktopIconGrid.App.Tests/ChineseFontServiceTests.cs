@@ -2,6 +2,7 @@ using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Security.Cryptography;
+using DesktopIconGrid.Core.Diagnostics;
 using DesktopIconGrid.Core.Fonts;
 using DesktopIconGrid.Resources;
 using DesktopIconGrid.Services;
@@ -86,6 +87,26 @@ public sealed class ChineseFontServiceTests : IDisposable
 
         File.Copy(TestFont, carried, overwrite: true);
         Assert.Equal(carried, service.Find());
+    }
+
+    [Fact]
+    public void A_damaged_copy_beside_the_program_does_not_hide_the_font_installed_and_is_said_once()
+    {
+        // 0.12.2, review 29 N1: Find stopped at the first file of that name, and said so at every look.
+        var carried = Path.Combine(Folder(Path.Combine("program", "Fonts")), TaipeiSans.FileName);
+        File.WriteAllBytes(carried, File.ReadAllBytes(TestFont)[..40]);
+        var installed = Path.Combine(Folder("user-fonts"), TaipeiSans.FileName);
+        File.Copy(TestFont, installed);
+        var registry = new FakeRegistry();
+        registry.User["Taipei Sans TC Beta Light (TrueType)"] = installed;
+        var service = Service(new Server([]), registry: registry);
+
+        Assert.Equal(installed, service.Find());
+        Assert.Equal(installed, service.Find()); // each start, each opening of Settings
+        Assert.Single(AppLog.Default.Snapshot(), entry => entry.Message.Contains(carried, StringComparison.OrdinalIgnoreCase));
+
+        File.Delete(installed);
+        Assert.Null(service.Find()); // the damaged one is never taken
     }
 
     [Fact]

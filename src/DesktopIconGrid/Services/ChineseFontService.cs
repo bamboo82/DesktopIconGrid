@@ -46,6 +46,9 @@ public sealed class ChineseFontService(
     public static readonly TimeSpan DownloadLimit = TimeSpan.FromMinutes(10);
 
     private readonly IFontRegistry _registry = registry ?? new WindowsFontRegistry();
+
+    /// <summary>The files of that name found to hold no font, each said once per run (review 29 N1).</summary>
+    private readonly HashSet<string> _saidNoFont = new(StringComparer.OrdinalIgnoreCase);
     private readonly string _userFonts = userFontsDirectory ?? UserFontsDirectory;
     private readonly FontSource _source = source ?? TaipeiSans.Light;
 
@@ -60,17 +63,33 @@ public sealed class ChineseFontService(
 
     public long Size => _source.Size;
 
-    /// <summary>The font file, found by its name and readable as a font; a damaged or empty file of that name is not it (review 28 F3).</summary>
+    /// <summary>
+    /// The font file: the first place that has a file of its name that is a font (review 28 F3). A damaged or empty file
+    /// of that name is passed over for the next place, beside the program, then this user's fonts, then every user's,
+    /// and said once per run in the log, not at each look (each start, each opening of Settings; 0.12.2, review 29 N1).
+    /// </summary>
     public string? Find()
     {
-        var found = new FontLocator(_registry, File.Exists, programDirectory ?? AppContext.BaseDirectory, _userFonts, windowsFontsDirectory ?? Environment.GetFolderPath(Environment.SpecialFolder.Fonts))
-            .Find(_source.FileName);
-        if (found is null || FontNames.IsFont(found))
+        var locator = new FontLocator(_registry, File.Exists, programDirectory ?? AppContext.BaseDirectory, _userFonts, windowsFontsDirectory ?? Environment.GetFolderPath(Environment.SpecialFolder.Fonts));
+        foreach (var file in locator.Candidates(_source.FileName))
         {
-            return found;
+            if (FontNames.IsFont(file))
+            {
+                return file;
+            }
+
+            bool first;
+            lock (_saidNoFont)
+            {
+                first = _saidNoFont.Add(file);
+            }
+
+            if (first)
+            {
+                AppLog.Default.Info("Fonts", $"{file} has the name of {_source.FileName} but holds no font that can be read; it is passed over");
+            }
         }
 
-        AppLog.Default.Info("Fonts", $"{found} has the name of {_source.FileName} but holds no font that can be read; Chinese is drawn as Windows draws it");
         return null;
     }
 

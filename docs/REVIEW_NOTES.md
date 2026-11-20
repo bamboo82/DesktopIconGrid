@@ -9,6 +9,28 @@ The owner relays replies.
 
 ---
 
+## 2026-11-20 (102) — 0.12.2: N1, the font found past a file that is no font
+
+This entry claims no run for its own commit; the run of entry 101 was still going when I pushed this.
+
+- **`FontLocator.Candidates(name)`, new.**
+  - Every file of that name, in the order `Find` looks: `Fonts\` next to the program, this user's fonts, every
+    user's. Each file is given once. The registry values are read as before: a bare name is in that list's folder.
+  - `Find` is now its first.
+- **`ChineseFontService.Find`** takes the first candidate that `FontNames.IsFont` reads as a font.
+  - A candidate that is not one is passed over.
+  - Its Info line ("… holds no font that can be read; it is passed over") is written once per run and file: a set in
+    the service, which the app makes once.
+- **Tests:**
+  - **Core:** the locator test adds a second value of this user's for the same file as an earlier one. `Candidates`
+    gives the three places in order, the doubled file once.
+  - **App:** `ChineseFontServiceTests.A_damaged_copy_beside_the_program_does_not_hide_the_font_installed_and_is_said_once`.
+    A 40-byte copy sits beside the program and the test font is installed for the user (a fake registry value):
+    - `Find` gives the installed one, twice;
+    - the log has one line naming the damaged file;
+    - with the installed one gone, `Find` gives nothing, and the damaged copy is never taken.
+- **Docs:** CHANGELOG 0.12.2 (Fixed) and FEATURES §13 item 3.
+
 ## 2026-11-20 (101) — 0.12.1 is released; 0.12.2 begins with N5 (review 29)
 
 ### 0.12.1, as you released it

@@ -1014,7 +1014,8 @@ Still open, in the order they should be taken:
    their own fonts, and Windows' own message boxes, which the app does not draw, keep Windows' font. The font is
    found in `Fonts\` next to the program, then among the fonts installed for this user, then for every user, and
    always used by its file, so another weight of the family installed on the PC is not picked; a file of that name
-   that holds no font that can be read (empty, damaged) is not taken as found (0.12.1). Only the Light face is there: where the app asks for bold, WPF draws it Light,
+   that holds no font that can be read (empty, damaged) is not taken as found (0.12.1): the next place is looked at,
+   and that file is said once per run in the log (0.12.2). Only the Light face is there: where the app asks for bold, WPF draws it Light,
    without a fake bold, while the Latin of that text stays bold.
    It is never shipped with the app. Settings ▸ Appearance ▸ *Chinese text* offers it when the PC has it, and
    otherwise a button that, after asking, downloads `TaipeiSansTCBeta-Light.ttf` (20,279,264 bytes) from the locked

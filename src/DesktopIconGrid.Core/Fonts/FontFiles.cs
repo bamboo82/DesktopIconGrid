@@ -61,18 +61,24 @@ public interface IFontRegistry
 public sealed class FontLocator(IFontRegistry registry, Func<string, bool> fileExists, string programDirectory, string userFontsDirectory, string windowsFontsDirectory)
 {
     /// <summary>The full path of <paramref name="fileName"/> as the first place that has it, or <see langword="null"/>.</summary>
-    public string? Find(string fileName)
+    public string? Find(string fileName) => Candidates(fileName).FirstOrDefault();
+
+    /// <summary>
+    /// Every file of that name, in the order <see cref="Find"/> looks: next to the program, this user's fonts, every
+    /// user's. The caller takes the first that is a font, so a damaged copy beside the program does not hide a good
+    /// one installed (0.12.2, review 29 N1).
+    /// </summary>
+    public IEnumerable<string> Candidates(string fileName)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(fileName);
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var carried = Path.Combine(programDirectory, "Fonts", fileName);
-        if (fileExists(carried))
+        if (fileExists(carried) && seen.Add(carried))
         {
-            return carried;
+            yield return carried;
         }
 
-        return InRegistry(registry.UserFonts(), userFontsDirectory) ?? InRegistry(registry.MachineFonts(), windowsFontsDirectory);
-
-        string? InRegistry(IEnumerable<KeyValuePair<string, string>> values, string folder)
+        foreach (var (values, folder) in new[] { (registry.UserFonts(), userFontsDirectory), (registry.MachineFonts(), windowsFontsDirectory) })
         {
             foreach (var (_, data) in values)
             {
@@ -83,13 +89,11 @@ public sealed class FontLocator(IFontRegistry registry, Func<string, bool> fileE
                 }
 
                 var full = Path.IsPathRooted(path) ? path : Path.Combine(folder, path);
-                if (fileExists(full))
+                if (fileExists(full) && seen.Add(full))
                 {
-                    return full;
+                    yield return full;
                 }
             }
-
-            return null;
         }
     }
 

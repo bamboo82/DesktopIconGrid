@@ -11,6 +11,9 @@ What the release check of 0.12.1 found (review 29).
 
 - Usage counts: a save that failed in a way other than a file held for a moment left the counts unwritten until the
   next use; they are written at the next save, and the failure is a warning in the log.
+- The Chinese font: a damaged copy beside the program hid a good one installed for your account, so Settings said the
+  PC had no font; the next place is looked at. A file of that name that holds no font is said once in the log, not at
+  each start and each opening of Settings.
 
 ## [0.12.1] – 2026-11-19
 
