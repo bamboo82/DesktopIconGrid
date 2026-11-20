@@ -110,28 +110,13 @@ public static class ImportDiscovery
         {
             ((IPersistFile)link).Load(path, 0);
             return (
-                ReadText((buffer, size) => link.GetPath(buffer, size, IntPtr.Zero, NativeMethods.SLGP_RAWPATH)),
-                ReadText(link.GetArguments),
-                ReadText(link.GetWorkingDirectory));
+                NativeMethods.ReadLinkText((buffer, size) => link.GetPath(buffer, size, IntPtr.Zero, NativeMethods.SLGP_RAWPATH)),
+                NativeMethods.ReadLinkText(link.GetArguments),
+                NativeMethods.ReadLinkText(link.GetWorkingDirectory));
         }
         finally
         {
             Marshal.ReleaseComObject(link);
-        }
-    }
-
-    private static string? ReadText(Func<IntPtr, int, int> read)
-    {
-        const int Characters = 2048;
-        var buffer = Marshal.AllocCoTaskMem(Characters * sizeof(char));
-        try
-        {
-            Marshal.WriteInt16(buffer, 0);
-            return read(buffer, Characters) == 0 ? Marshal.PtrToStringUni(buffer)?.Trim() : null;
-        }
-        finally
-        {
-            Marshal.FreeCoTaskMem(buffer);
         }
     }
 

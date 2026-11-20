@@ -877,7 +877,13 @@ Order of attempts for that icon, with an in-memory cache keyed by path and size:
 1. Explicit image file (`.png`, `.jpg`, `.bmp`, `.gif`, `.ico` — largest matching frame).
 2. `path,index` icon resources via `SHDefExtractIcon` (any size up to 256 px).
 3. `IShellItemImageFactory` for files, folders, `.lnk` and CLSID parsing names — gives
-   the same high-resolution icon Explorer shows.
+   the same high-resolution icon Explorer shows. Since 0.13.0, a file's picture that comes back as a small icon in
+   the middle of a larger bitmap (drawn on less than 70 % of its width and of its height, centred within a tenth of
+   the side; a frame of 1 px per 48 px at the edge is left out of the measure), as the shell gives for a file with no
+   image as large as asked, is replaced: by the file's own icon at the size asked (`SHDefExtractIcon`, which scales
+   the best image the file has; for a `.lnk`, the icon it names, else its target when that holds icons), else by the
+   drawn part cut out as a square, which the cell scales up. Any other picture is the shell's, pixel for pixel;
+   folders and shell names are as before.
 4. System image list (`SHGetFileInfo` + `SHGetImageList`) by extension for paths that
    do not exist yet, and a browser icon for `http(s):` links.
 5. A built-in placeholder glyph.
@@ -968,7 +974,10 @@ the notes of 0.12.0.
 minimise that counted as a use, the Sync window's Google heading and its problem said twice, and a usage save that
 could fail without trying again.
 
-**Next** — nothing planned yet.
+**0.13.0 "Where it lives, how it reads"** *(in progress)* — the owner's requests after 0.12.2: `portable.txt`
+holds the data folder, with a *Data location* block in Settings and this PC's bar brought into a portable copy;
+icons that came out smaller than the others; hint text in the dialogs' text colour; *Send to PC* added before sync
+is set up; a font and a text size for the interface.
 
 **1.0.0 "Ship it"** — the existing backlog: installer (MSIX/winget), code signing, and the Windows toast with
 actions.

@@ -7,6 +7,8 @@ using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using DesktopIconGrid.Core;
+using DesktopIconGrid.Core.Diagnostics;
+using DesktopIconGrid.Core.Icons;
 using DesktopIconGrid.Core.Launching;
 using DesktopIconGrid.Core.Models;
 
@@ -187,7 +189,13 @@ public sealed class ShellIconProvider : IIconProvider
             return TryShellItemImage(expanded, pixelSize);
         }
 
-        if (File.Exists(expanded) || Directory.Exists(expanded))
+        if (File.Exists(expanded))
+        {
+            return TryFileImage(expanded, pixelSize)
+                ?? TrySystemImageListIcon(expanded, pixelSize, attributes: null);
+        }
+
+        if (Directory.Exists(expanded))
         {
             return TryShellItemImage(expanded, pixelSize)
                 ?? TrySystemImageListIcon(expanded, pixelSize, attributes: null);
@@ -203,7 +211,7 @@ public sealed class ShellIconProvider : IIconProvider
         var resolved = ExecutableLocator.Find(expanded);
         if (resolved is not null)
         {
-            return TryShellItemImage(resolved, pixelSize)
+            return TryFileImage(resolved, pixelSize)
                 ?? TrySystemImageListIcon(resolved, pixelSize, attributes: null);
         }
 
@@ -297,7 +305,7 @@ public sealed class ShellIconProvider : IIconProvider
         }
     }
 
-    private static ImageSource? TryExtractResourceIcon(string path, int index, int pixelSize)
+    private static BitmapSource? TryExtractResourceIcon(string path, int index, int pixelSize)
     {
         var large = IntPtr.Zero;
         var small = IntPtr.Zero;
@@ -330,7 +338,100 @@ public sealed class ShellIconProvider : IIconProvider
         }
     }
 
-    private static ImageSource? TryShellItemImage(string parsingName, int pixelSize)
+    /// <summary>
+    /// The shell's image of a file, unless the shell answered with the file's small icon centred in a larger bitmap, as it
+    /// does for a file with no image as large as asked (PCMan on a 48 px bar was drawn about 32 px, 0.13.0 WP2). Then the
+    /// file's own icon at the asked size, which SHDefExtractIcon scales from the best image the file has (for a .lnk, the
+    /// icon it names, else its target); else the drawn part cut out as a square, which the cell scales up
+    /// (BitmapScalingMode.HighQuality). Any other image is the shell's, untouched: the same object, the same pixels.
+    /// </summary>
+    private static BitmapSource? TryFileImage(string path, int pixelSize)
+    {
+        var image = TryShellItemImage(path, pixelSize);
+        return image is null ? null : Unpadded(image, path, pixelSize);
+    }
+
+    /// <summary><paramref name="image"/>, or what stands in for it when the shell padded it (<see cref="TryFileImage"/>).</summary>
+    internal static BitmapSource Unpadded(BitmapSource image, string path, int pixelSize)
+    {
+        if (PaddedBox(image) is not { } box)
+        {
+            return image;
+        }
+
+        var drawn = $"{Path.GetFileName(path)}: the shell drew its icon {box.Width}×{box.Height} in {image.PixelWidth}×{image.PixelHeight}";
+        if (IconLocationOf(path) is { } location
+            && TryExtractResourceIcon(location.Path, location.Index, pixelSize) is { } own
+            && PaddedBox(own) is null)
+        {
+            AppLog.Default.Debug("Icons", $"{drawn}; showing the file's own icon at {own.PixelWidth} px");
+            return own;
+        }
+
+        var square = IconBox.Square(box, image.PixelWidth, image.PixelHeight);
+        AppLog.Default.Debug("Icons", $"{drawn}; showing that part, {square.Width} px, scaled");
+        return new CroppedBitmap(image, new Int32Rect(square.X, square.Y, square.Width, square.Height));
+    }
+
+    /// <summary>The box of a padded icon's drawn pixels, read from the bitmap's alpha; <see langword="null"/> for any other.</summary>
+    internal static PixelBox? PaddedBox(BitmapSource bitmap)
+    {
+        var pixels32 = bitmap.Format == PixelFormats.Bgra32 || bitmap.Format == PixelFormats.Pbgra32
+            ? bitmap
+            : new FormatConvertedBitmap(bitmap, PixelFormats.Bgra32, null, 0);
+        var stride = pixels32.PixelWidth * 4;
+        var pixels = new byte[stride * pixels32.PixelHeight];
+        pixels32.CopyPixels(pixels, stride, 0);
+        return IconBox.SmallAndCentred(pixels, pixels32.PixelWidth, pixels32.PixelHeight, stride);
+    }
+
+    /// <summary>
+    /// Where SHDefExtractIcon finds a file's icon: a program or icon file holds its own (the first, which Explorer shows);
+    /// a .lnk names one, or else its target may be such a file. <see langword="null"/> for a document, whose icon is its
+    /// type's, and for a link that cannot be read.
+    /// </summary>
+    internal static (string Path, int Index)? IconLocationOf(string path)
+    {
+        var extension = Path.GetExtension(path);
+        if (!string.Equals(extension, ".lnk", StringComparison.OrdinalIgnoreCase))
+        {
+            return ResourceExtensions.Contains(extension) ? (path, 0) : null;
+        }
+
+        NativeMethods.IShellLinkW? link = null;
+        try
+        {
+            link = (NativeMethods.IShellLinkW)new NativeMethods.CShellLink();
+            ((System.Runtime.InteropServices.ComTypes.IPersistFile)link).Load(path, 0);
+            var index = 0;
+            if (NativeMethods.ReadLinkText((buffer, size) => link.GetIconLocation(buffer, size, out index)) is { Length: > 0 } named
+                && Environment.ExpandEnvironmentVariables(named) is var icon
+                && File.Exists(icon))
+            {
+                return (icon, index);
+            }
+
+            return NativeMethods.ReadLinkText((buffer, size) => link.GetPath(buffer, size, IntPtr.Zero, 0)) is { Length: > 0 } stored
+                   && Environment.ExpandEnvironmentVariables(stored) is var target
+                   && ResourceExtensions.Contains(Path.GetExtension(target))
+                   && File.Exists(target)
+                ? (target, 0)
+                : null;
+        }
+        catch (Exception ex) when (ex is COMException or ExternalException or InvalidCastException or IOException or UnauthorizedAccessException or ArgumentException)
+        {
+            return null;
+        }
+        finally
+        {
+            if (link is not null)
+            {
+                Marshal.ReleaseComObject(link);
+            }
+        }
+    }
+
+    internal static BitmapSource? TryShellItemImage(string parsingName, int pixelSize)
     {
         var hBitmap = IntPtr.Zero;
         try

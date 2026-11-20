@@ -3,6 +3,19 @@
 All notable changes to Desktop Icon Grid. The format follows [Keep a Changelog](https://keepachangelog.com/);
 version numbers follow [Semantic Versioning](https://semver.org/).
 
+## [0.13.0] – Unreleased
+
+"Where it lives, how it reads": the owner's requests after 0.12.2.
+
+### Fixed
+
+- An icon that came out smaller than the others now fills its place. Windows answers for a program with no image as
+  large as the bar asks for (PCMan on a 48 px bar) with its small icon in the middle of a larger picture, sometimes
+  with a thin frame; the bar takes the program's own icon at the bar's size instead (for a shortcut, the icon it names
+  or its target's), or, for a file without icons of its own, cuts the drawn part out and scales it. An icon that fills
+  its picture, or is small by design in a corner or with margins of less than 30 %, is drawn as before, pixel for
+  pixel. The names table, Properties' preview and folder stacks show the same.
+
 ## [0.12.2] – 2026-11-20
 
 What the release check of 0.12.1 found (review 29).

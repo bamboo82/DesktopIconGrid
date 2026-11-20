@@ -9,6 +9,63 @@ The owner relays replies.
 
 ---
 
+## 2026-11-20 (108) — 0.13.0 begins: WP2, icons that came out smaller than the others
+
+Your plan 31, first package (order WP2, WP3, WP5, WP1, WP4). The version is 0.13.0 from this commit on.
+
+- **What changed:**
+  - The version: `Directory.Build.props` 0.13.0; `CHANGELOG.md` "[0.13.0] – Unreleased"; FEATURES §12 and the
+    roadmap name 0.13.0 *in progress* with its five packages.
+  - New `Core/Icons/IconBox.cs`, pure (pixels in, box out):
+    - `Drawn`: the box of the pixels with alpha over 8, leaving out a frame at the edge;
+    - `SmallAndCentred`: that box when it is under 70 % of the width and of the height and centred (the two margins
+      differ by at most a tenth of the side, at least 2 px), else none;
+    - `Square`: the square that is cut out.
+  - `ShellIconProvider`: a file, and a program found on the PATH, go through `TryFileImage`:
+    - the shell's image, as before;
+    - when `PaddedBox` finds it padded: `SHDefExtractIcon` of the file's icon at the asked size, used when it is not
+      padded itself;
+    - else a `CroppedBitmap` of the square, which the cell scales up (it already had `BitmapScalingMode.HighQuality`).
+    - Folders, shell names and CLSIDs, image files, `path,index` resources and symbol or text icons do not go through it.
+  - `IconLocationOf` says where `SHDefExtractIcon` looks:
+    - a program or icon file (`ResourceExtensions`) → its first icon, the one Explorer shows;
+    - a `.lnk` → the icon it names (variables expanded; the file must exist), else its target when the target has one
+      of those extensions;
+    - a document, or a link that cannot be read → none, so it is cut out.
+  - `NativeMethods.ReadLinkText` is `ImportDiscovery.ReadText` moved, so both readers of `.lnk` files use it.
+  - One Debug line per icon replaced, e.g. "Icons: PCMan.exe: the shell drew its icon 64×64 in 96×96; showing the
+    file's own icon at 96 px".
+- **Choices I made where the plan left room:**
+  - The frame left out is one pixel per 48 px of the side (at least one), not exactly one: a 1 px frame drawn on a
+    48 px image that the shell stretched to 96 is 2 px wide. An icon drawn only inside that band counts as empty and is
+    left as it is.
+  - The cut-out is a square (the longer side of the box, centred on it), so a narrow icon keeps its proportions.
+  - Folders are not measured: their icons are Windows' own, with every size, and there is no file to take one from.
+  - When the file's own icon is padded too (its best image has the same margins), the shell's picture is cut out: the
+    plan's "else".
+- **Pixel-identical, how checked:** by construction, `Unpadded` returns the very object `TryShellItemImage` gave unless
+  `SmallAndCentred` finds a box. Two tests hold it:
+  - `An_image_that_is_not_padded_is_the_shells_own_object`: full, 76 of 96, small in a corner, empty
+    (`Assert.Same`);
+  - `Windows_own_programs_come_out_as_the_shell_draws_them_unless_the_shell_padded_them`: `cmd.exe`,
+    `explorer.exe`, `regedit.exe` and `notepad.exe` at 32, 64, 96 and 128 px; the provider's pixels equal the
+    shell's, or, where the shell padded, the result is not padded.
+- **Tests:** Core `IconBoxTests` (7: centred 32 in 96, full 96, framed 32 in 96, a frame stretched to 2 and 5 px,
+  empty, margins under the limit and a corner, the square). App `ShellIconProviderTests` (6, Windows): a padded
+  picture of `cmd.exe` gives way to its own icon at 96 px; one of a document is cut out to 32 × 32 without the frame;
+  the not-padded and pixel tests above; a link's icon location; a `.lnk` whose icon has only a 32 px image is not
+  padded at 64, 96 and 128.
+- **What to look at in the app:** PCMan at 32, 48 and 64 (your check). If it stays small, the log at Debug has no
+  "Icons:" line for it; the box the shell gave is then over the limit, and its numbers are what I need. A known limit:
+  a padding of one size step (48 in 64, 96 in 128: 75 %) is over 70 % and stays as it is. I kept 70 % so icons drawn
+  with margins (Windows 11's own have about a tenth a side) are not touched.
+- **Not tested:** what the real shell gives for PCMan (there is no PCMan here, and how CI's Windows draws the 32 px
+  test icon is not asserted, only that what the bar gets is not padded). The result on a screen is not seen.
+- **0.12.1's date:** CHANGELOG and CLAUDE.md say 2026-11-19, the release commit's day (UTC), while the tag and the
+  GitHub release were made on 2026-11-20. I changed nothing; say if the CHANGELOG should follow the tag.
+
+This entry claims no run for its own commit.
+
 ## 2026-11-20 (107) — Release commit for v0.12.2
 
 Run 207 (`0c11619`, entry 106) is green, and your release check of it (review 30) passed with no finding. This is

@@ -8,6 +8,25 @@ internal static partial class NativeMethods
     /// <summary>GetPath: the target as stored, with environment variables left in.</summary>
     public const uint SLGP_RAWPATH = 0x4;
 
+    /// <summary>
+    /// The text one of <see cref="IShellLinkW"/>'s getters writes into a buffer (a path, the arguments, the icon's file),
+    /// trimmed; <see langword="null"/> when the getter fails.
+    /// </summary>
+    public static string? ReadLinkText(Func<IntPtr, int, int> read)
+    {
+        const int Characters = 2048;
+        var buffer = Marshal.AllocCoTaskMem(Characters * sizeof(char));
+        try
+        {
+            Marshal.WriteInt16(buffer, 0);
+            return read(buffer, Characters) == 0 ? Marshal.PtrToStringUni(buffer)?.Trim() : null;
+        }
+        finally
+        {
+            Marshal.FreeCoTaskMem(buffer);
+        }
+    }
+
     [ComImport]
     [Guid("00021401-0000-0000-C000-000000000046")]
     public class CShellLink
