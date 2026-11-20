@@ -963,6 +963,10 @@ click (§13 item 3).
 font install, usage counts at sign-out and after a damaged file, sync problems that lead to the Sync window, and
 the notes of 0.12.0.
 
+**0.12.2** *(in progress)* — what the release check of 0.12.1 found: the Chinese font found past a damaged copy, a
+minimise that counted as a use, the Sync window's Google heading and its problem said twice, and a usage save that
+could fail without trying again.
+
 **Next** — nothing planned yet.
 
 **1.0.0 "Ship it"** — the existing backlog: installer (MSIX/winget), code signing, and the Windows toast with

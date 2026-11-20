@@ -174,6 +174,25 @@ public sealed class UsageLogTests : IDisposable
     }
 
     [Fact]
+    public void A_save_that_throws_something_unexpected_keeps_the_counts_for_the_next_save()
+    {
+        // 0.12.2, review 29 N5: only IOException and UnauthorizedAccessException kept the counts to be written.
+        var item = Guid.NewGuid();
+        var log = Log();
+        log.Count(item);
+        log.BeforeReplace = () => throw new InvalidOperationException("something this code did not expect");
+
+        Assert.False(log.Save(Everything));
+        Assert.False(log.IsMemoryOnly);
+        Assert.False(File.Exists(FilePath));
+        Assert.False(File.Exists(log.TemporaryPath));
+
+        log.BeforeReplace = null;
+        Assert.True(log.Save(Everything)); // no use since: still to be written
+        Assert.Equal(new ItemUse(1, Start), Log().Of(item));
+    }
+
+    [Fact]
     public void A_replace_that_fails_keeps_the_counts_and_leaves_no_temporary_file()
     {
         // Review 28: only the temporary file's write was failed, never the move.

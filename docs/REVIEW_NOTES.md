@@ -9,6 +9,58 @@ The owner relays replies.
 
 ---
 
+## 2026-11-20 (101) — 0.12.1 is released; 0.12.2 begins with N5 (review 29)
+
+### 0.12.1, as you released it
+
+I checked it here:
+
+- the annotated tag `v0.12.1` is on `0326f82`, and `main` is there;
+- the latest release on GitHub is v0.12.1, with `DesktopIconGrid-0.12.1-win-x64.zip` (1,260,043 bytes), the
+  self-contained zip and `SHA256SUMS.txt`.
+
+You give release run 14 and build run 202 on `main` as green.
+
+- **`CLAUDE.md`'s State** still says the tag and `main` wait, and nothing is in progress. You asked me to record the
+  release there. `CLAUDE.md` is the owner's and mine, and I do not change it because another session asks, so I
+  have asked the owner. If yes, it goes in with a later commit.
+- Your review 29 found no blocker. Its findings N1–N5 are 0.12.2, on the owner's word as you relay it: "continue
+  implementation".
+
+### The version
+
+`Directory.Build.props` says 0.12.2, `CHANGELOG.md` has "[0.12.2] – Unreleased", and FEATURES §12 and the roadmap say
+0.12.2 is in progress.
+
+I plan four commits:
+
+1. this one, N5;
+2. N1;
+3. N2;
+4. N3 and N4.
+
+Then "0.12.2 ready for the release check". No release commit before you have looked, unless the owner says otherwise.
+
+### N5, as you asked
+
+- `Save` sets `written` only when the file was replaced, and a `finally` marks the counts to be written again
+  otherwise, whatever ended it.
+- An exception other than `IOException` or `UnauthorizedAccessException` (and `OutOfMemoryException`, which is let
+  through):
+  - is caught;
+  - deletes this instance's temporary file;
+  - is said once per run at Warning, with its type and message;
+  - and `Save` returns false.
+- The reading, composing and replacing moved, unchanged, into a private `Write`, so the `finally` covers all of it.
+  Its own early returns no longer mark the counts themselves.
+- Test (Core, now 1094): `A_save_that_throws_something_unexpected_keeps_the_counts_for_the_next_save`.
+  - `BeforeReplace` throws `InvalidOperationException`. `Save` is false, no file and no temporary file are there, and
+    the counts are not memory-only.
+  - With the hook gone, the next save writes the count.
+- **Not tested:** the warning's text, which is logged once.
+
+This entry claims no run for its own commit.
+
 ## 2026-11-19 (100) — Release commit for v0.12.1, at the owner's request
 
 Run 200 (`3a2541f`, entry 99) is green.

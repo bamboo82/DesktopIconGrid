@@ -73,6 +73,7 @@ public sealed class UsageLog
     private bool _readAgain;
 
     private bool _tooLargeSaid;
+    private bool _unexpectedSaid;
 
     /// <param name="filePath">The file; <see langword="null"/> counts in memory only (tests, and a bar without a data folder).</param>
     /// <param name="clock">The time; UTC now by default.</param>
@@ -275,67 +276,97 @@ public sealed class UsageLog
                 _dirty = false;
             }
 
-            var keptAside = false;
-            for (var attempt = 0; ; attempt++)
+            // Whatever ends this save, the counts stay to be written unless the file was replaced (0.12.2, review 29 N5:
+            // only IOException and UnauthorizedAccessException set them back, so anything else lost them until the next use).
+            var written = false;
+            try
             {
-                var read = Read(logProblems: false);
-                if (read.State is FileState.Unreadable or FileState.TooLarge)
+                written = Write(pc, isOnBar);
+                return written;
+            }
+            catch (Exception ex) when (ex is not OutOfMemoryException)
+            {
+                Delete(TemporaryPath);
+                if (!_unexpectedSaid)
                 {
-                    MarkDirty(); // locked just now, or not this app's: never written over, tried again at the next save
-                    return false;
+                    _unexpectedSaid = true;
+                    AppLog.Default.Warning("Usage", $"The uses could not be written ({ex.GetType().Name}): {ex.Message}; they are tried again at the next save");
                 }
 
-                if (read.State == FileState.Corrupt && !keptAside)
+                return false;
+            }
+            finally
+            {
+                if (!written)
                 {
-                    if (!KeepAside(move: false))
-                    {
-                        MarkDirty(); // not written over before a copy of it is kept
-                        return false;
-                    }
-
-                    keptAside = true;
-                }
-
-                byte[] bytes;
-                lock (_gate)
-                {
-                    bytes = Compose(read.State == FileState.Read ? read.Root! : new JsonObject(), pc, isOnBar);
-                }
-
-                if (bytes.Length > MaxBytes)
-                {
-                    TooLarge(bytes.Length);
                     MarkDirty();
-                    return false;
                 }
+            }
+        }
+    }
 
-                var temporary = TemporaryPath;
-                try
+    /// <summary>
+    /// Reads the file, joins this PC's block to it and replaces it through this instance's temporary file. False when
+    /// it could not be read or written just now; the caller keeps the counts to be written then.
+    /// </summary>
+    private bool Write(string pc, Func<Guid, bool> isOnBar)
+    {
+        var keptAside = false;
+        for (var attempt = 0; ; attempt++)
+        {
+            var read = Read(logProblems: false);
+            if (read.State is FileState.Unreadable or FileState.TooLarge)
+            {
+                return false; // locked just now, or not this app's: never written over, tried again at the next save
+            }
+
+            if (read.State == FileState.Corrupt && !keptAside)
+            {
+                if (!KeepAside(move: false))
                 {
-                    using (var stream = new FileStream(temporary, FileMode.Create, FileAccess.Write, FileShare.None))
-                    {
-                        stream.Write(bytes);
-                        stream.Flush(flushToDisk: true); // on the disk before it replaces the file (U2: NUL bytes after a power cut)
-                    }
-
-                    BeforeReplace?.Invoke();
-                    if (attempt == 0 && Stamp() != read.Stamp)
-                    {
-                        Delete(temporary); // another copy wrote meanwhile: its block is read again, once
-                        continue;
-                    }
-
-                    File.Move(temporary, FilePath!, overwrite: true);
-                    return true;
+                    return false; // not written over before a copy of it is kept
                 }
-                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+
+                keptAside = true;
+            }
+
+            byte[] bytes;
+            lock (_gate)
+            {
+                bytes = Compose(read.State == FileState.Read ? read.Root! : new JsonObject(), pc, isOnBar);
+            }
+
+            if (bytes.Length > MaxBytes)
+            {
+                TooLarge(bytes.Length);
+                return false;
+            }
+
+            var temporary = TemporaryPath;
+            try
+            {
+                using (var stream = new FileStream(temporary, FileMode.Create, FileAccess.Write, FileShare.None))
                 {
-                    // Locked by a scanner or a sync client for a moment: written at the next save, or at exit.
-                    Delete(temporary);
-                    AppLog.Default.Debug("Usage", $"The uses could not be written yet: {ex.Message}");
-                    MarkDirty();
-                    return false;
+                    stream.Write(bytes);
+                    stream.Flush(flushToDisk: true); // on the disk before it replaces the file (U2: NUL bytes after a power cut)
                 }
+
+                BeforeReplace?.Invoke();
+                if (attempt == 0 && Stamp() != read.Stamp)
+                {
+                    Delete(temporary); // another copy wrote meanwhile: its block is read again, once
+                    continue;
+                }
+
+                File.Move(temporary, FilePath!, overwrite: true);
+                return true;
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                // Locked by a scanner or a sync client for a moment: written at the next save, or at exit.
+                Delete(temporary);
+                AppLog.Default.Debug("Usage", $"The uses could not be written yet: {ex.Message}");
+                return false;
             }
         }
     }

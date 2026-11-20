@@ -3,6 +3,15 @@
 All notable changes to Desktop Icon Grid. The format follows [Keep a Changelog](https://keepachangelog.com/);
 version numbers follow [Semantic Versioning](https://semver.org/).
 
+## [0.12.2] – Unreleased
+
+What the release check of 0.12.1 found (review 29).
+
+### Fixed
+
+- Usage counts: a save that failed in a way other than a file held for a moment left the counts unwritten until the
+  next use; they are written at the next save, and the failure is a warning in the log.
+
 ## [0.12.1] – 2026-11-19
 
 What the review of 0.12.0 found after the release (review 28). The notes of 0.12.0 below are corrected where they
