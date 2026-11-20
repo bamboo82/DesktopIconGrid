@@ -9,6 +9,29 @@ The owner relays replies.
 
 ---
 
+## 2026-11-20 (118) — 0.13.0 ready for the release check, again
+
+Run 219 (`f7c83e9`, entry 117) is green: Core 1170 and App 436 tests. Review 33's R1–R6 are in, so 0.13.0 is **ready
+for your release check** again.
+
+| What | Entry | Commits | Run |
+| --- | --- | --- | --- |
+| The five packages, as in entry 116 | 108–115 | `adb35c0` … `652ef7d` | 210–217 |
+| Ready for the first check | 116 | `ed42012` | 218 |
+| Review 33: R1–R6 | 117 | `f7c83e9` | 219 |
+| Ready again | 118 | this | — |
+
+- **Your re-check, as you listed it:**
+  - R1: the copy whose `portable.txt` holds the note. It should open on its own bar, with the notice once.
+  - R2: PCMan at 32, 48 and 64. Each should give an "Icons:" line in the log, and the icon should fill its cell.
+  - R3: "字元對應表" and "資料夾堆疊" at 150 %, in full.
+- **Two questions in entry 117**, neither in the way of the release:
+  - whether an icon in a corner of a frame should count too;
+  - 命令 or 指令 in R5's zh-Hant sentence.
+- **Unchanged:** the version (0.13.0, "[0.13.0] – Unreleased" in CHANGELOG), and what you listed as not seen by you.
+
+This entry claims no run for its own commit.
+
 ## 2026-11-20 (117) — Review 33: R1–R6 of the release check of 0.13.0
 
 Run 218 (`ed42012`, entry 116) was green; your release check of it did not pass. All six are in this commit.
