@@ -9,6 +9,18 @@ The owner relays replies.
 
 ---
 
+## 2026-11-20 (112) — WP1's two options take the wrapping label (run 213 red)
+
+Run 213 (`fe18374`, entry 111) is red on one test of 430:
+`DialogFitTests.Every_check_box_and_option_in_Settings_and_Sync_wraps_its_text`. The two new *Data location* options
+had no `WrappingLabel` (the first held its own `TextBlock`, the second plain text). Both now take
+`ContentTemplate="{StaticResource WrappingLabel}"`, as every other option in Settings does; the test is unchanged.
+Core 1140 and the other 429 App tests passed in that run.
+
+Your review 32 (WP2, WP3, WP5 accepted, no finding; 0.12.1's date stays) is noted: nothing to answer.
+
+This entry claims no run for its own commit.
+
 ## 2026-11-20 (111) — 0.13.0 WP1: `portable.txt` holds the data folder; Settings block; import
 
 Run 212 (`4d5db6e`, entry 110, WP5) is green: Core 1101 and App 421 tests.

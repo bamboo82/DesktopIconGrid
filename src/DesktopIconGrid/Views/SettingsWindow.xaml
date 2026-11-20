@@ -379,12 +379,10 @@
           <TextBlock Grid.Row="1" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Settings_DataLocation}" Margin="0,4,12,10" VerticalAlignment="Top" />
           <StackPanel x:Name="DataLocationBlock" Grid.Row="1" Grid.Column="1" Margin="0,4,0,10">
             <RadioButton GroupName="DataLocation" IsChecked="{Binding DataIsThisPc}" Margin="0,0,0,6"
-                         AutomationProperties.Name="{Binding DataThisPcText}">
-              <TextBlock Text="{Binding DataThisPcText}" TextWrapping="Wrap" />
-            </RadioButton>
+                         Content="{Binding DataThisPcText}" ContentTemplate="{StaticResource WrappingLabel}" />
             <DockPanel Margin="0,0,0,6">
               <RadioButton DockPanel.Dock="Left" GroupName="DataLocation" IsChecked="{Binding DataIsPortable}" VerticalAlignment="Center" Margin="0,0,8,0"
-                           Content="{x:Static r:Strings.Settings_DataPortable}" />
+                           Content="{x:Static r:Strings.Settings_DataPortable}" ContentTemplate="{StaticResource WrappingLabel}" />
               <Button DockPanel.Dock="Right" Content="{x:Static r:Strings.Settings_DataBrowse}" Padding="10,2" Margin="8,0,0,0"
                       IsEnabled="{Binding DataIsPortable}" Click="BrowseData_Click" />
               <TextBox x:Name="DataFolderBox" Text="{Binding DataFolder, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding DataIsPortable}"
