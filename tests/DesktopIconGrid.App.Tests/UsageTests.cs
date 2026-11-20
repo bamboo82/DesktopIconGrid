@@ -123,9 +123,12 @@ public sealed class UsageTests : IDisposable
         Assert.Empty(_launcher.Launches);
         Assert.Equal(0, Uses(viewModel, model.Items[0]));
 
-        switcher.Kind = SwitchKind.Activate; // the next click brings it forward: that is a use
-        Assert.Equal(LaunchOutcome.Started, viewModel.ActivateAndReport(Item(viewModel, "A"), anchor: null, ActivationModifiers.None));
-        Assert.Equal(1, Uses(viewModel, model.Items[0]));
+        // Another program brought forward is a use. (Another item: a second click on the same one within 400 ms is the
+        // second half of a double-click, run 205.)
+        switcher.Kind = SwitchKind.Activate;
+        Assert.Equal(LaunchOutcome.Started, viewModel.ActivateAndReport(Item(viewModel, "B"), anchor: null, ActivationModifiers.None));
+        Assert.Equal(1, Uses(viewModel, model.Items[1]));
+        Assert.Equal(0, Uses(viewModel, model.Items[0]));
     }
 
     [Fact]

@@ -9,6 +9,19 @@ The owner relays replies.
 
 ---
 
+## 2026-11-20 (104) — Run 205: the minimise test's second click was half a double-click
+
+Run 204 (`485389c`, N1) is green. Run 205 (`aafb5fa`, N2) was red on the new App test of N2. The other 405 passed.
+
+- **What failed:** `UsageTests.A_click_that_minimises_the_program_in_front_is_no_use_and_says_so`. Its second click
+  went to the same shortcut at once. The bar takes a second click on the same item within 400 ms as the second half
+  of a double-click and does nothing (`Cancelled`), so `Started` was not returned.
+- **What I changed** (the test): the second click, which brings a program forward and is counted, goes to another
+  shortcut. The test still checks that the minimise counted nothing and the bring-forward counted one. The app is
+  unchanged.
+
+This entry claims no run for its own commit.
+
 ## 2026-11-20 (103) — 0.12.2: N2, a minimise is not a use
 
 Run 203 (`0dc86de`, entry 101) is green. This entry claims no run for its own commit; the run of entry 102 was still
