@@ -94,7 +94,104 @@ public partial class SettingsWindow : Window
         Dispatcher.BeginInvoke(DispatcherPriority.Input, () => page.MoveFocus(new TraversalRequest(FocusNavigationDirection.First)));
     }
 
-    private void Save_Click(object sender, RoutedEventArgs e) => DialogResult = true;
+    private void Save_Click(object sender, RoutedEventArgs e)
+    {
+        if (ViewModel is { } viewModel && !PlanDataMove(viewModel))
+        {
+            return; // a folder that cannot be used (said under the choice), or Cancel: the window stays open
+        }
+
+        DialogResult = true;
+    }
+
+    /// <summary>
+    /// A new place for the data (0.13.0 WP1): checked (it can be made and written), then, when there is a bar to copy and
+    /// the folder is another, the one question: copy the data there (Copy), only change the place (Don't copy, the
+    /// default), or Cancel, which changes nothing and leaves the dialog open. The bar carries it out after the dialog.
+    /// </summary>
+    private bool PlanDataMove(SettingsViewModel viewModel)
+    {
+        if (!viewModel.TryPlanDataMove(Core.Storage.DataLocation.CanUse, out var move))
+        {
+            Tabs.SelectedIndex = Tabs.Items.Count - 1; // General, where the reason is said
+            return false;
+        }
+
+        if (move is null || !viewModel.OffersCopy(move))
+        {
+            viewModel.PlannedMove = move;
+            return true;
+        }
+
+        var answer = ChoiceWindow.Ask(
+            this,
+            Strings.Data_Title,
+            string.Format(Strings.Data_CopyQuestion, viewModel.DataNow, move.Folder),
+            [Strings.Data_Copy, Strings.Data_DontCopy, Strings.Common_Cancel],
+            defaultButton: 1,
+            cancelButton: 2);
+        if (answer == 2)
+        {
+            return false;
+        }
+
+        viewModel.PlannedMove = move with { Copy = answer == 0 };
+        return true;
+    }
+
+    /// <summary>A folder for the data; one under the program's folder is written as it is from there (<c>.</c>, <c>data</c>).</summary>
+    private void BrowseData_Click(object sender, RoutedEventArgs e)
+    {
+        if (ViewModel is not { } viewModel)
+        {
+            return;
+        }
+
+        var dialog = new Microsoft.Win32.OpenFolderDialog
+        {
+            Title = Strings.Settings_DataPickTitle,
+            Multiselect = false,
+            InitialDirectory = DialogService.LocalFolderToOpen(viewModel.DataFolderFull),
+        };
+        if (dialog.ShowDialog(this) == true && !string.IsNullOrWhiteSpace(dialog.FolderName))
+        {
+            viewModel.DataFolder = Core.Storage.DataLocation.AsTyped(dialog.FolderName, viewModel.ProgramDirectory);
+        }
+    }
+
+    /// <summary>The data folder in use now, in File Explorer.</summary>
+    private void OpenDataFolder_Click(object sender, RoutedEventArgs e)
+    {
+        if (ViewModel is { DataNow.Length: > 0 } viewModel)
+        {
+            Core.Launching.ProcessLauncher.Start(new System.Diagnostics.ProcessStartInfo(viewModel.DataNow) { UseShellExecute = true }).Process?.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// This PC's bar into the portable copy (0.13.0 WP1), asked as at the start; Import closes the dialog (nothing else of it
+    /// is kept: the bar is replaced) and the bar restarts to bring it in.
+    /// </summary>
+    private void ImportThisPc_Click(object sender, RoutedEventArgs e)
+    {
+        if (ViewModel is not { } viewModel)
+        {
+            return;
+        }
+
+        var answer = ChoiceWindow.Ask(
+            this,
+            Strings.Data_Title,
+            string.Format(Strings.Data_ImportQuestion, viewModel.ThisPcDirectory),
+            [Strings.Data_Import, Strings.Common_Cancel],
+            defaultButton: 1,
+            cancelButton: 1);
+        if (answer == 0)
+        {
+            viewModel.ImportThisPcRequested = true;
+            DialogResult = true;
+        }
+    }
 
     private void ClearHotkey_Click(object sender, RoutedEventArgs e) => SetHotkey(HotkeyBox, string.Empty);
 

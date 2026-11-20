@@ -1743,7 +1743,7 @@
     <value>已有另一份 Desktop Icon Grid 會隨 Windows 啟動（{0}），因此未加入這一份。請先在那一份中關閉此選項。</value>
   </data>
   <data name="App_PortableReadOnly" xml:space="preserve">
-    <value>portable.txt 位於程式旁，但其資料夾無法寫入（位於 Program Files 下，或在唯讀磁碟機上），因此工具列目前將檔案保存在 {0}。</value>
+    <value>portable.txt 指定以 {0} 存放工具列的檔案，但該資料夾無法使用（名稱不是資料夾的名稱，或無法建立或寫入：位於 Program Files 下，或在唯讀磁碟機上），因此工具列目前將檔案保存在 {1}。</value>
   </data>
   <data name="Settings_StartupDisabledHint" xml:space="preserve">
     <value>若在「啟動應用程式」（工作管理員或設定）中停用了此項目，即使勾選這裡，工具列也不會啟動。請在那裡重新啟用。</value>
@@ -2647,5 +2647,96 @@ SHA-256：{3}
   </data>
   <data name="SendTo_AddedWithoutSync" xml:space="preserve">
     <value>圖示已加入工具列。請先設定「跨電腦同步」，再以滑鼠右鍵按一下它 ›「內容」選擇電腦。</value>
+  </data>
+  <data name="Settings_DataLocation" xml:space="preserve">
+    <value>資料位置：</value>
+  </data>
+  <data name="Settings_DataThisPc" xml:space="preserve">
+    <value>這台電腦（{0}）</value>
+  </data>
+  <data name="Settings_DataPortable" xml:space="preserve">
+    <value>可攜：資料夾</value>
+  </data>
+  <data name="Settings_DataFolderName" xml:space="preserve">
+    <value>可攜資料夾</value>
+  </data>
+  <data name="Settings_DataBrowse" xml:space="preserve">
+    <value>瀏覽…</value>
+  </data>
+  <data name="Settings_DataNow" xml:space="preserve">
+    <value>目前：</value>
+  </data>
+  <data name="Settings_DataOpenFolder" xml:space="preserve">
+    <value>開啟資料夾</value>
+  </data>
+  <data name="Settings_DataHint" xml:space="preserve">
+    <value>變更在重新啟動 Desktop Icon Grid 後生效。</value>
+  </data>
+  <data name="Settings_DataImport" xml:space="preserve">
+    <value>匯入這台電腦的資料…</value>
+  </data>
+  <data name="Settings_DataPickTitle" xml:space="preserve">
+    <value>工具列資料的資料夾</value>
+  </data>
+  <data name="Settings_DataNotAFolder" xml:space="preserve">
+    <value>「{0}」不是資料夾的名稱。</value>
+  </data>
+  <data name="Settings_DataCannotUse" xml:space="preserve">
+    <value>無法建立或寫入資料夾 {0}。</value>
+  </data>
+  <data name="Data_Title" xml:space="preserve">
+    <value>資料位置</value>
+  </data>
+  <data name="Data_CopyQuestion" xml:space="preserve">
+    <value>要將工具列的資料從 {0} 複製到 {1} 嗎？
+
+「複製」會帶過工具列、工作區與使用次數；該處同名的檔案會保留在旁邊，名稱為「….before-import-&lt;日期&gt;」。「不複製」只變更位置：工具列會以該資料夾中已有的內容啟動。</value>
+  </data>
+  <data name="Data_Copy" xml:space="preserve">
+    <value>複製</value>
+  </data>
+  <data name="Data_DontCopy" xml:space="preserve">
+    <value>不複製</value>
+  </data>
+  <data name="Data_StartQuestion" xml:space="preserve">
+    <value>要在這個可攜式複本中使用這台電腦的工具列嗎？
+
+「匯入」會從 {0} 複製工具列、工作區與使用次數。「從空白開始」會以空的工具列開始，之後不會再詢問。</value>
+  </data>
+  <data name="Data_ImportQuestion" xml:space="preserve">
+    <value>要在這個可攜式複本中使用這台電腦的工具列嗎？
+
+「匯入」會從 {0} 複製工具列、工作區與使用次數；這裡的檔案會保留在旁邊，名稱為「….before-import-&lt;日期&gt;」。之後 Desktop Icon Grid 會重新啟動以載入它們。</value>
+  </data>
+  <data name="Data_Import" xml:space="preserve">
+    <value>匯入</value>
+  </data>
+  <data name="Data_StartEmpty" xml:space="preserve">
+    <value>從空白開始</value>
+  </data>
+  <data name="Data_RestartQuestion" xml:space="preserve">
+    <value>Desktop Icon Grid 重新啟動後，工具列的資料會在 {0}。在那之前仍使用 {1}。</value>
+  </data>
+  <data name="Data_RestartNow" xml:space="preserve">
+    <value>立即重新啟動</value>
+  </data>
+  <data name="Data_Later" xml:space="preserve">
+    <value>稍後</value>
+  </data>
+  <data name="Data_MarkerFailed" xml:space="preserve">
+    <value>無法變更程式旁的 portable.txt（{0}）：{1}
+
+未做任何變更。</value>
+  </data>
+  <data name="Data_CopyFailed" xml:space="preserve">
+    <value>無法將工具列的資料複製到 {0}：{1}
+
+位置未變更；已複製的檔案留在該處。</value>
+  </data>
+  <data name="Data_Imported" xml:space="preserve">
+    <value>這台電腦的工具列已複製到 {0}。</value>
+  </data>
+  <data name="Settings_DataProgramReadOnly" xml:space="preserve">
+    <value>程式的資料夾無法寫入（位於 Program Files 下，或在唯讀磁碟機上）</value>
   </data>
 </root>

@@ -131,6 +131,18 @@ internal sealed class RecordingDialogs : IDialogService
 
     public string? PickFolder(string title, string? initialFolder) => Folder;
 
+    /// <summary>The questions asked with named buttons, and the answers given to them in turn; none left answers with the default.</summary>
+    public List<string> Choices { get; } = [];
+
+    public Queue<int> ChoiceAnswers { get; } = new();
+
+    public int Choose(string title, string message, IReadOnlyList<string> buttons, int defaultButton, int? cancelButton)
+    {
+        Choices.Add(message);
+        LastMessage = message;
+        return ChoiceAnswers.Count > 0 ? ChoiceAnswers.Dequeue() : defaultButton;
+    }
+
     public List<string> RepairRequests { get; } = [];
 
     public RepairResult? RepairAnswer { get; set; }

@@ -9,6 +9,119 @@ The owner relays replies.
 
 ---
 
+## 2026-11-20 (111) — 0.13.0 WP1: `portable.txt` holds the data folder; Settings block; import
+
+Run 212 (`4d5db6e`, entry 110, WP5) is green: Core 1101 and App 421 tests.
+
+- **What changed, Core:**
+  - `DataLocation.Resolve` returns a `DataPlace(Directory, Portable, Unusable, Named)`.
+    - `FirstLine`: the first line with text, trimmed; null (no folder) for a line over 1,024 characters or with a NUL.
+      Only 4 KB of the file are read; a byte order mark decides the encoding, else UTF-8.
+    - `FolderOf` applies Windows' rules by hand, so the tests on Linux see what Windows does:
+      - `.` or empty is the program's folder; `data`, `..\x` are under it; `\x` is on its drive; a full name is used;
+      - one pair of quotes is taken off; `/` reads as `\`; `..` never climbs above the root;
+      - `%APPDRIVE%` is replaced by the program's drive before the expansion, so the order of `PublishProgramDrive`
+        does not matter;
+      - no folder: a variable left unexpanded, `"<>|?*`, a control character, `E:data`, a `:` past the drive, a full
+        name over 248, `\x` for a program on a share.
+    - The folder is made (`MakeFolder`), then written to (`CanWriteTo`). Any failure gives `%LocalAppData%`,
+      `Unusable`, and `Named` = the folder, or the line as written (control characters as spaces, 120 characters).
+  - `PortableFolderIsReadOnly` is `PortableFolderIsUnusable`. `IsPortable` = the data is where `portable.txt` says,
+    wherever that is; `IsPortableCopy` = `portable.txt` exists. `ForStorage` is unchanged (the program's drive).
+  - `DataLocation.AsTyped` (Browse): `.`, a name relative to the program's folder, or the full name. `SameFolder`,
+    `CanUse`.
+  - New `DataImport`:
+    - `Run(source, target, appDrive, now)` copies `workspaces.json`, `usage.json`, then `layout.json` (the bar last).
+      A file in the way is renamed `<name>.before-import-yyyyMMdd-HHmmss` (local time; `-2`, `-3` when taken).
+    - `OffersThisPcBar` is the start question's rule.
+    - `RequestFile` = `import-this-pc.request`.
+- **What changed, app:**
+  - Start (`App.BringThisPcBar`, before the sync service and the layout are read):
+    - a request file in the data folder: it is deleted and the import runs without a question;
+    - else, when `OffersThisPcBar`: `ChoiceWindow` "Use this PC's bar in this portable copy?", *Import* / *Start empty*
+      (default and cancel), in the language of the bar it offers;
+    - *Start empty* saves an empty `layout.json`, so it is not asked again.
+    - Before the bar's window, WPF would take the question for the main window and end the app when it closes:
+      `AskBeforeTheBar` holds `ShutdownMode` for that time.
+  - Restart: `LauncherViewModel.RestartRequested` → `MainWindow` sets `App.RestartOnExit` and exits as *Exit* does.
+    `App.OnExit` starts the program again after the single-instance mutex is gone, with no argument, so nothing is
+    added to the command line or the pipe (`BarCommands.Validate` is untouched).
+  - Settings ▸ General ▸ *Data location*: the radios, the folder with *Browse…*, the problem line, *Now:* (a
+    read-only text box, selectable) with *Open folder*, *Import this PC's data…*, and the hint.
+    - The view model (`SettingsViewModel.DataLocation.cs`) reads `DataFolders.Current`, which reads `portable.txt`
+      again: a choice saved with *Later* shows as chosen.
+    - A changed folder that names no folder: ⚠ General and Save off.
+    - At Save, `TryPlanDataMove(DataLocation.CanUse)`: a folder that cannot be made or written is said under the
+      choice, the window stays, nothing is written.
+    - Then, only when the folder is another and the folder in use has a bar: *Copy* / *Don't copy* (default) /
+      *Cancel* (the window stays).
+  - After the dialog, `LauncherViewModel.MoveDataAsync`:
+    1. the program's folder must be writable, else "portable.txt could not be changed… the program's folder cannot
+       be written", and nothing more happens;
+    2. *Copy*: the bar is saved and the usage counts flushed (5 s at most), then `DataImport.Run` copies to the new
+       folder. A failure is said and the place is not changed;
+    3. `portable.txt` is written (UTF-8 without BOM, the text and a line end), or deleted for *This PC*;
+    4. *Restart now* (default) / *Later*.
+  - *Import this PC's data…*: *Import* / *Cancel* (default). Import closes Settings without keeping its other
+    changes, leaves the request file and restarts.
+  - *Send to* refusal: `IsPortableCopy`, so also when the portable folder could not be used (it was `IsPortable`).
+  - The notice at start names both folders: `App_PortableReadOnly` is now "portable.txt names {0}…, so the bar keeps
+    its files in {1}". The key is the same, the text changed in the three languages.
+  - `ChoiceWindow`: a question with named buttons, in the dialogs' look and font (Windows' message box gets
+    neither), and `IDialogService.Choose`.
+- **Choices I made, and why:**
+  - **The import into a running portable bar happens at the restart, not in Settings.** The running bar writes
+    `layout.json` at exit (its place on the screen) and the usage counts; done in Settings, the import would be
+    written over by the bar it replaces. The copy to a *new* folder (Save) happens at once, as you planned, after
+    the bar is saved and the counts flushed: the running bar never writes there. What it does after that, until
+    the restart, stays in the old folder ("until restart the running copy keeps its old folder").
+  - **`%APPDRIVE%`:** the plan says the normal save makes it. It does not: paths are written with `%APPDRIVE%` when
+    they are entered (`ForStorage`), and the save writes them as they are. So `DataImport.WithAppDrive` writes them
+    for a portable target, by the same rule (`StorageDrive`: not on Windows' own drive):
+    - locations, this PC's own ones too, start folders, icons, in groups as well;
+    - a layout that cannot be read, or one from a newer version, is copied as it is;
+    - a layout copied to *This PC* is copied as it is (`%APPDRIVE%` still works there: it is published in every
+      copy).
+  - **What is copied:** the three files. No cache: the Drive cache holds files' contents (not small), and the icon
+    cache is in memory.
+    **Not copied, and a question for you:** `icons\` (pictures from the web) and `sounds\` (recordings). The bar
+    names them by full path in `%LocalAppData%`, so on this PC the imported bar shows them; on another PC they are
+    missing. Copying them would need the paths rewritten. Say if you want it.
+  - The questions have named buttons (*Copy* / *Don't copy* / *Cancel*, *Import* / *Start empty*, *Restart now* /
+    *Later*) rather than Yes/No, in a window of the app's look. The copy question also says that files of the same
+    name are kept as `….before-import-<date>`.
+  - zh-Hans text (yours were en and zh-Hant): 数据位置 / 这台电脑 / 便携：文件夹 / 浏览… / 当前： / 打开文件夹, as
+    you wrote them, and the rest in the same words.
+- **Tests:**
+  - Core `DataLocationTests` (+33): 17 names that are folders, 6 that are not, too long a name or line and a NUL,
+    a folder that cannot be made or written, a program on a share, Browse's form, `SameFolder`. Two older ones now
+    compare `DataPlace`.
+  - Core `DataImportTests` (6): what is copied and what is not; kept aside, twice in the same second;
+    `%APPDRIVE%` for every kind of path; a damaged and a newer layout copied as they are, with the source left
+    alone; the same folder; the start question's rule.
+  - App `DataLocationAppTests` (8):
+    - what Settings shows;
+    - a name that is no folder's holds Save back with ⚠ General;
+    - Save's check, planning without writing;
+    - when the copy is offered and when Import is shown;
+    - a move that copies, writes `portable.txt` and restarts, and back to *This PC* with *Later*;
+    - a program folder that cannot be written;
+    - the import request;
+    - Settings with Import keeps nothing else.
+  - App `ChoiceWindowTests` (1): names, default, cancel, the answer when closed.
+- **Not tested:**
+  - a real restart (`Process.Start` after the mutex), and the modal flows clicked through (Settings' Save with the
+    question, the question at start);
+  - Program Files, a real stick whose letter changes, and a program on a share;
+  - a `portable.txt` saved by Notepad as ANSI with Chinese in it: read as UTF-8, it names another folder or none.
+    UTF-8 and UTF-16 with a byte order mark are read right.
+- **What to look at (your check):** `portable.txt` with `.`, `data`, `..\DIG-data`, `D:\…`, a bad name; the
+  Settings block in English and zh-Hant; a move with *Copy* and *Restart now*; the question at the first start of
+  a portable copy on a PC with a bar; *Import this PC's data…* with a bar already in the portable copy (its files
+  kept aside).
+
+This entry claims no run for its own commit.
+
 ## 2026-11-20 (110) — 0.13.0 WP5: *Send to PC* can be added before sync is set up
 
 Run 211 (`91cecf6`, entry 109, WP3) is green: Core 1101 and App 419 tests (`HintTextTests` passed in both looks).

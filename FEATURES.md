@@ -792,6 +792,36 @@ and each page scrolls on a screen too short for it.
   PC's name (A, then B, then A again makes three ids, and a name typed by hand is not carried along).
   Nothing is lost by it: the copy it last synced is known by its revision, so it is not mistaken for
   another PC's newer one.
+- Where the data lives (0.13.0): `portable.txt` holds the data folder on its first line with text in it (only
+  the first 4 KB are read). Empty or `.` is the program's folder, as before. A name without a drive is under the
+  program's folder (`data`, `..\DIG-data`), `\DIG-data` is on the program's drive, a full name is used as it is,
+  and environment variables are expanded, `%APPDRIVE%` too; one pair of quotes around it is taken off. The folder
+  is made when it is missing. A line that names no folder (a variable not set here, a character Windows refuses,
+  `E:data`, a stream's name, a full name over 248 characters, a line over 1,024 characters or with a NUL) or a
+  folder that cannot be made or written sends the data to `%LocalAppData%`, as a read-only one did, and the notice
+  at start names that folder. Whatever the folder, a copy with `portable.txt` is a portable copy: it asks before it
+  adds a Run entry, does not add itself to *Send to* (also when its folder could not be used), keeps a Google
+  sign-in per PC, and writes the paths on its own drive with `%APPDRIVE%`.
+  - Settings ▸ General ▸ *Data location*: *This PC* (`%LocalAppData%\DesktopIconGrid`) or *Portable: folder* with
+    the folder as `portable.txt` is to say it (Browse writes one under the program's folder as it is from there,
+    `.` or `data`, any other in full); *Now:* is the folder in use, with *Open folder*. A changed folder is checked
+    at Save: a name that is no folder's holds Save back, with ⚠ on the tab; one that cannot be made or written is
+    said under the choice and nothing is written. Then, when there is a bar to copy and the folder is another, one
+    question: *Copy* (the bar, its workspaces and its usage counts), *Don't copy* (the default: only the place
+    changes) or *Cancel* (the dialog stays open). Once the dialog closes, what waits is written, the copy is made,
+    `portable.txt` is written (or taken away for *This PC*), and *Restart now* or *Later* is offered; until a
+    restart the bar keeps its old folder. When `portable.txt` cannot be changed (the program under Program Files)
+    or the copy fails, that is said and the place is not changed.
+  - Bringing this PC's bar into a portable copy copies `layout.json` (written by the layout's own save, with the
+    paths on the program's drive as `%APPDRIVE%`), `workspaces.json` and `usage.json`. Not copied: the command and
+    health check approvals (`command-trust.json`), the Google sign-in, `sync.json` (its link to an account or a
+    folder, and its device id: two copies must not be one device), `this-pc.json`, the logs, the layout's history,
+    the Drive cache, and icons downloaded from the web and recordings, which the bar names where they are. A file
+    already there is first renamed `<name>.before-import-<date>`; nothing is written over. It is asked once at the
+    start of a portable copy that has no bar of its own while `%LocalAppData%` has one (*Import* or *Start empty*,
+    the default, which saves the empty bar so the question does not come again), and from *Import this PC's data…*
+    in Settings ▸ General, shown in a portable copy whose data is not `%LocalAppData%`'s when this PC has a bar
+    there: that one restarts the bar, which brings it in before it reads its bar.
 - A corrupt file is renamed to `layout.json.corrupt-<timestamp>` and the app starts
   with an empty bar, telling the user where the backup is.
 - Shape (abridged):

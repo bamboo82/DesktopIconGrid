@@ -110,11 +110,11 @@ public partial class App : Application
     /// over commands never loads them). Read from the layout file as it is; anything wrong leaves Windows' language. A file
     /// over 8 MB is not read: it is no layout this app wrote, and the start must not stall on it.
     /// </summary>
-    private static void ApplySavedLanguage()
+    private static void ApplySavedLanguage(string? layoutFile = null)
     {
         try
         {
-            var file = new FileInfo(LayoutStorage.GetDefaultFilePath());
+            var file = new FileInfo(layoutFile ?? LayoutStorage.GetDefaultFilePath());
             if (!file.Exists || file.Length > MaxLanguageReadBytes)
             {
                 return;
@@ -172,10 +172,12 @@ public partial class App : Application
         {
             AppLog.Default.Info("App", $"Portable mode ({DataLocation.PortableMarker} found): data in {DataLocation.Directory}, %{DataLocation.AppDriveVariable}% = {Environment.GetEnvironmentVariable(DataLocation.AppDriveVariable)}");
         }
-        else if (DataLocation.PortableFolderIsReadOnly)
+        else if (DataLocation.PortableFolderIsUnusable)
         {
-            AppLog.Default.Warning("App", $"{DataLocation.PortableMarker} found, but the program's folder cannot be written; data in {DataLocation.Directory}");
+            AppLog.Default.Warning("App", $"{DataLocation.PortableMarker} names \"{DataLocation.NamedFolder}\", which cannot be used; data in {DataLocation.Directory}");
         }
+
+        BringThisPcBar();
 
         // The sync service sets ThisDevice.Id, which the load needs: a portable copy's repair of 0.8.0's paths gives this
         // PC its own location, and does nothing without the id (review 18 D1).
@@ -266,6 +268,7 @@ public partial class App : Application
         _sync = new SyncCoordinator(syncService, viewModel, dialogs.Confirm) { Notify = dialogs.Show };
         dialogs.SyncViewModelFactory = () => new SyncViewModel(_sync, dialogs);
         viewModel.FlushBeforeExit = () => Task.WhenAll(_sync.FlushPendingAsync(TimeSpan.FromSeconds(5)), usageSaver.FlushAsync());
+        viewModel.FlushData = usageSaver.FlushAsync; // before the data is copied to a new folder (0.13.0 WP1)
         _ = Task.Run(() => DriveCache.Purge(cacheDirectory, TimeSpan.FromDays(1)));
 
         // A portable copy never adds a Run entry by itself on the PCs it visits: only when the option is turned on there.
@@ -315,9 +318,9 @@ public partial class App : Application
         window.TrayReady += (_, _) =>
         {
             dialogs.Notifier = window.TryNotify;
-            if (DataLocation.PortableFolderIsReadOnly)
+            if (DataLocation.PortableFolderIsUnusable)
             {
-                dialogs.Notify(Strings.App_Name, string.Format(Strings.App_PortableReadOnly, DataLocation.Directory)); // once, at start
+                dialogs.Notify(Strings.App_Name, string.Format(Strings.App_PortableReadOnly, DataLocation.NamedFolder, DataLocation.Directory)); // once, at start
             }
         };
         if (startHidden)
@@ -392,7 +395,114 @@ public partial class App : Application
         _windows?.Dispose();
         _tracker?.Dispose();
         _instanceMutex?.Dispose();
+        if (RestartOnExit)
+        {
+            StartAgain();
+        }
+
         base.OnExit(e);
+    }
+
+    /// <summary>
+    /// Set before the bar exits to start the program again once it is gone (0.13.0 WP1): a new data folder takes effect, or
+    /// this PC's bar is brought in. The new process starts after the single-instance mutex is let go, so it is the bar.
+    /// </summary>
+    internal static bool RestartOnExit { get; set; }
+
+    private static void StartAgain()
+    {
+        try
+        {
+            var program = Environment.ProcessPath ?? throw new InvalidOperationException("The program's path is not known.");
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(program) { UseShellExecute = false, WorkingDirectory = AppContext.BaseDirectory })?.Dispose();
+            AppLog.Default.Info("App", "Started again");
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or System.ComponentModel.Win32Exception or IOException)
+        {
+            AppLog.Default.Error("App", "Could not start again", ex);
+        }
+    }
+
+    /// <summary>
+    /// This PC's bar into a portable copy (0.13.0 WP1), before the bar is read: when Settings asked for it (its request file
+    /// is in the data folder, and the bar that asked has exited, so nothing of it is written over the import), or, asked
+    /// once here, when a portable copy starts with no bar of its own while this PC has one in <c>%LocalAppData%</c>.
+    /// "Start empty" saves the empty bar, so the question does not come again.
+    /// </summary>
+    private void BringThisPcBar()
+    {
+        var data = DataLocation.Directory;
+        var thisPc = DataLocation.ThisPcDirectory;
+        var request = Path.Combine(data, DataImport.RequestFile);
+        var asked = File.Exists(request);
+        if (asked)
+        {
+            try
+            {
+                File.Delete(request);
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                AppLog.Default.Warning("App", $"The import request could not be removed: {ex.Message}");
+            }
+        }
+        else if (!DataImport.OffersThisPcBar(DataLocation.IsPortable, data, thisPc))
+        {
+            return;
+        }
+
+        if (!asked)
+        {
+            ApplySavedLanguage(Path.Combine(thisPc, LayoutStorage.FileName)); // the question in the language of the bar it offers
+            var answer = AskBeforeTheBar(() => ChoiceWindow.Ask(
+                null,
+                Strings.Data_Title,
+                string.Format(Strings.Data_StartQuestion, thisPc),
+                [Strings.Data_Import, Strings.Data_StartEmpty],
+                defaultButton: 1,
+                cancelButton: 1));
+            if (answer != 0)
+            {
+                AppLog.Default.Info("App", "This PC's bar was offered to the portable copy; it starts empty");
+                try
+                {
+                    new LayoutStorage(LayoutStorage.GetDefaultFilePath()).Save(new LauncherLayout());
+                }
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+                {
+                    AppLog.Default.Warning("App", $"The empty bar could not be saved: {ex.Message}");
+                }
+
+                return;
+            }
+        }
+
+        var result = DataImport.Run(thisPc, data, DataLocation.StorageDrive(DataLocation.ProgramDirectory, Environment.GetEnvironmentVariable("SystemDrive")), DateTimeOffset.Now);
+        AppLog.Default.Info("App", $"This PC's bar brought from {thisPc}: {string.Join(", ", result.Copied)}{(result.KeptAside.Count > 0 ? $"; kept aside: {string.Join(", ", result.KeptAside)}" : string.Empty)}");
+        if (result.Problem is not null)
+        {
+            AppLog.Default.Error("App", $"This PC's bar could not be brought in full: {result.Problem}");
+            MessageBox.Show(string.Format(Strings.Data_CopyFailed, data, result.Problem), Strings.App_Name, MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
+    }
+
+    /// <summary>
+    /// A window before the bar's: with no main window yet, WPF takes the first one for it, and closing it would end the app
+    /// (<see cref="ShutdownMode.OnMainWindowClose"/>).
+    /// </summary>
+    private T AskBeforeTheBar<T>(Func<T> ask)
+    {
+        var mode = ShutdownMode;
+        ShutdownMode = ShutdownMode.OnExplicitShutdown;
+        try
+        {
+            return ask();
+        }
+        finally
+        {
+            MainWindow = null;
+            ShutdownMode = mode;
+        }
     }
 
     /// <summary>

@@ -1743,7 +1743,7 @@ Details are in {1}.</value>
     <value>Another copy of Desktop Icon Grid already starts with Windows ({0}), so this one was not added. Turn the option off in that copy first.</value>
   </data>
   <data name="App_PortableReadOnly" xml:space="preserve">
-    <value>portable.txt is next to the program, but its folder cannot be written (it is under Program Files, or on a read-only drive), so the bar keeps its files in {0} for now.</value>
+    <value>portable.txt names {0} for the bar's files, but that folder cannot be used (the name is no folder's, or the folder cannot be made or written: under Program Files, on a read-only drive), so the bar keeps its files in {1} for now.</value>
   </data>
   <data name="Settings_StartupDisabledHint" xml:space="preserve">
     <value>If the entry was turned off under Startup apps (Task Manager or Settings), the bar does not start even with this on. Turn it on there.</value>
@@ -2647,5 +2647,96 @@ Installed to: {4}</value>
   </data>
   <data name="SendTo_AddedWithoutSync" xml:space="preserve">
     <value>The icon is on the bar. Set up Sync across PCs, then right-click it › Properties to choose the PC.</value>
+  </data>
+  <data name="Settings_DataLocation" xml:space="preserve">
+    <value>Data location:</value>
+  </data>
+  <data name="Settings_DataThisPc" xml:space="preserve">
+    <value>This PC ({0})</value>
+  </data>
+  <data name="Settings_DataPortable" xml:space="preserve">
+    <value>Portable: folder</value>
+  </data>
+  <data name="Settings_DataFolderName" xml:space="preserve">
+    <value>Portable data folder</value>
+  </data>
+  <data name="Settings_DataBrowse" xml:space="preserve">
+    <value>Browse…</value>
+  </data>
+  <data name="Settings_DataNow" xml:space="preserve">
+    <value>Now:</value>
+  </data>
+  <data name="Settings_DataOpenFolder" xml:space="preserve">
+    <value>Open folder</value>
+  </data>
+  <data name="Settings_DataHint" xml:space="preserve">
+    <value>Takes effect after Desktop Icon Grid restarts.</value>
+  </data>
+  <data name="Settings_DataImport" xml:space="preserve">
+    <value>Import this PC's data…</value>
+  </data>
+  <data name="Settings_DataPickTitle" xml:space="preserve">
+    <value>Folder for the bar's data</value>
+  </data>
+  <data name="Settings_DataNotAFolder" xml:space="preserve">
+    <value>"{0}" is not a folder's name.</value>
+  </data>
+  <data name="Settings_DataCannotUse" xml:space="preserve">
+    <value>The folder {0} cannot be made or written.</value>
+  </data>
+  <data name="Data_Title" xml:space="preserve">
+    <value>Data location</value>
+  </data>
+  <data name="Data_CopyQuestion" xml:space="preserve">
+    <value>Copy the bar's data from {0} to {1}?
+
+Copy brings the bar, its workspaces and its usage counts; files of the same name there are kept beside them as "….before-import-&lt;date&gt;". Don't copy changes only the place: the bar starts with what that folder has.</value>
+  </data>
+  <data name="Data_Copy" xml:space="preserve">
+    <value>Copy</value>
+  </data>
+  <data name="Data_DontCopy" xml:space="preserve">
+    <value>Don't copy</value>
+  </data>
+  <data name="Data_StartQuestion" xml:space="preserve">
+    <value>Use this PC's bar in this portable copy?
+
+Import copies the bar, its workspaces and its usage counts from {0}. Start empty begins with an empty bar, and this is not asked again.</value>
+  </data>
+  <data name="Data_ImportQuestion" xml:space="preserve">
+    <value>Use this PC's bar in this portable copy?
+
+Import copies the bar, its workspaces and its usage counts from {0}; the files here are kept beside them as "….before-import-&lt;date&gt;". Desktop Icon Grid then restarts to load them.</value>
+  </data>
+  <data name="Data_Import" xml:space="preserve">
+    <value>Import</value>
+  </data>
+  <data name="Data_StartEmpty" xml:space="preserve">
+    <value>Start empty</value>
+  </data>
+  <data name="Data_RestartQuestion" xml:space="preserve">
+    <value>The bar's data will be in {0} once Desktop Icon Grid restarts. Until then it keeps using {1}.</value>
+  </data>
+  <data name="Data_RestartNow" xml:space="preserve">
+    <value>Restart now</value>
+  </data>
+  <data name="Data_Later" xml:space="preserve">
+    <value>Later</value>
+  </data>
+  <data name="Data_MarkerFailed" xml:space="preserve">
+    <value>portable.txt could not be changed next to the program ({0}): {1}
+
+Nothing was changed.</value>
+  </data>
+  <data name="Data_CopyFailed" xml:space="preserve">
+    <value>The bar's data could not be copied to {0}: {1}
+
+The place was not changed; what was copied stays there.</value>
+  </data>
+  <data name="Data_Imported" xml:space="preserve">
+    <value>This PC's bar was copied into {0}.</value>
+  </data>
+  <data name="Settings_DataProgramReadOnly" xml:space="preserve">
+    <value>the program's folder cannot be written (it is under Program Files, or on a read-only drive)</value>
   </data>
 </root>

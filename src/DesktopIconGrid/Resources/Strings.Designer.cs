@@ -240,7 +240,7 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to portable.txt is next to the program, but its folder cannot be written (it is und [rest of string was truncated]";.
+        ///   Looks up a localized string similar to portable.txt names {0} for the bar's files, but that folder cannot be used (the [rest of string was truncated]";.
         /// </summary>
         public static string App_PortableReadOnly {
             get {
@@ -1505,6 +1505,132 @@ namespace DesktopIconGrid.Resources {
         public static string Common_UnknownError {
             get {
                 return ResourceManager.GetString("Common_UnknownError", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Copy.
+        /// </summary>
+        public static string Data_Copy {
+            get {
+                return ResourceManager.GetString("Data_Copy", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The bar's data could not be copied to {0}: {1} [rest of string was truncated]";.
+        /// </summary>
+        public static string Data_CopyFailed {
+            get {
+                return ResourceManager.GetString("Data_CopyFailed", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Copy the bar's data from {0} to {1}? [rest of string was truncated]";.
+        /// </summary>
+        public static string Data_CopyQuestion {
+            get {
+                return ResourceManager.GetString("Data_CopyQuestion", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Don't copy.
+        /// </summary>
+        public static string Data_DontCopy {
+            get {
+                return ResourceManager.GetString("Data_DontCopy", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Import.
+        /// </summary>
+        public static string Data_Import {
+            get {
+                return ResourceManager.GetString("Data_Import", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Use this PC's bar in this portable copy? [rest of string was truncated]";.
+        /// </summary>
+        public static string Data_ImportQuestion {
+            get {
+                return ResourceManager.GetString("Data_ImportQuestion", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to This PC's bar was copied into {0}..
+        /// </summary>
+        public static string Data_Imported {
+            get {
+                return ResourceManager.GetString("Data_Imported", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Later.
+        /// </summary>
+        public static string Data_Later {
+            get {
+                return ResourceManager.GetString("Data_Later", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to portable.txt could not be changed next to the program ({0}): {1} [rest of string was truncated]";.
+        /// </summary>
+        public static string Data_MarkerFailed {
+            get {
+                return ResourceManager.GetString("Data_MarkerFailed", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Restart now.
+        /// </summary>
+        public static string Data_RestartNow {
+            get {
+                return ResourceManager.GetString("Data_RestartNow", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The bar's data will be in {0} once Desktop Icon Grid restarts. Until then it kee [rest of string was truncated]";.
+        /// </summary>
+        public static string Data_RestartQuestion {
+            get {
+                return ResourceManager.GetString("Data_RestartQuestion", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Start empty.
+        /// </summary>
+        public static string Data_StartEmpty {
+            get {
+                return ResourceManager.GetString("Data_StartEmpty", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Use this PC's bar in this portable copy? [rest of string was truncated]";.
+        /// </summary>
+        public static string Data_StartQuestion {
+            get {
+                return ResourceManager.GetString("Data_StartQuestion", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Data location.
+        /// </summary>
+        public static string Data_Title {
+            get {
+                return ResourceManager.GetString("Data_Title", resourceCulture);
             }
         }
 
@@ -5222,6 +5348,123 @@ namespace DesktopIconGrid.Resources {
         public static string Settings_ColourHint {
             get {
                 return ResourceManager.GetString("Settings_ColourHint", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Browse….
+        /// </summary>
+        public static string Settings_DataBrowse {
+            get {
+                return ResourceManager.GetString("Settings_DataBrowse", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The folder {0} cannot be made or written..
+        /// </summary>
+        public static string Settings_DataCannotUse {
+            get {
+                return ResourceManager.GetString("Settings_DataCannotUse", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Portable data folder.
+        /// </summary>
+        public static string Settings_DataFolderName {
+            get {
+                return ResourceManager.GetString("Settings_DataFolderName", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Takes effect after Desktop Icon Grid restarts..
+        /// </summary>
+        public static string Settings_DataHint {
+            get {
+                return ResourceManager.GetString("Settings_DataHint", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Import this PC's data….
+        /// </summary>
+        public static string Settings_DataImport {
+            get {
+                return ResourceManager.GetString("Settings_DataImport", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Data location:.
+        /// </summary>
+        public static string Settings_DataLocation {
+            get {
+                return ResourceManager.GetString("Settings_DataLocation", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to "{0}" is not a folder's name..
+        /// </summary>
+        public static string Settings_DataNotAFolder {
+            get {
+                return ResourceManager.GetString("Settings_DataNotAFolder", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Now:.
+        /// </summary>
+        public static string Settings_DataNow {
+            get {
+                return ResourceManager.GetString("Settings_DataNow", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Open folder.
+        /// </summary>
+        public static string Settings_DataOpenFolder {
+            get {
+                return ResourceManager.GetString("Settings_DataOpenFolder", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Folder for the bar's data.
+        /// </summary>
+        public static string Settings_DataPickTitle {
+            get {
+                return ResourceManager.GetString("Settings_DataPickTitle", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Portable: folder.
+        /// </summary>
+        public static string Settings_DataPortable {
+            get {
+                return ResourceManager.GetString("Settings_DataPortable", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to the program's folder cannot be written (it is under Program Files, or on a read- [rest of string was truncated]";.
+        /// </summary>
+        public static string Settings_DataProgramReadOnly {
+            get {
+                return ResourceManager.GetString("Settings_DataProgramReadOnly", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to This PC ({0}).
+        /// </summary>
+        public static string Settings_DataThisPc {
+            get {
+                return ResourceManager.GetString("Settings_DataThisPc", resourceCulture);
             }
         }
 

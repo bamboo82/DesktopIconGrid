@@ -7,6 +7,20 @@ version numbers follow [Semantic Versioning](https://semver.org/).
 
 "Where it lives, how it reads": the owner's requests after 0.12.2.
 
+### Added
+
+- `portable.txt` now says where the data is: its first line names the folder (`.` or nothing for the program's
+  folder, as before; `data` or `..\DIG-data` from the program's folder; `\DIG-data` on the program's drive; a full
+  name; environment variables and `%APPDRIVE%` work). The folder is made when missing; one that cannot be used
+  leaves the data in `%LocalAppData%`, and the notice at start names it.
+- Settings ▸ General ▸ *Data location*: this PC's folder or a portable folder, with *Browse…*, where the data is now
+  and *Open folder*. Save checks the folder, asks once whether to copy the bar's data there, writes or removes
+  `portable.txt`, and offers to restart; the bar keeps its folder until then.
+- A portable copy that starts without a bar of its own, on a PC whose `%LocalAppData%` has one, asks once whether to
+  use it (*Import* or *Start empty*); Settings ▸ General has *Import this PC's data…* too. The bar, its workspaces
+  and its usage counts are copied; approvals, the Google sign-in, sync settings, logs and history are not, and a
+  file already there is kept as `….before-import-<date>`.
+
 ### Changed
 
 - Hints under a field, and the other lines in dialogs that explain something, are in the dialog's text colour

@@ -445,7 +445,7 @@ public sealed partial class SettingsViewModel : ObservableObject
     public string? WindowKeyUsing(string hotkey) =>
         string.IsNullOrWhiteSpace(hotkey) ? null : WindowKeyRows.FirstOrDefault(row => HotkeyGesture.SameCombination(row.Text, hotkey))?.Label;
 
-    public bool CanSave => !HasAppearanceProblem && !HasKeysProblem && !HasVoiceProblem;
+    public bool CanSave => !HasAppearanceProblem && !HasKeysProblem && !HasVoiceProblem && !HasGeneralProblem;
 
     // ----- tabs (review 27 B1) -----------------------------------------------------------------------
 
@@ -466,13 +466,14 @@ public sealed partial class SettingsViewModel : ObservableObject
 
     public string VoiceTab => TabHeader(Strings.Settings_TabVoice, HasVoiceProblem);
 
-    public string GeneralTab => Strings.Settings_TabGeneral;
+    public string GeneralTab => TabHeader(Strings.Settings_TabGeneral, HasGeneralProblem);
 
     /// <summary>The line beside Save: which tab, the first in the tab order, has something to fix; empty when none has.</summary>
     public string ProblemText =>
         HasAppearanceProblem ? string.Format(Strings.Settings_FixOnTab, Strings.Settings_TabAppearance)
         : HasKeysProblem ? string.Format(Strings.Settings_FixOnTab, Strings.Settings_TabKeys)
         : HasVoiceProblem ? string.Format(Strings.Settings_FixOnTab, Strings.Settings_TabVoice)
+        : HasGeneralProblem ? string.Format(Strings.Settings_FixOnTab, Strings.Settings_TabGeneral)
         : string.Empty;
 
     /// <summary>A tab's name, with a warning sign before it while one of its values cannot be saved.</summary>

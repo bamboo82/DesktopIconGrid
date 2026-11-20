@@ -1,0 +1,15 @@
+<Window x:Class="DesktopIconGrid.Views.ChoiceWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Width="520"
+        SizeToContent="Height"
+        ResizeMode="NoResize"
+        WindowStartupLocation="CenterOwner"
+        ShowInTaskbar="False"
+        Icon="{StaticResource AppIconImage}">
+  <!-- A question whose buttons say what they do (0.13.0 WP1): "Import" and "Start empty", not Yes and No. -->
+  <StackPanel Margin="14">
+    <TextBlock x:Name="MessageText" TextWrapping="Wrap" />
+    <WrapPanel x:Name="Buttons" HorizontalAlignment="Right" Margin="0,14,0,0" />
+  </StackPanel>
+</Window>

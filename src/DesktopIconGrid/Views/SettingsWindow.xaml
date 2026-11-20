@@ -363,6 +363,7 @@
           </Grid.ColumnDefinitions>
           <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
           </Grid.RowDefinitions>
 
           <!-- Language -->
@@ -372,6 +373,36 @@
                       ItemsSource="{Binding Languages}" SelectedItem="{Binding SelectedLanguage}" DisplayMemberPath="Name"
                       AutomationProperties.Name="{x:Static r:Strings.Settings_LanguageName}" />
             <TextBlock Style="{StaticResource DialogHint}" Margin="0,6,0,0" Text="{x:Static r:Strings.Settings_LanguageHint}" />
+          </StackPanel>
+
+          <!-- Data location (0.13.0 WP1): this PC's folder, or a portable one named in portable.txt; nothing changes before a restart -->
+          <TextBlock Grid.Row="1" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Settings_DataLocation}" Margin="0,4,12,10" VerticalAlignment="Top" />
+          <StackPanel x:Name="DataLocationBlock" Grid.Row="1" Grid.Column="1" Margin="0,4,0,10">
+            <RadioButton GroupName="DataLocation" IsChecked="{Binding DataIsThisPc}" Margin="0,0,0,6"
+                         AutomationProperties.Name="{Binding DataThisPcText}">
+              <TextBlock Text="{Binding DataThisPcText}" TextWrapping="Wrap" />
+            </RadioButton>
+            <DockPanel Margin="0,0,0,6">
+              <RadioButton DockPanel.Dock="Left" GroupName="DataLocation" IsChecked="{Binding DataIsPortable}" VerticalAlignment="Center" Margin="0,0,8,0"
+                           Content="{x:Static r:Strings.Settings_DataPortable}" />
+              <Button DockPanel.Dock="Right" Content="{x:Static r:Strings.Settings_DataBrowse}" Padding="10,2" Margin="8,0,0,0"
+                      IsEnabled="{Binding DataIsPortable}" Click="BrowseData_Click" />
+              <TextBox x:Name="DataFolderBox" Text="{Binding DataFolder, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding DataIsPortable}"
+                       Padding="4,2" VerticalContentAlignment="Center" MinWidth="120"
+                       AutomationProperties.Name="{x:Static r:Strings.Settings_DataFolderName}" />
+            </DockPanel>
+            <TextBlock x:Name="DataProblemText" Text="{Binding DataProblem}" Foreground="{DynamicResource WarningBrush}" TextWrapping="Wrap" Margin="0,0,0,6"
+                       Visibility="{Binding HasDataProblem, Converter={StaticResource BoolToVisibility}}" />
+            <DockPanel Margin="0,0,0,4">
+              <TextBlock DockPanel.Dock="Left" Text="{x:Static r:Strings.Settings_DataNow}" VerticalAlignment="Center" Margin="0,0,6,0" />
+              <Button DockPanel.Dock="Right" Content="{x:Static r:Strings.Settings_DataOpenFolder}" Padding="10,2" Margin="8,0,0,0" Click="OpenDataFolder_Click" />
+              <!-- Read only, and selectable: the path can be copied -->
+              <TextBox x:Name="DataNowBox" Text="{Binding DataNow, Mode=OneWay}" IsReadOnly="True" BorderThickness="0" Background="Transparent"
+                       VerticalAlignment="Center" TextWrapping="Wrap" AutomationProperties.Name="{x:Static r:Strings.Settings_DataNow}" />
+            </DockPanel>
+            <Button x:Name="ImportThisPcButton" Content="{x:Static r:Strings.Settings_DataImport}" HorizontalAlignment="Left" Padding="10,2" Margin="0,4,0,4"
+                    Click="ImportThisPc_Click" Visibility="{Binding ShowsDataImport, Converter={StaticResource BoolToVisibility}}" />
+            <TextBlock Style="{StaticResource DialogHint}" Margin="0,4,0,0" Text="{x:Static r:Strings.Settings_DataHint}" />
           </StackPanel>
         </Grid>
       </ScrollViewer>

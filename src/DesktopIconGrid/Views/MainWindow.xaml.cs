@@ -46,6 +46,11 @@ public partial class MainWindow : Window
         viewModel.GroupActivated += OnGroupActivated;
         viewModel.ItemActivated += (_, _) => CloseSearch();
         viewModel.ExitRequested += (_, _) => ExitApplication();
+        viewModel.RestartRequested += (_, _) =>
+        {
+            App.RestartOnExit = true; // a new data folder takes effect, or this PC's bar is brought in (0.13.0 WP1)
+            ExitApplication();
+        };
         viewModel.SettingsChanged += (_, _) =>
         {
             EnsureMinimumSize();
@@ -1184,7 +1189,7 @@ public partial class MainWindow : Window
     {
         // A portable copy leaves nothing on the PC it visits (as with the Run entry): the entry would stay in that
         // user's Send to menu, pointing at a drive that is gone. Taking an old one out is always possible.
-        if (!SendToEntry.Exists && DesktopIconGrid.Core.Storage.DataLocation.IsPortable)
+        if (!SendToEntry.Exists && DesktopIconGrid.Core.Storage.DataLocation.IsPortableCopy)
         {
             MessageBox.Show(this, Strings.Commands_SendToPortable, Strings.App_Name, MessageBoxButton.OK, MessageBoxImage.Information);
             SendToMenuItem.IsChecked = false;

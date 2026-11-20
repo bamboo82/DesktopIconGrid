@@ -18,7 +18,7 @@ using DesktopIconGrid.SpecialIcons;
 namespace DesktopIconGrid.ViewModels;
 
 /// <summary>Root view model: owns the model, persists every change and exposes bar-wide commands.</summary>
-public sealed class LauncherViewModel : ObservableObject, ISyncHost
+public sealed partial class LauncherViewModel : ObservableObject, ISyncHost
 {
     public const int LabelHeight = 16;
     private const int PopupMaxColumns = 8;
@@ -1689,10 +1689,26 @@ public sealed class LauncherViewModel : ObservableObject, ISyncHost
     public void OpenSettings()
     {
         var edited = _dialogs.ShowSettings(Model.Settings.Clone(), Local.Clone());
-        if (edited is not null)
+        if (edited is null)
         {
-            ApplyLocalSettings(edited.Local); // first: ApplySettings' SettingsChanged registers the hotkeys from it
-            ApplySettings(edited.Settings);
+            return;
+        }
+
+        if (edited.ImportThisPc)
+        {
+            BringThisPcBar(); // the bar is replaced: nothing else of the dialog is kept (0.13.0 WP1)
+            return;
+        }
+
+        ApplyLocalSettings(edited.Local); // first: ApplySettings' SettingsChanged registers the hotkeys from it
+        ApplySettings(edited.Settings);
+        if (edited.Move is { } move)
+        {
+            MoveDataAsync(move).ContinueWith(
+                task => AppLog.Default.Error("App", "The data could not be moved", task.Exception?.GetBaseException()),
+                CancellationToken.None,
+                TaskContinuationOptions.OnlyOnFaulted,
+                TaskScheduler.Default);
         }
     }
 

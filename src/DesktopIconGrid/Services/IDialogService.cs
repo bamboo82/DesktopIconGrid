@@ -71,6 +71,13 @@ public interface IDialogService
     /// <summary>Asks for a folder, starting in <paramref name="initialFolder"/> when it exists; <see langword="null"/> on Cancel.</summary>
     string? PickFolder(string title, string? initialFolder);
 
+    /// <summary>
+    /// Asks <paramref name="message"/> with buttons named for what they do (0.13.0 WP1) and returns the one pressed, by its
+    /// place in <paramref name="buttons"/>; closing the window answers with <paramref name="cancelButton"/>, or the default
+    /// one when there is none.
+    /// </summary>
+    int Choose(string title, string message, IReadOnlyList<string> buttons, int defaultButton, int? cancelButton);
+
     /// <summary>The Repair dialog for a shortcut whose program is not on this PC; <see langword="null"/> on Cancel.</summary>
     RepairResult? ShowRepair(ShortcutItem shortcut);
 
@@ -96,5 +103,16 @@ public interface IDialogService
     Core.Storage.LayoutHistoryEntry? ShowLayoutHistory(Func<IReadOnlyList<Core.Storage.LayoutHistoryEntry>> list);
 }
 
-/// <summary>What the Settings dialog saved: the bar's settings, which travel with it, and this PC's own, which do not.</summary>
-public sealed record SettingsResult(LauncherSettings Settings, DesktopIconGrid.Core.Storage.LocalSettings Local);
+/// <summary>
+/// What the Settings dialog saved: the bar's settings, which travel with it, and this PC's own, which do not; a new place
+/// for the data (0.13.0 WP1), carried out once the dialog is closed, and whether this PC's bar is to be brought into the
+/// portable copy instead (then nothing else of the dialog is kept).
+/// </summary>
+public sealed record SettingsResult(LauncherSettings Settings, DesktopIconGrid.Core.Storage.LocalSettings Local, DataMove? Move = null, bool ImportThisPc = false);
+
+/// <summary>A new place for the data, chosen in Settings ▸ General and checked there (0.13.0 WP1).</summary>
+/// <param name="Portable">The data goes where <c>portable.txt</c> says; false: to <c>%LocalAppData%</c>, and the file goes.</param>
+/// <param name="MarkerText">What <c>portable.txt</c> is to say, as typed or as Browse made it (<c>.</c>, <c>data</c>, a full name).</param>
+/// <param name="Folder">The new data folder, in full.</param>
+/// <param name="Copy">The bar's data is copied there from the folder in use now.</param>
+public sealed record DataMove(bool Portable, string MarkerText, string Folder, bool Copy);

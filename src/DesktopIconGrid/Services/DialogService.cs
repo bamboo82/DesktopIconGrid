@@ -85,8 +85,11 @@ public sealed class DialogService(IIconProvider icons) : IDialogService, ILaunch
     {
         var viewModel = new SettingsViewModel(current, local);
         viewModel.UseChineseFont(ChineseFonts);
+        viewModel.UseDataFolders(DataFolders.Current);
         var window = new SettingsWindow { DataContext = viewModel, Owner = Owner };
-        return window.ShowDialog() == true ? new SettingsResult(viewModel.ToSettings(), viewModel.ToLocalSettings()) : null;
+        return window.ShowDialog() == true
+            ? new SettingsResult(viewModel.ToSettings(), viewModel.ToLocalSettings(), viewModel.PlannedMove, viewModel.ImportThisPcRequested)
+            : null;
     }
 
     public void ShowNameTable(LauncherViewModel launcher)
@@ -200,6 +203,9 @@ public sealed class DialogService(IIconProvider icons) : IDialogService, ILaunch
         var window = new RepairWindow { DataContext = viewModel, Owner = Owner };
         return window.ShowDialog() == true ? viewModel.Result : null;
     }
+
+    public int Choose(string title, string message, IReadOnlyList<string> buttons, int defaultButton, int? cancelButton) =>
+        ChoiceWindow.Ask(Owner, title, message, buttons, defaultButton, cancelButton);
 
     public string? PickFolder(string title, string? initialFolder)
     {
