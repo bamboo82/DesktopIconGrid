@@ -562,4 +562,81 @@ public sealed class SyncService
     }
 
     public void SaveSettings() => _saveSettings();
+
+    /// <summary>
+    /// After this PC uploaded a layout naming <paramref name="storedName"/> (0.15.0 WP5b): puts that picture from
+    /// <paramref name="folder"/> beside the copies unless it is there, and when the picture this PC last synced was another,
+    /// deletes that one from the sync place unless a copy this PC can see still names it (when unsure, it stays). Run after
+    /// the layout's upload, on its own: a failure here is the caller's to log, the layout is up all the same, and the next
+    /// upload tries again (<see cref="SyncSettings.LastSyncedPicture"/> moves only once all went well). True when a picture
+    /// was uploaded.
+    /// </summary>
+    public Task<bool> SyncPictureAfterUploadAsync(string? storedName, string folder, CancellationToken cancellationToken) => ExclusiveAsync(async copies =>
+    {
+        if (copies is not ISyncPictures pictures)
+        {
+            return false;
+        }
+
+        storedName = BackgroundImage.IsStoredName(storedName) ? storedName : null;
+        var uploaded = storedName is not null && await PictureSync.UploadIfMissingAsync(pictures, folder, storedName, cancellationToken).ConfigureAwait(false);
+        var previous = Settings.LastSyncedPicture;
+        if (previous is not null && !string.Equals(previous, storedName, StringComparison.OrdinalIgnoreCase))
+        {
+            var named = await PictureNamesInCopiesAsync(copies, cancellationToken).ConfigureAwait(false);
+            await PictureSync.DeleteIfUnnamedAsync(pictures, previous, named, cancellationToken).ConfigureAwait(false);
+        }
+
+        if (!string.Equals(previous, storedName, StringComparison.OrdinalIgnoreCase))
+        {
+            Settings.LastSyncedPicture = storedName;
+            SaveSettings();
+        }
+
+        return uploaded;
+    }, cancellationToken);
+
+    /// <summary>
+    /// Down (0.15.0 WP5b): fetches the stored picture <paramref name="storedName"/> from beside the copies into
+    /// <paramref name="folder"/>, through <see cref="PictureSync.FetchAsync"/>'s checks; <paramref name="decodes"/> is the
+    /// caller's check that Windows decodes the bytes as the type their name says.
+    /// </summary>
+    public Task<PictureFetch> FetchPictureAsync(string storedName, string folder, Func<byte[], bool, bool> decodes, CancellationToken cancellationToken) =>
+        ExclusiveAsync(
+            copies => copies is ISyncPictures pictures
+                ? PictureSync.FetchAsync(pictures, folder, storedName, decodes, cancellationToken)
+                : Task.FromResult(PictureFetch.NotThere),
+            cancellationToken);
+
+    /// <summary>
+    /// The pictures the profile copies in the sync place name, read from each copy; <see langword="null"/> when one cannot be
+    /// read (it may name the picture), so that the tidy keeps it.
+    /// </summary>
+    private static async Task<IReadOnlyCollection<string>?> PictureNamesInCopiesAsync(IDriveClient copies, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var names = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var file in await copies.ListFilesAsync(cancellationToken).ConfigureAwait(false))
+            {
+                if (file.AppProperties.ContainsKey(FolderSyncClient.UnreadableProperty))
+                {
+                    AppLog.Default.Info("Sync", $"The copy {file.Name} cannot be read now: the old background picture stays in the sync place");
+                    return null;
+                }
+
+                if (PictureSync.NamedIn(await copies.DownloadTextAsync(file.Id, cancellationToken).ConfigureAwait(false)) is { } name)
+                {
+                    names.Add(name);
+                }
+            }
+
+            return names;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Text.Json.JsonException or DriveException or HttpRequestException)
+        {
+            AppLog.Default.Info("Sync", $"The copies could not all be read ({ex.Message}): the old background picture stays in the sync place");
+            return null;
+        }
+    }
 }

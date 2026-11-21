@@ -9,6 +9,55 @@ The owner relays replies.
 
 ---
 
+## 2026-11-21 (159) — 0.15.0 WP5b: the background picture file travels with sync
+
+- **Runs:** 261 (`ae1afe8`, U2) green: Core 1359/1359, App 595/595. 262 (`a8bc7ea`, the 50 MB limit) green: Core
+  1359/1359, App 596/596.
+- **Drive scope:** none new. The sign-in always asks for `drive.file` (files the app creates); the pictures are files the
+  app creates in its own Drive folder beside the profile copies, which that scope covers on every PC signed in to this
+  app, as the copies already are. So both halves were coded; no new consent is asked.
+- **What travels:** the stored file itself, as `background-<stored name>` beside the copies, in a folder or in the app's
+  Drive folder (`ISyncPictures`, by `FolderSyncClient` and `GoogleDriveClient`; the copy listings are untouched: the folder
+  lists `*.json`, Drive lists JSON files). One remote file per picture, never uploaded twice (listed first).
+- **Up:** after an automatic upload that went up, and after the Sync window's save to a copy, `SyncPictureAfterUploadAsync`
+  uploads the layout's picture unless it is there. It runs after the layout's upload, on its own: a failure is one log line
+  and the layout stays up; `lastSyncedPicture` (this PC's, in `sync.json`) moves only once all went well, so the next upload
+  tries again.
+- **Down:** after a load is applied (an automatic load, the linked copy at start, a chosen copy: all through
+  `LoadAndApplyAsync`), after the start-up check whatever it found, and after each upload, a picture the bar names and this
+  PC lacks is fetched in the background (`PictureTransfers`, one fetch per picture at a time). The colour shows meanwhile;
+  when it comes, the bar is told (`ISyncHost.PictureArrived`) and redraws. Not there or refused: the colour stays, one line
+  in the log, no message box, and the next of those checks tries again, never a loop.
+- **Checks before a received file is kept** (`PictureSync.FetchAsync`): at most 20 MB by the listing and while reading (the
+  download stops at the limit, `BoundedBuffer`); `BackgroundImage.NameFor` of its bytes is exactly the name asked for (so a
+  JPEG's bytes cannot stand in a `.png` name); `BackgroundPictures.DecodesAs`: decoded with the JPEG or PNG decoder alone,
+  as the extension says, one frame, at most 3840 px on its longer side read from the header before the pixels, then
+  decoded whole (on the UI thread, as all of the app's imaging); written as `<name>.partial` and moved into `backgrounds`
+  only after all three. Anything else is discarded.
+- **Tidy:** when this PC uploads a layout naming another picture than the one it last synced, that one is deleted from the
+  sync place unless a copy it can see names it; it reads every copy for `backgroundImage.file`, and when one cannot be read
+  (half written, locked, not JSON) it keeps the picture. Local pruning skips a name being downloaded. Unlinking and signing
+  out touch no local picture.
+- **Settings:** for a picture this PC lacks, the thumbnail place says 下載中… / *Downloading…* / 下载中… during a fetch and
+  這台電腦沒有這張圖片 / *This PC does not have this picture* / 这台电脑没有这张图片 otherwise (it widens for that, two lines at
+  most); it follows a fetch while open.
+- **Security note,** as you wrote it, in docs/THEMES.md: "Only pixels the program decoded and re-encoded are stored from a
+  file or the web; from sync, only a file whose hash is its name and that decodes as the JPEG or PNG it claims."
+- **Tests:** Core: a picture goes up once, under its remote name, not for a name that is no stored name or a file this PC
+  lacks, and no copy is listed for it; it comes down through a temporary name, and one not there is said so; each refusal
+  keeps nothing (too large by the listing, too large while reading, a real 20 MB + 1 file, wrong hash, not decoded); the
+  check is asked with the name's type, and a `.jpg` name does not take the `.png` file; the tidy keeps a picture a copy
+  names, keeps it when unsure, deletes it otherwise; through the service with two PCs: a second copy that still names the
+  old picture keeps it, and once none does it goes, and an unreadable copy keeps it; a fetch through the service, then the
+  file gone: not there, and the copies load as before. App: Windows decodes a PNG and a JPEG as themselves, refuses each as
+  the other, refuses 3841 px and takes 3840; no prune while a download of that name is under way; Settings' three notes;
+  the coordinator fetches a missing picture and tells the bar, and leaves one not there for the next check; a picture
+  upload that fails leaves the layout up and `lastSyncedPicture` unmoved, and goes at the next try.
+- **Not tested:** the real Google Drive (listing by name, a picture upload and download there), two real PCs, a sync
+  program's conflict copy of a picture file, and on screen.
+
+This entry claims no run for its own commit.
+
 ## 2026-11-21 (158) — Review 41: a picked picture file over 50 MB is refused before it is read
 
 - **As answered:** `BackgroundPictures.ReadFile` looks at the file's length first and refuses one over 50 MB

@@ -6360,11 +6360,29 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Downloading….
+        /// </summary>
+        public static string Settings_PictureDownloading {
+            get {
+                return ResourceManager.GetString("Settings_PictureDownloading", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to From a web address….
         /// </summary>
         public static string Settings_PictureFromWeb {
             get {
                 return ResourceManager.GetString("Settings_PictureFromWeb", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to This PC does not have this picture.
+        /// </summary>
+        public static string Settings_PictureMissingHere {
+            get {
+                return ResourceManager.GetString("Settings_PictureMissingHere", resourceCulture);
             }
         }
 

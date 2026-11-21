@@ -62,6 +62,7 @@ public partial class MainWindow : Window
             App.RestartOnExit = true; // a new data folder takes effect, or this PC's bar is brought in (0.13.0 WP1)
             ExitApplication();
         };
+        viewModel.PictureChanged += (_, _) => ApplyAppearance(); // the picture's file came through sync (0.15.0 WP5b)
         viewModel.SettingsChanged += (_, _) =>
         {
             EnsureMinimumSize();

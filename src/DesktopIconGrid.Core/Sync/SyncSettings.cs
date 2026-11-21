@@ -61,6 +61,12 @@ public sealed class SyncSettings
     /// <summary>The <see cref="SyncProfile.Revision"/> this device last uploaded or downloaded for the linked copy.</summary>
     public string? LastRevision { get; set; }
 
+    /// <summary>
+    /// The background picture (its stored name) this PC last put beside the copies with a layout (0.15.0 WP5b), so that when
+    /// it uploads a layout with another one it knows which to tidy away. This PC's own, in <c>sync.json</c>, never synced.
+    /// </summary>
+    public string? LastSyncedPicture { get; set; }
+
     /// <summary>Upload changes to the linked copy automatically.</summary>
     public bool AutoUpload { get; set; } = true;
 

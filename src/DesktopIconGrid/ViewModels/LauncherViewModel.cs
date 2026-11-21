@@ -2147,6 +2147,23 @@ public sealed partial class LauncherViewModel : ObservableObject, ISyncHost
     /// Replaces the settings and items with those of <paramref name="layout"/> (for example a copy downloaded
     /// from Google Drive), keeping this device's window placement.
     /// </summary>
+    /// <summary>Raised when the background picture's file came from the sync place: the bar draws it (0.15.0 WP5b).</summary>
+    public event EventHandler? PictureChanged;
+
+    /// <summary>The background picture's file came from the sync place (0.15.0 WP5b): drawn now if the bar still names it.</summary>
+    public void PictureArrived(string storedName)
+    {
+        if (!string.Equals(Model.Settings.BackgroundImage?.File, storedName, StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        AppLog.Default.Info("Theme", $"Background picture {storedName} is here: the bar draws it");
+        OnPropertyChanged(nameof(ShownPicture));
+        OnPropertyChanged(nameof(Palette));
+        PictureChanged?.Invoke(this, EventArgs.Empty);
+    }
+
     public void ReplaceLayout(LauncherLayout layout)
     {
         ArgumentNullException.ThrowIfNull(layout);

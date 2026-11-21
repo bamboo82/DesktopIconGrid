@@ -83,6 +83,41 @@ public static class BackgroundPictures
     }
 
     /// <summary>
+    /// Whether <paramref name="bytes"/> from the sync place decode as the JPEG or PNG (<paramref name="png"/>) their name says
+    /// and nothing else (0.15.0 WP5b), within <see cref="MaxSide"/> on the longer side: the size is read from the header
+    /// before any pixel is decoded, then the whole picture is decoded.
+    /// </summary>
+    public static bool DecodesAs(byte[] bytes, bool png)
+    {
+        ArgumentNullException.ThrowIfNull(bytes);
+        try
+        {
+            using var header = new MemoryStream(bytes, writable: false);
+            var sizes = Decoder(header, png, BitmapCreateOptions.DelayCreation | BitmapCreateOptions.IgnoreColorProfile, BitmapCacheOption.None);
+            if (sizes.Frames.Count != 1 || sizes.Frames[0] is not { PixelWidth: > 0, PixelHeight: > 0 } first || Math.Max(first.PixelWidth, first.PixelHeight) > MaxSide)
+            {
+                return false;
+            }
+
+            using var whole = new MemoryStream(bytes, writable: false);
+            var frame = Decoder(whole, png, BitmapCreateOptions.IgnoreColorProfile, BitmapCacheOption.OnLoad).Frames[0];
+            var stride = frame.PixelWidth * ((frame.Format.BitsPerPixel + 7) / 8);
+            var row = new byte[stride];
+            frame.CopyPixels(new Int32Rect(0, frame.PixelHeight - 1, frame.PixelWidth, 1), row, stride, 0); // its last row decodes too
+            return true;
+        }
+        catch (Exception ex) when (ex is NotSupportedException or FileFormatException or ArgumentException or IOException or OverflowException
+                                       or InvalidOperationException or System.Runtime.InteropServices.COMException)
+        {
+            return false;
+        }
+
+        // The decoder of exactly that type: one of the other refuses the bytes.
+        static BitmapDecoder Decoder(Stream stream, bool png, BitmapCreateOptions options, BitmapCacheOption cache) =>
+            png ? new PngBitmapDecoder(stream, options, cache) : new JpegBitmapDecoder(stream, options, cache);
+    }
+
+    /// <summary>
     /// Writes <paramref name="picture"/> anew into <paramref name="folder"/> and returns its stored name and average
     /// colour. The same picture is written once: its name is its content's.
     /// </summary>
@@ -216,6 +251,11 @@ public static class BackgroundPictures
 
             foreach (var name in BackgroundImage.Unused(Directory.EnumerateFiles(folder).Select(Path.GetFileName).OfType<string>(), inUse))
             {
+                if (PictureTransfers.IsFetching(name))
+                {
+                    continue; // a download of that name is under way (0.15.0 WP5b)
+                }
+
                 File.Delete(Path.Combine(folder, name));
                 AppLog.Default.Info("Theme", $"Background picture {name} deleted: no setting names it any more");
             }

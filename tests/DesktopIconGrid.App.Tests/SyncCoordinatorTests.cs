@@ -78,6 +78,11 @@ public class SyncCoordinatorTests
 
         public void ReplaceLayout(LauncherLayout layout) => Layout = layout;
 
+        /// <summary>The pictures the coordinator said came from the sync place (0.15.0 WP5b).</summary>
+        public List<string> ArrivedPictures { get; } = [];
+
+        public void PictureArrived(string storedName) => ArrivedPictures.Add(storedName);
+
         public void Change() => LayoutChanged?.Invoke(this, EventArgs.Empty);
     }
 

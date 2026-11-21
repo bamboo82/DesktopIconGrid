@@ -24,6 +24,10 @@ public partial class SettingsWindow : Window
             }
         };
         Closed += (_, _) => ViewModel?.CancelInstall(); // Cancel, and Save too: a download does not outlive the window
+
+        // The picture's row follows a fetch of it through sync while the window is open (0.15.0 WP5b).
+        PictureTransfers.StateChanged += OnPictureTransfer;
+        Closed += (_, _) => PictureTransfers.StateChanged -= OnPictureTransfer;
     }
 
     /// <summary>
@@ -141,6 +145,15 @@ public partial class SettingsWindow : Window
     /// A background picture from a file (0.15.0 WP5): decoded by Windows and written anew into the data folder's
     /// backgrounds; the setting changes at Save.
     /// </summary>
+    private void OnPictureTransfer(object? sender, string storedName) =>
+        Dispatcher.BeginInvoke(() =>
+        {
+            if (ViewModel is { Picture: { } picture } viewModel && string.Equals(picture.File, storedName, StringComparison.OrdinalIgnoreCase))
+            {
+                viewModel.RefreshPicture();
+            }
+        });
+
     private void ChoosePicture_Click(object sender, RoutedEventArgs e)
     {
         if (ViewModel is not { } viewModel)

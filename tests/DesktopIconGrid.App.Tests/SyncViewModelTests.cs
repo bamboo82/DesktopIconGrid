@@ -56,6 +56,10 @@ public sealed class SyncViewModelTests : IDisposable
         public void ReplaceLayout(LauncherLayout layout)
         {
         }
+
+        public void PictureArrived(string storedName)
+        {
+        }
     }
 
     /// <summary>Answers the folder picker and the confirmation as told.</summary>

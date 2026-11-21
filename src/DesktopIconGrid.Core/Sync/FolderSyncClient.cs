@@ -19,7 +19,7 @@ namespace DesktopIconGrid.Core.Sync;
 /// or deleted. A file that cannot be read at the moment (still being synced) is listed without a device, so it never
 /// looks like this device's own copy and is never overwritten as one.
 /// </remarks>
-public sealed class FolderSyncClient : IDriveClient
+public sealed class FolderSyncClient : IDriveClient, ISyncPictures
 {
     /// <summary>Files bigger than this are not read for the listing; a copy is a few kilobytes.</summary>
     public const long MaxCopySize = 16 * 1024 * 1024;
@@ -61,6 +61,72 @@ public sealed class FolderSyncClient : IDriveClient
 
     public Task DeleteAsync(string fileId, CancellationToken cancellationToken) =>
         Task.Run(() => File.Delete(PathOf(fileId)), cancellationToken);
+
+    /// <summary>The background pictures beside the copies (0.15.0 WP5b): <c>background-&lt;stored name&gt;</c> files in the folder.</summary>
+    public Task<IReadOnlyList<SyncPicture>> ListPicturesAsync(CancellationToken cancellationToken) =>
+        Task.Run<IReadOnlyList<SyncPicture>>(() => Directory.Exists(Folder)
+            ? Directory.EnumerateFiles(Folder, PictureSync.Prefix + "*")
+                .Select(path => new FileInfo(path))
+                .Where(info => PictureSync.StoredNameOf(info.Name) is not null)
+                .Select(info => new SyncPicture(info.Name, info.Name, info.Length))
+                .ToList()
+            : [], cancellationToken);
+
+    /// <summary>Writes a picture beside the copies under a temporary name first; one that is there already is left as it is.</summary>
+    public Task UploadPictureAsync(string remoteName, byte[] content, CancellationToken cancellationToken) =>
+        Task.Run(() =>
+        {
+            ArgumentNullException.ThrowIfNull(content);
+            if (PictureSync.StoredNameOf(remoteName) is null)
+            {
+                throw new ArgumentException($"\"{remoteName}\" is no background picture's name.", nameof(remoteName));
+            }
+
+            var path = PathOf(remoteName);
+            if (File.Exists(path))
+            {
+                return; // its name is its content
+            }
+
+            Directory.CreateDirectory(Folder);
+            var temporary = path + PictureSync.PartialEnding;
+            File.WriteAllBytes(temporary, content);
+            try
+            {
+                File.Move(temporary, path, overwrite: false);
+            }
+            catch (IOException) when (File.Exists(path))
+            {
+                File.Delete(temporary);
+            }
+        }, cancellationToken);
+
+    /// <summary>A picture's bytes, none when it is longer than <paramref name="maxBytes"/> (by its length, and while reading).</summary>
+    public Task<byte[]?> DownloadPictureAsync(SyncPicture picture, long maxBytes, CancellationToken cancellationToken) =>
+        Task.Run(() =>
+        {
+            ArgumentNullException.ThrowIfNull(picture);
+            using var stream = new FileStream(PathOf(picture.Id), FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+            if (stream.Length > maxBytes)
+            {
+                return null;
+            }
+
+            using var buffer = new BoundedBuffer(maxBytes);
+            try
+            {
+                stream.CopyTo(buffer);
+            }
+            catch (BoundedBuffer.TooLongException)
+            {
+                return null; // it grew while it was read
+            }
+
+            return (byte[]?)buffer.ToArray();
+        }, cancellationToken);
+
+    public Task DeletePictureAsync(SyncPicture picture, CancellationToken cancellationToken) =>
+        Task.Run(() => File.Delete(PathOf(picture.Id)), cancellationToken);
 
     /// <summary>
     /// The name a copy is listed under: the name inside it when the file is named after it, otherwise the file name

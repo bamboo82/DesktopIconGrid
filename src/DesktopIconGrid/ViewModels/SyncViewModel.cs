@@ -464,6 +464,7 @@ public sealed class SyncViewModel : ObservableObject
     private Task SaveToAsync(string name, string? fileId) => RunAsync(string.Format(Strings.Sync_Saving, name), async ct =>
     {
         var saved = await Service.SaveProfileAsync(name, _sync.ExportLayout(), fileId, ct);
+        await _sync.SyncPictureAsync(); // its background picture beside it (0.15.0 WP5b); a failure there leaves the copy saved
         await RefreshProfilesAsync(ct);
         SelectedProfile = Profiles.FirstOrDefault(p => p.FileId == saved.FileId);
         StatusText = string.Format(Strings.Sync_SavedLinked, saved.Name);

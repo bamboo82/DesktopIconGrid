@@ -3131,4 +3131,10 @@ SHA-256：{3}
   <data name="Settings_PictureStrengthLabel" xml:space="preserve">
     <value>图片浓度：</value>
   </data>
+  <data name="Settings_PictureDownloading" xml:space="preserve">
+    <value>下载中…</value>
+  </data>
+  <data name="Settings_PictureMissingHere" xml:space="preserve">
+    <value>这台电脑没有这张图片</value>
+  </data>
 </root>

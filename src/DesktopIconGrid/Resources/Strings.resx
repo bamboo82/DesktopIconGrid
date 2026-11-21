@@ -3131,4 +3131,10 @@ The place was not changed; what was copied stays there.</value>
   <data name="Settings_PictureStrengthLabel" xml:space="preserve">
     <value>Picture strength:</value>
   </data>
+  <data name="Settings_PictureDownloading" xml:space="preserve">
+    <value>Downloading…</value>
+  </data>
+  <data name="Settings_PictureMissingHere" xml:space="preserve">
+    <value>This PC does not have this picture</value>
+  </data>
 </root>

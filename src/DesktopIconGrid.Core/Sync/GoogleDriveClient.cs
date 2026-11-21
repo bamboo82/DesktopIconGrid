@@ -37,7 +37,7 @@ public interface IDriveClient
 }
 
 /// <summary>Google Drive v3 REST calls over <see cref="HttpClient"/>, with one automatic token refresh on 401.</summary>
-public sealed class GoogleDriveClient : IDriveClient, IDriveFiles
+public sealed class GoogleDriveClient : IDriveClient, IDriveFiles, ISyncPictures
 {
     public const string FolderName = "DesktopIconGrid";
     public const string ApiBase = "https://www.googleapis.com/drive/v3/";
@@ -156,6 +156,63 @@ public sealed class GoogleDriveClient : IDriveClient, IDriveFiles
         using var response = await SendAsync(
             () => new HttpRequestMessage(HttpMethod.Delete, $"{ApiBase}files/{Uri.EscapeDataString(fileId)}"),
             cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// The background pictures beside the copies in the app's folder (0.15.0 WP5b), files the app created there, which the
+    /// sign-in's <c>drive.file</c> scope already covers.
+    /// </summary>
+    public async Task<IReadOnlyList<SyncPicture>> ListPicturesAsync(CancellationToken cancellationToken)
+    {
+        var folderId = await EnsureFolderAsync(cancellationToken).ConfigureAwait(false);
+        IReadOnlyList<string> folders = _folderIds.Count > 0 ? _folderIds : [folderId];
+        var parents = folders.Count == 1
+            ? $"'{folders[0]}' in parents"
+            : "(" + string.Join(" or ", folders.Select(id => $"'{id}' in parents")) + ")";
+        var query = $"{parents} and trashed = false and name contains '{PictureSync.Prefix}'";
+        var url = $"files?q={Uri.EscapeDataString(query)}&fields={Uri.EscapeDataString("files(id,name,size)")}&pageSize=200";
+        var response = await GetAsync<FileListDto>(url, cancellationToken).ConfigureAwait(false);
+        return (response?.Files ?? [])
+            .Where(file => file.Id is not null && PictureSync.StoredNameOf(file.Name) is not null)
+            .Select(file => new SyncPicture(file.Id!, file.Name!, long.TryParse(file.Size, out var size) ? size : null))
+            .ToList();
+    }
+
+    public async Task UploadPictureAsync(string remoteName, byte[] content, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(content);
+        if (PictureSync.StoredNameOf(remoteName) is null)
+        {
+            throw new ArgumentException($"\"{remoteName}\" is no background picture's name.", nameof(remoteName));
+        }
+
+        var folderId = await EnsureFolderAsync(cancellationToken).ConfigureAwait(false);
+        var mimeType = remoteName.EndsWith(".png", StringComparison.Ordinal) ? "image/png" : "image/jpeg";
+        using var stream = new MemoryStream(content, writable: false);
+        await UploadAsync(folderId, remoteName, mimeType, stream, content.Length, existingFileId: null, progress: null, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>A picture's bytes; the download stops, and none is returned, as soon as more than <paramref name="maxBytes"/> come.</summary>
+    public async Task<byte[]?> DownloadPictureAsync(SyncPicture picture, long maxBytes, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(picture);
+        using var buffer = new BoundedBuffer(maxBytes);
+        try
+        {
+            await DownloadAsync(picture.Id, buffer, progress: null, cancellationToken).ConfigureAwait(false);
+        }
+        catch (BoundedBuffer.TooLongException)
+        {
+            return null;
+        }
+
+        return buffer.ToArray();
+    }
+
+    public Task DeletePictureAsync(SyncPicture picture, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(picture);
+        return DeleteAsync(picture.Id, cancellationToken);
     }
 
     // ----- browsing and transfers (buckets, viewer) ---------------------------------------------------

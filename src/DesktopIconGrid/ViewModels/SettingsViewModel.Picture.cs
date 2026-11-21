@@ -2,6 +2,7 @@ using System.IO;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using DesktopIconGrid.Core.Models;
+using DesktopIconGrid.Resources;
 using DesktopIconGrid.Services;
 
 namespace DesktopIconGrid.ViewModels;
@@ -46,6 +47,7 @@ public sealed partial class SettingsViewModel
 
             OnPropertyChanged();
             OnPropertyChanged(nameof(HasPicture));
+            OnPropertyChanged(nameof(PictureNote));
             OnPropertyChanged(nameof(PictureStrength));
             OnPropertyChanged(nameof(PictureStrengthText));
             OnThemeColoursChanged();
@@ -53,6 +55,26 @@ public sealed partial class SettingsViewModel
     }
 
     public bool HasPicture => _picture is not null;
+
+    /// <summary>
+    /// What the thumbnail's place says when it shows no thumbnail (0.15.0 WP5b): 無 without a picture; for a picture this PC
+    /// lacks, 下載中… while it comes from the sync place and 這台電腦沒有這張圖片 otherwise. Empty with a thumbnail.
+    /// </summary>
+    public string PictureNote => _picture is not { } picture ? Strings.Settings_PictureNone
+        : PictureShown ? string.Empty
+        : PictureTransfers.IsFetching(picture.File) ? Strings.Settings_PictureDownloading
+        : Strings.Settings_PictureMissingHere;
+
+    /// <summary>A fetch of the picture began or ended (0.15.0 WP5b): the row reads it again.</summary>
+    public void RefreshPicture()
+    {
+        _thumbnail = null;
+        _thumbnailRead = false;
+        OnPropertyChanged(nameof(PictureThumbnail));
+        OnPropertyChanged(nameof(PictureThumbnailBrush));
+        OnPropertyChanged(nameof(PictureNote));
+        OnThemeColoursChanged();
+    }
 
     /// <summary>Whether this PC has the chosen picture's file: only then is it drawn, and only then does it change the text.</summary>
     private bool PictureShown => _picture is { } picture && File.Exists(Path.Combine(PicturesFolder, picture.File));

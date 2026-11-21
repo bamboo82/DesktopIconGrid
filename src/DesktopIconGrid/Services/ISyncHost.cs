@@ -11,4 +11,7 @@ public interface ISyncHost
     LauncherLayout ExportLayout();
 
     void ReplaceLayout(LauncherLayout layout);
+
+    /// <summary>The background picture <paramref name="storedName"/> came from the sync place (0.15.0 WP5b): draw it if it is still the one named.</summary>
+    void PictureArrived(string storedName);
 }

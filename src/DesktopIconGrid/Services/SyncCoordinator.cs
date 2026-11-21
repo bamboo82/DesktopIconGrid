@@ -195,6 +195,8 @@ public sealed class SyncCoordinator : ObservableObject
             {
                 case AutoUploadOutcome.Uploaded:
                     Status = string.Format(Strings.Sync_UploadedAt, result.Remote?.Name, DateTime.Now.ToString("t", CultureInfo.CurrentCulture));
+                    await SyncPictureAsync(); // the layout is up whatever this does (0.15.0 WP5b)
+                    _ = EnsurePictureAsync();
                     break;
                 case AutoUploadOutcome.Conflict:
                     Report(
@@ -261,6 +263,8 @@ public sealed class SyncCoordinator : ObservableObject
         {
             Report(string.Format(Strings.Sync_StartupCheckFailed, ex.Message), LogLevel.Warning);
         }
+
+        _ = EnsurePictureAsync(); // a picture the bar names and this PC lacks: tried again at each sync check (0.15.0 WP5b)
     }
 
     /// <summary>
@@ -278,6 +282,7 @@ public sealed class SyncCoordinator : ObservableObject
             _host.ReplaceLayout(profile.Layout);
             replaced = true;
             Status = string.Format(Strings.Sync_LoadedFrom, remote.Name, profile.SavedBy, Describe(profile.SavedAt));
+            _ = EnsurePictureAsync(); // the colour shows at once; the picture when it is here (0.15.0 WP5b)
         }
         finally
         {
@@ -294,6 +299,73 @@ public sealed class SyncCoordinator : ObservableObject
                 _uploadDueAfterLoad = false;
                 ScheduleUpload(); // the bar is still the one that was waiting to go up
             }
+        }
+    }
+
+    /// <summary>Where this PC keeps its background pictures; tests stand in a folder of their own.</summary>
+    internal string PicturesFolder { get; set; } = AppPaths.BackgroundsDirectory;
+
+    /// <summary>
+    /// Whether bytes from the sync place decode as the picture their name says: WPF imaging, on the UI thread as the rest of
+    /// the app's; tests stand in their own.
+    /// </summary>
+    internal Func<byte[], bool, bool> Decodes { get; set; } = DecodeOnUiThread;
+
+    private static bool DecodeOnUiThread(byte[] bytes, bool png)
+    {
+        var dispatcher = System.Windows.Application.Current?.Dispatcher;
+        if (dispatcher is null || dispatcher.CheckAccess())
+        {
+            return BackgroundPictures.DecodesAs(bytes, png);
+        }
+
+        try
+        {
+            return dispatcher.Invoke(() => BackgroundPictures.DecodesAs(bytes, png));
+        }
+        catch (Exception ex) when (ex is TaskCanceledException or InvalidOperationException)
+        {
+            return false; // the program is ending: nothing is kept
+        }
+    }
+
+    /// <summary>
+    /// After a layout went up (0.15.0 WP5b): its background picture beside the copies unless it is there, and the one it
+    /// replaced deleted from the sync place unless a copy still names it. A failure is one line in the log and leaves the
+    /// layout's upload as it was; the next upload tries again.
+    /// </summary>
+    public async Task SyncPictureAsync()
+    {
+        try
+        {
+            await Service.SyncPictureAfterUploadAsync(_host.ExportLayout().Settings.BackgroundImage?.File, PicturesFolder, CancellationToken.None);
+        }
+        catch (Exception ex) when (IsSyncError(ex) || ex is IOException or UnauthorizedAccessException)
+        {
+            AppLog.Default.Warning("Sync", $"The background picture was not synced: {ex.Message} (tried again at the next upload)");
+        }
+    }
+
+    /// <summary>
+    /// When the bar names a background picture this PC lacks (0.15.0 WP5b): fetches it from the sync place in the background,
+    /// the colour showing meanwhile, and the bar takes it when it is here. Not there or refused: one line in the log, and it is
+    /// tried again at the next sync check (an upload, a load, the start-up check), never in a loop.
+    /// </summary>
+    public async Task EnsurePictureAsync()
+    {
+        if (!Service.IsConnected || _host.ExportLayout().Settings.BackgroundImage?.File is not { } name)
+        {
+            return;
+        }
+
+        if (File.Exists(Path.Combine(PicturesFolder, name)))
+        {
+            return;
+        }
+
+        if (await PictureTransfers.EnsureAsync(Service, name, PicturesFolder, Decodes, CancellationToken.None))
+        {
+            _host.PictureArrived(name);
         }
     }
 

@@ -66,16 +66,34 @@ picture…*, *From a web address…* and *Remove*, and *Picture strength* (20–
   without data; a web page refused; then decoded by Windows. A failure is said in the window (not https, too large, not
   a picture, no answer). The address is not kept, and the picture is never fetched again by itself: nothing at start,
   at sync or at a theme change.
-- Stored: never the bytes that came in. The program decodes the picture and writes it anew into the data folder's
-  `backgrounds`, at most 3840 px on its longer side, as JPEG at quality 90, or as PNG when it has transparency, named by
-  its content (32 hex digits). A picture no setting names is deleted at the next start; nothing else in that folder is
-  touched.
+- Stored: only pixels the program decoded and re-encoded are stored from a file or the web; from sync, only a file whose
+  hash is its name and that decodes as the JPEG or PNG it claims. The program decodes a picture from a file or the web
+  and writes it anew into the data folder's `backgrounds`, at most 3840 px on its longer side, as JPEG at quality 90, or
+  as PNG when it has transparency, named by its content (32 hex digits). A picture no setting names is deleted at the
+  next start, but not while a download of that name is under way; nothing else in that folder is touched.
 - Setting: `backgroundImage` = `{ file, focusX, focusY, zoom, strength, average }` with the theme in `layout.json`.
   `file` must be one of the names the program gives; anything else (a path, another name) drops the picture at load. A
   focus outside 0–1, a zoom outside 100–400 or a strength outside 20–100 goes back to its default (0.5, 100, 100).
   `average` is the picture's average colour, worked out when it was stored.
-- It syncs as icons do: the setting travels, the file goes with the import and the data-location copy. A PC without
-  the file shows the colour alone, and no error.
+- It syncs (0.15.0 WP5b, the owner's "Yes, sync it"): the setting travels with the layout, and the stored file itself
+  beside the profile copies in the sync place, for Google Drive and a folder alike, as `background-<stored name>`, one
+  remote file per picture, never uploaded twice. On Drive these are files the app creates in its own folder, which the
+  sign-in's `drive.file` scope already covers: no new consent.
+  - Up: after this PC uploads a layout (automatically or with *Save to a copy*), its picture goes up unless the sync
+    place has it. A failed picture upload does not fail the layout's; it is logged and tried again at the next upload.
+  - Down: a layout that is applied (an automatic load, the linked copy at start, a chosen copy) and names a picture this
+    PC lacks shows the colour at once; the file is fetched in the background and the bar takes the picture when it is
+    there. Not there, or refused: the colour stays, one line in the log, no message box; tried again at the next sync
+    check (an upload, a load, the start-up check), never in a loop. Settings' thumbnail place says *Downloading…* meanwhile
+    and *This PC does not have this picture* without it.
+  - A received file is kept only when it is at most 20 MB (by the listing and while reading), the SHA-256 of its bytes
+    gives exactly the name the layout asks for, and Windows decodes it as the JPEG or PNG its extension says and nothing
+    else, at most 3840 px on its longer side (read from the header before any pixel); it is written under a temporary
+    name and moved into `backgrounds` only after all three. Anything else is discarded.
+  - Tidy: when this PC uploads a layout with another picture than the one it last synced (`lastSyncedPicture`, this PC's,
+    in `sync.json`), that one is deleted from the sync place unless a profile copy this PC can see still names it; when a
+    copy cannot be read, it stays. Unlinking or signing out leaves the local pictures alone.
+  - The file also goes with the import and the data-location copy, as before.
 - Drawing: in the bar and the window at the pointer, over the theme's colour and under everything else, scaled to
   cover (at zoom 100 it just covers; the focus point sits at the centre unless that would leave a gap) and at its
   strength. The background transparency fades the colour and the picture together; with Mica or Acrylic it lies over

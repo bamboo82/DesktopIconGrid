@@ -15,7 +15,8 @@ version numbers follow [Semantic Versioning](https://semver.org/).
 - The custom theme can have a background picture, from a file or a web address, drawn over its colour in the bar and
   the window at the pointer with a strength of your choice. *Adjust position…* chooses the part the bar shows and how
   far it is zoomed, with a preview of the bar. The program stores its own copy of the picture; the text is chosen to
-  read over it.
+  read over it. The picture travels to your other PCs with sync, through Google Drive or a folder; a PC shows the colour
+  until it is there, and keeps a received picture only after checking it.
 - The custom theme can have its own hover colour, with its strength, and its own keyboard focus border colour, each
   automatic (derived from the background, as before) until unticked. They show under the pointer, on focus, on the
   selected match and on the drop marker, in the bar, its groups and the window at the pointer. The theme's preview in

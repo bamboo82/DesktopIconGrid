@@ -188,13 +188,14 @@
           <TextBlock x:Name="PictureLabel" Grid.Row="5" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Settings_Picture}" Margin="0,0,12,10"
                      VerticalAlignment="Center" IsEnabled="{Binding IsCustomTheme}" />
           <WrapPanel Grid.Row="5" Grid.Column="1" Margin="0,0,0,10" IsEnabled="{Binding IsCustomTheme}">
-            <!-- The thumbnail is the border's fill, so nothing shares a cell (DialogFitTests) -->
-            <Border Width="64" Height="36" Margin="0,0,8,0" VerticalAlignment="Center" ClipToBounds="True"
+            <!-- The thumbnail is the border's fill, so nothing shares a cell (DialogFitTests). Without one it says why: none, or a
+                 picture this PC lacks, coming through sync or not (0.15.0 WP5b); it widens for that, two lines at most. -->
+            <Border x:Name="PictureThumbnailBox" MinWidth="64" MaxWidth="180" Height="36" Margin="0,0,8,0" VerticalAlignment="Center" ClipToBounds="True"
                     Background="{Binding PictureThumbnailBrush}"
                     BorderBrush="{DynamicResource SwatchBorderBrush}" BorderThickness="1" CornerRadius="3"
                     AutomationProperties.Name="{x:Static r:Strings.Settings_Picture}">
-              <TextBlock Text="{x:Static r:Strings.Settings_PictureNone}" HorizontalAlignment="Center" VerticalAlignment="Center"
-                         Visibility="{Binding HasPicture, Converter={StaticResource InverseBoolToVisibility}}" />
+              <TextBlock x:Name="PictureNoteText" Text="{Binding PictureNote}" HorizontalAlignment="Center" VerticalAlignment="Center"
+                         TextAlignment="Center" TextWrapping="Wrap" Margin="4,0" />
             </Border>
             <Button x:Name="ChoosePictureButton" Content="{x:Static r:Strings.Settings_ChoosePicture}" Padding="10,2" Margin="0,0,6,0" VerticalAlignment="Center" Click="ChoosePicture_Click" />
             <Button x:Name="PictureFromWebButton" Content="{x:Static r:Strings.Settings_PictureFromWeb}" Padding="10,2" Margin="0,0,6,0" VerticalAlignment="Center" Click="PictureFromWeb_Click" />
