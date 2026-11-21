@@ -97,6 +97,13 @@ public static class PictureSync
             return false;
         }
 
+        if (new FileInfo(path).Length > MaxBytes)
+        {
+            // Every other PC would refuse it (a large picture with transparency is stored as PNG): it stays on this one.
+            AppLog.Default.Info("Sync", $"Background picture {storedName} is larger than {MaxBytes / (1024 * 1024)} MB: not put beside the copies");
+            return false;
+        }
+
         var remote = RemoteName(storedName);
         var listed = await place.ListPicturesAsync(cancellationToken).ConfigureAwait(false);
         if (listed.Any(picture => string.Equals(picture.Name, remote, StringComparison.OrdinalIgnoreCase)))

@@ -79,6 +79,20 @@ public sealed class PictureSyncTests : IDisposable
     }
 
     [Fact]
+    public async Task A_stored_picture_over_the_limit_others_take_stays_on_this_PC()
+    {
+        var place = new FakePlace();
+        var name = new string('c', 32) + ".png";
+        using (var stream = File.Create(Path.Combine(_here, name)))
+        {
+            stream.SetLength(PictureSync.MaxBytes + 1); // a large picture with transparency, by its length alone
+        }
+
+        Assert.False(await PictureSync.UploadIfMissingAsync(place, _here, name, CancellationToken.None));
+        Assert.Empty(place.Uploaded); // every other PC would refuse it
+    }
+
+    [Fact]
     public async Task A_picture_this_PC_lacks_comes_down_through_a_temporary_name_and_one_not_there_is_said_so()
     {
         var place = new FolderSyncClient(_sync);

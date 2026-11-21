@@ -9,6 +9,16 @@ The owner relays replies.
 
 ---
 
+## 2026-11-21 (160) — WP5b: a picture over 20 MB stays on this PC
+
+- **Why:** a stored picture with transparency is a PNG and can be larger than the 20 MB every other PC takes; putting it
+  beside the copies only cost the transfer, and each PC then refused it.
+- **Change:** `PictureSync.UploadIfMissingAsync` leaves a stored picture over `MaxBytes` on this PC, with one line in the
+  log; the layout still names it, so other PCs show the colour, as for any picture they do not get.
+- **Test:** a stored `.png` of 20 MB and one byte (made by its length alone) is not uploaded.
+
+This entry claims no run for its own commit.
+
 ## 2026-11-21 (159) — 0.15.0 WP5b: the background picture file travels with sync
 
 - **Runs:** 261 (`ae1afe8`, U2) green: Core 1359/1359, App 595/595. 262 (`a8bc7ea`, the 50 MB limit) green: Core
