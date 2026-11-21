@@ -2769,7 +2769,7 @@ SHA-256：{3}
     <value>工具栏上的名称在保存时应用，对话框在下次打开时应用。图标大小不变。</value>
   </data>
   <data name="App_PortableKeptInProgram" xml:space="preserve">
-    <value>portable.txt 指定的 {0} 没有工具栏，而程序的文件夹有；工具栏仍将文件保存在程序的文件夹。若要移动文件，请使用“设置”›“常规”›“数据位置”。</value>
+    <value>portable.txt 指定的 {0} 没有工具栏，而程序的文件夹有；工具栏仍将文件保存在程序的文件夹。若要移动文件，请使用“设置”›“便携”。</value>
   </data>
   <data name="Separator_RowLine" xml:space="preserve">
     <value>换行线条</value>
@@ -2788,5 +2788,8 @@ SHA-256：{3}
   </data>
   <data name="Settings_TransparencyHint" xml:space="preserve">
     <value>只有工具栏的背景会变透明；图标与名称保持不透明。</value>
+  </data>
+  <data name="Settings_TabPortable" xml:space="preserve">
+    <value>便携</value>
   </data>
 </root>

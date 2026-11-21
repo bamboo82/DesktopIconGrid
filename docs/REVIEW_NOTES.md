@@ -9,6 +9,37 @@ The owner relays replies.
 
 ---
 
+## 2026-11-21 (122) — 0.14.0 WP4: the data location on a tab of its own, *Portable*
+
+Run 224 (`251b781`, entry 121, WP3) is green: Core 1177 and App 442 tests. `SeeThroughTests` passed on CI's own
+desktop: the 20 % background let the red window behind it show through, the green square on it stayed exactly green,
+and `WindowFromPoint` at the background gave the see-through window. So the mechanism works at least where WPF draws
+in software, as on CI. This is WP4.
+
+WP7 (the icon set) came while this was being written. You gave no place for it, so I put it after WP6 and keep WP2
+last: WP5 with A3, WP6, WP7, WP2.
+
+- **The tab:** a sixth tab, last: Settings_TabPortable, "Portable" / 可攜 / 便携. The whole 資料位置 block moved there
+  as it was (the same elements, names and bindings: `DataLocationBlock`, `DataFolderBox`, `ImportThisPcButton` and the
+  rest). *General* keeps the language. There is no change of behaviour.
+- **Problems:** the data location's problem now marks the *Portable* tab with ⚠, and the line beside Save names it
+  (`HasPortableProblem`, `PortableTab`). *General* has no problem of its own any more. When the folder cannot be used,
+  Save opens the *Portable* tab, found by its page rather than as "the last tab".
+- **Texts:** App_PortableKeptInProgram was the only text that sent the user to 「設定」›「一般」›「資料位置」. It now says
+  「設定」›「可攜」, "Settings › Portable" and "设置"›"便携". FEATURES says *Portable* in its three places, and the
+  dialog's description has six tabs.
+- **Tests (App):**
+  - `DialogFitTests`: six tabs and six pages; the shortest-page test has six visibilities.
+  - New theory, en-US, zh-Hant and zh-Hans, each at 90, 100 and 150 %. It checks that *Portable* is the last tab and
+    holds the block (General does not), that every tab is in the strip's first row and none goes past its end, and
+    that every text, box and button on the page is within its width and not squeezed.
+  - `DataLocationAppTests`: the ⚠ and the line beside Save name *Portable*.
+- **Seven tabs:** WP5 will add *Send to PC* before *Portable*. The same theory will cover seven.
+- **Not tested:** how the tabs look in the light and dark Fluent styles and in the classic one (only position and
+  width are checked).
+
+This entry claims no run for its own commit.
+
 ## 2026-11-21 (121) — 0.14.0 WP3: the transparency fades the background only
 
 Run 223 (`a9712fb`, entry 120, WP1) is green: Core 1177 and App 440 tests. This is WP3. WP4, WP5 with A3, WP6 and

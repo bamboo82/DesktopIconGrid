@@ -113,7 +113,7 @@ public partial class SettingsWindow : Window
     {
         if (!viewModel.TryPlanDataMove(Core.Storage.DataLocation.CanUse, out var move))
         {
-            Tabs.SelectedIndex = Tabs.Items.Count - 1; // General, where the reason is said
+            Tabs.SelectedIndex = PageList.ToList().IndexOf(PortablePage); // where the reason is said
             return false;
         }
 

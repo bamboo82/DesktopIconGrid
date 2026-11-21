@@ -100,8 +100,8 @@ public sealed class DialogFitTests(WpfThread wpf)
             var window = new SettingsWindow { DataContext = new SettingsViewModel(new LauncherSettings()) };
             try
             {
-                Assert.Equal(5, window.Tabs.Items.Count);
-                Assert.Equal(5, window.PageList.Count);
+                Assert.Equal(6, window.Tabs.Items.Count);
+                Assert.Equal(6, window.PageList.Count);
                 foreach (var page in window.PageList)
                 {
                     var grids = (page.Content is Grid root ? [root] : Array.Empty<Grid>()).Concat(LogicalDescendants<Grid>(page)).Distinct().ToList();
@@ -162,7 +162,7 @@ public sealed class DialogFitTests(WpfThread wpf)
 
                 window.Tabs.SelectedIndex = 4; // General, the shortest page
                 window.UpdateLayout();
-                Assert.Equal([false, false, false, false, true], window.PageList.Select(page => page.IsVisible));
+                Assert.Equal([false, false, false, false, true, false], window.PageList.Select(page => page.IsVisible));
                 Assert.Equal(height, window.ActualHeight, 1); // the page area keeps the tallest page's height
 
                 window.Tabs.SelectedIndex = 0;
@@ -175,6 +175,74 @@ public sealed class DialogFitTests(WpfThread wpf)
                 window.Close();
             }
         });
+    }
+
+    [Theory]
+    [InlineData("en-US", 0.9)]
+    [InlineData("en-US", 1.0)]
+    [InlineData("en-US", 1.5)]
+    [InlineData("zh-Hant", 0.9)]
+    [InlineData("zh-Hant", 1.0)]
+    [InlineData("zh-Hant", 1.5)]
+    [InlineData("zh-Hans", 0.9)]
+    [InlineData("zh-Hans", 1.0)]
+    [InlineData("zh-Hans", 1.5)]
+    public void The_Portable_tab_is_last_and_fits_and_the_tabs_stay_in_one_row(string language, double scale)
+    {
+        // 0.14.0 WP4: the data location on a tab of its own, moved there from General unchanged.
+        wpf.Invoke(() =>
+        {
+            var before = System.Threading.Thread.CurrentThread.CurrentUICulture;
+            System.Threading.Thread.CurrentThread.CurrentUICulture = System.Globalization.CultureInfo.GetCultureInfo(language);
+            Services.UiFonts.Configure(null, null, scale);
+            var window = new SettingsWindow { DataContext = new SettingsViewModel(new LauncherSettings()) };
+            try
+            {
+                window.Show();
+                window.Tabs.SelectedIndex = window.PageList.ToList().IndexOf(window.PortablePage);
+                Settle(window);
+                var what = $"{language} at {scale:P0}";
+                Assert.Equal(window.Tabs.Items.Count - 1, window.Tabs.SelectedIndex);
+                Assert.True(window.PortablePage.IsAncestorOf(window.DataLocationBlock), "the data location is not on the Portable tab");
+                Assert.False(window.GeneralPage.IsAncestorOf(window.DataLocationBlock));
+                TabsInOneRow(window, what);
+                FitsAcross(window.PortablePage, what);
+            }
+            finally
+            {
+                window.Close();
+                Services.UiFonts.Configure(null);
+                System.Threading.Thread.CurrentThread.CurrentUICulture = before;
+            }
+        });
+    }
+
+    /// <summary>Every tab of Settings on the strip's first row, none past its end.</summary>
+    private static void TabsInOneRow(SettingsWindow window, string what)
+    {
+        var tabs = window.Tabs.Items.Cast<TabItem>().ToList();
+        var top = tabs[0].TranslatePoint(default, window.Tabs).Y;
+        foreach (var tab in tabs)
+        {
+            var at = tab.TranslatePoint(default, window.Tabs);
+            Assert.True(Math.Abs(at.Y - top) < tabs[0].ActualHeight / 2, $"{what}: \"{tab.Header}\" is on another row ({at.Y}, the first at {top})");
+            Assert.True(at.X + tab.ActualWidth <= window.Tabs.ActualWidth + 0.5, $"{what}: \"{tab.Header}\" ends at {at.X + tab.ActualWidth} of {window.Tabs.ActualWidth}");
+        }
+    }
+
+    /// <summary>Every text, box and button shown on <paramref name="page"/> within its width, and none squeezed.</summary>
+    private static void FitsAcross(ScrollViewer page, string what)
+    {
+        var shown = LogicalDescendants<FrameworkElement>(page)
+            .Where(element => element is TextBlock or Button or System.Windows.Controls.Primitives.ToggleButton or TextBox or ComboBox && IsShown(element))
+            .ToList();
+        Assert.NotEmpty(shown);
+        foreach (var element in shown)
+        {
+            var right = element.TranslatePoint(new Point(element.ActualWidth, 0), page).X;
+            Assert.True(right <= page.ViewportWidth + 0.5, $"{what}: {Describe(element)} ends at {right} of {page.ViewportWidth}");
+            Assert.True(element.ActualWidth + element.Margin.Left + element.Margin.Right >= element.DesiredSize.Width - 0.5, $"{what}: {Describe(element)} is squeezed");
+        }
     }
 
     [Fact]

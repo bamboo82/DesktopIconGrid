@@ -446,7 +446,7 @@ public sealed partial class SettingsViewModel : ObservableObject
     public string? WindowKeyUsing(string hotkey) =>
         string.IsNullOrWhiteSpace(hotkey) ? null : WindowKeyRows.FirstOrDefault(row => HotkeyGesture.SameCombination(row.Text, hotkey))?.Label;
 
-    public bool CanSave => !HasAppearanceProblem && !HasKeysProblem && !HasVoiceProblem && !HasGeneralProblem;
+    public bool CanSave => !HasAppearanceProblem && !HasKeysProblem && !HasVoiceProblem && !HasPortableProblem;
 
     // ----- tabs (review 27 B1) -----------------------------------------------------------------------
 
@@ -467,14 +467,17 @@ public sealed partial class SettingsViewModel : ObservableObject
 
     public string VoiceTab => TabHeader(Strings.Settings_TabVoice, HasVoiceProblem);
 
-    public string GeneralTab => TabHeader(Strings.Settings_TabGeneral, HasGeneralProblem);
+    public string GeneralTab => Strings.Settings_TabGeneral;
+
+    /// <summary>The Portable tab (0.14.0 WP4): the data location, moved there from General.</summary>
+    public string PortableTab => TabHeader(Strings.Settings_TabPortable, HasPortableProblem);
 
     /// <summary>The line beside Save: which tab, the first in the tab order, has something to fix; empty when none has.</summary>
     public string ProblemText =>
         HasAppearanceProblem ? string.Format(Strings.Settings_FixOnTab, Strings.Settings_TabAppearance)
         : HasKeysProblem ? string.Format(Strings.Settings_FixOnTab, Strings.Settings_TabKeys)
         : HasVoiceProblem ? string.Format(Strings.Settings_FixOnTab, Strings.Settings_TabVoice)
-        : HasGeneralProblem ? string.Format(Strings.Settings_FixOnTab, Strings.Settings_TabGeneral)
+        : HasPortableProblem ? string.Format(Strings.Settings_FixOnTab, Strings.Settings_TabPortable)
         : string.Empty;
 
     /// <summary>A tab's name, with a warning sign before it while one of its values cannot be saved.</summary>

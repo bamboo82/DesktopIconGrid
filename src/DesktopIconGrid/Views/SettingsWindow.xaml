@@ -12,7 +12,7 @@
         PreviewKeyDown="Window_PreviewKeyDown"
         Icon="{StaticResource AppIconImage}">
   <!--
-    Five tabs (review 27 B1). The tab strip only chooses; the five pages lie on top of each other in one cell below it,
+    Six tabs (review 27 B1; Portable since 0.14.0). The tab strip only chooses; the pages lie on top of each other in one cell below it,
     the hidden ones still measured, so the page area is as tall as the tallest page (each at most 560) and the window
     does not jump when the tab changes. On a shorter screen every page scrolls, with Save and Cancel still in sight.
     Each page is its own Grid with exactly the rows it uses.
@@ -31,6 +31,7 @@
       <TabItem Header="{Binding KeysTab}" />
       <TabItem Header="{Binding VoiceTab}" />
       <TabItem Header="{Binding GeneralTab}" />
+      <TabItem Header="{Binding PortableTab}" />
     </TabControl>
 
     <Grid x:Name="Pages" Grid.Row="1" Margin="0,12,0,0">
@@ -396,7 +397,6 @@
           </Grid.ColumnDefinitions>
           <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
           </Grid.RowDefinitions>
 
           <!-- Language -->
@@ -407,10 +407,24 @@
                       AutomationProperties.Name="{x:Static r:Strings.Settings_LanguageName}" />
             <TextBlock Style="{StaticResource DialogHint}" Margin="0,6,0,0" Text="{x:Static r:Strings.Settings_LanguageHint}" />
           </StackPanel>
+        </Grid>
+      </ScrollViewer>
+
+      <!-- ===== Portable (0.14.0 WP4): the data location, moved here from General unchanged ===== -->
+      <ScrollViewer x:Name="PortablePage" Visibility="Hidden" MaxHeight="560" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Focusable="False"
+                    AutomationProperties.Name="{x:Static r:Strings.Settings_TabPortable}">
+        <Grid Margin="14,0,14,0">
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto" MinWidth="100" />
+            <ColumnDefinition Width="*" />
+          </Grid.ColumnDefinitions>
+          <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+          </Grid.RowDefinitions>
 
           <!-- Data location (0.13.0 WP1): this PC's folder, or a portable one named in portable.txt; nothing changes before a restart -->
-          <TextBlock Grid.Row="1" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Settings_DataLocation}" Margin="0,4,12,10" VerticalAlignment="Top" />
-          <StackPanel x:Name="DataLocationBlock" Grid.Row="1" Grid.Column="1" Margin="0,4,0,10">
+          <TextBlock Grid.Row="0" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Settings_DataLocation}" Margin="0,0,12,10" VerticalAlignment="Top" />
+          <StackPanel x:Name="DataLocationBlock" Grid.Row="0" Grid.Column="1" Margin="0,0,0,10">
             <RadioButton GroupName="DataLocation" IsChecked="{Binding DataIsThisPc}" Margin="0,0,0,6"
                          Content="{Binding DataThisPcText}" ContentTemplate="{StaticResource WrappingLabel}" />
             <DockPanel Margin="0,0,0,6">

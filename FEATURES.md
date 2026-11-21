@@ -771,10 +771,11 @@ warnings and errors. The last 2000 entries stay in memory and all of them are ap
 
 Settings live in the same JSON file as the layout and apply immediately on *Save*.
 
-The dialog (0.11.0) has five tabs: *Appearance* (theme, background, bar background, icon size, spacing, labels,
+The dialog (0.11.0) has six tabs: *Appearance* (theme, background, bar background, icon size, spacing, labels,
 font, Chinese text and text size since 0.13.0, background transparency), *Window* (open with, the window check boxes, start with
 Windows, dock to an edge), *Keys* (the show/hide and show-at-pointer hotkeys, the keys in the bar), *Voice* (the voice
-hotkey and language, one hint) and *General* (language, and the data location since 0.13.0). Save and Cancel stay under every tab. A tab with a value that cannot be saved shows ⚠ before
+hotkey and language, one hint), *General* (language) and *Portable* (the data location: on *General* in 0.13.0, a tab of
+its own, the last, since 0.14.0). Save and Cancel stay under every tab. A tab with a value that cannot be saved shows ⚠ before
 its name, and the line beside Save names the first such tab. Ctrl+Tab and Ctrl+Shift+Tab change the tab and put the
 focus on its first control; Enter saves and Esc cancels. The page area is as tall as the tallest page, at most 560,
 and each page scrolls on a screen too short for it.
@@ -813,10 +814,10 @@ and each page scrolls on a screen too short for it.
   at start names that folder. Before 0.13.0 any text meant the program's folder, and copies have notes in the file:
   when the folder the line names has no bar (or the line names none) while the program's folder has one, the program's
   folder stays in use, nothing is made, and the start says so once, in a notice and in the log, with the way to move
-  the data (Settings ▸ General ▸ *Data location*). Whatever the folder, a copy with `portable.txt` is a portable copy: it asks before it
+  the data (Settings ▸ Portable ▸ *Data location*). Whatever the folder, a copy with `portable.txt` is a portable copy: it asks before it
   adds a Run entry, does not add itself to *Send to* (also when its folder could not be used), keeps a Google
   sign-in per PC, and writes the paths on its own drive with `%APPDRIVE%`.
-  - Settings ▸ General ▸ *Data location*: *This PC* (`%LocalAppData%\DesktopIconGrid`) or *Portable: folder* with
+  - Settings ▸ Portable ▸ *Data location*: *This PC* (`%LocalAppData%\DesktopIconGrid`) or *Portable: folder* with
     the folder as `portable.txt` is to say it (Browse writes one under the program's folder as it is from there,
     `.` or `data`, any other in full); *Now:* is the folder in use, with *Open folder*. A changed folder is checked
     at Save: a name that is no folder's holds Save back, with ⚠ on the tab; one that cannot be made or written is
@@ -837,7 +838,7 @@ and each page scrolls on a screen too short for it.
     nothing is written over. It is asked once at the
     start of a portable copy that has no bar of its own while `%LocalAppData%` has one (*Import* or *Start empty*,
     the default, which saves the empty bar so the question does not come again), and from *Import this PC's data…*
-    in Settings ▸ General, shown in a portable copy whose data is not `%LocalAppData%`'s when this PC has a bar
+    in Settings ▸ Portable, shown in a portable copy whose data is not `%LocalAppData%`'s when this PC has a bar
     there: that one restarts the bar, which brings it in before it reads its bar.
 - A corrupt file is renamed to `layout.json.corrupt-<timestamp>` and the app starts
   with an empty bar, telling the user where the backup is.

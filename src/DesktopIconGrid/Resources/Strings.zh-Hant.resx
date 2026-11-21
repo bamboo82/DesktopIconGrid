@@ -2769,7 +2769,7 @@ SHA-256：{3}
     <value>工具列上的名稱在儲存時套用，對話方塊在下次開啟時套用。圖示大小不變。</value>
   </data>
   <data name="App_PortableKeptInProgram" xml:space="preserve">
-    <value>portable.txt 指定的 {0} 沒有工具列，而程式的資料夾有；工具列仍將檔案保存在程式的資料夾。若要移動檔案，請使用「設定」›「一般」›「資料位置」。</value>
+    <value>portable.txt 指定的 {0} 沒有工具列，而程式的資料夾有；工具列仍將檔案保存在程式的資料夾。若要移動檔案，請使用「設定」›「可攜」。</value>
   </data>
   <data name="Separator_RowLine" xml:space="preserve">
     <value>換列線條</value>
@@ -2788,5 +2788,8 @@ SHA-256：{3}
   </data>
   <data name="Settings_TransparencyHint" xml:space="preserve">
     <value>只有工具列的背景會變透明；圖示與名稱保持不透明。</value>
+  </data>
+  <data name="Settings_TabPortable" xml:space="preserve">
+    <value>可攜</value>
   </data>
 </root>

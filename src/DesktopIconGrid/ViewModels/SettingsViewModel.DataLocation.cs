@@ -5,9 +5,10 @@ using DesktopIconGrid.Services;
 namespace DesktopIconGrid.ViewModels;
 
 /// <summary>
-/// Settings ▸ General ▸ <em>Data location</em> (0.13.0 WP1): this PC's folder or a portable folder named in
-/// <c>portable.txt</c>, where the data is now, and, in a portable copy, bringing this PC's bar in. Nothing is written
-/// here: Save checks the new place (<see cref="TryPlanDataMove"/>) and the bar carries it out once the dialog closes.
+/// Settings ▸ Portable ▸ <em>Data location</em> (0.13.0 WP1; on General until 0.14.0 WP4): this PC's folder or a
+/// portable folder named in <c>portable.txt</c>, where the data is now, and, in a portable copy, bringing this PC's bar
+/// in. Nothing is written here: Save checks the new place (<see cref="TryPlanDataMove"/>) and the bar carries it out
+/// once the dialog closes.
 /// </summary>
 public sealed partial class SettingsViewModel
 {
@@ -84,8 +85,8 @@ public sealed partial class SettingsViewModel
         _dataPortable != _dataPortableBefore
         || (_dataPortable && !string.Equals(Full(_dataFolder), Full(_dataFolderBefore), StringComparison.OrdinalIgnoreCase));
 
-    /// <summary>A changed portable folder whose name is no folder's: Save waits for it, on the General tab.</summary>
-    private bool HasGeneralProblem => _dataProblem is not null || (DataLocationChanged && _dataPortable && DataFolderFull is null);
+    /// <summary>A changed portable folder whose name is no folder's: Save waits for it, on the Portable tab.</summary>
+    private bool HasPortableProblem => _dataProblem is not null || (DataLocationChanged && _dataPortable && DataFolderFull is null);
 
     /// <summary>What is wrong with the data location, said under it; empty when nothing is.</summary>
     public string DataProblem =>
@@ -156,7 +157,7 @@ public sealed partial class SettingsViewModel
     {
         OnPropertyChanged(nameof(DataProblem));
         OnPropertyChanged(nameof(HasDataProblem));
-        OnPropertyChanged(nameof(GeneralTab));
+        OnPropertyChanged(nameof(PortableTab));
         OnProblemsChanged();
     }
 }

@@ -5892,6 +5892,15 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Portable.
+        /// </summary>
+        public static string Settings_TabPortable {
+            get {
+                return ResourceManager.GetString("Settings_TabPortable", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Voice.
         /// </summary>
         public static string Settings_TabVoice {

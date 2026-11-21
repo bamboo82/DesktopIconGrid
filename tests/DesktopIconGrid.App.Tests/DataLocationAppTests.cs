@@ -62,8 +62,9 @@ public sealed class DataLocationAppTests : IDisposable
         viewModel.DataFolder = @"D:\what?";
 
         Assert.False(viewModel.CanSave);
-        Assert.Equal("\u26A0 " + Strings.Settings_TabGeneral, viewModel.GeneralTab);
-        Assert.Equal(string.Format(Strings.Settings_FixOnTab, Strings.Settings_TabGeneral), viewModel.ProblemText);
+        Assert.Equal("\u26A0 " + Strings.Settings_TabPortable, viewModel.PortableTab); // 0.14.0 WP4: on its own tab
+        Assert.Equal(string.Format(Strings.Settings_FixOnTab, Strings.Settings_TabPortable), viewModel.ProblemText);
+        Assert.Equal(Strings.Settings_TabGeneral, viewModel.GeneralTab);
         Assert.Equal(string.Format(Strings.Settings_DataNotAFolder, @"D:\what?"), viewModel.DataProblem);
 
         viewModel.DataIsThisPc = true; // back to where it was: nothing to fix
