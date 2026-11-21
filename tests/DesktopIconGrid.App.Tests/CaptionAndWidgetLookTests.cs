@@ -69,6 +69,20 @@ public sealed class CaptionAndWidgetLookTests(WpfThread wpf) : IDisposable
 
     private static Color ColourOf(Brush? brush) => Assert.IsType<SolidColorBrush>(brush).Color;
 
+    private static T Ancestor<T>(DependencyObject element)
+        where T : DependencyObject
+    {
+        for (var node = VisualTreeHelper.GetParent(element); node is not null; node = VisualTreeHelper.GetParent(node))
+        {
+            if (node is T found)
+            {
+                return found;
+            }
+        }
+
+        throw new InvalidOperationException($"No {typeof(T).Name} above it");
+    }
+
     private static byte[] Render(FrameworkElement element)
     {
         var width = (int)Math.Ceiling(element.ActualWidth);
@@ -289,7 +303,7 @@ public sealed class CaptionAndWidgetLookTests(WpfThread wpf) : IDisposable
                 // Each tile's template holds the three styles, one shown: the texts are told apart by what they show.
                 var number = Descendants(window).OfType<TextBlock>().Single(block => block.Name == "NumberText" && block.Text == "14:05");
                 var ringText = Descendants(window).OfType<TextBlock>().Single(block => block.Name == "RingText" && block.Text == "37%");
-                var fit = (Viewbox)VisualTreeHelper.GetParent(number);
+                var fit = Ancestor<Viewbox>(number); // a Viewbox holds its child in a visual of its own
 
                 // As the template drew them before 0.15.0.
                 Assert.Equal((clock.Last!.LabelFontSize, FontWeights.Bold), (number.FontSize, number.FontWeight));
@@ -437,7 +451,7 @@ public sealed class CaptionAndWidgetLookTests(WpfThread wpf) : IDisposable
                 Assert.Equal(Color.FromRgb(0xFF, 0x00, 0x00), ColourOf(inner.Foreground));
                 Assert.Equal(Color.FromRgb(0x2D, 0x4A, 0x6E), ColourOf(text.PlateForTests.Background));
                 Assert.Equal(new Thickness(TextOverPicture.PlatePadding), text.PlateForTests.Padding);
-                var strip = (FrameworkElement)VisualTreeHelper.GetParent(looked);
+                var strip = Ancestor<RowLinePanel>(looked);
                 var centred = looked.TranslatePoint(default, strip).Y;
 
                 bar.Dialogs.CaptionAnswer = new CaptionAnswer("工作", Full with { OffsetY = 20 });

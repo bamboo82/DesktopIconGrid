@@ -9,6 +9,19 @@ The owner relays replies.
 
 ---
 
+## 2026-11-21 (153) — WP7b: two tests corrected
+
+- **Run 256** (`4be2941`, WP7b): Core 1359/1359, App 586/588. Both red tests were the tests', not the app's:
+  - `LauncherViewModelTests.A_row_lines_text_is_asked_with_the_current_one_and_an_empty_answer_takes_it_away` still
+    answered the plain question, which WP7b replaced with the text icon window's Caption mode (the plan's change). It now
+    answers through the caption window, checks the same things (asked on a double-click and on Text…, Cancel changes
+    nothing, an empty answer takes the caption away, a row-start line is not asked) and that the plain question is no
+    longer asked. Nothing was skipped or widened.
+  - `CaptionAndWidgetLookTests` took the number's visual parent for its `Viewbox`; a `Viewbox` holds its child in a
+    visual of its own, so the test walks up to the first `Viewbox`, and to the `RowLinePanel` for the caption's strip.
+
+This entry claims no run for its own commit.
+
 ## 2026-11-21 (152) — 0.15.0 WP7b: the text icon window for captions and widgets
 
 - **Runs:** 255 (`0e05418`, WP7a with the "This device" collection) green: Core 1354/1354, App 568/568.

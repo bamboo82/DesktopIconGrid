@@ -195,36 +195,38 @@ public sealed class LauncherViewModelTests : IDisposable
     [Fact]
     public void A_row_lines_text_is_asked_with_the_current_one_and_an_empty_answer_takes_it_away()
     {
-        // 0.14.0 WP1 (A1): added without a question; Text… (or a double-click) asks; Cancel changes nothing.
+        // 0.14.0 WP1 (A1): added without a question; Text… (or a double-click) asks; Cancel changes nothing. Since 0.15.0
+        // WP7b it asks in the text icon window's Caption mode instead of the plain question (the plan's change).
         var (viewModel, model, dialogs) = Create();
         viewModel.AddSeparator(viewModel.RootItems, 1, SeparatorItem.RowLine);
         var item = viewModel.RootItems.Items[1];
-        Assert.Equal(0, dialogs.TextQuestions);
+        Assert.Equal(0, dialogs.CaptionQuestions);
 
-        dialogs.TextAnswer = "  Tools  ";
+        dialogs.CaptionAnswer = new CaptionAnswer("  Tools  ", null);
         viewModel.EditItem(item);
 
-        Assert.Equal(1, dialogs.TextQuestions);
+        Assert.Equal(1, dialogs.CaptionQuestions);
         Assert.Equal("Tools", model.Items[1].Name);
         Assert.True(item.HasRowLineText);
 
-        dialogs.TextAnswer = null; // Cancel
+        dialogs.CaptionAnswer = null; // Cancel
         viewModel.EditSeparatorText(item);
 
-        Assert.Equal("Tools", dialogs.OfferedText);
+        Assert.Equal("Tools", dialogs.OfferedCaption.Caption);
         Assert.Equal("Tools", model.Items[1].Name);
 
-        dialogs.TextAnswer = " ";
+        dialogs.CaptionAnswer = new CaptionAnswer(" ", null);
         viewModel.EditSeparatorText(item);
 
         Assert.Equal(string.Empty, model.Items[1].Name);
         Assert.False(item.HasRowLineText);
+        Assert.Equal(0, dialogs.TextQuestions); // the plain question is no longer asked
 
         viewModel.SetSeparatorKind(item, SeparatorItem.RowHead);
-        var asked = dialogs.TextQuestions;
+        var asked = dialogs.CaptionQuestions;
         viewModel.EditItem(item); // a row-start line has no text
         viewModel.EditSeparatorText(item);
-        Assert.Equal(asked, dialogs.TextQuestions);
+        Assert.Equal(asked, dialogs.CaptionQuestions);
     }
 
     [Fact]
