@@ -9,6 +9,16 @@ The owner relays replies.
 
 ---
 
+## 2026-11-21 (149) — WP5: the picture's thumbnail shares no cell
+
+- **Run 252** (`a94a797`, WP5, entry 148): Core 1338 of 1338; App 550 of 551. The red one is
+  `DialogFitTests.Every_tab_of_Settings_gives_each_control_a_cell_of_its_own`: the thumbnail laid the picture and the
+  word 無 over each other in one grid cell, which no grid in Settings may do. WP5's own tests passed.
+- **The fix:** the thumbnail is the border's fill (`PictureThumbnailBrush`, cut to the border), and 無 is its only child.
+  It looks the same.
+
+This entry claims no run for its own commit.
+
 ## 2026-11-21 (148) — 0.15.0 WP5: a background picture for the custom theme
 
 - **Run 251** (`834490b`, entry 147): green, Core 1317 of 1317, App 541 of 541. WP4b is done.

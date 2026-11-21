@@ -41,6 +41,7 @@ public sealed partial class SettingsViewModel
                 _thumbnail = null;
                 _thumbnailRead = false;
                 OnPropertyChanged(nameof(PictureThumbnail));
+                OnPropertyChanged(nameof(PictureThumbnailBrush));
             }
 
             OnPropertyChanged();
@@ -68,6 +69,22 @@ public sealed partial class SettingsViewModel
             }
 
             return _thumbnail;
+        }
+    }
+
+    /// <summary>The thumbnail as the row's fill, cut to it; none when there is no thumbnail.</summary>
+    public Brush? PictureThumbnailBrush
+    {
+        get
+        {
+            if (PictureThumbnail is not { } thumbnail)
+            {
+                return null;
+            }
+
+            var brush = new ImageBrush(thumbnail) { Stretch = Stretch.UniformToFill };
+            brush.Freeze();
+            return brush;
         }
     }
 
