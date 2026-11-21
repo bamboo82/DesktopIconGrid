@@ -571,6 +571,13 @@ public partial class IconGridControl : UserControl
                 continue;
             }
 
+            if (LiesAcross(i))
+            {
+                // A row line lies across the panel: its upper half is before it (the end of the row above), its lower half
+                // after it (the start of the row under it). Nothing is dropped into it.
+                return (position.Y < bounds.Top + bounds.Height / 2 ? i : i + 1, null);
+            }
+
             if (position.X < bounds.Left)
             {
                 insertIndex = i;
@@ -603,6 +610,12 @@ public partial class IconGridControl : UserControl
     private FrameworkElement? ContainerAt(int index) =>
         ItemsHost.ItemContainerGenerator.ContainerFromIndex(index) as FrameworkElement;
 
+    /// <summary>Whether the item at <paramref name="index"/> ends the row before it: a row line or a row-start line (0.14.0).</summary>
+    private bool StartsRow(int index) => ItemsHost.Items[index] is ItemViewModel { Slot: FlowSlot.Row or FlowSlot.RowHead };
+
+    /// <summary>Whether the item at <paramref name="index"/> is a row line, which lies across the panel (0.14.0).</summary>
+    private bool LiesAcross(int index) => ItemsHost.Items[index] is ItemViewModel { Slot: FlowSlot.Row };
+
     private void ShowDropFeedback(DropTarget target)
     {
         if (target.Action == DropAction.None)
@@ -629,14 +642,29 @@ public partial class IconGridControl : UserControl
         }
         else
         {
+            var index = Math.Min(target.Index, count - 1);
             after = target.Index >= count;
-            if (ContainerAt(Math.Min(target.Index, count - 1)) is not { } container)
+            if (!after && index > 0 && StartsRow(index) && !LiesAcross(index - 1))
+            {
+                // A row line or a row-start line ends the row before it, so what is dropped before it goes at the end of
+                // that row: the marker is drawn there, after the item before it.
+                index--;
+                after = true;
+            }
+
+            if (ContainerAt(index) is not { } container)
             {
                 DropIndicator.Visibility = Visibility.Collapsed;
                 return;
             }
 
             anchor = container.TransformToVisual(Overlay).TransformBounds(new Rect(container.RenderSize));
+            if (after && LiesAcross(index))
+            {
+                // After a row line the item starts the row under it, at its left.
+                anchor = new Rect(anchor.Left, anchor.Bottom, 0, List?.Root.CellHeight ?? 48);
+                after = false;
+            }
         }
 
         Canvas.SetLeft(DropIndicator, after ? anchor.Right - 1 : anchor.Left - 2);
@@ -772,6 +800,32 @@ public partial class IconGridControl : UserControl
         {
             item.Root.SetSeparatorKind(item, kind);
         }
+    }
+
+    /// <summary>"Text…" on a row line (0.14.0): its caption.</summary>
+    private void SeparatorText_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is MenuItem { DataContext: ItemViewModel item })
+        {
+            item.Root.EditSeparatorText(item);
+        }
+    }
+
+    /// <summary>
+    /// A double-click on a separator with a caption (a row line or a label) asks for its text, as the Properties key does
+    /// (0.14.0); on the other kinds it does nothing, as before.
+    /// </summary>
+    private void Separator_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+    {
+        if (e.ChangedButton != MouseButton.Left || ItemOf(sender) is not { } item || !(item.IsRowLineSeparator || item.IsLabelSeparator))
+        {
+            return;
+        }
+
+        _dragCandidate = null; // the question takes the button's release: no drag may start from this press
+        _dragButton = null;
+        item.Root.EditItem(item);
+        e.Handled = true;
     }
 
     /// <summary>"Workspaces ▸": the bar's workspaces with this shortcut's ticked, and "New workspace…".</summary>

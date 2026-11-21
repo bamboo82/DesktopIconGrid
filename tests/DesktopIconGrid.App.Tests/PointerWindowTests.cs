@@ -214,6 +214,67 @@ public sealed class PointerWindowTests(WpfThread wpf) : IDisposable
     }
 
     [Fact]
+    public void Row_lines_and_row_start_lines_end_their_rows_and_every_row_shows()
+    {
+        // 0.14.0 WP1: 2 icons, a row line with a caption, a row-start line and 3 icons, a row line, 1 icon. Measured in
+        // one row the widest row is the row-start line's (a line and 3 cells), so the first row has room it does not use.
+        var model = Shortcuts(2);
+        model.Add(new SeparatorItem { Kind = SeparatorItem.RowLine, Name = "Work" });
+        model.Add(new SeparatorItem { Kind = SeparatorItem.RowHead });
+        for (var i = 2; i < 5; i++)
+        {
+            model.Add(Shortcut(i));
+        }
+
+        model.Add(new SeparatorItem { Kind = SeparatorItem.RowLine });
+        model.Add(Shortcut(5));
+        WithWindow(model, (window, bar) =>
+        {
+            EveryRowShows(window, bar.CellHeight);
+            var host = window.Icons.ItemsHost;
+            Rect BoxOf(int index)
+            {
+                var container = (FrameworkElement)host.ItemContainerGenerator.ContainerFromIndex(index);
+                return container.TransformToAncestor(host).TransformBounds(new Rect(container.RenderSize));
+            }
+
+            static void Near(double expected, double actual, string what) =>
+                Assert.True(Math.Abs(expected - actual) < 1, $"{what} is {actual}, not {expected}");
+
+            var panelWidth = window.Icons.LayoutPanel!.ActualWidth;
+            Near(FlowLayout.NarrowSize + (3 * bar.CellWidth), panelWidth, "the panel's width");
+            var captioned = BoxOf(2);
+            Near(0, captioned.X, "the captioned row line's left");
+            Near(bar.CellHeight, captioned.Y, "the captioned row line's top"); // it ends the first row where it is
+            Near(panelWidth, captioned.Width, "the captioned row line's width");
+            Assert.True(captioned.Height > FlowLayout.NarrowSize + 1, $"the captioned strip is {captioned.Height} high");
+
+            var head = BoxOf(3);
+            Near(0, head.X, "the row-start line's left");
+            Near(captioned.Bottom, head.Y, "the row-start line's top");
+            Near(FlowLayout.NarrowSize, head.Width, "the row-start line's width");
+            Near(FlowLayout.NarrowSize, BoxOf(4).X, "the first icon after the row-start line");
+
+            var plain = BoxOf(7);
+            Near(head.Bottom, plain.Y, "the plain row line's top"); // the full row before it makes no empty row
+            Near(FlowLayout.NarrowSize, plain.Height, "the plain row line's height");
+            Near(0, BoxOf(8).X, "the last icon's left");
+            Near(plain.Bottom, BoxOf(8).Y, "the last icon's top");
+        });
+    }
+
+    [Fact]
+    public void A_row_lines_caption_keeps_24_units_of_line_unless_the_strip_is_one_icon_wide()
+    {
+        // 0.14.0 WP1 (A1): 6 in, 6 to the line, at least 24 of line, 6 from the edge; in a narrow strip it takes what a label would.
+        Assert.Equal(200 - 42, RowLinePanel.CaptionRoom(200));
+        Assert.Equal(84 - 42, RowLinePanel.CaptionRoom(84)); // exactly half the strip
+        Assert.Equal(52 - 12, RowLinePanel.CaptionRoom(52)); // a bar one icon wide: the caption first
+        Assert.Equal(double.PositiveInfinity, RowLinePanel.CaptionRoom(double.PositiveInfinity));
+        Assert.Equal(0, RowLinePanel.CaptionRoom(8));
+    }
+
+    [Fact]
     public void A_window_shown_in_the_turn_it_is_made_fits_itself_once_its_bindings_are_alive()
     {
         // Its first measure sees an empty grid; the fit after showing it puts that right.

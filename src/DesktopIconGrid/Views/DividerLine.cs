@@ -5,7 +5,8 @@ namespace DesktopIconGrid.Views;
 
 /// <summary>
 /// A one-pixel line along the longer side of its box, centred: upright between icons in a row, flat across a single
-/// column (a bar docked to the left or right edge). Leaves <see cref="Inset"/> free at both ends.
+/// column (a bar docked to the left or right edge). Leaves <see cref="Inset"/> free at both ends. A row line's is always
+/// flat (<see cref="Flat"/>), however short what is left of it beside a caption.
 /// </summary>
 public sealed class DividerLine : FrameworkElement
 {
@@ -14,6 +15,9 @@ public sealed class DividerLine : FrameworkElement
 
     public static readonly DependencyProperty InsetProperty = DependencyProperty.Register(
         nameof(Inset), typeof(double), typeof(DividerLine), new FrameworkPropertyMetadata(6.0, FrameworkPropertyMetadataOptions.AffectsRender));
+
+    public static readonly DependencyProperty FlatProperty = DependencyProperty.Register(
+        nameof(Flat), typeof(bool), typeof(DividerLine), new FrameworkPropertyMetadata(false, FrameworkPropertyMetadataOptions.AffectsRender));
 
     public Brush Stroke
     {
@@ -27,6 +31,13 @@ public sealed class DividerLine : FrameworkElement
         set => SetValue(InsetProperty, value);
     }
 
+    /// <summary>Drawn flat whatever the box's shape (a row line, 0.14.0); otherwise along the longer side.</summary>
+    public bool Flat
+    {
+        get => (bool)GetValue(FlatProperty);
+        set => SetValue(FlatProperty, value);
+    }
+
     protected override void OnRender(DrawingContext drawingContext)
     {
         ArgumentNullException.ThrowIfNull(drawingContext);
@@ -34,7 +45,7 @@ public sealed class DividerLine : FrameworkElement
         var height = ActualHeight;
         var thickness = 1 / Math.Max(VisualTreeHelper.GetDpi(this).DpiScaleX, 0.01); // one device pixel
         var inset = Inset;
-        if (width >= height)
+        if (Flat || width >= height)
         {
             var y = Math.Round(height / 2);
             drawingContext.DrawRectangle(Stroke, null, new Rect(inset, y, Math.Max(0, width - 2 * inset), thickness));

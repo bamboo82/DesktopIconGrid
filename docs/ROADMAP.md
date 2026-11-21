@@ -221,7 +221,8 @@ folder.
 ## Small ones (about a day each)
 
 - Separators and labels: a thin line, a gap or a small caption (`"$type": "separator"`); older versions
-  keep them as unknown items.
+  keep them as unknown items. *(0.14.0: a line that starts a new row, across the bar with a caption if wanted, or
+  upright at the row's start.)*
 - Colour tags per item (corner or tint), filterable in the names table.
 - Launch feedback: the clicked icon pulses until the bar loses the foreground or 5 s pass.
 - Glyph icons *(done in 0.12.0, as symbol icons: 197 symbols, a search and a tile colour)*: a picker over Segoe
@@ -269,7 +270,9 @@ folder.
 - **0.13.0 "Where it lives, how it reads"** (released 2026-11-21): the owner's requests after 0.12.2 — the data
   folder in `portable.txt` and Settings, icons that came out small, hint text colour, *Send to PC* before sync, the
   interface's font and text size.
-- **Next**: nothing planned yet.
+- **0.14.0** (in progress): the owner's requests after 0.13.0 — separators that start a new row (across the bar,
+  with a caption if wanted, or at a row's start), a transparency that fades only the background, and dialogs' own
+  font and text size.
 - **1.0.0 "Ship it"**: the existing backlog — installer (MSIX/winget), code signing, toast notifications with
   actions.
 

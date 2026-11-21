@@ -790,7 +790,9 @@ public sealed partial class LauncherViewModel : ObservableObject, ISyncHost
 
     /// <summary>
     /// Turns a separator into another kind. Choosing a label asks for its text, offering the current one when it is a
-    /// label already; a line's or gap's name means nothing (it may be "Group" from a 0.6.0 PC), so it is not offered.
+    /// label already; a row line's caption goes with it without a question (0.14.0). A label turned into a row line
+    /// keeps its text as the row line's caption. A line's, gap's or row-start line's name means nothing (it may be
+    /// "Group" from a 0.6.0 PC), so it is neither offered nor kept.
     /// </summary>
     public void SetSeparatorKind(ItemViewModel item, string kind)
     {
@@ -801,13 +803,16 @@ public sealed partial class LauncherViewModel : ObservableObject, ISyncHost
 
         var draft = (SeparatorItem)separator.Clone();
         draft.Kind = kind;
+        var text = SeparatorItem.HasText(separator.EffectiveKind) ? separator.Name?.Trim() ?? string.Empty : string.Empty;
         if (draft.EffectiveKind == SeparatorItem.Label)
         {
-            var current = separator.EffectiveKind == SeparatorItem.Label ? separator.Name : null;
-            var text = _dialogs.AskText(Strings.Separator_LabelTitle, Strings.Separator_LabelPrompt, current)?.Trim();
-            if (string.IsNullOrEmpty(text))
+            if (separator.EffectiveKind == SeparatorItem.Label || text.Length == 0)
             {
-                return;
+                text = _dialogs.AskText(Strings.Separator_LabelTitle, Strings.Separator_LabelPrompt, separator.EffectiveKind == SeparatorItem.Label ? text : null)?.Trim() ?? string.Empty;
+                if (text.Length == 0)
+                {
+                    return;
+                }
             }
 
             draft.Name = text;
@@ -818,9 +823,33 @@ public sealed partial class LauncherViewModel : ObservableObject, ISyncHost
         }
         else
         {
-            draft.Name = string.Empty; // a caption's text does not stay with a line or a gap
+            draft.Name = draft.EffectiveKind == SeparatorItem.RowLine ? text : string.Empty; // a caption's text stays only with a row line
         }
 
+        Model.Update(draft);
+        item.RefreshFromModel();
+        Save();
+    }
+
+    /// <summary>
+    /// A row line's caption (0.14.0): asked with the current text; an empty answer takes the caption away, Cancel changes
+    /// nothing.
+    /// </summary>
+    public void EditSeparatorText(ItemViewModel item)
+    {
+        if (item.Model is not SeparatorItem { EffectiveKind: SeparatorItem.RowLine } separator)
+        {
+            return;
+        }
+
+        var answer = _dialogs.AskText(Strings.Separator_LabelTitle, Strings.Separator_LabelPrompt, separator.Name);
+        if (answer is null || answer.Trim() == (separator.Name?.Trim() ?? string.Empty))
+        {
+            return;
+        }
+
+        var draft = (SeparatorItem)separator.Clone();
+        draft.Name = answer.Trim();
         Model.Update(draft);
         item.RefreshFromModel();
         Save();
@@ -1163,6 +1192,10 @@ public sealed partial class LauncherViewModel : ObservableObject, ISyncHost
             if (item.IsLabelSeparator)
             {
                 SetSeparatorKind(item, SeparatorItem.Label); // edits the caption
+            }
+            else if (item.IsRowLineSeparator)
+            {
+                EditSeparatorText(item); // a row line's caption, as a label's (0.14.0)
             }
 
             return;

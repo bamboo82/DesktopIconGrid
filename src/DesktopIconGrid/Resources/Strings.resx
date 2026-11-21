@@ -2771,4 +2771,19 @@ The place was not changed; what was copied stays there.</value>
   <data name="App_PortableKeptInProgram" xml:space="preserve">
     <value>portable.txt names {0}, which has no bar, while the program's folder has one; the bar keeps its files in the program's folder. To move them, use Settings › General › Data location.</value>
   </data>
+  <data name="Separator_RowLine" xml:space="preserve">
+    <value>Line, new row</value>
+  </data>
+  <data name="Separator_RowLineName" xml:space="preserve">
+    <value>Row divider</value>
+  </data>
+  <data name="Separator_RowHead" xml:space="preserve">
+    <value>Line at row start</value>
+  </data>
+  <data name="Separator_RowHeadName" xml:space="preserve">
+    <value>Row-start divider</value>
+  </data>
+  <data name="Separator_RowLineText" xml:space="preserve">
+    <value>Text…</value>
+  </data>
 </root>

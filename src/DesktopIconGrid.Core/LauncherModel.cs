@@ -180,9 +180,9 @@ public sealed class LauncherModel
         if (item is SeparatorItem separator)
         {
             separator.Kind = separator.Kind?.Trim() is { Length: > 0 } kind ? kind : SeparatorItem.Line; // a caption may be empty
-            if (SeparatorItem.SavedName(separator.Kind) is not null)
+            if (SeparatorItem.SavedName(separator.Kind, separator.Name) is not null)
             {
-                separator.Name = string.Empty; // only a caption has a name; a line's or gap's is there for 0.6.0
+                separator.Name = string.Empty; // only a caption has a name (a row line's too); the others' is there for 0.6.0
             }
         }
         else if (item is ShortcutItem shortcut)

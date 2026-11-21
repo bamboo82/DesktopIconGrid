@@ -120,8 +120,12 @@ internal sealed class RecordingDialogs : IDialogService
     /// <summary>The text the last question offered to start from.</summary>
     public string? OfferedText { get; private set; }
 
+    /// <summary>How many times a text was asked for.</summary>
+    public int TextQuestions { get; private set; }
+
     public string? AskText(string title, string prompt, string? initialValue)
     {
+        TextQuestions++;
         OfferedText = initialValue;
         return TextAnswer;
     }

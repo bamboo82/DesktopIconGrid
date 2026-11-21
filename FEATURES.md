@@ -391,14 +391,21 @@ The item model, handler interface, registry and the bucket are specified in
 
 ### 2.5 Separators (0.7.0)
 
-*Add separator ▸* on an icon (inserts after it) or on empty space (appends) offers three kinds, stored as
-`"$type": "separator"` with `"kind": "line" | "gap" | "label"`:
+*Add separator ▸* on an icon (inserts after it) or on empty space (appends) offers five kinds, stored as
+`"$type": "separator"` with `"kind": "line" | "rowhead" | "rowline" | "gap" | "label"`, in that order in the menus
+(the two row kinds since 0.14.0):
 
 | Kind | Looks like |
 | --- | --- |
 | Line | A thin divider between two icons in a row, nine units wide, or only what is left at the end of a full row (it never starts a row of its own); across the column in a bar one icon wide (docked left or right). |
+| Line at row start (0.14.0) | Ends its row where it is and is the first thing of the next one: an upright line nine units wide and a row high, with the items after it following it in that row (wrapping as usual). At a row's start it makes no empty row. Across the column in a one-icon-wide bar, as a line. No text. |
+| Line, new row (0.14.0) | Ends its row where it is and lies across the bar under it, nine units high, the line inset six units from each end; the next item starts the row under it. At a row's start (after a full row, or after another one) it makes no empty row, so two in a row are two strips. It can carry a caption: *Text…* on its menu, a double-click or `F2` asks for it (with the current text; an empty answer takes it away, Cancel changes nothing). The caption sits at the left in the caption style, six units in, and the line goes on six units after it to the right edge; a caption too long for the bar ends in "…" and leaves the line at least 24 units. With a caption the strip is as tall as the text. Across the column in a one-icon-wide bar, as a line. |
 | Gap | An empty cell. |
-| Label | A small caption, as wide as its text; across the column in a one-icon-wide bar. *Label…* asks for the text; `F2` edits it. |
+| Label | A small caption, as wide as its text; across the column in a one-icon-wide bar. *Label…* asks for the text; `F2` edits it, and since 0.14.0 so does a double-click. |
+
+Changing a separator's kind keeps a caption between *Label* and *Line, new row*, either way, without a question; the
+other kinds drop it. A drop just before a row line or a row-start line goes at the end of the row above, and the drop
+marker is drawn there; the upper half of a row line means before it, the lower half after it.
 
 Separators have no click action and are left out of searches and of the names table; they are outlined
 under the pointer so they can be found, dragged like icons, changed into another kind or removed from
@@ -406,7 +413,9 @@ their own menu, and may sit inside groups. Versions before 0.7.0 show them as it
 and keep them. Since 0.8.0 lines and gaps are saved with the name "Divider" or "Gap", which the bar ignores:
 0.6.0 names every nameless item from a newer version "Group" and saves that, so lines saved nameless by
 0.7.0 came back from a 0.6.0 PC called "Group". A kind this version does not know is kept and drawn as a
-line.
+line. The two row kinds are saved as "Divider" too, a row line with a caption by its caption; versions before
+0.14.0 draw both as a line and keep them as they are. A row line whose caption is the word "Divider" reads back
+without one.
 
 ### 2.6 Colour tags (0.7.0)
 
@@ -1026,7 +1035,9 @@ portable copy; icons that came out smaller than the others; hint text in the dia
 added before sync is set up; a font and a text size for the interface; and what the release check found (a note in
 `portable.txt`, the shell's frame at every size, names at larger text, icons and recordings in the import).
 
-**Next** — nothing planned yet.
+**0.14.0** *(in progress)* — the owner's requests after 0.13.0: separators that start a new row (a line across the
+bar, with a caption if wanted, and a line at a row's start); the transparency slider fades only the bar's
+background; dialogs and menus get their own font and text size.
 
 **1.0.0 "Ship it"** — the existing backlog: installer (MSIX/winget), code signing, and the Windows toast with
 actions.

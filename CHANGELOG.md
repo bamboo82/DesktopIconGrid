@@ -3,6 +3,22 @@
 All notable changes to Desktop Icon Grid. The format follows [Keep a Changelog](https://keepachangelog.com/);
 version numbers follow [Semantic Versioning](https://semver.org/).
 
+## [0.14.0] – Unreleased
+
+The owner's requests after 0.13.0.
+
+### Added
+
+- Two separators that start a new row. *Line, new row* ends its row where it is and lies across the bar, and the
+  next item starts the row under it. It can carry a caption (*Text…* on its menu, `F2` or a double-click): the text
+  sits at its left in the caption style and the line goes on to the right edge. *Line at row start* ends its row too,
+  and stands upright at the start of the next one, with the items after it following it in that row. At a row's
+  start neither makes an empty row. In a bar one icon wide both lie across the column as a line does. *Add
+  separator ▸* and the separator's own menu offer them in the order *Line*, *Line at row start*, *Line, new row*,
+  *Gap*, *Label…*. A label turned into a row line keeps its text, and so does the reverse; a double-click on a label
+  edits its text too, as `F2` does. A drop just before either goes at the end of the row above, and the drop marker
+  shows it there. Versions before 0.14.0 draw both as a line and keep them.
+
 ## [0.13.0] – 2026-11-21
 
 "Where it lives, how it reads": the owner's requests after 0.12.2.

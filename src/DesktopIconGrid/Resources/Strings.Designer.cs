@@ -5208,6 +5208,51 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Line at row start.
+        /// </summary>
+        public static string Separator_RowHead {
+            get {
+                return ResourceManager.GetString("Separator_RowHead", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Row-start divider.
+        /// </summary>
+        public static string Separator_RowHeadName {
+            get {
+                return ResourceManager.GetString("Separator_RowHeadName", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Line, new row.
+        /// </summary>
+        public static string Separator_RowLine {
+            get {
+                return ResourceManager.GetString("Separator_RowLine", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Row divider.
+        /// </summary>
+        public static string Separator_RowLineName {
+            get {
+                return ResourceManager.GetString("Separator_RowLineName", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Text….
+        /// </summary>
+        public static string Separator_RowLineText {
+            get {
+                return ResourceManager.GetString("Separator_RowLineText", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Auto-hide: slide away a second after the pointer leaves; touch the edge or press [rest of string was truncated]";.
         /// </summary>
         public static string Settings_AutoHide {

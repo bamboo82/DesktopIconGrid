@@ -9,6 +9,94 @@ The owner relays replies.
 
 ---
 
+## 2026-11-21 (120) — 0.14.0 WP1: separators that start a new row (plan 35, with A1 and A2)
+
+The first package of plan 35, with your two additions: A1, a caption on the row line, and A2, the row-start line.
+WP3 (background-only transparency) and WP4 (the data location on a tab of its own) came while this was being written.
+The order is now the one you gave: WP1, WP3, WP4, WP2, each with its own entry, then "0.14.0 ready for the release
+check".
+
+- **The version:** `Directory.Build.props` says 0.14.0; CHANGELOG has "[0.14.0] – Unreleased"; FEATURES §12 and the
+  roadmap have 0.14.0 in progress (no name yet: yours to give, if any).
+- **Core:**
+  - `SeparatorItem` has `rowhead` and `rowline`, with `Kinds` in the menus' order: line, rowhead, rowline, gap,
+    label.
+  - `HasText(kind)` is true for a label and a row line.
+  - `SavedName(kind, name)` gives "Divider" for a line, a row-start line, and a row line without a caption; a row
+    line with a caption is saved by its caption. The converter and the load both use it.
+  - `FlowLayout` has `FlowSlot.Row` and `FlowSlot.RowHead`, as in the plan:
+    - **Row.** When x > 0 the row ends (y += cell height). The box is (0, y, the panel's width, max(9, the content's
+      height)); then x = 0 and y goes under the strip. At a row's start there is only the strip. Measured at an
+      infinite width the strip is as wide as the widest row (finite), and the row still breaks.
+    - **RowHead.** When x > 0 the row ends. The box is (0, y, 9, cell height) and x = 9.
+    - **One column.** Both lie across it as a line does; a captioned row line is as tall as its caption.
+- **App:**
+  - **Drawing.** The template draws a row-start line with the existing `DividerLine` (upright, because its box is
+    tall). A row line is a new `RowLinePanel`: the caption (Theme.Hint, SemiBold, NameFontSize, ellipsis) 6 in, a
+    gap of 6, then the line to 6 before the edge. The line keeps at least 24 units. The caption's strip is the
+    text's height plus the button's border of 2. `DividerLine.Flat` keeps the row line's line flat, however short
+    it gets beside a caption.
+  - **Menus.** All three places have the five kinds in your order. The separator's menu has *Text…* (標題文字…) while
+    it is a row line, with the Properties key (F2) shown beside it.
+  - **Editing the text.** `EditSeparatorText` asks with the current text: an empty answer takes it away, Cancel
+    changes nothing. `EditItem` (the Properties key) does the same for a row line. A double-click on a row line
+    does it too.
+  - **Changing kind.** `SetSeparatorKind`:
+    - label → row line keeps the text without a question;
+    - row line with text → label keeps it without a question;
+    - a label chosen again, or chosen from a kind without text, asks as before;
+    - line, gap and row-start line drop the text.
+  - **Dropping.** In the drop hit test, the upper half of a row line means before it and the lower half after it;
+    nothing is dropped into a separator. The drop marker for a drop just before a row line or a row-start line is
+    drawn after the item before it, at the end of the row above, which is where the item goes. Before, it would
+    have shown at the strip's left, on the next row. After a row line that is last, the marker is at the left under
+    the strip.
+  - **Screen readers.** The separator button's name is `SeparatorName`: the caption, else 換列分隔線 or 列首分隔線.
+    The item container's name stays `Name`, as for the other separators.
+- **Choices to look at:**
+  - A **double-click on a label** now asks for its text too, as F2 always did. A1 named the row line only. Say if a
+    label should keep doing nothing on a double-click.
+  - **In a strip too narrow** for 24 units of line to leave the caption half the width (a bar one icon wide), the
+    caption may take all but the insets, as a label does, and the line gets what is left. With your rule as
+    written, a 52-unit column would leave the caption 10 units.
+  - **A new row line** is added without asking for text; *Text…* adds a caption.
+  - **A row line whose caption is exactly "Divider"** reads back without one, because that is the name a row line
+    without a caption is saved with. FEATURES says so.
+- **Checked by reading, not run:**
+  - The names table and the voice vocabulary skip every `SeparatorItem` (`NameTableViewModel`,
+    `VoiceVocabulary.IsStartable`).
+  - A group's popup is the same `IconGridControl` and panel.
+  - The pointer window measures its rows from the panel, so the strips count.
+  - **Height.** The bar does not size itself to its rows: its size is the user's, and the strips add their height to
+    what scrolls. A group's popup follows its content up to `PopupMaxHeight` (rows × cell height), so a popup at its
+    row limit scrolls the strips' height. `PopupWidth` still counts a separator as a cell.
+  - **Arrow keys** use WPF's directional navigation (`DirectionalNavigation="Contained"`), which goes by position.
+    The strips are focusable buttons, so Down from a row lands on the strip and Down again on the row under it.
+  - **0.13.0** reads both kinds as a line (`EffectiveKind`), keeps a name of a kind it does not know, and writes it
+    back as it was. A caption survives a round trip through it.
+- **Tests:**
+  - **Core (1177; 1170 at 0.13.0):** in `FlowLayoutTests`:
+    - a row line ends its row where it is and lies across;
+    - a row line first, after a full row, and twice, makes no empty row;
+    - a captioned row line is as tall as its caption;
+    - measured in one row it still breaks and is as wide as the widest row;
+    - in one column both lie across it;
+    - a row-start line ends its row and the items follow it ([C C RowHead C] gives the line at (0, cellH) and the
+      cell at (9, cellH)).
+
+    In `SeparatorAndTagTests`, the saved names and their read-back.
+  - **App (4 new):**
+    - `LauncherViewModelTests`: the five kinds and what each keeps of a caption, without a question; the row line's
+      text, with Cancel, the empty answer, and a row-start line that asks nothing.
+    - `PointerWindowTests`: the real window with a captioned row line, a row-start line, three icons, a plain row
+      line and an icon. It checks every position, and that every row shows. It also checks the caption's room rule.
+    - `RecordingDialogs` counts text questions.
+- **Not tested:** the drop hit test and marker (no drag is simulated), the arrow keys, the double-click, the look
+  (the caption's style and ellipsis, the line's inset), a group's popup with the new kinds, and a real 0.13.0
+  reading a bar that has them.
+
+This entry claims no run for its own commit.
+
 ## 2026-11-21 (119) — Release commit for v0.13.0
 
 Runs 219 and 220 (`f7c83e9`, `bd58ca1`) are green, and your re-check (review 34) passed with no finding. This is the

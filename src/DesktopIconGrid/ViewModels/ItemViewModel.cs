@@ -73,10 +73,24 @@ public sealed class ItemViewModel : ObservableObject
 
     public bool IsLabelSeparator => SeparatorKind == SeparatorItem.Label;
 
-    /// <summary>How much room the item takes in the grid: a divider is thin and a caption as wide as its text.</summary>
+    /// <summary>A line that starts a new row, across the bar (0.14.0).</summary>
+    public bool IsRowLineSeparator => SeparatorKind == SeparatorItem.RowLine;
+
+    /// <summary>An upright line that is the first thing of a new row (0.14.0).</summary>
+    public bool IsRowHeadSeparator => SeparatorKind == SeparatorItem.RowHead;
+
+    /// <summary>A plain divider is drawn: a line, or a row-start line (the box's shape decides upright or flat).</summary>
+    public bool ShowsDivider => IsLineSeparator || IsRowHeadSeparator;
+
+    /// <summary>A row line with a caption: the text, then the line.</summary>
+    public bool HasRowLineText => IsRowLineSeparator && !string.IsNullOrWhiteSpace(Name);
+
+    /// <summary>How much room the item takes in the grid: a divider is thin, a caption as wide as its text, and a row line across the bar.</summary>
     public FlowSlot Slot => SeparatorKind switch
     {
         SeparatorItem.Line => FlowSlot.Narrow,
+        SeparatorItem.RowHead => FlowSlot.RowHead,
+        SeparatorItem.RowLine => FlowSlot.Row,
         SeparatorItem.Label => FlowSlot.Auto,
         _ => FlowSlot.Cell,
     };
@@ -86,6 +100,8 @@ public sealed class ItemViewModel : ObservableObject
     {
         SeparatorItem.Line => Strings.Separator_LineName,
         SeparatorItem.Gap => Strings.Separator_GapName,
+        SeparatorItem.RowHead => Strings.Separator_RowHeadName,
+        SeparatorItem.RowLine => string.IsNullOrWhiteSpace(Name) ? Strings.Separator_RowLineName : Name,
         _ => Name,
     };
 

@@ -101,6 +101,87 @@ public sealed class LauncherViewModelTests : IDisposable
     }
 
     [Fact]
+    public void A_labels_text_goes_with_it_to_a_row_line_and_back_and_the_other_kinds_drop_it()
+    {
+        // 0.14.0 WP1 (A1, A2): the five kinds, and what each keeps of a caption.
+        var (viewModel, model, dialogs) = Create();
+        dialogs.TextAnswer = "Work";
+        viewModel.AddSeparator(viewModel.RootItems, 1, SeparatorItem.Label);
+        var item = viewModel.RootItems.Items[1];
+        var asked = dialogs.TextQuestions;
+
+        viewModel.SetSeparatorKind(item, SeparatorItem.RowLine);
+
+        Assert.Equal(asked, dialogs.TextQuestions); // kept without a question
+        Assert.Equal((SeparatorItem.RowLine, "Work"), (((SeparatorItem)model.Items[1]).Kind, model.Items[1].Name));
+        Assert.True(item.IsRowLineSeparator);
+        Assert.True(item.HasRowLineText);
+        Assert.False(item.ShowsDivider);
+        Assert.Equal(FlowSlot.Row, item.Slot);
+        Assert.Equal("Work", item.SeparatorName);
+
+        viewModel.SetSeparatorKind(item, SeparatorItem.Label);
+
+        Assert.Equal(asked, dialogs.TextQuestions); // a row line's caption becomes the label's
+        Assert.Equal((SeparatorItem.Label, "Work"), (((SeparatorItem)model.Items[1]).Kind, model.Items[1].Name));
+
+        viewModel.SetSeparatorKind(item, SeparatorItem.RowHead);
+
+        Assert.Equal(string.Empty, model.Items[1].Name);
+        Assert.True(item.IsRowHeadSeparator);
+        Assert.True(item.ShowsDivider);
+        Assert.Equal(FlowSlot.RowHead, item.Slot);
+        Assert.Equal(Strings.Separator_RowHeadName, item.SeparatorName);
+
+        viewModel.SetSeparatorKind(item, SeparatorItem.RowLine);
+
+        Assert.Equal(string.Empty, model.Items[1].Name);
+        Assert.False(item.HasRowLineText);
+        Assert.Equal(Strings.Separator_RowLineName, item.SeparatorName);
+
+        viewModel.SetSeparatorKind(item, SeparatorItem.Line);
+        Assert.Equal(FlowSlot.Narrow, item.Slot);
+        viewModel.SetSeparatorKind(item, SeparatorItem.Gap);
+        Assert.Equal(FlowSlot.Cell, item.Slot);
+        Assert.Equal(asked, dialogs.TextQuestions);
+    }
+
+    [Fact]
+    public void A_row_lines_text_is_asked_with_the_current_one_and_an_empty_answer_takes_it_away()
+    {
+        // 0.14.0 WP1 (A1): added without a question; Text… (or a double-click) asks; Cancel changes nothing.
+        var (viewModel, model, dialogs) = Create();
+        viewModel.AddSeparator(viewModel.RootItems, 1, SeparatorItem.RowLine);
+        var item = viewModel.RootItems.Items[1];
+        Assert.Equal(0, dialogs.TextQuestions);
+
+        dialogs.TextAnswer = "  Tools  ";
+        viewModel.EditItem(item);
+
+        Assert.Equal(1, dialogs.TextQuestions);
+        Assert.Equal("Tools", model.Items[1].Name);
+        Assert.True(item.HasRowLineText);
+
+        dialogs.TextAnswer = null; // Cancel
+        viewModel.EditSeparatorText(item);
+
+        Assert.Equal("Tools", dialogs.OfferedText);
+        Assert.Equal("Tools", model.Items[1].Name);
+
+        dialogs.TextAnswer = " ";
+        viewModel.EditSeparatorText(item);
+
+        Assert.Equal(string.Empty, model.Items[1].Name);
+        Assert.False(item.HasRowLineText);
+
+        viewModel.SetSeparatorKind(item, SeparatorItem.RowHead);
+        var asked = dialogs.TextQuestions;
+        viewModel.EditItem(item); // a row-start line has no text
+        viewModel.EditSeparatorText(item);
+        Assert.Equal(asked, dialogs.TextQuestions);
+    }
+
+    [Fact]
     public void Removing_a_shortcut_asks_nothing_and_undo_puts_it_back_where_it_was()
     {
         var previous = LauncherViewModel.UndoWindow;

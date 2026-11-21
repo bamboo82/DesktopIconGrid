@@ -101,6 +101,36 @@ public class SeparatorAndTagTests
     }
 
     [Fact]
+    public void The_new_kinds_are_saved_with_Divider_unless_a_row_line_has_a_caption_and_read_back()
+    {
+        // 0.14.0: a row line's caption is its name; without one it is saved as "Divider" for 0.6.0, as a line is.
+        var model = LauncherModel.FromLayout(new LauncherLayout
+        {
+            Items =
+            [
+                new SeparatorItem { Kind = SeparatorItem.RowLine },
+                new SeparatorItem { Kind = SeparatorItem.RowLine, Name = "Tools" },
+                new SeparatorItem { Kind = SeparatorItem.RowHead },
+            ],
+        });
+
+        var json = Save(model);
+
+        Assert.Equal(["Divider", "Tools", "Divider"], JsonNode.Parse(json)!["items"]!.AsArray().Select(i => i!["name"]!.GetValue<string>()));
+        Assert.Equal(["rowline", "rowline", "rowhead"], JsonNode.Parse(json)!["items"]!.AsArray().Select(i => i!["kind"]!.GetValue<string>()));
+        var loaded = Load(json).Items.Cast<SeparatorItem>().ToList();
+        Assert.Equal([string.Empty, "Tools", string.Empty], loaded.Select(i => i.Name));
+        Assert.Equal([SeparatorItem.RowLine, SeparatorItem.RowLine, SeparatorItem.RowHead], loaded.Select(i => i.EffectiveKind));
+        Assert.Equal("Divider", SeparatorItem.SavedName(SeparatorItem.RowLine));
+        Assert.Null(SeparatorItem.SavedName(SeparatorItem.RowLine, "Tools"));
+        Assert.Equal("Divider", SeparatorItem.SavedName(SeparatorItem.RowLine, " Divider ")); // the saved name itself is no caption
+        Assert.Equal("Divider", SeparatorItem.SavedName(SeparatorItem.RowHead, "anything"));
+        Assert.Equal("Divider", SeparatorItem.SavedName("ROWLINE", string.Empty));
+        Assert.True(SeparatorItem.HasText(SeparatorItem.RowLine) && SeparatorItem.HasText(SeparatorItem.Label));
+        Assert.False(SeparatorItem.HasText(SeparatorItem.RowHead) || SeparatorItem.HasText(SeparatorItem.Line));
+    }
+
+    [Fact]
     public void A_bar_saved_by_0_6_0_on_the_way_keeps_its_lines_and_gaps_without_a_name()
     {
         // The emulation is faithful to the bug: a line saved by 0.7.0 ("name": "") came back from 0.6.0 as "Group".

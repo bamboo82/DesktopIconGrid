@@ -34,6 +34,8 @@
             <MenuItem Header="{x:Static r:Strings.Menu_AddSpecialIcon}" Tag="special-icons" />
             <MenuItem Header="{x:Static r:Strings.Menu_AddSeparator}">
               <MenuItem Header="{x:Static r:Strings.Separator_Line}" Tag="line" Click="AddSeparatorAfter_Click" />
+              <MenuItem Header="{x:Static r:Strings.Separator_RowHead}" Tag="rowhead" Click="AddSeparatorAfter_Click" />
+              <MenuItem Header="{x:Static r:Strings.Separator_RowLine}" Tag="rowline" Click="AddSeparatorAfter_Click" />
               <MenuItem Header="{x:Static r:Strings.Separator_Gap}" Tag="gap" Click="AddSeparatorAfter_Click" />
               <MenuItem Header="{x:Static r:Strings.Separator_Label}" Tag="label" Click="AddSeparatorAfter_Click" />
             </MenuItem>
@@ -195,12 +197,17 @@
               LostMouseCapture="Item_LostMouseCapture"
               PreviewMouseWheel="Item_PreviewMouseWheel"
               MouseLeave="Item_MouseLeave"
+              MouseDoubleClick="Separator_MouseDoubleClick"
               KeyDown="Item_KeyDown">
         <Button.ContextMenu>
           <ContextMenu>
             <MenuItem Header="{x:Static r:Strings.Separator_Line}" Tag="line" IsChecked="{Binding IsLineSeparator, Mode=OneWay}" Click="SeparatorKind_Click" />
+            <MenuItem Header="{x:Static r:Strings.Separator_RowHead}" Tag="rowhead" IsChecked="{Binding IsRowHeadSeparator, Mode=OneWay}" Click="SeparatorKind_Click" />
+            <MenuItem Header="{x:Static r:Strings.Separator_RowLine}" Tag="rowline" IsChecked="{Binding IsRowLineSeparator, Mode=OneWay}" Click="SeparatorKind_Click" />
             <MenuItem Header="{x:Static r:Strings.Separator_Gap}" Tag="gap" IsChecked="{Binding IsGapSeparator, Mode=OneWay}" Click="SeparatorKind_Click" />
             <MenuItem Header="{x:Static r:Strings.Separator_Label}" Tag="label" IsChecked="{Binding IsLabelSeparator, Mode=OneWay}" Click="SeparatorKind_Click" />
+            <MenuItem Header="{x:Static r:Strings.Separator_RowLineText}" Click="SeparatorText_Click" InputGestureText="{Binding Root.KeyText[Properties]}"
+                      Visibility="{Binding IsRowLineSeparator, Converter={StaticResource BoolToVisibility}}" />
             <Separator />
             <MenuItem Header="{x:Static r:Strings.Menu_NewShortcut}" Command="{Binding NewShortcutAfterCommand}" />
             <MenuItem Header="{x:Static r:Strings.Common_Remove}" Command="{Binding RemoveCommand}" InputGestureText="{Binding Root.KeyText[Remove]}" />
@@ -208,7 +215,18 @@
         </Button.ContextMenu>
         <Grid>
           <views:DividerLine Stroke="{DynamicResource Theme.HoverBorder}"
-                             Visibility="{Binding IsLineSeparator, Converter={StaticResource BoolToVisibility}}" />
+                             Visibility="{Binding ShowsDivider, Converter={StaticResource BoolToVisibility}}" />
+          <!-- A row line (0.14.0): its caption, when it has one, then the line to the right edge -->
+          <views:RowLinePanel Visibility="{Binding IsRowLineSeparator, Converter={StaticResource BoolToVisibility}}">
+            <TextBlock Text="{Binding Name}"
+                       Foreground="{DynamicResource Theme.Hint}"
+                       FontSize="{Binding Root.NameFontSize}"
+                       FontWeight="SemiBold"
+                       VerticalAlignment="Center"
+                       TextTrimming="CharacterEllipsis"
+                       Visibility="{Binding HasRowLineText, Converter={StaticResource BoolToVisibility}}" />
+            <views:DividerLine Stroke="{DynamicResource Theme.HoverBorder}" Inset="0" Flat="True" />
+          </views:RowLinePanel>
           <TextBlock Text="{Binding Name}"
                      Foreground="{DynamicResource Theme.Hint}"
                      FontSize="{Binding Root.NameFontSize}"
@@ -248,6 +266,8 @@
           <MenuItem Header="{x:Static r:Strings.Menu_AddSpecialIcon}" Tag="special-icons" />
           <MenuItem Header="{x:Static r:Strings.Menu_AddSeparator}">
             <MenuItem Header="{x:Static r:Strings.Separator_Line}" Tag="line" Click="AddSeparator_Click" />
+            <MenuItem Header="{x:Static r:Strings.Separator_RowHead}" Tag="rowhead" Click="AddSeparator_Click" />
+            <MenuItem Header="{x:Static r:Strings.Separator_RowLine}" Tag="rowline" Click="AddSeparator_Click" />
             <MenuItem Header="{x:Static r:Strings.Separator_Gap}" Tag="gap" Click="AddSeparator_Click" />
             <MenuItem Header="{x:Static r:Strings.Separator_Label}" Tag="label" Click="AddSeparator_Click" />
           </MenuItem>
