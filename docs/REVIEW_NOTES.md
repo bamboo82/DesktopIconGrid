@@ -9,6 +9,18 @@ The owner relays replies.
 
 ---
 
+## 2026-11-21 (155) — U1: 自動 without the Fluent style's minimum width
+
+- **Runs:** 257 (`17b0745`, the WP7b test corrections) green: Core 1359/1359, App 588/588, so WP7b is done. 258 (`ceb9983`,
+  U1): Core 1359/1359, App 591/592: in English at 100 % 自動 was under its box (183 against 151), the Chinese cases passed.
+- **Fix:** the two 自動 boxes take `MinWidth="0"`. The Fluent style gives a check box a minimum width that pushed it to
+  the next line in English, as it set the text icon window's radio buttons 140 px apart in release check V3.
+- **Test:** it now follows the rule as written: 自動 is on its box's line exactly when the row's shown children fit the
+  row's width together, and under it when they do not; in Chinese at 100 % they must fit. The labels' column checks are
+  unchanged.
+
+This entry claims no run for its own commit.
+
 ## 2026-11-21 (154) — Review 41 U1: the custom theme's new rows in the tab's label column
 
 - **U1:** 滑鼠停留色彩, 滑鼠停留強度, 焦點外框色彩, 背景圖片 and 圖片濃度 are now rows of the 外觀 tab's own grid (rows 2–6, the

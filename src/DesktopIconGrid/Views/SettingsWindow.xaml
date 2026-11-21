@@ -130,7 +130,8 @@
 
           <!-- The custom theme's hover and focus border colours (0.15.0 WP4b): automatic, from the background, until unticked.
                Rows of the tab's own grid, labels in the label column (review 41 U1); 自動 stays on the line of its box and button
-               where it fits and wraps under them where it does not. -->
+               where it fits and wraps under them where it does not, without the Fluent style's minimum width (as in release
+               check V3) that wrapped it in English. -->
           <TextBlock x:Name="HoverColourLabel" Grid.Row="2" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Settings_HoverColour}" Margin="0,0,12,10"
                      IsEnabled="{Binding IsCustomTheme}" />
           <WrapPanel Grid.Row="2" Grid.Column="1" Margin="0,0,0,10" IsEnabled="{Binding IsCustomTheme}">
@@ -142,7 +143,7 @@
                      AutomationProperties.Name="{x:Static r:Strings.Settings_HoverColourName}" />
             <Button x:Name="PickHoverButton" Content="{x:Static r:Strings.Settings_PickColour}" Padding="10,2" Margin="6,0,0,0" VerticalAlignment="Center"
                     IsEnabled="{Binding HoverAutomatic, Converter={StaticResource InverseBool}}" Click="PickHover_Click" />
-            <CheckBox x:Name="HoverAutomaticBox" Content="{x:Static r:Strings.Settings_Automatic}" ContentTemplate="{StaticResource WrappingLabel}" Margin="10,0,0,0" VerticalAlignment="Center"
+            <CheckBox x:Name="HoverAutomaticBox" Content="{x:Static r:Strings.Settings_Automatic}" ContentTemplate="{StaticResource WrappingLabel}" Margin="10,0,0,0" MinWidth="0" VerticalAlignment="Center"
                       IsChecked="{Binding HoverAutomatic}" AutomationProperties.Name="{x:Static r:Strings.Settings_HoverAutomaticName}" />
             <TextBlock Text="{x:Static r:Strings.Settings_UseHex}" Foreground="{DynamicResource WarningBrush}" Margin="10,0,0,0" VerticalAlignment="Center"
                        Visibility="{Binding IsHoverColorValid, Converter={StaticResource InverseBoolToVisibility}}" />
@@ -173,7 +174,7 @@
                        AutomationProperties.Name="{x:Static r:Strings.Settings_FocusColourName}" />
               <Button x:Name="PickFocusButton" Content="{x:Static r:Strings.Settings_PickColour}" Padding="10,2" Margin="6,0,0,0" VerticalAlignment="Center"
                       IsEnabled="{Binding FocusAutomatic, Converter={StaticResource InverseBool}}" Click="PickFocus_Click" />
-              <CheckBox x:Name="FocusAutomaticBox" Content="{x:Static r:Strings.Settings_Automatic}" ContentTemplate="{StaticResource WrappingLabel}" Margin="10,0,0,0" VerticalAlignment="Center"
+              <CheckBox x:Name="FocusAutomaticBox" Content="{x:Static r:Strings.Settings_Automatic}" ContentTemplate="{StaticResource WrappingLabel}" Margin="10,0,0,0" MinWidth="0" VerticalAlignment="Center"
                         IsChecked="{Binding FocusAutomatic}" AutomationProperties.Name="{x:Static r:Strings.Settings_FocusAutomaticName}" />
               <TextBlock Text="{x:Static r:Strings.Settings_UseHex}" Foreground="{DynamicResource WarningBrush}" Margin="10,0,0,0" VerticalAlignment="Center"
                          Visibility="{Binding IsFocusColorValid, Converter={StaticResource InverseBoolToVisibility}}" />

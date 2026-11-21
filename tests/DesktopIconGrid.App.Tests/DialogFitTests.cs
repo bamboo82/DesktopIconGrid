@@ -178,14 +178,19 @@ public sealed class DialogFitTests(WpfThread wpf)
                     Assert.True(label.IsVisible, $"{what}: {label.Name} is not shown");
                 }
 
-                if (scale == 1.0)
+                // 自動 on the line of its box and button where they fit together, under them where they do not.
+                foreach (var (box, automatic) in new[] { (window.HoverColourBox, window.HoverAutomaticBox), (window.FocusColourBox, window.FocusAutomaticBox) })
                 {
-                    // 自動 on the line of its box and button where it fits.
-                    foreach (var (box, automatic) in new[] { (window.HoverColourBox, window.HoverAutomaticBox), (window.FocusColourBox, window.FocusAutomaticBox) })
+                    var row = Assert.IsType<WrapPanel>(automatic.Parent);
+                    var needed = row.Children.OfType<FrameworkElement>().Where(child => child.Visibility == Visibility.Visible).Sum(child => child.DesiredSize.Width);
+                    var boxMiddle = box.TranslatePoint(new Point(0, box.ActualHeight / 2), grid).Y;
+                    var automaticMiddle = automatic.TranslatePoint(new Point(0, automatic.ActualHeight / 2), grid).Y;
+                    var fits = needed <= row.ActualWidth + 0.5;
+                    Assert.True(fits == Math.Abs(boxMiddle - automaticMiddle) < 4,
+                        $"{what}: {automatic.Name} at {automaticMiddle}, its box at {boxMiddle}; the row needs {needed} of {row.ActualWidth}");
+                    if (scale == 1.0 && language != "en-US")
                     {
-                        var boxMiddle = box.TranslatePoint(new Point(0, box.ActualHeight / 2), grid).Y;
-                        var automaticMiddle = automatic.TranslatePoint(new Point(0, automatic.ActualHeight / 2), grid).Y;
-                        Assert.True(Math.Abs(boxMiddle - automaticMiddle) < 4, $"{what}: {automatic.Name} at {automaticMiddle}, its box at {boxMiddle}");
+                        Assert.True(fits, $"{what}: the row needs {needed} of {row.ActualWidth}"); // the Chinese rows fit at 100 %
                     }
                 }
             }
