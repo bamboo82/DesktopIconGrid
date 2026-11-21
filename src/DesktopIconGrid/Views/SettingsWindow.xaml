@@ -213,7 +213,8 @@
           <TextBlock x:Name="BarSampleLabel" Grid.Row="11" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Settings_TextSample}" Margin="0,0,12,10" VerticalAlignment="Top" />
           <StackPanel Grid.Row="11" Grid.Column="1" Margin="0,0,0,10">
             <!-- In the chosen font and size at once -->
-            <TextBlock x:Name="TextSample" Text="{x:Static r:Strings.Settings_BarSample}" FontFamily="{Binding SampleFontFamily}" HorizontalAlignment="Left" Margin="0,0,0,4">
+            <TextBlock x:Name="TextSample" Text="{x:Static r:Strings.Settings_BarSample}" FontFamily="{Binding SampleFontFamily}" HorizontalAlignment="Left" Margin="0,0,0,4"
+                       TextOptions.TextFormattingMode="{Binding SampleFormatting}">
               <TextBlock.LayoutTransform>
                 <ScaleTransform ScaleX="{Binding SampleScale}" ScaleY="{Binding SampleScale}" />
               </TextBlock.LayoutTransform>
@@ -240,7 +241,8 @@
                     AutomationProperties.Name="{x:Static r:Strings.Settings_DialogTextSizeName}" />
           <TextBlock x:Name="DialogSampleLabel" Grid.Row="15" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Settings_TextSample}" Margin="0,0,12,10" VerticalAlignment="Top" />
           <StackPanel Grid.Row="15" Grid.Column="1" Margin="0,0,0,10">
-            <TextBlock x:Name="DialogTextSample" Text="{x:Static r:Strings.Settings_DialogSample}" FontFamily="{Binding DialogSampleFontFamily}" HorizontalAlignment="Left" Margin="0,0,0,4">
+            <TextBlock x:Name="DialogTextSample" Text="{x:Static r:Strings.Settings_DialogSample}" FontFamily="{Binding DialogSampleFontFamily}" HorizontalAlignment="Left" Margin="0,0,0,4"
+                       TextOptions.TextFormattingMode="{Binding DialogSampleFormatting}">
               <TextBlock.LayoutTransform>
                 <ScaleTransform ScaleX="{Binding DialogSampleScale}" ScaleY="{Binding DialogSampleScale}" />
               </TextBlock.LayoutTransform>

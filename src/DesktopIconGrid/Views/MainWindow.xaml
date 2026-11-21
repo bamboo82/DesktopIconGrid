@@ -10,10 +10,7 @@
         MinHeight="64"
         ShowInTaskbar="False"
         Topmost="{Binding AlwaysOnTop}"
-        Icon="{StaticResource AppIconImage}"
-        UseLayoutRounding="True"
-        SnapsToDevicePixels="True"
-        TextOptions.TextFormattingMode="Display">
+        Icon="{StaticResource AppIconImage}">
 
   <WindowChrome.WindowChrome>
     <WindowChrome CaptionHeight="0"

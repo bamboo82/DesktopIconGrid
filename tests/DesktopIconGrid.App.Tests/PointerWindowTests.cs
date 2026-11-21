@@ -685,6 +685,9 @@ public sealed class PointerWindowTests(WpfThread wpf) : IDisposable
                 window.ShowAtPointer();
                 Assert.False(window.Surface.SeeThrough);
                 Assert.False(window.Resources.Contains(MainWindow.TextEdgeKey));
+                Assert.Equal(TextRenderingMode.ClearType, TextOptions.GetTextRenderingMode(window)); // opaque (0.15.0 WP9)
+                Assert.Equal(TextFormattingMode.Display, TextOptions.GetTextFormattingMode(window));
+                Assert.True(window.UseLayoutRounding);
                 window.Dismiss();
 
                 settings.Opacity = 70;
@@ -693,6 +696,7 @@ public sealed class PointerWindowTests(WpfThread wpf) : IDisposable
                 Assert.False(window.Surface.SeeThrough, "see-through under High Contrast");
                 Assert.False(window.Resources.Contains(MainWindow.TextEdgeKey));
                 Assert.NotEqual(Brushes.Transparent, window.Background);
+                Assert.Equal(TextRenderingMode.ClearType, TextOptions.GetTextRenderingMode(window)); // the same rule under High Contrast
             }
             finally
             {

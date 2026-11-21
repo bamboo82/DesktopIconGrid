@@ -55,6 +55,10 @@ public static class DialogTheme
         window.ThemeMode = UseFluent ? ThemeMode.System : ThemeMode.None;
 #pragma warning restore WPF0001
         ScaleText(window, Services.UiFonts.TextFactor);
+
+        // Whole-pixel text, ClearType on the dialog's opaque background (0.15.0 WP9); laid out as drawn when the dialog is
+        // scaled, since whole pixels at the unscaled size are not whole pixels once scaled.
+        TextSharpness.Apply(window, TextRenderingMode.ClearType, scaled: window.Content is FrameworkElement { LayoutTransform.Value.IsIdentity: false });
     }
 
     /// <summary>

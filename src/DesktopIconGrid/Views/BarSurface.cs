@@ -91,8 +91,9 @@ internal sealed class BarSurface(Window window, double resizeBorder, string name
         }
 
         // On a see-through background the edges of text are smoothed in grey: ClearType works its colours out against the
-        // window's own colour, not against what shows through, and would fringe there.
-        TextOptions.SetTextRenderingMode(window, SeeThrough ? TextRenderingMode.Grayscale : TextRenderingMode.Auto);
+        // window's own colour, not against what shows through, and would fringe there. On an opaque one, ClearType (0.15.0
+        // WP9); with a backdrop, WPF's own choice, as before.
+        TextOptions.SetTextRenderingMode(window, TextSharpness.RenderingFor(SeeThrough, active));
         MainWindow.SetSeeThroughLook(window.Resources, SeeThrough ? palette.Foreground : null, iconSize);
     }
 }

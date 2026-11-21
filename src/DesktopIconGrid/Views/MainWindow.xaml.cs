@@ -47,6 +47,7 @@ public partial class MainWindow : Window
         _viewModel = viewModel;
         DataContext = viewModel;
         InitializeComponent();
+        TextSharpness.Apply(this); // whole-pixel text; the background decides the smoothing (BarSurface) (0.15.0 WP9)
         _surface = new BarSurface(this, resizeBorder: 6, "Bar");
         IconsColumn.SizeChanged += (_, _) => NoteIconArea();
         UiFonts.ApplyBar(this); // the bar's font, Chinese in Taipei Sans TC Light where this PC has it (0.12.0 WP5, 0.14.0 WP2)
@@ -409,7 +410,7 @@ public partial class MainWindow : Window
 
         if (GroupPopup.Child is { } child)
         {
-            TextOptions.SetTextRenderingMode(child, translucent && !_surface.BackdropActive ? TextRenderingMode.Grayscale : TextRenderingMode.Auto);
+            TextOptions.SetTextRenderingMode(child, TextSharpness.RenderingFor(translucent && !_surface.BackdropActive, _surface.BackdropActive));
         }
 
         ThemeManager.SetPopupBackground(palette, translucent, _viewModel.Opacity / 100.0);

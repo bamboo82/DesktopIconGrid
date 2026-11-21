@@ -8,10 +8,7 @@
         ResizeMode="NoResize"
         ShowInTaskbar="False"
         ShowActivated="True"
-        Topmost="True"
-        UseLayoutRounding="True"
-        SnapsToDevicePixels="True"
-        TextOptions.TextFormattingMode="Display">
+        Topmost="True">
 
   <!-- The bar's frame, without its resize border (0.15.0 WP3): a backdrop or a see-through background paint behind it. -->
   <WindowChrome.WindowChrome>

@@ -7,6 +7,7 @@
   <conv:InverseBooleanToVisibilityConverter x:Key="InverseBoolToVisibility" />
   <conv:InverseBooleanConverter x:Key="InverseBool" />
   <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+  <conv:ScaledTextFormattingConverter x:Key="ScaledTextFormatting" />
 
   <!-- Consolas text; UiFonts puts the Chinese font after Consolas when there is one (0.12.1, review 28 F2) -->
   <FontFamily x:Key="App.CodeFontFamily">Consolas, Courier New</FontFamily>

@@ -9,9 +9,7 @@
         Width="300"
         SizeToContent="Height"
         MaxHeight="520"
-        Background="{DynamicResource Theme.Background}"
-        UseLayoutRounding="True"
-        SnapsToDevicePixels="True">
+        Background="{DynamicResource Theme.Background}">
   <Border BorderBrush="{DynamicResource Theme.Border}" BorderThickness="1" Padding="4">
     <DockPanel>
       <TextBlock x:Name="Caption" DockPanel.Dock="Top" FontWeight="SemiBold" Margin="6,4,6,6" TextTrimming="CharacterEllipsis"

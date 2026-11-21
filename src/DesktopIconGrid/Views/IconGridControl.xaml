@@ -78,6 +78,20 @@
                                 Visibility="{Binding HasTextIcon, Converter={StaticResource BoolToVisibility}}" />
             <Viewbox Stretch="Uniform" Visibility="{Binding ShowsGauge, Converter={StaticResource BoolToVisibility}}">
               <Grid Width="100" Height="100" DataContext="{Binding Gauge}">
+                <Grid.Resources>
+                  <!-- Gauge text drawn 20 units high or more is laid out as drawn, smaller text on whole pixels: its size in
+                       this box, scaled to the icon (0.15.0 WP9, TextSharpness) -->
+                  <Style TargetType="TextBlock">
+                    <Setter Property="TextOptions.TextFormattingMode">
+                      <Setter.Value>
+                        <MultiBinding Converter="{StaticResource ScaledTextFormatting}" ConverterParameter="100">
+                          <Binding Path="FontSize" RelativeSource="{RelativeSource Self}" />
+                          <Binding Path="DataContext.Root.IconSize" RelativeSource="{RelativeSource AncestorType=Button}" />
+                        </MultiBinding>
+                      </Setter.Value>
+                    </Setter>
+                  </Style>
+                </Grid.Resources>
                 <!-- Ring -->
                 <Grid Visibility="{Binding IsRing, Converter={StaticResource BoolToVisibility}}">
                   <Ellipse Width="88" Height="88" Stroke="{DynamicResource Theme.HoverBorder}" StrokeThickness="12" />
@@ -128,7 +142,7 @@
                                Foreground="{Binding LevelBrush}" TextTrimming="CharacterEllipsis" MaxWidth="{Binding LabelMaxWidth}">
                       <!-- A value in the neutral grey (the clock's time) has an edge of its own; green, orange and red need none -->
                       <TextBlock.Style>
-                        <Style TargetType="TextBlock">
+                        <Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
                           <Style.Triggers>
                             <DataTrigger Binding="{Binding IsNeutral}" Value="True">
                               <Setter Property="Effect" Value="{DynamicResource Theme.GaugeNeutralEdge}" />

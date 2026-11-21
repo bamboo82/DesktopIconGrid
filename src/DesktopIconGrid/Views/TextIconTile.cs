@@ -162,6 +162,11 @@ public sealed class TextIconTile : Decorator
         _tile.CornerRadius = new CornerRadius(CornerAt32);
     }
 
+    /// <summary>How high the text is drawn: fitted, about as high as the box it fills; else its own size.</summary>
+    internal double DrawnSize(TextIcon icon) => icon.Fit
+        ? Math.Max(TileSize, 0) * (1 - (2 * FitMargin))
+        : Math.Min(double.IsFinite(icon.FontSize) && icon.FontSize > 0 ? icon.FontSize : TextIcon.DefaultFontSize, MaxFontSize);
+
     private void DrawText(TextIcon icon)
     {
         _text.Text = icon.Text;
@@ -201,6 +206,10 @@ public sealed class TextIconTile : Decorator
             _text.Margin = new Thickness(1);
             _tile.Child = _text;
         }
+
+        // Laid out as drawn from 20 units up, on whole pixels below (0.15.0 WP9): fitted text is drawn about as high as
+        // the box it is fitted to, the rest at its own size.
+        TextOptions.SetTextFormattingMode(_text, TextSharpness.FormattingFor(DrawnSize(icon)));
 
         // In the theme's colour, with no tile colour behind it, the text stands on the bar's background, which may be
         // see-through: it takes the bar's text edge (review 38 T2; the window has it only while it is see-through). Fitted

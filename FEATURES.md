@@ -820,6 +820,16 @@ warnings and errors. The last 2000 entries stay in memory and all of them are ap
 | Text size | 100 % (0.13.0; 90, 110, 125 or 150 %): stored as `textScale` in percent (nothing for 100; a value outside 90–150 is taken to its end), and it syncs. Since 0.14.0 it is the bar's (*Bar text*). On the bar the names under the icons, separators' captions and the empty bar's line follow, with the name line's height and, when names are shown, the cell's width (never narrower than at 100 %); icons, gauges' numbers and symbol and text icons keep their sizes. The sample under it (*Shortcut 123*) shows the chosen font and size at once; the bar follows at Save |
 | Dialog and menu text size | the bar's (0.14.0): *Same as the bar* first, then 90 to 150 %. Stored as `dialogTextScale`: nothing for the bar's, else the percent, 100 too (it says 100 % whatever the bar has); a value outside 90–150 is taken to its end; it syncs. A dialog is scaled whole as it opens, its set sizes with it, so what fits at 100 % fits in proportion; one taller than the screen keeps to the work area and its body scrolls, as before. Menus, tooltips and the tray menu take the size through Windows' menu, status and message font sizes. The sample under it (*Settings 123*) shows the dialogs' font and size, the bar's while they take it, live; a dialog takes a new size when it is next opened, and the folder stack keeps Windows' size, as in 0.13.0 |
 
+**Sharp text (0.15.0, the owner's request: text looked soft).** In every window, the bar's and the dialogs', and in every
+menu and tooltip, text is laid out on whole pixels (WPF's *Display* mode) with layout rounding, and smoothed with
+ClearType on an opaque background. Before, only the bar and the window at the pointer were laid out that way. Where the
+desktop shows through the bar or the window at the pointer without a backdrop, text is smoothed in grey (0.14.0); with
+Mica or Acrylic, WPF chooses. Text drawn 20 units high or more (about 15 pt: big text and symbol icons, a gauge's or
+the clock's text at large icon sizes) is laid out as drawn (*Ideal*), and so is text under a scale: a dialog at a text
+size other than 100 % and the two samples in Settings, since whole pixels at the unscaled size are not whole pixels once
+scaled. Text over a picture is drawn as outlines, and text under the see-through look's edge is smoothed in grey by WPF,
+whatever is asked. The fonts are unchanged.
+
 Settings live in the same JSON file as the layout and apply immediately on *Save*.
 
 The dialog (0.11.0) has seven tabs: *Appearance* (theme, background, bar background, background transparency, icon

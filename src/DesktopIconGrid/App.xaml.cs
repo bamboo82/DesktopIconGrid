@@ -49,6 +49,7 @@ public partial class App : Application
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
+        Views.TextSharpness.RegisterMenusAndTooltips(); // whole-pixel text in every menu and tooltip (0.15.0 WP9)
         DispatcherUnhandledException += OnDispatcherUnhandledException;
         AppDomain.CurrentDomain.UnhandledException += (_, args) =>
             AppLog.Default.Error("App", "Unhandled exception (process is terminating)", args.ExceptionObject as Exception);

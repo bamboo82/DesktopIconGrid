@@ -20,6 +20,10 @@ version numbers follow [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- Sharper text: every window, menu and tooltip lays small text out on whole pixels, with ClearType on an opaque
+  background. The bar and the window at the pointer did already; the dialogs, menus and tooltips did not. Large text
+  (20 px and up, such as big text icons and gauges at large icon sizes) and dialogs at a text size other than 100 % keep
+  the smoother layout, and a see-through bar keeps its grey smoothing.
 - More icon sizes under Settings ▸ Appearance: 16, 20, 24, 28, 32, 40, 48, 56, 64, 72, 80, 96 and 128 px, and the box
   takes any whole number from 16 to 256 typed into it. Icons are taken from their source at the first usual size that
   covers the pixels they are drawn at on your screens, then scaled down, so large icons stay sharp.

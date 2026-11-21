@@ -119,6 +119,8 @@ public sealed partial class SettingsViewModel
             {
                 OnPropertyChanged(nameof(SampleScale));
                 OnPropertyChanged(nameof(DialogSampleScale));
+                OnPropertyChanged(nameof(SampleFormatting));
+                OnPropertyChanged(nameof(DialogSampleFormatting));
             }
         }
     }
@@ -154,6 +156,7 @@ public sealed partial class SettingsViewModel
             if (SetProperty(ref _selectedDialogScale, value ?? _dialogScaleOptions[0]))
             {
                 OnPropertyChanged(nameof(DialogSampleScale));
+                OnPropertyChanged(nameof(DialogSampleFormatting));
             }
         }
     }
@@ -172,6 +175,15 @@ public sealed partial class SettingsViewModel
 
     /// <summary>How much the dialogs' sample is scaled, as the bar's is: their size, or the bar's while they take it.</summary>
     public double DialogSampleScale => (SelectedDialogScale.Percent ?? SelectedTextScale.Percent) / 100.0 / UiFonts.TextFactor;
+
+    /// <summary>
+    /// The bar's sample's text layout, as a dialog's (0.15.0 WP9): on whole pixels when nothing scales it in the end (the
+    /// chosen size is the one this dialog is drawn at, and that is 100 %), else as drawn.
+    /// </summary>
+    public TextFormattingMode SampleFormatting => Views.TextSharpness.FormattingForScale(SampleScale * UiFonts.TextFactor);
+
+    /// <summary>The dialogs' sample's text layout, by the same rule.</summary>
+    public TextFormattingMode DialogSampleFormatting => Views.TextSharpness.FormattingForScale(DialogSampleScale * UiFonts.TextFactor);
 
     /// <summary>The family the dialogs would ask for with what is chosen now: <see langword="null"/> for Windows' own.</summary>
     private string? ChosenDialogFamily => SelectedDialogFont.Id switch

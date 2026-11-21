@@ -9,6 +9,54 @@ The owner relays replies.
 
 ---
 
+## 2026-11-21 (144) — 0.15.0 WP9: sharp text in every window
+
+- **Run 247** (`ccf1627`, WP8, entry 143): green, Core 1279 of 1279, App 512 of 512.
+- **One place:** `TextSharpness` (Views). `Apply(root, rendering, scaled)` sets Display (Ideal when scaled), layout
+  rounding, pixel snapping and the rendering mode; children inherit them. `FormattingFor(drawn)` is the 20 px rule and
+  `FormattingForScale(scale)` the rule for scaled text; `RenderingFor(seeThrough, backdrop)` decides the smoothing.
+  - `DialogTheme.Apply` calls it after scaling, for all 22 dialogs. `MainWindow`, `PointerWindow` and `StackWindow` call
+    it in their constructors, and the XAML copies on those three are gone.
+  - Popup content (the group popup, the ComboBox lists, submenus) inherits from its window or menu.
+- **Menus and tooltips: class handlers, not implicit styles.** In a dialog with the Fluent theme, the theme's own
+  `ContextMenu` and `ToolTip` styles sit in the dialog's resources and come before an implicit style in App.xaml, so an
+  App.xaml style would not reach the dialogs' menus. Instead, `RegisterMenusAndTooltips` (called once at start) adds
+  class handlers on `ContextMenu.Opened` and `ToolTip.Opened` that apply the helper, ClearType included, to every menu
+  and tooltip the app opens, Fluent or not. They act as the menu opens, so its very first frame may still be laid out the
+  old way; I cannot see whether that shows.
+- **Rendering:** dialogs, menus and tooltips: ClearType. The bar and the window at the pointer, through `BarSurface`:
+  ClearType when opaque (it was Auto), grey when see-through without a backdrop, Auto with Mica or Acrylic (as before).
+  The group popup follows the same rule. High Contrast has no rule of its own.
+- **20 px:** `FormattingFor` (Ideal from 20 units) decides for:
+  - the text tile: fitted text is drawn about as high as its box, 68 % of the tile; other text at its own size;
+  - the gauges: each text's size in the 100-unit box times the icon size / 100, through `ScaledTextFormattingConverter`
+    in one implicit style in the gauge's box (the number's own style is based on it). That covers the clock (a number
+    gauge) and the captions.
+  - Text over a picture is drawn as outlines (geometry), so neither mode applies there.
+- **Scaled dialogs:** Ideal when a dialog is scaled, Display at 100 %, your fallback. What I weighed (I cannot try
+  anything on screen here):
+  - font sizes and lengths instead of the transform: the Fluent theme's controls have fixed paddings, heights and glyph
+    sizes that a font size does not scale, and every dialog's set widths, heights and margins would change. That is too
+    large for this release, and it would change the 150 % look the release check approved;
+  - telling WPF a higher DPI for the dialog (`VisualTreeHelper.SetRootDpi`) would put text on whole pixels at the scaled
+    size, but it fights Windows' own DPI messages when a dialog moves between monitors. Not tried.
+  - The two samples in Settings follow the rule (`SampleFormatting`, `DialogSampleFormatting`): whole pixels only when
+    nothing scales them.
+- **Fonts:** unchanged.
+- **Tests:**
+  - the 20 px rule, the scale rule and the three rendering cases;
+  - every window class (25, found by reflection) calls `TextSharpness.Apply` or `DialogTheme.Apply` in its own code (a
+    `call` with the method's token in its IL), and `DialogTheme.Apply` calls `TextSharpness.Apply`;
+  - a dialog at 100 % (Display, ClearType, rounding, snapping, inherited by its text) and at 150 % (Ideal);
+  - a menu and a tooltip after they open;
+  - gauge text at 32, 48, 64 and 96 px; a fitted text tile at 32 and 24, and sized text at 12 and 24;
+  - the samples at 100 % and 125 %;
+  - the window at the pointer: ClearType and Display at 100 % and under High Contrast, grey when see-through (as before).
+- **Not tested:** anything on screen at 100, 125 and 150 % (yours); the first frame of a menu; whether WPF smooths in grey
+  where the Fluent theme draws a backdrop behind a dialog.
+
+This entry claims no run for its own commit.
+
 ## 2026-11-21 (143) — 0.15.0 WP8: more icon sizes
 
 - **Run 246** (`274ac48`, entry 142): green, Core 1249 of 1249, App 507 of 507. WP1's tests pass with it.
