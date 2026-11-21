@@ -39,7 +39,7 @@ public partial class PointerWindow : Window
         _viewModel = viewModel;
         DataContext = viewModel;
         InitializeComponent();
-        _surface = new BarSurface(this, resizeBorder: null, "Window at the pointer");
+        _surface = new BarSurface(this, resizeBorder: 0, "Window at the pointer");
         BarIconArea = () => new Size(6 * viewModel.CellWidth, 2 * viewModel.CellHeight);
         UiFonts.ApplyBar(this); // the bar's font, Chinese in Taipei Sans TC Light where this PC has it (0.12.0 WP5, 0.14.0 WP2)
         Icons.DataContext = viewModel.RootItems;

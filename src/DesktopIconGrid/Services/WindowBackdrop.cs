@@ -60,22 +60,6 @@ public static class WindowBackdrop
     }
 
     /// <summary>
-    /// Extends the DWM frame into the whole client area of a window without WindowChrome, so a backdrop shows behind it,
-    /// or takes it back (0.15.0 WP3: the window at the pointer). Returns whether Windows took it.
-    /// </summary>
-    public static bool ExtendFrame(IntPtr hwnd, bool intoClient)
-    {
-        if (hwnd == IntPtr.Zero)
-        {
-            return false;
-        }
-
-        var all = intoClient ? -1 : 0;
-        var margins = new NativeMethods.MARGINS { Left = all, Right = all, Top = all, Bottom = all };
-        return NativeMethods.DwmExtendFrameIntoClientArea(hwnd, ref margins) == 0;
-    }
-
-    /// <summary>
     /// Acrylic for a popup window (the group popup has no WindowChrome, so the DWM frame is extended into its
     /// whole client area here). Returns false, leaving the popup solid, when either call is refused.
     /// </summary>

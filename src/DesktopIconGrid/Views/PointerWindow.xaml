@@ -13,6 +13,15 @@
         SnapsToDevicePixels="True"
         TextOptions.TextFormattingMode="Display">
 
+  <!-- The bar's frame, without its resize border (0.15.0 WP3): a backdrop or a see-through background paint behind it. -->
+  <WindowChrome.WindowChrome>
+    <WindowChrome CaptionHeight="0"
+                  ResizeBorderThickness="0"
+                  GlassFrameThickness="0"
+                  CornerRadius="0"
+                  UseAeroCaptionButtons="False" />
+  </WindowChrome.WindowChrome>
+
   <!-- The bar's background and border (0.15.0 WP3; BarSurface makes the window behind it a backdrop or see-through) -->
   <Border x:Name="Chrome" BorderBrush="{DynamicResource Theme.Border}" BorderThickness="1" Padding="3"
           Background="{DynamicResource Theme.BarBackground}">

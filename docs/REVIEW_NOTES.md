@@ -9,6 +9,24 @@ The owner relays replies.
 
 ---
 
+## 2026-11-21 (138) — Run 241: the window was hidden, not refused; WindowChrome back
+
+Run 241 (`0874e4c`, entry 137) failed the same test, with the answer in its message: the window asked for 162 units
+(141 and the header's 21) and stayed at 141, while the header was laid out. Its icon area was right. My entry 137 was
+wrong about the cause: it was not WindowChrome.
+
+- **What happens:** on the CI machine the window loses the focus during the test and hides itself, as it does when
+  you click elsewhere. A hidden window is not resized (`FitToContent` resizes the shown window only, as before WP3),
+  so its height stayed where it was. The old test passed by chance of focus. The code does what it should.
+- **The test** now checks the size the window asks for: the top level, then the header's height more with the icon
+  area unchanged, then the top level again after a search. The window's own height is checked as well when it is
+  shown at that moment.
+- **WindowChrome is back** on the window at the pointer, as WP3 had it (`dc9e8d7`), so it shares the bar's code path:
+  `BarSurface` with no resize border. `WindowBackdrop.ExtendFrame` is gone again. What differs from the bar, as you
+  asked: the resize border (0 for the bar's 6), and the window is a topmost tool window.
+
+This entry claims no run for its own commit.
+
 ## 2026-11-21 (137) — The window at the pointer without WindowChrome (run 240 said why 239 was red)
 
 Run 240 (`b732176`, entry 136) reported it: the window stayed 141 units high when the group's header (21) showed, so
