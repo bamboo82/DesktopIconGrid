@@ -3054,7 +3054,7 @@ SHA-256：{3}
     <value>请使用以 https:// 开头的网址。</value>
   </data>
   <data name="Picture_TooLarge" xml:space="preserve">
-    <value>图片超过 10 MB。</value>
+    <value>图片超过 {0} MB。</value>
   </data>
   <data name="Picture_NotAPicture" xml:space="preserve">
     <value>这个网址不是 Windows 能打开的图片。</value>

@@ -19,6 +19,24 @@ public static class BackgroundPictures
     public const int MaxSide = 3840;
     public const int JpegQuality = 90;
 
+    /// <summary>The largest picture file taken from this PC (review 41: 50 MB), refused before any of it is read or decoded.</summary>
+    public const long MaxFileBytes = 50L * 1024 * 1024;
+
+    /// <summary>
+    /// The bytes of a picture file chosen in Settings, for <see cref="Decode"/>. A file over <see cref="MaxFileBytes"/> is
+    /// refused by its length alone, before anything of it is read: <see cref="PictureTooLargeException"/>.
+    /// </summary>
+    public static byte[] ReadFile(string path)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(path);
+        if (new FileInfo(path).Length > MaxFileBytes)
+        {
+            throw new PictureTooLargeException(MaxFileBytes);
+        }
+
+        return File.ReadAllBytes(path);
+    }
+
     private static (string Path, BitmapSource Picture)? _loaded;
 
     /// <summary>
@@ -251,4 +269,11 @@ public static class BackgroundPictures
 
         return false;
     }
+}
+
+/// <summary>A picture file over the limit (<see cref="BackgroundPictures.MaxFileBytes"/>), refused before it was read.</summary>
+public sealed class PictureTooLargeException(long limit) : InvalidOperationException($"The picture file is larger than {limit / (1024 * 1024)} MB.")
+{
+    /// <summary>The limit in whole megabytes, for the "too large" text.</summary>
+    public long LimitMegabytes { get; } = limit / (1024 * 1024);
 }

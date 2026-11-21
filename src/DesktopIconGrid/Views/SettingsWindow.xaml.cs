@@ -160,9 +160,16 @@ public partial class SettingsWindow : Window
 
         try
         {
-            var picture = BackgroundPictures.Decode(File.ReadAllBytes(dialog.FileName));
+            var picture = BackgroundPictures.Decode(BackgroundPictures.ReadFile(dialog.FileName));
             var (name, average) = BackgroundPictures.Store(picture, AppPaths.BackgroundsDirectory);
             viewModel.UsePicture(name, average);
+        }
+        catch (PictureTooLargeException ex)
+        {
+            // Refused by its length before it is read or decoded (review 41: 50 MB), with the "too large" text.
+            Core.Diagnostics.AppLog.Default.Info("Theme", $"Background picture from {dialog.FileName}: {ex.Message}");
+            MessageBox.Show(this, string.Format(System.Globalization.CultureInfo.CurrentCulture, Strings.Picture_TooLarge, ex.LimitMegabytes),
+                Strings.Settings_Picture.TrimEnd('：', ':'), MessageBoxButton.OK, MessageBoxImage.Warning);
         }
         catch (Exception ex) when (ex is InvalidOperationException or IOException or UnauthorizedAccessException)
         {

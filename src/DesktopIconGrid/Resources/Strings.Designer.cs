@@ -4326,7 +4326,7 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to The picture is larger than 10 MB..
+        ///   Looks up a localized string similar to The picture is larger than {0} MB..
         /// </summary>
         public static string Picture_TooLarge {
             get {

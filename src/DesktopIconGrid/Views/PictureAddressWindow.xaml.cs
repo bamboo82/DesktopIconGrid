@@ -39,7 +39,7 @@ public partial class PictureAddressWindow : Window
     internal static string Reason(DownloadFailure failure) => failure switch
     {
         DownloadFailure.NotHttps => Strings.Picture_NotHttps,
-        DownloadFailure.TooLarge => Strings.Picture_TooLarge,
+        DownloadFailure.TooLarge => string.Format(System.Globalization.CultureInfo.CurrentCulture, Strings.Picture_TooLarge, IconDownloader.MaxBytes / (1024 * 1024)),
         DownloadFailure.NotAPicture => Strings.Picture_NotAPicture,
         _ => Strings.Picture_NoAnswer,
     };

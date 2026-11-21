@@ -201,8 +201,30 @@ public sealed class BackgroundPictureTests(WpfThread wpf) : IDisposable
         var missing = new Server(_ => new HttpResponseMessage(HttpStatusCode.NotFound));
         Assert.Equal(DownloadFailure.NoAnswer, await FailureOf(missing, "https://example.test/a.jpg"));
 
-        Assert.Equal(DesktopIconGrid.Resources.Strings.Picture_TooLarge, PictureAddressWindow.Reason(DownloadFailure.TooLarge));
+        Assert.Equal(string.Format(DesktopIconGrid.Resources.Strings.Picture_TooLarge, 10), PictureAddressWindow.Reason(DownloadFailure.TooLarge));
         Assert.Equal(DesktopIconGrid.Resources.Strings.Picture_NotHttps, PictureAddressWindow.Reason(DownloadFailure.NotHttps));
+    }
+
+    [Fact]
+    public void A_picked_file_over_50_MB_is_refused_by_its_length_before_it_is_read()
+    {
+        // Review 41: the limit for a file from this PC, with the "too large" text the download has (10 MB there).
+        var large = Path.Combine(_directory, "large.jpg");
+        using (var stream = File.Create(large))
+        {
+            stream.SetLength(BackgroundPictures.MaxFileBytes + 1); // never written: only its length is looked at
+        }
+
+        var refused = Assert.Throws<PictureTooLargeException>(() => BackgroundPictures.ReadFile(large));
+        Assert.Equal(50, refused.LimitMegabytes);
+        var english = DesktopIconGrid.Resources.Strings.ResourceManager.GetString(nameof(DesktopIconGrid.Resources.Strings.Picture_TooLarge), System.Globalization.CultureInfo.InvariantCulture)!;
+        Assert.Equal("The picture is larger than 50 MB.", string.Format(System.Globalization.CultureInfo.InvariantCulture, english, refused.LimitMegabytes));
+        Assert.IsAssignableFrom<InvalidOperationException>(refused); // the window's other refusals still catch it last
+
+        var small = Path.Combine(_directory, "small.bin");
+        File.WriteAllBytes(small, [1, 2, 3]);
+        Assert.Equal([1, 2, 3], BackgroundPictures.ReadFile(small));
+        Assert.Equal(50L * 1024 * 1024, BackgroundPictures.MaxFileBytes);
     }
 
     [Fact]

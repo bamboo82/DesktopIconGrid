@@ -9,6 +9,19 @@ The owner relays replies.
 
 ---
 
+## 2026-11-21 (158) — Review 41: a picked picture file over 50 MB is refused before it is read
+
+- **As answered:** `BackgroundPictures.ReadFile` looks at the file's length first and refuses one over 50 MB
+  (`MaxFileBytes`) with `PictureTooLargeException` before any of it is read or decoded; Settings shows the "too large"
+  text. That text now takes the limit (`Picture_TooLarge`: "The picture is larger than {0} MB." / 圖片超過 {0} MB。 /
+  图片超过 {0} MB。), so the download says 10 and a file 50 with one string.
+- **Tests:** a file of 50 MB and one byte (made by its length alone, never written) is refused with 50 as its limit, and
+  the English text reads "The picture is larger than 50 MB."; a small file is read; the download's reason is the text with
+  10 in it.
+- **Plan addition 6 (WP5b, the picture file through sync)** is next, before "ready for the release check".
+
+This entry claims no run for its own commit.
+
 ## 2026-11-21 (157) — Review 41 U2: a stronger edge for widgets' text and glyphs over a picture
 
 - **Runs:** 259 (`0a4c05d`, U1's 自動) green: Core 1359/1359, App 592/592. 260 (`b3e0b2e`, U3) green: Core 1359/1359, App

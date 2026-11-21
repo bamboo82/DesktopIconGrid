@@ -58,7 +58,9 @@ with the theme.
 **Background picture (0.15.0).** Under the custom colour, *Background picture* has a thumbnail (or *None*), *Choose a
 picture…*, *From a web address…* and *Remove*, and *Picture strength* (20–100 %).
 
-- From a file: PNG, JPEG, BMP, GIF (its first frame), TIFF, and WebP where Windows can decode it; an icon is refused.
+- From a file: PNG, JPEG, BMP, GIF (its first frame), TIFF, and WebP where Windows can decode it; an icon is refused. A
+  file over 50 MB is refused by its length before any of it is read (review 41), with the "too large" text the download
+  has (there, 10 MB).
 - From a web address: one `https://` address, fetched when that window's OK is pressed, once, by the web icon's download
   rules (`IconDownloader.FetchAsync`): https only, also after redirects; at most 10 MB; abandoned after 30 seconds
   without data; a web page refused; then decoded by Windows. A failure is said in the window (not https, too large, not

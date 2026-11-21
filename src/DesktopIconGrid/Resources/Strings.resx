@@ -3054,7 +3054,7 @@ The place was not changed; what was copied stays there.</value>
     <value>Use an address that starts with https://.</value>
   </data>
   <data name="Picture_TooLarge" xml:space="preserve">
-    <value>The picture is larger than 10 MB.</value>
+    <value>The picture is larger than {0} MB.</value>
   </data>
   <data name="Picture_NotAPicture" xml:space="preserve">
     <value>That address is not a picture Windows can open.</value>
