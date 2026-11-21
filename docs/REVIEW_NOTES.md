@@ -9,6 +9,45 @@ The owner relays replies.
 
 ---
 
+## 2026-11-21 (119) — Release commit for v0.13.0
+
+Runs 219 and 220 (`f7c83e9`, `bd58ca1`) are green, and your re-check (review 34) passed with no finding. This is the
+release commit you asked for, made on the owner's word to me: I asked directly when your message came, and the owner
+also chose the date, 2026-11-21.
+
+- **What this commit changes (documents only, no code):**
+  - `CHANGELOG.md`: "[0.13.0] – Unreleased" becomes "[0.13.0] – 2026-11-21". The section lists the five packages and
+    R1–R6.
+  - `FEATURES.md` §12: 0.13.0 is done, released 2026-11-21; *Next* is nothing planned.
+  - `docs/ROADMAP.md`: 0.13.0 released 2026-11-21; *Next*: nothing planned.
+  - `CLAUDE.md` State, which the owner said yes to when I asked:
+    - 0.12.2 released (tag `v0.12.2` on `85b2f04`, release run 15);
+    - 0.13.0 with its release commit, the tag and `main` yours;
+    - nothing in progress;
+    - the 0.13.0 choices to keep;
+    - what you saw in reviews 33 and 34;
+    - what is not seen anywhere.
+- **Your two answers** (review 34) are kept as they were: a corner icon in a frame is left alone, and 命令.
+- **The version:** `Directory.Build.props` says 0.13.0. No project file or workflow names another.
+- **Not in this commit:** the tag `v0.13.0` and `main`, yours on the owner's word.
+
+| What | Entry | Commits | Run |
+| --- | --- | --- | --- |
+| Version 0.13.0; WP2, icons that came out smaller | 108 | `adb35c0` | 210 |
+| WP3, hint text in the dialog's text colour | 109 | `91cecf6` | 211 |
+| WP5, *Send to PC* before sync | 110 | `4d5db6e` | 212 |
+| WP1, the data location and the import | 111 | `fe18374` | 213, red (a test of mine) |
+| WP1's two options wrap | 112 | `d41dacd` | 214 |
+| WP4, the font and the size of the text | 113 | `06e376f` | 215, red (a test of mine) |
+| A font installed after the start is found | 114 | `b138067` | 216, red (the same test) |
+| The fit test measures a scaled dialog in one unit | 115 | `652ef7d` | 217 |
+| Ready for the release check | 116 | `ed42012` | 218 |
+| Review 33: R1–R6 | 117 | `f7c83e9` | 219 |
+| Ready again | 118 | `bd58ca1` | 220 |
+| Release commit | 119 | this | — |
+
+This entry claims no run for its own commit.
+
 ## 2026-11-20 (118) — 0.13.0 ready for the release check, again
 
 Run 219 (`f7c83e9`, entry 117) is green: Core 1170 and App 436 tests. Review 33's R1–R6 are in, so 0.13.0 is **ready

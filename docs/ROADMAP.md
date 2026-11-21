@@ -266,9 +266,10 @@ folder.
   and Chinese text in Taipei Sans TC Light (the owner's request of 2026-11-18), installed for the user on a click.
 - **0.12.1** (released 2026-11-19): the review fixes after 0.12.0.
 - **0.12.2** (released 2026-11-20): the findings of the release check of 0.12.1.
-- **0.13.0 "Where it lives, how it reads"** (in progress): the owner's requests after 0.12.2 — the data folder in
-  `portable.txt` and Settings, icons that came out small, hint text colour, *Send to PC* before sync, the
+- **0.13.0 "Where it lives, how it reads"** (released 2026-11-21): the owner's requests after 0.12.2 — the data
+  folder in `portable.txt` and Settings, icons that came out small, hint text colour, *Send to PC* before sync, the
   interface's font and text size.
+- **Next**: nothing planned yet.
 - **1.0.0 "Ship it"**: the existing backlog — installer (MSIX/winget), code signing, toast notifications with
   actions.
 

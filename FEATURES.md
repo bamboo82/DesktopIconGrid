@@ -1020,10 +1020,13 @@ the notes of 0.12.0.
 minimise that counted as a use, the Sync window's Google heading and its problem said twice, and a usage save that
 could fail without trying again.
 
-**0.13.0 "Where it lives, how it reads"** *(in progress)* — the owner's requests after 0.12.2: `portable.txt`
-holds the data folder, with a *Data location* block in Settings and this PC's bar brought into a portable copy;
-icons that came out smaller than the others; hint text in the dialogs' text colour; *Send to PC* added before sync
-is set up; a font and a text size for the interface.
+**0.13.0 "Where it lives, how it reads"** *(done, released 2026-11-21)* — the owner's requests after 0.12.2:
+`portable.txt` holds the data folder, with a *Data location* block in Settings and this PC's bar brought into a
+portable copy; icons that came out smaller than the others; hint text in the dialogs' text colour; *Send to PC*
+added before sync is set up; a font and a text size for the interface; and what the release check found (a note in
+`portable.txt`, the shell's frame at every size, names at larger text, icons and recordings in the import).
+
+**Next** — nothing planned yet.
 
 **1.0.0 "Ship it"** — the existing backlog: installer (MSIX/winget), code signing, and the Windows toast with
 actions.

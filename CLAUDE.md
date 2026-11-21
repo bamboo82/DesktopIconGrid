@@ -88,15 +88,33 @@ After removing or editing a key in the `.resx` files, run `python3 -I tools/gen_
 
 ## State
 
-- Released: 0.12.1 on 2026-11-19 (release commit `0326f82`; annotated tag `v0.12.1` on it, release run 14; REVIEW_NOTES
-  entry 100 has its table), the faults the review session found in 0.12.0 after the release (review 28). Before it
-  0.12.0 "Find it, see it" on 2026-11-18 (tag `v0.12.0` on `ca7b1c6`, entry 91), 0.11.0 (tag `v0.11.0` on
-  `10dec5a`), and 0.10.0 (tag `v0.10.0` on `254c55c`).
-- 0.12.2, the findings of the release check of 0.12.1 (review 29: N1–N5), has its release commit, dated 2026-11-20
-  (REVIEW_NOTES entry 107). It came after the review session's release check (review 30, no finding), on the owner's
-  word. The tag `v0.12.2` and `main` are the review session's, on the owner's word.
-- In progress: nothing. After 0.12.2 nothing is planned; 1.0.0 keeps the installer, code signing and the Windows toast
+- Released: 0.12.2 on 2026-11-20 (release commit `85b2f04`; annotated tag `v0.12.2` on it, release run 15; REVIEW_NOTES
+  entry 107 has its table), the findings of the release check of 0.12.1 (review 29: N1–N5). Before it 0.12.1 (tag
+  `v0.12.1` on `0326f82`, entry 100), 0.12.0 "Find it, see it" (tag `v0.12.0` on `ca7b1c6`, entry 91), 0.11.0 (tag
+  `v0.11.0` on `10dec5a`), and 0.10.0 (tag `v0.10.0` on `254c55c`).
+- 0.13.0 "Where it lives, how it reads", the owner's requests after 0.12.2 (plan 31: WP1–WP5; review 33: R1–R6), has
+  its release commit, dated 2026-11-21 (REVIEW_NOTES entry 119 has its table). It came after the review session's
+  re-check (review 34, no finding), on the owner's word. The tag `v0.13.0` and `main` are the review session's, on the
+  owner's word.
+- In progress: nothing. After 0.13.0 nothing is planned; 1.0.0 keeps the installer, code signing and the Windows toast
   with actions.
+- Keep as designed (0.13.0):
+  - `portable.txt`'s first line names the data folder (`DataLocation.FolderOf`, Windows' rules by hand). A note in it
+    (the folder it names has no bar while the program's folder has one) keeps the program's folder, makes nothing,
+    and says so once (entry 117, R1). *Don't copy* leaves an empty bar in a folder without one;
+  - the import copies `layout.json`, `workspaces.json`, `usage.json`, `icons\` and `sounds\` (icon paths made the
+    target's; `%APPDRIVE%` only on the shared location and this PC's own), never approvals, the sign-in, `sync.json`,
+    `this-pc.json`, logs, history or the Drive cache. Files in the way are kept as `….before-import-<date>`. Into a
+    running portable bar it happens at the restart (the request file); the copy at Save happens at once after a flush
+    (entries 111 and 117);
+  - the shell's frame around a padded icon is found by its shape; inside it any centred icon counts, a corner one is
+    left alone; without a frame, 70 % (entry 117, R2; review 34);
+  - `uiFont` and `textScale` sync like `chineseFont`; a dialog is scaled whole and capped to the work area with a
+    scrolling body; with names shown the cell's width follows the size (entries 113 and 117);
+  - hints take the dialog's text colour; grey stays for the log's Debug lines, the Drive viewer's dividers, the
+    filter placeholder and the folder stack's two lines (entry 109, review 32);
+  - *Send to PC* added before sync keeps an `AddedHereMark`, never an `IconMark` (entry 110, review 32);
+  - zh-Hant says 命令 for commands (review 34).
 - Keep as designed (0.12.1–0.12.2):
   - `usage.json` is read and written as a JSON tree: what this version cannot read goes back as it was, a file that
     is not the JSON this app writes is kept as `usage.json.corrupt-<date>`, and none over 1 MB is written (entry 98);
@@ -116,10 +134,17 @@ After removing or editing a key in the `.resx` files, run `python3 -I tools/gen_
   - for 0.12.0: WP3, WP4, F1, and WP5 with the real font download and install (with the owner's leave); the release
     check's fixes V1, V3 and V4, and S1 with real keys;
   - for 0.12.1 (review 29): A1–A3 in English, the Install row, D2, F2, F3, and U1 with `WM_QUERYENDSESSION`;
-  - for 0.12.2 (review 30): N1–N4 (N3 in zh-Hant only; English and zh-Hans in `DialogFitTests`).
+  - for 0.12.2 (review 30): N1–N4 (N3 in zh-Hant only; English and zh-Hans in `DialogFitTests`);
+  - for 0.13.0 (reviews 33 and 34, a portable copy on zh-TW Windows 11 at 100 %): `portable.txt` with `.`, a move to
+    `data` with *Copy* and *Restart now*, an absolute folder in quotes, the question at a first start with *Start
+    empty*, the note copy (R1); PCMan at 32, 48 and 64 (R2); hints in the light Fluent look; Settings at 150 % zh-Hant
+    and 90 % English; names at 150 % (R3); *Send to PC* on a copy without sync.
 - Not seen anywhere:
   - a real notification banner, a real sign-out, a real Windows snap, and maximise on a second monitor;
   - the recogniser with a microphone (the reviewer asks the owner before it opens one);
   - Windows 10 (the symbol font fallback), another DPI scale, and a real lock on `usage.json` (a scanner, a sync
-    client).
+    client);
+  - for 0.13.0: *Import this PC's data…* and *Import* at a first start, and R4–R6 run (they read the owner's real data
+    folder: the reviewer asks the owner), the *This PC* direction and a folder that cannot be used, hints in the dark
+    and the classic look, Properties at 150 %, a chosen font other than the default, a real stick, Program Files.
 - Nothing is open for the owner from this session.
