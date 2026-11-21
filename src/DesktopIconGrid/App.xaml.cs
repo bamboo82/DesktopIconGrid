@@ -50,6 +50,7 @@ public partial class App : Application
     {
         base.OnStartup(e);
         Views.TextSharpness.RegisterMenusAndTooltips(); // whole-pixel text in every menu and tooltip (0.15.0 WP9)
+        Views.OpenToolTips.Register(); // so that the bar can close its tooltip when a dialog takes the focus (review 41 U3)
         DispatcherUnhandledException += OnDispatcherUnhandledException;
         AppDomain.CurrentDomain.UnhandledException += (_, args) =>
             AppLog.Default.Error("App", "Unhandled exception (process is terminating)", args.ExceptionObject as Exception);

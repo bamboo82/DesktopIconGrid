@@ -1299,6 +1299,7 @@ public partial class MainWindow : Window
     private void OnDeactivated(object? sender, EventArgs e)
     {
         _viewModel.EndLaunchFeedback(); // the program that was started has come up (or something else took over)
+        OpenToolTips.CloseFor(this); // a tooltip of the bar does not stay in front of the dialog that took the focus (review 41 U3)
         if (!DragState.IsDragging)
         {
             _viewModel.IsGroupPopupOpen = false;

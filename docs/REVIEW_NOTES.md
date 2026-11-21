@@ -9,6 +9,22 @@ The owner relays replies.
 
 ---
 
+## 2026-11-21 (156) — Review 41 U3: a tooltip of the bar goes when the bar loses the focus
+
+- **New with WP9? No.** WP9's class handler only sets the text options of a tooltip as it opens; it keeps nothing open. A
+  tooltip stays while the pointer rests on its element, and nothing closed the bar's when a dialog came up in front, since
+  the pointer did not move: so it was before WP9 too.
+- **Fix:** `OpenToolTips` follows every tooltip that opens and closes (class handlers on `ToolTip.Opened` and `Closed`,
+  registered once at start beside WP9's). When the bar is deactivated (a dialog of its own or another program takes the
+  focus) it closes the open tooltips of its elements, a group popup's among them; another window's stay. The pointer moving
+  back over an icon shows its tooltip again as usual. The window at the pointer closes when it loses the focus anyway.
+- **Test:** two windows with an open tooltip each: closing the bar's closes its one and leaves the other's open; a tooltip
+  that was closed is no longer followed.
+- **Not tested:** the bar's real deactivation by Settings with the pointer resting on an icon (the event is the window's
+  own and is not raised by a test); on screen.
+
+This entry claims no run for its own commit.
+
 ## 2026-11-21 (155) — U1: 自動 without the Fluent style's minimum width
 
 - **Runs:** 257 (`17b0745`, the WP7b test corrections) green: Core 1359/1359, App 588/588, so WP7b is done. 258 (`ceb9983`,
