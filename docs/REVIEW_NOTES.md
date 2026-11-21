@@ -9,6 +9,16 @@ The owner relays replies.
 
 ---
 
+## 2026-11-21 (147) — WP4b: the 自動 boxes wrap like every box in Settings
+
+- **Run 250** (`5600c07`, WP4b, entry 146): Core 1317 of 1317; App 540 of 541. The red one is
+  `DialogFitTests.Every_check_box_and_option_in_Settings_and_Sync_wraps_its_text`: the two new 自動 boxes had no
+  `WrappingLabel` template, which every check box in Settings has, so that a long label wraps (release check, 0.12.x).
+  WP4b's own tests passed.
+- **The fix:** both boxes take `WrappingLabel`. Nothing else changes.
+
+This entry claims no run for its own commit.
+
 ## 2026-11-21 (146) — 0.15.0 WP4b: the custom theme's hover and focus border colours
 
 - **Run 249** (`b75b870`, WP4, entry 145): green, Core 1308 of 1308, App 534 of 534.
