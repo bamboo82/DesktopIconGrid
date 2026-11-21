@@ -239,7 +239,8 @@ public sealed class TextIconTile : Decorator
         _text.ClearValue(EffectProperty);
         if (themeColour)
         {
-            (icon.Fit ? (FrameworkElement)_fit : _text).SetResourceReference(EffectProperty, MainWindow.TextEdgeKey);
+            // The glyphs' own key: the names' edge, stronger over a background picture (review 41 U2).
+            (icon.Fit ? (FrameworkElement)_fit : _text).SetResourceReference(EffectProperty, MainWindow.GlyphEdgeKey);
         }
     }
 }

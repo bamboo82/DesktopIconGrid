@@ -334,8 +334,26 @@ public partial class MainWindow : Window
 
     internal const string GaugeDarkTextEdgeKey = "Theme.GaugeDarkTextEdge";
 
+    /// <summary>
+    /// The edge of text and symbol icons in the theme's colour, the Voice and Send to PC glyphs among them: the names' edge,
+    /// stronger over a background picture (review 41 U2), where the names keep theirs.
+    /// </summary>
+    internal const string GlyphEdgeKey = "Theme.GlyphEdge";
+
+    /// <summary>
+    /// The edges of a gauge's value in its level colour, green, orange or red, which read on the theme's background without
+    /// one: set only while a background picture is drawn (review 41 U2), for a light colour (near-black) and a dark one
+    /// (white), as the colour's own tone stands out.
+    /// </summary>
+    internal const string GaugeLevelLightEdgeKey = "Theme.GaugeLevelLightEdge";
+
+    internal const string GaugeLevelDarkEdgeKey = "Theme.GaugeLevelDarkEdge";
+
     /// <summary>The blur of the edge, in the bar's units.</summary>
     internal const double TextEdgeBlur = 3;
+
+    /// <summary>How much wider the strong edge over a picture is than the see-through one (review 41 U2).</summary>
+    internal const double StrongEdgeScale = 2;
 
     /// <summary>
     /// While a background is see-through, the names under the icons, the captions of labels and row lines, the empty
@@ -353,13 +371,16 @@ public partial class MainWindow : Window
     /// as the box is smaller than 100: on the bar they look as the names' do.
     /// </para>
     /// </summary>
-    internal static void SetSeeThroughLook(ResourceDictionary resources, string? foreground, double iconSize)
+    internal static void SetSeeThroughLook(ResourceDictionary resources, string? foreground, double iconSize, bool picture = false)
     {
         if (foreground is null)
         {
             resources.Remove(TextEdgeKey);
+            resources.Remove(GlyphEdgeKey);
             resources.Remove(GaugeTextEdgeKey);
             resources.Remove(GaugeNeutralEdgeKey);
+            resources.Remove(GaugeLevelLightEdgeKey);
+            resources.Remove(GaugeLevelDarkEdgeKey);
             resources.Remove(LightTextEdgeKey);
             resources.Remove(DarkTextEdgeKey);
             resources.Remove(GaugeLightTextEdgeKey);
@@ -368,14 +389,30 @@ public partial class MainWindow : Window
             return;
         }
 
+        // Over a picture a widget's text and an icon's glyph lie on any part of it, a white disc or a green field: their
+        // edge is then at full strength and twice as wide (review 41 U2); the names, captions and lines keep theirs.
         var box = 100 / Math.Max(iconSize, 1);
-        resources[TextEdgeKey] = TextEdgeFor(foreground);
-        resources[GaugeTextEdgeKey] = TextEdgeFor(foreground, box);
-        resources[GaugeNeutralEdgeKey] = TextEdgeFor(GaugeState.NeutralColor, box);
+        System.Windows.Media.Effects.DropShadowEffect Edge(string colour, double scale) => picture ? StrongEdgeFor(colour, scale) : TextEdgeFor(colour, scale);
+        var textEdge = TextEdgeFor(foreground);
+        resources[TextEdgeKey] = textEdge;
+        resources[GlyphEdgeKey] = picture ? StrongEdgeFor(foreground) : textEdge;
+        resources[GaugeTextEdgeKey] = Edge(foreground, box);
+        resources[GaugeNeutralEdgeKey] = Edge(GaugeState.NeutralColor, box);
+        if (picture)
+        {
+            resources[GaugeLevelLightEdgeKey] = StrongEdgeFor("#FFFFFF", box);
+            resources[GaugeLevelDarkEdgeKey] = StrongEdgeFor("#000000", box);
+        }
+        else
+        {
+            resources.Remove(GaugeLevelLightEdgeKey); // green, orange and red read on the theme's background without one
+            resources.Remove(GaugeLevelDarkEdgeKey);
+        }
+
         resources[LightTextEdgeKey] = TextEdgeFor("#FFFFFF");
         resources[DarkTextEdgeKey] = TextEdgeFor("#000000");
-        resources[GaugeLightTextEdgeKey] = TextEdgeFor("#FFFFFF", box);
-        resources[GaugeDarkTextEdgeKey] = TextEdgeFor("#000000", box);
+        resources[GaugeLightTextEdgeKey] = Edge("#FFFFFF", box);
+        resources[GaugeDarkTextEdgeKey] = Edge("#000000", box);
         resources[ThemeManager.LineStrokeKey] = ThemeManager.ToBrush(foreground); // at full strength
     }
 
@@ -383,6 +420,24 @@ public partial class MainWindow : Window
     /// The edge for text of <paramref name="foreground"/>: a shadow under the letters, no offset, a blur of 3, times
     /// <paramref name="scale"/> for text drawn in a box its icon scales down.
     /// </summary>
+    /// <summary>
+    /// The strong edge over a background picture (review 41 U2): the see-through edge's tone, chosen against the text's own
+    /// colour, at full strength and <see cref="StrongEdgeScale"/> times as wide.
+    /// </summary>
+    internal static System.Windows.Media.Effects.DropShadowEffect StrongEdgeFor(string foreground, double scale = 1)
+    {
+        var edge = new System.Windows.Media.Effects.DropShadowEffect
+        {
+            Color = ThemeManager.ToColor(ThemeCatalog.Luminance(foreground) > 0.5 ? TextOverPicture.DarkOutline : "#FFFFFF"),
+            ShadowDepth = 0,
+            BlurRadius = TextEdgeBlur * StrongEdgeScale * scale,
+            Opacity = 1,
+            RenderingBias = System.Windows.Media.Effects.RenderingBias.Performance,
+        };
+        edge.Freeze();
+        return edge;
+    }
+
     internal static System.Windows.Media.Effects.DropShadowEffect TextEdgeFor(string foreground, double scale = 1)
     {
         var edge = new System.Windows.Media.Effects.DropShadowEffect

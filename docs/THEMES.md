@@ -89,7 +89,12 @@ picture…*, *From a web address…* and *Remove*, and *Picture strength* (20–
   (`BackgroundFit`) in the preview's units.
 - Reading over it: while a picture is drawn, the see-through look's edges are on at every opacity, and the light or
   dark text is chosen for the picture's average blended into the colour by its strength. The focus colour's contrast
-  warning uses the same blend.
+  warning uses the same blend. A widget's text (a gauge's value and caption, the clock's time, in the theme's colour,
+  the neutral grey or a look's colour) and an icon's glyph in the theme's colour lie on any part of the picture, so
+  their edge is stronger there (review 41 U2): at full strength and twice as wide, near-black under light text and white
+  under dark, chosen against the text's own colour; a value in green or orange takes the near-black one and red the
+  white one, which it has only over a picture. The names, captions, lines and the bar's own marks keep the see-through
+  edge.
 
 Existing layouts that only had a background colour keep their look: when a layout file has no
 `theme` field, the app picks *Classic* if the colour is still the default and *Custom* otherwise.

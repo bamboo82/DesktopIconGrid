@@ -9,6 +9,27 @@ The owner relays replies.
 
 ---
 
+## 2026-11-21 (157) — Review 41 U2: a stronger edge for widgets' text and glyphs over a picture
+
+- **Runs:** 259 (`0a4c05d`, U1's 自動) green: Core 1359/1359, App 592/592. 260 (`b3e0b2e`, U3) green: Core 1359/1359, App
+  593/593.
+- **U2:** while a background picture is drawn (`BarSurface` now tells `SetSeeThroughLook` so), the edge under a gauge's
+  text in the theme's colour, the neutral grey (the clock's time), a widget look's colour (WP7b) and an icon's glyph in
+  the theme's colour is at full strength (opacity 1 for 0.95) and twice as wide (blur 6 for 3, times the gauge box's
+  scale), in the tone chosen against the text's own colour by the see-through rule (near-black above luminance 0.5,
+  white below). A value in green or orange, which had none, takes the near-black one, red the white one
+  (`GaugeState.IsLightLevel`), through two keys that exist only over a picture, so without one they are drawn as before.
+- **Names keep theirs:** glyphs moved to a key of their own (`Theme.GlyphEdge`), which is the very same edge as the
+  names' while there is no picture; the names, captions (with or without a look), lines, grip, ✕ and ▸ keep
+  `Theme.TextEdge`.
+- **Tests:** the resources with a picture (names' edge unchanged; the glyphs', gauges', grey's, levels' and a look's at
+  full strength and twice the blur, in the right tone) and without (glyphs on the names' edge, no level edges); in a tile,
+  green and orange take the near-black level edge and red the white one only over a picture, the grey keeps its own, and
+  the Voice glyph moves from the names' edge to its own. The review 38 tests stand unchanged.
+- **Not tested:** on screen over the review's gradient with a white disc.
+
+This entry claims no run for its own commit.
+
 ## 2026-11-21 (156) — Review 41 U3: a tooltip of the bar goes when the bar loses the focus
 
 - **New with WP9? No.** WP9's class handler only sets the text options of a tooltip as it opens; it keeps nothing open. A

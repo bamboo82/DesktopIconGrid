@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Windows;
 using System.Windows.Media;
+using DesktopIconGrid.Core.Models;
 using DesktopIconGrid.Core.SpecialIcons;
 using DesktopIconGrid.Infrastructure;
 using DesktopIconGrid.Services;
@@ -122,6 +123,7 @@ public sealed class GaugeState : ObservableObject
             {
                 OnPropertyChanged(nameof(LevelBrush));
                 OnPropertyChanged(nameof(IsNeutral));
+                OnPropertyChanged(nameof(IsLightLevel));
                 OnPropertyChanged(nameof(IsAlarm));
             }
         }
@@ -213,6 +215,13 @@ public sealed class GaugeState : ObservableObject
 
     /// <summary>The value is drawn in <see cref="NeutralColor"/>.</summary>
     public bool IsNeutral => ReferenceEquals(LevelBrush, UnknownBrush);
+
+    /// <summary>
+    /// The value's level colour is light (green, orange; not red): over a background picture its edge is near-black, else
+    /// white (review 41 U2), by the rule the see-through edges follow.
+    /// </summary>
+    public bool IsLightLevel => LevelBrush is SolidColorBrush { Color: var colour }
+        && ThemeCatalog.Luminance($"#{colour.R:X2}{colour.G:X2}{colour.B:X2}") > 0.5;
 
     private Brush LevelFromPercent => _percent switch
     {

@@ -242,6 +242,22 @@
                             <DataTrigger Binding="{Binding IsNeutral}" Value="True">
                               <Setter Property="Effect" Value="{DynamicResource Theme.GaugeNeutralEdge}" />
                             </DataTrigger>
+                            <!-- Green, orange and red take an edge only over a background picture, where they may lie on any
+                                 colour (review 41 U2): the resources are there only then -->
+                            <MultiDataTrigger>
+                              <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding IsNeutral}" Value="False" />
+                                <Condition Binding="{Binding IsLightLevel}" Value="True" />
+                              </MultiDataTrigger.Conditions>
+                              <Setter Property="Effect" Value="{DynamicResource Theme.GaugeLevelLightEdge}" />
+                            </MultiDataTrigger>
+                            <MultiDataTrigger>
+                              <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding IsNeutral}" Value="False" />
+                                <Condition Binding="{Binding IsLightLevel}" Value="False" />
+                              </MultiDataTrigger.Conditions>
+                              <Setter Property="Effect" Value="{DynamicResource Theme.GaugeLevelDarkEdge}" />
+                            </MultiDataTrigger>
                             <DataTrigger Binding="{Binding Look.HasFont}" Value="True">
                               <Setter Property="FontFamily" Value="{Binding Look.Family}" />
                             </DataTrigger>
