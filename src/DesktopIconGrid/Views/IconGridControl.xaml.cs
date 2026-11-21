@@ -170,11 +170,17 @@ public partial class IconGridControl : UserControl
     /// </summary>
     internal static bool IsKeyboardActivation(InputDevice? mostRecent) => mostRecent is KeyboardDevice;
 
-    /// <summary>The modifier keys held now, as the launcher's activation flags.</summary>
+    /// <summary>
+    /// The modifier keys of a hotkey still held, which a click leaves out (0.15.0 WP2: while the key held to show the bar
+    /// at the pointer is down, a click there is a plain click); the bar window sets it.
+    /// </summary>
+    internal static Func<ModifierKeys> HeldHotkeyModifiers { get; set; } = () => ModifierKeys.None;
+
+    /// <summary>The modifier keys held now, as the launcher's activation flags, less those of a hotkey still held.</summary>
     internal static ActivationModifiers CurrentModifiers()
     {
         var modifiers = ActivationModifiers.None;
-        var keys = Keyboard.Modifiers;
+        var keys = Keyboard.Modifiers & ~HeldHotkeyModifiers();
         if (keys.HasFlag(ModifierKeys.Control))
         {
             modifiers |= ActivationModifiers.Control;

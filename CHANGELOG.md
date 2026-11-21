@@ -7,6 +7,13 @@ version numbers follow [Semantic Versioning](https://semver.org/).
 
 "Locked and at hand": the owner's requests after 0.14.0.
 
+### Added
+
+- *Show at pointer while held* under Settings ▸ Keys: while that combination is held, the bar shows at the mouse
+  pointer, and letting go of any of its keys hides it. While it is held a click there is a plain click, whatever
+  modifiers the combination has; a menu or a drag open at the moment you let go keeps the window until it ends. It
+  syncs with the other settings.
+
 ### Changed
 
 - The window the show-at-pointer key opens is the bar's twin. Its icons have the bar's room, so they fall into the same

@@ -3048,6 +3048,15 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Show-at-pointer-while-held hotkey.
+        /// </summary>
+        public static string Main_HoldHotkeyTitle {
+            get {
+                return ResourceManager.GetString("Main_HoldHotkeyTitle", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Show/hide hotkey.
         /// </summary>
         public static string Main_HotkeyTitle {
@@ -5721,6 +5730,42 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Show at pointer while held:.
+        /// </summary>
+        public static string Settings_HoldHotkey {
+            get {
+                return ResourceManager.GetString("Settings_HoldHotkey", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to While these keys are held, the bar shows at the mouse pointer; letting go hides [rest of string was truncated]";.
+        /// </summary>
+        public static string Settings_HoldHotkeyHint {
+            get {
+                return ResourceManager.GetString("Settings_HoldHotkeyHint", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Show at pointer while held hotkey.
+        /// </summary>
+        public static string Settings_HoldHotkeyName {
+            get {
+                return ResourceManager.GetString("Settings_HoldHotkeyName", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Use a different combination from the hotkeys above..
+        /// </summary>
+        public static string Settings_HoldHotkeySame {
+            get {
+                return ResourceManager.GetString("Settings_HoldHotkeySame", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Show/hide hotkey:.
         /// </summary>
         public static string Settings_Hotkey {
@@ -6378,7 +6423,7 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Use a different combination from the other two hotkeys..
+        ///   Looks up a localized string similar to Use a different combination from the other hotkeys..
         /// </summary>
         public static string Settings_VoiceHotkeySame {
             get {
@@ -8417,6 +8462,15 @@ namespace DesktopIconGrid.Resources {
         public static string WindowKey_Find {
             get {
                 return ResourceManager.GetString("WindowKey_Find", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Show at the pointer while held (system-wide).
+        /// </summary>
+        public static string WindowKey_HoldHotkey {
+            get {
+                return ResourceManager.GetString("WindowKey_HoldHotkey", resourceCulture);
             }
         }
 

@@ -62,6 +62,12 @@ public partial class PointerWindow : Window
     internal BarSurface Surface => _surface;
 
     /// <summary>
+    /// A menu is open (it holds the mouse while it is): the key held to show this window hides it only when the menu
+    /// has closed (0.15.0 WP2).
+    /// </summary>
+    internal bool IsMenuOpen => IsVisible && Mouse.Captured is System.Windows.Controls.ContextMenu or System.Windows.Controls.MenuItem;
+
+    /// <summary>
     /// The window's size in WPF units, its icon area set within it: the bar's icon area (<see cref="BarIconArea"/>), the
     /// search box above it and, in a group, the group's header under the box, inside the border. Held to
     /// <paramref name="workArea"/> (the pointer's monitor's work area, in WPF units at its scale): an icon area that would

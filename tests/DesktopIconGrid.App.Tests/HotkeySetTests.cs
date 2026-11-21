@@ -57,8 +57,8 @@ public sealed class HotkeySetTests
     private readonly FakeWindows _windows = new();
 
     private HotkeySet Create() => new(
-        (new GlobalHotkey(_windows), "Show/hide hotkey"),
-        (new GlobalHotkey(_windows, GlobalHotkey.PointerIds), "Show-at-pointer hotkey"));
+        (new GlobalHotkey(_windows), "Show/hide hotkey", string.Empty),
+        (new GlobalHotkey(_windows, GlobalHotkey.PointerIds), "Show-at-pointer hotkey", DesktopIconGrid.Resources.Strings.Settings_PointerHotkeySame));
 
     private bool HeldByShowHide(string text) => _windows.HolderOf(text) is GlobalHotkey.ShowHideIds or GlobalHotkey.ShowHideIds + 1;
 
@@ -182,6 +182,27 @@ public sealed class HotkeySetTests
         Assert.Equal(Strings.Settings_PointerHotkeySame, refusals[1]);
         Assert.True(HeldByShowHide("Ctrl+Alt+A"));
         Assert.Null(hotkeys.Held[1]);
+    }
+
+    [Fact]
+    public void With_four_hotkeys_the_first_of_two_alike_keeps_the_combination_and_the_other_says_its_own_refusal()
+    {
+        // 0.15.0 WP2: show/hide, show at pointer, held at pointer, voice. Only a hand-edited file gets here.
+        var hotkeys = new HotkeySet(
+            (new GlobalHotkey(_windows), "Show/hide hotkey", string.Empty),
+            (new GlobalHotkey(_windows, GlobalHotkey.PointerIds), "Show-at-pointer hotkey", Strings.Settings_PointerHotkeySame),
+            (new GlobalHotkey(_windows, GlobalHotkey.HoldIds), "Show-at-pointer-while-held hotkey", Strings.Settings_HoldHotkeySame),
+            (new GlobalHotkey(_windows, GlobalHotkey.VoiceIds), "Voice hotkey", Strings.Settings_VoiceHotkeySame));
+
+        var refusals = hotkeys.Apply(["Ctrl+Alt+A", "Ctrl+Alt+B", "Ctrl+Alt+B", "Ctrl+Alt+A"]);
+
+        Assert.Equal([null, null, Strings.Settings_HoldHotkeySame, Strings.Settings_VoiceHotkeySame], refusals);
+        Assert.True(_windows.HolderOf("Ctrl+Alt+B") is GlobalHotkey.PointerIds or GlobalHotkey.PointerIds + 1);
+        Assert.Null(hotkeys.Held[2]);
+
+        NothingShown(hotkeys.Apply(["Ctrl+Alt+A", "Ctrl+Alt+B", "Ctrl+Alt+C", "Ctrl+Alt+D"]));
+        Assert.True(_windows.HolderOf("Ctrl+Alt+C") is GlobalHotkey.HoldIds or GlobalHotkey.HoldIds + 1);
+        Assert.True(_windows.HolderOf("Ctrl+Alt+D") is GlobalHotkey.VoiceIds or GlobalHotkey.VoiceIds + 1);
     }
 
     [Fact]

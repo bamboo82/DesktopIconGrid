@@ -2382,7 +2382,7 @@
     <value>語音快速鍵</value>
   </data>
   <data name="Settings_VoiceHotkeySame" xml:space="preserve">
-    <value>請使用與另外兩個快速鍵不同的組合。</value>
+    <value>請使用與其他快速鍵不同的組合。</value>
   </data>
   <data name="Settings_VoiceLanguage" xml:space="preserve">
     <value>語音語言：</value>
@@ -2911,5 +2911,23 @@ SHA-256：{3}
   </data>
   <data name="Settings_DialogTextSizeName" xml:space="preserve">
     <value>對話方塊與功能表文字的大小</value>
+  </data>
+  <data name="Settings_HoldHotkey" xml:space="preserve">
+    <value>按住時在指標處顯示：</value>
+  </data>
+  <data name="Settings_HoldHotkeyName" xml:space="preserve">
+    <value>按住時在指標處顯示的快速鍵</value>
+  </data>
+  <data name="Settings_HoldHotkeyHint" xml:space="preserve">
+    <value>按住這組按鍵時，工具列會顯示在滑鼠指標處；放開就隱藏。</value>
+  </data>
+  <data name="Settings_HoldHotkeySame" xml:space="preserve">
+    <value>請使用與上面快速鍵不同的組合。</value>
+  </data>
+  <data name="Main_HoldHotkeyTitle" xml:space="preserve">
+    <value>按住時在指標處顯示的快速鍵</value>
+  </data>
+  <data name="WindowKey_HoldHotkey" xml:space="preserve">
+    <value>按住時在指標處顯示（全系統）</value>
   </data>
 </root>

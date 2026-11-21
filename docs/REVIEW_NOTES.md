@@ -9,6 +9,45 @@ The owner relays replies.
 
 ---
 
+## 2026-11-21 (139) — 0.15.0 WP2: show at the pointer while a key is held
+
+Run 242 (`00bc2e8`, entry 138) is red on the same test, and it says more: the window is shown, asks for 162 units and
+stays at 141. So it was not hidden: the resize itself does not take, and entry 138's cause was wrong as well. I am
+still on it; the next entry has it. This commit is WP2, which does not touch the window's size.
+
+- **The setting:** `holdAtPointerHotkey`, already in `b732176` by my mistake (entry 137): none by default, trimmed,
+  copied and synced as `showAtPointerHotkey` is.
+- **Settings ▸ 按鍵:** a third row right under 在指標處顯示, with your label and hint. It has the same box, 清除, tooltip, the
+  "needs Ctrl, Alt or Win" and "a key of the bar has it" warnings as the rows above, and its own line for a combination
+  one of them has: 請使用與上面快速鍵不同的組合。 / "Use a different combination from the hotkeys above." Each row is checked
+  against the ones before it (this one against show/hide and show at pointer), and the voice key against all three now,
+  so its line says 其他快速鍵 / "the other hotkeys" in place of 另外兩個. A key of the bar can neither take it nor have it
+  (`WindowKey_HoldHotkey` names it in that refusal).
+- **`HotkeySet`:** four keys, in the order show/hide, show at pointer, held at pointer, voice. The voice key moved from
+  third to fourth place, and the code reads both by named indexes now. Each key has its own refusal for a combination
+  that one before it holds (only a hand-edited file gets there). The new ids are `0x4A41` and `0x4A42`.
+- **The hold (`HoldToShow`, Core):**
+  - the press shows the window the way the show-at-pointer key does (the bar's group popup and its type-to-find close).
+    If the window is already open, from the other key, the press does nothing, and nor does its release. A press during
+    a hold does nothing more;
+  - every 50 ms (a `DispatcherTimer` at Input priority, as for the voice key) the keys are looked at with
+    `GetAsyncKeyState`: the main key and each modifier of the combination (Ctrl, Alt, Shift, either Windows key). The
+    first one up hides the window. If one of its menus is open, or a drag from it is under way, it hides when that ends;
+  - the window going away by itself (a launch, the focus elsewhere, Esc) ends the hold without a second hide.
+- **A plain click while held:** while the hold lasts and the window is shown, `IconGridControl.CurrentModifiers` leaves
+  out the combination's Ctrl, Shift and Alt, for a click and for Enter in the search box. A middle click keeps its new
+  instance. "A menu is open" is a context menu or a menu item holding the mouse, as an open menu does.
+- **Tests:**
+  - Core `HoldToShowTests`: the press shows and the first key up hides; a repeat; a tap; a window already open is left
+    alone, release included; a menu open at the release hides after it closes; a launch or the focus elsewhere ends the
+    hold without a second hide; the setting's round trip and trimming;
+  - App: Settings (off by default, refused against show/hide and show at pointer, the voice key against it, a key of
+    the bar, Save writes it); `HotkeySet` with four keys (the later of two alike refused with its own text, four
+    different ones each held).
+- **Not tested:** the real keys and a real click with Ctrl held during a hold; the menu check with a real menu.
+
+This entry claims no run for its own commit.
+
 ## 2026-11-21 (138) — Run 241: the window was hidden, not refused; WindowChrome back
 
 Run 241 (`0874e4c`, entry 137) failed the same test, with the answer in its message: the window asked for 162 units

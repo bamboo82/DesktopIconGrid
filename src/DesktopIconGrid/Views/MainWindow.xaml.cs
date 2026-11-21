@@ -27,6 +27,7 @@ public partial class MainWindow : Window
     private GlobalHotkey? _hotkey;
     private GlobalHotkey? _pointerHotkey;
     private GlobalHotkey? _voiceHotkey;
+    private GlobalHotkey? _holdHotkey;
     private HotkeySet? _hotkeys;
     private PointerWindow? _pointerWindow;
     private TrayIcon? _tray;
@@ -85,7 +86,13 @@ public partial class MainWindow : Window
             _pointerHotkey.Pressed += (_, _) => TogglePointerWindow();
             _voiceHotkey = new GlobalHotkey(source, GlobalHotkey.VoiceIds);
             _voiceHotkey.Pressed += (_, _) => ListenWhileVoiceHotkeyIsHeld();
-            _hotkeys = new HotkeySet((_hotkey, "Show/hide hotkey"), (_pointerHotkey, "Show-at-pointer hotkey"), (_voiceHotkey, "Voice hotkey"));
+            _holdHotkey = new GlobalHotkey(source, GlobalHotkey.HoldIds);
+            _holdHotkey.Pressed += (_, _) => ShowAtPointerWhileHeld();
+            _hotkeys = new HotkeySet(
+                (_hotkey, "Show/hide hotkey", string.Empty),
+                (_pointerHotkey, "Show-at-pointer hotkey", Strings.Settings_PointerHotkeySame),
+                (_holdHotkey, "Show-at-pointer-while-held hotkey", Strings.Settings_HoldHotkeySame),
+                (_voiceHotkey, "Voice hotkey", Strings.Settings_VoiceHotkeySame));
             ApplyHotkeys(reportErrors: true);
         }
 
@@ -409,6 +416,9 @@ public partial class MainWindow : Window
         _pointerHotkey = null;
         _voiceHotkey?.Dispose();
         _voiceHotkey = null;
+        _holdTimer?.Stop();
+        _holdHotkey?.Dispose();
+        _holdHotkey = null;
         _voice?.Cancel(); // the app is closing: a listening stops, and nothing it brings is started (review 27)
         _voiceWindow?.CloseForGood();
         _voiceWindow = null;
@@ -678,10 +688,12 @@ public partial class MainWindow : Window
         }
 
         var settings = _viewModel.Model.Settings;
-        var refusals = _hotkeys.Apply([settings.ToggleHotkey, settings.ShowAtPointerHotkey, _viewModel.Local.VoiceHotkey]); // the voice hotkey is this PC's (review 27 B4)
+        // In the order of HotkeySet: show/hide, show at pointer, held at pointer (0.15.0 WP2), voice (this PC's, review 27 B4).
+        var refusals = _hotkeys.Apply([settings.ToggleHotkey, settings.ShowAtPointerHotkey, settings.HoldAtPointerHotkey, _viewModel.Local.VoiceHotkey]);
         var toggleError = refusals[0];
         var pointerError = refusals[1];
-        var voiceError = refusals[2];
+        var holdError = refusals[2];
+        var voiceError = refusals[3];
         if (!reportErrors)
         {
             return;
@@ -695,6 +707,11 @@ public partial class MainWindow : Window
         if (!string.IsNullOrEmpty(pointerError))
         {
             MessageBox.Show(this, pointerError, Strings.Main_PointerHotkeyTitle, MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
+
+        if (!string.IsNullOrEmpty(holdError))
+        {
+            MessageBox.Show(this, holdError, Strings.Main_HoldHotkeyTitle, MessageBoxButton.OK, MessageBoxImage.Warning);
         }
 
         if (!string.IsNullOrEmpty(voiceError))
@@ -739,7 +756,7 @@ public partial class MainWindow : Window
         }
 
         ListenForVoice();
-        if (_hotkeys?.Held[2] is not { } gesture)
+        if (_hotkeys?.Held[VoiceHotkeyIndex] is not { } gesture)
         {
             return;
         }
@@ -917,9 +934,78 @@ public partial class MainWindow : Window
             return;
         }
 
+        ShowPointerWindow(window);
+    }
+
+    private void ShowPointerWindow(PointerWindow window)
+    {
         _viewModel.IsGroupPopupOpen = false;
         CloseSearch();
         window.ShowAtPointer();
+    }
+
+    // ----- held at the pointer (0.15.0 WP2) ----------------------------------------------------------
+
+    /// <summary>Where each hotkey is in <see cref="HotkeySet"/>.</summary>
+    private const int HoldHotkeyIndex = 2;
+
+    private const int VoiceHotkeyIndex = 3;
+
+    private HoldToShow? _hold;
+    private DispatcherTimer? _holdTimer;
+
+    /// <summary>
+    /// The key held to show the bar at the pointer was pressed: the window at the pointer opens, and while the hold lasts
+    /// its keys are looked at 20 times a second, as the voice key's are (no keyboard hook); the first of them to come up
+    /// hides it (<see cref="HoldToShow"/>). While it is held a click there is a plain click (<see cref="IconGridControl.HeldHotkeyModifiers"/>).
+    /// </summary>
+    private void ShowAtPointerWhileHeld()
+    {
+        if (EnsurePointerWindow() is not { } window || _hotkeys?.Held[HoldHotkeyIndex] is not { } gesture)
+        {
+            return;
+        }
+
+        _hold ??= new HoldToShow(new PointerHoldWindow(this, window), () => _hotkeys?.Held[HoldHotkeyIndex] is { } held && AllKeysDown(held));
+        IconGridControl.HeldHotkeyModifiers = () =>
+            _hold is { IsHolding: true } && window.IsVisible && _hotkeys?.Held[HoldHotkeyIndex] is { } held ? held.Modifiers : ModifierKeys.None;
+        if (!_hold.Pressed())
+        {
+            return;
+        }
+
+        _holdTimer ??= new DispatcherTimer(HoldToShow.Interval, DispatcherPriority.Input, (_, _) =>
+        {
+            if (_hold?.Tick() != true)
+            {
+                _holdTimer?.Stop();
+            }
+        }, Dispatcher);
+        _holdTimer.Start();
+        AppLog.Default.Debug("Hotkey", $"Held at the pointer: {gesture}");
+    }
+
+    /// <summary>Whether the main key of <paramref name="gesture"/> and each of its modifiers are down now.</summary>
+    private static bool AllKeysDown(HotkeyGesture gesture)
+    {
+        static bool Down(int virtualKey) => (GetAsyncKeyState(virtualKey) & 0x8000) != 0;
+        return Down(KeyInterop.VirtualKeyFromKey(gesture.Key))
+            && (!gesture.Modifiers.HasFlag(ModifierKeys.Control) || Down(0x11))
+            && (!gesture.Modifiers.HasFlag(ModifierKeys.Alt) || Down(0x12))
+            && (!gesture.Modifiers.HasFlag(ModifierKeys.Shift) || Down(0x10))
+            && (!gesture.Modifiers.HasFlag(ModifierKeys.Windows) || Down(0x5B) || Down(0x5C));
+    }
+
+    /// <summary>The window at the pointer, as the hold sees it: busy while one of its menus is open or a drag from it runs.</summary>
+    private sealed class PointerHoldWindow(MainWindow bar, PointerWindow window) : IHoldWindow
+    {
+        public bool IsOpen => window.IsVisible;
+
+        public bool IsBusy => window.IsMenuOpen || DragState.IsDragging;
+
+        public void Show() => bar.ShowPointerWindow(window);
+
+        public void Hide() => window.Dismiss();
     }
 
     /// <summary>

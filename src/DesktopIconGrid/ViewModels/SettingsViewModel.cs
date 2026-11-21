@@ -50,6 +50,7 @@ public sealed partial class SettingsViewModel : ObservableObject
     private bool _fluentDialogs;
     private string _toggleHotkey;
     private string _pointerHotkey;
+    private string _holdHotkey;
     private int _transparency;
     private bool _closeToTray;
     private bool _startWithWindows;
@@ -76,6 +77,7 @@ public sealed partial class SettingsViewModel : ObservableObject
         _backgroundColor = current.BackgroundColor;
         _toggleHotkey = current.ToggleHotkey ?? string.Empty;
         _pointerHotkey = current.ShowAtPointerHotkey ?? string.Empty;
+        _holdHotkey = current.HoldAtPointerHotkey ?? string.Empty;
         _voiceHotkey = _originalLocal.VoiceHotkey ?? string.Empty;
         VoiceLanguages = VoiceLanguageOptions(InstalledVoiceLanguages(), _originalLocal.VoiceLanguage);
         _selectedVoiceLanguage = VoiceLanguages.FirstOrDefault(l => string.Equals(l.Id, _originalLocal.VoiceLanguage, StringComparison.OrdinalIgnoreCase)) ?? VoiceLanguages[0];
@@ -344,6 +346,34 @@ public sealed partial class SettingsViewModel : ObservableObject
 
     public bool HasPointerHotkey => _pointerHotkey.Length > 0;
 
+    /// <summary>Text form of the hotkey that shows the bar at the pointer while it is held (0.15.0 WP2); empty for none.</summary>
+    public string HoldAtPointerHotkey
+    {
+        get => _holdHotkey;
+        set
+        {
+            if (SetProperty(ref _holdHotkey, value?.Trim() ?? string.Empty))
+            {
+                OnPropertyChanged(nameof(HasHoldHotkey));
+                OnHotkeysChanged();
+            }
+        }
+    }
+
+    public bool HasHoldHotkey => _holdHotkey.Length > 0;
+
+    /// <summary>The hold key is one of the two above it (however it is spelled): Windows would refuse it.</summary>
+    public bool IsHoldHotkeySame =>
+        HotkeyGesture.TryParse(_holdHotkey, out var hold)
+        && ((HotkeyGesture.TryParse(_toggleHotkey, out var toggle) && hold == toggle) || (HotkeyGesture.TryParse(_pointerHotkey, out var pointer) && hold == pointer));
+
+    public bool IsHoldHotkeyValid =>
+        (_holdHotkey.Length == 0 || (HotkeyGesture.TryParse(_holdHotkey, out _) && WindowKeyUsing(_holdHotkey) is null)) && !IsHoldHotkeySame;
+
+    public string? HoldHotkeyClash => WindowKeyUsing(_holdHotkey) is { } action ? string.Format(Strings.Settings_HotkeyUsedInBar, _holdHotkey, action) : null;
+
+    public bool HasHoldHotkeyClash => HoldHotkeyClash is not null;
+
     // ----- voice launch ------------------------------------------------------------------------------
 
     private string _voiceHotkey;
@@ -378,10 +408,12 @@ public sealed partial class SettingsViewModel : ObservableObject
 
     public bool HasVoiceHotkey => _voiceHotkey.Length > 0;
 
-    /// <summary>The voice hotkey is one of the other two (however it is spelled): Windows would refuse it.</summary>
+    /// <summary>The voice hotkey is one of the others (however it is spelled): Windows would refuse it.</summary>
     public bool IsVoiceHotkeySame =>
         HotkeyGesture.TryParse(_voiceHotkey, out var voice)
-        && ((HotkeyGesture.TryParse(_toggleHotkey, out var toggle) && voice == toggle) || (HotkeyGesture.TryParse(_pointerHotkey, out var pointer) && voice == pointer));
+        && ((HotkeyGesture.TryParse(_toggleHotkey, out var toggle) && voice == toggle)
+            || (HotkeyGesture.TryParse(_pointerHotkey, out var pointer) && voice == pointer)
+            || (HotkeyGesture.TryParse(_holdHotkey, out var hold) && voice == hold));
 
     public bool IsVoiceHotkeyValid =>
         (_voiceHotkey.Length == 0 || (HotkeyGesture.TryParse(_voiceHotkey, out _) && WindowKeyUsing(_voiceHotkey) is null)) && !IsVoiceHotkeySame;
@@ -453,8 +485,8 @@ public sealed partial class SettingsViewModel : ObservableObject
     /// <summary>The Appearance tab holds a value that cannot be saved: a custom background that is no colour.</summary>
     private bool HasAppearanceProblem => IsCustomTheme && !IsColorValid;
 
-    /// <summary>The Keys tab: a hotkey a window key has, or the show-at-pointer hotkey equal to the show/hide one.</summary>
-    private bool HasKeysProblem => !IsHotkeyValid || !IsPointerHotkeyValid;
+    /// <summary>The Keys tab: a hotkey a window key has, or one of its hotkeys equal to another.</summary>
+    private bool HasKeysProblem => !IsHotkeyValid || !IsPointerHotkeyValid || !IsHoldHotkeyValid;
 
     /// <summary>The Voice tab: its hotkey is a window key's or one of the other two hotkeys.</summary>
     private bool HasVoiceProblem => !IsVoiceHotkeyValid;
@@ -502,6 +534,10 @@ public sealed partial class SettingsViewModel : ObservableObject
         OnPropertyChanged(nameof(IsHotkeyValid));
         OnPropertyChanged(nameof(IsPointerHotkeySame));
         OnPropertyChanged(nameof(IsPointerHotkeyValid));
+        OnPropertyChanged(nameof(HoldHotkeyClash));
+        OnPropertyChanged(nameof(HasHoldHotkeyClash));
+        OnPropertyChanged(nameof(IsHoldHotkeySame));
+        OnPropertyChanged(nameof(IsHoldHotkeyValid));
         OnPropertyChanged(nameof(VoiceHotkeyClash));
         OnPropertyChanged(nameof(HasVoiceHotkeyClash));
         OnPropertyChanged(nameof(IsVoiceHotkeySame));
@@ -529,7 +565,10 @@ public sealed partial class SettingsViewModel : ObservableObject
         if (text.Length > 0)
         {
             var taken = WindowKeyRows.FirstOrDefault(other => other != row && SameKey(other.Text, text))?.Label
-                        ?? (SameKey(_toggleHotkey, text) ? Strings.WindowKey_ToggleHotkey : SameKey(_pointerHotkey, text) ? Strings.WindowKey_PointerHotkey : SameKey(_voiceHotkey, text) ? Strings.WindowKey_VoiceHotkey : null);
+                        ?? (SameKey(_toggleHotkey, text) ? Strings.WindowKey_ToggleHotkey
+                            : SameKey(_pointerHotkey, text) ? Strings.WindowKey_PointerHotkey
+                            : SameKey(_holdHotkey, text) ? Strings.WindowKey_HoldHotkey
+                            : SameKey(_voiceHotkey, text) ? Strings.WindowKey_VoiceHotkey : null);
             if (taken is not null)
             {
                 return string.Format(Strings.Settings_WindowKeyInUse, text, taken);
@@ -558,6 +597,7 @@ public sealed partial class SettingsViewModel : ObservableObject
         settings.ChineseFont = ChineseFontToSave;
         settings.ToggleHotkey = IsHotkeyValid && HasHotkey ? _toggleHotkey : null;
         settings.ShowAtPointerHotkey = IsPointerHotkeyValid && HasPointerHotkey ? _pointerHotkey : null;
+        settings.HoldAtPointerHotkey = IsHoldHotkeyValid && HasHoldHotkey ? _holdHotkey : null;
         settings.WindowKeys = WindowKeys.Overrides(WindowKeyRows.ToDictionary(row => row.Action, row => row.Text));
         if (_original.WindowKeys?.Where(pair => !Enum.TryParse<WindowKeyAction>(pair.Key, out _)).ToList() is { Count: > 0 } unknown)
         {

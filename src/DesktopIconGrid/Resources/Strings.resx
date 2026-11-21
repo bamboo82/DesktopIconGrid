@@ -2382,7 +2382,7 @@ Details are in {1}.</value>
     <value>Voice hotkey</value>
   </data>
   <data name="Settings_VoiceHotkeySame" xml:space="preserve">
-    <value>Use a different combination from the other two hotkeys.</value>
+    <value>Use a different combination from the other hotkeys.</value>
   </data>
   <data name="Settings_VoiceLanguage" xml:space="preserve">
     <value>Voice language:</value>
@@ -2911,5 +2911,23 @@ The place was not changed; what was copied stays there.</value>
   </data>
   <data name="Settings_DialogTextSizeName" xml:space="preserve">
     <value>Size of dialog and menu text</value>
+  </data>
+  <data name="Settings_HoldHotkey" xml:space="preserve">
+    <value>Show at pointer while held:</value>
+  </data>
+  <data name="Settings_HoldHotkeyName" xml:space="preserve">
+    <value>Show at pointer while held hotkey</value>
+  </data>
+  <data name="Settings_HoldHotkeyHint" xml:space="preserve">
+    <value>While these keys are held, the bar shows at the mouse pointer; letting go hides it.</value>
+  </data>
+  <data name="Settings_HoldHotkeySame" xml:space="preserve">
+    <value>Use a different combination from the hotkeys above.</value>
+  </data>
+  <data name="Main_HoldHotkeyTitle" xml:space="preserve">
+    <value>Show-at-pointer-while-held hotkey</value>
+  </data>
+  <data name="WindowKey_HoldHotkey" xml:space="preserve">
+    <value>Show at the pointer while held (system-wide)</value>
   </data>
 </root>

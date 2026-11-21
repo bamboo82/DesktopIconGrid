@@ -200,6 +200,9 @@ public sealed class GlobalHotkey : IDisposable
     /// <summary>The first of the two ids of the voice hotkey.</summary>
     public const int VoiceIds = 0x4A31;
 
+    /// <summary>The first of the two ids of the hotkey held to show the bar at the pointer (0.15.0 WP2).</summary>
+    public const int HoldIds = 0x4A41;
+
     private const int WmHotkey = 0x0312;
     private const uint ModNoRepeat = 0x4000;
     private const int ErrorHotkeyAlreadyRegistered = 1409;

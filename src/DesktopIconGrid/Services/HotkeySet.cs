@@ -1,5 +1,4 @@
 using DesktopIconGrid.Core.Diagnostics;
-using DesktopIconGrid.Resources;
 
 namespace DesktopIconGrid.Services;
 
@@ -15,15 +14,20 @@ internal sealed class HotkeySet
 {
     private readonly GlobalHotkey[] _hotkeys;
     private readonly string[] _names;
+    private readonly string[] _sameRefusals;
     private readonly HotkeyGesture?[] _held;
     private readonly string?[] _shown;
 
-    /// <param name="hotkeys">In the order they get their combinations; the names are for the log.</param>
-    public HotkeySet(params (GlobalHotkey Hotkey, string Name)[] hotkeys)
+    /// <param name="hotkeys">
+    /// In the order they get their combinations; the names are for the log, and the refusal is said when a hotkey is
+    /// given the combination of one before it.
+    /// </param>
+    public HotkeySet(params (GlobalHotkey Hotkey, string Name, string SameRefusal)[] hotkeys)
     {
         ArgumentNullException.ThrowIfNull(hotkeys);
         _hotkeys = [.. hotkeys.Select(h => h.Hotkey)];
         _names = [.. hotkeys.Select(h => h.Name)];
+        _sameRefusals = [.. hotkeys.Select(h => h.SameRefusal)];
         _held = new HotkeyGesture?[hotkeys.Length];
         _shown = new string?[hotkeys.Length];
     }
@@ -53,7 +57,7 @@ internal sealed class HotkeySet
             {
                 // The same combination twice (only a hand-edited settings file; the dialog refuses it): the first keeps it.
                 gestures[i] = null;
-                refusals[i] = i >= 2 ? Strings.Settings_VoiceHotkeySame : Strings.Settings_PointerHotkeySame;
+                refusals[i] = _sameRefusals[i];
             }
         }
 

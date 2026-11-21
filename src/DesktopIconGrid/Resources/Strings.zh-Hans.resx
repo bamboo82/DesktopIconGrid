@@ -2382,7 +2382,7 @@
     <value>语音快捷键</value>
   </data>
   <data name="Settings_VoiceHotkeySame" xml:space="preserve">
-    <value>请使用与另外两个快捷键不同的组合。</value>
+    <value>请使用与其他快捷键不同的组合。</value>
   </data>
   <data name="Settings_VoiceLanguage" xml:space="preserve">
     <value>语音语言：</value>
@@ -2911,5 +2911,23 @@ SHA-256：{3}
   </data>
   <data name="Settings_DialogTextSizeName" xml:space="preserve">
     <value>对话框与菜单文字的大小</value>
+  </data>
+  <data name="Settings_HoldHotkey" xml:space="preserve">
+    <value>按住时在指针处显示：</value>
+  </data>
+  <data name="Settings_HoldHotkeyName" xml:space="preserve">
+    <value>按住时在指针处显示的热键</value>
+  </data>
+  <data name="Settings_HoldHotkeyHint" xml:space="preserve">
+    <value>按住这组按键时，工具栏会显示在鼠标指针处；松开就隐藏。</value>
+  </data>
+  <data name="Settings_HoldHotkeySame" xml:space="preserve">
+    <value>请使用与上面热键不同的组合。</value>
+  </data>
+  <data name="Main_HoldHotkeyTitle" xml:space="preserve">
+    <value>按住时在指针处显示的热键</value>
+  </data>
+  <data name="WindowKey_HoldHotkey" xml:space="preserve">
+    <value>按住时在指针处显示（全系统）</value>
   </data>
 </root>

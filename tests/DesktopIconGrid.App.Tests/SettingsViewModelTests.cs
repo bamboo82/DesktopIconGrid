@@ -52,6 +52,46 @@ public class SettingsViewModelTests
         Assert.True(viewModel.CanSave);
         Assert.Null(viewModel.ToSettings().ShowAtPointerHotkey);
     }
+
+    [Fact]
+    public void The_key_held_at_the_pointer_is_off_by_default_and_differs_from_the_others()
+    {
+        // 0.15.0 WP2: a third row on the Keys tab; four system-wide hotkeys now, none two alike.
+        var viewModel = new SettingsViewModel(new LauncherSettings { ToggleHotkey = "Ctrl+Alt+Space", ShowAtPointerHotkey = "Ctrl+Alt+F" });
+        Assert.True(viewModel.IsHoldHotkeyValid);
+        Assert.Null(viewModel.ToSettings().HoldAtPointerHotkey);
+
+        viewModel.HoldAtPointerHotkey = "Control+Alt+Space"; // the show/hide hotkey, spelled differently
+        Assert.True(viewModel.IsHoldHotkeySame);
+        Assert.StartsWith("\u26A0 ", viewModel.KeysTab);
+        Assert.False(viewModel.CanSave);
+
+        viewModel.HoldAtPointerHotkey = "Ctrl+Alt+F"; // the show-at-pointer hotkey
+        Assert.True(viewModel.IsHoldHotkeySame);
+
+        viewModel.HoldAtPointerHotkey = "Ctrl+Alt+G";
+        Assert.False(viewModel.IsHoldHotkeySame);
+        Assert.True(viewModel.CanSave);
+        Assert.Equal("Ctrl+Alt+G", viewModel.ToSettings().HoldAtPointerHotkey);
+
+        viewModel.VoiceHotkey = "Control+Alt+G"; // the voice hotkey is checked against it too
+        Assert.True(viewModel.IsVoiceHotkeySame);
+        Assert.False(viewModel.CanSave);
+        viewModel.VoiceHotkey = string.Empty;
+
+        // A window key may not take it, and it may not take a window key's.
+        var row = viewModel.WindowKeyRows[0];
+        Assert.Equal(
+            string.Format(DesktopIconGrid.Resources.Strings.Settings_WindowKeyInUse, "Ctrl+Alt+G", DesktopIconGrid.Resources.Strings.WindowKey_HoldHotkey),
+            viewModel.SetWindowKey(row, "Ctrl+Alt+G"));
+        viewModel.HoldAtPointerHotkey = row.Text;
+        Assert.True(viewModel.HasHoldHotkeyClash);
+        Assert.False(viewModel.IsHoldHotkeyValid);
+
+        viewModel.HoldAtPointerHotkey = string.Empty;
+        Assert.True(viewModel.CanSave);
+        Assert.Null(viewModel.ToSettings().HoldAtPointerHotkey);
+    }
     [Fact]
     public void A_tab_with_a_value_that_cannot_be_saved_is_marked_and_named_beside_Save()
     {
