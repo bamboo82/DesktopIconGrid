@@ -19,9 +19,13 @@ namespace DesktopIconGrid.Views;
 /// (<see cref="MainWindow.SetSeeThroughLook"/>).
 /// </summary>
 /// <param name="window">The window; its content paints <c>Theme.BarBackground</c>.</param>
-/// <param name="resizeBorder">How far in from its edges the window can be resized: the bar's 6, nothing for a window that is not resized.</param>
+/// <param name="resizeBorder">
+/// How far in from its edges the window can be resized: the bar's 6 (it has WindowChrome), or <see langword="null"/> for
+/// a window that is not resized and has no WindowChrome (the window at the pointer), whose frame is extended into its
+/// client area for a backdrop as the group popup's is: a WindowChrome on it kept it from growing when a group opened.
+/// </param>
 /// <param name="name">How the log names the window.</param>
-internal sealed class BarSurface(Window window, double resizeBorder, string name)
+internal sealed class BarSurface(Window window, double? resizeBorder, string name)
 {
     /// <summary>Windows paints the chosen backdrop behind the window.</summary>
     public bool BackdropActive { get; private set; }
@@ -49,19 +53,32 @@ internal sealed class BarSurface(Window window, double resizeBorder, string name
         }
 
         var active = WindowBackdrop.Apply(source.Handle, wanted, darkMode: ThemeCatalog.Luminance(palette.Background) <= 0.6);
+        if (active && resizeBorder is null && !WindowBackdrop.ExtendFrame(source.Handle, intoClient: true))
+        {
+            active = false; // without the frame in the client area the backdrop would not show: solid instead
+        }
+
         if (active != BackdropActive)
         {
             BackdropActive = active;
 
             // For DWM to paint behind the client area WPF must not: extend the frame into it and leave the window transparent.
-            WindowChrome.SetWindowChrome(window, new WindowChrome
+            if (resizeBorder is { } border)
             {
-                CaptionHeight = 0,
-                ResizeBorderThickness = new Thickness(resizeBorder),
-                GlassFrameThickness = active ? new Thickness(-1) : new Thickness(0),
-                CornerRadius = new CornerRadius(0),
-                UseAeroCaptionButtons = false,
-            });
+                WindowChrome.SetWindowChrome(window, new WindowChrome
+                {
+                    CaptionHeight = 0,
+                    ResizeBorderThickness = new Thickness(border),
+                    GlassFrameThickness = active ? new Thickness(-1) : new Thickness(0),
+                    CornerRadius = new CornerRadius(0),
+                    UseAeroCaptionButtons = false,
+                });
+            }
+            else if (!active)
+            {
+                WindowBackdrop.ExtendFrame(source.Handle, intoClient: false);
+            }
+
             AppLog.Default.Info("App", active ? $"{name} background: {wanted} backdrop" : $"{name} background: solid colour");
         }
 

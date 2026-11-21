@@ -204,7 +204,7 @@ public sealed class PointerWindowTests(WpfThread wpf) : IDisposable
             var chrome = (FrameworkElement)window.Content;
             Assert.True(
                 Math.Abs(window.ActualHeight - (topLevel + header)) < 1.5,
-                $"the window is {window.ActualHeight} high (Height {window.Height}, content {chrome.ActualHeight}, desired {chrome.DesiredSize.Height}) "
+                $"the window is {window.ActualHeight} high (Height {window.Height}, content {chrome.ActualHeight}, asking for {window.MeasureSize(Size.Empty).Height}) "
                 + $"after {topLevel} at the top level; the header takes {header} (desired {window.GroupHeader.DesiredSize.Height}), the icons {window.Icons.ActualHeight}");
             Assert.Equal(area, window.Icons.ActualHeight, precision: 1);
 

@@ -9,6 +9,28 @@ The owner relays replies.
 
 ---
 
+## 2026-11-21 (137) — The window at the pointer without WindowChrome (run 240 said why 239 was red)
+
+Run 240 (`b732176`, entry 136) reported it: the window stayed 141 units high when the group's header (21) showed, so
+the icon area was pushed down and cut at the bottom; the window was not resized. Before WP3 the window had no
+WindowChrome and grew; WP3 gave it one, like the bar's. Nothing else in WP3 touches its size.
+
+- **The fix:** the window at the pointer has no WindowChrome again. For a backdrop, `BarSurface` extends its frame into
+  the client area with `DwmExtendFrameIntoClientArea`, as the group popup's is (`WindowBackdrop.ExtendFrame`), and takes
+  it back when the backdrop goes; a refused extension leaves it solid. The see-through path never needed WindowChrome
+  (the group popup has none). The bar keeps its WindowChrome and its path unchanged: `BarSurface` takes a resize border
+  of 6 for it, none for this window.
+- **The test** also reports the size the window asks for, so if this run is red too it says whether the header's room
+  was asked for and refused, or not asked for.
+- **What differs from the bar's path, as you asked in plan 36:** this is the one difference now. The backdrop comes
+  through the extended frame instead of WindowChrome; the result on screen is meant to be the same, and I could not
+  see it: no backdrop on the CI machine.
+- **A mistake of mine in `b732176`:** besides the test, it took in WP2's first lines, which were in my working tree:
+  `LauncherSettings.HoldAtPointerHotkey`, stored, normalised and copied like `ShowAtPointerHotkey`. Nothing reads it
+  yet; WP2's own commit completes it and its entry covers it.
+
+This entry claims no run for its own commit.
+
 ## 2026-11-21 (136) — Run 239 was red: my WP3 test of a group's header
 
 Run 239 (`dc9e8d7`, WP3, entry 135) failed one App test of 500, a new one of mine:
