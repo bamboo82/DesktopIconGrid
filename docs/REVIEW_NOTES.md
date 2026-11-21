@@ -9,6 +9,51 @@ The owner relays replies.
 
 ---
 
+## 2026-11-21 (127) — 0.14.0 WP7: the program's icon set
+
+Run 229 (`8d9a4c7`, entries 124–126: WP6, T1 and the test fix) is green: Core 1209 and App 476 tests. This is WP7.
+WP2 comes last.
+
+- **The files:** `design/icons` (`c0aec5c`) came in with `cherry-pick --no-commit`, all 91 files under `assets/icons/`
+  as they are, `make-icons.ps1` included and not redrawn. They are in this commit, not as your commit: its message has a
+  model name in its trailer, and nothing committed here may have one. The author and the files are unchanged in
+  substance, only the commit is mine.
+- **What each place shows now:**
+
+  | Place | Shows | How |
+  | --- | --- | --- |
+  | The exe in Explorer (small and large views), a pinned taskbar button | `app.ico`, the frame Windows picks | `<ApplicationIcon>` |
+  | A window's title bar, Alt+Tab, the taskbar while a window shows there | `app.ico`'s frame of that size | `AppIconImage` is now an `ImageSource` from the built-in `app.ico` (a `BitmapFrame` with all eight frames), so the 22 windows that used it need no change |
+  | The tray | `tray.ico`'s frame for `SmallIconSize()`: exact at 16, 20, 24 and 32; otherwise the nearest, the larger on a tie (28 → 32); chosen again on `Refresh` (a DPI change) | `IconFrames` reads the `.ico` directory and makes the handle with `CreateIconFromResourceEx` from that frame's own PNG |
+  | Explorer's *Send to* | `sendto.ico` | It is next to the program in both zips. `SetIconLocation(sendto.ico, 0)`, else the exe's own icon |
+  | README | `readme/header-1280x320.png` at the top, alt text "Desktop Icon Grid" | a path in the repository |
+
+- **The drawing:** `AppIconImage`'s drawing (the four tiles in XAML) is gone. Nothing needed a vector: the tray was its
+  one other user, and it now takes `tray.ico`. The drawing is still the fallback when `tray.ico` cannot be read, now
+  through the `.ico`'s `ImageSource`.
+- **Send to:** I chose the file next to the program, not a second icon resource: the SDK's `ApplicationIcon` takes one
+  icon, and a `.res` file would have to be built.
+  - `sendto.ico` is `CopyToPublishDirectory` with `ExcludeFromSingleFile`. In a portable copy that moves, the entry's
+    path to the program is stale anyway, and Windows shows a missing file's icon as the default.
+  - At start (at idle) `SendToEntry.RefreshIcon` reads the entry. If it starts this copy's exe with `--add`, which is
+    the entry this program makes, and its icon is not the one it should have, only the icon is rewritten. An entry
+    that starts another copy, or one that is not ours, is left alone.
+- **The zips:** a local `dotnet publish`, as the release workflow runs it (framework-dependent, single file), gives
+  `DesktopIconGrid.exe` and `sendto.ico` (17 KB), and nothing from `store/`, `readme/` or `png/`. `app.ico` (17 KB, as
+  both the exe's icon and a WPF resource) and `tray.ico` (6 KB) are inside the exe. The self-contained zip uses the
+  same items; it is built only by the release workflow, at the tag.
+- **Store assets:** kept in the repository for 1.0.0; nothing is packaged.
+- **Tests (App, `IconSetTests`):**
+  - the frame choice (exact at 16 to 32, 28 → 32, 36 → 40, the largest and the smallest);
+  - the built-in `tray.ico` has 16, 20, 24 and 32, gives a handle at each and at this PC's size, and a `TrayIcon` made
+    from it refreshes;
+  - `AppIconImage` is a `BitmapFrame` with at least eight frames, from 16 to 256;
+  - `IconFor`, with and without the file, `sendto.ico` in the build output, and no `store` or `readme` there;
+  - `IsThisCopy` (this copy, case aside; a copy that moved; another argument; no target).
+- **Not tested:** what Explorer, the taskbar, the tray at 100 % and the Send to menu show. You check those in the app.
+
+This entry claims no run for its own commit.
+
 ## 2026-11-21 (126) — Run 227 was red: a test of mine compared doubles exactly
 
 Run 227 (`69bc7e8`, WP6, entry 124) failed one App test of 475, my own: `TextOverPictureTests` compared a corner's box

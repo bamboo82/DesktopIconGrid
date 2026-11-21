@@ -30,6 +30,9 @@ version numbers follow [Semantic Versioning](https://semver.org/).
 - A text or symbol icon can keep the item's picture and be drawn over it, in the middle or a corner (*Keep the icon
   picture; draw the text on top* in *Text or symbol icon…*). Without a tile colour the text has a thin outline; with one,
   the colour is a small plate behind the text. Versions before 0.14.0 draw the text tile alone.
+- The program's own icon set: the program in Explorer, on the taskbar, in Alt+Tab and on every window shows it, the tray
+  takes the frame drawn for its size, and Explorer's *Send to* entry shows the icon with a plus (an entry made by an
+  older version gets it at the next start). The README starts with its header picture.
 
 ### Changed
 

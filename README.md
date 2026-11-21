@@ -1,3 +1,5 @@
+![Desktop Icon Grid](assets/icons/readme/header-1280x320.png)
+
 # Desktop Icon Grid
 
 A compact launcher bar for Windows. Put programs, folders and web links on it as

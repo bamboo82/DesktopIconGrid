@@ -92,18 +92,35 @@ public partial class MainWindow : Window
         ApplyAppearance();
         ApplyDocking();
         CreateTrayIcon();
+        Dispatcher.BeginInvoke(DispatcherPriority.ApplicationIdle, SendToEntry.RefreshIcon); // an older entry gets the new icon (0.14.0 WP7)
+    }
+
+    /// <summary>The frames of <c>tray.ico</c>, built in (0.14.0 WP7); <see langword="null"/> when it cannot be read.</summary>
+    internal static IconFrames? TrayFrames()
+    {
+        try
+        {
+            using var stream = Application.GetResourceStream(new Uri("pack://application:,,,/DesktopIconGrid;component/Resources/tray.ico"))?.Stream;
+            return stream is null ? null : IconFrames.Read(stream);
+        }
+        catch (Exception ex) when (ex is IOException or InvalidOperationException)
+        {
+            AppLog.Default.Warning("App", $"The tray icon's picture could not be read: {ex.Message}");
+            return null;
+        }
     }
 
     private void CreateTrayIcon()
     {
-        if (TryFindResource("AppIconImage") is not ImageSource image)
+        var frames = TrayFrames();
+        if (frames is null && TryFindResource("AppIconImage") is not ImageSource)
         {
             return;
         }
 
         try
         {
-            _tray = new TrayIcon(image, Strings.App_Name);
+            _tray = frames is not null ? new TrayIcon(frames, Strings.App_Name) : new TrayIcon((ImageSource)FindResource("AppIconImage"), Strings.App_Name);
         }
         catch (Exception ex) when (ex is InvalidOperationException or System.ComponentModel.Win32Exception)
         {

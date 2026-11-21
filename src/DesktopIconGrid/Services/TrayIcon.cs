@@ -47,7 +47,8 @@ public sealed class TrayIcon : IDisposable
     private const int WsExToolWindow = 0x00000080;
     private const int IdiApplication = 32512;
 
-    private readonly ImageSource _image;
+    private readonly ImageSource? _image;
+    private readonly IconFrames? _frames;
     private readonly string _text;
     private readonly HwndSource _source;
     private readonly uint _taskbarCreated;
@@ -56,9 +57,25 @@ public sealed class TrayIcon : IDisposable
     private bool _version4;
     private bool _disposed;
 
+    /// <summary>The icon drawn from <paramref name="image"/> at the notification area's size.</summary>
     public TrayIcon(ImageSource image, string text)
+        : this(image, null, text)
+    {
+    }
+
+    /// <summary>
+    /// The icon from the frame of <paramref name="frames"/> (<c>tray.ico</c>, 0.14.0 WP7) for the notification area's size:
+    /// exact at 16, 20, 24 and 32 px, the nearest otherwise, chosen again when the scaling changes.
+    /// </summary>
+    public TrayIcon(IconFrames frames, string text)
+        : this(null, frames, text)
+    {
+    }
+
+    private TrayIcon(ImageSource? image, IconFrames? frames, string text)
     {
         _image = image;
+        _frames = frames;
         _text = text;
         _taskbarCreated = NativeMethods.RegisterWindowMessage("TaskbarCreated");
         _source = new HwndSource(new HwndSourceParameters("DesktopIconGrid.Tray", 0, 0)
@@ -69,7 +86,7 @@ public sealed class TrayIcon : IDisposable
             ExtendedWindowStyle = WsExToolWindow,
         });
         _source.AddHook(WndProc);
-        _icon = CreateIcon(image, SmallIconSize());
+        _icon = CreateIconNow(SmallIconSize());
         Add();
     }
 
@@ -112,7 +129,7 @@ public sealed class TrayIcon : IDisposable
         NativeMethods.Shell_NotifyIcon(NimModify, ref data);
     }
 
-    /// <summary>Re-renders the icon for the current DPI (after a monitor or scaling change).</summary>
+    /// <summary>Makes the icon again for the current DPI (after a monitor or scaling change): another frame of the file, or the picture drawn anew.</summary>
     public void Refresh()
     {
         if (_disposed)
@@ -120,7 +137,7 @@ public sealed class TrayIcon : IDisposable
             return;
         }
 
-        var fresh = CreateIcon(_image, SmallIconSize());
+        var fresh = CreateIconNow(SmallIconSize());
         if (fresh == IntPtr.Zero)
         {
             return;
@@ -238,6 +255,10 @@ public sealed class TrayIcon : IDisposable
     /// Renders a WPF image (the app's vector icon) into a GDI icon of exactly <paramref name="size"/> pixels, so it
     /// is crisp at any DPI: a top-down 32-bit DIB with straight alpha plus an empty mask, through CreateIconIndirect.
     /// </summary>
+    /// <summary>The icon handle at <paramref name="size"/>: the frame of the icon file for it, or the picture drawn at it.</summary>
+    private IntPtr CreateIconNow(int size) =>
+        _frames is not null ? _frames.CreateIcon(size) : _image is not null ? CreateIcon(_image, size) : IntPtr.Zero;
+
     internal static IntPtr CreateIcon(ImageSource image, int size)
     {
         try

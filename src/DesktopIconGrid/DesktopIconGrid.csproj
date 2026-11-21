@@ -9,6 +9,8 @@
     <AssemblyTitle>Desktop Icon Grid</AssemblyTitle>
     <Description>A compact launcher bar that shows programs, folders and links as a grid of icons.</Description>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <!-- The program's icon in Explorer, on the taskbar and in Alt+Tab (0.14.0 WP7). -->
+    <ApplicationIcon>../../assets/icons/app.ico</ApplicationIcon>
     <RollForward>LatestMinor</RollForward>
     <!-- WPF0001: ThemeMode (Fluent theme) is still marked experimental in the reference assemblies. -->
     <NoWarn>$(NoWarn);WPF0001</NoWarn>
@@ -27,6 +29,15 @@
 
   <ItemGroup>
     <InternalsVisibleTo Include="DesktopIconGrid.App.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- The icon set (0.14.0 WP7; assets/icons, drawn by make-icons.ps1): app.ico for the windows and tray.ico for the
+         notification area are built in; sendto.ico goes next to the program, where Explorer's Send to entry points. The
+         Store pictures and the readme's stay in the repository: nothing of them is published. -->
+    <Resource Include="../../assets/icons/app.ico" Link="Resources/app.ico" />
+    <Resource Include="../../assets/icons/tray.ico" Link="Resources/tray.ico" />
+    <None Include="../../assets/icons/sendto.ico" Link="sendto.ico" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" ExcludeFromSingleFile="true" />
   </ItemGroup>
 
   <ItemGroup>

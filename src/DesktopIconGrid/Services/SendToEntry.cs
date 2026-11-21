@@ -41,7 +41,8 @@ public static class SendToEntry
         {
             Check(link.SetPath(program));
             Check(link.SetArguments(BarCommands.AddArgument));
-            Check(link.SetIconLocation(program, 0));
+            var (icon, index) = IconFor(program);
+            Check(link.SetIconLocation(icon, index));
             Check(link.SetWorkingDirectory(Path.GetDirectoryName(program) ?? string.Empty));
             Directory.CreateDirectory(Path.GetDirectoryName(path)!);
             ((IPersistFile)link).Save(path, true);
@@ -52,6 +53,68 @@ public static class SendToEntry
             Marshal.ReleaseComObject(link);
         }
     }
+
+    /// <summary>The file Explorer's Send to menu shows for the entry (0.14.0 WP7), next to the program in both zips.</summary>
+    public const string IconFileName = "sendto.ico";
+
+    /// <summary>The icon the entry shows: <see cref="IconFileName"/> next to <paramref name="program"/>, else the program's own.</summary>
+    public static (string Path, int Index) IconFor(string program)
+    {
+        ArgumentNullException.ThrowIfNull(program);
+        var icon = Path.Combine(Path.GetDirectoryName(program) ?? string.Empty, IconFileName);
+        return File.Exists(icon) ? (icon, 0) : (program, 0);
+    }
+
+    /// <summary>
+    /// At start: the entry, when this program made it and it starts this copy, gets the icon it should have now (one made
+    /// before 0.14.0 has the program's), and nothing else of it changes. An entry that starts another copy, or one that
+    /// moved, or that is not this program's, is left as it is.
+    /// </summary>
+    public static void RefreshIcon()
+    {
+        if (FilePath is not { } path || !File.Exists(path) || Environment.ProcessPath is not { } program)
+        {
+            return;
+        }
+
+        var link = (NativeMethods.IShellLinkW)new NativeMethods.CShellLink();
+        try
+        {
+            ((IPersistFile)link).Load(path, 0);
+            var target = NativeMethods.ReadLinkText((buffer, size) => link.GetPath(buffer, size, IntPtr.Zero, NativeMethods.SLGP_RAWPATH));
+            var arguments = NativeMethods.ReadLinkText(link.GetArguments);
+            if (!IsThisCopy(target, arguments, program))
+            {
+                return;
+            }
+
+            var shown = 0;
+            var iconPath = NativeMethods.ReadLinkText((buffer, size) => link.GetIconLocation(buffer, size, out shown));
+            var (icon, index) = IconFor(program);
+            if (string.Equals(iconPath, icon, StringComparison.OrdinalIgnoreCase) && shown == index)
+            {
+                return;
+            }
+
+            Check(link.SetIconLocation(icon, index));
+            ((IPersistFile)link).Save(path, true);
+            AppLog.Default.Info("Commands", $"The Send To entry shows {Path.GetFileName(icon)} now");
+        }
+        catch (Exception ex) when (ex is COMException or IOException or UnauthorizedAccessException)
+        {
+            AppLog.Default.Debug("Commands", $"The Send To entry's icon could not be brought up to date: {ex.Message}");
+        }
+        finally
+        {
+            Marshal.ReleaseComObject(link);
+        }
+    }
+
+    /// <summary>Whether a link starts <paramref name="program"/> with <c>--add</c>: the entry this program makes, for this copy.</summary>
+    internal static bool IsThisCopy(string? target, string? arguments, string program) =>
+        target is not null
+        && string.Equals(Path.GetFullPath(target), Path.GetFullPath(program), StringComparison.OrdinalIgnoreCase)
+        && string.Equals(arguments?.Trim(), BarCommands.AddArgument, StringComparison.Ordinal);
 
     private static void Check(int hresult) => Marshal.ThrowExceptionForHR(hresult);
 }

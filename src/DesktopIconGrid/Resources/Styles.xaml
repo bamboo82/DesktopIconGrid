@@ -48,38 +48,9 @@
   <SolidColorBrush x:Key="ErrorTextBrush" Color="#FFC62828" />
   <SolidColorBrush x:Key="SwatchBorderBrush" Color="#FF9A9A9A" />
 
-  <!-- Application icon: four tiles on a dark rounded square -->
-  <DrawingImage x:Key="AppIconImage">
-    <DrawingImage.Drawing>
-      <DrawingGroup>
-        <GeometryDrawing Brush="#FF2F3A2F">
-          <GeometryDrawing.Geometry>
-            <RectangleGeometry Rect="0,0,32,32" RadiusX="6" RadiusY="6" />
-          </GeometryDrawing.Geometry>
-        </GeometryDrawing>
-        <GeometryDrawing Brush="#FF4C8BF5">
-          <GeometryDrawing.Geometry>
-            <RectangleGeometry Rect="5,5,10,10" RadiusX="2" RadiusY="2" />
-          </GeometryDrawing.Geometry>
-        </GeometryDrawing>
-        <GeometryDrawing Brush="#FFF5A623">
-          <GeometryDrawing.Geometry>
-            <RectangleGeometry Rect="17,5,10,10" RadiusX="2" RadiusY="2" />
-          </GeometryDrawing.Geometry>
-        </GeometryDrawing>
-        <GeometryDrawing Brush="#FF7ED321">
-          <GeometryDrawing.Geometry>
-            <RectangleGeometry Rect="5,17,10,10" RadiusX="2" RadiusY="2" />
-          </GeometryDrawing.Geometry>
-        </GeometryDrawing>
-        <GeometryDrawing Brush="#FFE8E8E8">
-          <GeometryDrawing.Geometry>
-            <RectangleGeometry Rect="17,17,10,10" RadiusX="2" RadiusY="2" />
-          </GeometryDrawing.Geometry>
-        </GeometryDrawing>
-      </DrawingGroup>
-    </DrawingImage.Drawing>
-  </DrawingImage>
+  <!-- The program's icon (0.14.0 WP7): the frames of assets/icons/app.ico, built in as a resource. A window's title bar
+       and Alt+Tab take the frame of their size from it; until 0.14.0 this was a drawing of the same four tiles. -->
+  <ImageSource x:Key="AppIconImage">pack://application:,,,/DesktopIconGrid;component/Resources/app.ico</ImageSource>
 
   <!-- Google Drive Bucket: a folder with the three-colour Drive triangle -->
   <DrawingImage x:Key="DriveBucketIconImage">
