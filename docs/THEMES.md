@@ -55,6 +55,34 @@ with the theme.
 - A chosen focus colour under 3 : 1 against the background shows a warning under its row; Save still works.
 - The theme's preview beside the list shows the background, one icon under the pointer and one with the focus border.
 
+**Background picture (0.15.0).** Under the custom colour, *Background picture* has a thumbnail (or *None*), *Choose a
+picture…*, *From a web address…* and *Remove*, and *Picture strength* (20–100 %).
+
+- From a file: PNG, JPEG, BMP, GIF (its first frame), TIFF, and WebP where Windows can decode it; an icon is refused.
+- From a web address: one `https://` address, fetched when that window's OK is pressed, once, by the web icon's download
+  rules (`IconDownloader.FetchAsync`): https only, also after redirects; at most 10 MB; abandoned after 30 seconds
+  without data; a web page refused; then decoded by Windows. A failure is said in the window (not https, too large, not
+  a picture, no answer). The address is not kept, and the picture is never fetched again by itself: nothing at start,
+  at sync or at a theme change.
+- Stored: never the bytes that came in. The program decodes the picture and writes it anew into the data folder's
+  `backgrounds`, at most 3840 px on its longer side, as JPEG at quality 90, or as PNG when it has transparency, named by
+  its content (32 hex digits). A picture no setting names is deleted at the next start; nothing else in that folder is
+  touched.
+- Setting: `backgroundImage` = `{ file, focusX, focusY, zoom, strength, average }` with the theme in `layout.json`.
+  `file` must be one of the names the program gives; anything else (a path, another name) drops the picture at load. A
+  focus outside 0–1, a zoom outside 100–400 or a strength outside 20–100 goes back to its default (0.5, 100, 100).
+  `average` is the picture's average colour, worked out when it was stored.
+- It syncs as icons do: the setting travels, the file goes with the import and the data-location copy. A PC without
+  the file shows the colour alone, and no error.
+- Drawing: in the bar and the window at the pointer, over the theme's colour and under everything else, scaled to
+  cover (at zoom 100 it just covers; the focus point sits at the centre unless that would leave a gap) and at its
+  strength. The background transparency fades the colour and the picture together; with Mica or Acrylic it lies over
+  the tinted backdrop the same way. Under High Contrast there is no picture. The bar keeps one bitmap for its size,
+  made again at most every 100 ms while an edge is dragged.
+- Reading over it: while a picture is drawn, the see-through look's edges are on at every opacity, and the light or
+  dark text is chosen for the picture's average blended into the colour by its strength. The focus colour's contrast
+  warning uses the same blend.
+
 Existing layouts that only had a background colour keep their look: when a layout file has no
 `theme` field, the app picks *Classic* if the colour is still the default and *Custom* otherwise.
 

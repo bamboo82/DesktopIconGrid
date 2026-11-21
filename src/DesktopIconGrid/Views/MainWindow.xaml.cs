@@ -37,6 +37,7 @@ public partial class MainWindow : Window
     private bool _closing;
 
     /// <summary>The bar's background: a backdrop, see-through or solid (0.14.0 WP3; shared with the window at the pointer since 0.15.0).</summary>
+    private readonly BarPicture _picture;
     private readonly BarSurface _surface;
 
     /// <summary>The icon area as the bar last had it shown and expanded (0.15.0 WP3): the window at the pointer has its size.</summary>
@@ -49,6 +50,7 @@ public partial class MainWindow : Window
         InitializeComponent();
         TextSharpness.Apply(this); // whole-pixel text; the background decides the smoothing (BarSurface) (0.15.0 WP9)
         _surface = new BarSurface(this, resizeBorder: 6, "Bar");
+        _picture = new BarPicture(BarLayout, PictureLayer);
         IconsColumn.SizeChanged += (_, _) => NoteIconArea();
         UiFonts.ApplyBar(this); // the bar's font, Chinese in Taipei Sans TC Light where this PC has it (0.12.0 WP5, 0.14.0 WP2)
 
@@ -293,8 +295,11 @@ public partial class MainWindow : Window
 
         var settings = _viewModel.Model.Settings;
         var palette = ThemeManager.EffectivePalette(_viewModel.Palette);
-        _surface.Apply(source, settings.BarBackdrop, palette, _viewModel.Opacity, _viewModel.IconSize);
+        var shown = _viewModel.ShownPicture;
+        var picture = BackgroundPictures.Load(AppPaths.BackgroundsDirectory, shown);
+        _surface.Apply(source, settings.BarBackdrop, palette, _viewModel.Opacity, _viewModel.IconSize, picture: picture is not null);
         ThemeManager.Apply(palette, translucentBar: _surface.BackdropActive || _surface.SeeThrough, tintOpacity: _viewModel.Opacity / 100.0);
+        _picture.Show(picture, shown, _viewModel.Opacity / 100.0); // over the colour, fading with it (0.15.0 WP5)
         DialogTheme.Configure(settings.FluentDialogs);
         if (GroupPopup.IsOpen && GroupPopup.Child is { } child && PresentationSource.FromVisual(child) is HwndSource popupSource)
         {

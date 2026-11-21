@@ -3017,4 +3017,49 @@ The place was not changed; what was copied stays there.</value>
   <data name="Settings_PreviewFocus" xml:space="preserve">
     <value>An icon with the keyboard focus</value>
   </data>
+  <data name="Settings_Picture" xml:space="preserve">
+    <value>Background picture:</value>
+  </data>
+  <data name="Settings_PictureNone" xml:space="preserve">
+    <value>None</value>
+  </data>
+  <data name="Settings_ChoosePicture" xml:space="preserve">
+    <value>Choose a picture…</value>
+  </data>
+  <data name="Settings_PictureFromWeb" xml:space="preserve">
+    <value>From a web address…</value>
+  </data>
+  <data name="Settings_RemovePicture" xml:space="preserve">
+    <value>Remove</value>
+  </data>
+  <data name="Settings_PictureStrength" xml:space="preserve">
+    <value>Picture strength</value>
+  </data>
+  <data name="Picture_FileFilter" xml:space="preserve">
+    <value>Pictures</value>
+  </data>
+  <data name="Picture_FileUnreadable" xml:space="preserve">
+    <value>That file is not a picture Windows can open.</value>
+  </data>
+  <data name="Picture_WebTitle" xml:space="preserve">
+    <value>Background picture from a web address</value>
+  </data>
+  <data name="Picture_WebPrompt" xml:space="preserve">
+    <value>The picture's https:// address. It is fetched once, when you press OK.</value>
+  </data>
+  <data name="Picture_Fetching" xml:space="preserve">
+    <value>Fetching the picture…</value>
+  </data>
+  <data name="Picture_NotHttps" xml:space="preserve">
+    <value>Use an address that starts with https://.</value>
+  </data>
+  <data name="Picture_TooLarge" xml:space="preserve">
+    <value>The picture is larger than 10 MB.</value>
+  </data>
+  <data name="Picture_NotAPicture" xml:space="preserve">
+    <value>That address is not a picture Windows can open.</value>
+  </data>
+  <data name="Picture_NoAnswer" xml:space="preserve">
+    <value>The server did not answer, or not with the picture.</value>
+  </data>
 </root>

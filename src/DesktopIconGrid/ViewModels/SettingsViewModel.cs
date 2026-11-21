@@ -75,6 +75,7 @@ public sealed partial class SettingsViewModel : ObservableObject
         _doubleClickToLaunch = current.DoubleClickToLaunch;
         _alwaysOnTop = current.AlwaysOnTop;
         _backgroundColor = current.BackgroundColor;
+        ReadPicture(current); // before the colours: the picture changes the derived ones (0.15.0 WP5)
         ReadThemeColours(current); // after the background, which the automatic ones come from (0.15.0 WP4b)
         _toggleHotkey = current.ToggleHotkey ?? string.Empty;
         _pointerHotkey = current.ShowAtPointerHotkey ?? string.Empty;
@@ -621,6 +622,7 @@ public sealed partial class SettingsViewModel : ObservableObject
         settings.Theme = _selectedTheme.Id;
         settings.BackgroundColor = IsColorValid ? _backgroundColor : LauncherSettings.DefaultBackgroundColor;
         WriteThemeColours(settings);
+        WritePicture(settings);
         settings.BarBackdrop = _selectedBackdrop.Id;
         settings.FluentDialogs = _fluentDialogs;
         settings.ChineseFont = ChineseFontToSave;

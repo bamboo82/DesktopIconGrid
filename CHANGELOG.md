@@ -12,6 +12,9 @@ version numbers follow [Semantic Versioning](https://semver.org/).
 - A colour picker for the custom theme's colour, under Settings ▸ Appearance: a saturation and brightness square, a
   hue strip, the colour code and its red, green and blue, the old and new colour side by side, and the swatches. The
   theme's preview follows it while it is open. The text icon window's colour and tile colour have it too.
+- The custom theme can have a background picture, from a file or a web address, drawn over its colour in the bar and
+  the window at the pointer with a strength of your choice. The program stores its own copy of the picture; the text
+  is chosen to read over it.
 - The custom theme can have its own hover colour, with its strength, and its own keyboard focus border colour, each
   automatic (derived from the background, as before) until unticked. They show under the pointer, on focus, on the
   selected match and on the drop marker, in the bar, its groups and the window at the pointer. The theme's preview in

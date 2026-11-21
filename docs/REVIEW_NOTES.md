@@ -9,6 +9,63 @@ The owner relays replies.
 
 ---
 
+## 2026-11-21 (148) — 0.15.0 WP5: a background picture for the custom theme
+
+- **Run 251** (`834490b`, entry 147): green, Core 1317 of 1317, App 541 of 541. WP4b is done.
+- **Settings ▸ 外觀**, under the hover and focus rows (so, like them, only for 自訂): 背景圖片 with a thumbnail (or 無),
+  選擇圖片…, 從網址… and 移除, and 圖片濃度 (20–100 %, steps of 5) under them. 調整位置… comes with WP6.
+- **From a file:** PNG, JPEG, BMP, GIF (its first frame), TIFF, and WebP where Windows can decode it. An icon is refused
+  (an `IconBitmapDecoder` is checked for), as is anything Windows cannot decode; a message box says so.
+- **From a web address:** a small window for one `https://` address. Nothing is fetched until its OK, and then once.
+  The rules are shared, not copied: `IconDownloader.FetchAsync` now holds them for the web icon and the picture alike
+  (one GET; a web page refused; 10 MB by the header and while reading; the 30-second stall timeout). The picture asks
+  `httpsOnly`, which also checks the address the redirects ended at. Failures carry a kind and are said in the window
+  in its language: not https, too large, not a picture, no answer. The window stays open after a failure. The address
+  is not kept.
+  - The web icon still takes `http://` as before 0.15.0. You wrote "https only" as one of IconDownloader's rules, but it
+    never had that rule. Say if icons should become https-only too: it is one argument.
+- **Stored:** decoded by Windows and written anew, never the bytes that came in. At most 3840 px on the longer side (a
+  larger file is decoded at that size); JPEG at quality 90, or PNG when a pixel is not opaque; named by the start of
+  the encoded bytes' SHA-256 (32 hex digits), so the same picture is one file. Written as soon as it is chosen; a
+  picture no setting names is deleted at the next start, and nothing else in `backgrounds` is touched.
+- **Setting:** `backgroundImage = { file, focusX, focusY, zoom, strength, average }`. `average` is my addition: the
+  picture's average colour (alpha-weighted, from a 32 px copy), worked out when it is stored, so that the light or dark
+  text is right from the start, before the picture is decoded. `file` must match the stored-name pattern; a path or any
+  other name drops the picture at load. Values out of range go back to their defaults, as you asked (not clamped).
+- **Travel:** `backgrounds` joins `icons` and `sounds` in `DataImport.Folders`, so the import and the data-location
+  copy bring it. Sync carries the setting, not the file, which is also how icons travel: the sync copy holds the layout
+  only. A PC without the file shows the colour alone, with no error. A layout restored from history names its picture,
+  which may have been deleted by then: the colour alone too.
+- **Drawing** (`BarPicture`): a layer under the bar's grid and under the twin's content (the twin's 3 px padding is now
+  its content's margin, so the picture covers the inside of the border). It is scaled to cover by `BackgroundFit` (in
+  WP5 already, since the setting has a focus and a zoom), at strength × the background transparency. With Mica or
+  Acrylic it lies over the tinted backdrop. There is no picture under High Contrast, or when the theme is not 自訂.
+  - The stored picture is decoded once when it becomes the one in use, at start or at Save, on the UI thread. The layer
+    gets one bitmap made for the bar's pixel size, made again when the size changes, at most every 100 ms.
+  - The group popup has no picture: the plan names the bar and the twin.
+- **Reading over it:** while a picture is drawn, `BarSurface` turns the see-through look's edges on at every opacity.
+  `ThemeCatalog.Resolve(settings, pictureShown)` chooses the light or dark set and the text colour for
+  `Blend(colour, average, strength)`; the border stays the colour's. WP4b's focus warning uses the same blend when this
+  PC has the picture.
+- **Security:** your three notes are how it works now: nothing is fetched without OK; only pixels the program decoded
+  and re-encoded are stored (and the name is all that syncs); and a `file` that is not a stored name is dropped at load.
+  Putting them into CLAUDE.md's decided rules is the owner's call; I will ask at the ready-for-release-check point.
+- **Tests:**
+  - Core: the stored-name rule (paths, upper case, other extensions); the name follows the content; normalising; the
+    setting's round trip; the unused list; `BackgroundFit` for a wide bar on a tall picture and the reverse, a bar
+    larger and smaller than the picture, the focus in each corner (no gap), zoom 100 and 400; the light or dark choice
+    with the picture shown and not, and the blend;
+  - App: storing (JPEG, PNG with transparency, one file per picture, the average); refusing what is not a picture and an
+    icon; a huge picture reduced; the scaled part for focus left and right; pruning; loading (missing, a path, kept once
+    read); the download rules through a fake server (http refused before any request, a redirect ending on http, too
+    large, a web page, 404) and the messages; Settings (defaults, strength held, saved, removed); the focus warning over
+    a picture this PC has; what the bar shows (custom theme, file present, else none) and its text colour; the layer's
+    size and opacity in a window; the text edge at 100 % with a picture.
+- **Not tested:** on screen, a real download, WebP or TIFF files, a Mica backdrop under the picture, and the 100 ms
+  limit while dragging (it is a timer that starts once and draws at its tick).
+
+This entry claims no run for its own commit.
+
 ## 2026-11-21 (147) — WP4b: the 自動 boxes wrap like every box in Settings
 
 - **Run 250** (`5600c07`, WP4b, entry 146): Core 1317 of 1317; App 540 of 541. The red one is

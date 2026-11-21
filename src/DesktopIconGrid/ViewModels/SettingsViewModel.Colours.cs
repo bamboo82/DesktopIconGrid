@@ -35,8 +35,11 @@ public sealed partial class SettingsViewModel
         settings.FocusColor = !_focusAutomatic && LauncherSettings.IsValidColor(_focusColorText) ? _focusColorText.ToUpperInvariant() : null;
     }
 
-    /// <summary>The custom theme as the background now gives it, without colours of its own.</summary>
-    private ThemePalette DerivedPalette() => ThemeCatalog.CreateCustom(IsColorValid ? _backgroundColor : null);
+    /// <summary>
+    /// The custom theme as the background now gives it, without colours of its own; with a picture this PC has, its text
+    /// chosen for the picture blended into the colour (0.15.0 WP5).
+    /// </summary>
+    private ThemePalette DerivedPalette() => ThemeCatalog.CreateCustom(IsColorValid ? _backgroundColor : null, PictureBasis());
 
     /// <summary>The theme as it would look with what is chosen now: the custom one with its own colours, or the one chosen.</summary>
     private ThemePalette PreviewPalette() => IsCustomTheme
@@ -133,7 +136,7 @@ public sealed partial class SettingsViewModel
     /// still works. The automatic colour is not judged: there is nothing to choose then.
     /// </summary>
     public bool IsFocusHardToSee => IsCustomTheme && !_focusAutomatic && LauncherSettings.IsValidColor(_focusColorText)
-        && ThemeCatalog.IsFocusHardToSee(_focusColorText, DerivedPalette().Background);
+        && ThemeCatalog.IsFocusHardToSee(_focusColorText, PictureBasis() ?? DerivedPalette().Background);
 
     public Brush PreviewBorderBrush => ThemeManager.ToBrush(PreviewPalette().Border);
 

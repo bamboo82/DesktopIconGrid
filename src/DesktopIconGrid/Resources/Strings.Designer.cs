@@ -4272,6 +4272,87 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Fetching the picture….
+        /// </summary>
+        public static string Picture_Fetching {
+            get {
+                return ResourceManager.GetString("Picture_Fetching", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Pictures.
+        /// </summary>
+        public static string Picture_FileFilter {
+            get {
+                return ResourceManager.GetString("Picture_FileFilter", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to That file is not a picture Windows can open..
+        /// </summary>
+        public static string Picture_FileUnreadable {
+            get {
+                return ResourceManager.GetString("Picture_FileUnreadable", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The server did not answer, or not with the picture..
+        /// </summary>
+        public static string Picture_NoAnswer {
+            get {
+                return ResourceManager.GetString("Picture_NoAnswer", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to That address is not a picture Windows can open..
+        /// </summary>
+        public static string Picture_NotAPicture {
+            get {
+                return ResourceManager.GetString("Picture_NotAPicture", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Use an address that starts with https://..
+        /// </summary>
+        public static string Picture_NotHttps {
+            get {
+                return ResourceManager.GetString("Picture_NotHttps", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The picture is larger than 10 MB..
+        /// </summary>
+        public static string Picture_TooLarge {
+            get {
+                return ResourceManager.GetString("Picture_TooLarge", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The picture's https:// address. It is fetched once, when you press OK..
+        /// </summary>
+        public static string Picture_WebPrompt {
+            get {
+                return ResourceManager.GetString("Picture_WebPrompt", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Background picture from a web address.
+        /// </summary>
+        public static string Picture_WebTitle {
+            get {
+                return ResourceManager.GetString("Picture_WebTitle", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Back to all icons.
         /// </summary>
         public static string Pointer_BackName {
@@ -5604,6 +5685,15 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Choose a picture….
+        /// </summary>
+        public static string Settings_ChoosePicture {
+            get {
+                return ResourceManager.GetString("Settings_ChoosePicture", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to The close button hides the bar to the tray (Exit is in the tray and options menu [rest of string was truncated]";.
         /// </summary>
         public static string Settings_CloseToTray {
@@ -6171,6 +6261,42 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Background picture:.
+        /// </summary>
+        public static string Settings_Picture {
+            get {
+                return ResourceManager.GetString("Settings_Picture", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to From a web address….
+        /// </summary>
+        public static string Settings_PictureFromWeb {
+            get {
+                return ResourceManager.GetString("Settings_PictureFromWeb", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to None.
+        /// </summary>
+        public static string Settings_PictureNone {
+            get {
+                return ResourceManager.GetString("Settings_PictureNone", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Picture strength.
+        /// </summary>
+        public static string Settings_PictureStrength {
+            get {
+                return ResourceManager.GetString("Settings_PictureStrength", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Show at pointer:.
         /// </summary>
         public static string Settings_PointerHotkey {
@@ -6329,6 +6455,15 @@ namespace DesktopIconGrid.Resources {
         public static string Settings_ReceiveTooLong {
             get {
                 return ResourceManager.GetString("Settings_ReceiveTooLong", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Remove.
+        /// </summary>
+        public static string Settings_RemovePicture {
+            get {
+                return ResourceManager.GetString("Settings_RemovePicture", resourceCulture);
             }
         }
 

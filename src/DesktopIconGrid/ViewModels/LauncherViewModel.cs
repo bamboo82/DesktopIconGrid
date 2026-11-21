@@ -312,8 +312,24 @@ public sealed partial class LauncherViewModel : ObservableObject, ISyncHost
         }
     }
 
-    /// <summary>The colours the bar is currently drawn with.</summary>
-    public ThemePalette Palette => ThemeCatalog.Resolve(Model.Settings);
+    /// <summary>The colours the bar is currently drawn with: with a background picture shown, its text chosen for the picture (0.15.0 WP5).</summary>
+    public ThemePalette Palette => ThemeCatalog.Resolve(Model.Settings, pictureShown: ShownPicture is not null);
+
+    /// <summary>Whether this PC has a stored picture's file; tests stand in for the data folder.</summary>
+    internal Func<BackgroundImage, bool> PictureAvailable { get; set; } =
+        image => File.Exists(Path.Combine(AppPaths.BackgroundsDirectory, image.File));
+
+    /// <summary>
+    /// The custom theme's background picture to draw (0.15.0 WP5): chosen, with the custom theme, on a PC that has its file,
+    /// and not under High Contrast; else none, and the colour alone shows.
+    /// </summary>
+    public BackgroundImage? ShownPicture =>
+        string.Equals(Model.Settings.Theme, ThemeCatalog.CustomId, StringComparison.OrdinalIgnoreCase)
+        && Model.Settings.BackgroundImage is { } image
+        && !System.Windows.SystemParameters.HighContrast
+        && PictureAvailable(image)
+            ? image
+            : null;
 
     public bool HasMultiLaunchMembers => Model.MultiLaunchMembers().Any();
 

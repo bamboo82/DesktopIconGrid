@@ -36,6 +36,9 @@
         <ColumnDefinition Width="18" />
       </Grid.ColumnDefinitions>
 
+      <!-- The custom theme's background picture (0.15.0 WP5): over the colour, under everything else (BarPicture) -->
+      <Rectangle x:Name="PictureLayer" Grid.ColumnSpan="3" IsHitTestVisible="False" Visibility="Collapsed" />
+
       <!-- Move grip -->
       <Border x:Name="Grip"
               Grid.Column="0"

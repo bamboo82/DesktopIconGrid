@@ -103,13 +103,21 @@ public static class ThemeCatalog
     public static bool IsKnown(string? id) =>
         Find(id) is not null || string.Equals(id?.Trim(), CustomId, StringComparison.OrdinalIgnoreCase);
 
-    /// <summary>The palette for the settings: a built-in theme by id, or a custom one derived from the background colour.</summary>
-    public static ThemePalette Resolve(LauncherSettings settings)
+    /// <summary>
+    /// The palette for the settings: a built-in theme by id, or a custom one derived from the background colour. While its
+    /// background picture is shown (<paramref name="pictureShown"/>: this PC has the file, and Windows is not in High
+    /// Contrast), the light or dark text is chosen for the picture's average blended into the colour by its strength
+    /// (0.15.0 WP5).
+    /// </summary>
+    public static ThemePalette Resolve(LauncherSettings settings, bool pictureShown = false)
     {
         ArgumentNullException.ThrowIfNull(settings);
         if (string.Equals(settings.Theme, CustomId, StringComparison.OrdinalIgnoreCase))
         {
-            return WithHoverAndFocus(CreateCustom(settings.BackgroundColor), settings.HoverColor, settings.HoverStrength, settings.FocusColor);
+            var lightBasis = pictureShown && settings.BackgroundImage is { Average: { } average } picture && LauncherSettings.IsValidColor(settings.BackgroundColor)
+                ? Blend(settings.BackgroundColor, average, picture.Strength)
+                : null;
+            return WithHoverAndFocus(CreateCustom(settings.BackgroundColor, lightBasis), settings.HoverColor, settings.HoverStrength, settings.FocusColor);
         }
 
         return Find(settings.Theme) ?? Classic;
@@ -119,18 +127,24 @@ public static class ThemeCatalog
     /// Builds a palette around a background colour: light backgrounds get dark text and dark highlights,
     /// dark backgrounds get white text and white highlights.
     /// </summary>
-    public static ThemePalette CreateCustom(string? backgroundHex)
+    /// <param name="backgroundHex">The custom colour; the default when it is none.</param>
+    /// <param name="lightBasis">
+    /// What the text stands on when it is not the colour alone: the picture's average blended into it (0.15.0 WP5). The
+    /// light or dark set and the text colour are chosen for it; the border stays the colour's.
+    /// </param>
+    public static ThemePalette CreateCustom(string? backgroundHex, string? lightBasis = null)
     {
         var background = LauncherSettings.IsValidColor(backgroundHex)
             ? backgroundHex!.ToUpperInvariant()
             : LauncherSettings.DefaultBackgroundColor;
-        var light = IsLight(background);
+        var basis = LauncherSettings.IsValidColor(lightBasis) ? lightBasis! : background;
+        var light = IsLight(basis);
 
         return new ThemePalette(
             CustomId, "Custom",
             Background: background,
             Border: Darken(background, 0.5),
-            Foreground: ForegroundOn(background),
+            Foreground: ForegroundOn(basis),
             Hover: light ? "#14000000" : "#2EFFFFFF",
             HoverBorder: light ? "#30000000" : "#50FFFFFF",
             Pressed: light ? "#24000000" : "#50FFFFFF",
@@ -169,6 +183,19 @@ public static class ThemeCatalog
         }
 
         return palette;
+    }
+
+    /// <summary>
+    /// The colour the picture and the custom colour make together: the picture's average over the colour at
+    /// <paramref name="strength"/> percent (0.15.0 WP5), <c>#RRGGBB</c>.
+    /// </summary>
+    public static string Blend(string backgroundHex, string averageHex, int strength)
+    {
+        var share = Math.Clamp(strength, 0, 100) / 100.0;
+        var (br, bg, bb) = ParseRgb(backgroundHex);
+        var (ar, ag, ab) = ParseRgb(averageHex);
+        int Mix(int under, int over) => (int)Math.Round(under + ((over - under) * share), MidpointRounding.AwayFromZero);
+        return string.Create(CultureInfo.InvariantCulture, $"#{Mix(br, ar):X2}{Mix(bg, ag):X2}{Mix(bb, ab):X2}");
     }
 
     /// <summary>The hover colour a custom theme derives from its background, <c>#RRGGBB</c>: black on a light one, white on a dark one.</summary>

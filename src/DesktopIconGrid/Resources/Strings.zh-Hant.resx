@@ -3017,4 +3017,49 @@ SHA-256：{3}
   <data name="Settings_PreviewFocus" xml:space="preserve">
     <value>有鍵盤焦點的圖示</value>
   </data>
+  <data name="Settings_Picture" xml:space="preserve">
+    <value>背景圖片：</value>
+  </data>
+  <data name="Settings_PictureNone" xml:space="preserve">
+    <value>無</value>
+  </data>
+  <data name="Settings_ChoosePicture" xml:space="preserve">
+    <value>選擇圖片…</value>
+  </data>
+  <data name="Settings_PictureFromWeb" xml:space="preserve">
+    <value>從網址…</value>
+  </data>
+  <data name="Settings_RemovePicture" xml:space="preserve">
+    <value>移除</value>
+  </data>
+  <data name="Settings_PictureStrength" xml:space="preserve">
+    <value>圖片濃度</value>
+  </data>
+  <data name="Picture_FileFilter" xml:space="preserve">
+    <value>圖片</value>
+  </data>
+  <data name="Picture_FileUnreadable" xml:space="preserve">
+    <value>這個檔案不是 Windows 能開啟的圖片。</value>
+  </data>
+  <data name="Picture_WebTitle" xml:space="preserve">
+    <value>從網址取得背景圖片</value>
+  </data>
+  <data name="Picture_WebPrompt" xml:space="preserve">
+    <value>圖片的 https:// 網址。按下「確定」時取得一次。</value>
+  </data>
+  <data name="Picture_Fetching" xml:space="preserve">
+    <value>正在取得圖片…</value>
+  </data>
+  <data name="Picture_NotHttps" xml:space="preserve">
+    <value>請使用以 https:// 開頭的網址。</value>
+  </data>
+  <data name="Picture_TooLarge" xml:space="preserve">
+    <value>圖片超過 10 MB。</value>
+  </data>
+  <data name="Picture_NotAPicture" xml:space="preserve">
+    <value>這個網址不是 Windows 能開啟的圖片。</value>
+  </data>
+  <data name="Picture_NoAnswer" xml:space="preserve">
+    <value>伺服器沒有回應，或沒有傳回圖片。</value>
+  </data>
 </root>

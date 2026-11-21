@@ -26,8 +26,8 @@ public static class DataImport
     /// <summary>The files copied, in this order: the bar last, so a stop half way leaves the target's bar as it was.</summary>
     public static IReadOnlyList<string> Files { get; } = [WorkspacePositions.FileName, UsageLog.FileName, LayoutStorage.FileName];
 
-    /// <summary>The folders of files the bar uses, copied whole before the bar.</summary>
-    public static IReadOnlyList<string> Folders { get; } = ["icons", "sounds"];
+    /// <summary>The folders of files the bar uses, copied whole before the bar; the background pictures since 0.15.0 (WP5).</summary>
+    public static IReadOnlyList<string> Folders { get; } = ["icons", "sounds", Models.BackgroundImage.FolderName];
 
     /// <summary>The name a file in the way is given: <c>layout.json.before-import-20261121-093000</c>.</summary>
     public static string KeptAsideName(string path, DateTimeOffset now) =>

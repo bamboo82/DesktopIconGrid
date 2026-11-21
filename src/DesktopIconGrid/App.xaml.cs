@@ -193,6 +193,7 @@ public partial class App : Application
         var load = storage.Load();
         var model = LauncherModel.FromLayout(load.Layout);
         UiLanguage.Apply(model.Settings.Language);
+        BackgroundPictures.Prune(AppPaths.BackgroundsDirectory, model.Settings.BackgroundImage?.File); // pictures no setting names (0.15.0 WP5)
         AppLog.Default.Info("App", load.IsFirstRun
             ? "No layout file yet; starting with an empty bar"
             : $"Layout loaded: {model.Items.Count} top-level items, {model.TotalShortcutCount} shortcuts{(model.RepairCount > 0 ? $", {model.RepairCount} repaired" : string.Empty)}{(load.RecoveredFromBackup ? " (recovered from layout.json.bak)" : string.Empty)}");

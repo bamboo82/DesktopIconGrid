@@ -37,7 +37,11 @@ internal sealed class BarSurface(Window window, double resizeBorder, string name
     /// the theme's <paramref name="palette"/> and the background's <paramref name="opacity"/> in percent. Call it once the
     /// window has a handle, and again whenever one of them may have changed.
     /// </summary>
-    public void Apply(HwndSource source, string? backdrop, ThemePalette palette, int opacity, double iconSize)
+    /// <param name="picture">
+    /// A background picture is drawn (0.15.0 WP5): text and lines take their edges at every opacity then, since they may
+    /// stand on any part of it.
+    /// </param>
+    public void Apply(HwndSource source, string? backdrop, ThemePalette palette, int opacity, double iconSize, bool picture = false)
     {
         ArgumentNullException.ThrowIfNull(source);
         ArgumentNullException.ThrowIfNull(palette);
@@ -94,6 +98,6 @@ internal sealed class BarSurface(Window window, double resizeBorder, string name
         // window's own colour, not against what shows through, and would fringe there. On an opaque one, ClearType (0.15.0
         // WP9); with a backdrop, WPF's own choice, as before.
         TextOptions.SetTextRenderingMode(window, TextSharpness.RenderingFor(SeeThrough, active));
-        MainWindow.SetSeeThroughLook(window.Resources, SeeThrough ? palette.Foreground : null, iconSize);
+        MainWindow.SetSeeThroughLook(window.Resources, SeeThrough || picture ? palette.Foreground : null, iconSize);
     }
 }

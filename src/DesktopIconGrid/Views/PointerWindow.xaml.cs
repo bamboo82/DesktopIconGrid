@@ -30,6 +30,7 @@ public partial class PointerWindow : Window
     private const double GrabOffset = 14;
 
     private readonly LauncherViewModel _viewModel;
+    private readonly BarPicture _picture;
     private readonly BarSurface _surface;
     private bool _dismissing;
     private bool _closingForGood;
@@ -41,6 +42,7 @@ public partial class PointerWindow : Window
         InitializeComponent();
         TextSharpness.Apply(this); // whole-pixel text; the background decides the smoothing, as on the bar (0.15.0 WP9)
         _surface = new BarSurface(this, resizeBorder: 0, "Window at the pointer");
+        _picture = new BarPicture(ChromeContent, PictureLayer);
         BarIconArea = () => new Size(6 * viewModel.CellWidth, 2 * viewModel.CellHeight);
         UiFonts.ApplyBar(this); // the bar's font, Chinese in Taipei Sans TC Light where this PC has it (0.12.0 WP5, 0.14.0 WP2)
         Icons.DataContext = viewModel.RootItems;
@@ -145,7 +147,10 @@ public partial class PointerWindow : Window
     {
         if (HwndSource.FromHwnd(new WindowInteropHelper(this).Handle) is { } source)
         {
-            _surface.Apply(source, _viewModel.Model.Settings.BarBackdrop, ThemeManager.EffectivePalette(_viewModel.Palette), _viewModel.Opacity, _viewModel.IconSize);
+            var shown = _viewModel.ShownPicture;
+            var picture = BackgroundPictures.Load(AppPaths.BackgroundsDirectory, shown);
+            _surface.Apply(source, _viewModel.Model.Settings.BarBackdrop, ThemeManager.EffectivePalette(_viewModel.Palette), _viewModel.Opacity, _viewModel.IconSize, picture: picture is not null);
+            _picture.Show(picture, shown, _viewModel.Opacity / 100.0); // the bar's picture, as the bar draws it (0.15.0 WP5)
         }
     }
 

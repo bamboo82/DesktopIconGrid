@@ -1,3 +1,4 @@
+using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -135,6 +136,62 @@ public partial class SettingsWindow : Window
         var chosen = ColourPickerWindow.Pick(this, viewModel.IsFocusColorValid ? before : null, colour => viewModel.FocusColorText = colour, viewModel.Presets);
         viewModel.FocusColorText = chosen ?? before;
     }
+
+    /// <summary>
+    /// A background picture from a file (0.15.0 WP5): decoded by Windows and written anew into the data folder's
+    /// backgrounds; the setting changes at Save.
+    /// </summary>
+    private void ChoosePicture_Click(object sender, RoutedEventArgs e)
+    {
+        if (ViewModel is not { } viewModel)
+        {
+            return;
+        }
+
+        var dialog = new Microsoft.Win32.OpenFileDialog
+        {
+            Title = Strings.Settings_ChoosePicture.TrimEnd('…'),
+            Filter = $"{Strings.Picture_FileFilter}|*.png;*.jpg;*.jpeg;*.bmp;*.gif;*.webp;*.tif;*.tiff",
+        };
+        if (dialog.ShowDialog(this) != true)
+        {
+            return;
+        }
+
+        try
+        {
+            var picture = BackgroundPictures.Decode(File.ReadAllBytes(dialog.FileName));
+            var (name, average) = BackgroundPictures.Store(picture, AppPaths.BackgroundsDirectory);
+            viewModel.UsePicture(name, average);
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or IOException or UnauthorizedAccessException)
+        {
+            Core.Diagnostics.AppLog.Default.Info("Theme", $"Background picture from {dialog.FileName}: {ex.Message}");
+            MessageBox.Show(this, Strings.Picture_FileUnreadable, Strings.Settings_Picture.TrimEnd('：', ':'), MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
+    }
+
+    /// <summary>A background picture from a web address (0.15.0 WP5): fetched when that window's OK is pressed, once.</summary>
+    private void PictureFromWeb_Click(object sender, RoutedEventArgs e)
+    {
+        if (ViewModel is not { } viewModel || PictureAddressWindow.Show(this, App.SharedHttp) is not { } picture)
+        {
+            return;
+        }
+
+        try
+        {
+            var (name, average) = BackgroundPictures.Store(picture, AppPaths.BackgroundsDirectory);
+            viewModel.UsePicture(name, average);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            Core.Diagnostics.AppLog.Default.Warning("Theme", $"The background picture could not be stored: {ex.Message}");
+            MessageBox.Show(this, ex.Message, Strings.Settings_Picture.TrimEnd('：', ':'), MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
+    }
+
+    private void RemovePicture_Click(object sender, RoutedEventArgs e) => ViewModel?.RemovePicture();
 
     private void Save_Click(object sender, RoutedEventArgs e)
     {

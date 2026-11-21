@@ -176,6 +176,41 @@
               <TextBlock x:Name="FocusHardToSeeLine" Grid.Row="3" Grid.Column="1" Text="{x:Static r:Strings.Settings_FocusHardToSee}" Foreground="{DynamicResource WarningBrush}" TextWrapping="Wrap"
                          Visibility="{Binding IsFocusHardToSee, Converter={StaticResource BoolToVisibility}}" />
             </Grid>
+
+            <!-- The background picture (0.15.0 WP5): over the colour, under everything else, in the bar and the window at the pointer -->
+            <Grid Margin="0,10,0,0">
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+              </Grid.ColumnDefinitions>
+              <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+              </Grid.RowDefinitions>
+              <TextBlock x:Name="PictureLabel" Grid.Row="0" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Settings_Picture}" Margin="0,0,10,4" VerticalAlignment="Center" />
+              <WrapPanel Grid.Row="0" Grid.Column="1" Margin="0,0,0,4">
+                <Border Width="64" Height="36" Margin="0,0,8,0" VerticalAlignment="Center" ClipToBounds="True"
+                        BorderBrush="{DynamicResource SwatchBorderBrush}" BorderThickness="1" CornerRadius="3"
+                        AutomationProperties.Name="{x:Static r:Strings.Settings_Picture}">
+                  <Grid>
+                    <Image Source="{Binding PictureThumbnail}" Stretch="UniformToFill" />
+                    <TextBlock Text="{x:Static r:Strings.Settings_PictureNone}" HorizontalAlignment="Center" VerticalAlignment="Center"
+                               Visibility="{Binding HasPicture, Converter={StaticResource InverseBoolToVisibility}}" />
+                  </Grid>
+                </Border>
+                <Button x:Name="ChoosePictureButton" Content="{x:Static r:Strings.Settings_ChoosePicture}" Padding="10,2" Margin="0,0,6,0" VerticalAlignment="Center" Click="ChoosePicture_Click" />
+                <Button x:Name="PictureFromWebButton" Content="{x:Static r:Strings.Settings_PictureFromWeb}" Padding="10,2" Margin="0,0,6,0" VerticalAlignment="Center" Click="PictureFromWeb_Click" />
+                <Button x:Name="RemovePictureButton" Content="{x:Static r:Strings.Settings_RemovePicture}" Padding="10,2" VerticalAlignment="Center"
+                        IsEnabled="{Binding HasPicture}" Click="RemovePicture_Click" />
+              </WrapPanel>
+              <DockPanel Grid.Row="1" Grid.Column="1" Margin="0,0,0,4" IsEnabled="{Binding HasPicture}">
+                <TextBlock DockPanel.Dock="Left" Text="{x:Static r:Strings.Settings_PictureStrength}" VerticalAlignment="Center" Margin="0,0,8,0" />
+                <TextBlock DockPanel.Dock="Right" Text="{Binding PictureStrengthText}" MinWidth="40" TextAlignment="Right" VerticalAlignment="Center" />
+                <Slider Minimum="{Binding MinPictureStrength}" Maximum="{Binding MaxPictureStrength}" Value="{Binding PictureStrength}"
+                        IsSnapToTickEnabled="True" TickFrequency="5" VerticalAlignment="Center" Margin="0,0,8,0"
+                        AutomationProperties.Name="{x:Static r:Strings.Settings_PictureStrength}" />
+              </DockPanel>
+            </Grid>
           </StackPanel>
 
           <!-- Bar background (Windows 11 backdrop) -->

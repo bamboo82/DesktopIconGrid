@@ -103,6 +103,9 @@ public sealed partial class LauncherSettings
     /// </summary>
     public string? FocusColor { get; set; }
 
+    /// <summary>The custom theme's background picture (0.15.0 WP5); none for the colour alone.</summary>
+    public BackgroundImage? BackgroundImage { get; set; }
+
     /// <summary>What the bar is painted on: the theme colour, or a Windows 11 backdrop tinted with it (one of <see cref="Backdrops"/>).</summary>
     public string BarBackdrop { get; set; } = BackdropSolid;
 
@@ -241,6 +244,7 @@ public sealed partial class LauncherSettings
         HoverColor = source.HoverColor;
         HoverStrength = source.HoverStrength;
         FocusColor = source.FocusColor;
+        BackgroundImage = source.BackgroundImage;
         BarBackdrop = source.BarBackdrop;
         FluentDialogs = source.FluentDialogs;
         ChineseFont = source.ChineseFont;
@@ -297,6 +301,14 @@ public sealed partial class LauncherSettings
         else if (BackgroundColor != BackgroundColor.ToUpperInvariant())
         {
             BackgroundColor = BackgroundColor.ToUpperInvariant();
+        }
+
+        // The background picture (0.15.0 WP5): a stored name or none; values out of range back to their defaults.
+        var picture = BackgroundImage?.Normalized();
+        if (picture != BackgroundImage)
+        {
+            BackgroundImage = picture;
+            changed = true;
         }
 
         // The custom theme's own hover and focus colours (0.15.0 WP4b): #RRGGBB or none; the strength 10–100 or none.

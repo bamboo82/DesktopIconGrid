@@ -38,25 +38,63 @@ public static class IconDownloader
 
         var uri = new Uri(url.Trim());
         byte[] bytes;
+        try
+        {
+            bytes = await FetchAsync(http, uri, httpsOnly: false, cancellationToken);
+        }
+        catch (DownloadFailedException ex)
+        {
+            throw new InvalidOperationException(ex.Message, ex);
+        }
+
+        var normalised = Normalise(bytes);
+        Directory.CreateDirectory(iconsDirectory);
+        var path = Path.Combine(iconsDirectory, FileNameFor(uri));
+        var temporary = path + ".tmp";
+        await File.WriteAllBytesAsync(temporary, normalised, cancellationToken);
+        File.Move(temporary, path, overwrite: true);
+        return path;
+    }
+
+    /// <summary>
+    /// The download rules, shared by the web icon and the background picture (0.15.0 WP5): one GET, a web page refused, at
+    /// most <see cref="MaxBytes"/> (by the header and while reading), abandoned after <see cref="StallTimeout"/> without
+    /// data. With <paramref name="httpsOnly"/> the address and the one the redirects end at must both be https. Returns the
+    /// bytes; what they are is for the caller to decode.
+    /// </summary>
+    public static async Task<byte[]> FetchAsync(HttpClient http, Uri uri, bool httpsOnly, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(http);
+        ArgumentNullException.ThrowIfNull(uri);
+        if (httpsOnly && uri.Scheme != Uri.UriSchemeHttps)
+        {
+            throw new DownloadFailedException(DownloadFailure.NotHttps, "The address does not start with https://.");
+        }
+
         using var idle = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         try
         {
             idle.CancelAfter(StallTimeout);
             using var response = await http.GetAsync(uri, HttpCompletionOption.ResponseHeadersRead, idle.Token);
+            if (httpsOnly && response.RequestMessage?.RequestUri is { } landed && landed.Scheme != Uri.UriSchemeHttps)
+            {
+                throw new DownloadFailedException(DownloadFailure.NotHttps, "The address led to one that does not start with https://.");
+            }
+
             if (!response.IsSuccessStatusCode)
             {
-                throw new InvalidOperationException($"The server answered {(int)response.StatusCode} {response.ReasonPhrase}.");
+                throw new DownloadFailedException(DownloadFailure.NoAnswer, $"The server answered {(int)response.StatusCode} {response.ReasonPhrase}.");
             }
 
             var contentType = response.Content.Headers.ContentType?.MediaType ?? string.Empty;
             if (contentType.StartsWith("text/html", StringComparison.OrdinalIgnoreCase))
             {
-                throw new InvalidOperationException("That address is a web page, not an image. Use the image's own address (right-click the picture → Copy image address).");
+                throw new DownloadFailedException(DownloadFailure.NotAPicture, "That address is a web page, not an image. Use the image's own address (right-click the picture → Copy image address).");
             }
 
             if (response.Content.Headers.ContentLength is > MaxBytes)
             {
-                throw new InvalidOperationException("The image is larger than 10 MB.");
+                throw new DownloadFailedException(DownloadFailure.TooLarge, "The image is larger than 10 MB.");
             }
 
             await using var stream = await response.Content.ReadAsStreamAsync(idle.Token);
@@ -74,28 +112,20 @@ public static class IconDownloader
                 buffer.Write(chunk, 0, read);
                 if (buffer.Length > MaxBytes)
                 {
-                    throw new InvalidOperationException("The image is larger than 10 MB.");
+                    throw new DownloadFailedException(DownloadFailure.TooLarge, "The image is larger than 10 MB.");
                 }
             }
 
-            bytes = buffer.ToArray();
+            return buffer.ToArray();
         }
         catch (HttpRequestException ex)
         {
-            throw new InvalidOperationException($"The image could not be downloaded: {ex.Message}", ex);
+            throw new DownloadFailedException(DownloadFailure.NoAnswer, $"The image could not be downloaded: {ex.Message}", ex);
         }
         catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
         {
-            throw new InvalidOperationException($"The download timed out: the server sent nothing for {StallTimeout.TotalSeconds:0} seconds.");
+            throw new DownloadFailedException(DownloadFailure.NoAnswer, $"The download timed out: the server sent nothing for {StallTimeout.TotalSeconds:0} seconds.");
         }
-
-        var normalised = Normalise(bytes);
-        Directory.CreateDirectory(iconsDirectory);
-        var path = Path.Combine(iconsDirectory, FileNameFor(uri));
-        var temporary = path + ".tmp";
-        await File.WriteAllBytesAsync(temporary, normalised, cancellationToken);
-        File.Move(temporary, path, overwrite: true);
-        return path;
     }
 
     public static string FileNameFor(Uri uri) =>
@@ -156,4 +186,19 @@ public static class IconDownloader
         encoder.Save(output);
         return output.ToArray();
     }
+}
+
+/// <summary>Why a download failed, for a message in the user's language (0.15.0 WP5).</summary>
+public enum DownloadFailure
+{
+    NotHttps,
+    TooLarge,
+    NotAPicture,
+    NoAnswer,
+}
+
+/// <summary>A download that failed by one of <see cref="IconDownloader.FetchAsync"/>'s rules; the message is English, for the log.</summary>
+public sealed class DownloadFailedException(DownloadFailure failure, string message, Exception? inner = null) : Exception(message, inner)
+{
+    public DownloadFailure Failure { get; } = failure;
 }

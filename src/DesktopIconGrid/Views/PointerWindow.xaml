@@ -20,9 +20,13 @@
   </WindowChrome.WindowChrome>
 
   <!-- The bar's background and border (0.15.0 WP3; BarSurface makes the window behind it a backdrop or see-through) -->
-  <Border x:Name="Chrome" BorderBrush="{DynamicResource Theme.Border}" BorderThickness="1" Padding="3"
+  <Border x:Name="Chrome" BorderBrush="{DynamicResource Theme.Border}" BorderThickness="1"
           Background="{DynamicResource Theme.BarBackground}">
-    <DockPanel>
+    <Grid x:Name="ChromeContent">
+    <!-- The custom theme's background picture, as on the bar (0.15.0 WP5): it covers the inside of the border, so the
+         space around the content is a margin, not the border's padding -->
+    <Rectangle x:Name="PictureLayer" IsHitTestVisible="False" Visibility="Collapsed" />
+    <DockPanel Margin="3">
       <!-- Search box with its placeholder, and what Enter opens -->
       <DockPanel DockPanel.Dock="Top">
         <TextBlock DockPanel.Dock="Right"
@@ -97,5 +101,6 @@
       <!-- The bar's icon area, its size set from the bar's (0.15.0 WP3) -->
       <views:IconGridControl x:Name="Icons" OpensGroupsInPlace="True" Margin="0,3,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" />
     </DockPanel>
+    </Grid>
   </Border>
 </Window>
