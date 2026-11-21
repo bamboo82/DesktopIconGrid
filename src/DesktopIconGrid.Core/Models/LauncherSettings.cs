@@ -164,6 +164,13 @@ public sealed partial class LauncherSettings
     public string? ShowAtPointerHotkey { get; set; }
 
     /// <summary>
+    /// The system-wide combination that shows the bar at the mouse pointer while it is held and hides it when the first
+    /// of its keys comes up (0.15.0 WP2, the owner's request); <see langword="null"/> for none (the default). It syncs, as
+    /// <see cref="ShowAtPointerHotkey"/> does.
+    /// </summary>
+    public string? HoldAtPointerHotkey { get; set; }
+
+    /// <summary>
     /// The bar window's keys that differ from their defaults (<see cref="Models.WindowKeys"/>), by action name; an empty
     /// text turns a key off. <see langword="null"/> when every key is its default.
     /// </summary>
@@ -203,6 +210,7 @@ public sealed partial class LauncherSettings
         DialogTextScale = source.DialogTextScale;
         ToggleHotkey = source.ToggleHotkey;
         ShowAtPointerHotkey = source.ShowAtPointerHotkey;
+        HoldAtPointerHotkey = source.HoldAtPointerHotkey;
         WindowKeys = source.WindowKeys is null ? null : new Dictionary<string, string>(source.WindowKeys);
         Opacity = source.Opacity;
         CloseToTray = source.CloseToTray;
@@ -315,6 +323,7 @@ public sealed partial class LauncherSettings
 
         ToggleHotkey = string.IsNullOrWhiteSpace(ToggleHotkey) ? null : ToggleHotkey.Trim();
         ShowAtPointerHotkey = string.IsNullOrWhiteSpace(ShowAtPointerHotkey) ? null : ShowAtPointerHotkey.Trim();
+        HoldAtPointerHotkey = string.IsNullOrWhiteSpace(HoldAtPointerHotkey) ? null : HoldAtPointerHotkey.Trim();
 
         var language = Languages.FirstOrDefault(l => string.Equals(l, Language?.Trim(), StringComparison.OrdinalIgnoreCase));
         if (language is null)

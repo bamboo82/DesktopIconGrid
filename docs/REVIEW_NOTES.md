@@ -9,6 +9,20 @@ The owner relays replies.
 
 ---
 
+## 2026-11-21 (136) — Run 239 was red: my WP3 test of a group's header
+
+Run 239 (`dc9e8d7`, WP3, entry 135) failed one App test of 500, a new one of mine:
+`An_opened_group_adds_its_header_and_the_icon_area_keeps_its_size_and_a_search_goes_back`. Core 1242 passed, and so
+did the other WP3 tests: the bar's icon area and places, the cap, and the see-through look on, off and under High
+Contrast.
+
+- **What:** after a group opens, the window is not taller by the header's height, as the test asks. Before WP3 the
+  test asked only that it be taller. Reading the code I do not see why it is not; this commit changes nothing but the
+  test, which now reports the window's, the content's, the header's and the icons' heights, so the next run says what
+  happens. The fix follows in its own commit, with this entry's answer.
+
+This entry claims no run for its own commit.
+
 ## 2026-11-21 (135) — 0.15.0 WP3: the window at the pointer is the bar's twin
 
 v0.14.0 is out as you said: I checked the annotated tag on `fab4172`, `main` there, release run 17 and the three files

@@ -200,7 +200,12 @@ public sealed class PointerWindowTests(WpfThread wpf) : IDisposable
             window.UpdateLayout();
 
             EveryRowShows(window);
-            Assert.True(window.ActualHeight > topLevel + window.GroupHeader.ActualHeight - 1, "no room was made for the group's header");
+            var header = window.GroupHeader.ActualHeight + window.GroupHeader.Margin.Top + window.GroupHeader.Margin.Bottom;
+            var chrome = (FrameworkElement)window.Content;
+            Assert.True(
+                Math.Abs(window.ActualHeight - (topLevel + header)) < 1.5,
+                $"the window is {window.ActualHeight} high (Height {window.Height}, content {chrome.ActualHeight}, desired {chrome.DesiredSize.Height}) "
+                + $"after {topLevel} at the top level; the header takes {header} (desired {window.GroupHeader.DesiredSize.Height}), the icons {window.Icons.ActualHeight}");
             Assert.Equal(area, window.Icons.ActualHeight, precision: 1);
 
             bar.SearchText = "Item 1"; // a search covers every group, so it goes back to the top level
