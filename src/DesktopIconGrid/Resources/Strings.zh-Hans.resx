@@ -2930,4 +2930,10 @@ SHA-256：{3}
   <data name="WindowKey_HoldHotkey" xml:space="preserve">
     <value>按住时在指针处显示（全系统）</value>
   </data>
+  <data name="Menu_LockGrid" xml:space="preserve">
+    <value>锁定网格</value>
+  </data>
+  <data name="Main_GridLocked" xml:space="preserve">
+    <value>网格已锁定。在工具栏的空白处右击即可解除。</value>
+  </data>
 </root>

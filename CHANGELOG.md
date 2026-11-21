@@ -9,6 +9,10 @@ version numbers follow [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- *Lock grid* in the menu of the bar's empty area and in its ▸ menu: while it is ticked nothing on the grid moves by
+  dragging (icons, groups, special icons, separators), in the bar, its groups and the window at the pointer. Files
+  dropped from elsewhere are still added or opened, and the bar itself still moves. The first drag it stops says how
+  to unlock it. It syncs with the other settings.
 - *Show at pointer while held* under Settings ▸ Keys: while that combination is held, the bar shows at the mouse
   pointer, and letting go of any of its keys hides it. While it is held a click there is a plain click, whatever
   modifiers the combination has; a menu or a drag open at the moment you let go keeps the window until it ends. It

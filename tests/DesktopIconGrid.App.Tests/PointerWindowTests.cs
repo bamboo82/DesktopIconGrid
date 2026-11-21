@@ -218,6 +218,38 @@ public sealed class PointerWindowTests(WpfThread wpf) : IDisposable
     }
 
     [Fact]
+    public void The_notice_line_shows_under_the_icons_as_wide_as_they_are_and_the_window_grows_by_it()
+    {
+        // 0.15.0 WP1: the first drag refused on a locked grid says so in the bar's notice row, and here under the icons.
+        WithWindow(Shortcuts(6), (window, bar) =>
+        {
+            var before = window.ActualHeight;
+            var width = window.ActualWidth;
+            var area = window.Icons.Height;
+            Assert.Equal(Visibility.Collapsed, window.MessageRow.Visibility);
+
+            bar.LockGrid = true;
+            Assert.False(IconGridControl.MayMove(bar.RootItems.Items[0]));
+            window.UpdateLayout();
+
+            Assert.Equal(Visibility.Visible, window.MessageRow.Visibility);
+            Assert.Equal(DesktopIconGrid.Resources.Strings.Main_GridLocked, window.MessageText.Text);
+            var line = window.MessageRow.ActualHeight + window.MessageRow.Margin.Top + window.MessageRow.Margin.Bottom;
+            Assert.True(line > 10, $"the line takes {line}");
+            Assert.Equal(window.Icons.Width, window.MessageRow.ActualWidth, precision: 1); // it wraps within the icons' width
+            Assert.Equal(before + line, window.ActualHeight, precision: 0);
+            Assert.Equal(width, window.ActualWidth, precision: 0);
+            Assert.Equal(area, window.Icons.Height, precision: 1);
+
+            bar.LockGrid = false; // takes the notice back
+            window.UpdateLayout();
+
+            Assert.Equal(Visibility.Collapsed, window.MessageRow.Visibility);
+            Assert.Equal(before, window.ActualHeight, precision: 0);
+        }, area: bar => Area(bar, 4, bar.CellHeight));
+    }
+
+    [Fact]
     public void The_icon_area_is_the_bars_and_the_icons_fall_where_the_bars_do()
     {
         // 0.15.0 WP3: a bar five cells wide that wraps, with a line, a caption, a row line with a caption and a row-start

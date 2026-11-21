@@ -69,27 +69,20 @@ public partial class PointerWindow : Window
 
     /// <summary>
     /// The window's size in WPF units, its icon area set within it: the bar's icon area (<see cref="BarIconArea"/>), the
-    /// search box above it and, in a group, the group's header under the box, inside the border. Held to
+    /// search box above it, in a group the group's header under the box, and the bar's notice line under the icons while
+    /// it has one, inside the border. Held to
     /// <paramref name="workArea"/> (the pointer's monitor's work area, in WPF units at its scale): an icon area that would
     /// not fit gives up what does not, and the icons flow again in it as in a narrower bar (<see cref="FitIconArea"/>).
     /// </summary>
     internal Size MeasureSize(Size workArea)
     {
         var bar = BarIconArea();
-        SetIconArea(bar);
-
-        // WPF skips a measure at the size an element was last measured at unless the element itself was invalidated. A
-        // change below the frame (a group's header shown or hidden, the icon area set) marks only the element it is on
-        // until a layout pass, and once the window has its content's size the frame's last measure was this same trial.
-        // So the layout is brought up to date first, and the frame is measured anew (UpdateLayout does nothing while a
-        // layout pass is running).
-        UpdateLayout();
-        Chrome.InvalidateMeasure();
-        Chrome.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
-        var around = new Size(Math.Max(0, Chrome.DesiredSize.Width - bar.Width), Math.Max(0, Chrome.DesiredSize.Height - bar.Height));
+        var around = MeasureAround(bar);
         var fitted = FitIconArea(bar, around, workArea);
         if (fitted != bar)
         {
+            around = MeasureAround(fitted); // a narrower icon area wraps the notice line further
+            fitted = FitIconArea(fitted, around, workArea);
             SetIconArea(fitted);
         }
 
@@ -99,9 +92,28 @@ public partial class PointerWindow : Window
     }
 
     /// <summary>
+    /// What the window needs around an icon area of <paramref name="area"/>, which it sets: the border, the search box, a
+    /// group's header and the notice line.
+    /// </summary>
+    private Size MeasureAround(Size area)
+    {
+        SetIconArea(area);
+
+        // WPF skips a measure at the size an element was last measured at unless the element itself was invalidated. A
+        // change below the frame (a group's header shown or hidden, the icon area set) marks only the element it is on
+        // until a layout pass, and once the window has its content's size the frame's last measure was this same trial.
+        // So the layout is brought up to date first, and the frame is measured anew (UpdateLayout does nothing while a
+        // layout pass is running).
+        UpdateLayout();
+        Chrome.InvalidateMeasure();
+        Chrome.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+        return new Size(Math.Max(0, Chrome.DesiredSize.Width - area.Width), Math.Max(0, Chrome.DesiredSize.Height - area.Height));
+    }
+
+    /// <summary>
     /// The icon area that fits: the bar's, less what would go past <paramref name="workArea"/> once
-    /// <paramref name="around"/> (the border, the search box, a group's header) is added. An empty work area (none known)
-    /// holds nothing back.
+    /// <paramref name="around"/> (the border, the search box, a group's header, the notice line) is added. An empty work
+    /// area (none known) holds nothing back.
     /// </summary>
     internal static Size FitIconArea(Size bar, Size around, Size workArea) => workArea.Width <= 0 || workArea.Height <= 0
         ? bar
@@ -113,6 +125,18 @@ public partial class PointerWindow : Window
     {
         Icons.Width = area.Width;
         Icons.Height = area.Height;
+        MessageRow.Width = area.Width; // the notice line wraps within the icons' width, never widening the window
+    }
+
+    /// <summary>
+    /// Shows the bar's notice line under the icons while it has one (0.15.0 WP1: the grid is locked), and fits the window
+    /// to it when it is shown.
+    /// </summary>
+    private void ShowBarMessage()
+    {
+        MessageText.Text = _viewModel.BarMessage ?? string.Empty;
+        MessageRow.Visibility = _viewModel.HasBarMessage ? Visibility.Visible : Visibility.Collapsed;
+        FitToContent();
     }
 
     /// <summary>The background, brought to the bar's settings now (0.15.0 WP3): the window has a handle by then.</summary>
@@ -147,6 +171,7 @@ public partial class PointerWindow : Window
     {
         _viewModel.ClearSearch();
         ShowRoot();
+        ShowBarMessage();
         new WindowInteropHelper(this).EnsureHandle();
         ApplyLook();
         if (!NativeMethods.GetCursorPos(out var pointer))
@@ -349,12 +374,19 @@ public partial class PointerWindow : Window
     /// <summary>Closes after a launch (or after a running program was brought forward).</summary>
     private void OnItemActivated(object? sender, ItemViewModel item) => Dismiss();
 
-    /// <summary>A search covers every group, so typing goes back to the top level, where the groups holding matches light up.</summary>
+    /// <summary>
+    /// A search covers every group, so typing goes back to the top level, where the groups holding matches light up. The
+    /// bar's notice line comes and goes with the bar's.
+    /// </summary>
     private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName == nameof(LauncherViewModel.IsSearching) && _viewModel.IsSearching && OpenedGroup is not null)
         {
             ShowRoot();
+        }
+        else if (e.PropertyName == nameof(LauncherViewModel.BarMessage))
+        {
+            ShowBarMessage();
         }
     }
 }

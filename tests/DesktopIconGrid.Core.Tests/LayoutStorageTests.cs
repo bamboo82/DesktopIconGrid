@@ -36,7 +36,7 @@ public sealed class LayoutStorageTests : IDisposable
         var storage = new LayoutStorage(FilePath);
         var layout = new LauncherLayout
         {
-            Settings = new LauncherSettings { IconSize = 48, BackgroundColor = "#123456", AlwaysOnTop = true },
+            Settings = new LauncherSettings { IconSize = 48, BackgroundColor = "#123456", AlwaysOnTop = true, LockGrid = true },
             Window = new WindowPlacement { Left = 10, Top = 20, Width = 500, Height = 120 },
             Items =
             [
@@ -59,6 +59,7 @@ public sealed class LayoutStorageTests : IDisposable
         Assert.Equal(48, loaded.Settings.IconSize);
         Assert.Equal("#123456", loaded.Settings.BackgroundColor);
         Assert.True(loaded.Settings.AlwaysOnTop);
+        Assert.True(loaded.Settings.LockGrid);
         Assert.Equal(500, loaded.Window!.Width);
 
         var shortcut = Assert.IsType<ShortcutItem>(loaded.Items[0]);

@@ -90,7 +90,7 @@ public partial class IconGridControl : UserControl
         }
     }
 
-    private enum DropAction
+    internal enum DropAction
     {
         None,
         Insert,
@@ -98,7 +98,7 @@ public partial class IconGridControl : UserControl
         OpenWith,
     }
 
-    private readonly record struct DropTarget(DragDropEffects Effects, DropAction Action, int Index, ItemViewModel? Item)
+    internal readonly record struct DropTarget(DragDropEffects Effects, DropAction Action, int Index, ItemViewModel? Item)
     {
         public static readonly DropTarget None = new(DragDropEffects.None, DropAction.None, 0, null);
     }
@@ -396,6 +396,11 @@ public partial class IconGridControl : UserControl
         _dragButton = null;
         _holdTimer.Stop();
         _holdCandidate = null;
+        if (!MayMove(item))
+        {
+            button.ReleaseMouseCapture(); // as a drag would: the release that follows is no click
+            return;
+        }
 
         var data = new DataObject(DragState.ItemFormat, item.Id.ToString());
         DragState.Current = item;
@@ -409,6 +414,23 @@ public partial class IconGridControl : UserControl
             DragState.Current = null;
             ClearDropFeedback();
         }
+    }
+
+    /// <summary>
+    /// Whether <paramref name="item"/> may be dragged now: not while the grid is locked (0.15.0 WP1), whatever it is (an
+    /// icon, a group, a special icon, any separator) and wherever it is (the bar, a group, the window at the pointer). A
+    /// refusal is told to the bar, whose first one in a run says so in the notice row.
+    /// </summary>
+    internal static bool MayMove(ItemViewModel item)
+    {
+        ArgumentNullException.ThrowIfNull(item);
+        if (!item.Root.LockGrid)
+        {
+            return true;
+        }
+
+        item.Root.RefuseMove();
+        return false;
     }
 
     // ----- drop target ----------------------------------------------------------------------------
@@ -450,11 +472,22 @@ public partial class IconGridControl : UserControl
         Dispatcher.BeginInvoke(DispatcherPriority.Input, () => CompleteDrop(list, target, draggedId, paths));
     }
 
-    private static void CompleteDrop(ItemListViewModel list, DropTarget target, Guid? draggedId, IReadOnlyList<string> paths)
+    /// <summary>
+    /// Acts on a drop once the OLE call has returned: moves one of the bar's items (<paramref name="draggedId"/>), unless
+    /// the grid was locked since the drag began (0.15.0 WP1), or adds <paramref name="paths"/>, or opens them with an icon.
+    /// </summary>
+    internal static void CompleteDrop(ItemListViewModel list, DropTarget target, Guid? draggedId, IReadOnlyList<string> paths)
     {
+        ArgumentNullException.ThrowIfNull(list);
+        ArgumentNullException.ThrowIfNull(paths);
         var root = list.Root;
         if (draggedId is { } id)
         {
+            if (root.LockGrid)
+            {
+                return;
+            }
+
             if (target.Action == DropAction.IntoGroup && target.Item is not null)
             {
                 root.MoveIntoGroup(id, target.Item);
@@ -495,9 +528,9 @@ public partial class IconGridControl : UserControl
 
         var isInternal = e.Data.GetDataPresent(DragState.ItemFormat);
         var isExternal = !isInternal && (e.Data.GetDataPresent(DataFormats.FileDrop) || TryGetLink(e.Data, out _));
-        if (!isInternal && !isExternal)
+        if ((!isInternal && !isExternal) || (isInternal && List.Root.LockGrid))
         {
-            return DropTarget.None;
+            return DropTarget.None; // a locked grid (0.15.0 WP1) takes no item of the bar's, from any of its windows
         }
 
         var dragged = isInternal ? DragState.Current : null;

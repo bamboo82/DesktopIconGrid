@@ -3030,6 +3030,15 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to The grid is locked. Right-click an empty part of the bar to unlock it..
+        /// </summary>
+        public static string Main_GridLocked {
+            get {
+                return ResourceManager.GetString("Main_GridLocked", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Move grip.
         /// </summary>
         public static string Main_GripName {
@@ -3242,6 +3251,15 @@ namespace DesktopIconGrid.Resources {
         public static string Menu_LaunchMultiLaunch {
             get {
                 return ResourceManager.GetString("Menu_LaunchMultiLaunch", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Lock grid.
+        /// </summary>
+        public static string Menu_LockGrid {
+            get {
+                return ResourceManager.GetString("Menu_LockGrid", resourceCulture);
             }
         }
 

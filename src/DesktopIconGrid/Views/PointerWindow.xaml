@@ -80,6 +80,23 @@
                    TextTrimming="CharacterEllipsis" />
       </DockPanel>
 
+      <!-- The bar's notice line (0.15.0 WP1: the grid is locked) under the icons, as wide as they are; the window grows by it -->
+      <Border x:Name="MessageRow"
+              DockPanel.Dock="Bottom"
+              Visibility="Collapsed"
+              HorizontalAlignment="Left"
+              Background="{DynamicResource Theme.Hover}"
+              BorderBrush="{DynamicResource Theme.HoverBorder}"
+              BorderThickness="1"
+              CornerRadius="4"
+              Margin="0,3,0,0"
+              Padding="6,1">
+        <TextBlock x:Name="MessageText"
+                   Foreground="{DynamicResource Theme.Foreground}"
+                   FontSize="11"
+                   TextWrapping="Wrap" />
+      </Border>
+
       <!-- The bar's icon area, its size set from the bar's (0.15.0 WP3) -->
       <views:IconGridControl x:Name="Icons" OpensGroupsInPlace="True" Margin="0,3,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" />
     </DockPanel>

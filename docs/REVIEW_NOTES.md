@@ -9,6 +9,49 @@ The owner relays replies.
 
 ---
 
+## 2026-11-21 (141) — 0.15.0 WP1: 鎖定格線 (Lock grid)
+
+- **Run 244** (`41ff5ae`, entry 140): green, Core 1248 of 1248, App 502 of 502. The group test passes with the window's
+  own height checked in every run, so WP3 is done.
+- **The setting:** `lockGrid` in the bar's settings, off by default, copied and synced as `alwaysOnTop` is. Older
+  versions keep it as an unknown property.
+- **The menus:** a ticked 鎖定格線 / *Lock grid* in the empty area's menu, just before 設定 (it is one menu in the bar, a
+  group's popup and the window at the pointer), and in the ▸ menu right under 永遠在最上層. Not in Settings. Not in the
+  tray menu either, because the plan names only those two menus. The tray menu has 永遠在最上層, and adding the lock there
+  is one line if you want it.
+- **What it stops:** every drag of the bar's items starts in one place, `IconGridControl.Item_PreviewMouseMove`. That is
+  the same for icons, groups, special icons and every separator kind, in all three windows. Past the drag distance it
+  asks `MayMove`, which refuses while the grid is locked. The press's mouse capture is then released, as a drag start
+  does, so the release is no click (without that, a refused drag would launch the program). A drop of one of the bar's
+  items is refused in `ResolveDropTarget` (the pointer shows no-drop) and again in `CompleteDrop`, for a drag already
+  on its way when the lock came on (a sync can turn it on during a drag).
+- **What still works:** files and links from Explorer or a browser (added, or opened with the icon they land on),
+  clicks, menus, Properties, adding, removing, renaming, moving, resizing and docking the bar, sync and restore. The
+  press-and-hold `_holdTimer` is not a drag start. It is the Sound Replayer's hold (it plays while held, and nothing
+  moves), so it keeps working. A press that moves past the drag distance before the hold begins drops the hold, as
+  before, locked or not.
+- **Your question:** `WindowKeys` has no keys that move an item (new shortcut, new group, settings, find, undo the
+  removal, remove, properties), so that line is dropped.
+- **The notice:** the notice row is the removal banner's row. The lock's line is a second row of the same look under the
+  icons, without a button, wrapped, for 10 s (the Undo offer's time). Only the first refusal in a run shows it
+  (`LauncherViewModel.RefuseMove`), and unlocking takes it back. The window at the pointer shows the same line under its
+  icons, as wide as they are, and grows by it while it is there: the bar may be hidden while that window is in use.
+  When the icon area is held to a small work area, `MeasureSize` now measures again at the narrower width, so the
+  line's extra wrapped height is counted.
+- **Tests:**
+  - Core: the setting's default, its JSON name, `CopyFrom` and `Clone`; the layout round trip carries it;
+  - App, `LockGridTests`: with the lock on, no item of any kind can be dragged (a shortcut, a group, a shortcut inside
+    it, a special icon, a line, a row-start line, a row line, a gap, a caption), and all can with it off; only the first
+    refusal says so (after the line has gone, a refusal is silent); unlocking takes the line back; a locked grid takes a
+    file drop and moves no item, and the item moves again once unlocked; the empty area's menu has the item, checkable
+    and bound both ways;
+  - App, `PointerWindowTests`: the line under the icons, as wide as the icon area, and the window growing by it and back.
+- **Not tested:** the drag itself with a real mouse (WPF reads the real button state, which a test cannot press), the
+  no-drop pointer, the ▸ menu's entry (no test makes the bar's window; its binding is the same as the line above it),
+  and the line in the bar's notice row on screen.
+
+This entry claims no run for its own commit.
+
 ## 2026-11-21 (140) — 0.15.0 WP3: the window at the pointer grows by a group's header again
 
 The cause of runs 239–243, and it was in the app, not only in the test. Entries 137 and 138 guessed wrong twice

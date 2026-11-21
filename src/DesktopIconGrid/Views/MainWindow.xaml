@@ -87,6 +87,21 @@
                        TextTrimming="CharacterEllipsis" />
           </DockPanel>
         </Border>
+        <!-- The notice row's line without a button (0.15.0 WP1: the grid is locked), on the removal banner's fill -->
+        <Border x:Name="BarMessageRow"
+                DockPanel.Dock="Bottom"
+                Visibility="{Binding HasBarMessage, Converter={StaticResource BoolToVisibility}}"
+                Background="{DynamicResource Theme.Hover}"
+                BorderBrush="{DynamicResource Theme.HoverBorder}"
+                BorderThickness="1"
+                CornerRadius="4"
+                Margin="2,0,2,2"
+                Padding="6,1">
+          <TextBlock Text="{Binding BarMessage}"
+                     Foreground="{DynamicResource Theme.Foreground}"
+                     FontSize="11"
+                     TextWrapping="Wrap" />
+        </Border>
         <views:IconGridControl x:Name="MainGrid"
                                DataContext="{Binding RootItems}"
                                Margin="0,2" />
@@ -120,6 +135,7 @@
               <MenuItem Header="{x:Static r:Strings.Menu_NewGroup}" Command="{Binding NewGroupCommand}" InputGestureText="{Binding KeyText[NewGroup]}" />
               <Separator />
               <MenuItem Header="{x:Static r:Strings.Menu_AlwaysOnTop}" IsCheckable="True" IsChecked="{Binding AlwaysOnTop, Mode=TwoWay}" />
+              <MenuItem Header="{x:Static r:Strings.Menu_LockGrid}" IsCheckable="True" IsChecked="{Binding LockGrid, Mode=TwoWay}" />
               <MenuItem x:Name="SendToMenuItem" Header="{x:Static r:Strings.Menu_SendTo}" IsCheckable="True" Click="SendTo_Click" />
               <MenuItem x:Name="ReceiveFilesMenuItem" Header="{x:Static r:Strings.Menu_ReceiveFiles}" IsCheckable="True" Click="ReceiveFiles_Click" />
               <MenuItem Header="{x:Static r:Strings.Menu_RestoreLayout}" Command="{Binding RestoreLayoutCommand}" />

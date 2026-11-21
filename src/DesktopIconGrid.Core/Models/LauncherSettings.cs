@@ -59,6 +59,13 @@ public sealed partial class LauncherSettings
     public bool AlwaysOnTop { get; set; }
 
     /// <summary>
+    /// Nothing on the grid can be moved by dragging (0.15.0 WP1, the owner's request): no icon, group, special icon or
+    /// separator, in the bar, its groups or the window at the pointer. Files dropped from elsewhere are still taken, and
+    /// the bar itself still moves. Off by default; it syncs, as <see cref="AlwaysOnTop"/> does.
+    /// </summary>
+    public bool LockGrid { get; set; }
+
+    /// <summary>
     /// Id of a theme in <see cref="ThemeCatalog"/>, or <c>custom</c> to derive one from <see cref="BackgroundColor"/>.
     /// <see langword="null"/> only occurs for layouts saved before themes existed; <see cref="Normalize"/> migrates it.
     /// </summary>
@@ -199,6 +206,7 @@ public sealed partial class LauncherSettings
         ShowLabels = source.ShowLabels;
         DoubleClickToLaunch = source.DoubleClickToLaunch;
         AlwaysOnTop = source.AlwaysOnTop;
+        LockGrid = source.LockGrid;
         Theme = source.Theme;
         BackgroundColor = source.BackgroundColor;
         BarBackdrop = source.BarBackdrop;

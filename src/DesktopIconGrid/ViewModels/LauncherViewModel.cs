@@ -245,6 +245,33 @@ public sealed partial class LauncherViewModel : ObservableObject, ISyncHost
         }
     }
 
+    /// <summary>
+    /// Nothing on the grid moves by dragging while this is on (0.15.0 WP1): no drag starts from an item in the bar, a
+    /// group or the window at the pointer, and no drop moves one of the bar's items (<see cref="Views.IconGridControl"/>).
+    /// Turning it off takes back the notice that it is on. Saved and synced with the settings.
+    /// </summary>
+    public bool LockGrid
+    {
+        get => Model.Settings.LockGrid;
+        set
+        {
+            if (Model.Settings.LockGrid == value)
+            {
+                return;
+            }
+
+            Model.Settings.LockGrid = value;
+            OnPropertyChanged();
+            if (!value && string.Equals(BarMessage, Strings.Main_GridLocked, StringComparison.Ordinal))
+            {
+                SetBarMessage(null);
+            }
+
+            AppLog.Default.Info("Layout", value ? "Grid locked: nothing on it moves by dragging" : "Grid unlocked");
+            Save();
+        }
+    }
+
     /// <summary>The colours the bar is currently drawn with.</summary>
     public ThemePalette Palette => ThemeCatalog.Resolve(Model.Settings);
 
@@ -1445,6 +1472,59 @@ public sealed partial class LauncherViewModel : ObservableObject, ISyncHost
         OnPropertyChanged(nameof(UndoText));
     }
 
+    // ----- the notice row --------------------------------------------------------------------------
+
+    /// <summary>How long a line stays in the notice row; shortened by tests.</summary>
+    internal static TimeSpan BarMessageWindow { get; set; } = TimeSpan.FromSeconds(10);
+
+    private int _barMessageVersion;
+    private bool _toldGridLocked;
+
+    /// <summary>
+    /// A line the notice row under the icons shows for <see cref="BarMessageWindow"/>, without a button (0.15.0 WP1: the
+    /// grid is locked); <see langword="null"/> when there is none. The window at the pointer shows it under its icons.
+    /// </summary>
+    public string? BarMessage { get; private set; }
+
+    public bool HasBarMessage => BarMessage is not null;
+
+    /// <summary>Completes when the current line of the notice row has gone (at once when there is none); tests await it.</summary>
+    internal Task BarMessageExpiry { get; private set; } = Task.CompletedTask;
+
+    /// <summary>
+    /// A drag that did not start because the grid is locked (<see cref="LockGrid"/>): the first in a run says so in the
+    /// notice row, with the way to unlock it; later ones in the same run are silent.
+    /// </summary>
+    internal void RefuseMove()
+    {
+        if (_toldGridLocked)
+        {
+            return;
+        }
+
+        _toldGridLocked = true;
+        AppLog.Default.Info("Layout", "A drag on the locked grid did not start; the notice row says how to unlock it");
+        SetBarMessage(Strings.Main_GridLocked);
+    }
+
+    private void SetBarMessage(string? text)
+    {
+        BarMessage = text;
+        var version = ++_barMessageVersion;
+        OnPropertyChanged(nameof(BarMessage));
+        OnPropertyChanged(nameof(HasBarMessage));
+        BarMessageExpiry = text is null ? Task.CompletedTask : ExpireBarMessageAsync(version);
+    }
+
+    private async Task ExpireBarMessageAsync(int version)
+    {
+        await Task.Delay(BarMessageWindow);
+        if (version == _barMessageVersion && BarMessage is not null)
+        {
+            SetBarMessage(null);
+        }
+    }
+
     public void ToggleMultiLaunch(ItemViewModel item)
     {
         if (item.Model is not ShortcutItem shortcut)
@@ -2034,6 +2114,7 @@ public sealed partial class LauncherViewModel : ObservableObject, ISyncHost
         OnPropertyChanged(nameof(NameHeight));
         OnPropertyChanged(nameof(EmptyHintFontSize));
         OnPropertyChanged(nameof(AlwaysOnTop));
+        OnPropertyChanged(nameof(LockGrid));
         OnPropertyChanged(nameof(Opacity));
         OnPropertyChanged(nameof(Palette));
         OnPropertyChanged(nameof(PopupWidth));
