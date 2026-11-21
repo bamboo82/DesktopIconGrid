@@ -3,6 +3,19 @@
 All notable changes to Desktop Icon Grid. The format follows [Keep a Changelog](https://keepachangelog.com/);
 version numbers follow [Semantic Versioning](https://semver.org/).
 
+## [0.15.0] – Unreleased
+
+"Locked and at hand": the owner's requests after 0.14.0.
+
+### Changed
+
+- The window the show-at-pointer key opens is the bar's twin. Its icons have the bar's room, so they fall into the same
+  rows and columns, with the same row lines and lines at a row's start, and scroll where the bar's do; the search box
+  is above them, and a group's header under the box while a group is open. Its background is the bar's: the colour,
+  the background transparency, Mica or Acrylic, the border and the see-through look with its edges. It has no grip, ✕
+  or ▸, and it is not resized or docked. On a smaller screen it keeps to the work area and its icons flow again. Before,
+  it was a small opaque window of three to six columns and at most five rows.
+
 ## [0.14.0] – 2026-11-21
 
 "Rows, looks and places": the owner's requests after 0.13.0.

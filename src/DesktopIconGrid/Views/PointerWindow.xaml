@@ -9,11 +9,22 @@
         ShowInTaskbar="False"
         ShowActivated="True"
         Topmost="True"
-        Background="{DynamicResource Theme.Background}"
         UseLayoutRounding="True"
         SnapsToDevicePixels="True"
         TextOptions.TextFormattingMode="Display">
-  <Border x:Name="Chrome" BorderBrush="{DynamicResource Theme.Border}" BorderThickness="1" Padding="3">
+
+  <!-- The bar's frame, without its resize border (0.15.0 WP3): a backdrop or a see-through background paint behind it. -->
+  <WindowChrome.WindowChrome>
+    <WindowChrome CaptionHeight="0"
+                  ResizeBorderThickness="0"
+                  GlassFrameThickness="0"
+                  CornerRadius="0"
+                  UseAeroCaptionButtons="False" />
+  </WindowChrome.WindowChrome>
+
+  <!-- The bar's background and border (0.15.0 WP3; BarSurface makes the window behind it a backdrop or see-through) -->
+  <Border x:Name="Chrome" BorderBrush="{DynamicResource Theme.Border}" BorderThickness="1" Padding="3"
+          Background="{DynamicResource Theme.BarBackground}">
     <DockPanel>
       <!-- Search box with its placeholder, and what Enter opens -->
       <DockPanel DockPanel.Dock="Top">
@@ -23,8 +34,10 @@
                    Text="{Binding SelectedSearchResult.Name, StringFormat={}↵ {0}}" />
         <Grid>
           <!-- No tooltip: the window opens with the pointer on this box, so it would cover the first row every time. -->
+          <!-- A solid fill of its own, so typed text reads on a see-through background (0.15.0 WP3) -->
           <TextBox x:Name="SearchBox"
                    Style="{StaticResource SearchBoxStyle}"
+                   Background="{DynamicResource Theme.Background}"
                    Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
                    AutomationProperties.Name="{x:Static r:Strings.Main_SearchName}"
                    AutomationProperties.HelpText="{x:Static r:Strings.Main_SearchToolTip}" />
@@ -58,6 +71,7 @@
           <TextBlock Text="←" FontSize="12" Style="{StaticResource BarGlyphStyle}" />
         </Button>
         <TextBlock x:Name="GroupTitle"
+                   Effect="{DynamicResource Theme.TextEdge}"
                    Foreground="{DynamicResource Theme.Foreground}"
                    FontSize="11"
                    FontWeight="SemiBold"
@@ -66,7 +80,8 @@
                    TextTrimming="CharacterEllipsis" />
       </DockPanel>
 
-      <views:IconGridControl x:Name="Icons" OpensGroupsInPlace="True" Margin="0,3,0,0" />
+      <!-- The bar's icon area, its size set from the bar's (0.15.0 WP3) -->
+      <views:IconGridControl x:Name="Icons" OpensGroupsInPlace="True" Margin="0,3,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" />
     </DockPanel>
   </Border>
 </Window>

@@ -12,8 +12,8 @@ using DesktopIconGrid.Views;
 namespace DesktopIconGrid.App.Tests;
 
 /// <summary>
-/// The Show-at-pointer window built from its markup, on the shared WPF thread: what Alt+F4 does to it, and whether
-/// its size, measured from that markup, shows every row (with a group's header, lines and captions) and nothing more.
+/// The Show-at-pointer window built from its markup, on the shared WPF thread: what Alt+F4 does to it, and, since 0.15.0
+/// (WP3), that it is the bar's twin: the bar's icon area, the icons where the bar has them, the bar's background.
 /// </summary>
 [Collection(WpfWindowsCollection.Name)]
 public sealed class PointerWindowTests(WpfThread wpf) : IDisposable
@@ -40,12 +40,15 @@ public sealed class PointerWindowTests(WpfThread wpf) : IDisposable
 
     private TestBar CreateBar(int shortcuts) => new(_directory, Shortcuts(shortcuts));
 
+    /// <summary>An icon area of <paramref name="columns"/> cells and <paramref name="height"/> units of rows, as a bar has it (the grid's margin of 1 included).</summary>
+    private static Size Area(LauncherViewModel bar, int columns, double height) => new((columns * bar.CellWidth) + 2, height + 2);
+
     /// <summary>
     /// Shows the bar's icons at the pointer, lets the WPF thread settle, runs <paramref name="check"/> on the shown
     /// window and closes it. Made <paramref name="ahead"/>, as the bar does, its bindings are alive before it is shown;
     /// otherwise it is shown in the turn it is made, as when the hotkey comes first.
     /// </summary>
-    private void WithWindow(LauncherModel model, Action<PointerWindow, LauncherViewModel> check, bool ahead = true, IEnumerable<DesktopIconGrid.SpecialIcons.ISpecialIconHandler>? handlers = null)
+    private void WithWindow(LauncherModel model, Action<PointerWindow, LauncherViewModel> check, bool ahead = true, IEnumerable<DesktopIconGrid.SpecialIcons.ISpecialIconHandler>? handlers = null, Func<LauncherViewModel, Size>? area = null)
     {
         TestBar? bar = null;
         PointerWindow? window = null;
@@ -55,6 +58,12 @@ public sealed class PointerWindowTests(WpfThread wpf) : IDisposable
             {
                 bar = new TestBar(_directory, model, handlers: handlers);
                 window = new PointerWindow(bar.ViewModel);
+                if (area is not null)
+                {
+                    var viewModel = bar.ViewModel;
+                    window.BarIconArea = () => area(viewModel);
+                }
+
                 if (!ahead)
                 {
                     window.ShowAtPointer();
@@ -90,14 +99,13 @@ public sealed class PointerWindowTests(WpfThread wpf) : IDisposable
             + $"rows {scroller.ExtentHeight} high in a view {scroller.ViewportWidth}×{scroller.ViewportHeight}";
     }
 
-    /// <summary>Every row shows in full: no scroll bar, nothing below the bottom edge, and no empty row under the last.</summary>
-    private static void EveryRowShows(PointerWindow window, double cellHeight)
+    /// <summary>Every row shows in full: no scroll bar and nothing below the bottom edge. (The bar's area may have room under the last row.)</summary>
+    private static void EveryRowShows(PointerWindow window)
     {
         var scroller = window.Icons.Scroller;
         Assert.True(window.Icons.ItemsHost.Items.Count > 0, $"no items: {Describe(window)}");
         Assert.True(scroller.ComputedVerticalScrollBarVisibility == Visibility.Collapsed, $"a scroll bar: {Describe(window)}");
         Assert.True(scroller.ExtentHeight <= scroller.ViewportHeight + 0.5, $"rows cut off: {Describe(window)}");
-        Assert.True(scroller.ViewportHeight - scroller.ExtentHeight < cellHeight / 2, $"an empty row: {Describe(window)}");
     }
 
     private static bool IsWithin(DependencyObject? element, DependencyObject ancestor)
@@ -117,16 +125,17 @@ public sealed class PointerWindowTests(WpfThread wpf) : IDisposable
     public void A_divider_after_a_full_row_is_seen_and_hit_inside_the_view()
     {
         // Review 15 UI2: the divider of a full row took its room past the row's end, where the scroll viewer clips, so
-        // it was as invisible as before with 1 unit to click. The pointer window's rows hold their cells exactly.
-        var model = Shortcuts(PointerWindow.MaxColumns);
+        // it was as invisible as before with 1 unit to click. A bar six cells wide: its rows hold their cells exactly.
+        const int columns = 6;
+        var model = Shortcuts(columns);
         model.Add(new SeparatorItem { Kind = SeparatorItem.Line });
         model.Add(Shortcut(99));
         WithWindow(model, (window, _) =>
         {
             var scroller = window.Icons.Scroller;
             var host = window.Icons.ItemsHost;
-            var divider = (FrameworkElement)host.ItemContainerGenerator.ContainerFromIndex(PointerWindow.MaxColumns);
-            var lastIcon = (FrameworkElement)host.ItemContainerGenerator.ContainerFromIndex(PointerWindow.MaxColumns - 1);
+            var divider = (FrameworkElement)host.ItemContainerGenerator.ContainerFromIndex(columns);
+            var lastIcon = (FrameworkElement)host.ItemContainerGenerator.ContainerFromIndex(columns - 1);
             var middle = divider.TranslatePoint(new Point(divider.ActualWidth / 2, divider.ActualHeight / 2), scroller);
 
             Assert.True(middle.X > 0 && middle.X < scroller.ViewportWidth, $"the divider's middle is at {middle.X}, outside the view's {scroller.ViewportWidth}: {Describe(window)}");
@@ -135,7 +144,7 @@ public sealed class PointerWindowTests(WpfThread wpf) : IDisposable
 
             var iconMiddle = lastIcon.TranslatePoint(new Point(lastIcon.ActualWidth / 2, lastIcon.ActualHeight / 2), scroller);
             Assert.True(IsWithin(scroller.InputHitTest(iconMiddle) as DependencyObject, lastIcon), "the last icon of the row is no longer hit in its middle");
-        });
+        }, area: bar => Area(bar, columns, 3 * bar.CellHeight));
     }
 
     [Fact]
@@ -169,9 +178,10 @@ public sealed class PointerWindowTests(WpfThread wpf) : IDisposable
     }
 
     [Fact]
-    public void An_opened_group_gets_room_for_its_header_and_every_row_and_a_search_goes_back()
+    public void An_opened_group_adds_its_header_and_the_icon_area_keeps_its_size_and_a_search_goes_back()
     {
-        // The screen pass: 11 items at the top level; the group of 7 opened in place lost its second row to its header.
+        // The screen pass found a group of 7 losing its second row to its header. Since 0.15.0 (WP3) the header is added
+        // under the search box and the icon area keeps the bar's size.
         var model = Shortcuts(10);
         var tools = new GroupItem { Name = "Tools" };
         model.Add(tools);
@@ -182,36 +192,109 @@ public sealed class PointerWindowTests(WpfThread wpf) : IDisposable
 
         WithWindow(model, (window, bar) =>
         {
-            EveryRowShows(window, bar.CellHeight);
+            EveryRowShows(window);
             var topLevel = window.ActualHeight;
+            var area = window.Icons.ActualHeight;
 
             window.OpenGroup(bar.RootItems.Items.Single(item => item.Children is not null));
             window.UpdateLayout();
 
-            EveryRowShows(window, bar.CellHeight);
-            Assert.True(window.ActualHeight > topLevel, "no room was made for the group's header");
+            EveryRowShows(window);
+            Assert.True(window.ActualHeight > topLevel + window.GroupHeader.ActualHeight - 1, "no room was made for the group's header");
+            Assert.Equal(area, window.Icons.ActualHeight, precision: 1);
 
             bar.SearchText = "Item 1"; // a search covers every group, so it goes back to the top level
             window.UpdateLayout();
 
             Assert.Null(window.OpenedGroup);
             Assert.Equal(topLevel, window.ActualHeight, precision: 0);
-        });
+        }, area: bar => Area(bar, 6, 2 * bar.CellHeight));
     }
 
     [Fact]
-    public void Lines_and_captions_take_the_room_they_take_and_every_row_shows()
+    public void The_icon_area_is_the_bars_and_the_icons_fall_where_the_bars_do()
     {
-        // 6 icons, a line, a caption, 6 icons: 0.7.0 counted 14 cells.
+        // 0.15.0 WP3: a bar five cells wide that wraps, with a line, a caption, a row line with a caption and a row-start
+        // line. The window's icon area has the bar's size, and each entry lies where it lies in a bar's grid of that size.
         var model = Shortcuts(6);
         model.Add(new SeparatorItem { Kind = SeparatorItem.Line });
         model.Add(new SeparatorItem { Kind = SeparatorItem.Label, Name = "Work in progress" });
+        model.Add(new SeparatorItem { Kind = SeparatorItem.RowLine, Name = "Tools" });
+        model.Add(new SeparatorItem { Kind = SeparatorItem.RowHead });
         for (var i = 6; i < 12; i++)
         {
             model.Add(Shortcut(i));
         }
 
-        WithWindow(model, (window, bar) => EveryRowShows(window, bar.CellHeight));
+        Size? expected = null;
+        WithWindow(model, (window, bar) =>
+        {
+            var area = expected!.Value;
+            Assert.Equal(area.Width, window.Icons.ActualWidth, precision: 1);
+            Assert.Equal(area.Height, window.Icons.ActualHeight, precision: 1);
+
+            // The bar's grid: the same control at the same size, in a window with the bar's font.
+            var barGrid = new IconGridControl { Width = area.Width, Height = area.Height, DataContext = bar.RootItems };
+            var barWindow = new Window
+            {
+                Content = barGrid,
+                DataContext = bar,
+                SizeToContent = SizeToContent.WidthAndHeight,
+                WindowStyle = WindowStyle.None,
+                ShowInTaskbar = false,
+                ShowActivated = false,
+                UseLayoutRounding = true,
+            };
+            TextOptions.SetTextFormattingMode(barWindow, TextFormattingMode.Display);
+            DesktopIconGrid.Services.UiFonts.ApplyBar(barWindow);
+            try
+            {
+                barWindow.Show();
+                barWindow.UpdateLayout();
+                Rect BoxOf(IconGridControl grid, int index)
+                {
+                    var container = (FrameworkElement)grid.ItemsHost.ItemContainerGenerator.ContainerFromIndex(index);
+                    return container.TransformToAncestor(grid.ItemsHost).TransformBounds(new Rect(container.RenderSize));
+                }
+
+                var count = window.Icons.ItemsHost.Items.Count;
+                Assert.Equal(count, barGrid.ItemsHost.Items.Count);
+                for (var i = 0; i < count; i++)
+                {
+                    var mine = BoxOf(window.Icons, i);
+                    var theBars = BoxOf(barGrid, i);
+                    Assert.True(Math.Abs(mine.X - theBars.X) < 1 && Math.Abs(mine.Y - theBars.Y) < 1 && Math.Abs(mine.Width - theBars.Width) < 1,
+                        $"entry {i} is at {mine}, on the bar at {theBars}");
+                }
+
+                Assert.Equal(barGrid.Scroller.ComputedVerticalScrollBarVisibility, window.Icons.Scroller.ComputedVerticalScrollBarVisibility);
+            }
+            finally
+            {
+                barWindow.Close();
+            }
+        }, area: bar => (expected = Area(bar, 5, (4 * bar.CellHeight) + 30)).Value);
+    }
+
+    [Fact]
+    public void An_icon_area_too_large_for_the_work_area_gives_up_what_does_not_fit()
+    {
+        // 0.15.0 WP3: a maximised or edge-docked bar on a larger monitor. Measured in WPF units at the monitor's scale.
+        var bar = new Size(1500, 900);
+        var around = new Size(8, 40);
+        Assert.Equal(bar, PointerWindow.FitIconArea(bar, around, new Size(2000, 1200))); // fits as it is
+        Assert.Equal(new Size(992, 728), PointerWindow.FitIconArea(bar, around, new Size(1000, 768))); // capped both ways
+        Assert.Equal(new Size(1500, 728), PointerWindow.FitIconArea(bar, around, new Size(1600, 768))); // the height only
+        Assert.Equal(bar, PointerWindow.FitIconArea(bar, around, Size.Empty)); // no work area known: held to nothing
+
+        // A window from a bar far larger than any screen stays on the pointer's work area, and its icons flow again.
+        WithWindow(Shortcuts(30), (window, _) =>
+        {
+            var work = SystemParameters.WorkArea;
+            Assert.True(window.ActualWidth <= work.Width + 1 && window.ActualHeight <= work.Height + 1,
+                $"the window is {window.ActualWidth}×{window.ActualHeight} on a work area of {work.Width}×{work.Height}");
+            Assert.True(window.Icons.ActualWidth < 20000, "the icon area was not held back");
+        }, area: _ => new Size(20000, 12000));
     }
 
     [Fact]
@@ -231,7 +314,7 @@ public sealed class PointerWindowTests(WpfThread wpf) : IDisposable
         model.Add(Shortcut(5));
         WithWindow(model, (window, bar) =>
         {
-            EveryRowShows(window, bar.CellHeight);
+            EveryRowShows(window);
             var host = window.Icons.ItemsHost;
             Rect BoxOf(int index)
             {
@@ -261,13 +344,14 @@ public sealed class PointerWindowTests(WpfThread wpf) : IDisposable
             Near(FlowLayout.NarrowSize, plain.Height, "the plain row line's height");
             Near(0, BoxOf(8).X, "the last icon's left");
             Near(plain.Bottom, BoxOf(8).Y, "the last icon's top");
-        });
+        }, area: bar => Area(bar, 0, (4 * bar.CellHeight) + 40) with { Width = FlowLayout.NarrowSize + (3 * bar.CellWidth) + 2 });
     }
 
     [Fact]
-    public void Names_and_captions_take_the_windows_text_edge_and_an_opaque_window_has_none()
+    public void Names_and_captions_take_the_windows_text_edge_and_none_without_it()
     {
-        // Review 37 T1: the bar sets the edge while its background is see-through; the pointer window, opaque, never does.
+        // Review 37 T1: the edge is the window's resource while its background is see-through (since 0.15.0 the pointer
+        // window has it as the bar does, through BarSurface); set here by hand.
         var model = Shortcuts(2);
         model.Add(new SeparatorItem { Kind = SeparatorItem.RowLine, Name = "Work" });
         WithWindow(model, (window, _) =>
@@ -501,33 +585,81 @@ public sealed class PointerWindowTests(WpfThread wpf) : IDisposable
     }
 
     [Fact]
-    public void A_window_shown_in_the_turn_it_is_made_fits_itself_once_its_bindings_are_alive()
+    public void A_window_shown_in_the_turn_it_is_made_has_the_bars_icon_area()
     {
-        // Its first measure sees an empty grid; the fit after showing it puts that right.
-        WithWindow(Shortcuts(12), (window, bar) => EveryRowShows(window, bar.CellHeight), ahead: false);
+        // Its first measure comes before its bindings are alive; the icon area is the bar's all the same.
+        WithWindow(Shortcuts(12), (window, bar) =>
+        {
+            EveryRowShows(window);
+            Assert.Equal(Area(bar, 6, 2 * bar.CellHeight).Width, window.Icons.ActualWidth, precision: 1);
+        }, ahead: false, area: bar => Area(bar, 6, 2 * bar.CellHeight));
     }
 
     [Fact]
-    public void A_few_icons_make_one_row_at_least_three_cells_wide()
+    public void A_few_icons_keep_the_bars_icon_area()
     {
+        // 0.15.0 WP3: no fitting to the icons any more (before, at least three cells): the bar's width and height.
         WithWindow(Shortcuts(2), (window, bar) =>
         {
-            EveryRowShows(window, bar.CellHeight);
-            Assert.Equal(PointerWindow.MinColumns * bar.CellWidth, window.Icons.LayoutPanel!.ActualWidth, precision: 0);
-        });
+            EveryRowShows(window);
+            Assert.Equal(Area(bar, 7, 3 * bar.CellHeight), new Size(Math.Round(window.Icons.ActualWidth, 1), Math.Round(window.Icons.ActualHeight, 1)));
+        }, area: bar => Area(bar, 7, 3 * bar.CellHeight));
     }
 
     [Fact]
-    public void More_than_five_rows_scroll_and_the_scroll_bar_takes_no_column()
+    public void Rows_past_the_bars_height_scroll()
     {
+        // 0.15.0 WP3: as on the bar, past its height (before, past five rows).
         WithWindow(Shortcuts(40), (window, bar) =>
         {
             var scroller = window.Icons.Scroller;
             Assert.True(scroller.ComputedVerticalScrollBarVisibility == Visibility.Visible, $"no scroll bar: {Describe(window)}");
-            Assert.True(
-                scroller.ViewportHeight >= PointerWindow.MaxRows * bar.CellHeight && scroller.ViewportHeight < (PointerWindow.MaxRows + 0.5) * bar.CellHeight,
-                $"not five rows: {Describe(window)}");
-            Assert.True(window.Icons.LayoutPanel!.ActualWidth >= PointerWindow.MaxColumns * bar.CellWidth - 0.5, "the scroll bar took a column");
+            Assert.Equal(Area(bar, 6, 3 * bar.CellHeight).Height, window.Icons.ActualHeight, precision: 1);
+        }, area: bar => Area(bar, 6, 3 * bar.CellHeight));
+    }
+
+    [Fact]
+    public void The_window_has_the_bars_see_through_look_below_100_percent_and_none_at_100_or_under_High_Contrast()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        // 0.15.0 WP3: the bar's background on this window, through the same BarSurface.
+        wpf.Invoke(() =>
+        {
+            using var bar = CreateBar(4);
+            var settings = bar.ViewModel.Model.Settings;
+            settings.BarBackdrop = LauncherSettings.BackdropSolid; // a backdrop, where Windows has one, would take over
+            var window = new PointerWindow(bar.ViewModel);
+            try
+            {
+                settings.Opacity = 70;
+                window.ShowAtPointer();
+                Assert.True(window.Surface.SeeThrough, "not see-through at 70 %");
+                Assert.Equal(Brushes.Transparent, window.Background);
+                Assert.True(window.Resources.Contains(MainWindow.TextEdgeKey), "no text edge while see-through");
+                Assert.Equal(TextRenderingMode.Grayscale, TextOptions.GetTextRenderingMode(window));
+                window.Dismiss();
+
+                settings.Opacity = LauncherSettings.MaxOpacity; // shows at the next opening
+                window.ShowAtPointer();
+                Assert.False(window.Surface.SeeThrough);
+                Assert.False(window.Resources.Contains(MainWindow.TextEdgeKey));
+                window.Dismiss();
+
+                settings.Opacity = 70;
+                window.Surface.HighContrast = () => true;
+                window.ShowAtPointer();
+                Assert.False(window.Surface.SeeThrough, "see-through under High Contrast");
+                Assert.False(window.Resources.Contains(MainWindow.TextEdgeKey));
+                Assert.NotEqual(Brushes.Transparent, window.Background);
+            }
+            finally
+            {
+                window.CloseForGood();
+            }
         });
     }
 

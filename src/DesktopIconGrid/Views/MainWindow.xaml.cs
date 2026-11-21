@@ -8,7 +8,6 @@ using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Media3D;
-using System.Windows.Shell;
 using System.Windows.Threading;
 using DesktopIconGrid.Core.Commands;
 using DesktopIconGrid.Core.Diagnostics;
@@ -35,16 +34,20 @@ public partial class MainWindow : Window
     private bool _exiting;
     private bool _sessionEnded;
     private bool _closing;
-    private bool _backdropActive;
 
-    /// <summary>The background lets the desktop show through without a backdrop (0.14.0 WP3; <see cref="WindowTransparency"/>).</summary>
-    private bool _seeThrough;
+    /// <summary>The bar's background: a backdrop, see-through or solid (0.14.0 WP3; shared with the window at the pointer since 0.15.0).</summary>
+    private readonly BarSurface _surface;
+
+    /// <summary>The icon area as the bar last had it shown and expanded (0.15.0 WP3): the window at the pointer has its size.</summary>
+    private Size? _iconArea;
 
     public MainWindow(LauncherViewModel viewModel)
     {
         _viewModel = viewModel;
         DataContext = viewModel;
         InitializeComponent();
+        _surface = new BarSurface(this, resizeBorder: 6, "Bar");
+        IconsColumn.SizeChanged += (_, _) => NoteIconArea();
         UiFonts.ApplyBar(this); // the bar's font, Chinese in Taipei Sans TC Light where this PC has it (0.12.0 WP5, 0.14.0 WP2)
 
         viewModel.GroupActivated += OnGroupActivated;
@@ -271,61 +274,8 @@ public partial class MainWindow : Window
 
         var settings = _viewModel.Model.Settings;
         var palette = ThemeManager.EffectivePalette(_viewModel.Palette);
-        var highContrast = SystemParameters.HighContrast;
-        var wanted = highContrast ? LauncherSettings.BackdropSolid : settings.BarBackdrop; // High Contrast asks for flat colours
-        if (_seeThrough && !string.Equals(wanted, LauncherSettings.BackdropSolid, StringComparison.Ordinal) && WindowBackdrop.IsSupported)
-        {
-            _seeThrough = WindowTransparency.Set(source, seeThrough: false); // a backdrop takes over the background
-        }
-
-        var active = WindowBackdrop.Apply(handle, wanted, darkMode: ThemeCatalog.Luminance(palette.Background) <= 0.6);
-        if (active != _backdropActive)
-        {
-            _backdropActive = active;
-
-            // For DWM to paint behind the client area WPF must not: extend the frame into it and leave the window transparent.
-            WindowChrome.SetWindowChrome(this, new WindowChrome
-            {
-                CaptionHeight = 0,
-                ResizeBorderThickness = new Thickness(6),
-                GlassFrameThickness = active ? new Thickness(-1) : new Thickness(0),
-                CornerRadius = new CornerRadius(0),
-                UseAeroCaptionButtons = false,
-            });
-            AppLog.Default.Info("App", active ? $"Bar background: {wanted} backdrop" : "Bar background: solid colour");
-        }
-
-        // Without a backdrop, a background that is not opaque shows the desktop; an opaque one stays as it was. High
-        // Contrast keeps its flat colours.
-        var seeThrough = !active && !highContrast && _viewModel.Opacity < LauncherSettings.MaxOpacity;
-        if (seeThrough != _seeThrough)
-        {
-            _seeThrough = WindowTransparency.Set(source, seeThrough);
-            if (seeThrough)
-            {
-                AppLog.Default.Info("App", _seeThrough ? $"Bar background: solid colour at {_viewModel.Opacity} %, the desktop shows through" : "Bar background: solid colour, opaque");
-            }
-        }
-
-        if (active || _seeThrough)
-        {
-            Background = Brushes.Transparent;
-            if (source.CompositionTarget is { } target)
-            {
-                target.BackgroundColor = Colors.Transparent; // WindowChrome does this too while DWM composes; said here as well
-            }
-        }
-        else
-        {
-            ClearValue(BackgroundProperty);
-        }
-
-        // On a see-through background the edges of text are smoothed in grey: ClearType works its colours out against the
-        // bar's own colour, not against what shows through, and would fringe there.
-        TextOptions.SetTextRenderingMode(this, _seeThrough ? TextRenderingMode.Grayscale : TextRenderingMode.Auto);
-        ApplySeeThroughLook(palette);
-
-        ThemeManager.Apply(palette, translucentBar: active || _seeThrough, tintOpacity: _viewModel.Opacity / 100.0);
+        _surface.Apply(source, settings.BarBackdrop, palette, _viewModel.Opacity, _viewModel.IconSize);
+        ThemeManager.Apply(palette, translucentBar: _surface.BackdropActive || _surface.SeeThrough, tintOpacity: _viewModel.Opacity / 100.0);
         DialogTheme.Configure(settings.FluentDialogs);
         if (GroupPopup.IsOpen && GroupPopup.Child is { } child && PresentationSource.FromVisual(child) is HwndSource popupSource)
         {
@@ -350,22 +300,20 @@ public partial class MainWindow : Window
     internal const double TextEdgeBlur = 3;
 
     /// <summary>
-    /// While the background is see-through, the names under the icons, the captions of labels and row lines, the empty
+    /// While a background is see-through, the names under the icons, the captions of labels and row lines, the empty
     /// bar's line and a group's heading get a thin soft edge in the tone that stands out from their colour (near-black
     /// under light text, white under dark), so they can be read over a light or a dark desktop alike (review 37 T1); so do
     /// the glyphs and text of icons drawn in the theme's colour straight on the background (review 38 T2), and the grip,
     /// ✕ and ▸; and the separators' lines, drawn in the theme's faint line colour that leaned on the solid background, are
     /// drawn in the text colour then (review 39 T3). Before 0.14.0 the theme's colour was always behind them. At 100 %,
-    /// with a backdrop and under High Contrast nothing of this is set. They are resources of this window, so the group's
-    /// popup has them too and the pointer window, which is opaque, does not; one frozen effect of each is shared.
-    /// </summary>
-    private void ApplySeeThroughLook(ThemePalette palette) => SetSeeThroughLook(Resources, _seeThrough ? palette.Foreground : null, _viewModel.IconSize);
-
-    /// <summary>
+    /// with a backdrop and under High Contrast nothing of this is set. They are resources of the window
+    /// (<see cref="BarSurface"/> puts them there), so the group's popup has the bar's; one frozen effect of each is shared.
+    /// <para>
     /// Puts the edges and the lines' colour in <paramref name="resources"/> for text of <paramref name="foreground"/>, or
     /// takes them out with <see langword="null"/>, which leaves the theme's own. A gauge is drawn in a box of 100 units that
     /// its icon scales, and an effect is scaled with what it is drawn in, so the gauge's edges are as much wider in the box
     /// as the box is smaller than 100: on the bar they look as the names' do.
+    /// </para>
     /// </summary>
     internal static void SetSeeThroughLook(ResourceDictionary resources, string? foreground, double iconSize)
     {
@@ -428,7 +376,7 @@ public partial class MainWindow : Window
     {
         var palette = ThemeManager.EffectivePalette(_viewModel.Palette);
         var translucent = false;
-        if (_backdropActive)
+        if (_surface.BackdropActive)
         {
             translucent = WindowBackdrop.ApplyToPopup(popupSource.Handle, darkMode: ThemeCatalog.Luminance(palette.Background) <= 0.6);
             if (translucent && popupSource.CompositionTarget is { } target)
@@ -438,12 +386,12 @@ public partial class MainWindow : Window
         }
         else
         {
-            translucent = WindowTransparency.Set(popupSource, _seeThrough);
+            translucent = WindowTransparency.Set(popupSource, _surface.SeeThrough);
         }
 
         if (GroupPopup.Child is { } child)
         {
-            TextOptions.SetTextRenderingMode(child, translucent && !_backdropActive ? TextRenderingMode.Grayscale : TextRenderingMode.Auto);
+            TextOptions.SetTextRenderingMode(child, translucent && !_surface.BackdropActive ? TextRenderingMode.Grayscale : TextRenderingMode.Auto);
         }
 
         ThemeManager.SetPopupBackground(palette, translucent, _viewModel.Opacity / 100.0);
@@ -974,12 +922,49 @@ public partial class MainWindow : Window
         window.ShowAtPointer();
     }
 
+    /// <summary>
+    /// Notes the icon area while the bar is shown and expanded (0.15.0 WP3): not in the tray, not minimised, not its
+    /// auto-hide strip. It is the column the icons have, less the grid's margins, so a removal banner or the type-to-find
+    /// box under the icons, there for a moment, does not count.
+    /// </summary>
+    private void NoteIconArea()
+    {
+        if (!IsVisible || _collapsed || WindowState == WindowState.Minimized || IconsColumn.ActualWidth <= 0 || IconsColumn.ActualHeight <= 0)
+        {
+            return;
+        }
+
+        _iconArea = new Size(
+            Math.Max(0, IconsColumn.ActualWidth - MainGrid.Margin.Left - MainGrid.Margin.Right),
+            Math.Max(0, IconsColumn.ActualHeight - MainGrid.Margin.Top - MainGrid.Margin.Bottom));
+    }
+
+    /// <summary>
+    /// The bar's icon area in WPF units, as it is when the bar is shown and expanded (0.15.0 WP3): the window at the
+    /// pointer has this size. Until the bar has been shown in this run (it started in the tray), the size its saved
+    /// place gives, less what is around the icons; on a first run the room for six icons in two rows.
+    /// </summary>
+    internal Size BarIconArea()
+    {
+        if (_iconArea is { } shown)
+        {
+            return shown;
+        }
+
+        var aroundWidth = BarFrame.BorderThickness.Left + BarFrame.BorderThickness.Right + BarLayout.ColumnDefinitions[0].Width.Value
+            + BarLayout.ColumnDefinitions[2].Width.Value + MainGrid.Margin.Left + MainGrid.Margin.Right;
+        var aroundHeight = BarFrame.BorderThickness.Top + BarFrame.BorderThickness.Bottom + MainGrid.Margin.Top + MainGrid.Margin.Bottom;
+        return _viewModel.WindowPlacement is { IsUsable: true } placement
+            ? new Size(Math.Max(_viewModel.CellWidth, placement.Width - aroundWidth), Math.Max(_viewModel.CellHeight, placement.Height - aroundHeight))
+            : new Size(6 * _viewModel.CellWidth, 2 * _viewModel.CellHeight);
+    }
+
     /// <summary>The Show-at-pointer window, made the first time it is needed; none once the bar is closing.</summary>
     private PointerWindow? EnsurePointerWindow()
     {
         if (_pointerWindow is null && !_closing)
         {
-            _pointerWindow = new PointerWindow(_viewModel);
+            _pointerWindow = new PointerWindow(_viewModel) { BarIconArea = BarIconArea };
             _pointerWindow.Closed += (sender, _) =>
             {
                 if (ReferenceEquals(sender, _pointerWindow))

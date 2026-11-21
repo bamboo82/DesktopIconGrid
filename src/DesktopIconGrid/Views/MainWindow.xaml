@@ -28,10 +28,11 @@
     <KeyBinding Key="Escape" Command="{Binding CloseGroupPopupCommand}" />
   </Window.InputBindings>
 
-  <Border BorderBrush="{DynamicResource Theme.Border}"
+  <Border x:Name="BarFrame"
+          BorderBrush="{DynamicResource Theme.Border}"
           BorderThickness="1"
           Background="{DynamicResource Theme.BarBackground}">
-    <Grid>
+    <Grid x:Name="BarLayout">
       <Grid.ColumnDefinitions>
         <ColumnDefinition Width="14" />
         <ColumnDefinition Width="*" />
@@ -47,7 +48,7 @@
               MouseLeftButtonDown="Grip_MouseLeftButtonDown" />
 
       <!-- Icons, with the removal banner and the type-to-find box under them -->
-      <DockPanel Grid.Column="1">
+      <DockPanel x:Name="IconsColumn" Grid.Column="1">
         <DockPanel x:Name="SearchPanel"
                    DockPanel.Dock="Bottom"
                    Visibility="Collapsed"

@@ -9,6 +9,53 @@ The owner relays replies.
 
 ---
 
+## 2026-11-21 (135) — 0.15.0 WP3: the window at the pointer is the bar's twin
+
+v0.14.0 is out as you said: I checked the annotated tag on `fab4172`, `main` there, release run 17 and the three files
+on GitHub. Plan 36 is taken in the order you set, with its two additions: WP3, WP2, WP1, WP4, WP5, WP6, WP7a, WP7b,
+then "ready for the release check". The version is 0.15.0 from this commit, with "[0.15.0] – Unreleased" in the
+changelog, and FEATURES §12 and the roadmap say *in progress*. WP5's security notes for CLAUDE.md wait for the owner's
+word: I ask when WP5 is in.
+
+- **The icon area:** the window's `IconGridControl` gets the bar's icon area in WPF units, so the same control at the
+  same size lays the entries out the same way: rows, columns, row lines, lines at a row's start, and the scroll bar.
+  - The bar notes its icon area (`MainWindow.BarIconArea`) whenever the icon column changes size while the bar is
+    shown and expanded: not in the tray, not minimised, not the auto-hide strip. It takes the column less the grid's
+    margins, so a removal banner or the bar's own type-to-find box under the icons does not count.
+  - Before the bar has been shown in a run (started in the tray), the size comes from its saved place less the frame,
+    the grip's and the buttons' columns; on a first run, six cells by two rows.
+  - The search box is above it and, while a group is open, the header under the box: the window grows by the header,
+    and the icon area keeps its size. `MaxColumns`, `MinColumns`, `MaxRows` and `RoundingSlack` are gone.
+  - Held to the pointer's monitor: its work area in WPF units at its scale. An icon area that would not fit with the
+    rest gives up what does not (`FitIconArea`), and the icons flow again in it.
+- **The look:** the bar's background code moved into `BarSurface`, which both windows use: backdrop, `WindowChrome`,
+  `WindowTransparency`, the transparent window background, grey text smoothing and `SetSeeThroughLook`. The bar's
+  result is unchanged; its group popup keeps its own path.
+  - The window draws `Theme.BarBackground` in a border like the bar's, with the bar's square corners (WindowBackdrop sets
+    them where Windows has the attribute). It is brought to the bar's settings at each opening, so a change made while
+    it is hidden shows at the next one.
+  - The search box has `Theme.Background` as its own fill. The ↵ target (`SearchTargetStyle`), the group's title and ← have
+    the edge while see-through.
+- **What differs from the bar's path, as you asked:** nothing in the code. The window has no resize border (0 for 6), and
+  it is a topmost tool window, which the bar is not. Whether DWM draws Mica on a tool window I could not see: the CI
+  machine's Windows has no system backdrop. If it refuses, `WindowBackdrop.Apply` returns false and the window is drawn
+  solid.
+- **Tests (App, `PointerWindowTests`):**
+  - the icon area is the bar's, and every entry lies where it lies in a bar's grid of that size, in a window of its
+    own with the bar's font: icons, a line, a caption, a row line with a caption, a row-start line, wrapped in five
+    columns. The scroll bar is the same;
+  - `FitIconArea` (as it is, both ways, the height only, no work area), and a window from a bar far larger than the
+    screen staying in the work area;
+  - see-through at 70 % (the look's resources, transparent background, grey smoothing), none at 100 % at the next
+    opening, none under High Contrast (stood in through `BarSurface.HighContrast`);
+  - the older size tests rewritten for the bar's area: a group adds its header and keeps the area; a few icons keep the
+    bar's area; rows past the bar's height scroll; a window shown in the turn it is made has the bar's area. "No empty
+    row under the last" is dropped, since the bar's area may have room left.
+- **Not tested:** Mica or Acrylic on this window; a second monitor at another scale; a docked bar started in the tray
+  (the saved place is the undocked one).
+
+This entry claims no run for its own commit.
+
 ## 2026-11-21 (134) — Release commit for v0.14.0
 
 Run 236 (`6dd3b3b`, entry 133) is green: Core 1242 and App 498 tests, and your look at T3 (review 40) found nothing
