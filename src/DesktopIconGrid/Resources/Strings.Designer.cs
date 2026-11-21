@@ -5856,6 +5856,15 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Pick a size, or type a whole number from 16 to 256..
+        /// </summary>
+        public static string Settings_IconSizeToolTip {
+            get {
+                return ResourceManager.GetString("Settings_IconSizeToolTip", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Labels:.
         /// </summary>
         public static string Settings_Labels {

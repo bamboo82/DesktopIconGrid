@@ -96,6 +96,8 @@ public partial class SettingsWindow : Window
 
     private void Save_Click(object sender, RoutedEventArgs e)
     {
+        // A size typed into the icon size box and not yet read: Enter presses Save without leaving the box (0.15.0 WP8).
+        System.Windows.Data.BindingOperations.GetBindingExpression(IconSizeBox, System.Windows.Controls.ComboBox.TextProperty)?.UpdateSource();
         if (ViewModel is { } checking && !checking.TryCheckReceiveFolder())
         {
             Tabs.SelectedIndex = PageList.ToList().IndexOf(SendToPage); // the receive folder cannot be used: the reason is beside it

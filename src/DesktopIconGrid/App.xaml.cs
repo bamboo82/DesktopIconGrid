@@ -242,6 +242,7 @@ public partial class App : Application
             _windows,
             trust: trust,
             workspacePositions: new WorkspacePositions(Path.Combine(AppPaths.DataDirectory, WorkspacePositions.FileName)));
+        viewModel.IconScale = ScreenGeometry.HighestScale(); // before the first icons load, which wait for the dispatcher (0.15.0 WP8)
         viewModel.UseLocalSettings(new LocalSettingsStore(Path.Combine(AppPaths.DataDirectory, LocalSettings.FileName))); // before the window registers hotkeys
         var usage = new UsageLog(Path.Combine(AppPaths.DataDirectory, UsageLog.FileName)); // this PC's own: never synced (0.12.0 WP4)
         usage.Load();

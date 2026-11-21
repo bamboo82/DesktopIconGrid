@@ -186,6 +186,46 @@ public sealed partial class LauncherViewModel : ObservableObject, ISyncHost
 
     public int IconSize => Model.Settings.IconSize;
 
+    private double _iconScale = 1.0;
+
+    /// <summary>
+    /// The display scale icons are asked of their sources at (0.15.0 WP8): the highest of the monitors', which the app and
+    /// the bar keep up to date, so the bar and its twin draw them from at least as many pixels as they cover anywhere. A
+    /// change that asks for another size loads the icons again.
+    /// </summary>
+    public double IconScale
+    {
+        get => _iconScale;
+        set
+        {
+            var scale = value > 0 ? value : 1.0;
+            if (Math.Abs(scale - _iconScale) < 0.001)
+            {
+                return;
+            }
+
+            var before = IconSourceSize;
+            _iconScale = scale;
+            if (IconSourceSize != before)
+            {
+                AppLog.Default.Debug("Icons", $"Icons asked at {IconSourceSize} px now (scale {scale:0.##})");
+                ReloadImages();
+            }
+        }
+    }
+
+    /// <summary>The pixels an icon is asked of its source in: the first usual size at or above the icon size at <see cref="IconScale"/>.</summary>
+    public int IconSourceSize => Core.Icons.IconPixels.SourceSize(IconSize, _iconScale);
+
+    /// <summary>Loads every item's icon again, at the size now asked.</summary>
+    private void ReloadImages()
+    {
+        foreach (var viewModel in _viewModels.Values)
+        {
+            _defer(viewModel.LoadImage);
+        }
+    }
+
     /// <summary>
     /// Whether a number tile draws its caption under the number: from 40 px icons on, and only while labels are off.
     /// Below 40 px the caption is a few pixels high and unreadable (review 27 T1); with labels on, the label under the
@@ -375,7 +415,7 @@ public sealed partial class LauncherViewModel : ObservableObject, ISyncHost
         }
 
         var model = viewModel.Model;
-        var size = IconSize;
+        var size = IconSourceSize;
         var slow = IconWorker.IsOnSlowStorage(model.IconPath) || IconWorker.IsOnSlowStorage((model as ShortcutItem)?.EffectiveLocation);
         IconWorker.Shared.RunAsync(() => Icons.GetItemIcon(model, size), IconWorker.LookupTimeout, model.Name, slow)
             .ContinueWith(
@@ -1947,10 +1987,7 @@ public sealed partial class LauncherViewModel : ObservableObject, ISyncHost
 
         if (IconSize != previousIconSize)
         {
-            foreach (var viewModel in _viewModels.Values)
-            {
-                _defer(viewModel.LoadImage);
-            }
+            ReloadImages();
         }
 
         Save();

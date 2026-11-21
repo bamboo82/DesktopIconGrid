@@ -132,10 +132,12 @@
 
           <!-- Icon size -->
           <TextBlock Grid.Row="4" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Settings_IconSize}" Margin="0,0,12,10" />
-          <ComboBox Grid.Row="4" Grid.Column="1" Width="110" HorizontalAlignment="Left" Margin="0,0,0,10"
-                    ItemsSource="{Binding IconSizes}"
-                    SelectedItem="{Binding IconSize}"
-                    ItemStringFormat="{}{0} px"
+          <!-- A listed size or a typed whole number from 16 to 256 (0.15.0 WP8), read when the box is left or Save is pressed -->
+          <ComboBox x:Name="IconSizeBox" Grid.Row="4" Grid.Column="1" Width="110" HorizontalAlignment="Left" Margin="0,0,0,10"
+                    IsEditable="True"
+                    ItemsSource="{Binding IconSizeChoices}"
+                    Text="{Binding IconSizeText, UpdateSourceTrigger=LostFocus}"
+                    ToolTip="{x:Static r:Strings.Settings_IconSizeToolTip}"
                     AutomationProperties.Name="{x:Static r:Strings.Settings_IconSizeName}" />
 
           <!-- Spacing -->

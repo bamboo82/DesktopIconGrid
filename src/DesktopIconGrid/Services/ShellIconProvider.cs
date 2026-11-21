@@ -47,7 +47,7 @@ public sealed class ShellIconProvider : IIconProvider
     public ImageSource? GetItemIcon(LauncherItem item, int pixelSize)
     {
         ArgumentNullException.ThrowIfNull(item);
-        var requested = RequestSize(pixelSize);
+        var requested = Math.Clamp(pixelSize, 16, 256);
 
         if (item.HasCustomIcon)
         {
@@ -145,9 +145,6 @@ public sealed class ShellIconProvider : IIconProvider
     }
 
     public void ClearCache() => _cache.Clear();
-
-    /// <summary>Ask the shell for twice the display size (capped) so icons stay crisp on high-DPI screens.</summary>
-    private static int RequestSize(int pixelSize) => Math.Clamp(pixelSize * 2, 32, 256);
 
     private static ImageSource? Load(string source, int pixelSize)
     {

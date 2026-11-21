@@ -332,7 +332,7 @@ public class LauncherModelTests
         var sharedId = Guid.NewGuid();
         var layout = new LauncherLayout
         {
-            Settings = new LauncherSettings { IconSize = 30, CellPadding = 500 },
+            Settings = new LauncherSettings { IconSize = 300, CellPadding = 500 }, // 0.15.0 WP8: 30 is a size now; 300 is past the largest
             Window = new WindowPlacement { Width = 0, Height = 0 },
             Items =
             [
@@ -353,7 +353,7 @@ public class LauncherModelTests
 
         var model = LauncherModel.FromLayout(layout);
 
-        Assert.Equal(32, model.Settings.IconSize);
+        Assert.Equal(256, model.Settings.IconSize);
         Assert.Equal(LauncherSettings.MaxCellPadding, model.Settings.CellPadding);
         Assert.Null(model.Window);
         Assert.Equal(["first", "dup", "Group"], Names(model.Items));

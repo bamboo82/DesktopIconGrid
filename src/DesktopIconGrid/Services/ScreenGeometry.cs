@@ -81,6 +81,48 @@ public static class ScreenGeometry
         return pixelWidth > 0 && SystemParameters.PrimaryScreenWidth > 0 ? pixelWidth / SystemParameters.PrimaryScreenWidth : 1.0;
     }
 
+    /// <summary>
+    /// The largest display scale of the monitors, and at least <paramref name="atLeast"/> (0.15.0 WP8): icons are asked of
+    /// their sources at it, so the bar and the window at the pointer draw them from enough pixels on any monitor.
+    /// </summary>
+    public static double HighestScale(double atLeast = 1.0)
+    {
+        var highest = atLeast > 0 ? atLeast : 1.0;
+        if (!OperatingSystem.IsWindows())
+        {
+            return highest;
+        }
+
+        highest = Math.Max(highest, PrimaryScale());
+        NativeMethods.MonitorEnumProc callback = (IntPtr monitor, IntPtr _, ref NativeMethods.RECT _, IntPtr _) =>
+        {
+            try
+            {
+                if (NativeMethods.GetDpiForMonitor(monitor, NativeMethods.MDT_EFFECTIVE_DPI, out var dpi, out _) == 0 && dpi > 0)
+                {
+                    highest = Math.Max(highest, dpi / 96.0);
+                }
+            }
+            catch (Exception ex) when (ex is DllNotFoundException or EntryPointNotFoundException)
+            {
+                // Older than Windows 8.1: the primary scale is the best guess.
+            }
+
+            return true;
+        };
+        try
+        {
+            NativeMethods.EnumDisplayMonitors(IntPtr.Zero, IntPtr.Zero, callback, IntPtr.Zero);
+        }
+        catch (EntryPointNotFoundException)
+        {
+            // No monitors to ask: the primary scale stands.
+        }
+
+        GC.KeepAlive(callback);
+        return highest;
+    }
+
     /// <summary>Every monitor with its device name (<c>\\.\DISPLAY1</c>) and bounds in device pixels; empty without a desktop.</summary>
     public static IReadOnlyList<MonitorBounds> Monitors()
     {

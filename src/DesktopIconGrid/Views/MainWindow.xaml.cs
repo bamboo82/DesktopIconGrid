@@ -169,7 +169,18 @@ public partial class MainWindow : Window
     }
 
     /// <summary>The display settings changed (scale, monitors): the tray icon is re-rendered for the system DPI.</summary>
-    private void OnDisplaySettingsChanged(object? sender, EventArgs e) => Dispatcher.BeginInvoke(() => _tray?.Refresh());
+    private void OnDisplaySettingsChanged(object? sender, EventArgs e) => Dispatcher.BeginInvoke(() =>
+    {
+        _tray?.Refresh();
+        _viewModel.IconScale = ScreenGeometry.HighestScale(); // a monitor came, went or changed its scale (0.15.0 WP8)
+    });
+
+    /// <summary>The bar on a monitor with another scale, or its scale changed: icons asked at the highest scale (0.15.0 WP8).</summary>
+    protected override void OnDpiChanged(DpiScale oldDpi, DpiScale newDpi)
+    {
+        base.OnDpiChanged(oldDpi, newDpi);
+        _viewModel.IconScale = ScreenGeometry.HighestScale(newDpi.DpiScaleX);
+    }
 
     private IEnumerable<TrayMenuEntry> BuildTrayMenu()
     {

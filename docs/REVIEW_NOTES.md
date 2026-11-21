@@ -9,6 +9,47 @@ The owner relays replies.
 
 ---
 
+## 2026-11-21 (143) — 0.15.0 WP8: more icon sizes
+
+- **Run 246** (`274ac48`, entry 142): green, Core 1249 of 1249, App 507 of 507. WP1's tests pass with it.
+- **The list and the box:** 圖示大小 lists 16, 20, 24, 28, 32, 40, 48, 56, 64, 72, 80, 96 and 128 px, and the box is
+  editable: pick a size or type one. What is typed is read when the box is left, and at Save: Enter presses Save without
+  leaving the box, so Save reads it first. "72", "72 px" and full-width digits (as a Chinese input method types them)
+  count. A number outside 16–256 goes to the nearer end; anything else goes back to the size before. The box then shows
+  what was kept ("256 px" for 300). Its tooltip: 選擇一個大小，或輸入 16 到 256 之間的整數。
+- **Stored:** `iconSize` as before. Normalising keeps any whole number from 16 to 256 (`ClampIconSize`), and
+  `NearestIconSize` is gone.
+- **An older version** snaps a size it does not list to the nearest of 16, 24, 32, 48 and 64: 72 → 64, 20 → 16, 28 →
+  24, 40 → 32, 56 → 48, and 80, 96, 128 or a typed 200 → 64. It keeps that in memory and writes it back at its next
+  save, which syncs. So in a set of PCs where one still runs 0.14, a 72 can come back as 64 on all of them. This version
+  can do nothing about that; you asked me to say it.
+- **Sharp icons:** `IconPixels.SourceSize` (Core) gives the first of 16, 20, 24, 32, 40, 48, 64, 72, 80, 96, 128 and 256
+  at or above the icon size times the scale, and 256 above that. The bar asks its icons at that size, and the cell scales
+  them down with high quality. The scale is the highest of the monitors' (`ScreenGeometry.HighestScale`), not the bar's
+  own: the window at the pointer shows the same images on whichever monitor the pointer is on. With one monitor it is
+  that monitor's scale. It is set at start, before the first icons load (they wait for the dispatcher), and again on a
+  display change and on the bar's DPI change; a change that asks for another size loads the icons again.
+  - The provider no longer doubles. Before, it asked twice the icon size whatever the screen: a 32 px icon at 100 % was
+    a 64 px image scaled down, and now it is the 32 px image itself, pixel for pixel. The 256 cap is unchanged.
+  - The shell's `GetImage` (bigger size allowed) and `SHDefExtractIcon` scale from the best image a file has. The
+    padded-frame rule of 0.13.0 runs on whatever comes back, at every size, as before. The image list keeps its three
+    sizes (32, 48, 256).
+- **What scales with the cell:** the cell template draws text and symbol icons (`TextIconTile` at the icon size),
+  gauges and the clock (a `Viewbox`) and the frame from the icon size, so they follow at any size; the badges keep their
+  8 px. A cell is the size plus twice the spacing. Names, the window at the pointer, group popups and row lines follow
+  the cell. A bar too small for one cell grows to one, by today's rule.
+- **Other places:** none offers icon sizes (Properties and the text icon window preview at the bar's size).
+- **Tests:**
+  - Core: the clamp (15 → 16, 300 → 256, 50 kept; normalising says when it changed something); the box's reading
+    ("72 px", full-width, "-5", "abc", "72.5"); the list; the source size for 72 at 100 % (72) and 150 % (128), and
+    others. The layout repair test now uses 300, since 30 is a size now;
+  - App: the bar asks the provider for 72, then 128 once the scale is 1.5; cells at 20, 50 and 128; the Settings box
+    (the list, a pick, a typed 50, 300, "big", a typed 200 from the layout).
+- **Not tested:** real icons at 72–256 on screen, a real DPI change or a second monitor, and the box with a keyboard (Enter
+  at Save).
+
+This entry claims no run for its own commit.
+
 ## 2026-11-21 (142) — Tests: the announced font is not one the others draw with
 
 - **Run 245** (`62990bb`, WP1, entry 141): Core 1249 of 1249; App 506 of 507. The red one is

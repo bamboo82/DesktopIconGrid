@@ -117,7 +117,8 @@ public sealed partial class SettingsViewModel : ObservableObject
         set => SetProperty(ref _selectedLanguage, value ?? Languages[0]);
     }
 
-    public IReadOnlyList<int> IconSizes => LauncherSettings.IconSizes;
+    /// <summary>The sizes the icon size box lists (0.15.0 WP8), as it shows them.</summary>
+    public IReadOnlyList<string> IconSizeChoices { get; } = LauncherSettings.IconSizes.Select(IconSizeLabel).ToList();
 
     public IReadOnlyList<string> Presets => ColorPresets;
 
@@ -135,8 +136,32 @@ public sealed partial class SettingsViewModel : ObservableObject
     public int IconSize
     {
         get => _iconSize;
-        set => SetProperty(ref _iconSize, value);
+        set
+        {
+            if (SetProperty(ref _iconSize, LauncherSettings.ClampIconSize(value)))
+            {
+                OnPropertyChanged(nameof(IconSizeText));
+            }
+        }
     }
+
+    /// <summary>
+    /// The icon size box's text (0.15.0 WP8): a listed size or a typed whole number from 16 to 256, read when the box is
+    /// left or Settings is saved. A number outside that goes to the nearer end, anything else back to the size before; the
+    /// box then shows what was kept.
+    /// </summary>
+    public string IconSizeText
+    {
+        get => IconSizeLabel(_iconSize);
+        set
+        {
+            IconSize = LauncherSettings.ParseIconSize(value, _iconSize);
+            OnPropertyChanged(); // "300" shows as "256 px", "abc" as the size before
+        }
+    }
+
+    /// <summary>A size as the icon size box lists it: "72 px".</summary>
+    internal static string IconSizeLabel(int size) => string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{size} px");
 
     public int CellPadding
     {

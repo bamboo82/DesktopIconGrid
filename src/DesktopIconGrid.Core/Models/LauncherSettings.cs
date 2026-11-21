@@ -9,8 +9,14 @@ namespace DesktopIconGrid.Core.Models;
 /// <summary>User preferences that affect how the bar looks and reacts.</summary>
 public sealed partial class LauncherSettings
 {
-    public static readonly IReadOnlyList<int> IconSizes = [16, 24, 32, 48, 64];
+    /// <summary>
+    /// The icon sizes Settings lists (0.15.0 WP8, the owner's request; before, 16, 24, 32, 48 and 64). Its box also takes any
+    /// whole number from <see cref="MinIconSize"/> to <see cref="MaxIconSize"/>.
+    /// </summary>
+    public static readonly IReadOnlyList<int> IconSizes = [16, 20, 24, 28, 32, 40, 48, 56, 64, 72, 80, 96, 128];
 
+    public const int MinIconSize = 16;
+    public const int MaxIconSize = 256;
     public const int DefaultIconSize = 32;
     public const int MinCellPadding = 2;
     public const int MaxCellPadding = 32;
@@ -46,7 +52,10 @@ public sealed partial class LauncherSettings
 
     public static readonly IReadOnlyList<string> Languages = [LanguageSystem, LanguageEnglish, LanguageTraditionalChinese, LanguageSimplifiedChinese];
 
-    /// <summary>Icon edge length in device-independent pixels; one of <see cref="IconSizes"/>.</summary>
+    /// <summary>
+    /// Icon edge length in device-independent pixels, any whole number from <see cref="MinIconSize"/> to
+    /// <see cref="MaxIconSize"/> (0.15.0 WP8). A version before 0.15.0 snaps a size it does not list to its nearest.
+    /// </summary>
     public int IconSize { get; set; } = DefaultIconSize;
 
     /// <summary>Space around each icon; a cell is <c>IconSize + 2 × CellPadding</c>.</summary>
@@ -243,10 +252,10 @@ public sealed partial class LauncherSettings
             changed = true;
         }
 
-        var nearest = NearestIconSize(IconSize);
-        if (nearest != IconSize)
+        var iconSize = ClampIconSize(IconSize);
+        if (iconSize != IconSize)
         {
-            IconSize = nearest;
+            IconSize = iconSize;
             changed = true;
         }
 
@@ -369,8 +378,41 @@ public sealed partial class LauncherSettings
         return changed;
     }
 
-    public static int NearestIconSize(int requested) =>
-        IconSizes.MinBy(size => (Math.Abs(size - requested), size));
+    /// <summary>An icon size held to 16–256: since 0.15.0 (WP8) any whole number in that range is kept, not snapped to the list.</summary>
+    public static int ClampIconSize(int requested) => Math.Clamp(requested, MinIconSize, MaxIconSize);
+
+    /// <summary>
+    /// What the icon size box makes of <paramref name="text"/> (0.15.0 WP8): a whole number, with or without "px" after it,
+    /// held to 16–256 (so 300 is 256 and 0 or −5 is 16); anything else gives <paramref name="previous"/> back. Full-width
+    /// digits, as a Chinese input method types them, count.
+    /// </summary>
+    public static int ParseIconSize(string? text, int previous)
+    {
+        var value = (text ?? string.Empty).Trim();
+        if (value.EndsWith("px", StringComparison.OrdinalIgnoreCase))
+        {
+            value = value[..^2].TrimEnd();
+        }
+
+        var negative = value.StartsWith('-') || value.StartsWith('－') || value.StartsWith('−');
+        if (negative || value.StartsWith('+') || value.StartsWith('＋'))
+        {
+            value = value[1..].TrimStart();
+        }
+
+        if (value.Length == 0 || !value.All(char.IsDigit))
+        {
+            return previous;
+        }
+
+        long number = 0;
+        foreach (var digit in value)
+        {
+            number = Math.Min(number * 10 + (long)char.GetNumericValue(digit), MaxIconSize + 1);
+        }
+
+        return negative ? MinIconSize : ClampIconSize((int)number);
+    }
 
     public static bool IsValidColor(string? value) =>
         value is not null && ColorPattern().IsMatch(value);

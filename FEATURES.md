@@ -792,7 +792,7 @@ warnings and errors. The last 2000 entries stay in memory and all of them are ap
 
 | Setting | Default |
 | --- | --- |
-| Icon size | 32 px (choices 16 / 24 / 32 / 48 / 64) |
+| Icon size | 32 px (listed: 16 / 20 / 24 / 28 / 32 / 40 / 48 / 56 / 64 / 72 / 80 / 96 / 128; the box also takes a typed whole number from 16 to 256, a number outside that going to the nearer end and anything else back to the size before; 0.15.0, before which the five of 16 to 64. A version before 0.15.0 shows a size it does not list as its nearest one, 72 as 64, and writes that back at its next save, which then syncs) |
 | Cell padding | 10 px (cell = icon size + 2 × padding) |
 | Show labels | off |
 | Launch on | single click (or double click) |
@@ -979,7 +979,12 @@ What a tile shows, the first that applies (0.12.0 adds symbols to the second):
 3. A special icon's live drawing (gauges, the clock, the volume).
 4. The icon of the Location, extracted as below.
 
-Order of attempts for that icon, with an in-memory cache keyed by path and size:
+Order of attempts for that icon, with an in-memory cache keyed by path and size. The size asked is in device pixels:
+since 0.15.0 the first of 16, 20, 24, 32, 40, 48, 64, 72, 80, 96, 128 and 256 at or above the icon size times the
+highest display scale of the monitors (so the bar and the window at the pointer draw from enough pixels on any of them),
+and 256 above that; the cell scales it down with high quality, and a smaller image is never stretched up below 256
+pixels. A change of monitors or of a scale that asks for another size loads the icons again. Before, the bar asked for
+twice the icon size whatever the screen.
 
 1. Explicit image file (`.png`, `.jpg`, `.bmp`, `.gif`, `.ico` — largest matching frame).
 2. `path,index` icon resources via `SHDefExtractIcon` (any size up to 256 px).

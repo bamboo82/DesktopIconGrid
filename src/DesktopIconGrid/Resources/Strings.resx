@@ -2936,4 +2936,7 @@ The place was not changed; what was copied stays there.</value>
   <data name="Main_GridLocked" xml:space="preserve">
     <value>The grid is locked. Right-click an empty part of the bar to unlock it.</value>
   </data>
+  <data name="Settings_IconSizeToolTip" xml:space="preserve">
+    <value>Pick a size, or type a whole number from 16 to 256.</value>
+  </data>
 </root>

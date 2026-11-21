@@ -2936,4 +2936,7 @@ SHA-256：{3}
   <data name="Main_GridLocked" xml:space="preserve">
     <value>格線已鎖定。在工具列的空白處按右鍵即可解除。</value>
   </data>
+  <data name="Settings_IconSizeToolTip" xml:space="preserve">
+    <value>選擇一個大小，或輸入 16 到 256 之間的整數。</value>
+  </data>
 </root>

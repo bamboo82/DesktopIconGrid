@@ -12,7 +12,11 @@ public interface IIconProvider
     /// </summary>
     ImageSource? GetIcon(string source, int pixelSize);
 
-    /// <summary>Icon for an item, honouring its custom icon and falling back to the kind's default.</summary>
+    /// <summary>
+    /// Icon for an item, honouring its custom icon and falling back to the kind's default, asked of its source at
+    /// <paramref name="pixelSize"/> device pixels (16–256): the bar asks <see cref="Core.Icons.IconPixels.SourceSize"/>
+    /// since 0.15.0 (WP8; before, twice the icon size whatever the screen).
+    /// </summary>
     ImageSource? GetItemIcon(LauncherItem item, int pixelSize);
 
     /// <summary>The system folder icon, used by groups.</summary>
