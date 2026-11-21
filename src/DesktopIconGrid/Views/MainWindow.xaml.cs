@@ -15,6 +15,7 @@ using DesktopIconGrid.Core.Diagnostics;
 using DesktopIconGrid.Core.Models;
 using DesktopIconGrid.Resources;
 using DesktopIconGrid.Services;
+using DesktopIconGrid.SpecialIcons;
 using DesktopIconGrid.ViewModels;
 using Microsoft.Win32;
 
@@ -332,36 +333,65 @@ public partial class MainWindow : Window
         }
     }
 
-    /// <summary>The window's resource the names, captions, the empty bar's line and a group's heading take as their effect.</summary>
+    /// <summary>
+    /// The window's resource the names, captions, the empty bar's line, a group's heading, and text and symbol icons in the
+    /// theme's text colour without a tile colour (review 38 T2) take as their effect.
+    /// </summary>
     internal const string TextEdgeKey = "Theme.TextEdge";
+
+    /// <summary>The same edge for a gauge's text in the theme's colour, drawn in a box of 100 units scaled to the icon (review 38 T2).</summary>
+    internal const string GaugeTextEdgeKey = "Theme.GaugeTextEdge";
+
+    /// <summary>The edge of a gauge's value in <see cref="GaugeState.NeutralColor"/>, the clock's time among them (review 38 T2).</summary>
+    internal const string GaugeNeutralEdgeKey = "Theme.GaugeNeutralEdge";
+
+    /// <summary>The blur of the edge, in the bar's units.</summary>
+    internal const double TextEdgeBlur = 3;
 
     /// <summary>
     /// While the background is see-through, the names under the icons, the captions of labels and row lines, the empty
     /// bar's line and a group's heading get a thin soft edge in the tone that stands out from their colour (near-black
-    /// under light text, white under dark), so they can be read over a light or a dark desktop alike (review 37 T1).
-    /// Before 0.14.0 the theme's colour was always behind them. At 100 %, with a backdrop and under High Contrast there is
-    /// none. It is a resource of this window, so the group's popup has it too and the pointer window, which is opaque,
-    /// does not; one frozen effect is shared by every text.
+    /// under light text, white under dark), so they can be read over a light or a dark desktop alike (review 37 T1); so do
+    /// the glyphs and text of icons drawn in the theme's colour straight on the background (review 38 T2). Before 0.14.0
+    /// the theme's colour was always behind them. At 100 %, with a backdrop and under High Contrast there is none. They are
+    /// resources of this window, so the group's popup has them too and the pointer window, which is opaque, does not; one
+    /// frozen effect of each is shared by every text.
     /// </summary>
-    private void ApplyTextEdge(ThemePalette palette)
+    private void ApplyTextEdge(ThemePalette palette) => SetTextEdges(Resources, _seeThrough ? palette.Foreground : null, _viewModel.IconSize);
+
+    /// <summary>
+    /// Puts the edges in <paramref name="resources"/> for text of <paramref name="foreground"/>, or takes them out with
+    /// <see langword="null"/>. A gauge is drawn in a box of 100 units that its icon scales, and an effect is scaled with what
+    /// it is drawn in, so the gauge's edges are as much wider in the box as the box is smaller than 100: on the bar they
+    /// look as the names' do.
+    /// </summary>
+    internal static void SetTextEdges(ResourceDictionary resources, string? foreground, double iconSize)
     {
-        if (!_seeThrough)
+        if (foreground is null)
         {
-            Resources.Remove(TextEdgeKey);
+            resources.Remove(TextEdgeKey);
+            resources.Remove(GaugeTextEdgeKey);
+            resources.Remove(GaugeNeutralEdgeKey);
             return;
         }
 
-        Resources[TextEdgeKey] = TextEdgeFor(palette.Foreground);
+        var box = 100 / Math.Max(iconSize, 1);
+        resources[TextEdgeKey] = TextEdgeFor(foreground);
+        resources[GaugeTextEdgeKey] = TextEdgeFor(foreground, box);
+        resources[GaugeNeutralEdgeKey] = TextEdgeFor(GaugeState.NeutralColor, box);
     }
 
-    /// <summary>The edge for text of <paramref name="foreground"/>: a shadow under the letters, no offset, a blur of 3.</summary>
-    internal static System.Windows.Media.Effects.DropShadowEffect TextEdgeFor(string foreground)
+    /// <summary>
+    /// The edge for text of <paramref name="foreground"/>: a shadow under the letters, no offset, a blur of 3, times
+    /// <paramref name="scale"/> for text drawn in a box its icon scales down.
+    /// </summary>
+    internal static System.Windows.Media.Effects.DropShadowEffect TextEdgeFor(string foreground, double scale = 1)
     {
         var edge = new System.Windows.Media.Effects.DropShadowEffect
         {
             Color = ThemeManager.ToColor(ThemeCatalog.Luminance(foreground) > 0.5 ? TextOverPicture.DarkOutline : "#FFFFFF"),
             ShadowDepth = 0,
-            BlurRadius = 3,
+            BlurRadius = TextEdgeBlur * scale,
             Opacity = 0.95,
             RenderingBias = System.Windows.Media.Effects.RenderingBias.Performance,
         };

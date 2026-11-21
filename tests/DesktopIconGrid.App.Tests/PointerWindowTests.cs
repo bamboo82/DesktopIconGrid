@@ -5,6 +5,7 @@ using System.Windows.Interop;
 using System.Windows.Media;
 using DesktopIconGrid.Core;
 using DesktopIconGrid.Core.Models;
+using DesktopIconGrid.Core.SpecialIcons;
 using DesktopIconGrid.ViewModels;
 using DesktopIconGrid.Views;
 
@@ -44,7 +45,7 @@ public sealed class PointerWindowTests(WpfThread wpf) : IDisposable
     /// window and closes it. Made <paramref name="ahead"/>, as the bar does, its bindings are alive before it is shown;
     /// otherwise it is shown in the turn it is made, as when the hotkey comes first.
     /// </summary>
-    private void WithWindow(LauncherModel model, Action<PointerWindow, LauncherViewModel> check, bool ahead = true)
+    private void WithWindow(LauncherModel model, Action<PointerWindow, LauncherViewModel> check, bool ahead = true, IEnumerable<DesktopIconGrid.SpecialIcons.ISpecialIconHandler>? handlers = null)
     {
         TestBar? bar = null;
         PointerWindow? window = null;
@@ -52,7 +53,7 @@ public sealed class PointerWindowTests(WpfThread wpf) : IDisposable
         {
             wpf.Invoke(() =>
             {
-                bar = new TestBar(_directory, model);
+                bar = new TestBar(_directory, model, handlers: handlers);
                 window = new PointerWindow(bar.ViewModel);
                 if (!ahead)
                 {
@@ -286,6 +287,121 @@ public sealed class PointerWindowTests(WpfThread wpf) : IDisposable
             window.Resources.Remove(MainWindow.TextEdgeKey);
             Assert.Null(Text("Item 0").Effect);
         });
+    }
+
+    [Fact]
+    public void Glyphs_and_gauge_text_in_the_themes_colour_and_a_grey_value_take_an_edge_and_coloured_ones_none()
+    {
+        // Review 38 T2: the Voice microphone (a symbol in the theme's colour, no tile colour), a gauge's text in the theme's
+        // colour, and a value in the neutral grey (the clock's time) take an edge while the bar is see-through; a symbol on
+        // a tile colour and a green value do not.
+        var model = new LauncherModel();
+        model.Add(new SpecialIconItem { Kind = SpecialIconKinds.Voice, Name = "Voice" });
+        model.Add(new ShortcutItem { Name = "Tiled", Location = @"C:\Tools\tool.exe", TextIcon = new TextIcon("T", Fit: true, Background: "#3366CC") });
+        model.Add(new SpecialIconItem { Kind = "test-ring", Name = "Ring" });
+        model.Add(new SpecialIconItem { Kind = "test-bar", Name = "Bar" });
+        model.Add(new SpecialIconItem { Kind = "test-clock", Name = "Clock" });
+        model.Add(new SpecialIconItem { Kind = "test-ok", Name = "Ok" });
+        DesktopIconGrid.SpecialIcons.ISpecialIconHandler[] handlers =
+        [
+            new FakeIconHandler(SpecialIconKinds.Voice, glyph: DesktopIconGrid.Core.SpecialIcons.BuiltInTextIcons.Voice),
+            new FakeIconHandler("test-ring", gauge: () => Gauge("RING", DesktopIconGrid.Core.SpecialIcons.GaugeStyle.Ring, 42, null, null)),
+            new FakeIconHandler("test-bar", gauge: () => Gauge("BAR", DesktopIconGrid.Core.SpecialIcons.GaugeStyle.Bar, 7, null, null)),
+            new FakeIconHandler("test-clock", gauge: () => Gauge("CLOCK", DesktopIconGrid.Core.SpecialIcons.GaugeStyle.Number, null, "12:34", DesktopIconGrid.Core.SpecialIcons.CommandLevel.Unknown)),
+            new FakeIconHandler("test-ok", gauge: () => Gauge("OK", DesktopIconGrid.Core.SpecialIcons.GaugeStyle.Number, null, "Done", DesktopIconGrid.Core.SpecialIcons.CommandLevel.Ok)),
+        ];
+        var hasGlyph = TextIconTile.HasGlyph;
+        TextIconTile.HasGlyph = _ => true; // the microphone, whatever symbol fonts the test machine has
+        try
+        {
+            WithWindow(model, CheckEdges, handlers: handlers);
+        }
+        finally
+        {
+            TextIconTile.HasGlyph = hasGlyph;
+        }
+
+        static void CheckEdges(PointerWindow window, LauncherViewModel bar)
+        {
+            // A gauge's template has all three styles, the two not used collapsed: the one shown.
+            System.Windows.Controls.TextBlock Text(string text) => Descendants(window).OfType<System.Windows.Controls.TextBlock>().Single(block => block.Text == text && block.IsVisible);
+            var tiles = Descendants(window).OfType<TextIconTile>().ToList();
+            var voice = tiles.Single(tile => tile.Icon == DesktopIconGrid.Core.SpecialIcons.BuiltInTextIcons.Voice);
+            var tiled = tiles.Single(tile => tile.Icon?.Background is not null);
+            Assert.Null(voice.FitBox!.Effect);
+            Assert.Null(Text("12:34").Effect);
+
+            MainWindow.SetTextEdges(window.Resources, "#FFFFFF", bar.IconSize);
+            window.UpdateLayout();
+            var edge = window.Resources[MainWindow.TextEdgeKey];
+            var gaugeEdge = (System.Windows.Media.Effects.DropShadowEffect)window.Resources[MainWindow.GaugeTextEdgeKey];
+            var neutralEdge = (System.Windows.Media.Effects.DropShadowEffect)window.Resources[MainWindow.GaugeNeutralEdgeKey];
+            Assert.Same(edge, voice.FitBox!.Effect); // on the box, at the bar's scale, not on the text the box scales
+            Assert.Null(voice.TextElement.Effect);
+            Assert.Null(tiled.FitBox!.Effect); // on a tile colour
+            Assert.Null(tiled.TextElement.Effect);
+            Assert.Same(gaugeEdge, Text("42%").Effect); // the ring's value
+            Assert.Same(gaugeEdge, Text("BAR").Effect); // the bar style's caption and value
+            Assert.Same(gaugeEdge, Text("7%").Effect);
+            Assert.Same(neutralEdge, Text("12:34").Effect); // the clock's grey time
+            Assert.Null(Text("Done").Effect); // green
+
+            // In the gauge's box of 100 units, scaled to the icon: as wide on the bar as the names' edge.
+            Assert.Equal(MainWindow.TextEdgeBlur * 100 / bar.IconSize, gaugeEdge.BlurRadius, 3);
+            Assert.Equal(gaugeEdge.BlurRadius, neutralEdge.BlurRadius, 3);
+            Assert.Equal(System.Windows.Media.Color.FromRgb(0x1A, 0x1A, 0x1A), neutralEdge.Color); // the grey is light: a dark edge
+            Assert.Equal(System.Windows.Media.Color.FromRgb(0x1A, 0x1A, 0x1A), gaugeEdge.Color); // under the white of the dark theme
+
+            MainWindow.SetTextEdges(window.Resources, null, bar.IconSize);
+            Assert.Null(voice.FitBox!.Effect);
+            Assert.Null(Text("42%").Effect);
+            Assert.Null(Text("12:34").Effect);
+        }
+    }
+
+    [Fact]
+    public void A_value_with_no_level_is_neutral_until_it_has_one()
+    {
+        var state = Gauge("CPU", DesktopIconGrid.Core.SpecialIcons.GaugeStyle.Number, null, null, null);
+        Assert.True(state.IsNeutral); // no sample yet
+        var changed = new List<string?>();
+        state.PropertyChanged += (_, e) => changed.Add(e.PropertyName);
+        state.Level = DesktopIconGrid.Core.SpecialIcons.CommandLevel.Ok;
+        Assert.False(state.IsNeutral);
+        Assert.Contains(nameof(state.IsNeutral), changed);
+        state.Level = null;
+        state.Update(42, "CPU");
+        Assert.False(state.IsNeutral); // green from the percentage
+        state.Level = DesktopIconGrid.Core.SpecialIcons.CommandLevel.Unknown;
+        Assert.True(state.IsNeutral);
+    }
+
+    private static DesktopIconGrid.SpecialIcons.GaugeState Gauge(string caption, DesktopIconGrid.Core.SpecialIcons.GaugeStyle style, double? percent, string? label, DesktopIconGrid.Core.SpecialIcons.CommandLevel? level)
+    {
+        var state = new DesktopIconGrid.SpecialIcons.GaugeState(caption, style, warningAt: 80, criticalAt: 95, string.Empty) { LabelText = label, Level = level };
+        state.Update(percent, caption);
+        return state;
+    }
+
+    /// <summary>A special icon kind with a glyph or a gauge and nothing else.</summary>
+    private sealed class FakeIconHandler(string kind, TextIcon? glyph = null, Func<DesktopIconGrid.SpecialIcons.GaugeState>? gauge = null) : DesktopIconGrid.SpecialIcons.ISpecialIconHandler
+    {
+        public string Kind => kind;
+
+        public string DisplayName => kind;
+
+        public string Description => kind;
+
+        public TextIcon? DefaultTextIcon => glyph;
+
+        public SpecialIconItem CreateItem() => new() { Kind = kind, Name = kind };
+
+        public DesktopIconGrid.SpecialIcons.GaugeState? CreateState(SpecialIconItem item) => gauge?.Invoke();
+
+        public DesktopIconGrid.Core.Launching.LaunchResult Activate(SpecialIconItem item, DesktopIconGrid.SpecialIcons.ActivationModifiers modifiers) =>
+            DesktopIconGrid.Core.Launching.LaunchResult.Started;
+
+        public bool ShowProperties(SpecialIconItem item, bool isNew) => false;
     }
 
     private static IEnumerable<DependencyObject> Descendants(DependencyObject root)

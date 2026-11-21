@@ -9,6 +9,43 @@ The owner relays replies.
 
 ---
 
+## 2026-11-21 (130) — Review 38 T2: special icons' glyphs and gauge text over a light desktop
+
+Run 232 (`daeb0c6`, entry 129) is green: Core 1242 and App 495 tests, the four that failed in run 231 among them. WP2's
+test that opens a real context menu and a tooltip passed in both runs: the menu item and the tooltip take the dialogs'
+font and size. Review 38 read; thank you for checking WP6, T1 and WP7 in the app.
+
+**T2:** while the bar is see-through these now take an edge, through resources of the bar window that are absent at
+100 %, with a backdrop and under High Contrast, as T1's is:
+
+| What | Drawn in | Edge |
+| --- | --- | --- |
+| The Voice microphone, the Send to PC paper plane | the theme's text colour, no tile colour (a symbol that fits) | `Theme.TextEdge`, on the symbol's fit box |
+| Any other text or symbol icon in the theme's colour without a tile colour, a shortcut's or a group's too | the same | the same; text drawn at its size, in the hover frame, has it on the text |
+| A ring's value; the bar style's caption and value; the number style's caption | the theme's text colour | `Theme.GaugeTextEdge` |
+| A number value in the neutral grey: the clock's time without a timer, a command tile without a level, a monitor before its first sample | `#9A9A9A` | `Theme.GaugeNeutralEdge`, near-black in every theme |
+| None: a symbol on a tile colour, a text icon with a colour of its own, the pictures (bucket, recorder), values in green, orange or red, text over a picture (its own outline or plate, WP6) | | |
+
+- **Why two gauge edges, and why on the fit box:** an effect is drawn in the coordinates of the element it is on, so
+  it grows and shrinks with the scale of whatever holds that element. A gauge is drawn in a box of 100 units that its
+  icon scales (0.32 at 32 px), where T1's edge would be a third as wide. The gauge edges are T1's edge with the blur
+  times 100 / the icon size, made again at each settings change (the icon size is one), so on the bar they are as wide
+  as the names'. For the same reason a fitted symbol's edge is on its box, not on the text the box scales.
+- **The grey's own edge:** the theme's edge is chosen against the theme's text colour, white under dark text, and would
+  be white around a grey value on a white desktop. The grey is light, so its edge is near-black.
+- **Shortcuts' and groups' text icons too:** they are drawn by the same tile and stand on the background the same way;
+  leaving them out would take a special case. Say if only special icons should have it.
+- **Left as they are:** the bar's ✕ and ▸, the notice row with *Undo*, the type-to-find box and what Enter opens beside
+  it. They are in the theme's colour on the background too, but they are not special icons. Say if they should have it.
+- **Tests (App, `PointerWindowTests`):** a window with the Voice icon, a symbol on a tile colour, a ring, a bar, a number
+  with no level (as the clock's) and a green one, through a fake handler. Before the edges are set nothing has one. After
+  `SetTextEdges` the microphone's box and the gauge texts have theirs, the tiled symbol and the green value none, the
+  gauge blur is 3 × 100 / the icon size, and the grey's edge is dark. Once they are taken out, nothing has one. And
+  `GaugeState.IsNeutral` with no sample, with a level, with a percentage and with Unknown.
+- **Not tested:** how it looks. You check that at 30 % over your striped window.
+
+This entry claims no run for its own commit.
+
 ## 2026-11-21 (129) — Run 231 was red: the colour hint ran past the 外觀 page in English
 
 Run 231 (`4e4d223`, WP2, entry 128) failed four App tests of 495, all new ones of mine, all in English: the 外觀 tab at

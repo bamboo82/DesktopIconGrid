@@ -167,6 +167,7 @@ public sealed class TextIconTile : Decorator
         _text.Text = icon.Text;
         _text.FontFamily = TextIconFonts.Resolve(icon.FontFamily);
         _text.FontWeight = icon.Bold ? FontWeights.Bold : FontWeights.Normal;
+        var themeColour = false;
         if (icon.Color is { } color && LauncherSettings.IsValidColor(color))
         {
             _text.Foreground = ThemeManager.ToBrush(color);
@@ -178,6 +179,7 @@ public sealed class TextIconTile : Decorator
         else
         {
             _text.SetResourceReference(TextBlock.ForegroundProperty, "Theme.Foreground");
+            themeColour = true;
         }
 
         // Re-parent the text: it is the child of the fit box or of the tile, never of both.
@@ -198,6 +200,16 @@ public sealed class TextIconTile : Decorator
             _text.TextWrapping = TextWrapping.Wrap;
             _text.Margin = new Thickness(1);
             _tile.Child = _text;
+        }
+
+        // In the theme's colour, with no tile colour behind it, the text stands on the bar's background, which may be
+        // see-through: it takes the bar's text edge (review 38 T2; the window has it only while it is see-through). Fitted
+        // text has it on its box, at the bar's scale: on the text the box scales, it would shrink with the box.
+        _fit.ClearValue(EffectProperty);
+        _text.ClearValue(EffectProperty);
+        if (themeColour)
+        {
+            (icon.Fit ? (FrameworkElement)_fit : _text).SetResourceReference(EffectProperty, MainWindow.TextEdgeKey);
         }
     }
 }

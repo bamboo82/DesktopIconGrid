@@ -18,7 +18,13 @@ public sealed class GaugeState : ObservableObject
     private static readonly SolidColorBrush NormalBrush = Frozen("#FF34C759");
     private static readonly SolidColorBrush WarningBrush = Frozen("#FFF5A623");
     private static readonly SolidColorBrush CriticalBrush = Frozen("#FFE5484D");
-    private static readonly SolidColorBrush UnknownBrush = Frozen("#FF9A9A9A");
+    private static readonly SolidColorBrush UnknownBrush = Frozen(NeutralColor);
+
+    /// <summary>
+    /// The grey of a value with no level (a clock without a timer, a sample not taken yet). On a see-through bar such a
+    /// value takes an edge of its own (review 38 T2); the green, orange and red ones read without one.
+    /// </summary>
+    public const string NeutralColor = "#9A9A9A";
 
     private readonly double _warningAt;
     private readonly double _criticalAt;
@@ -106,6 +112,7 @@ public sealed class GaugeState : ObservableObject
             if (SetProperty(ref _level, value))
             {
                 OnPropertyChanged(nameof(LevelBrush));
+                OnPropertyChanged(nameof(IsNeutral));
             }
         }
     }
@@ -138,6 +145,9 @@ public sealed class GaugeState : ObservableObject
         CommandLevel.Unknown => UnknownBrush,
         _ => LevelFromPercent,
     };
+
+    /// <summary>The value is drawn in <see cref="NeutralColor"/>.</summary>
+    public bool IsNeutral => ReferenceEquals(LevelBrush, UnknownBrush);
 
     private Brush LevelFromPercent => _percent switch
     {

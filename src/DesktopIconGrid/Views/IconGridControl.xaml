@@ -83,14 +83,15 @@
                   <Ellipse Width="88" Height="88" Stroke="{DynamicResource Theme.HoverBorder}" StrokeThickness="12" />
                   <Path Data="{Binding ArcGeometry}" Stroke="{Binding LevelBrush}" StrokeThickness="12"
                         StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
+                  <!-- The gauge's text in the theme's colour takes the bar's edge while it is see-through, in the box's units (review 38 T2) -->
                   <TextBlock Text="{Binding Label}" FontSize="26" FontWeight="SemiBold"
-                             Foreground="{DynamicResource Theme.Foreground}"
+                             Foreground="{DynamicResource Theme.Foreground}" Effect="{DynamicResource Theme.GaugeTextEdge}"
                              HorizontalAlignment="Center" VerticalAlignment="Center" />
                 </Grid>
                 <!-- Bar -->
                 <Grid Visibility="{Binding IsBar, Converter={StaticResource BoolToVisibility}}">
                   <TextBlock Text="{Binding Caption}" FontSize="24" FontWeight="SemiBold"
-                             Foreground="{DynamicResource Theme.Foreground}"
+                             Foreground="{DynamicResource Theme.Foreground}" Effect="{DynamicResource Theme.GaugeTextEdge}"
                              HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,6,0,0" />
                   <Border Height="22" Margin="8,0,8,30" VerticalAlignment="Bottom" CornerRadius="6" ClipToBounds="True"
                           Background="{DynamicResource Theme.HoverBorder}">
@@ -103,7 +104,7 @@
                     </Grid>
                   </Border>
                   <TextBlock Text="{Binding Label}" FontSize="22"
-                             Foreground="{DynamicResource Theme.Foreground}"
+                             Foreground="{DynamicResource Theme.Foreground}" Effect="{DynamicResource Theme.GaugeTextEdge}"
                              HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,2" />
                 </Grid>
                 <!-- Number. The caption shows its start (review 27 T1) and is drawn from 40 px icons on; below, the number
@@ -124,10 +125,21 @@
                       </Style>
                     </Viewbox.Style>
                     <TextBlock x:Name="NumberText" Text="{Binding Label}" FontSize="{Binding LabelFontSize}" FontWeight="Bold"
-                               Foreground="{Binding LevelBrush}" TextTrimming="CharacterEllipsis" MaxWidth="{Binding LabelMaxWidth}" />
+                               Foreground="{Binding LevelBrush}" TextTrimming="CharacterEllipsis" MaxWidth="{Binding LabelMaxWidth}">
+                      <!-- A value in the neutral grey (the clock's time) has an edge of its own; green, orange and red need none -->
+                      <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                          <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsNeutral}" Value="True">
+                              <Setter Property="Effect" Value="{DynamicResource Theme.GaugeNeutralEdge}" />
+                            </DataTrigger>
+                          </Style.Triggers>
+                        </Style>
+                      </TextBlock.Style>
+                    </TextBlock>
                   </Viewbox>
                   <TextBlock Text="{Binding Caption}" FontSize="22" MaxWidth="96" TextTrimming="CharacterEllipsis"
-                             Foreground="{DynamicResource Theme.Foreground}"
+                             Foreground="{DynamicResource Theme.Foreground}" Effect="{DynamicResource Theme.GaugeTextEdge}"
                              HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,2"
                              Visibility="{Binding DataContext.Root.ShowsNumberCaptions, RelativeSource={RelativeSource AncestorType=Viewbox}, Converter={StaticResource BoolToVisibility}}" />
                 </Grid>
