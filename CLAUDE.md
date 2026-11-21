@@ -94,17 +94,46 @@ After removing or editing a key in the `.resx` files, run `python3 -I tools/gen_
 
 ## State
 
-- Released: 0.13.0 "Where it lives, how it reads" on 2026-11-21 (release commit `361beb4`; annotated tag `v0.13.0` on
-  it, release run 16; REVIEW_NOTES entry 119 has its table), the owner's requests after 0.12.2 (plan 31: WP1–WP5;
-  review 33: R1–R6). Before it 0.12.2 (tag `v0.12.2` on `85b2f04`, entry 107), 0.12.1 (tag `v0.12.1` on `0326f82`,
-  entry 100), 0.12.0 "Find it, see it" (tag `v0.12.0` on `ca7b1c6`, entry 91), 0.11.0 (tag `v0.11.0` on `10dec5a`),
-  and 0.10.0 (tag `v0.10.0` on `254c55c`).
-- 0.14.0 "Rows, looks and places", the owner's requests after 0.13.0 (plan 35: WP1–WP7 with A1–A3; reviews 37–39:
-  T1–T3), has its release commit, dated 2026-11-21 (REVIEW_NOTES entry 134 has its table). It came after the review
-  session's release check (review 39) and its look at T3 (review 40, no finding), on the owner's word. The tag
-  `v0.14.0` and `main` are the review session's, on the owner's word.
-- In progress: nothing. After 0.14.0 nothing is planned; 1.0.0 keeps the installer, code signing and the Windows toast
+- Released: 0.14.0 "Rows, looks and places" on 2026-11-21 (release commit `fab4172`; annotated tag `v0.14.0` on it,
+  release run 17; REVIEW_NOTES entry 134 has its table), the owner's requests after 0.13.0 (plan 35: WP1–WP7 with
+  A1–A3; reviews 37–39: T1–T3). Before it 0.13.0 "Where it lives, how it reads" (tag `v0.13.0` on `361beb4`, entry
+  119), 0.12.2 (tag `v0.12.2` on `85b2f04`, entry 107), 0.12.1 (tag `v0.12.1` on `0326f82`, entry 100), 0.12.0 "Find
+  it, see it" (tag `v0.12.0` on `ca7b1c6`, entry 91), 0.11.0 (tag `v0.11.0` on `10dec5a`), and 0.10.0 (tag `v0.10.0`
+  on `254c55c`).
+- 0.15.0 "Locked and at hand", the owner's requests after 0.14.0 (plan 36: WP1–WP9 with WP4b, WP5b, WP7a and WP7b;
+  review 41: U1–U3), has its release commit, dated 2026-11-22 (REVIEW_NOTES entry 162 has its table). It came after the
+  review session's release check (review 42, no finding), on the owner's word. The tag `v0.15.0` and `main` are the
+  review session's, on the owner's word.
+- In progress: nothing. After 0.15.0 nothing is planned; 1.0.0 keeps the installer, code signing and the Windows toast
   with actions.
+- Keep as designed (0.15.0):
+  - the window at the pointer is the bar's twin: its icon area has the bar's size as shown and expanded, so its rows, row
+    lines and scrolling are the bar's, and its background is the bar's (`BarSurface`); no grip, ✕ or ▸, never resized
+    or docked; on a smaller work area its icons flow again (entries 135 and 140);
+  - *Show at pointer while held* (`holdAtPointerHotkey`): its keys are read 20 times a second, no keyboard hook; the
+    first key up hides it; a click while it is held is a plain click; an open menu or drag keeps the window until it
+    ends (entry 139);
+  - *Lock grid* (`lockGrid`, synced): no drag moves anything on the grid; files dropped from elsewhere still come in;
+    the first refused drag in a run says so for 10 s; in the menus only, not in Settings or the tray (entry 141, review
+    41);
+  - icon sizes: 13 listed, any whole number from 16 to 256 typed; a version before 0.15.0 snaps to its five and writes
+    that back, which review 41 put to the owner (entry 143);
+  - sharp text: whole pixels (*Display*) with ClearType on an opaque background in every window, menu and tooltip (class
+    handlers on `ContextMenu.Opened` and `ToolTip.Opened`); *Ideal* from 20 units and in a dialog scaled other than
+    100 % (entry 144, review 41);
+  - the custom theme: the colour picker (entry 145); `hoverColor`, `hoverStrength` and `focusColor`, absent while
+    derived (entry 146); the picture (`backgroundImage`) stored re-encoded in `backgrounds\` with its position and zoom,
+    under the security rules above (entries 148–150 and 158); its file travels with sync as `background-<name>` beside
+    the copies, the colour shows until it is there, `lastSyncedPicture` is this PC's, one over 20 MB stays on its PC, no
+    new Drive scope (entries 159 and 160);
+  - over a picture, widgets' text and icons' glyphs (text icons in the theme's colour too) have a full-strength edge
+    twice as wide, green and orange values a dark one and red a white one; the names keep theirs (entry 157, review 42);
+  - up or down (`offsetY`, −20 to +20 % of the tile in whole units, written only when not 0) and the looks
+    (`captionLook` on a row line, `textLook` on a widget): a caption's size in the bar's units, a widget's in its tile's
+    100; a widget's font and colour reach its caption too, its size, weight and offset the value only; warning and alarm
+    colours win; a moved caption is not cut at its strip (entries 151 and 152, review 42);
+  - a tooltip of the bar goes when the bar loses the focus (`OpenToolTips`, entry 156); the custom theme's new rows are
+    rows of the 外觀 tab's grid, 自動 beside its box (entries 154 and 155).
 - Keep as designed (0.14.0):
   - 換列線條 (`rowline`: across the bar under its row, an optional caption at its left, saved as "Divider" only while
     it has no text) and 列首線條 (`rowhead`: upright at the next row's start); neither makes an empty row at a row's
@@ -175,7 +204,14 @@ After removing or editing a key in the `.resx` files, run `python3 -I tools/gen_
     and drags across them; the background at 30 % without a backdrop, sharp, icons solid; T1–T3 over white and red;
     the 可攜 and 傳送到電腦 tabs; text over a picture (a corner plate, a middle outline); the exe's and every title bar's
     icon and `sendto.ico` beside the exe; dialogs at 150 % with the bar at 100 % (Settings 780 wide, nothing cut) and
-    the bar's menu at 150 %.
+    the bar's menu at 150 %;
+  - for 0.15.0 (reviews 41 and 42, a portable Release build on zh-TW Windows 11 at 100 %): the twin with the bar's rows,
+    row line and picture; the hold key (gone within half a second, a 60 ms tap leaves nothing); a drag refused by the
+    lock, with its notice; the bar at 40 px; sharp text in Settings, the picker, the position dialog and a tooltip, and
+    Settings at 150 % (780 wide, nothing cut); the picker, the hover and focus colours with the contrast warning; the
+    picture at 40 % with the desktop through it, and the position dialog; up or down at −20 and +20 %; a caption's look,
+    a CPU number and the clock's time with looks (set in the layout file); U1 at 100 %; U2 over a gradient with a white
+    disc at 60 %.
 - Not seen anywhere:
   - a real notification banner, a real sign-out, a real Windows snap, and maximise on a second monitor;
   - the recogniser with a microphone (the reviewer asks the owner before it opens one);
@@ -185,5 +221,9 @@ After removing or editing a key in the `.resx` files, run `python3 -I tools/gen_
     folder: the reviewer asks the owner), the *This PC* direction and a folder that cannot be used, hints in the dark
     and the classic look, Properties at 150 %, a chosen font other than the default, a real stick, Program Files;
   - for 0.14.0: the tray icon, the Send to menu, saving on the 傳送到電腦 tab and the receive folder's rules, a rename
-    reaching another PC, F2 or a double-click on a row line, English and zh-Hans, the zips.
+    reaching another PC, F2 or a double-click on a row line, English and zh-Hans, the zips;
+  - for 0.15.0: U3 with the pointer resting on an icon while Settings opens; the picture between two PCs (a folder or
+    Drive); a real download; a file picked through the dialog; the 50 MB refusal; Mica or Acrylic under the picture and
+    on the twin; mouse drags in the picker and the position dialog; a click with the hold key down; 文字外觀… from a
+    widget's menu and F2 on a row line; icons at 96–256; 125 %; English and zh-Hans; the zips.
 - Nothing is open for the owner from this session.

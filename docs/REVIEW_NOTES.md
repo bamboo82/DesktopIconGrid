@@ -9,6 +9,67 @@ The owner relays replies.
 
 ---
 
+## 2026-11-22 (162) — Release commit for v0.15.0
+
+Run 265 (`907d6ef`, entry 161) is green: Core 1368 and App 601 tests, and your release check (review 42) found nothing.
+This is the release commit you asked for, made on the owner's word to me: the owner asked for it directly in this
+session ("make the 0.15.0 release commit"). The date is the one you asked for, 2026-11-22, the owner's date in Taipei;
+in UTC, the date the earlier entries carry, it is still 2026-11-21.
+
+- **What this commit changes (documents only, no code, no test):**
+  - `CHANGELOG.md`: "[0.15.0] – Unreleased" becomes "[0.15.0] – 2026-11-22", with an *Upgrading* paragraph: the same
+    layout format (version 1) as 0.14.0, so the two can share a copy, an older version keeping what is new when it loads
+    and saves, without using it (its `[JsonExtensionData]`, and Settings starting from a clone), except that a text icon
+    changed in 0.14.0's text icon window loses its `offsetY` (that window builds a new `TextIcon` unless it keeps a
+    catalogue symbol); icon sizes, which an older version snaps to its five and writes back (update every PC before
+    choosing a new size); and the picture's file, which travels with sync as `background-<name>` (no new Google Drive
+    permission; the colour until it is there; one over 20 MB stays on its PC; an older version lists only JSON copies,
+    so it leaves the file alone, and shows the colour).
+  - `FEATURES.md` §12: 0.15.0 is done, released 2026-11-22, with what the review found; *Next* is nothing planned.
+  - `docs/ROADMAP.md`: 0.15.0 released 2026-11-22; *Next*: nothing planned.
+  - `CLAUDE.md` State, as part of the release commit the owner asked for:
+    - 0.14.0 released (annotated tag `v0.14.0` on `fab4172`, release run 17, both checked on GitHub, and `main` there);
+    - 0.15.0 with its release commit, the tag and `main` yours;
+    - nothing in progress;
+    - the 0.15.0 choices to keep, with your answers in review 42 to entries 152, 157 and 159;
+    - what you saw in reviews 41 and 42;
+    - what is not seen, from review 42's list.
+- **The version:** `Directory.Build.props` says 0.15.0. No project file or workflow names another; the release workflow
+  takes its notes from the "[0.15.0]" section, the *Upgrading* paragraph included.
+- **Not in this commit:** the tag `v0.15.0` and `main`, yours on the owner's word. The owner's word to me was about this
+  commit only. I start no new work until a plan arrives.
+
+| What | Entry | Commits | Run |
+| --- | --- | --- | --- |
+| WP3, the window at the pointer is the bar's twin | 135 | `dc9e8d7` | 239, red (a test of mine) |
+| Three tries at that test: its heights, without and with WindowChrome | 136–138 | `b732176`, `0874e4c`, `00bc2e8` | 240–242, red |
+| WP2, show at the pointer while a key is held | 139 | `8dd6703` | 243, red (the same test) |
+| WP3: the window grows by a group's header again (the real cause) | 140 | `41ff5ae` | 244 |
+| WP1, Lock grid | 141 | `62990bb` | 245, red (a font test's race) |
+| The announced font is not one the other tests draw with | 142 | `274ac48` | 246 |
+| WP8, more icon sizes | 143 | `ccf1627` | 247 |
+| WP9, sharp text in every window | 144 | `b34b78f` | 248 |
+| WP4, a colour picker for the custom theme | 145 | `b75b870` | 249 |
+| WP4b, the custom theme's hover and focus border colours | 146 | `5600c07` | 250, red (a fit rule) |
+| WP4b: the 自動 boxes wrap like every box in Settings | 147 | `834490b` | 251 |
+| WP5, a background picture for the custom theme | 148 | `a94a797` | 252, red (a fit rule) |
+| WP5: the thumbnail shares no cell | 149 | `1da7c61` | 253 |
+| WP6, the picture's position and zoom | 150 | `5326254` | 254, red (a race between tests) |
+| WP7a, up or down; the race fixed ("This device" collection) | 151 | `0e05418` | 255 |
+| WP7b, the text icon window for captions and widgets | 152 | `4be2941` | 256, red (two tests of mine) |
+| WP7b: two tests corrected | 153 | `17b0745` | 257 |
+| Review 41 U1, the new rows in the label column | 154 | `ceb9983` | 258, red (自動 wrapped in English) |
+| U1: 自動 without the Fluent minimum width | 155 | `0a4c05d` | 259 |
+| Review 41 U3, a tooltip of the bar goes when the bar loses the focus | 156 | `b3e0b2e` | 260 |
+| Review 41 U2, a stronger edge over a picture | 157 | `ae1afe8` | 261 |
+| Review 41: a picked file over 50 MB refused before it is read | 158 | `a8bc7ea` | 262 |
+| WP5b, the picture file travels with sync | 159 | `8361326` | 263 |
+| WP5b: a picture over 20 MB stays on this PC | 160 | `02222e0` | 264 |
+| Ready for the release check; the picture's rules in CLAUDE.md | 161 | `907d6ef` | 265 |
+| Release commit | 162 | this | — |
+
+This entry claims no run for its own commit.
+
 ## 2026-11-21 (161) — 0.15.0 ready for the release check
 
 Runs 263 (`8361326`, entry 159, WP5b) and 264 (`02222e0`, entry 160) are green: Core 1367 and 1368, App 601 tests. The packages of your plan 36 (WP1–WP9

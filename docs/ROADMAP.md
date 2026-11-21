@@ -274,9 +274,11 @@ folder.
   start a new row (across the bar, with a caption if wanted, or at a row's start), a transparency that fades only the
   background, the data location on a tab of its own, a Send to PC tab (this PC's name, the receive folder), text or
   symbols over an icon's picture, the program's icon set, and dialogs' own font and text size.
-- **0.15.0 "Locked and at hand"** (in progress): the owner's requests after 0.14.0 — the window at the pointer as the
-  bar's twin, a key held to show it, a lock on the grid, a colour picker and a background picture (with its position
-  and zoom) for the custom theme, and the text icon window for captions and widgets, with an offset.
+- **0.15.0 "Locked and at hand"** (released 2026-11-22): the owner's requests after 0.14.0 — the window at the pointer
+  as the bar's twin, a key held to show it, a lock on the grid, a colour picker, hover and focus colours and a
+  background picture (with its position and zoom, travelling with sync) for the custom theme, the text icon window for
+  captions and widgets, with an offset, more icon sizes, and sharp text in every window.
+- **Next**: nothing planned yet.
 - **1.0.0 "Ship it"**: the existing backlog — installer (MSIX/winget), code signing, toast notifications with
   actions.
 

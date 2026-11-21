@@ -3,9 +3,22 @@
 All notable changes to Desktop Icon Grid. The format follows [Keep a Changelog](https://keepachangelog.com/);
 version numbers follow [Semantic Versioning](https://semver.org/).
 
-## [0.15.0] – Unreleased
+## [0.15.0] – 2026-11-22
 
 "Locked and at hand": the owner's requests after 0.14.0.
+
+Upgrading: 0.15.0 reads and writes the same layout format as 0.14.0 (version 1), so PCs on either can share a settings
+copy. A version before 0.15.0 keeps what is new when it loads and saves, without using it (the lock, the key held to
+show the bar, the custom theme's hover and focus colours and its picture, a caption's or a widget's look, a text icon
+moved up or down); a text icon changed there in its text icon window loses its up or down. Two things to know:
+
+- Icon sizes: a version before 0.15.0 shows a size it does not list as the nearest of its five (16, 24, 32, 48 and
+  64 px; 72 as 64, 40 as 32) and writes that back at its next save, which then syncs. Update every PC that shares a
+  copy before choosing one of the new sizes.
+- The background picture: the file itself now travels with sync, beside the copies as `background-<name>` in the sync
+  folder or the program's Google Drive folder (Google Drive asks for no new permission). A PC shows the theme's colour
+  until the picture is there, and keeps a received picture only after checking it; a picture over 20 MB stays on its
+  PC. A version before 0.15.0 leaves the file alone and shows the theme's colour.
 
 ### Added
 

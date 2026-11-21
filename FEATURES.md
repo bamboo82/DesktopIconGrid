@@ -1158,9 +1158,14 @@ receive folder; text or symbols drawn over an icon's picture; the program's icon
 font and text size; and what the release check found (names, glyphs, gauge text, lines and the bar's own marks that
 read over a light desktop while the background is see-through).
 
-**0.15.0 "Locked and at hand"** *(in progress)* — the owner's requests after 0.14.0: the window at the pointer as the
-bar's twin; a key held to show the bar at the pointer; a lock on the grid; and for the custom theme a colour picker, a
-background picture with its position and zoom; and the text icon window for captions and widgets, with an offset.
+**0.15.0 "Locked and at hand"** *(done, released 2026-11-22)* — the owner's requests after 0.14.0: the window at the
+pointer as the bar's twin; a key held to show the bar at the pointer; a lock on the grid; for the custom theme a colour
+picker, hover and focus colours, and a background picture with its position and zoom that travels with sync; the text
+icon window for captions and widgets, with an offset; more icon sizes; sharp text in every window; and what the review
+found (the new rows in Settings' label column, a stronger edge over a picture, a tooltip that goes with the focus, a
+picked file over 50 MB refused before it is read).
+
+**Next** — nothing planned yet.
 
 **1.0.0 "Ship it"** — the existing backlog: installer (MSIX/winget), code signing, and the Windows toast with
 actions.
