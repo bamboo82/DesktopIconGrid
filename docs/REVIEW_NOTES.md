@@ -9,6 +9,67 @@ The owner relays replies.
 
 ---
 
+## 2026-11-21 (121) — 0.14.0 WP3: the transparency fades the background only
+
+Run 223 (`a9712fb`, entry 120, WP1) is green: Core 1177 and App 440 tests. This is WP3. WP4, WP5 with A3, WP6 and
+WP2 follow, in that order.
+
+- **How (the way was mine):** the bar stays an ordinary window, not a layered one.
+  - WPF draws on a transparent surface: the composition target's background is transparent, which `WindowChrome`
+    already does while DWM composes.
+  - DWM is asked to compose the window by that surface's alpha: `DwmEnableBlurBehindWindow` with an empty region.
+    Since Windows 8 that call blurs nothing; it only makes DWM use the alpha. GLFW's transparent framebuffer relies on
+    the same thing on Windows 8 to 11.
+  - The opacity goes only into `Theme.BarBackground`, as it already did with Mica or Acrylic (`translucentBar` is now
+    "backdrop or see-through"). Everything else is drawn solid.
+  - `WindowAlpha` (the layered window's single alpha) and its declarations are gone. The new service is
+    `Services/WindowTransparency.cs`.
+- **Why not `AllowsTransparency`:**
+  - a layered window cannot take Mica or Acrylic;
+  - it has to be chosen before the window exists, so switching between solid and a backdrop would need a new window;
+  - it passes clicks through where it is fully transparent.
+
+  An ordinary window is hit by its rectangle: a right-click on an empty part of the background reaches the bar
+  however transparent it is, and `WindowFromPoint` at the background gives the bar (tested, below).
+- **What it keeps:** docking and the work-area reservation, drag and drop from Explorer, the hotkey, and
+  show/hide. None of these depend on the window being layered or not. The backdrops on Windows 11 are unchanged: a
+  chosen backdrop turns the see-through mode off before DWM gets the backdrop. A refused call is logged, and the
+  background is then opaque, never unpainted.
+- **Text:** while the background is see-through, the bar and its popup draw text with `TextRenderingMode.Grayscale`.
+  ClearType works its colour fringes out against the bar's own colour, not against what shows through. At 100 % the
+  surface is as before, and so is ClearType. The Mica and Acrylic path is left as it was.
+- **The popup** follows the bar: Acrylic with a tint when the bar has a backdrop; see-through at the bar's value when
+  the bar is (`Theme.PopupBackground` takes the opacity, the icons stay solid); solid otherwise.
+- **The folder stack:** its window had no transparency before, and it still has none.
+- **High Contrast:** the background stays opaque. Before, the whole window faded under High Contrast too. This is my
+  choice, the same as for the backdrop ("High Contrast asks for flat colours"); say if you want the value to apply
+  there.
+- **Windows 10** cannot be seen here. The same call is documented to do the same there (no blur since Windows 8, the
+  alpha used). If it is refused, the bar is opaque and the log has a Warning.
+- **Strings:**
+  - renamed: Settings_Transparency ("Background transparency:", 背景透明度：), Settings_TransparencyName;
+  - new, under the slider: Settings_TransparencyHint;
+  - Settings_BackdropHintSupported loses "Icons stay sharp", which the new hint now says, and names the slider by its
+    new name;
+  - the slider's tool tip says "the bar's background".
+- **Stored value:** `opacity` is unchanged in `layout.json` and in sync.
+- **Tests (App):**
+  - `SeeThroughTests` shows real windows on CI's desktop: a red window, and over it a window with a blue background
+    at 20 % and a green square, made see-through by `WindowTransparency`. Read back from the screen:
+    - the square is exactly green;
+    - the background is about (204, 0, 51), blue at 20 % over red. A window-wide alpha would fade the square; an
+      opaque surface would give (0, 0, 51);
+    - `WindowFromPoint` at the background is that window.
+  - A second test: of the theme's brushes, only the bar background takes the tint.
+- **Not tested:**
+  - the bar window itself (`MainWindow.ApplyAppearance` is not run by a test: the mechanism and the brush are);
+  - a real 20 % capture of the bar, which you said you do;
+  - ClearType versus grey on a real screen;
+  - Windows 10, a GPU (CI renders in software), RDP, and a change of setting while a popup is open (Settings
+    closes the popup first).
+
+This entry claims no run for its own commit.
+
 ## 2026-11-21 (120) — 0.14.0 WP1: separators that start a new row (plan 35, with A1 and A2)
 
 The first package of plan 35, with your two additions: A1, a caption on the row line, and A2, the row-start line.

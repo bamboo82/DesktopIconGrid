@@ -124,7 +124,11 @@ public sealed partial class LauncherSettings
     /// <summary>When started with Windows, keep the bar hidden until it is shown from the tray or the hotkey.</summary>
     public bool StartHidden { get; set; }
 
-    /// <summary>Bar opacity in percent, <see cref="MinOpacity"/>–100 (solid background only).</summary>
+    /// <summary>
+    /// The opacity of the bar's background in percent, <see cref="MinOpacity"/>–100: a tint over Mica or Acrylic, or, with
+    /// a solid background, how much of it hides the desktop. Icons, names and the rest of the bar stay solid (0.14.0;
+    /// before, without a backdrop, the whole bar faded). Stored and synced as before.
+    /// </summary>
     public int Opacity { get; set; } = MaxOpacity;
 
     /// <summary>System-wide key combination that shows or hides the bar, e.g. <c>Ctrl+Alt+Space</c>; <see langword="null"/> for none.</summary>

@@ -4,7 +4,8 @@ namespace DesktopIconGrid.Services;
 
 /// <summary>
 /// Win32 declarations for windows, monitors, the desktop toolbar (SHAppBarMessage), the notification area
-/// (Shell_NotifyIcon), the icons drawn for it and the DWM backdrop: one declaration each, shared by every caller.
+/// (Shell_NotifyIcon), the icons drawn for it, the DWM backdrop and the see-through background: one declaration each,
+/// shared by every caller.
 /// BITMAPINFOHEADER, DestroyIcon, DeleteObject, SetForegroundWindow and DwmSetWindowAttribute are in NativeMethods.cs.
 /// </summary>
 internal static partial class NativeMethods
@@ -14,9 +15,7 @@ internal static partial class NativeMethods
     public const long WS_CAPTION = 0x00C00000; // WS_BORDER | WS_DLGFRAME: a title bar
     public const long WS_THICKFRAME = 0x00040000; // a sizing border
     public const long WS_EX_TOOLWINDOW = 0x00000080;
-    public const long WS_EX_LAYERED = 0x00080000;
     public const long WS_EX_NOACTIVATE = 0x08000000;
-    public const uint LWA_ALPHA = 0x2;
 
     public const uint SWP_NOSIZE = 0x0001;
     public const uint SWP_NOZORDER = 0x0004;
@@ -66,10 +65,6 @@ internal static partial class NativeMethods
 
     [DllImport("user32.dll", CharSet = CharSet.Unicode)]
     public static extern uint RegisterWindowMessage(string lpString);
-
-    [DllImport("user32.dll")]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    public static extern bool SetLayeredWindowAttributes(IntPtr hwnd, uint crKey, byte bAlpha, uint dwFlags);
 
     /// <summary>The window's extended style. 32-bit user32 has no GetWindowLongPtr export, so it reads GetWindowLong there.</summary>
     public static long GetExStyle(IntPtr hwnd) =>
@@ -325,4 +320,27 @@ internal static partial class NativeMethods
 
     [DllImport("dwmapi.dll")]
     public static extern int DwmExtendFrameIntoClientArea(IntPtr hwnd, ref MARGINS margins);
+
+    public const uint DWM_BB_ENABLE = 0x1;
+    public const uint DWM_BB_BLURREGION = 0x2;
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct DWM_BLURBEHIND
+    {
+        public uint dwFlags;
+
+        [MarshalAs(UnmanagedType.Bool)]
+        public bool fEnable;
+
+        public IntPtr hRgnBlur;
+
+        [MarshalAs(UnmanagedType.Bool)]
+        public bool fTransitionOnMaximized;
+    }
+
+    [DllImport("dwmapi.dll")]
+    public static extern int DwmEnableBlurBehindWindow(IntPtr hwnd, ref DWM_BLURBEHIND blurBehind);
+
+    [DllImport("gdi32.dll")]
+    public static extern IntPtr CreateRectRgn(int left, int top, int right, int bottom);
 }

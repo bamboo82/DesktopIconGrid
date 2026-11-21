@@ -290,13 +290,13 @@ Made by a newer version of Desktop Icon Grid; kept as a placeholder.</value>
     <value>A docked bar spans the edge of its screen like the taskbar: maximised windows stop at it, it stays on top, and its thickness is the current height or width (drag the inner edge to change it). Full-screen programs hide it.</value>
   </data>
   <data name="Settings_Transparency" xml:space="preserve">
-    <value>Transparency:</value>
+    <value>Background transparency:</value>
   </data>
   <data name="Settings_TransparencyName" xml:space="preserve">
-    <value>Transparency</value>
+    <value>Background transparency</value>
   </data>
   <data name="Settings_TransparencyToolTip" xml:space="preserve">
-    <value>How much shows through the bar: the desktop with a solid colour, the blurred backdrop with Mica or Acrylic (icons stay sharp)</value>
+    <value>How much of the bar's background shows through: the desktop with a solid colour, the blurred backdrop with Mica or Acrylic</value>
   </data>
   <data name="Settings_Hotkey" xml:space="preserve">
     <value>Show/hide hotkey:</value>
@@ -347,7 +347,7 @@ Made by a newer version of Desktop Icon Grid; kept as a placeholder.</value>
     <value>Right edge</value>
   </data>
   <data name="Settings_BackdropHintSupported" xml:space="preserve">
-    <value>Mica and Acrylic let the desktop show through with a blur; the theme colour tints it and the transparency slider sets how much of the blur shows. Icons stay sharp.</value>
+    <value>Mica and Acrylic let the desktop show through with a blur; the theme colour tints it and the background transparency slider sets how much of the blur shows.</value>
   </data>
   <data name="Settings_BackdropHintUnsupported" xml:space="preserve">
     <value>Mica and Acrylic need Windows 11 (version 22H2 or later).</value>
@@ -2785,5 +2785,8 @@ The place was not changed; what was copied stays there.</value>
   </data>
   <data name="Separator_RowLineText" xml:space="preserve">
     <value>Text…</value>
+  </data>
+  <data name="Settings_TransparencyHint" xml:space="preserve">
+    <value>Only the bar's background fades; icons and names stay solid.</value>
   </data>
 </root>

@@ -290,13 +290,13 @@
     <value>停靠的工具栏会像任务栏一样横跨屏幕边缘：最大化的窗口会停在它前面，它总在最前，厚度为当前的高度或宽度（拖动内侧边缘可调整）。全屏程序会将它隐藏。</value>
   </data>
   <data name="Settings_Transparency" xml:space="preserve">
-    <value>透明度：</value>
+    <value>背景透明度：</value>
   </data>
   <data name="Settings_TransparencyName" xml:space="preserve">
-    <value>透明度</value>
+    <value>背景透明度</value>
   </data>
   <data name="Settings_TransparencyToolTip" xml:space="preserve">
-    <value>工具栏的透视程度：纯色时透出桌面，Mica 或 Acrylic 时透出模糊的背景（图标保持清晰）</value>
+    <value>工具栏背景的透视程度：纯色时透出桌面，Mica 或 Acrylic 时透出模糊的背景</value>
   </data>
   <data name="Settings_Hotkey" xml:space="preserve">
     <value>显示/隐藏热键：</value>
@@ -347,7 +347,7 @@
     <value>右边缘</value>
   </data>
   <data name="Settings_BackdropHintSupported" xml:space="preserve">
-    <value>Mica 和 Acrylic 让桌面以模糊方式透出；主题色为其着色，透明度滑块决定模糊透出的程度。图标保持清晰。</value>
+    <value>Mica 和 Acrylic 让桌面以模糊方式透出；主题色为其着色，背景透明度滑块决定模糊透出的程度。</value>
   </data>
   <data name="Settings_BackdropHintUnsupported" xml:space="preserve">
     <value>Mica 和 Acrylic 需要 Windows 11（22H2 或更高版本）。</value>
@@ -2785,5 +2785,8 @@ SHA-256：{3}
   </data>
   <data name="Separator_RowLineText" xml:space="preserve">
     <value>标题文字…</value>
+  </data>
+  <data name="Settings_TransparencyHint" xml:space="preserve">
+    <value>只有工具栏的背景会变透明；图标与名称保持不透明。</value>
   </data>
 </root>

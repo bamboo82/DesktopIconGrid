@@ -36,6 +36,9 @@ public partial class MainWindow : Window
     private bool _closing;
     private bool _backdropActive;
 
+    /// <summary>The background lets the desktop show through without a backdrop (0.14.0 WP3; <see cref="WindowTransparency"/>).</summary>
+    private bool _seeThrough;
+
     public MainWindow(LauncherViewModel viewModel)
     {
         _viewModel = viewModel;
@@ -234,24 +237,27 @@ public partial class MainWindow : Window
     }
 
     /// <summary>
-    /// Theme brushes, the Windows 11 backdrop and the opacity, in that order: the backdrop decides whether the bar
-    /// background is a tint and whether the layered alpha applies. Runs once the window has a handle, and again on
-    /// every settings change and when Windows High Contrast is switched.
+    /// Theme brushes, the Windows 11 backdrop and the background's transparency: the backdrop decides whether the bar's
+    /// background is a tint over it, and without one a background that is not opaque lets the desktop show through
+    /// (<see cref="WindowTransparency"/>). Either way only the background takes the transparency; icons, names and
+    /// everything else on the bar are drawn solid (0.14.0 WP3; before, without a backdrop, the whole window faded). Runs
+    /// once the window has a handle, and again on every settings change and when Windows High Contrast is switched.
     /// </summary>
     private void ApplyAppearance()
     {
         var handle = new WindowInteropHelper(this).Handle;
-        if (handle == IntPtr.Zero)
+        if (handle == IntPtr.Zero || HwndSource.FromHwnd(handle) is not { } source)
         {
             return; // before SourceInitialized; it calls again
         }
 
         var settings = _viewModel.Model.Settings;
         var palette = ThemeManager.EffectivePalette(_viewModel.Palette);
-        var wanted = SystemParameters.HighContrast ? LauncherSettings.BackdropSolid : settings.BarBackdrop; // High Contrast asks for flat colours
-        if (!string.Equals(wanted, LauncherSettings.BackdropSolid, StringComparison.Ordinal) && WindowBackdrop.IsSupported)
+        var highContrast = SystemParameters.HighContrast;
+        var wanted = highContrast ? LauncherSettings.BackdropSolid : settings.BarBackdrop; // High Contrast asks for flat colours
+        if (_seeThrough && !string.Equals(wanted, LauncherSettings.BackdropSolid, StringComparison.Ordinal) && WindowBackdrop.IsSupported)
         {
-            WindowAlpha.Apply(handle, LauncherSettings.MaxOpacity); // a layered window cannot take a backdrop: drop the style first
+            _seeThrough = WindowTransparency.Set(source, seeThrough: false); // a backdrop takes over the background
         }
 
         var active = WindowBackdrop.Apply(handle, wanted, darkMode: ThemeCatalog.Luminance(palette.Background) <= 0.6);
@@ -268,25 +274,44 @@ public partial class MainWindow : Window
                 CornerRadius = new CornerRadius(0),
                 UseAeroCaptionButtons = false,
             });
-            if (active)
-            {
-                Background = Brushes.Transparent;
-                if (HwndSource.FromHwnd(handle) is { CompositionTarget: { } target })
-                {
-                    target.BackgroundColor = Colors.Transparent;
-                }
-            }
-            else
-            {
-                ClearValue(BackgroundProperty);
-            }
-
             AppLog.Default.Info("App", active ? $"Bar background: {wanted} backdrop" : "Bar background: solid colour");
         }
 
-        ThemeManager.Apply(palette, translucentBar: active, tintOpacity: _viewModel.Opacity / 100.0);
+        // Without a backdrop, a background that is not opaque shows the desktop; an opaque one stays as it was. High
+        // Contrast keeps its flat colours.
+        var seeThrough = !active && !highContrast && _viewModel.Opacity < LauncherSettings.MaxOpacity;
+        if (seeThrough != _seeThrough)
+        {
+            _seeThrough = WindowTransparency.Set(source, seeThrough);
+            if (seeThrough)
+            {
+                AppLog.Default.Info("App", _seeThrough ? $"Bar background: solid colour at {_viewModel.Opacity} %, the desktop shows through" : "Bar background: solid colour, opaque");
+            }
+        }
+
+        if (active || _seeThrough)
+        {
+            Background = Brushes.Transparent;
+            if (source.CompositionTarget is { } target)
+            {
+                target.BackgroundColor = Colors.Transparent; // WindowChrome does this too while DWM composes; said here as well
+            }
+        }
+        else
+        {
+            ClearValue(BackgroundProperty);
+        }
+
+        // On a see-through background the edges of text are smoothed in grey: ClearType works its colours out against the
+        // bar's own colour, not against what shows through, and would fringe there.
+        TextOptions.SetTextRenderingMode(this, _seeThrough ? TextRenderingMode.Grayscale : TextRenderingMode.Auto);
+
+        ThemeManager.Apply(palette, translucentBar: active || _seeThrough, tintOpacity: _viewModel.Opacity / 100.0);
         DialogTheme.Configure(settings.FluentDialogs);
-        ApplyOpacity();
+        if (GroupPopup.IsOpen && GroupPopup.Child is { } child && PresentationSource.FromVisual(child) is HwndSource popupSource)
+        {
+            ApplyPopupBackground(popupSource);
+        }
     }
 
     private void OnSystemParametersChanged(object? sender, PropertyChangedEventArgs e)
@@ -297,26 +322,21 @@ public partial class MainWindow : Window
         }
     }
 
-    /// <summary>With a backdrop the tint already carries the transparency; the layered alpha would fade the icons as well.</summary>
-    private int EffectiveOpacity => _backdropActive ? LauncherSettings.MaxOpacity : _viewModel.Opacity;
-
-    private void ApplyOpacity()
+    /// <summary>The popup has its own window: it follows the bar, with an Acrylic backdrop, see-through, or the solid colour.</summary>
+    private void GroupPopup_Opened(object? sender, EventArgs e)
     {
-        WindowAlpha.Apply(new WindowInteropHelper(this).Handle, EffectiveOpacity);
-        if (GroupPopup.IsOpen && GroupPopup.Child is { } child && PresentationSource.FromVisual(child) is HwndSource popupSource)
+        if (GroupPopup.Child is { } child && PresentationSource.FromVisual(child) is HwndSource popupSource)
         {
-            WindowAlpha.Apply(popupSource.Handle, EffectiveOpacity);
+            ApplyPopupBackground(popupSource);
         }
     }
 
-    /// <summary>The popup has its own window: give it an Acrylic backdrop when the bar has one, else the solid colour.</summary>
-    private void GroupPopup_Opened(object? sender, EventArgs e)
+    /// <summary>
+    /// The group popup's background as the bar's: a tint over Acrylic when the bar has a backdrop, see-through at the
+    /// bar's transparency when the bar is (its icons solid, as on the bar), otherwise the solid colour.
+    /// </summary>
+    private void ApplyPopupBackground(HwndSource popupSource)
     {
-        if (GroupPopup.Child is not { } child || PresentationSource.FromVisual(child) is not HwndSource popupSource)
-        {
-            return;
-        }
-
         var palette = ThemeManager.EffectivePalette(_viewModel.Palette);
         var translucent = false;
         if (_backdropActive)
@@ -327,9 +347,17 @@ public partial class MainWindow : Window
                 target.BackgroundColor = Colors.Transparent;
             }
         }
+        else
+        {
+            translucent = WindowTransparency.Set(popupSource, _seeThrough);
+        }
+
+        if (GroupPopup.Child is { } child)
+        {
+            TextOptions.SetTextRenderingMode(child, translucent && !_backdropActive ? TextRenderingMode.Grayscale : TextRenderingMode.Auto);
+        }
 
         ThemeManager.SetPopupBackground(palette, translucent, _viewModel.Opacity / 100.0);
-        WindowAlpha.Apply(popupSource.Handle, EffectiveOpacity);
     }
 
     protected override void OnClosed(EventArgs e)

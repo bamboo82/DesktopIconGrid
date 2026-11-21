@@ -5982,7 +5982,7 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Transparency:.
+        ///   Looks up a localized string similar to Background transparency:.
         /// </summary>
         public static string Settings_Transparency {
             get {
@@ -5991,7 +5991,16 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Transparency.
+        ///   Looks up a localized string similar to Only the bar's background fades; icons and names stay solid..
+        /// </summary>
+        public static string Settings_TransparencyHint {
+            get {
+                return ResourceManager.GetString("Settings_TransparencyHint", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Background transparency.
         /// </summary>
         public static string Settings_TransparencyName {
             get {
@@ -6000,7 +6009,7 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to How much shows through the bar: the desktop with a solid colour, the blurred bac [rest of string was truncated]";.
+        ///   Looks up a localized string similar to How much of the bar's background shows through: the desktop with a solid colour, [rest of string was truncated]";.
         /// </summary>
         public static string Settings_TransparencyToolTip {
             get {

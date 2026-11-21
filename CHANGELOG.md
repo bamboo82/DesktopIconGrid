@@ -19,6 +19,14 @@ The owner's requests after 0.13.0.
   edits its text too, as `F2` does. A drop just before either goes at the end of the row above, and the drop marker
   shows it there. Versions before 0.14.0 draw both as a line and keep them.
 
+### Changed
+
+- *Transparency* is now *Background transparency* and fades only the bar's background, with a solid colour as with
+  Mica or Acrylic: icons, names, captions, lines, gauges, tiles and the notice row stay solid, on the bar and in a
+  group's popup. Before, without a backdrop, the whole bar faded with it. The bar stays an ordinary window, so a click
+  on its background still reaches it. While the background is see-through, text is smoothed in grey instead of with
+  ClearType. Under Windows High Contrast the background stays opaque. The value is stored and synced as before.
+
 ## [0.13.0] – 2026-11-21
 
 "Where it lives, how it reads": the owner's requests after 0.12.2.
