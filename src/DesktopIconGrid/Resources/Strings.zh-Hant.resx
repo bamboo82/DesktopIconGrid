@@ -2745,7 +2745,7 @@ SHA-256：{3}
     <value>字型：</value>
   </data>
   <data name="Settings_UiFontName" xml:space="preserve">
-    <value>程式文字的字型</value>
+    <value>工具列文字的字型</value>
   </data>
   <data name="Settings_UiFontDefault" xml:space="preserve">
     <value>Windows 預設（{0}）</value>
@@ -2757,16 +2757,16 @@ SHA-256：{3}
     <value>文字大小：</value>
   </data>
   <data name="Settings_TextSizeName" xml:space="preserve">
-    <value>文字大小</value>
+    <value>工具列文字的大小</value>
   </data>
   <data name="Settings_TextSizeValue" xml:space="preserve">
     <value>{0}%</value>
   </data>
   <data name="Settings_TextSample" xml:space="preserve">
-    <value>範例 Sample 123 快速啟動</value>
+    <value>範例：</value>
   </data>
   <data name="Settings_TextHint" xml:space="preserve">
-    <value>工具列上的名稱在儲存時套用，對話方塊在下次開啟時套用。圖示大小不變。</value>
+    <value>工具列上的名稱在儲存時套用。圖示大小不變。</value>
   </data>
   <data name="App_PortableKeptInProgram" xml:space="preserve">
     <value>portable.txt 指定的 {0} 沒有工具列，而程式的資料夾有；工具列仍將檔案保存在程式的資料夾。若要移動檔案，請使用「設定」›「可攜」。</value>
@@ -2887,5 +2887,29 @@ SHA-256：{3}
   </data>
   <data name="TextIcon_HintOver" xml:space="preserve">
     <value>文字會疊在圖示圖片上。一到兩個字或一個符號效果最好。</value>
+  </data>
+  <data name="Settings_BarText" xml:space="preserve">
+    <value>工具列文字</value>
+  </data>
+  <data name="Settings_DialogText" xml:space="preserve">
+    <value>對話方塊與功能表文字</value>
+  </data>
+  <data name="Settings_SameAsBar" xml:space="preserve">
+    <value>與工具列相同</value>
+  </data>
+  <data name="Settings_DialogTextHint" xml:space="preserve">
+    <value>設定、內容等視窗與功能表使用這個字型與大小。視窗的大小在下次開啟時套用。</value>
+  </data>
+  <data name="Settings_BarSample" xml:space="preserve">
+    <value>捷徑 Shortcut 123</value>
+  </data>
+  <data name="Settings_DialogSample" xml:space="preserve">
+    <value>設定 Settings 123</value>
+  </data>
+  <data name="Settings_DialogFontName" xml:space="preserve">
+    <value>對話方塊與功能表文字的字型</value>
+  </data>
+  <data name="Settings_DialogTextSizeName" xml:space="preserve">
+    <value>對話方塊與功能表文字的大小</value>
   </data>
 </root>

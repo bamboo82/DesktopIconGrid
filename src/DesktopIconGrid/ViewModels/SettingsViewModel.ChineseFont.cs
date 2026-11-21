@@ -74,7 +74,7 @@ public sealed partial class SettingsViewModel
             if (value is not null && SetProperty(ref _selectedChineseFont, value))
             {
                 _chineseFontChosen = true;
-                OnPropertyChanged(nameof(SampleFontFamily)); // the sample's Chinese follows the choice (0.13.0 WP4)
+                OnSampleFontsChanged(); // the samples' Chinese follows the choice (0.13.0 WP4)
             }
         }
     }
@@ -174,7 +174,7 @@ public sealed partial class SettingsViewModel
             _chineseFontChosen = true;
             OnPropertyChanged(nameof(ChineseFontOptions));
             OnPropertyChanged(nameof(SelectedChineseFont));
-            OnPropertyChanged(nameof(SampleFontFamily));
+            OnSampleFontsChanged();
         }
 
         SetInstallState(state);

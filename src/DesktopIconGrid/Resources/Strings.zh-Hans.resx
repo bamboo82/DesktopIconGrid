@@ -2745,7 +2745,7 @@ SHA-256：{3}
     <value>字体：</value>
   </data>
   <data name="Settings_UiFontName" xml:space="preserve">
-    <value>程序文字的字体</value>
+    <value>工具栏文字的字体</value>
   </data>
   <data name="Settings_UiFontDefault" xml:space="preserve">
     <value>Windows 默认（{0}）</value>
@@ -2757,16 +2757,16 @@ SHA-256：{3}
     <value>文字大小：</value>
   </data>
   <data name="Settings_TextSizeName" xml:space="preserve">
-    <value>文字大小</value>
+    <value>工具栏文字的大小</value>
   </data>
   <data name="Settings_TextSizeValue" xml:space="preserve">
     <value>{0}%</value>
   </data>
   <data name="Settings_TextSample" xml:space="preserve">
-    <value>示例 Sample 123 快速启动</value>
+    <value>示例：</value>
   </data>
   <data name="Settings_TextHint" xml:space="preserve">
-    <value>工具栏上的名称在保存时应用，对话框在下次打开时应用。图标大小不变。</value>
+    <value>工具栏上的名称在保存时应用。图标大小不变。</value>
   </data>
   <data name="App_PortableKeptInProgram" xml:space="preserve">
     <value>portable.txt 指定的 {0} 没有工具栏，而程序的文件夹有；工具栏仍将文件保存在程序的文件夹。若要移动文件，请使用“设置”›“便携”。</value>
@@ -2887,5 +2887,29 @@ SHA-256：{3}
   </data>
   <data name="TextIcon_HintOver" xml:space="preserve">
     <value>文字会叠在图标图片上。一到两个字或一个符号效果最好。</value>
+  </data>
+  <data name="Settings_BarText" xml:space="preserve">
+    <value>工具栏文字</value>
+  </data>
+  <data name="Settings_DialogText" xml:space="preserve">
+    <value>对话框与菜单文字</value>
+  </data>
+  <data name="Settings_SameAsBar" xml:space="preserve">
+    <value>与工具栏相同</value>
+  </data>
+  <data name="Settings_DialogTextHint" xml:space="preserve">
+    <value>设置、属性等窗口与菜单使用这个字体与大小。窗口的大小在下次打开时应用。</value>
+  </data>
+  <data name="Settings_BarSample" xml:space="preserve">
+    <value>快捷方式 Shortcut 123</value>
+  </data>
+  <data name="Settings_DialogSample" xml:space="preserve">
+    <value>设置 Settings 123</value>
+  </data>
+  <data name="Settings_DialogFontName" xml:space="preserve">
+    <value>对话框与菜单文字的字体</value>
+  </data>
+  <data name="Settings_DialogTextSizeName" xml:space="preserve">
+    <value>对话框与菜单文字的大小</value>
   </data>
 </root>

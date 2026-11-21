@@ -187,10 +187,10 @@ public sealed class ChineseFontAppTests(WpfThread wpf)
             {
                 Assert.Equal(TestFont, UiFonts.ChineseFontFile);
 
-                // The bar's windows take the font as MainWindow does.
+                // The bar's windows take the font as MainWindow does: the bar's since 0.14.0 WP2, Chinese for both.
                 var label = new TextBlock { Text = "設定 Settings" };
                 bar = new Window { Width = 300, Height = 100, Content = label };
-                UiFonts.Apply(bar);
+                UiFonts.ApplyBar(bar);
                 bar.Show();
                 Settle(bar);
                 Assert.True(IsTestFont(FontOf(label, '設')));

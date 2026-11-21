@@ -59,7 +59,7 @@ public partial class StackWindow : Window
     public StackWindow(string name, string folder, bool newestFirst, IIconProvider icons)
     {
         InitializeComponent();
-        UiFonts.Apply(this); // Chinese in Taipei Sans TC Light where this PC has it (0.12.0 WP5)
+        UiFonts.Apply(this); // the dialogs' font, as the menus have (0.14.0 WP2); Chinese in Taipei Sans TC Light where this PC has it (0.12.0 WP5)
         _folder = folder;
         _newestFirst = newestFirst;
         _icons = icons;

@@ -42,7 +42,7 @@ public partial class PointerWindow : Window
         _viewModel = viewModel;
         DataContext = viewModel;
         InitializeComponent();
-        UiFonts.Apply(this); // Chinese in Taipei Sans TC Light where this PC has it (0.12.0 WP5)
+        UiFonts.ApplyBar(this); // the bar's font, Chinese in Taipei Sans TC Light where this PC has it (0.12.0 WP5, 0.14.0 WP2)
         Icons.DataContext = viewModel.RootItems;
         Icons.GroupOpening += (_, group) => OpenGroup(group);
         viewModel.ItemActivated += OnItemActivated;

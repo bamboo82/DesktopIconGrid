@@ -1,4 +1,16 @@
+using DesktopIconGrid.Core.Models;
+
 namespace DesktopIconGrid.Core.Fonts;
+
+/// <summary>Whose text a font is chosen for (0.14.0 WP2).</summary>
+public enum FontUse
+{
+    /// <summary>The bar's names and captions, and the bar shown at the pointer.</summary>
+    Bar,
+
+    /// <summary>The other windows, the menus and the tooltips.</summary>
+    Dialogs,
+}
 
 /// <summary>
 /// The families the app's own text is drawn with, in order (0.13.0 WP4): the font chosen in Settings, else Windows' own
@@ -35,4 +47,30 @@ public static class UiFontChain
         !string.IsNullOrWhiteSpace(name)
         && name.Trim().Length <= MaxNameLength
         && !name.Any(c => c < ' ' || c is ',' or '#' or '/' or '\\' or ':' or '"');
+
+    /// <summary>
+    /// The families the bar and the dialogs are drawn with on this PC (0.14.0 WP2): the ones the settings name, a family
+    /// this PC lacks being Windows' own (<see langword="null"/>). Dialogs that take the bar's font take it as it is found
+    /// here, so a missing one is told of once, for the bar.
+    /// </summary>
+    /// <param name="isInstalled">Whether this PC has a family.</param>
+    /// <param name="missing">Told of each family that is chosen and missing, and for whose text.</param>
+    public static (string? Bar, string? Dialogs) Found(LauncherSettings settings, Func<string, bool> isInstalled, Action<string, FontUse>? missing = null)
+    {
+        ArgumentNullException.ThrowIfNull(settings);
+        ArgumentNullException.ThrowIfNull(isInstalled);
+        string? Here(string? family, FontUse use)
+        {
+            if (family is null || isInstalled(family))
+            {
+                return family;
+            }
+
+            missing?.Invoke(family, use);
+            return null;
+        }
+
+        var bar = Here(settings.UiFont, FontUse.Bar);
+        return (bar, settings.DialogFont is null ? bar : Here(settings.DialogFamily, FontUse.Dialogs));
+    }
 }

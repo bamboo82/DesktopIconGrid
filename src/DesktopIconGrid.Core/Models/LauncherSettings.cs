@@ -88,7 +88,8 @@ public sealed partial class LauncherSettings
 
     /// <summary>
     /// The font of the app's own text, by family name (0.13.0 WP4); <see langword="null"/> for Windows' own. It syncs, as
-    /// <see cref="ChineseFont"/> does; a PC that does not have the family draws the text in Windows' own.
+    /// <see cref="ChineseFont"/> does; a PC that does not have the family draws the text in Windows' own. Since 0.14.0 it is
+    /// the bar's, and the dialogs' while <see cref="DialogFont"/> is not set.
     /// </summary>
     public string? UiFont { get; set; }
 
@@ -101,13 +102,35 @@ public sealed partial class LauncherSettings
 
     /// <summary>
     /// The size of the app's text in percent of Windows' (0.13.0 WP4): dialogs are scaled whole, the bar's labels and their
-    /// cells follow, icons keep their size. <see langword="null"/> is 100; a value outside 90–150 is taken to its end.
+    /// cells follow, icons keep their size. <see langword="null"/> is 100; a value outside 90–150 is taken to its end. Since
+    /// 0.14.0 it is the bar's, and the dialogs' while <see cref="DialogTextScale"/> is not set.
     /// </summary>
     public int? TextScale { get; set; }
 
     /// <summary><see cref="TextScale"/> as a factor: 1 for 100 %.</summary>
     [JsonIgnore]
     public double TextFactor => (TextScale ?? 100) / 100.0;
+
+    /// <summary>
+    /// The font of the dialogs and menus (0.14.0 WP2), when it is not the bar's: <see langword="null"/> takes
+    /// <see cref="UiFont"/>, as 0.13.0 did for both; an empty string is Windows' own while the bar has a font of its own; else
+    /// a family's name, like <see cref="UiFont"/>. <see cref="UiFont"/> and <see cref="TextScale"/> are the bar's since then.
+    /// </summary>
+    public string? DialogFont { get; set; }
+
+    /// <summary>
+    /// The size of the dialogs' and menus' text in percent (0.14.0 WP2): <see langword="null"/> takes <see cref="TextScale"/>;
+    /// 100 is kept, since it says 100 % whatever the bar's size is. A value outside 90–150 is taken to its end.
+    /// </summary>
+    public int? DialogTextScale { get; set; }
+
+    /// <summary>The family the dialogs and menus ask for: <see langword="null"/> for Windows' own.</summary>
+    [JsonIgnore]
+    public string? DialogFamily => DialogFont is null ? UiFont : DialogFont.Length == 0 ? null : DialogFont;
+
+    /// <summary>The dialogs' and menus' size as a factor: 1 for 100 %.</summary>
+    [JsonIgnore]
+    public double DialogTextFactor => (DialogTextScale ?? TextScale ?? 100) / 100.0;
 
     /// <summary>The close button hides the bar to the notification area instead of exiting.</summary>
     public bool CloseToTray { get; set; } = true;
@@ -176,6 +199,8 @@ public sealed partial class LauncherSettings
         ChineseFont = source.ChineseFont;
         UiFont = source.UiFont;
         TextScale = source.TextScale;
+        DialogFont = source.DialogFont;
+        DialogTextScale = source.DialogTextScale;
         ToggleHotkey = source.ToggleHotkey;
         ShowAtPointerHotkey = source.ShowAtPointerHotkey;
         WindowKeys = source.WindowKeys is null ? null : new Dictionary<string, string>(source.WindowKeys);
@@ -260,6 +285,21 @@ public sealed partial class LauncherSettings
             var clamped = Math.Clamp(scale, MinTextScale, MaxTextScale);
             changed |= clamped != scale; // out of range: repaired; 100 is only the default written out
             TextScale = clamped == 100 ? null : clamped;
+        }
+
+        if (DialogFont is not null)
+        {
+            // An empty string says Windows' own, and so does what is no family's name, as for the bar's font.
+            var family = UiFontChain.IsFamilyName(DialogFont) ? DialogFont.Trim() : string.Empty;
+            changed |= family != DialogFont;
+            DialogFont = family;
+        }
+
+        if (DialogTextScale is { } dialogScale)
+        {
+            var clamped = Math.Clamp(dialogScale, MinTextScale, MaxTextScale);
+            changed |= clamped != dialogScale;
+            DialogTextScale = clamped; // 100 too: it is not the bar's size
         }
 
         var edge = DockEdge?.Trim().ToLowerInvariant() ?? string.Empty;

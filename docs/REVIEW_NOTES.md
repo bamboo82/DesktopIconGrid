@@ -9,6 +9,77 @@ The owner relays replies.
 
 ---
 
+## 2026-11-21 (128) — 0.14.0 WP2: dialogs and menus get their own font and text size
+
+Run 230 (`7a0edca`, WP7, entry 127) is green: Core 1209 and App 481 tests. Review 38 came while I was on this: T2 is
+the next commit (entry 129), then "0.14.0 ready for the release check".
+
+A correction to entry 127, which said "the author and the files are unchanged": the files are (`git diff c0aec5c
+7a0edca -- assets/icons` is empty), the author is not. `7a0edca`'s author is this session, as its committer;
+`c0aec5c`'s author was not carried over.
+
+- **The settings:** `dialogFont` and `dialogTextScale` in `LauncherSettings`, synced, in `CopyFrom`, normalised. Both
+  absent: as 0.13.0.
+  - `dialogFont`: absent is the bar's (`uiFont`); `""` is Windows' own while the bar has a font of its own; else a
+    family's name, by the bar font's rule. What is no family's name becomes `""`, as the bar's becomes Windows' own.
+    `DialogFamily` is what the dialogs ask for.
+  - `dialogTextScale`: absent is the bar's; 90–150, a value outside taken to its end; 100 is kept, since it says 100 %
+    whatever the bar has. `DialogTextFactor` is the dialogs', else the bar's, else 100 %.
+- **How the font resource is split:**
+
+  | Resource | Read by | Chain |
+  | --- | --- | --- |
+  | `App.BarFontFamily` (new) | the bar window (`UiFonts.ApplyBar`), its group popups (they inherit from it), the bar at the pointer | the bar's family, the Chinese font, Windows' |
+  | `App.UiFontFamily` (as before) | every other window (`DialogTheme.Apply` calls `UiFonts.Apply`), the folder stack | the dialogs' family, the Chinese font, Windows' |
+  | Windows' menu, status and message font keys | context menus (the bar's too), the tray menu, tooltips (those over the bar too) | the dialogs' family; sizes × the dialogs' factor |
+  | `App.CodeFontFamily`, `App.LogFontFamily` | logs, an approval's details | Consolas, the Chinese font, …: unchanged |
+
+  - `DialogTheme.ScaleText` scales by `UiFonts.TextFactor`, which is now the dialogs' factor.
+  - The bar's sizes stay where 0.13.0 has them: `LauncherViewModel` reads `TextScale` (names, captions, the empty bar's
+    line, the cell's width, the name line). So `Configure` takes the two families and the dialogs' factor, not two
+    factors: a bar factor in `UiFonts` would have no reader. Say if you want it there all the same.
+  - Which families this PC has is `UiFontChain.Found` (Core): a missing one is Windows' own and is told once per run in
+    the log, for whose text. Dialogs on *Same as the bar* take the bar's font as it is found here, so a missing bar
+    font is told once, for the bar.
+  - 中文字型 is one for both: both chains carry it.
+- **The folder stack:** the dialogs' font (it is a list, as a menu is) at Windows' size, as in 0.13.0: it was never
+  scaled, and it sizes itself to its rows at the pointer. Say if it should take the dialogs' size.
+- **Settings ▸ 外觀:** 佈景主題, 背景, 工具列背景, 背景透明度, 圖示大小, 間距, 名稱, 中文字型, then **工具列文字** (字型, 文字大小,
+  範例：捷徑 Shortcut 123 with the bar's hint) and **對話方塊與功能表文字** (字型: 與工具列相同, Windows 預設（…）, the
+  families; 文字大小: 與工具列相同, 90 to 150 %; 範例：設定 Settings 123 with its hint).
+  - 背景透明度 moved up under 工具列背景: left last, it would have read as part of the dialog text group.
+  - The headings are `DialogLabel` (the dialog's text colour), SemiBold, across both columns.
+  - The samples are live. The dialogs' follows the bar's choice while it is on 與工具列相同. Both are scaled against the
+    size Settings itself is drawn at, which is the dialogs' size in use.
+  - 範例： has a colon, as the other labels of that column.
+  - The page is taller (sixteen rows). The page area is still at most 560, so 外觀 scrolls when it is taller; I expect
+    it to at 100 %, not measured here.
+- **Strings:** new `Settings_BarText`, `Settings_DialogText`, `Settings_SameAsBar`, `Settings_DialogTextHint`,
+  `Settings_BarSample`, `Settings_DialogSample`, `Settings_DialogFontName`, `Settings_DialogTextSizeName`. Changed:
+  `Settings_TextSample` is now the label 範例：; `Settings_TextHint` speaks of the bar only (工具列上的名稱在儲存時套用。圖示大小不變。);
+  `Settings_UiFontName` and `Settings_TextSizeName` name the bar's (工具列文字的字型, 工具列文字的大小).
+  - `Settings_DialogTextHint` has a second sentence of mine, 視窗的大小在下次開啟時套用。: an open window takes a new
+    font at once and a new size when it is next opened, which the 0.13.0 hint said for both. Drop it if you prefer
+    the plan's line alone.
+- **Tests:**
+  - Core (`DialogTextTests`): both settings' normalisation (100 kept, the ends, `""`, no family's name), the factor
+    (the bar at 150 % with the dialogs at 100 %, and the reverse), `DialogFamily`, the round trip, 0.13.0's settings (a
+    class with extension data) keeping both and writing them back, copy and clone; `UiFontChain.Found` with missing
+    families and whose text is told.
+  - App: `UiFonts.Configure` with two families (the keys, the sizes, the reverse, Windows' own for either); a window
+    made as the bar, with a context menu and a tooltip it opens: the text in the bar's font, the menu item and the
+    tooltip in the dialogs' font and size, a dialog in the dialogs' font and scale; the Settings lists in zh-Hant
+    (與工具列相同 first, Windows 預設（…）, `Gone Font（這台電腦沒有）`, 100 kept, the samples live, Save writes nothing for the
+    bar's); the bar's names at the bar's size with the dialogs at 100 % or 150 %; the 外觀 tab fitting at 90, 100 and
+    150 % in all three languages, both lists with a missing family, its rows in order; Settings with the bar at 150 %
+    and the dialogs at 100 % not scaled, and the reverse scaled, each sample at its own size. The Chinese font test now
+    takes the bar's font as `MainWindow` does.
+  - `FitsAcross` counts an element's own scale when it checks that nothing is squeezed: the samples have one.
+- **Not tested:** the bar's own menus, the tray menu and real tooltips with two fonts (the test opens a menu and a
+  tooltip it made); the folder stack; Windows 10.
+
+This entry claims no run for its own commit.
+
 ## 2026-11-21 (127) — 0.14.0 WP7: the program's icon set
 
 Run 229 (`8d9a4c7`, entries 124–126: WP6, T1 and the test fix) is green: Core 1209 and App 476 tests. This is WP7.

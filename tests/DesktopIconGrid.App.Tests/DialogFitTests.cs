@@ -83,7 +83,7 @@ public sealed class DialogFitTests(WpfThread wpf)
         wpf.Invoke(() =>
         {
             var window = new SettingsWindow { DataContext = new SettingsViewModel(new LauncherSettings()) };
-            window.Tabs.SelectedIndex = 2; // Keys, the tallest page since Settings has tabs
+            window.Tabs.SelectedIndex = 2; // Keys, a page taller than this screen
             FitsAShortScreen(window, window.Body, 400, Strings.Common_Save, Strings.Common_Cancel);
         });
     }
@@ -227,6 +227,86 @@ public sealed class DialogFitTests(WpfThread wpf)
         });
     }
 
+    [Theory]
+    [InlineData("en-US", 0.9)]
+    [InlineData("en-US", 1.0)]
+    [InlineData("en-US", 1.5)]
+    [InlineData("zh-Hant", 0.9)]
+    [InlineData("zh-Hant", 1.0)]
+    [InlineData("zh-Hant", 1.5)]
+    [InlineData("zh-Hans", 0.9)]
+    [InlineData("zh-Hans", 1.0)]
+    [InlineData("zh-Hans", 1.5)]
+    public void The_Appearance_tab_with_the_bar_text_and_the_dialog_text_fits(string language, double scale)
+    {
+        // 0.14.0 WP2: the Chinese row, then two headed groups, each with a font, a size and a sample; both fonts named by a
+        // family this PC lacks, so each list shows it as such.
+        wpf.Invoke(() =>
+        {
+            var before = System.Threading.Thread.CurrentThread.CurrentUICulture;
+            System.Threading.Thread.CurrentThread.CurrentUICulture = System.Globalization.CultureInfo.GetCultureInfo(language);
+            Services.UiFonts.Configure(null, null, scale);
+            var viewModel = new SettingsViewModel(new LauncherSettings { UiFont = "Gone Sans", TextScale = 150, DialogFont = "Gone Serif", DialogTextScale = 100 });
+            var window = new SettingsWindow { DataContext = viewModel };
+            try
+            {
+                window.Show();
+                Settle(window);
+                var what = $"{language} at {scale:P0}";
+                Assert.Equal(0, window.Tabs.SelectedIndex);
+                FitsAcross(window.AppearancePage, what);
+                var order = new FrameworkElement[]
+                {
+                    window.ChineseFontLabel, window.BarTextHeading, window.UiFontList, window.TextSizeList, window.TextSample,
+                    window.DialogTextHeading, window.DialogFontList, window.DialogTextSizeList, window.DialogTextSample,
+                };
+                var tops = order.Select(element => element.TranslatePoint(default, window.AppearancePage).Y).ToList();
+                Assert.Equal(tops.Order(), tops);
+                Assert.Contains("Gone Serif", viewModel.SelectedDialogFont.Name, StringComparison.Ordinal);
+                Assert.NotEqual("Gone Serif", viewModel.SelectedDialogFont.Name); // said to be missing
+                Assert.Equal(1.5 / scale, ((System.Windows.Media.ScaleTransform)window.TextSample.LayoutTransform).ScaleX, 3);
+                Assert.Equal(1.0 / scale, ((System.Windows.Media.ScaleTransform)window.DialogTextSample.LayoutTransform).ScaleX, 3);
+            }
+            finally
+            {
+                window.Close();
+                Services.UiFonts.Configure(null);
+                System.Threading.Thread.CurrentThread.CurrentUICulture = before;
+            }
+        });
+    }
+
+    [Fact]
+    public void Settings_takes_the_dialogs_size_not_the_bars_and_each_sample_shows_its_own()
+    {
+        // 0.14.0 WP2: the bar at 150 % with the dialogs at 100 %, and the reverse, as App configures them.
+        wpf.Invoke(() =>
+        {
+            foreach (var (bar, dialogs) in new (int?, int?)[] { (150, 100), (null, 150) })
+            {
+                var settings = new LauncherSettings { TextScale = bar, DialogTextScale = dialogs };
+                Services.UiFonts.Configure(null, null, null, settings.DialogTextFactor);
+                var window = new SettingsWindow { DataContext = new SettingsViewModel(settings) };
+                try
+                {
+                    window.Show();
+                    Settle(window);
+                    var what = $"the bar at {bar ?? 100} %, the dialogs at {dialogs} %";
+                    var scale = ((FrameworkElement)window.Content).LayoutTransform.Value.M11;
+                    Assert.Equal(settings.DialogTextFactor, scale, 3);
+                    Assert.Equal(settings.TextFactor, scale * ((System.Windows.Media.ScaleTransform)window.TextSample.LayoutTransform).ScaleX, 3);
+                    Assert.Equal(settings.DialogTextFactor, scale * ((System.Windows.Media.ScaleTransform)window.DialogTextSample.LayoutTransform).ScaleX, 3);
+                    FitsAcross(window.AppearancePage, what);
+                }
+                finally
+                {
+                    window.Close();
+                    Services.UiFonts.Configure(null);
+                }
+            }
+        });
+    }
+
     /// <summary>Every tab of Settings on the strip's first row, none past its end.</summary>
     private static void TabsInOneRow(SettingsWindow window, string what)
     {
@@ -253,7 +333,9 @@ public sealed class DialogFitTests(WpfThread wpf)
         {
             var right = element.TranslatePoint(new Point(element.ActualWidth, 0), root).X;
             Assert.True(right <= width + 0.5, $"{what}: {Describe(element)} ends at {right} of {width}");
-            Assert.True(element.ActualWidth + element.Margin.Left + element.Margin.Right >= element.DesiredSize.Width - 0.5, $"{what}: {Describe(element)} is squeezed");
+            // The width it is drawn at, its own scale included (Settings' text samples, 0.14.0 WP2), as its desired size has it.
+            var drawn = element.LayoutTransform.TransformBounds(new Rect(0, 0, element.ActualWidth, element.ActualHeight)).Width;
+            Assert.True(drawn + element.Margin.Left + element.Margin.Right >= element.DesiredSize.Width - 0.5, $"{what}: {Describe(element)} is squeezed");
         }
     }
 

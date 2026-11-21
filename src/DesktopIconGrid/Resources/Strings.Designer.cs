@@ -5379,6 +5379,24 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Shortcut 123 捷徑.
+        /// </summary>
+        public static string Settings_BarSample {
+            get {
+                return ResourceManager.GetString("Settings_BarSample", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Bar text.
+        /// </summary>
+        public static string Settings_BarText {
+            get {
+                return ResourceManager.GetString("Settings_BarText", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Chinese text:.
         /// </summary>
         public static string Settings_ChineseFont {
@@ -5555,6 +5573,51 @@ namespace DesktopIconGrid.Resources {
         public static string Settings_DataThisPc {
             get {
                 return ResourceManager.GetString("Settings_DataThisPc", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Font of dialog and menu text.
+        /// </summary>
+        public static string Settings_DialogFontName {
+            get {
+                return ResourceManager.GetString("Settings_DialogFontName", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Settings 123 設定.
+        /// </summary>
+        public static string Settings_DialogSample {
+            get {
+                return ResourceManager.GetString("Settings_DialogSample", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Dialog and menu text.
+        /// </summary>
+        public static string Settings_DialogText {
+            get {
+                return ResourceManager.GetString("Settings_DialogText", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Settings, Properties and the other windows, and the menus, use this font and siz [rest of string was truncated]";.
+        /// </summary>
+        public static string Settings_DialogTextHint {
+            get {
+                return ResourceManager.GetString("Settings_DialogTextHint", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Size of dialog and menu text.
+        /// </summary>
+        public static string Settings_DialogTextSizeName {
+            get {
+                return ResourceManager.GetString("Settings_DialogTextSizeName", resourceCulture);
             }
         }
 
@@ -5964,6 +6027,15 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Same as the bar.
+        /// </summary>
+        public static string Settings_SameAsBar {
+            get {
+                return ResourceManager.GetString("Settings_SameAsBar", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Sending and receiving files needs Sync across PCs to be set up first..
         /// </summary>
         public static string Settings_SendToNeedsSync {
@@ -6135,7 +6207,7 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to The bar's names follow at Save, a dialog when it is next opened. Icons keep thei [rest of string was truncated]";.
+        ///   Looks up a localized string similar to The bar's names follow at Save. Icons keep their size..
         /// </summary>
         public static string Settings_TextHint {
             get {
@@ -6144,7 +6216,7 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Sample 123 快速啟動.
+        ///   Looks up a localized string similar to Sample:.
         /// </summary>
         public static string Settings_TextSample {
             get {
@@ -6162,7 +6234,7 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Text size.
+        ///   Looks up a localized string similar to Size of the bar's text.
         /// </summary>
         public static string Settings_TextSizeName {
             get {
@@ -6261,7 +6333,7 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Font of the app's text.
+        ///   Looks up a localized string similar to Font of the bar's text.
         /// </summary>
         public static string Settings_UiFontName {
             get {

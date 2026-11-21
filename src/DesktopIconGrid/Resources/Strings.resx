@@ -2745,7 +2745,7 @@ The place was not changed; what was copied stays there.</value>
     <value>Font:</value>
   </data>
   <data name="Settings_UiFontName" xml:space="preserve">
-    <value>Font of the app's text</value>
+    <value>Font of the bar's text</value>
   </data>
   <data name="Settings_UiFontDefault" xml:space="preserve">
     <value>Windows default ({0})</value>
@@ -2757,16 +2757,16 @@ The place was not changed; what was copied stays there.</value>
     <value>Text size:</value>
   </data>
   <data name="Settings_TextSizeName" xml:space="preserve">
-    <value>Text size</value>
+    <value>Size of the bar's text</value>
   </data>
   <data name="Settings_TextSizeValue" xml:space="preserve">
     <value>{0} %</value>
   </data>
   <data name="Settings_TextSample" xml:space="preserve">
-    <value>Sample 123 快速啟動</value>
+    <value>Sample:</value>
   </data>
   <data name="Settings_TextHint" xml:space="preserve">
-    <value>The bar's names follow at Save, a dialog when it is next opened. Icons keep their size.</value>
+    <value>The bar's names follow at Save. Icons keep their size.</value>
   </data>
   <data name="App_PortableKeptInProgram" xml:space="preserve">
     <value>portable.txt names {0}, which has no bar, while the program's folder has one; the bar keeps its files in the program's folder. To move them, use Settings › Portable.</value>
@@ -2887,5 +2887,29 @@ The place was not changed; what was copied stays there.</value>
   </data>
   <data name="TextIcon_HintOver" xml:space="preserve">
     <value>The text is drawn on top of the icon picture. One or two characters, or one symbol, work best.</value>
+  </data>
+  <data name="Settings_BarText" xml:space="preserve">
+    <value>Bar text</value>
+  </data>
+  <data name="Settings_DialogText" xml:space="preserve">
+    <value>Dialog and menu text</value>
+  </data>
+  <data name="Settings_SameAsBar" xml:space="preserve">
+    <value>Same as the bar</value>
+  </data>
+  <data name="Settings_DialogTextHint" xml:space="preserve">
+    <value>Settings, Properties and the other windows, and the menus, use this font and size. A window changes size when it is next opened.</value>
+  </data>
+  <data name="Settings_BarSample" xml:space="preserve">
+    <value>Shortcut 123 捷徑</value>
+  </data>
+  <data name="Settings_DialogSample" xml:space="preserve">
+    <value>Settings 123 設定</value>
+  </data>
+  <data name="Settings_DialogFontName" xml:space="preserve">
+    <value>Font of dialog and menu text</value>
+  </data>
+  <data name="Settings_DialogTextSizeName" xml:space="preserve">
+    <value>Size of dialog and menu text</value>
   </data>
 </root>

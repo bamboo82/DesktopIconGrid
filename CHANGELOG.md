@@ -33,6 +33,11 @@ version numbers follow [Semantic Versioning](https://semver.org/).
 - The program's own icon set: the program in Explorer, on the taskbar, in Alt+Tab and on every window shows it, the tray
   takes the frame drawn for its size, and Explorer's *Send to* entry shows the icon with a plus (an entry made by an
   older version gets it at the next start). The README starts with its header picture.
+- Dialogs and menus can have their own font and text size. Settings ▸ Appearance has two groups under the Chinese text
+  row: *Bar text* (the font and size of the bar's names, as before) and *Dialog and menu text* (Settings, Properties and
+  the other windows, the menus and the tooltips), each with a sample. The dialogs' font and size start as *Same as the
+  bar*, so nothing changes until they are chosen; *Windows default* keeps them in Windows' font whatever the bar has.
+  Both sync. Versions before 0.14.0 draw everything with the bar's and keep the dialogs' choice.
 
 ### Changed
 
@@ -44,6 +49,7 @@ version numbers follow [Semantic Versioning](https://semver.org/).
   over a light desktop too. Under Windows High Contrast the background stays opaque. The value is stored and synced as before.
 - The data location has a Settings tab of its own, *Portable*, the last; *General* keeps the language. Nothing in the
   block changed, and the notice that sends you there names the new tab.
+- *Background transparency* sits under *Bar background* on the Appearance tab, with the other background settings.
 
 ## [0.13.0] – 2026-11-21
 

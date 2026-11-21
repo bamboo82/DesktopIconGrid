@@ -12,6 +12,7 @@ using DesktopIconGrid.Core.Launching;
 using DesktopIconGrid.Core.SpecialIcons;
 using DesktopIconGrid.Core;
 using DesktopIconGrid.Core.Diagnostics;
+using DesktopIconGrid.Core.Fonts;
 using DesktopIconGrid.Core.Models;
 using DesktopIconGrid.Core.Storage;
 using DesktopIconGrid.Core.Sync;
@@ -248,27 +249,23 @@ public partial class App : Application
         var usageSaver = new UsageSaver(usage, viewModel.ShortcutIds, read => Dispatcher.InvokeAsync(read).Task);
 
         // Chinese in Taipei Sans TC Light where this PC has it (0.12.0 WP5), the font and the size chosen for the app's
-        // text (0.13.0 WP4): now, and again after each Save.
+        // text (0.13.0 WP4), the bar's and the dialogs' (0.14.0 WP2): now, and again after each Save.
         var chineseFonts = new ChineseFontService(Http);
         dialogs.ChineseFonts = chineseFonts;
-        string? toldMissingFont = null;
+        var toldMissingFont = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         void ApplyFonts()
         {
             var settings = viewModel.Model.Settings;
             var file = chineseFonts.Find();
-            var family = settings.UiFont;
-            if (family is not null && !UiFonts.IsInstalled(family))
+            var (bar, dialogs) = UiFontChain.Found(settings, UiFonts.IsInstalled, (family, use) =>
             {
-                if (!string.Equals(toldMissingFont, family, StringComparison.OrdinalIgnoreCase))
+                if (toldMissingFont.Add($"{use}|{family}")) // once per run, family and use
                 {
-                    AppLog.Default.Info("Fonts", $"The font \"{family}\" chosen for the app's text is not on this PC; Windows' own is used");
-                    toldMissingFont = family; // once per run and family
+                    var text = use == FontUse.Bar ? "the bar's text" : "dialog and menu text";
+                    AppLog.Default.Info("Fonts", $"The font \"{family}\" chosen for {text} is not on this PC; Windows' own is used");
                 }
-
-                family = null;
-            }
-
-            UiFonts.Configure(ChineseFonts.UsesTaipei(settings.ChineseFont, CultureInfo.CurrentUICulture, file is not null) ? file : null, family, settings.TextFactor);
+            });
+            UiFonts.Configure(ChineseFonts.UsesTaipei(settings.ChineseFont, CultureInfo.CurrentUICulture, file is not null) ? file : null, bar, dialogs, settings.DialogTextFactor);
         }
 
         ApplyFonts();

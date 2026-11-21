@@ -571,6 +571,8 @@ public sealed partial class SettingsViewModel : ObservableObject
         settings.Opacity = LauncherSettings.MaxOpacity - _transparency;
         settings.UiFont = SelectedUiFont.Id;
         settings.TextScale = SelectedTextScale.Percent == 100 ? null : SelectedTextScale.Percent;
+        settings.DialogFont = SelectedDialogFont.Id; // null: the bar's; "": Windows' own (0.14.0 WP2)
+        settings.DialogTextScale = SelectedDialogScale.Percent; // null: the bar's; 100 is kept
         settings.CloseToTray = _closeToTray;
         settings.StartWithWindows = _startWithWindows;
         settings.StartHidden = _startHidden;

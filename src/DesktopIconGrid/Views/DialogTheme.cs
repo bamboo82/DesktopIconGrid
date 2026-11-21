@@ -58,9 +58,9 @@ public static class DialogTheme
     }
 
     /// <summary>
-    /// A dialog at the text size chosen in Settings (0.13.0 WP4): its whole content is scaled as one (a
-    /// <see cref="FrameworkElement.LayoutTransform"/> on it), so what fits at 100 % fits at 150 % in proportion, logs and
-    /// code text with it; the width and height it sets, and their limits, grow by the same factor. A dialog that would be
+    /// A dialog at the text size chosen in Settings (0.13.0 WP4; the dialogs' own since 0.14.0 WP2, the bar's unless
+    /// chosen): its whole content is scaled as one (a <see cref="FrameworkElement.LayoutTransform"/> on it), so what fits
+    /// at 100 % fits at 150 % in proportion, logs and code text with it; the width and height it sets, and their limits, grow by the same factor. A dialog that would be
     /// taller or wider than the work area is held to it (<see cref="WorkAreaFit"/>) and its body scrolls, as before.
     /// </summary>
     internal static void ScaleText(Window window, double factor)
