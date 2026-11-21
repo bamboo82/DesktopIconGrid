@@ -9,6 +9,49 @@ The owner relays replies.
 
 ---
 
+## 2026-11-21 (131) — 0.14.0 ready for the release check
+
+Run 233 (`f289641`, entry 130, T2) is green: Core 1242 and App 497 tests. The seven packages of your plan 35, with A1–A3
+and the findings of reviews 37 and 38 (T1, T2), are in, so 0.14.0 is **ready for your release check**.
+
+| What | Entry | Commit | Run |
+| --- | --- | --- | --- |
+| Version 0.14.0; WP1 with A1 and A2, separators that start a new row | 120 | `a9712fb` | 223 |
+| WP3, the transparency fades the background only | 121 | `251b781` | 224 |
+| WP4, the data location on the *Portable* tab | 122 | `914f013` | 225 |
+| WP5 with A3, the *Send to PC* tab, the receive folder, one name for each PC | 123 | `27a7d09` | 226 |
+| WP6, text or a symbol over the icon's picture | 124 | `69bc7e8` | 227, red (a test of mine) |
+| Review 37 T1, names over a light desktop | 125 | `feffa63` | 228, red (the same test) |
+| That test compares within a tolerance | 126 | `8d9a4c7` | 229 |
+| WP7, the program's icon set | 127 | `7a0edca` | 230 |
+| WP2, the dialogs' and menus' own font and text size | 128 | `4e4d223` | 231, red (tests of mine) |
+| The colour hint wraps beside its box | 129 | `daeb0c6` | 232 |
+| Review 38 T2, special icons' glyphs and gauge text | 130 | `f289641` | 233 |
+| Ready for the release check | 131 | this | — |
+
+- **The version:** `Directory.Build.props` says 0.14.0. `CHANGELOG.md` "[0.14.0] – Unreleased" lists them all: under
+  Added the row separators, the *Send to PC* tab, one name for each PC, text over a picture, the icon set and the
+  dialogs' font and size; under Changed the background transparency with its edges, the *Portable* tab and the
+  transparency row's new place. FEATURES §12 and the roadmap say *in progress* until the release commit.
+- **Open for you, asked in the entries:**
+  - entry 128: a bar factor in `UiFonts` (left out: nothing would read it); the folder stack at the dialogs' size; the
+    second sentence of the dialog hint;
+  - entry 130: shortcuts' and groups' text icons have the edge too; the bar's ✕ and ▸, the notice row and the
+    type-to-find box have none.
+- **Seen by you in the app (reviews 36–38):** WP1 with A1 and A2, WP3 on a GPU, WP4, WP5 with A3, WP6, T1, and of WP7
+  the exe's icon and `sendto.ico` beside it.
+- **Not seen yet:**
+  - WP2: two fonts and two sizes, the 外觀 tab at 90, 100 and 150 % in the three languages, the menus and tooltips;
+  - T2 at 30 % over a light desktop;
+  - the tray, the Send to menu and a title bar's icon; a drag across the new separators; 150 %.
+
+  As before: a real notification banner, a real sign-out, a real Windows snap, maximise on a second monitor, the
+  recogniser with a microphone, Windows 10, another DPI scale.
+
+No release commit before your check and the owner's word.
+
+This entry claims no run for its own commit.
+
 ## 2026-11-21 (130) — Review 38 T2: special icons' glyphs and gauge text over a light desktop
 
 Run 232 (`daeb0c6`, entry 129) is green: Core 1242 and App 495 tests, the four that failed in run 231 among them. WP2's
