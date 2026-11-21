@@ -17,7 +17,7 @@ plus **Custom**, which derives a full palette from one background colour.
 | **Paper** | `#F3F2EE` | `#B8B6B0` | `#202020` | black 8 % | black 33 % | `#2563EB` | Light desktops; matches light Windows mode. |
 | **Midnight** | `#1C2733` | `#0D141B` | `#E3ECF5` | cyan 16 % | `#9FB7CC` 42 % | `#7DD3FC` | Blue/teal wallpapers; a cooler dark theme. |
 | **Sand** | `#D8C8A4` | `#8A7A55` | `#2B2415` | black 9 % | black 35 % | `#B45309` | Warm, low-contrast light theme. |
-| **Custom** | user colour | background darkened 50 % | white or `#202020` | white 18 % or black 8 % | white 44 % or black 33 % | `#4C8BF5` or `#2563EB` | Any colour; see the rule below. |
+| **Custom** | user colour | background darkened 50 % | white or `#202020` | white 18 % or black 8 % | white 44 % or black 33 % | `#4C8BF5` or `#2563EB` | Any colour; see the rule below. Since 0.15.0 its hover and focus border colours can be its own (below). |
 
 Percentages are the alpha of a white or black overlay, so highlights work on any background.
 
@@ -34,6 +34,26 @@ by one unit, ten with Shift; Enter is OK and Esc is Cancel. While it is open, th
 the new colour; Cancel puts back what the box had, and the bar changes at Save, as before. The conversions
 (`ColourMath`: `#RRGGBB`, red-green-blue and hue-saturation-value) are in the core library and unit-tested. The text
 icon window's colour and tile colour have the same button.
+
+**Hover and focus colours (0.15.0).** Under the custom colour, *Hover colour* and *Focus border colour* each have a chip
+with the colour in use, a code box, *Pick a colour…* and *Automatic*, ticked by default. While it is ticked the colour
+is the one derived above and the box and button are off; unticking starts from the derived colour. *Hover strength*
+(10–100 %) goes with the hover colour. They are stored as `hoverColor`, `hoverStrength` and `focusColor` (absent: the
+derived ones, so a bar that never set them looks as before; anything that is not `#RRGGBB` is dropped at load) and sync
+with the theme.
+
+- The hover colour lies at its strength behind an icon, a group, a special icon or one of the bar's own buttons under the
+  pointer (`Theme.PointerOver`); an item's or a separator's outline then (`Theme.PointerOverBorder`) and the pressed
+  state (`Theme.Pressed`) are the same colour, stronger by the derived ratios (outline 80/46 or 48/20, pressed 80/46 or
+  36/20). Without a strength, the derived overlay's own (18 % or 8 %).
+- The focus colour borders keyboard focus, the selected match and a drop target, and draws the drop marker
+  (`Theme.Focus`); a drop target's fill is the focus colour at the derived alpha (`Theme.DropTarget`).
+- The derived fill (`Theme.Hover`) stays on the search box, the notice row and a text tile's frame, and the accent
+  (`Theme.Accent`) on the launch frame, the search box's border and selection, and the missing badge.
+- In the bar, its group popups and the window at the pointer alike. Dialogs, menus and Settings keep their own colours,
+  and High Contrast keeps Windows'.
+- A chosen focus colour under 3 : 1 against the background shows a warning under its row; Save still works.
+- The theme's preview beside the list shows the background, one icon under the pointer and one with the focus border.
 
 Existing layouts that only had a background colour keep their look: when a layout file has no
 `theme` field, the app picks *Classic* if the colour is still the default and *Custom* otherwise.

@@ -344,7 +344,7 @@
     <Canvas x:Name="Overlay" IsHitTestVisible="False" ClipToBounds="True">
       <Border x:Name="DropIndicator"
               Width="3"
-              Background="{DynamicResource Theme.Accent}"
+              Background="{DynamicResource Theme.Focus}"
               CornerRadius="1.5"
               Visibility="Collapsed" />
     </Canvas>

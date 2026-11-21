@@ -2984,4 +2984,37 @@ The place was not changed; what was copied stays there.</value>
   <data name="ColourPicker_NotAColour" xml:space="preserve">
     <value>Use #RRGGBB, and whole numbers from 0 to 255.</value>
   </data>
+  <data name="Settings_HoverColour" xml:space="preserve">
+    <value>Hover colour:</value>
+  </data>
+  <data name="Settings_FocusColour" xml:space="preserve">
+    <value>Focus border colour:</value>
+  </data>
+  <data name="Settings_Automatic" xml:space="preserve">
+    <value>Automatic</value>
+  </data>
+  <data name="Settings_HoverStrength" xml:space="preserve">
+    <value>Hover strength</value>
+  </data>
+  <data name="Settings_FocusHardToSee" xml:space="preserve">
+    <value>Too close to the background; keyboard focus may be hard to see.</value>
+  </data>
+  <data name="Settings_HoverColourName" xml:space="preserve">
+    <value>Hover colour code</value>
+  </data>
+  <data name="Settings_FocusColourName" xml:space="preserve">
+    <value>Focus border colour code</value>
+  </data>
+  <data name="Settings_HoverAutomaticName" xml:space="preserve">
+    <value>Hover colour: automatic</value>
+  </data>
+  <data name="Settings_FocusAutomaticName" xml:space="preserve">
+    <value>Focus border colour: automatic</value>
+  </data>
+  <data name="Settings_PreviewHover" xml:space="preserve">
+    <value>An icon under the pointer</value>
+  </data>
+  <data name="Settings_PreviewFocus" xml:space="preserve">
+    <value>An icon with the keyboard focus</value>
+  </data>
 </root>

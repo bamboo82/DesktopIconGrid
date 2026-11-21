@@ -23,6 +23,8 @@ public sealed partial class LauncherSettings
     public const int DefaultCellPadding = 10;
     public const string DefaultBackgroundColor = "#73806E";
     public const int MinOpacity = 20;
+    public const int MinHoverStrength = 10;
+    public const int MaxHoverStrength = 100;
     public const int MaxOpacity = 100;
 
     /// <summary>The bar is painted in the theme colour.</summary>
@@ -82,6 +84,24 @@ public sealed partial class LauncherSettings
 
     /// <summary>Bar background as <c>#RRGGBB</c>, used by the custom theme.</summary>
     public string BackgroundColor { get; set; } = DefaultBackgroundColor;
+
+    /// <summary>
+    /// The custom theme's colour under the pointer (0.15.0 WP4b, the owner's request): <c>#RRGGBB</c>, or none for the
+    /// overlay derived from the background, as before. Anything else is dropped at load; it syncs with the theme.
+    /// </summary>
+    public string? HoverColor { get; set; }
+
+    /// <summary>
+    /// How strongly <see cref="HoverColor"/> lies over an item, <see cref="MinHoverStrength"/> to
+    /// <see cref="MaxHoverStrength"/> percent; none for the derived overlay's own. Not used without a hover colour.
+    /// </summary>
+    public int? HoverStrength { get; set; }
+
+    /// <summary>
+    /// The custom theme's keyboard focus border colour (0.15.0 WP4b): <c>#RRGGBB</c>, or none for the accent derived
+    /// from the background, as before. Anything else is dropped at load; it syncs with the theme.
+    /// </summary>
+    public string? FocusColor { get; set; }
 
     /// <summary>What the bar is painted on: the theme colour, or a Windows 11 backdrop tinted with it (one of <see cref="Backdrops"/>).</summary>
     public string BarBackdrop { get; set; } = BackdropSolid;
@@ -218,6 +238,9 @@ public sealed partial class LauncherSettings
         LockGrid = source.LockGrid;
         Theme = source.Theme;
         BackgroundColor = source.BackgroundColor;
+        HoverColor = source.HoverColor;
+        HoverStrength = source.HoverStrength;
+        FocusColor = source.FocusColor;
         BarBackdrop = source.BarBackdrop;
         FluentDialogs = source.FluentDialogs;
         ChineseFont = source.ChineseFont;
@@ -274,6 +297,16 @@ public sealed partial class LauncherSettings
         else if (BackgroundColor != BackgroundColor.ToUpperInvariant())
         {
             BackgroundColor = BackgroundColor.ToUpperInvariant();
+        }
+
+        // The custom theme's own hover and focus colours (0.15.0 WP4b): #RRGGBB or none; the strength 10–100 or none.
+        var hover = OwnColour(HoverColor);
+        var focus = OwnColour(FocusColor);
+        var strength = HoverStrength is { } percent ? Math.Clamp(percent, MinHoverStrength, MaxHoverStrength) : (int?)null;
+        if (hover != HoverColor || focus != FocusColor || strength != HoverStrength)
+        {
+            changed |= !string.Equals(hover, HoverColor, StringComparison.OrdinalIgnoreCase) || !string.Equals(focus, FocusColor, StringComparison.OrdinalIgnoreCase) || strength != HoverStrength;
+            (HoverColor, FocusColor, HoverStrength) = (hover, focus, strength);
         }
 
         var backdrop = BarBackdrop?.Trim().ToLowerInvariant() ?? string.Empty;
@@ -413,6 +446,9 @@ public sealed partial class LauncherSettings
 
         return negative ? MinIconSize : ClampIconSize((int)number);
     }
+
+    /// <summary>A colour of the theme's own, <c>#RRGGBB</c> in capitals, or none for anything else.</summary>
+    private static string? OwnColour(string? value) => IsValidColor(value?.Trim()) ? value!.Trim().ToUpperInvariant() : null;
 
     public static bool IsValidColor(string? value) =>
         value is not null && ColorPattern().IsMatch(value);

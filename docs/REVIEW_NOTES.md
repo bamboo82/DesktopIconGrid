@@ -9,6 +9,53 @@ The owner relays replies.
 
 ---
 
+## 2026-11-21 (146) — 0.15.0 WP4b: the custom theme's hover and focus border colours
+
+- **Run 249** (`b75b870`, WP4, entry 145): green, Core 1308 of 1308, App 534 of 534.
+- **Settings:** `hoverColor`, `hoverStrength` and `focusColor` beside `backgroundColor`, synced with it. Absent means the
+  derived colours, so a bar that never set them looks exactly as before. A colour that is not `#RRGGBB` is dropped at
+  load; the strength is held to 10–100.
+- **Settings ▸ 外觀:** under the custom colour (so, like it, only for 自訂), two rows: 滑鼠停留色彩 and 焦點外框色彩. Each
+  has a chip with the colour in use, a code box, 選擇顏色… (WP4's picker) and 自動, ticked by default. While ticked, the
+  box and button are off and show the derived colour, which follows the background. Unticking starts from the derived
+  colour, and the hover row's strength from the derived overlay's. 滑鼠停留強度 (10–100 %, steps of 5) sits under the
+  hover row and is off with it. A box with what is not a colour says 請使用 #RRGGBB and saves nothing for that colour.
+- **Where the colours go** (in the bar, its group popups and the window at the pointer alike, through the shared
+  styles; new brush keys `Theme.PointerOver`, `Theme.PointerOverBorder` and `Theme.Focus`):
+  - hover: behind an icon, a group or a special icon under the pointer, and behind ✕, ▸, ← and Undo; the outline of an
+    icon or a separator under the pointer; the pressed state. The outline and the pressed state take the same colour,
+    stronger by the derived ratios (dark set: outline and pressed 80/46; light set: outline 48/20, pressed 36/20). Without
+    a strength, the derived overlay's own: 18 % (dark) or 8 % (light);
+  - focus: the keyboard focus border of the same things, the selected match's border, a drop target's border and fill
+    (the fill at the derived alpha) and the drop marker line.
+- **Kept on the derived colours** (your question about the accent):
+  - the accent keeps the launch frame (an icon framed while its program comes up), the search box's border and
+    selection colour, and the missing badge (the "?" circle);
+  - the derived hover fill keeps the search box's fill, the notice row's fill, a text tile's frame and the selected
+    match's fill.
+  - Dialogs, menus and Settings keep their own colours. Under High Contrast the palette is Windows' own, which these never
+    reach.
+- **The light set's 8 %:** the slider starts at 10, so unticking the hover row on a light background starts a little
+  stronger than the derived overlay. Left ticked, it is exactly 8 % as before.
+- **Preview:** the swatch beside the theme list is now a small bar: the background with its border, one icon (A) under
+  the pointer (overlay and outline) and one (B) with the focus border.
+- **Reading check:** a chosen focus colour under 3 : 1 against the background shows 與背景太接近，鍵盤焦點可能看不清楚。 under
+  its row; Save still works. The automatic colour is not judged, since there is nothing to choose then. The check against
+  a background picture comes with WP5, as you said.
+- **Tests:**
+  - Core: without colours the palette equals the derived one field by field; the hover colour at 50 % and with no
+    strength, and the outline and pressed ratios on both sets; the focus colour and the drop fill on both sets, with the
+    accent unchanged; a built-in theme ignores them; the derived colour and strength for unticking; the 3 : 1 threshold
+    (#949494 on white is 3.03, #959595 is 2.99); the settings' round trip and what is dropped or held;
+  - App: both automatic by default, saving nothing; unticking starts from the derived values and saves what is chosen;
+    the automatic colours follow the background; the contrast warning, still saved, and not on automatic; a box with no
+    colour; colours from the layout open unticked; the bar's brushes for the new keys, with the accent and the hover fill
+    unchanged.
+- **Not tested:** on screen (the rows at 150 % and in English are for your look; `DialogFitTests` covers Settings' fit),
+  the picker opened from these rows, and the colours on the real bar under the pointer and on focus.
+
+This entry claims no run for its own commit.
+
 ## 2026-11-21 (145) — 0.15.0 WP4: a colour picker for the custom theme
 
 - **Run 248** (`b34b78f`, WP9, entry 144): green, Core 1279 of 1279, App 527 of 527.

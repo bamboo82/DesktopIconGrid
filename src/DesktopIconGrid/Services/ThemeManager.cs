@@ -30,6 +30,16 @@ public static class ThemeManager
     public const string AccentKey = "Theme.Accent";
     public const string DropTargetKey = "Theme.DropTarget";
 
+    /// <summary>
+    /// What lies behind an item or one of the bar's buttons under the pointer, and an item's or a separator's outline
+    /// then (0.15.0 WP4b): the custom theme's hover colour when it has one, else the hover brushes.
+    /// </summary>
+    public const string PointerOverKey = "Theme.PointerOver";
+    public const string PointerOverBorderKey = "Theme.PointerOverBorder";
+
+    /// <summary>The keyboard focus border, the selected match's border and the drop marker (0.15.0 WP4b); else the accent.</summary>
+    public const string FocusKey = "Theme.Focus";
+
     /// <summary>Id of the palette used under Windows High Contrast (never stored in settings).</summary>
     public const string HighContrastId = "high-contrast";
 
@@ -63,6 +73,9 @@ public static class ThemeManager
         resources[GripPatternKey] = CreateGripPattern(grip);
         resources[AccentKey] = ToBrush(palette.Accent);
         resources[DropTargetKey] = ToBrush(palette.DropTarget);
+        resources[PointerOverKey] = ToBrush(palette.PointerOver);
+        resources[PointerOverBorderKey] = ToBrush(palette.PointerOverBorder);
+        resources[FocusKey] = ToBrush(palette.Focus);
     }
 
     /// <summary>The group popup's background: a tint when its window got a backdrop, otherwise the solid theme colour.</summary>

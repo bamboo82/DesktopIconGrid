@@ -110,6 +110,32 @@ public partial class SettingsWindow : Window
         viewModel.BackgroundColor = chosen ?? before;
     }
 
+    /// <summary>The hover colour from the colour picker (0.15.0 WP4b); the theme's preview follows it, and Cancel puts back what the box had.</summary>
+    private void PickHover_Click(object sender, RoutedEventArgs e)
+    {
+        if (ViewModel is not { } viewModel)
+        {
+            return;
+        }
+
+        var before = viewModel.HoverColorText;
+        var chosen = ColourPickerWindow.Pick(this, viewModel.IsHoverColorValid ? before : null, colour => viewModel.HoverColorText = colour, viewModel.Presets);
+        viewModel.HoverColorText = chosen ?? before;
+    }
+
+    /// <summary>The focus border colour from the colour picker (0.15.0 WP4b), as the hover colour.</summary>
+    private void PickFocus_Click(object sender, RoutedEventArgs e)
+    {
+        if (ViewModel is not { } viewModel)
+        {
+            return;
+        }
+
+        var before = viewModel.FocusColorText;
+        var chosen = ColourPickerWindow.Pick(this, viewModel.IsFocusColorValid ? before : null, colour => viewModel.FocusColorText = colour, viewModel.Presets);
+        viewModel.FocusColorText = chosen ?? before;
+    }
+
     private void Save_Click(object sender, RoutedEventArgs e)
     {
         // A size typed into the icon size box and not yet read: Enter presses Save without leaving the box (0.15.0 WP8).

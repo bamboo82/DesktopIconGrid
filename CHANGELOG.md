@@ -12,6 +12,10 @@ version numbers follow [Semantic Versioning](https://semver.org/).
 - A colour picker for the custom theme's colour, under Settings ▸ Appearance: a saturation and brightness square, a
   hue strip, the colour code and its red, green and blue, the old and new colour side by side, and the swatches. The
   theme's preview follows it while it is open. The text icon window's colour and tile colour have it too.
+- The custom theme can have its own hover colour, with its strength, and its own keyboard focus border colour, each
+  automatic (derived from the background, as before) until unticked. They show under the pointer, on focus, on the
+  selected match and on the drop marker, in the bar, its groups and the window at the pointer. The theme's preview in
+  Settings shows both, and a focus colour too close to the background is warned about.
 - *Lock grid* in the menu of the bar's empty area and in its ▸ menu: while it is ticked nothing on the grid moves by
   dragging (icons, groups, special icons, separators), in the bar, its groups and the window at the pointer. Files
   dropped from elsewhere are still added or opened, and the bar itself still moves. The first drag it stops says how

@@ -19,7 +19,39 @@ public sealed record ThemePalette(
     string Accent,
     string DropTarget)
 {
+    private readonly string? _pointerOver;
+    private readonly string? _pointerOverBorder;
+    private readonly string? _focus;
+
     public bool IsCustom => string.Equals(Id, ThemeCatalog.CustomId, StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// The overlay behind an item or one of the bar's buttons under the pointer (0.15.0 WP4b): the custom theme's hover
+    /// colour when it has one, else <see cref="Hover"/>. <see cref="Hover"/> stays the fill of the search box, the notice
+    /// row and a text tile's frame.
+    /// </summary>
+    public string PointerOver
+    {
+        get => _pointerOver ?? Hover;
+        init => _pointerOver = value;
+    }
+
+    /// <summary>The outline of an item or a separator under the pointer: from the hover colour, else <see cref="HoverBorder"/>.</summary>
+    public string PointerOverBorder
+    {
+        get => _pointerOverBorder ?? HoverBorder;
+        init => _pointerOverBorder = value;
+    }
+
+    /// <summary>
+    /// The keyboard focus border, the selected match's border and the drop marker (0.15.0 WP4b): the custom theme's
+    /// focus colour when it has one, else <see cref="Accent"/>, which keeps its other uses.
+    /// </summary>
+    public string Focus
+    {
+        get => _focus ?? Accent;
+        init => _focus = value;
+    }
 }
 
 /// <summary>Built-in themes plus the "Custom" theme derived from a user-chosen background colour.</summary>
@@ -77,7 +109,7 @@ public static class ThemeCatalog
         ArgumentNullException.ThrowIfNull(settings);
         if (string.Equals(settings.Theme, CustomId, StringComparison.OrdinalIgnoreCase))
         {
-            return CreateCustom(settings.BackgroundColor);
+            return WithHoverAndFocus(CreateCustom(settings.BackgroundColor), settings.HoverColor, settings.HoverStrength, settings.FocusColor);
         }
 
         return Find(settings.Theme) ?? Classic;
@@ -106,6 +138,60 @@ public static class ThemeCatalog
             Accent: light ? "#2563EB" : "#4C8BF5",
             DropTarget: light ? "#402563EB" : "#4A4C8BF5");
     }
+
+    /// <summary>
+    /// The custom theme's own hover and focus colours over the ones derived from its background (0.15.0 WP4b). The hover
+    /// colour lies under the pointer at its strength (else at the derived overlay's), and the item's outline and the
+    /// pressed state are stronger by the derived ratios. The focus colour borders keyboard focus, the selected match and
+    /// the drop marker, and fills a drop target at the derived alpha. Without them, the palette is the derived one.
+    /// </summary>
+    public static ThemePalette WithHoverAndFocus(ThemePalette custom, string? hoverHex, int? hoverStrength, string? focusHex)
+    {
+        ArgumentNullException.ThrowIfNull(custom);
+        var palette = custom;
+        if (LauncherSettings.IsValidColor(hoverHex))
+        {
+            var derived = AlphaOf(custom.Hover);
+            double alpha = hoverStrength is { } percent
+                ? Math.Clamp(percent, LauncherSettings.MinHoverStrength, LauncherSettings.MaxHoverStrength) * 255 / 100.0
+                : derived;
+            palette = palette with
+            {
+                PointerOver = WithAlpha(hoverHex!, alpha),
+                PointerOverBorder = WithAlpha(hoverHex!, alpha * AlphaOf(custom.HoverBorder) / derived),
+                Pressed = WithAlpha(hoverHex!, alpha * AlphaOf(custom.Pressed) / derived),
+            };
+        }
+
+        if (LauncherSettings.IsValidColor(focusHex))
+        {
+            palette = palette with { Focus = focusHex!.ToUpperInvariant(), DropTarget = WithAlpha(focusHex!, AlphaOf(custom.DropTarget)) };
+        }
+
+        return palette;
+    }
+
+    /// <summary>The hover colour a custom theme derives from its background, <c>#RRGGBB</c>: black on a light one, white on a dark one.</summary>
+    public static string DerivedHoverColor(ThemePalette custom) => "#" + Opaque(custom.Hover);
+
+    /// <summary>The strength of the derived hover overlay in percent, held to the slider's 10–100 (black's 8 % starts at 10).</summary>
+    public static int DerivedHoverStrength(ThemePalette custom) =>
+        Math.Clamp((int)Math.Round(AlphaOf(custom.Hover) * 100 / 255.0), LauncherSettings.MinHoverStrength, LauncherSettings.MaxHoverStrength);
+
+    /// <summary>
+    /// Whether a focus colour is too close to the background for keyboard focus to be seen: a WCAG contrast ratio under
+    /// 3 : 1 (0.15.0 WP4b; Settings warns, Save is not stopped).
+    /// </summary>
+    public static bool IsFocusHardToSee(string focusHex, string backgroundHex) =>
+        ContrastRatio(RelativeLuminance(focusHex), RelativeLuminance(backgroundHex)) < 3;
+
+    private static int AlphaOf(string argb) => argb.Length == 9 ? int.Parse(argb.AsSpan(1, 2), NumberStyles.HexNumber, CultureInfo.InvariantCulture) : 255;
+
+    /// <summary>The colour of <c>#AARRGGBB</c> or <c>#RRGGBB</c> without its alpha.</summary>
+    private static string Opaque(string hex) => hex.Length == 9 ? hex[3..] : hex[1..];
+
+    private static string WithAlpha(string hex, double alpha) =>
+        string.Create(CultureInfo.InvariantCulture, $"#{(int)Math.Clamp(Math.Round(alpha, MidpointRounding.AwayFromZero), 0, 255):X2}{Opaque(hex).ToUpperInvariant()}");
 
     /// <summary>Whether text on <paramref name="hex"/> should be dark: the rule of a custom background.</summary>
     public static bool IsLight(string hex) => Luminance(hex) > 0.6;

@@ -30,6 +30,10 @@
   <SolidColorBrush x:Key="Theme.Grip" Color="#70FFFFFF" />
   <SolidColorBrush x:Key="Theme.Accent" Color="#FF4C8BF5" />
   <SolidColorBrush x:Key="Theme.DropTarget" Color="#4A4C8BF5" />
+  <!-- Under the pointer and on keyboard focus (0.15.0 WP4b): the custom theme's own colours when it has them -->
+  <SolidColorBrush x:Key="Theme.PointerOver" Color="#2EFFFFFF" />
+  <SolidColorBrush x:Key="Theme.PointerOverBorder" Color="#50FFFFFF" />
+  <SolidColorBrush x:Key="Theme.Focus" Color="#FF4C8BF5" />
   <DrawingBrush x:Key="Theme.GripPattern" TileMode="Tile" Viewport="0,0,4,4" ViewportUnits="Absolute" Viewbox="0,0,4,4" ViewboxUnits="Absolute">
     <DrawingBrush.Drawing>
       <GeometryDrawing Brush="#70FFFFFF">
@@ -165,13 +169,13 @@
           </Border>
           <ControlTemplate.Triggers>
             <Trigger Property="IsMouseOver" Value="True">
-              <Setter TargetName="Root" Property="Background" Value="{DynamicResource Theme.Hover}" />
+              <Setter TargetName="Root" Property="Background" Value="{DynamicResource Theme.PointerOver}" />
             </Trigger>
             <Trigger Property="IsPressed" Value="True">
               <Setter TargetName="Root" Property="Background" Value="{DynamicResource Theme.Pressed}" />
             </Trigger>
             <Trigger Property="IsKeyboardFocused" Value="True">
-              <Setter TargetName="Root" Property="BorderBrush" Value="{DynamicResource Theme.Accent}" />
+              <Setter TargetName="Root" Property="BorderBrush" Value="{DynamicResource Theme.Focus}" />
             </Trigger>
           </ControlTemplate.Triggers>
         </ControlTemplate>
@@ -244,18 +248,18 @@
           </Border>
           <ControlTemplate.Triggers>
             <Trigger Property="IsMouseOver" Value="True">
-              <Setter TargetName="Root" Property="Background" Value="{DynamicResource Theme.Hover}" />
-              <Setter TargetName="Root" Property="BorderBrush" Value="{DynamicResource Theme.HoverBorder}" />
+              <Setter TargetName="Root" Property="Background" Value="{DynamicResource Theme.PointerOver}" />
+              <Setter TargetName="Root" Property="BorderBrush" Value="{DynamicResource Theme.PointerOverBorder}" />
             </Trigger>
             <Trigger Property="IsPressed" Value="True">
               <Setter TargetName="Root" Property="Background" Value="{DynamicResource Theme.Pressed}" />
             </Trigger>
             <Trigger Property="IsKeyboardFocused" Value="True">
-              <Setter TargetName="Root" Property="BorderBrush" Value="{DynamicResource Theme.Accent}" />
+              <Setter TargetName="Root" Property="BorderBrush" Value="{DynamicResource Theme.Focus}" />
             </Trigger>
             <DataTrigger Binding="{Binding IsDropTarget}" Value="True">
               <Setter TargetName="Root" Property="Background" Value="{DynamicResource Theme.DropTarget}" />
-              <Setter TargetName="Root" Property="BorderBrush" Value="{DynamicResource Theme.Accent}" />
+              <Setter TargetName="Root" Property="BorderBrush" Value="{DynamicResource Theme.Focus}" />
             </DataTrigger>
             <!-- Not found on this PC -->
             <DataTrigger Binding="{Binding IsMissing}" Value="True">
@@ -267,7 +271,7 @@
             </DataTrigger>
             <DataTrigger Binding="{Binding IsSearchSelected}" Value="True">
               <Setter TargetName="Root" Property="Background" Value="{DynamicResource Theme.Hover}" />
-              <Setter TargetName="Root" Property="BorderBrush" Value="{DynamicResource Theme.Accent}" />
+              <Setter TargetName="Root" Property="BorderBrush" Value="{DynamicResource Theme.Focus}" />
             </DataTrigger>
             <!-- Launch feedback: framed while the program comes up, and pulsing unless Windows animations are off -->
             <DataTrigger Binding="{Binding IsLaunching}" Value="True">
@@ -319,10 +323,10 @@
           </Border>
           <ControlTemplate.Triggers>
             <Trigger Property="IsMouseOver" Value="True">
-              <Setter TargetName="Root" Property="BorderBrush" Value="{DynamicResource Theme.HoverBorder}" />
+              <Setter TargetName="Root" Property="BorderBrush" Value="{DynamicResource Theme.PointerOverBorder}" />
             </Trigger>
             <Trigger Property="IsKeyboardFocused" Value="True">
-              <Setter TargetName="Root" Property="BorderBrush" Value="{DynamicResource Theme.Accent}" />
+              <Setter TargetName="Root" Property="BorderBrush" Value="{DynamicResource Theme.Focus}" />
             </Trigger>
             <DataTrigger Binding="{Binding IsSearchDimmed}" Value="True">
               <Setter TargetName="Root" Property="Opacity" Value="0.3" />

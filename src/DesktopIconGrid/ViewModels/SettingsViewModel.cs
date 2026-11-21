@@ -75,6 +75,7 @@ public sealed partial class SettingsViewModel : ObservableObject
         _doubleClickToLaunch = current.DoubleClickToLaunch;
         _alwaysOnTop = current.AlwaysOnTop;
         _backgroundColor = current.BackgroundColor;
+        ReadThemeColours(current); // after the background, which the automatic ones come from (0.15.0 WP4b)
         _toggleHotkey = current.ToggleHotkey ?? string.Empty;
         _pointerHotkey = current.ShowAtPointerHotkey ?? string.Empty;
         _holdHotkey = current.HoldAtPointerHotkey ?? string.Empty;
@@ -216,6 +217,7 @@ public sealed partial class SettingsViewModel : ObservableObject
             {
                 OnPropertyChanged(nameof(IsCustomTheme));
                 OnPropertyChanged(nameof(PreviewBrush));
+                OnThemeColoursChanged();
                 OnProblemsChanged(); // leaving the custom theme settles an unreadable colour
             }
         }
@@ -232,6 +234,7 @@ public sealed partial class SettingsViewModel : ObservableObject
             {
                 OnPropertyChanged(nameof(IsColorValid));
                 OnPropertyChanged(nameof(PreviewBrush));
+                OnThemeColoursChanged();
                 OnProblemsChanged();
             }
         }
@@ -617,6 +620,7 @@ public sealed partial class SettingsViewModel : ObservableObject
         settings.AlwaysOnTop = _alwaysOnTop;
         settings.Theme = _selectedTheme.Id;
         settings.BackgroundColor = IsColorValid ? _backgroundColor : LauncherSettings.DefaultBackgroundColor;
+        WriteThemeColours(settings);
         settings.BarBackdrop = _selectedBackdrop.Id;
         settings.FluentDialogs = _fluentDialogs;
         settings.ChineseFont = ChineseFontToSave;

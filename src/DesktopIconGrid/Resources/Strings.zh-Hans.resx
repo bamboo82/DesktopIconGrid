@@ -2984,4 +2984,37 @@ SHA-256：{3}
   <data name="ColourPicker_NotAColour" xml:space="preserve">
     <value>请使用 #RRGGBB，以及 0 到 255 的整数。</value>
   </data>
+  <data name="Settings_HoverColour" xml:space="preserve">
+    <value>鼠标悬停颜色：</value>
+  </data>
+  <data name="Settings_FocusColour" xml:space="preserve">
+    <value>焦点边框颜色：</value>
+  </data>
+  <data name="Settings_Automatic" xml:space="preserve">
+    <value>自动</value>
+  </data>
+  <data name="Settings_HoverStrength" xml:space="preserve">
+    <value>鼠标悬停强度</value>
+  </data>
+  <data name="Settings_FocusHardToSee" xml:space="preserve">
+    <value>与背景太接近，键盘焦点可能看不清楚。</value>
+  </data>
+  <data name="Settings_HoverColourName" xml:space="preserve">
+    <value>鼠标悬停颜色代码</value>
+  </data>
+  <data name="Settings_FocusColourName" xml:space="preserve">
+    <value>焦点边框颜色代码</value>
+  </data>
+  <data name="Settings_HoverAutomaticName" xml:space="preserve">
+    <value>鼠标悬停颜色：自动</value>
+  </data>
+  <data name="Settings_FocusAutomaticName" xml:space="preserve">
+    <value>焦点边框颜色：自动</value>
+  </data>
+  <data name="Settings_PreviewHover" xml:space="preserve">
+    <value>鼠标悬停时的图标</value>
+  </data>
+  <data name="Settings_PreviewFocus" xml:space="preserve">
+    <value>有键盘焦点的图标</value>
+  </data>
 </root>

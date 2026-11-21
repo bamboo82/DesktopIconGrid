@@ -5451,6 +5451,15 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Automatic.
+        /// </summary>
+        public static string Settings_Automatic {
+            get {
+                return ResourceManager.GetString("Settings_Automatic", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Acrylic (Windows 11).
         /// </summary>
         public static string Settings_BackdropAcrylic {
@@ -5874,6 +5883,42 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Focus border colour: automatic.
+        /// </summary>
+        public static string Settings_FocusAutomaticName {
+            get {
+                return ResourceManager.GetString("Settings_FocusAutomaticName", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Focus border colour:.
+        /// </summary>
+        public static string Settings_FocusColour {
+            get {
+                return ResourceManager.GetString("Settings_FocusColour", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Focus border colour code.
+        /// </summary>
+        public static string Settings_FocusColourName {
+            get {
+                return ResourceManager.GetString("Settings_FocusColourName", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Too close to the background; keyboard focus may be hard to see..
+        /// </summary>
+        public static string Settings_FocusHardToSee {
+            get {
+                return ResourceManager.GetString("Settings_FocusHardToSee", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Show at pointer while held:.
         /// </summary>
         public static string Settings_HoldHotkey {
@@ -5960,6 +6005,42 @@ namespace DesktopIconGrid.Resources {
         public static string Settings_HotkeyUsedInBar {
             get {
                 return ResourceManager.GetString("Settings_HotkeyUsedInBar", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Hover colour: automatic.
+        /// </summary>
+        public static string Settings_HoverAutomaticName {
+            get {
+                return ResourceManager.GetString("Settings_HoverAutomaticName", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Hover colour:.
+        /// </summary>
+        public static string Settings_HoverColour {
+            get {
+                return ResourceManager.GetString("Settings_HoverColour", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Hover colour code.
+        /// </summary>
+        public static string Settings_HoverColourName {
+            get {
+                return ResourceManager.GetString("Settings_HoverColourName", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Hover strength.
+        /// </summary>
+        public static string Settings_HoverStrength {
+            get {
+                return ResourceManager.GetString("Settings_HoverStrength", resourceCulture);
             }
         }
 
@@ -6122,6 +6203,24 @@ namespace DesktopIconGrid.Resources {
         public static string Settings_PointerHotkeySame {
             get {
                 return ResourceManager.GetString("Settings_PointerHotkeySame", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to An icon with the keyboard focus.
+        /// </summary>
+        public static string Settings_PreviewFocus {
+            get {
+                return ResourceManager.GetString("Settings_PreviewFocus", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to An icon under the pointer.
+        /// </summary>
+        public static string Settings_PreviewHover {
+            get {
+                return ResourceManager.GetString("Settings_PreviewHover", resourceCulture);
             }
         }
 

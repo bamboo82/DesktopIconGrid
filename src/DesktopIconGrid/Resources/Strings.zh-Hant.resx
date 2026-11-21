@@ -2984,4 +2984,37 @@ SHA-256：{3}
   <data name="ColourPicker_NotAColour" xml:space="preserve">
     <value>請使用 #RRGGBB，以及 0 到 255 的整數。</value>
   </data>
+  <data name="Settings_HoverColour" xml:space="preserve">
+    <value>滑鼠停留色彩：</value>
+  </data>
+  <data name="Settings_FocusColour" xml:space="preserve">
+    <value>焦點外框色彩：</value>
+  </data>
+  <data name="Settings_Automatic" xml:space="preserve">
+    <value>自動</value>
+  </data>
+  <data name="Settings_HoverStrength" xml:space="preserve">
+    <value>滑鼠停留強度</value>
+  </data>
+  <data name="Settings_FocusHardToSee" xml:space="preserve">
+    <value>與背景太接近，鍵盤焦點可能看不清楚。</value>
+  </data>
+  <data name="Settings_HoverColourName" xml:space="preserve">
+    <value>滑鼠停留色彩代碼</value>
+  </data>
+  <data name="Settings_FocusColourName" xml:space="preserve">
+    <value>焦點外框色彩代碼</value>
+  </data>
+  <data name="Settings_HoverAutomaticName" xml:space="preserve">
+    <value>滑鼠停留色彩：自動</value>
+  </data>
+  <data name="Settings_FocusAutomaticName" xml:space="preserve">
+    <value>焦點外框色彩：自動</value>
+  </data>
+  <data name="Settings_PreviewHover" xml:space="preserve">
+    <value>滑鼠停留時的圖示</value>
+  </data>
+  <data name="Settings_PreviewFocus" xml:space="preserve">
+    <value>有鍵盤焦點的圖示</value>
+  </data>
 </root>
