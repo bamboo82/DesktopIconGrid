@@ -147,6 +147,22 @@ public sealed class LauncherViewModelTests : IDisposable
     }
 
     [Fact]
+    public void Text_over_the_picture_shows_both_and_a_chosen_picture_does_not_hide_it()
+    {
+        // 0.14.0 WP6: the picture as without a text icon, the text on it; a text icon in its place is as before.
+        var (viewModel, model, _) = Create();
+        model.Add(new ShortcutItem { Name = "Over", Location = @"C:\over.exe", TextIcon = new TextIcon("2") { OverImage = true } });
+        model.Add(new ShortcutItem { Name = "Over mine", Location = @"C:\mine.exe", IconPath = @"C:\Icons\mine.png", TextIcon = new TextIcon("3") { OverImage = true } });
+        model.Add(new ShortcutItem { Name = "Instead", Location = @"C:\instead.exe", TextIcon = new TextIcon("記") });
+        viewModel.RootItems.Sync();
+        var items = viewModel.RootItems.Items.Where(item => item.Name is "Over" or "Over mine" or "Instead").ToList();
+
+        Assert.Equal([(true, true, true), (true, true, true), (true, false, false)], items.Select(item => (item.HasTextIcon, item.TextIsOverImage, item.ShowsImage)));
+        Assert.True(items[0].NeedsImage); // the picture is loaded under the text
+        Assert.False(items[2].NeedsImage);
+    }
+
+    [Fact]
     public void Send_to_PC_icons_follow_a_renamed_PC_and_the_bar_is_saved_once()
     {
         // 0.14.0 A3: a PC renamed on its own Settings tab is renamed on the others' icons; a typed caption stays.

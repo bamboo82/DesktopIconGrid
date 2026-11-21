@@ -37,8 +37,14 @@
             Background="{DynamicResource Theme.Background}"
             BorderBrush="{DynamicResource Theme.Border}" BorderThickness="1" CornerRadius="4"
             VerticalAlignment="Top">
-      <views:TextIconTile x:Name="Preview" Icon="{Binding PreviewIcon}" TileSize="{Binding PreviewSize}"
-                          Width="{Binding PreviewSize}" Height="{Binding PreviewSize}" />
+      <Grid Width="{Binding PreviewSize}" Height="{Binding PreviewSize}">
+        <!-- The item's real picture under the text, when the text goes over it (0.14.0 WP6) -->
+        <Image x:Name="PreviewPicture" Source="{Binding Picture, TargetNullValue={StaticResource PlaceholderIconImage}}"
+               Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality"
+               Visibility="{Binding ShowsPicture, Converter={StaticResource BoolToVisibility}}" />
+        <views:TextIconTile x:Name="Preview" Icon="{Binding PreviewIcon}" TileSize="{Binding PreviewSize}"
+                            Width="{Binding PreviewSize}" Height="{Binding PreviewSize}" />
+      </Grid>
     </Border>
 
     <!-- Text: the window as it was -->
@@ -193,9 +199,23 @@
                  Text="{x:Static r:Strings.TextIcon_TileColourHint}" />
     </Grid>
 
-    <TextBlock Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" Style="{StaticResource DialogHint}" Margin="0,4,0,8"
-               Text="{x:Static r:Strings.TextIcon_Hint}"
-               Visibility="{Binding IsText, Converter={StaticResource BoolToVisibility}}" />
+    <!-- Keep the item's picture and put the text over it, on both sides (0.14.0 WP6) -->
+    <StackPanel x:Name="OverImageBlock" Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,0,0,8"
+                Visibility="{Binding CanOverImage, Converter={StaticResource BoolToVisibility}}">
+      <CheckBox x:Name="OverImageBox" Content="{x:Static r:Strings.TextIcon_OverImage}" ContentTemplate="{StaticResource WrappingLabel}"
+                IsChecked="{Binding OverImage}" />
+      <WrapPanel x:Name="PlaceChoices" Margin="22,6,0,0" IsEnabled="{Binding OverImage}">
+        <TextBlock Text="{x:Static r:Strings.TextIcon_Place}" VerticalAlignment="Center" Margin="0,0,10,4" />
+        <RadioButton GroupName="Place" Content="{x:Static r:Strings.TextIcon_PlaceCenter}" IsChecked="{Binding IsPlaceCenter}" MinWidth="0" Margin="0,0,14,4" />
+        <RadioButton GroupName="Place" Content="{x:Static r:Strings.TextIcon_PlaceTopLeft}" IsChecked="{Binding IsPlaceTopLeft}" MinWidth="0" Margin="0,0,14,4" />
+        <RadioButton GroupName="Place" Content="{x:Static r:Strings.TextIcon_PlaceTopRight}" IsChecked="{Binding IsPlaceTopRight}" MinWidth="0" Margin="0,0,14,4" />
+        <RadioButton GroupName="Place" Content="{x:Static r:Strings.TextIcon_PlaceBottomLeft}" IsChecked="{Binding IsPlaceBottomLeft}" MinWidth="0" Margin="0,0,14,4" />
+        <RadioButton GroupName="Place" Content="{x:Static r:Strings.TextIcon_PlaceBottomRight}" IsChecked="{Binding IsPlaceBottomRight}" MinWidth="0" Margin="0,0,0,4" />
+      </WrapPanel>
+    </StackPanel>
+    <TextBlock x:Name="HintLine" Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2" Style="{StaticResource DialogHint}" Margin="0,4,0,8"
+               TextWrapping="Wrap" Text="{Binding Hint}"
+               Visibility="{Binding ShowsHint, Converter={StaticResource BoolToVisibility}}" />
 
     <!-- Buttons -->
     <StackPanel Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,6,0,0">

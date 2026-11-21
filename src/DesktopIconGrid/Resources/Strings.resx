@@ -2864,4 +2864,28 @@ The place was not changed; what was copied stays there.</value>
   <data name="SendTo_FolderInSettings" xml:space="preserve">
     <value>The receive folder is in Settings › Send to PC.</value>
   </data>
+  <data name="TextIcon_OverImage" xml:space="preserve">
+    <value>Keep the icon picture; draw the text on top</value>
+  </data>
+  <data name="TextIcon_Place" xml:space="preserve">
+    <value>Position:</value>
+  </data>
+  <data name="TextIcon_PlaceCenter" xml:space="preserve">
+    <value>Centre</value>
+  </data>
+  <data name="TextIcon_PlaceTopLeft" xml:space="preserve">
+    <value>Top left</value>
+  </data>
+  <data name="TextIcon_PlaceTopRight" xml:space="preserve">
+    <value>Top right</value>
+  </data>
+  <data name="TextIcon_PlaceBottomLeft" xml:space="preserve">
+    <value>Bottom left</value>
+  </data>
+  <data name="TextIcon_PlaceBottomRight" xml:space="preserve">
+    <value>Bottom right</value>
+  </data>
+  <data name="TextIcon_HintOver" xml:space="preserve">
+    <value>The text is drawn on top of the icon picture. One or two characters, or one symbol, work best.</value>
+  </data>
 </root>

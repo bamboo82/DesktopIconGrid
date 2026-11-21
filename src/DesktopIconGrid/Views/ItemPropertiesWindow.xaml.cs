@@ -168,7 +168,8 @@ public partial class ItemPropertiesWindow : Window
             return;
         }
 
-        var editor = new TextIconViewModel(viewModel.TextIcon, viewModel.Name) { PreviewSize = viewModel.BarIconSize };
+        // The item's picture goes with it, so the text can be put over it (0.14.0 WP6): shortcuts and groups have one.
+        var editor = new TextIconViewModel(viewModel.TextIcon, viewModel.Name, viewModel.Preview, canOverImage: true) { PreviewSize = viewModel.BarIconSize };
         var window = new TextIconWindow { DataContext = editor, Owner = this };
         if (window.ShowDialog() == true)
         {

@@ -7665,6 +7665,15 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to The text is drawn on top of the icon picture. One or two characters, or one symb [rest of string was truncated]";.
+        /// </summary>
+        public static string TextIcon_HintOver {
+            get {
+                return ResourceManager.GetString("TextIcon_HintOver", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Symbol.
         /// </summary>
         public static string TextIcon_ModeSymbol {
@@ -7688,6 +7697,69 @@ namespace DesktopIconGrid.Resources {
         public static string TextIcon_NoSymbol {
             get {
                 return ResourceManager.GetString("TextIcon_NoSymbol", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Keep the icon picture; draw the text on top.
+        /// </summary>
+        public static string TextIcon_OverImage {
+            get {
+                return ResourceManager.GetString("TextIcon_OverImage", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Position:.
+        /// </summary>
+        public static string TextIcon_Place {
+            get {
+                return ResourceManager.GetString("TextIcon_Place", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Bottom left.
+        /// </summary>
+        public static string TextIcon_PlaceBottomLeft {
+            get {
+                return ResourceManager.GetString("TextIcon_PlaceBottomLeft", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Bottom right.
+        /// </summary>
+        public static string TextIcon_PlaceBottomRight {
+            get {
+                return ResourceManager.GetString("TextIcon_PlaceBottomRight", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Centre.
+        /// </summary>
+        public static string TextIcon_PlaceCenter {
+            get {
+                return ResourceManager.GetString("TextIcon_PlaceCenter", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Top left.
+        /// </summary>
+        public static string TextIcon_PlaceTopLeft {
+            get {
+                return ResourceManager.GetString("TextIcon_PlaceTopLeft", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Top right.
+        /// </summary>
+        public static string TextIcon_PlaceTopRight {
+            get {
+                return ResourceManager.GetString("TextIcon_PlaceTopRight", resourceCulture);
             }
         }
 

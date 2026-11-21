@@ -27,6 +27,9 @@ version numbers follow [Semantic Versioning](https://semver.org/).
   files it sent (a PC that only sends leaves a card with its name beside them), the copies it saved, and the log. A
   renamed PC is renamed on the others' Send to PC icons, and their captions follow unless typed by hand. Two PCs with
   one name are told apart in the list by the start of their ids: NOTEBOOK (3fa9).
+- A text or symbol icon can keep the item's picture and be drawn over it, in the middle or a corner (*Keep the icon
+  picture; draw the text on top* in *Text or symbol icon…*). Without a tile colour the text has a thin outline; with one,
+  the colour is a small plate behind the text. Versions before 0.14.0 draw the text tile alone.
 
 ### Changed
 

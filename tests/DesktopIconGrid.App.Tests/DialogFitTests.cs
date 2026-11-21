@@ -241,18 +241,71 @@ public sealed class DialogFitTests(WpfThread wpf)
     }
 
     /// <summary>Every text, box and button shown on <paramref name="page"/> within its width, and none squeezed.</summary>
-    private static void FitsAcross(ScrollViewer page, string what)
+    private static void FitsAcross(ScrollViewer page, string what) => FitsAcross(page, page.ViewportWidth, what);
+
+    private static void FitsAcross(FrameworkElement root, double width, string what)
     {
-        var shown = LogicalDescendants<FrameworkElement>(page)
+        var shown = LogicalDescendants<FrameworkElement>(root)
             .Where(element => element is TextBlock or Button or System.Windows.Controls.Primitives.ToggleButton or TextBox or ComboBox && IsShown(element))
             .ToList();
         Assert.NotEmpty(shown);
         foreach (var element in shown)
         {
-            var right = element.TranslatePoint(new Point(element.ActualWidth, 0), page).X;
-            Assert.True(right <= page.ViewportWidth + 0.5, $"{what}: {Describe(element)} ends at {right} of {page.ViewportWidth}");
+            var right = element.TranslatePoint(new Point(element.ActualWidth, 0), root).X;
+            Assert.True(right <= width + 0.5, $"{what}: {Describe(element)} ends at {right} of {width}");
             Assert.True(element.ActualWidth + element.Margin.Left + element.Margin.Right >= element.DesiredSize.Width - 0.5, $"{what}: {Describe(element)} is squeezed");
         }
+    }
+
+    [Theory]
+    [InlineData("en-US", 0.9)]
+    [InlineData("en-US", 1.0)]
+    [InlineData("en-US", 1.5)]
+    [InlineData("zh-Hant", 0.9)]
+    [InlineData("zh-Hant", 1.0)]
+    [InlineData("zh-Hant", 1.5)]
+    [InlineData("zh-Hans", 0.9)]
+    [InlineData("zh-Hans", 1.0)]
+    [InlineData("zh-Hans", 1.5)]
+    public void The_text_icon_window_with_the_picture_kept_fits_and_its_buttons_are_in_sight(string language, double scale)
+    {
+        // 0.14.0 WP6: the box and its five positions under the fields, the second hint, on both sides.
+        wpf.Invoke(() =>
+        {
+            var before = System.Threading.Thread.CurrentThread.CurrentUICulture;
+            System.Threading.Thread.CurrentThread.CurrentUICulture = System.Globalization.CultureInfo.GetCultureInfo(language);
+            Services.UiFonts.Configure(null, null, scale);
+            var viewModel = new TextIconViewModel(new TextIcon("2") { OverImage = true, Place = TextIcon.PlaceBottomRight }, "Notes", picture: null, canOverImage: true);
+            var window = new TextIconWindow { DataContext = viewModel };
+            try
+            {
+                window.Show();
+                var root = (FrameworkElement)window.Content;
+                foreach (var symbol in new[] { false, true })
+                {
+                    viewModel.IsSymbol = symbol;
+                    Settle(window);
+                    var what = $"{language} at {scale:P0}, {(symbol ? "symbol" : "text")}";
+                    Assert.True(window.OverImageBox.IsChecked == true && viewModel.IsPlaceBottomRight, what);
+                    Assert.Equal(Strings.TextIcon_HintOver, window.HintLine.Text);
+                    Assert.True(window.HintLine.IsVisible, $"{what}: the hint is not shown");
+                    FitsAcross(root, root.ActualWidth, what);
+                    var client = root.TranslatePoint(new Point(0, root.ActualHeight), window).Y;
+                    foreach (var label in new[] { Strings.Common_OK, Strings.Common_Cancel })
+                    {
+                        var button = LogicalDescendants<Button>(window).Single(b => Equals(b.Content, label));
+                        var bottom = button.TranslatePoint(new Point(0, button.ActualHeight), window).Y;
+                        Assert.True(button.IsVisible && bottom <= client + 0.5, $"{what}: {label} ends at {bottom}, below {client}");
+                    }
+                }
+            }
+            finally
+            {
+                window.Close();
+                Services.UiFonts.Configure(null);
+                System.Threading.Thread.CurrentThread.CurrentUICulture = before;
+            }
+        });
     }
 
     [Fact]

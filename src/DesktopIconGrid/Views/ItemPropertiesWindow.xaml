@@ -213,10 +213,14 @@
                      Visibility="{Binding ShowsImagePreview, Converter={StaticResource BoolToVisibility}}" />
               <!-- The tile as the bar draws it at 32 px, on the bar's background (0.12.0 WP3) -->
               <Border CornerRadius="5" Background="{DynamicResource Theme.Background}"
-                      Visibility="{Binding HasTextIcon, Converter={StaticResource BoolToVisibility}}">
+                      Visibility="{Binding ShowsTextTile, Converter={StaticResource BoolToVisibility}}">
                 <views:TextIconTile x:Name="TextIconPreview" Icon="{Binding TextIcon}" TileSize="32" MaxFontSize="28"
                                     Width="32" Height="32" />
               </Border>
+              <!-- The text over the picture (0.14.0 WP6) -->
+              <views:TextIconTile x:Name="TextOverPreview" Icon="{Binding TextIcon}" TileSize="32" MaxFontSize="28"
+                                  Width="32" Height="32"
+                                  Visibility="{Binding ShowsTextOverImage, Converter={StaticResource BoolToVisibility}}" />
             </Grid>
           </Border>
           <!-- The buttons wrap beside the preview: in English the three did not fit on one line (0.12.1, review 28 A2) -->

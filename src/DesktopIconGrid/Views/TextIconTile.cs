@@ -18,6 +18,8 @@ namespace DesktopIconGrid.Views;
 /// <item>The text's colour is the icon's own, else on a tile colour white or near-black, whichever has the higher WCAG
 /// contrast (<see cref="ThemeCatalog.TextOnTile"/>), else the theme's text colour.</item>
 /// <item>A symbol the symbol fonts of this PC do not have is the placeholder icon, not an empty box.</item>
+/// <item>Over the item's own picture (0.14.0 WP6, <see cref="TextIcon.OverImage"/>) there is no tile:
+/// <see cref="TextOverPicture"/> draws the text alone, and the caller draws the picture under it.</item>
 /// </list>
 /// </summary>
 public sealed class TextIconTile : Decorator
@@ -47,6 +49,9 @@ public sealed class TextIconTile : Decorator
     };
 
     private readonly Image _placeholder = new() { Stretch = Stretch.Uniform };
+
+    /// <summary>The text over the item's picture, without a tile of its own (0.14.0 WP6).</summary>
+    private readonly TextOverPicture _overlay = new();
 
     public TextIconTile()
     {
@@ -87,6 +92,9 @@ public sealed class TextIconTile : Decorator
     /// <summary>Whether the placeholder is drawn because the symbol is missing here (tests).</summary>
     internal bool ShowsPlaceholder => ReferenceEquals(Child, _placeholder);
 
+    /// <summary>The text drawn over the item's picture, or <see langword="null"/> when the tile is drawn (tests).</summary>
+    internal TextOverPicture? Overlay => ReferenceEquals(Child, _overlay) ? _overlay : null;
+
     /// <summary>Whether this PC's symbol fonts have a code point; tests stand in an older Windows here.</summary>
     internal static Func<int, bool> HasGlyph { get; set; } = SymbolGlyphs.Has;
 
@@ -102,6 +110,17 @@ public sealed class TextIconTile : Decorator
         if (icon is null)
         {
             Child = null;
+            return;
+        }
+
+        if (icon.OverImage)
+        {
+            // Over the item's own picture, drawn under this (0.14.0 WP6): no tile, only the text. A symbol this PC does not
+            // have leaves the picture alone rather than putting the placeholder over it.
+            _overlay.Icon = IsMissingSymbol(icon) ? null : icon;
+            _overlay.TileSize = TileSize;
+            _overlay.MaxFontSize = MaxFontSize;
+            Child = _overlay;
             return;
         }
 

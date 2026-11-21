@@ -2864,4 +2864,28 @@ SHA-256：{3}
   <data name="SendTo_FolderInSettings" xml:space="preserve">
     <value>接收資料夾在「設定」›「傳送到電腦」。</value>
   </data>
+  <data name="TextIcon_OverImage" xml:space="preserve">
+    <value>保留圖示圖片，文字疊在上面</value>
+  </data>
+  <data name="TextIcon_Place" xml:space="preserve">
+    <value>位置：</value>
+  </data>
+  <data name="TextIcon_PlaceCenter" xml:space="preserve">
+    <value>中央</value>
+  </data>
+  <data name="TextIcon_PlaceTopLeft" xml:space="preserve">
+    <value>左上</value>
+  </data>
+  <data name="TextIcon_PlaceTopRight" xml:space="preserve">
+    <value>右上</value>
+  </data>
+  <data name="TextIcon_PlaceBottomLeft" xml:space="preserve">
+    <value>左下</value>
+  </data>
+  <data name="TextIcon_PlaceBottomRight" xml:space="preserve">
+    <value>右下</value>
+  </data>
+  <data name="TextIcon_HintOver" xml:space="preserve">
+    <value>文字會疊在圖示圖片上。一到兩個字或一個符號效果最好。</value>
+  </data>
 </root>

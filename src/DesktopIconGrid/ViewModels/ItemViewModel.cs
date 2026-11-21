@@ -191,9 +191,16 @@ public sealed class ItemViewModel : ObservableObject
     // ----- text icons -----------------------------------------------------------------------------
 
     /// <summary>True when the icon is drawn as text; an explicit icon image takes precedence.</summary>
-    public bool HasTextIcon => !Model.HasCustomIcon && DrawnTextIcon is not null;
+    /// <summary>
+    /// A text icon is drawn: in place of the picture, or over it (0.14.0 WP6), which a picture of the user's own does not
+    /// hide, since the text is meant to go on it.
+    /// </summary>
+    public bool HasTextIcon => DrawnTextIcon is { } icon && (!Model.HasCustomIcon || icon.OverImage);
 
-    public bool ShowsImage => !HasTextIcon && !ShowsGauge;
+    /// <summary>The text icon is drawn over the item's picture, which shows as it does without one (0.14.0 WP6).</summary>
+    public bool TextIsOverImage => HasTextIcon && DrawnTextIcon!.OverImage;
+
+    public bool ShowsImage => (!HasTextIcon || TextIsOverImage) && !ShowsGauge;
 
     /// <summary>True when files dropped on this icon are handled by it: opened with a shortcut's program, or taken by a special icon.</summary>
     public bool AcceptsDroppedFiles => Model switch
@@ -297,7 +304,7 @@ public sealed class ItemViewModel : ObservableObject
     }
 
     /// <summary>False when the icon is drawn as text or a gauge and no image is needed.</summary>
-    public bool NeedsImage => !HasTextIcon && !ShowsGauge;
+    public bool NeedsImage => (!HasTextIcon || TextIsOverImage) && !ShowsGauge;
 
     public void LoadImage() => Root.LoadImageAsync(this);
 

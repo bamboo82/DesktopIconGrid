@@ -49,6 +49,38 @@ public sealed record TextIcon(
     [JsonExtensionData]
     public Dictionary<string, JsonElement>? ExtensionData { get; init; }
 
+    /// <summary>The middle of the picture, where <see cref="Place"/> puts the text unless it names a corner; never written.</summary>
+    public const string PlaceCenter = "center";
+
+    public const string PlaceTopLeft = "topLeft";
+    public const string PlaceTopRight = "topRight";
+    public const string PlaceBottomLeft = "bottomLeft";
+    public const string PlaceBottomRight = "bottomRight";
+
+    /// <summary>The corners <see cref="Place"/> may name.</summary>
+    public static readonly IReadOnlyList<string> Corners = [PlaceTopLeft, PlaceTopRight, PlaceBottomLeft, PlaceBottomRight];
+
+    /// <summary>
+    /// Draw the item's picture as it is drawn without a text icon, and the text or symbol over it (0.14.0 WP6, the owner's
+    /// request). Written only when set: a version before 0.14.0 does not read it and draws the text tile alone, as before.
+    /// </summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public bool OverImage { get; init; }
+
+    /// <summary>
+    /// Where the text sits on the picture: one of <see cref="Corners"/>, or <see langword="null"/> for the middle. Read only
+    /// with <see cref="OverImage"/>; another value is the middle. Written only when it names a corner.
+    /// </summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? Place { get; init; }
+
+    /// <summary>The corner the text is drawn in over the picture, or <see langword="null"/> for the middle (or no picture).</summary>
+    [JsonIgnore]
+    public string? Corner => OverImage ? CornerOf(Place) : null;
+
+    private static string? CornerOf(string? place) =>
+        Corners.FirstOrDefault(corner => string.Equals(corner, place?.Trim(), StringComparison.OrdinalIgnoreCase));
+
     public static readonly IReadOnlyList<double> SuggestedFontSizes =
         [8, 9, 10, 11, 12, 14, 16, 18, 20, 22, 24, 28, 32, 36, 40, 48];
 
@@ -74,6 +106,7 @@ public sealed record TextIcon(
             FontSize = size,
             Color = LauncherSettings.IsValidColor(Color) ? Color!.ToUpperInvariant() : null,
             Background = LauncherSettings.IsValidColor(Background) ? Background!.ToUpperInvariant() : null,
+            Place = OverImage ? CornerOf(Place) : null, // the middle and another value are not written
         };
     }
 }

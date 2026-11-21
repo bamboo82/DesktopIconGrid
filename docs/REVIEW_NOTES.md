@@ -9,6 +9,64 @@ The owner relays replies.
 
 ---
 
+## 2026-11-21 (124) — 0.14.0 WP6: text or a symbol over the icon's picture
+
+Run 226 (`27a7d09`, entry 123, WP5 with A3) is green: Core 1207 and App 460 tests. Review 37 is read, and thank you for
+the early check: T1 (names over a light desktop) gets its own commit and entry next. After that come WP7 and WP2.
+
+- **Model:** `TextIcon` has two init properties, written only when set.
+  - `overImage` (bool).
+  - `place` (`topLeft`, `topRight`, `bottomLeft`, `bottomRight`). The middle (`center`) is not written, any other value
+    reads as the middle, and `place` is read only with `overImage` (`Corner`). `Normalized` writes the corner in its
+    canonical form, or drops `place`.
+  - A version before 0.14.0 ignores both and draws the text tile alone, which is the fallback.
+- **Drawing:** a new `Views/TextOverPicture` is used by `TextIconTile` whenever `OverImage` is set. There is no tile; it
+  draws only the text, as its outline geometry (`FormattedText.BuildGeometry`), so the outline keeps one unit at any
+  fitted size.
+  - **The middle:** the whole tile, at its size, or fitted when `fit` (always for a symbol), with the 16 % margin a
+    fitted tile has.
+  - **A corner:** a box of 55 % of the side, always fitted, less the room for the outline or the plate. The letters' ink
+    is centred in the box.
+  - **Without a tile colour:** white unless the icon has its own colour, with a 2-unit pen drawn under the fill (1 unit
+    outside the letters). The pen is `#1A1A1A` under light text and white under dark (luminance at 0.5).
+  - **With a tile colour:** a rounded plate (ink + 2, radius 3), and the text follows `ThemeCatalog.TextOnTile`.
+  - **A symbol this PC lacks:** nothing is drawn over the picture, rather than the placeholder.
+- **The bar** (`ItemViewModel`):
+  - `HasTextIcon` is also true over a chosen picture, when the text goes over it;
+  - `TextIsOverImage` is new;
+  - `ShowsImage` and `NeedsImage` stay true under text over the picture, so the picture is loaded and drawn as without
+    a text icon, running mark and badges included;
+  - the template is unchanged, since the image and the tile already lie in one cell;
+  - the hover fill and border are the button's, as for a picture.
+- **Properties:**
+  - text over the picture keeps the chosen picture, and choosing another picture keeps the text;
+  - text in the picture's place replaces it, as before;
+  - the preview has the picture with a second `TextIconTile` over it (`ShowsTextOverImage`), or the tile alone
+    (`ShowsTextTile`).
+- **The window:**
+  - Under the colours, *Keep the icon picture; draw the text on top* (a wrapping check box) and *Position* with the five
+    choices, enabled only with the box ticked, on both sides.
+  - The hint becomes TextIcon_HintOver while ticked, and then shows on the Symbol side too.
+  - The preview draws the item's real picture (`ItemPropertiesViewModel.Preview`, passed in) under the text.
+  - The box is offered when the window is opened from Properties, that is for shortcuts and groups. Special icons have
+    their own properties, without *Text or symbol icon…*, so they do not get it.
+- **The names table:** it draws no icons, so it has nothing to show (FEATURES says so).
+- **Tests:**
+  - **Core (1209):** the round trip, the middle not written, a corner read back, another place, `place` without
+    `overImage`, an old file.
+  - **App:**
+    - `TextOverPictureTests`: the boxes; the colours (default white with a dark edge, dark text with a white edge, the
+      plate's contrast rule); the tile using the overlay and a missing symbol leaving the picture alone; the editor
+      (not offered without a picture, both sides, the corner saved and read back, the second hint).
+    - In `ItemPropertiesViewModelTests`, the picture kept and dropped.
+    - In `LauncherViewModelTests`, the bar's state for both kinds.
+    - In `DialogFitTests`, the window with the box ticked at 90, 100 and 150 % in three languages, on both sides,
+      with OK and Cancel in sight.
+- **Not tested:** the drawing itself on the screen (the outline, the plate, a corner at 16 and 64 px); a real
+  program's picture under a symbol.
+
+This entry claims no run for its own commit.
+
 ## 2026-11-21 (123) — 0.14.0 WP5 with A3: a *Send to PC* tab, the receive folder, and one name for each PC
 
 Run 225 (`914f013`, entry 122, WP4) is green: Core 1177 and App 451 tests. Review 36 is read: there are no findings,

@@ -22,6 +22,44 @@ public class TextIconTests
     }
 
     [Fact]
+    public void Over_the_picture_and_its_corner_are_written_only_when_set_and_read_back()
+    {
+        // 0.14.0 WP6: the text or symbol drawn on the item's picture.
+        var plain = JsonSerializer.Serialize(new TextIcon("A").Normalized(), LayoutStorage.JsonOptions);
+        Assert.DoesNotContain("overImage", plain, StringComparison.Ordinal);
+        Assert.DoesNotContain("place", plain, StringComparison.Ordinal);
+
+        var centre = new TextIcon("A") { OverImage = true, Place = TextIcon.PlaceCenter }.Normalized()!;
+        var centreJson = JsonSerializer.Serialize(centre, LayoutStorage.JsonOptions);
+        Assert.True(JsonDocument.Parse(centreJson).RootElement.GetProperty("overImage").GetBoolean());
+        Assert.DoesNotContain("place", centreJson, StringComparison.Ordinal); // the middle is not written
+        Assert.Null(centre.Corner);
+
+        var corner = new TextIcon("2") { OverImage = true, Place = "BOTTOMright" }.Normalized()!;
+        Assert.Equal(TextIcon.PlaceBottomRight, corner.Place);
+        var read = JsonSerializer.Deserialize<TextIcon>(JsonSerializer.Serialize(corner, LayoutStorage.JsonOptions), LayoutStorage.JsonOptions)!;
+        Assert.Equal(corner, read);
+        Assert.Equal((true, TextIcon.PlaceBottomRight), (read.OverImage, read.Corner));
+    }
+
+    [Fact]
+    public void Another_place_is_the_middle_a_place_without_the_picture_is_dropped_and_an_old_file_draws_the_tile()
+    {
+        var unknown = JsonSerializer.Deserialize<TextIcon>("""{"text":"A","overImage":true,"place":"middleLeft"}""", LayoutStorage.JsonOptions)!;
+        Assert.Null(unknown.Corner);
+        Assert.Null(unknown.Normalized()!.Place);
+
+        var alone = new TextIcon("A") { Place = TextIcon.PlaceTopLeft };
+        Assert.Null(alone.Corner); // read only with the picture
+        Assert.Null(alone.Normalized()!.Place);
+
+        var old = JsonSerializer.Deserialize<TextIcon>("""{"text":"備","fontSize":14}""", LayoutStorage.JsonOptions)!;
+        Assert.False(old.OverImage); // a file without them: the text tile, as before
+        Assert.Null(old.Corner);
+        Assert.Equal(TextIcon.Corners, [TextIcon.PlaceTopLeft, TextIcon.PlaceTopRight, TextIcon.PlaceBottomLeft, TextIcon.PlaceBottomRight]);
+    }
+
+    [Fact]
     public void Normalized_drops_empty_text_and_bad_values()
     {
         Assert.Null(new TextIcon("   ").Normalized());

@@ -93,6 +93,22 @@ drawn with the symbol, and its layout is not changed. `fit` and `background` are
 older keep them unread and draw a symbol as text of size 26. The bar, a group's popup, the pointer window and both
 previews draw text icons with one control.
 
+**Text over the picture** (0.14.0). Under the fields of both sides, *Keep the icon picture; draw the text on top*
+keeps the item's picture (its own icon, or the picture chosen for it, with the running mark and the badges, as without a
+text icon) and draws the text or symbol over it; *Position* offers the middle and the four corners, and is enabled
+only with the box ticked. In the middle the text takes the whole tile, at its size or fitted (a symbol always); in a
+corner it takes a box of 55 % of the tile's side and is always fitted to it. Without a tile colour the text is white
+unless it has a colour of its own, with a one-unit outline in the contrasting tone (near-black under light text, white
+under dark); with a tile colour that colour is a plate just behind the text (its box and 2 more, corner 3), not the
+whole tile, and the text follows the tile colour's contrast rule. The hover fill and border are the picture's. The
+preview shows the item's real picture with the text on it, and the hint under the fields says that one or two
+characters or one symbol work best. A picture chosen for the item is kept when the text goes over it, and choosing
+another picture keeps the text; text drawn in the picture's place replaces it, as before. Stored as `overImage`
+and `place` (`topLeft`, `topRight`, `bottomLeft`, `bottomRight`; the middle is not written, and another value is the
+middle), written only when set: a version before 0.14.0 draws the text tile alone. Shortcuts and groups have the box
+(their Properties offer *Text or symbol icon…*); special icons have their own properties, without it. The names table
+draws no icons.
+
 **Advanced** (0.7.0), the options a Windows `.lnk` has:
 
 | Field | Notes |

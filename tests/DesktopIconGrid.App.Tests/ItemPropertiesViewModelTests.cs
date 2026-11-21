@@ -263,4 +263,24 @@ public class ItemPropertiesViewModelTests
         Assert.True(viewModel.Apply());
         Assert.Equal((null, null, false), (shortcut.Browser, shortcut.BrowserProfile, shortcut.AppWindow));
     }
+
+    // 0.14.0 WP6
+    [Fact]
+    public void Properties_keep_a_chosen_picture_for_text_over_it_and_drop_it_for_text_in_its_place()
+    {
+        var properties = new ItemPropertiesViewModel(new ShortcutItem { Name = "Tool", Location = @"C:\Tools\tool.exe", IconPath = @"C:\Icons\tool.png" }, isNew: false, new NoIcons());
+
+        properties.TextIcon = new TextIcon("2") { OverImage = true, Place = TextIcon.PlaceBottomRight };
+        Assert.Equal(@"C:\Icons\tool.png", properties.IconPath);
+        Assert.True(properties.HasTextIcon && properties.ShowsImagePreview && properties.ShowsTextOverImage);
+        Assert.False(properties.ShowsTextTile);
+
+        properties.IconPath = @"C:\Icons\other.png"; // another picture: the text stays over it
+        Assert.NotNull(properties.TextIcon);
+
+        properties.TextIcon = new TextIcon("備");
+        Assert.Null(properties.IconPath); // in its place, as before
+        Assert.True(properties.ShowsTextTile);
+        Assert.False(properties.ShowsImagePreview);
+    }
 }

@@ -506,9 +506,9 @@ public sealed class ItemPropertiesViewModel : ObservableObject
             var normalized = string.IsNullOrWhiteSpace(value) ? null : value.Trim();
             if (SetProperty(ref _iconPath, normalized))
             {
-                if (normalized is not null)
+                if (normalized is not null && _textIcon is not { OverImage: true })
                 {
-                    _textIcon = null; // an image replaces a text icon
+                    _textIcon = null; // an image replaces a text icon, unless the text goes over the picture (0.14.0 WP6)
                 }
 
                 NotifyIconChanged();
@@ -519,7 +519,10 @@ public sealed class ItemPropertiesViewModel : ObservableObject
     /// <summary>The bar's icon size: the Text icon window draws its preview at it (0.12.0 A2).</summary>
     public int BarIconSize { get; init; } = LauncherSettings.DefaultIconSize;
 
-    /// <summary>Text drawn instead of an image. Setting it clears a custom image.</summary>
+    /// <summary>
+    /// Text drawn instead of an image, or over the item's picture (0.14.0 WP6). Setting one drawn instead clears a custom
+    /// image; one drawn over the picture keeps it.
+    /// </summary>
     public TextIcon? TextIcon
     {
         get => _textIcon;
@@ -529,7 +532,7 @@ public sealed class ItemPropertiesViewModel : ObservableObject
             if (!Equals(_textIcon, normalized))
             {
                 _textIcon = normalized;
-                if (normalized is not null)
+                if (normalized is { OverImage: false })
                 {
                     _iconPath = null;
                 }
@@ -542,9 +545,15 @@ public sealed class ItemPropertiesViewModel : ObservableObject
     /// <summary>True when either an image or a text icon overrides the default.</summary>
     public bool HasCustomIcon => _iconPath is not null || _textIcon is not null;
 
-    public bool HasTextIcon => _iconPath is null && _textIcon is not null;
+    public bool HasTextIcon => _textIcon is not null && (_iconPath is null || _textIcon.OverImage);
 
-    public bool ShowsImagePreview => !HasTextIcon;
+    public bool ShowsImagePreview => !HasTextIcon || _textIcon!.OverImage;
+
+    /// <summary>The preview shows the text icon's own tile, in place of the picture.</summary>
+    public bool ShowsTextTile => HasTextIcon && !_textIcon!.OverImage;
+
+    /// <summary>The preview shows the text over the picture (0.14.0 WP6).</summary>
+    public bool ShowsTextOverImage => HasTextIcon && _textIcon!.OverImage;
 
     public ImageSource? Preview
     {
@@ -583,6 +592,8 @@ public sealed class ItemPropertiesViewModel : ObservableObject
         OnPropertyChanged(nameof(HasCustomIcon));
         OnPropertyChanged(nameof(HasTextIcon));
         OnPropertyChanged(nameof(ShowsImagePreview));
+        OnPropertyChanged(nameof(ShowsTextTile));
+        OnPropertyChanged(nameof(ShowsTextOverImage));
         RefreshPreviewAndWarning();
     }
 

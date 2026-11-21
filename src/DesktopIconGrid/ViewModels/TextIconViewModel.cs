@@ -45,6 +45,8 @@ public sealed class TextIconViewModel : ObservableObject
     private bool _isSymbol;
     private string _search = string.Empty;
     private SymbolChoice? _symbol;
+    private bool _overImage;
+    private string _place;
 
     /// <summary>
     /// A symbol icon whose character the catalogue does not have (one a later version adds, come through sync): kept as
@@ -52,8 +54,14 @@ public sealed class TextIconViewModel : ObservableObject
     /// </summary>
     private readonly TextIcon? _keptSymbol;
 
-    public TextIconViewModel(TextIcon? current, string suggestedText)
+    /// <param name="picture">The item's picture, which the text can be put over (0.14.0 WP6); the preview draws it under the text.</param>
+    /// <param name="canOverImage">The item has a picture or a default icon to put the text over: the box is offered.</param>
+    public TextIconViewModel(TextIcon? current, string suggestedText, ImageSource? picture = null, bool canOverImage = false)
     {
+        Picture = picture;
+        CanOverImage = canOverImage;
+        _overImage = canOverImage && current is { OverImage: true };
+        _place = current?.Corner ?? TextIcon.PlaceCenter;
         // An icon that is a symbol opens on Symbol with its symbol chosen; the Text side then starts as for a new icon.
         _isSymbol = SymbolCatalog.IsSymbol(current);
         var text = _isSymbol ? null : current;
@@ -97,6 +105,7 @@ public sealed class TextIconViewModel : ObservableObject
             if (SetProperty(ref _isSymbol, value))
             {
                 OnPropertyChanged(nameof(IsText));
+                OnPropertyChanged(nameof(ShowsHint));
                 NotifyIcon();
             }
         }
@@ -108,6 +117,84 @@ public sealed class TextIconViewModel : ObservableObject
         get => !_isSymbol;
         set => IsSymbol = !value;
     }
+
+    // ----- over the picture (0.14.0 WP6) ------------------------------------------------------------
+
+    /// <summary>The item's picture, under the text in the preview while <see cref="OverImage"/>.</summary>
+    public ImageSource? Picture { get; }
+
+    /// <summary>The item has a picture or a default icon: <em>Keep the icon picture</em> is offered.</summary>
+    public bool CanOverImage { get; }
+
+    /// <summary>Keep the item's picture and draw the text or symbol over it, on both sides.</summary>
+    public bool OverImage
+    {
+        get => _overImage;
+        set
+        {
+            if (SetProperty(ref _overImage, value && CanOverImage))
+            {
+                OnPropertyChanged(nameof(ShowsPicture));
+                OnPropertyChanged(nameof(Hint));
+                OnPropertyChanged(nameof(ShowsHint));
+                NotifyIcon();
+            }
+        }
+    }
+
+    /// <summary>The preview draws the item's picture under the text.</summary>
+    public bool ShowsPicture => _overImage;
+
+    public bool IsPlaceCenter
+    {
+        get => _place == TextIcon.PlaceCenter;
+        set => SetPlace(TextIcon.PlaceCenter, value);
+    }
+
+    public bool IsPlaceTopLeft
+    {
+        get => _place == TextIcon.PlaceTopLeft;
+        set => SetPlace(TextIcon.PlaceTopLeft, value);
+    }
+
+    public bool IsPlaceTopRight
+    {
+        get => _place == TextIcon.PlaceTopRight;
+        set => SetPlace(TextIcon.PlaceTopRight, value);
+    }
+
+    public bool IsPlaceBottomLeft
+    {
+        get => _place == TextIcon.PlaceBottomLeft;
+        set => SetPlace(TextIcon.PlaceBottomLeft, value);
+    }
+
+    public bool IsPlaceBottomRight
+    {
+        get => _place == TextIcon.PlaceBottomRight;
+        set => SetPlace(TextIcon.PlaceBottomRight, value);
+    }
+
+    private void SetPlace(string place, bool chosen)
+    {
+        if (!chosen || _place == place)
+        {
+            return;
+        }
+
+        _place = place;
+        OnPropertyChanged(nameof(IsPlaceCenter));
+        OnPropertyChanged(nameof(IsPlaceTopLeft));
+        OnPropertyChanged(nameof(IsPlaceTopRight));
+        OnPropertyChanged(nameof(IsPlaceBottomLeft));
+        OnPropertyChanged(nameof(IsPlaceBottomRight));
+        NotifyIcon();
+    }
+
+    /// <summary>The hint under the fields: the Text side's, or the one for text over the picture, on both sides.</summary>
+    public string Hint => _overImage ? Strings.TextIcon_HintOver : Strings.TextIcon_Hint;
+
+    public bool ShowsHint => _overImage || !_isSymbol;
 
     // ----- Text ------------------------------------------------------------------------------------
 
@@ -279,14 +366,21 @@ public sealed class TextIconViewModel : ObservableObject
         var tile = _tileColor.Length == 0 ? null : _tileColor;
         if (_isSymbol)
         {
-            return _symbol is not null ? SymbolCatalog.Icon(_symbol.Entry, color, tile).Normalized()
-                : _keptSymbol is not null ? (_keptSymbol with { Color = color, Background = tile }).Normalized() // its own character, as it came
+            return _symbol is not null ? OverPicture(SymbolCatalog.Icon(_symbol.Entry, color, tile)).Normalized()
+                : _keptSymbol is not null ? OverPicture(_keptSymbol with { Color = color, Background = tile }).Normalized() // its own character, as it came
                 : null;
         }
 
         TryParseFontSize(out var size);
-        return new TextIcon(emptyText ?? _text, _selectedFont?.Source, size, _bold, color, _fit, tile).Normalized();
+        return OverPicture(new TextIcon(emptyText ?? _text, _selectedFont?.Source, size, _bold, color, _fit, tile)).Normalized();
     }
+
+    /// <summary>The icon with the choice of drawing it over the picture, and where (0.14.0 WP6).</summary>
+    private TextIcon OverPicture(TextIcon icon) => icon with
+    {
+        OverImage = _overImage,
+        Place = _overImage && _place != TextIcon.PlaceCenter ? _place : null,
+    };
 
     private void NotifyIcon()
     {
