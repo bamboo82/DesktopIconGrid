@@ -9,6 +9,52 @@ The owner relays replies.
 
 ---
 
+## 2026-11-21 (134) — Release commit for v0.14.0
+
+Run 236 (`6dd3b3b`, entry 133) is green: Core 1242 and App 498 tests, and your look at T3 (review 40) found nothing
+more. This is the release commit you asked for, made on the owner's word to me: I asked directly when your message
+came, and the owner also chose the date, 2026-11-21.
+
+- **What this commit changes (documents only, no code):**
+  - `CHANGELOG.md`: "[0.14.0] – Unreleased" becomes "[0.14.0] – 2026-11-21".
+  - `FEATURES.md` §12: 0.14.0 is done, released 2026-11-21, with what the release check found; *Next* is nothing
+    planned.
+  - `docs/ROADMAP.md`: 0.14.0 released 2026-11-21; *Next*: nothing planned.
+  - `CLAUDE.md` State, which the owner said yes to when I asked:
+    - 0.13.0 released (annotated tag `v0.13.0` on `361beb4`, release run 16, both checked on GitHub, and `main` there);
+    - 0.14.0 with its release commit, the tag and `main` yours;
+    - nothing in progress;
+    - the 0.14.0 choices to keep;
+    - what you saw in reviews 36–40;
+    - what is not seen: the tray icon, the Send to menu, saving on the 傳送到電腦 tab and the receive folder's rules, a
+      rename reaching another PC, F2 or a double-click on a row line, English and zh-Hans, the zips, and the standing
+      list.
+- **Your answers** (reviews 39 and 40) are kept as they were: no bar factor in `UiFonts`, the folder stack as it is,
+  the hint's second sentence, the edge on shortcuts' and groups' text icons, and the notice row and the type-to-find
+  box left on their fill.
+- **The version:** `Directory.Build.props` says 0.14.0. No project file or workflow names another.
+- **Not in this commit:** the tag `v0.14.0` and `main`, yours on the owner's word.
+
+| What | Entry | Commits | Run |
+| --- | --- | --- | --- |
+| Version 0.14.0; WP1 with A1 and A2, separators that start a new row | 120 | `a9712fb` | 223 |
+| WP3, the transparency fades the background only | 121 | `251b781` | 224 |
+| WP4, the data location on the *Portable* tab | 122 | `914f013` | 225 |
+| WP5 with A3, the *Send to PC* tab, the receive folder, one name for each PC | 123 | `27a7d09` | 226 |
+| WP6, text or a symbol over the icon's picture | 124 | `69bc7e8` | 227, red (a test of mine) |
+| Review 37 T1, names over a light desktop | 125 | `feffa63` | 228, red (the same test) |
+| That test compares within a tolerance | 126 | `8d9a4c7` | 229 |
+| WP7, the program's icon set | 127 | `7a0edca` | 230 |
+| WP2, the dialogs' and menus' own font and text size | 128 | `4e4d223` | 231, red (tests of mine) |
+| The colour hint wraps beside its box | 129 | `daeb0c6` | 232 |
+| Review 38 T2, special icons' glyphs and gauge text | 130 | `f289641` | 233 |
+| Ready for the release check | 131 | `036c419` | 234 |
+| Review 39 T3, lines and the bar's own marks | 132 | `d9da59e` | 235, red (a test of mine) |
+| That test looks in the logical tree | 133 | `6dd3b3b` | 236 |
+| Release commit | 134 | this | — |
+
+This entry claims no run for its own commit.
+
 ## 2026-11-21 (133) — Run 235 was red: my T3 test looked for ← in the wrong tree
 
 Run 235 (`d9da59e`, T3, entry 132) failed one App test of 498, the new one of mine:

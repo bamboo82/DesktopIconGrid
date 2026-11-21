@@ -88,16 +88,42 @@ After removing or editing a key in the `.resx` files, run `python3 -I tools/gen_
 
 ## State
 
-- Released: 0.12.2 on 2026-11-20 (release commit `85b2f04`; annotated tag `v0.12.2` on it, release run 15; REVIEW_NOTES
-  entry 107 has its table), the findings of the release check of 0.12.1 (review 29: N1–N5). Before it 0.12.1 (tag
-  `v0.12.1` on `0326f82`, entry 100), 0.12.0 "Find it, see it" (tag `v0.12.0` on `ca7b1c6`, entry 91), 0.11.0 (tag
-  `v0.11.0` on `10dec5a`), and 0.10.0 (tag `v0.10.0` on `254c55c`).
-- 0.13.0 "Where it lives, how it reads", the owner's requests after 0.12.2 (plan 31: WP1–WP5; review 33: R1–R6), has
-  its release commit, dated 2026-11-21 (REVIEW_NOTES entry 119 has its table). It came after the review session's
-  re-check (review 34, no finding), on the owner's word. The tag `v0.13.0` and `main` are the review session's, on the
-  owner's word.
-- In progress: nothing. After 0.13.0 nothing is planned; 1.0.0 keeps the installer, code signing and the Windows toast
+- Released: 0.13.0 "Where it lives, how it reads" on 2026-11-21 (release commit `361beb4`; annotated tag `v0.13.0` on
+  it, release run 16; REVIEW_NOTES entry 119 has its table), the owner's requests after 0.12.2 (plan 31: WP1–WP5;
+  review 33: R1–R6). Before it 0.12.2 (tag `v0.12.2` on `85b2f04`, entry 107), 0.12.1 (tag `v0.12.1` on `0326f82`,
+  entry 100), 0.12.0 "Find it, see it" (tag `v0.12.0` on `ca7b1c6`, entry 91), 0.11.0 (tag `v0.11.0` on `10dec5a`),
+  and 0.10.0 (tag `v0.10.0` on `254c55c`).
+- 0.14.0 "Rows, looks and places", the owner's requests after 0.13.0 (plan 35: WP1–WP7 with A1–A3; reviews 37–39:
+  T1–T3), has its release commit, dated 2026-11-21 (REVIEW_NOTES entry 134 has its table). It came after the review
+  session's release check (review 39) and its look at T3 (review 40, no finding), on the owner's word. The tag
+  `v0.14.0` and `main` are the review session's, on the owner's word.
+- In progress: nothing. After 0.14.0 nothing is planned; 1.0.0 keeps the installer, code signing and the Windows toast
   with actions.
+- Keep as designed (0.14.0):
+  - 換列線條 (`rowline`: across the bar under its row, an optional caption at its left, saved as "Divider" only while
+    it has no text) and 列首線條 (`rowhead`: upright at the next row's start); neither makes an empty row at a row's
+    start, and versions before 0.14.0 draw both as a line (entry 120, A1, A2);
+  - 背景透明度 fades the background only: the bar is no layered window; WPF draws on a transparent surface that
+    `DwmEnableBlurBehindWindow` (an empty region) lets Windows compose; a click on the background still reaches the
+    bar; text is smoothed in grey then; High Contrast stays opaque (entry 121, review 37);
+  - while see-through: names, captions, the empty bar's line, a group's heading, text and symbol icons in the theme's
+    colour without a tile colour (shortcuts' too), a gauge's text and a grey value, the grip, ✕, ▸ and what Enter
+    opens have a soft edge (blur 3, opacity 0.95, near-black under light text, white under dark; in a gauge's box the
+    blur × 100 / the icon size); the lines are in the text colour at full strength; the notice row and the
+    type-to-find box stay on their fill (entries 125, 130, 132; reviews 38–40);
+  - Settings' tabs: 外觀, 視窗, 按鍵, 語音, 一般, 傳送到電腦, 可攜 (the data location, moved unchanged). `receiveFolder` is
+    this PC's, in `sync.json`, never synced or imported; a folder that fails when files arrive sends them to Downloads
+    with one notice and the setting stays (entries 122 and 123);
+  - one name for each PC: the sender's card, the inbox and the Send to PC captions; two with one name are told apart by
+    the start of their ids (entry 123, A3);
+  - text over a picture (`overImage`, `place`): a small plate with a tile colour, an outline without; a corner's box is
+    55 % of the tile (entry 124);
+  - the icon set in `assets/icons`: `app.ico` for the exe and every window, `tray.ico`'s frame for the tray's size,
+    `sendto.ico` beside the exe (this copy's older entry gets it); the Store and readme pictures are kept for 1.0.0 and
+    not shipped (entry 127);
+  - `dialogFont` and `dialogTextScale` beside the bar's `uiFont` and `textScale`: absent takes the bar's, `""` is
+    Windows' own, 100 is kept; menus and tooltips take the dialogs'; no bar factor in `UiFonts`; the folder stack has the
+    dialogs' font at Windows' size; the 外觀 tab scrolls at 100 % (entries 128 and 129, review 39).
 - Keep as designed (0.13.0):
   - `portable.txt`'s first line names the data folder (`DataLocation.FolderOf`, Windows' rules by hand). A note in it
     (the folder it names has no bar while the program's folder has one) keeps the program's folder, makes nothing,
@@ -138,7 +164,12 @@ After removing or editing a key in the `.resx` files, run `python3 -I tools/gen_
   - for 0.13.0 (reviews 33 and 34, a portable copy on zh-TW Windows 11 at 100 %): `portable.txt` with `.`, a move to
     `data` with *Copy* and *Restart now*, an absolute folder in quotes, the question at a first start with *Start
     empty*, the note copy (R1); PCMan at 32, 48 and 64 (R2); hints in the light Fluent look; Settings at 150 % zh-Hant
-    and 90 % English; names at 150 % (R3); *Send to PC* on a copy without sync.
+    and 90 % English; names at 150 % (R3); *Send to PC* on a copy without sync;
+  - for 0.14.0 (reviews 36–40, a portable Release build on zh-TW Windows 11 at 100 %, GPU): the three separator kinds
+    and drags across them; the background at 30 % without a backdrop, sharp, icons solid; T1–T3 over white and red;
+    the 可攜 and 傳送到電腦 tabs; text over a picture (a corner plate, a middle outline); the exe's and every title bar's
+    icon and `sendto.ico` beside the exe; dialogs at 150 % with the bar at 100 % (Settings 780 wide, nothing cut) and
+    the bar's menu at 150 %.
 - Not seen anywhere:
   - a real notification banner, a real sign-out, a real Windows snap, and maximise on a second monitor;
   - the recogniser with a microphone (the reviewer asks the owner before it opens one);
@@ -146,5 +177,7 @@ After removing or editing a key in the `.resx` files, run `python3 -I tools/gen_
     client);
   - for 0.13.0: *Import this PC's data…* and *Import* at a first start, and R4–R6 run (they read the owner's real data
     folder: the reviewer asks the owner), the *This PC* direction and a folder that cannot be used, hints in the dark
-    and the classic look, Properties at 150 %, a chosen font other than the default, a real stick, Program Files.
+    and the classic look, Properties at 150 %, a chosen font other than the default, a real stick, Program Files;
+  - for 0.14.0: the tray icon, the Send to menu, saving on the 傳送到電腦 tab and the receive folder's rules, a rename
+    reaching another PC, F2 or a double-click on a row line, English and zh-Hans, the zips.
 - Nothing is open for the owner from this session.

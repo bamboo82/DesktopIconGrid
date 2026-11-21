@@ -1085,11 +1085,14 @@ portable copy; icons that came out smaller than the others; hint text in the dia
 added before sync is set up; a font and a text size for the interface; and what the release check found (a note in
 `portable.txt`, the shell's frame at every size, names at larger text, icons and recordings in the import).
 
-**0.14.0 "Rows, looks and places"** *(in progress)* — the owner's requests after 0.13.0: separators that start a new row
-(a line across the bar, with a caption if wanted, and a line at a row's start); the transparency slider fades only the
-bar's background; the data location on a tab of its own; a Send to PC tab with this PC's name and the receive folder;
-text or symbols drawn over an icon's picture; the program's icon set; and dialogs and menus with their own font and
-text size.
+**0.14.0 "Rows, looks and places"** *(done, released 2026-11-21)* — the owner's requests after 0.13.0: separators that
+start a new row (a line across the bar, with a caption if wanted, and a line at a row's start); the transparency slider
+fades only the bar's background; the data location on a tab of its own; a Send to PC tab with this PC's name and the
+receive folder; text or symbols drawn over an icon's picture; the program's icon set; dialogs and menus with their own
+font and text size; and what the release check found (names, glyphs, gauge text, lines and the bar's own marks that
+read over a light desktop while the background is see-through).
+
+**Next** — nothing planned yet.
 
 **1.0.0 "Ship it"** — the existing backlog: installer (MSIX/winget), code signing, and the Windows toast with
 actions.
