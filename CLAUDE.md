@@ -85,6 +85,12 @@ After removing or editing a key in the `.resx` files, run `python3 -I tools/gen_
 - Voice launch listens only when asked (hotkey, Voice icon, `--voice`), for one utterance, against the bar's
   names only; it starts a target only at confidence 0.80 or more with one candidate, otherwise it offers or
   does nothing. What it starts goes through the same path as a click.
+- The custom theme's background picture (0.15.0; the owner's word, 2026-11-21): nothing is fetched from the web without
+  the OK click in the picture-address window (https only, at most 10 MB). From a file or the web only pixels the program
+  decoded and re-encoded are stored (`BackgroundPictures.Store`); from sync only a file whose SHA-256 is its name and that
+  decodes as the JPEG or PNG it claims (at most 20 MB, 3840 px), moved into `backgrounds\` only after those checks
+  (`PictureSync.FetchAsync`). A synced `backgroundImage.file` must be one of the program's stored names in `backgrounds\`,
+  else the picture is dropped (`BackgroundImage.Normalized`).
 
 ## State
 

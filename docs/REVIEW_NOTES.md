@@ -9,6 +9,69 @@ The owner relays replies.
 
 ---
 
+## 2026-11-21 (161) — 0.15.0 ready for the release check
+
+Runs 263 (`8361326`, entry 159, WP5b) and 264 (`02222e0`, entry 160) are green: Core 1367 and 1368, App 601 tests. The packages of your plan 36 (WP1–WP9
+with WP4b, WP5b and WP7a/WP7b) and review 41's U1–U3 with the 50 MB answer are in, so 0.15.0 is **ready for your release
+check**.
+
+| What | Entry | Commit | Run |
+| --- | --- | --- | --- |
+| WP3, the window at the pointer is the bar's twin | 135 | `dc9e8d7` | 239, red (a test of mine) |
+| Three tries at that test: its heights, without and with WindowChrome | 136–138 | `b732176`, `0874e4c`, `00bc2e8` | 240–242, red |
+| WP2, show at the pointer while a key is held | 139 | `8dd6703` | 243, red (the same test) |
+| WP3: the window grows by a group's header again (the real cause) | 140 | `41ff5ae` | 244 |
+| WP1, Lock grid | 141 | `62990bb` | 245, red (a font test's race) |
+| The announced font is not one the other tests draw with | 142 | `274ac48` | 246 |
+| WP8, more icon sizes | 143 | `ccf1627` | 247 |
+| WP9, sharp text in every window | 144 | `b34b78f` | 248 |
+| WP4, a colour picker for the custom theme | 145 | `b75b870` | 249 |
+| WP4b, the custom theme's hover and focus border colours | 146 | `5600c07` | 250, red (a fit rule) |
+| WP4b: the 自動 boxes wrap like every box in Settings | 147 | `834490b` | 251 |
+| WP5, a background picture for the custom theme | 148 | `a94a797` | 252, red (a fit rule) |
+| WP5: the thumbnail shares no cell | 149 | `1da7c61` | 253 |
+| WP6, the picture's position and zoom | 150 | `5326254` | 254, red (a race between tests) |
+| WP7a, up or down; the race fixed ("This device" collection) | 151 | `0e05418` | 255 |
+| WP7b, the text icon window for captions and widgets | 152 | `4be2941` | 256, red (two tests of mine) |
+| WP7b: two tests corrected | 153 | `17b0745` | 257 |
+| Review 41 U1, the new rows in the label column | 154 | `ceb9983` | 258, red (自動 wrapped in English) |
+| U1: 自動 without the Fluent minimum width | 155 | `0a4c05d` | 259 |
+| Review 41 U3, a tooltip of the bar goes when the bar loses the focus | 156 | `b3e0b2e` | 260 |
+| Review 41 U2, a stronger edge over a picture | 157 | `ae1afe8` | 261 |
+| Review 41: a picked file over 50 MB refused before it is read | 158 | `a8bc7ea` | 262 |
+| WP5b, the picture file travels with sync | 159 | `8361326` | 263 |
+| WP5b: a picture over 20 MB stays on this PC | 160 | `02222e0` | 264 |
+| Ready for the release check; the picture's rules in CLAUDE.md | 161 | this | — |
+
+- **The version:** `Directory.Build.props` says 0.15.0. `CHANGELOG.md` "[0.15.0] – Unreleased" lists them: under Added the
+  colour picker, the background picture (with its position, zoom and sync), the hover and focus colours, Lock grid, the
+  caption and widget looks, up or down, and show at the pointer while held; under Changed sharper text, more icon sizes,
+  the twin and, new in this entry, the bar's tooltip going when a dialog takes the focus (U3). FEATURES §12 and the
+  roadmap say *in progress* until the release commit.
+- **Open for you, asked in the entries:**
+  - entry 152: a caption's size is in the bar's units and a widget's in its tile's 100 units; a widget's font and colour
+    go to its caption too, its size, weight and offset to the value only; a moved caption is not cut at its strip;
+  - entry 157: shortcuts' and groups' text icons in the theme's colour take the glyphs' stronger edge too;
+  - entry 159: a picture left beside the copies by another PC's change stays until a PC that last synced it uploads
+    away from it (the tidy is this PC's previous picture only, as written); the decode check runs on the UI thread.
+- **CLAUDE.md:** I asked the owner in this session whether the picture's three security rules (WP5, with WP5b's wording:
+  the web only on OK, https, 10 MB; stored only re-encoded pixels from a file or the web, and from sync only a file whose
+  hash is its name and that decodes as the JPEG or PNG it claims, 20 MB, 3840 px; a synced `file` only a stored name) go
+  into the decided security rules. The answer was yes, so this commit adds them there and changes nothing else in it.
+- **Seen by you in the app (review 41):** WP3, WP2, WP1, WP8, WP9 (dialogs at 100 and 150 %), WP4, WP4b, WP5, WP6.
+- **Not seen yet:** from your list, a real download, a file picked through the dialog, Mica or Acrylic under the picture
+  and on the twin, mouse drags in the picker and the position dialog, a click with the hold key down, WP7a's offset, icons
+  at 96–256, 125 %, English and zh-Hans; and since then WP7b (a caption with a look, F2 and a double-click, 文字外觀… on
+  the clock, a gauge and a command tile, warning colours), U1 at 100 and 150 %, U2 over your gradient, U3 with Settings
+  over an icon's tooltip, the 50 MB refusal, and WP5b between two PCs (a folder, and Drive).
+
+  As before: a real notification banner, a real sign-out, a real Windows snap, maximise on a second monitor, the
+  recogniser with a microphone, Windows 10, another DPI scale.
+
+No release commit before your check and the owner's word.
+
+This entry claims no run for its own commit.
+
 ## 2026-11-21 (160) — WP5b: a picture over 20 MB stays on this PC
 
 - **Why:** a stored picture with transparency is a PNG and can be larger than the 20 MB every other PC takes; putting it

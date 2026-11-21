@@ -44,6 +44,8 @@ version numbers follow [Semantic Versioning](https://semver.org/).
 - More icon sizes under Settings ▸ Appearance: 16, 20, 24, 28, 32, 40, 48, 56, 64, 72, 80, 96 and 128 px, and the box
   takes any whole number from 16 to 256 typed into it. Icons are taken from their source at the first usual size that
   covers the pixels they are drawn at on your screens, then scaled down, so large icons stay sharp.
+- A tooltip of the bar goes away when the bar loses the focus to one of its dialogs or another program; before, one could
+  stay in front of Settings for as long as the pointer rested where it was.
 - The window the show-at-pointer key opens is the bar's twin. Its icons have the bar's room, so they fall into the same
   rows and columns, with the same row lines and lines at a row's start, and scroll where the bar's do; the search box
   is above them, and a group's header under the box while a group is open. Its background is the bar's: the colour,
