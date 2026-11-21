@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:r="clr-namespace:DesktopIconGrid.Resources"
         xmlns:views="clr-namespace:DesktopIconGrid.Views"
-        Title="{x:Static r:Strings.TextIcon_Title}"
+        Title="{Binding Title}"
         Width="620"
         SizeToContent="Height"
         ResizeMode="NoResize"
@@ -25,8 +25,9 @@
       <RowDefinition Height="Auto" />
     </Grid.RowDefinitions>
 
-    <!-- Text or Symbol (0.12.0 WP3) -->
-    <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Horizontal" Margin="0,0,0,10">
+    <!-- Text or Symbol (0.12.0 WP3); a widget has neither, it shows its own text (0.15.0 WP7b) -->
+    <StackPanel x:Name="Sides" Grid.Row="0" Grid.Column="0" Orientation="Horizontal" Margin="0,0,0,10"
+                Visibility="{Binding ShowsSides, Converter={StaticResource BoolToVisibility}}">
       <!-- Next to each other: the Fluent style's MinWidth set them 140 px apart (release check V3) -->
       <RadioButton x:Name="TextMode" Content="{x:Static r:Strings.TextIcon_ModeText}" IsChecked="{Binding IsText}" MinWidth="0" Margin="0,0,24,0" />
       <RadioButton x:Name="SymbolMode" Content="{x:Static r:Strings.TextIcon_ModeSymbol}" IsChecked="{Binding IsSymbol}" MinWidth="0" />
@@ -37,13 +38,42 @@
             Background="{DynamicResource Theme.Background}"
             BorderBrush="{DynamicResource Theme.Border}" BorderThickness="1" CornerRadius="4"
             VerticalAlignment="Top">
-      <Grid Width="{Binding PreviewSize}" Height="{Binding PreviewSize}">
-        <!-- The item's real picture under the text, when the text goes over it (0.14.0 WP6) -->
-        <Image x:Name="PreviewPicture" Source="{Binding Picture, TargetNullValue={StaticResource PlaceholderIconImage}}"
-               Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality"
-               Visibility="{Binding ShowsPicture, Converter={StaticResource BoolToVisibility}}" />
-        <views:TextIconTile x:Name="Preview" Icon="{Binding PreviewIcon}" TileSize="{Binding PreviewSize}"
-                            Width="{Binding PreviewSize}" Height="{Binding PreviewSize}" />
+      <Grid>
+        <Grid Width="{Binding PreviewSize}" Height="{Binding PreviewSize}"
+              Visibility="{Binding IsIconMode, Converter={StaticResource BoolToVisibility}}">
+          <!-- The item's real picture under the text, when the text goes over it (0.14.0 WP6) -->
+          <Image x:Name="PreviewPicture" Source="{Binding Picture, TargetNullValue={StaticResource PlaceholderIconImage}}"
+                 Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality"
+                 Visibility="{Binding ShowsPicture, Converter={StaticResource BoolToVisibility}}" />
+          <views:TextIconTile x:Name="Preview" Icon="{Binding PreviewIcon}" TileSize="{Binding PreviewSize}"
+                              Width="{Binding PreviewSize}" Height="{Binding PreviewSize}" />
+        </Grid>
+        <!-- A caption (0.15.0 WP7b): the strip as the bar draws it, the caption and then the line -->
+        <views:RowLinePanel x:Name="CaptionPreview" Width="84" VerticalAlignment="Center"
+                            Visibility="{Binding IsCaptionMode, Converter={StaticResource BoolToVisibility}}">
+          <Viewbox Stretch="Uniform" StretchDirection="DownOnly"
+                   views:RowLinePanel.ShiftPercent="{Binding OffsetY}">
+            <views:LookedText x:Name="CaptionPreviewText" Text="{Binding PreviewText}" Look="{Binding PreviewLook}"
+                              TextElement.Foreground="{DynamicResource Theme.Hint}" TextElement.FontSize="{Binding DefaultSize}"
+                              TextElement.FontWeight="{Binding DefaultWeight}" TextElement.FontFamily="{Binding DefaultFamily}" />
+          </Viewbox>
+          <views:DividerLine Stroke="{DynamicResource Theme.LineStroke}" Inset="0" Flat="True" />
+        </views:RowLinePanel>
+        <!-- A widget (0.15.0 WP7b): its text on its tile, in the tile's 100 units, the plate as the tile's fill -->
+        <Viewbox x:Name="WidgetPreview" Width="{Binding PreviewSize}" Height="{Binding PreviewSize}"
+                 Visibility="{Binding IsWidgetMode, Converter={StaticResource BoolToVisibility}}">
+          <Grid Width="100" Height="100">
+            <Border Background="{Binding PreviewPlateBrush}" CornerRadius="18.75" />
+            <Viewbox Stretch="Uniform" StretchDirection="DownOnly" MaxWidth="98" HorizontalAlignment="Center" VerticalAlignment="Center">
+              <Viewbox.RenderTransform>
+                <TranslateTransform Y="{Binding OffsetY}" />
+              </Viewbox.RenderTransform>
+              <views:LookedText x:Name="WidgetPreviewText" Text="{Binding PreviewText}" Look="{Binding PreviewLook}" DrawsPlate="False"
+                                TextElement.Foreground="{DynamicResource Theme.Foreground}" TextElement.FontSize="{Binding DefaultSize}"
+                                TextElement.FontWeight="{Binding DefaultWeight}" TextElement.FontFamily="{Binding DefaultFamily}" />
+            </Viewbox>
+          </Grid>
+        </Viewbox>
       </Grid>
     </Border>
 
@@ -60,9 +90,11 @@
         <RowDefinition Height="Auto" />
       </Grid.RowDefinitions>
 
-      <TextBlock Grid.Row="0" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.TextIcon_Text}" Margin="0,0,12,8" />
+      <!-- The icon's text, the caption, or what the widget shows now, read-only (0.15.0 WP7b) -->
+      <TextBlock x:Name="TextLabel" Grid.Row="0" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="{Binding TextLabel}" Margin="0,0,12,8" />
       <TextBox x:Name="TextBox" Grid.Row="0" Grid.Column="1" Style="{StaticResource DialogTextBox}"
-               MaxLength="{Binding MaxTextLength}"
+               MaxLength="{Binding MaxTextLength}" IsReadOnly="{Binding IsTextReadOnly}"
+               AutomationProperties.LabeledBy="{Binding ElementName=TextLabel}"
                Text="{Binding Text, UpdateSourceTrigger=PropertyChanged}" />
 
       <TextBlock Grid.Row="1" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.TextIcon_Font}" Margin="0,0,12,8" />
@@ -195,7 +227,7 @@
                    Margin="8,0,0,0" VerticalAlignment="Center" />
       </DockPanel>
 
-      <TextBlock x:Name="TileColourLabel" Grid.Row="2" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.TextIcon_TileColour}"
+      <TextBlock x:Name="TileColourLabel" Grid.Row="2" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="{Binding TileColorLabel}"
                  VerticalAlignment="Top" Margin="0,4,12,0" />
       <!-- The swatches on the row, the code, None and the warning under them: on one line they did not fit (release check V3) -->
       <StackPanel Grid.Row="2" Grid.Column="1">

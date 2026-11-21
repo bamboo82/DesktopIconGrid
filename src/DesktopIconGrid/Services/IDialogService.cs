@@ -68,6 +68,19 @@ public interface IDialogService
     /// <summary>Asks for a line of text, starting from <paramref name="initialValue"/>; <see langword="null"/> on Cancel.</summary>
     string? AskText(string title, string prompt, string? initialValue);
 
+    /// <summary>
+    /// A row line's caption and its look in the text icon window's Caption mode (0.15.0 WP7b), starting from
+    /// <paramref name="caption"/> and <paramref name="look"/>, with <paramref name="defaults"/>, the caption without a look;
+    /// <see langword="null"/> on Cancel. An empty text is no caption.
+    /// </summary>
+    CaptionAnswer? EditCaption(string? caption, TextLook? look, TextLookDefaults defaults);
+
+    /// <summary>
+    /// A widget's text look in the text icon window's Widget mode (0.15.0 WP7b), with <paramref name="sample"/>, what the
+    /// widget shows now, and <paramref name="defaults"/>, its text without a look; <see langword="null"/> on Cancel.
+    /// </summary>
+    LookAnswer? EditTextLook(string name, string sample, TextLook? look, TextLookDefaults defaults);
+
     /// <summary>Asks for a folder, starting in <paramref name="initialFolder"/> when it exists; <see langword="null"/> on Cancel.</summary>
     string? PickFolder(string title, string? initialFolder);
 
@@ -116,3 +129,9 @@ public sealed record SettingsResult(LauncherSettings Settings, DesktopIconGrid.C
 /// <param name="Folder">The new data folder, in full.</param>
 /// <param name="Copy">The bar's data is copied there from the folder in use now.</param>
 public sealed record DataMove(bool Portable, string MarkerText, string Folder, bool Copy);
+
+/// <summary>A row line's caption as the Caption mode saved it (0.15.0 WP7b): its text, empty for none, and its look.</summary>
+public sealed record CaptionAnswer(string Text, TextLook? Look);
+
+/// <summary>A widget's text look as the Widget mode saved it (0.15.0 WP7b); <see langword="null"/> when nothing differs from its own.</summary>
+public sealed record LookAnswer(TextLook? Look);

@@ -85,6 +85,18 @@ public sealed class ItemViewModel : ObservableObject
     /// <summary>A row line with a caption: the text, then the line.</summary>
     public bool HasRowLineText => IsRowLineSeparator && !string.IsNullOrWhiteSpace(Name);
 
+    /// <summary>A row line's caption look (0.15.0 WP7b), or <see langword="null"/> for the caption as before.</summary>
+    public TextLook? CaptionLook => (Model as SeparatorItem)?.CaptionLook;
+
+    /// <summary>A row line's caption drawn as before 0.15.0: the template's own text, untouched.</summary>
+    public bool HasPlainRowLineText => HasRowLineText && CaptionLook is null;
+
+    /// <summary>A row line's caption drawn with a look of its own (<see cref="Views.LookedText"/>).</summary>
+    public bool HasLookedRowLineText => HasRowLineText && CaptionLook is not null;
+
+    /// <summary>The widget draws text of its own whose look can be set: 文字外觀… is in its menu (0.15.0 WP7b).</summary>
+    public bool CanEditTextLook => Model is SpecialIconItem && SpecialHandler.HasTextLook;
+
     /// <summary>How much room the item takes in the grid: a divider is thin, a caption as wide as its text, and a row line across the bar.</summary>
     public FlowSlot Slot => SeparatorKind switch
     {
@@ -272,6 +284,9 @@ public sealed class ItemViewModel : ObservableObject
     public ItemListViewModel? Children =>
         Model is GroupItem group ? _children ??= new ItemListViewModel(Root, group) : null;
 
+    /// <summary>The group's contents if they were made (its popup was shown), without making them.</summary>
+    internal ItemListViewModel? CreatedChildren => _children;
+
     public ICommand ActivateCommand { get; }
 
     public ICommand PropertiesCommand { get; }
@@ -334,9 +349,22 @@ public sealed class ItemViewModel : ObservableObject
             };
         }
 
+        ApplyTextLook();
         OnPropertyChanged(nameof(Gauge));
         OnPropertyChanged(nameof(ShowsGauge));
         OnPropertyChanged(nameof(ShowsImage));
+    }
+
+    /// <summary>
+    /// Gives the gauge the item's text look (0.15.0 WP7b), or takes it away, without making the gauge anew: a command tile
+    /// does not run again and a clock's timer goes on. Only a widget whose handler offers 文字外觀… draws it.
+    /// </summary>
+    public void ApplyTextLook()
+    {
+        if (_gauge is not null)
+        {
+            _gauge.Look = CanEditTextLook && (Model as SpecialIconItem)?.TextLook is { } look ? new GaugeLook(look, UiFonts.BarFontFamily()) : null;
+        }
     }
 
     /// <summary>Stops live updates; called when the item leaves the bar.</summary>

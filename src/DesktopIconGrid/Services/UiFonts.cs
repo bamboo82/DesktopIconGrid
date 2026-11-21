@@ -162,6 +162,13 @@ public static class UiFonts
         window.SetResourceReference(TextElement.FontFamilyProperty, FamilyKey);
     }
 
+    /// <summary>
+    /// The bar's font as the bar draws with it now (<see cref="BarFamilyKey"/>), Windows' own without an application (tests):
+    /// what a caption or a widget's text without a font of its own is drawn in (0.15.0 WP7b).
+    /// </summary>
+    public static FontFamily BarFontFamily() =>
+        Application.Current?.TryFindResource(BarFamilyKey) as FontFamily ?? SystemFonts.MessageFontFamily;
+
     /// <summary>Gives the bar's window (or the bar at the pointer) the bar's font (0.14.0 WP2); call it once, when it is made.</summary>
     public static void ApplyBar(FrameworkElement window)
     {

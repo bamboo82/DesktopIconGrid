@@ -8223,6 +8223,24 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Caption:.
+        /// </summary>
+        public static string TextIcon_Caption {
+            get {
+                return ResourceManager.GetString("TextIcon_Caption", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to An empty caption takes the caption away; the line stays..
+        /// </summary>
+        public static string TextIcon_CaptionHint {
+            get {
+                return ResourceManager.GetString("TextIcon_CaptionHint", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Colour:.
         /// </summary>
         public static string TextIcon_Colour {
@@ -8264,6 +8282,15 @@ namespace DesktopIconGrid.Resources {
         public static string TextIcon_HintOver {
             get {
                 return ResourceManager.GetString("TextIcon_HintOver", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to {0} (not on this PC).
+        /// </summary>
+        public static string TextIcon_MissingFont {
+            get {
+                return ResourceManager.GetString("TextIcon_MissingFont", resourceCulture);
             }
         }
 
@@ -8331,6 +8358,15 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to (as before).
+        /// </summary>
+        public static string TextIcon_OwnFont {
+            get {
+                return ResourceManager.GetString("TextIcon_OwnFont", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Position:.
         /// </summary>
         public static string TextIcon_Place {
@@ -8381,6 +8417,24 @@ namespace DesktopIconGrid.Resources {
         public static string TextIcon_PlaceTopRight {
             get {
                 return ResourceManager.GetString("TextIcon_PlaceTopRight", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Plate colour:.
+        /// </summary>
+        public static string TextIcon_PlateColour {
+            get {
+                return ResourceManager.GetString("TextIcon_PlateColour", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Shows now:.
+        /// </summary>
+        public static string TextIcon_Sample {
+            get {
+                return ResourceManager.GetString("TextIcon_Sample", resourceCulture);
             }
         }
 
@@ -8444,6 +8498,33 @@ namespace DesktopIconGrid.Resources {
         public static string TextIcon_Title {
             get {
                 return ResourceManager.GetString("TextIcon_Title", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Caption text.
+        /// </summary>
+        public static string TextIcon_TitleCaption {
+            get {
+                return ResourceManager.GetString("TextIcon_TitleCaption", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Text of {0}.
+        /// </summary>
+        public static string TextIcon_TitleWidget {
+            get {
+                return ResourceManager.GetString("TextIcon_TitleWidget", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Text look….
+        /// </summary>
+        public static string TextLook_Menu {
+            get {
+                return ResourceManager.GetString("TextLook_Menu", resourceCulture);
             }
         }
 

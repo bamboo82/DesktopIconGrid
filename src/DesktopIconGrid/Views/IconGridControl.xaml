@@ -56,6 +56,9 @@
                       Visibility="{Binding IsShortcut, Converter={StaticResource BoolToVisibility}}" />
             <MenuItem Header="{x:Static r:Strings.Menu_ColorTag}" Tag="color-tags" />
             <Separator />
+            <!-- A widget's own text: its look in the text icon window (0.15.0 WP7b) -->
+            <MenuItem Header="{x:Static r:Strings.TextLook_Menu}" Click="TextLook_Click"
+                      Visibility="{Binding CanEditTextLook, Converter={StaticResource BoolToVisibility}}" />
             <MenuItem Header="{x:Static r:Strings.Common_Properties}" Command="{Binding PropertiesCommand}" InputGestureText="{Binding Root.KeyText[Properties]}" />
           </ContextMenu>
         </Button.ContextMenu>
@@ -91,22 +94,101 @@
                       </Setter.Value>
                     </Setter>
                   </Style>
+                  <!-- A widget's text look (0.15.0 WP7b, GaugeLook): only what it sets changes; each text keeps its own
+                       values as setters, which these triggers win over. The ring's and the bar's value: -->
+                  <Style x:Key="GaugeValueLook" TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+                    <Style.Triggers>
+                      <DataTrigger Binding="{Binding Look.HasFont}" Value="True">
+                        <Setter Property="FontFamily" Value="{Binding Look.Family}" />
+                      </DataTrigger>
+                      <DataTrigger Binding="{Binding Look.HasBold}" Value="True">
+                        <Setter Property="FontWeight" Value="{Binding Look.Weight}" />
+                      </DataTrigger>
+                      <DataTrigger Binding="{Binding Look.HasSize}" Value="True">
+                        <Setter Property="FontSize" Value="{Binding LookLabelSize}" />
+                      </DataTrigger>
+                      <DataTrigger Binding="{Binding Look.HasColor}" Value="True">
+                        <Setter Property="Foreground" Value="{Binding Look.TextBrush}" />
+                        <Setter Property="Effect" Value="{x:Null}" />
+                      </DataTrigger>
+                      <MultiDataTrigger>
+                        <MultiDataTrigger.Conditions>
+                          <Condition Binding="{Binding Look.EdgesColor}" Value="True" />
+                          <Condition Binding="{Binding Look.IsLightText}" Value="True" />
+                        </MultiDataTrigger.Conditions>
+                        <Setter Property="Effect" Value="{DynamicResource Theme.GaugeLightTextEdge}" />
+                      </MultiDataTrigger>
+                      <MultiDataTrigger>
+                        <MultiDataTrigger.Conditions>
+                          <Condition Binding="{Binding Look.EdgesColor}" Value="True" />
+                          <Condition Binding="{Binding Look.IsLightText}" Value="False" />
+                        </MultiDataTrigger.Conditions>
+                        <Setter Property="Effect" Value="{DynamicResource Theme.GaugeDarkTextEdge}" />
+                      </MultiDataTrigger>
+                      <DataTrigger Binding="{Binding Look.HasShift}" Value="True">
+                        <Setter Property="RenderTransform" Value="{Binding Look.Shift}" />
+                      </DataTrigger>
+                    </Style.Triggers>
+                  </Style>
+                  <!-- A caption under or over the value takes the font and the colour, not the size, weight or place -->
+                  <Style x:Key="GaugeCaptionLook" TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+                    <Style.Triggers>
+                      <DataTrigger Binding="{Binding Look.HasFont}" Value="True">
+                        <Setter Property="FontFamily" Value="{Binding Look.Family}" />
+                      </DataTrigger>
+                      <DataTrigger Binding="{Binding Look.HasColor}" Value="True">
+                        <Setter Property="Foreground" Value="{Binding Look.TextBrush}" />
+                        <Setter Property="Effect" Value="{x:Null}" />
+                      </DataTrigger>
+                      <MultiDataTrigger>
+                        <MultiDataTrigger.Conditions>
+                          <Condition Binding="{Binding Look.EdgesColor}" Value="True" />
+                          <Condition Binding="{Binding Look.IsLightText}" Value="True" />
+                        </MultiDataTrigger.Conditions>
+                        <Setter Property="Effect" Value="{DynamicResource Theme.GaugeLightTextEdge}" />
+                      </MultiDataTrigger>
+                      <MultiDataTrigger>
+                        <MultiDataTrigger.Conditions>
+                          <Condition Binding="{Binding Look.EdgesColor}" Value="True" />
+                          <Condition Binding="{Binding Look.IsLightText}" Value="False" />
+                        </MultiDataTrigger.Conditions>
+                        <Setter Property="Effect" Value="{DynamicResource Theme.GaugeDarkTextEdge}" />
+                      </MultiDataTrigger>
+                    </Style.Triggers>
+                  </Style>
                 </Grid.Resources>
+                <!-- A look's plate is the tile's fill, with a text icon's tile corner (0.15.0 WP7b) -->
+                <Border x:Name="GaugePlate" Background="{Binding Look.PlateBrush}" CornerRadius="{Binding Look.PlateCornerRadius, FallbackValue=0}"
+                        Visibility="{Binding Look.HasPlate, Converter={StaticResource BoolToVisibility}, FallbackValue=Collapsed}" />
                 <!-- Ring -->
                 <Grid Visibility="{Binding IsRing, Converter={StaticResource BoolToVisibility}}">
                   <Ellipse Width="88" Height="88" Stroke="{DynamicResource Theme.HoverBorder}" StrokeThickness="12" />
                   <Path Data="{Binding ArcGeometry}" Stroke="{Binding LevelBrush}" StrokeThickness="12"
                         StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
                   <!-- The gauge's text in the theme's colour takes the bar's edge while it is see-through, in the box's units (review 38 T2) -->
-                  <TextBlock Text="{Binding Label}" FontSize="26" FontWeight="SemiBold"
-                             Foreground="{DynamicResource Theme.Foreground}" Effect="{DynamicResource Theme.GaugeTextEdge}"
-                             HorizontalAlignment="Center" VerticalAlignment="Center" />
+                  <TextBlock x:Name="RingText" Text="{Binding Label}" HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <TextBlock.Style>
+                      <Style TargetType="TextBlock" BasedOn="{StaticResource GaugeValueLook}">
+                        <Setter Property="FontSize" Value="26" />
+                        <Setter Property="FontWeight" Value="SemiBold" />
+                        <Setter Property="Foreground" Value="{DynamicResource Theme.Foreground}" />
+                        <Setter Property="Effect" Value="{DynamicResource Theme.GaugeTextEdge}" />
+                      </Style>
+                    </TextBlock.Style>
+                  </TextBlock>
                 </Grid>
                 <!-- Bar -->
                 <Grid Visibility="{Binding IsBar, Converter={StaticResource BoolToVisibility}}">
-                  <TextBlock Text="{Binding Caption}" FontSize="24" FontWeight="SemiBold"
-                             Foreground="{DynamicResource Theme.Foreground}" Effect="{DynamicResource Theme.GaugeTextEdge}"
-                             HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,6,0,0" />
+                  <TextBlock x:Name="BarCaption" Text="{Binding Caption}" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,6,0,0">
+                    <TextBlock.Style>
+                      <Style TargetType="TextBlock" BasedOn="{StaticResource GaugeCaptionLook}">
+                        <Setter Property="FontSize" Value="24" />
+                        <Setter Property="FontWeight" Value="SemiBold" />
+                        <Setter Property="Foreground" Value="{DynamicResource Theme.Foreground}" />
+                        <Setter Property="Effect" Value="{DynamicResource Theme.GaugeTextEdge}" />
+                      </Style>
+                    </TextBlock.Style>
+                  </TextBlock>
                   <Border Height="22" Margin="8,0,8,30" VerticalAlignment="Bottom" CornerRadius="6" ClipToBounds="True"
                           Background="{DynamicResource Theme.HoverBorder}">
                     <Grid>
@@ -117,9 +199,15 @@
                       <Border Grid.Column="0" Background="{Binding LevelBrush}" CornerRadius="6" />
                     </Grid>
                   </Border>
-                  <TextBlock Text="{Binding Label}" FontSize="22"
-                             Foreground="{DynamicResource Theme.Foreground}" Effect="{DynamicResource Theme.GaugeTextEdge}"
-                             HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,2" />
+                  <TextBlock x:Name="BarText" Text="{Binding Label}" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,2">
+                    <TextBlock.Style>
+                      <Style TargetType="TextBlock" BasedOn="{StaticResource GaugeValueLook}">
+                        <Setter Property="FontSize" Value="22" />
+                        <Setter Property="Foreground" Value="{DynamicResource Theme.Foreground}" />
+                        <Setter Property="Effect" Value="{DynamicResource Theme.GaugeTextEdge}" />
+                      </Style>
+                    </TextBlock.Style>
+                  </TextBlock>
                 </Grid>
                 <!-- Number. The caption shows its start (review 27 T1) and is drawn from 40 px icons on; below, the number
                      is centred in the whole height. A value of up to nine characters starts at LabelFontSize and shrinks
@@ -135,27 +223,74 @@
                           <DataTrigger Binding="{Binding DataContext.Root.ShowsNumberCaptions, RelativeSource={RelativeSource AncestorType=Viewbox}}" Value="False">
                             <Setter Property="Margin" Value="0" />
                           </DataTrigger>
+                          <!-- Up or down in the tile's units, outside the box's own scale (0.15.0 WP7b) -->
+                          <DataTrigger Binding="{Binding Look.HasShift}" Value="True">
+                            <Setter Property="RenderTransform" Value="{Binding Look.Shift}" />
+                          </DataTrigger>
                         </Style.Triggers>
                       </Style>
                     </Viewbox.Style>
-                    <TextBlock x:Name="NumberText" Text="{Binding Label}" FontSize="{Binding LabelFontSize}" FontWeight="Bold"
-                               Foreground="{Binding LevelBrush}" TextTrimming="CharacterEllipsis" MaxWidth="{Binding LabelMaxWidth}">
-                      <!-- A value in the neutral grey (the clock's time) has an edge of its own; green, orange and red need none -->
+                    <TextBlock x:Name="NumberText" Text="{Binding Label}" TextTrimming="CharacterEllipsis" MaxWidth="{Binding LabelMaxWidth}">
+                      <!-- A value in the neutral grey (the clock's time) has an edge of its own; green, orange and red need none.
+                           A look's colour is the normal state's: orange and red still win (0.15.0 WP7b). -->
                       <TextBlock.Style>
                         <Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+                          <Setter Property="FontSize" Value="{Binding LabelFontSize}" />
+                          <Setter Property="FontWeight" Value="Bold" />
+                          <Setter Property="Foreground" Value="{Binding LevelBrush}" />
                           <Style.Triggers>
                             <DataTrigger Binding="{Binding IsNeutral}" Value="True">
                               <Setter Property="Effect" Value="{DynamicResource Theme.GaugeNeutralEdge}" />
                             </DataTrigger>
+                            <DataTrigger Binding="{Binding Look.HasFont}" Value="True">
+                              <Setter Property="FontFamily" Value="{Binding Look.Family}" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding Look.HasBold}" Value="True">
+                              <Setter Property="FontWeight" Value="{Binding Look.Weight}" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding Look.HasSize}" Value="True">
+                              <Setter Property="FontSize" Value="{Binding LookLabelSize}" />
+                            </DataTrigger>
+                            <MultiDataTrigger>
+                              <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding Look.HasColor}" Value="True" />
+                                <Condition Binding="{Binding IsAlarm}" Value="False" />
+                              </MultiDataTrigger.Conditions>
+                              <Setter Property="Foreground" Value="{Binding Look.TextBrush}" />
+                              <Setter Property="Effect" Value="{x:Null}" />
+                            </MultiDataTrigger>
+                            <MultiDataTrigger>
+                              <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding Look.EdgesColor}" Value="True" />
+                                <Condition Binding="{Binding IsAlarm}" Value="False" />
+                                <Condition Binding="{Binding Look.IsLightText}" Value="True" />
+                              </MultiDataTrigger.Conditions>
+                              <Setter Property="Effect" Value="{DynamicResource Theme.GaugeLightTextEdge}" />
+                            </MultiDataTrigger>
+                            <MultiDataTrigger>
+                              <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding Look.EdgesColor}" Value="True" />
+                                <Condition Binding="{Binding IsAlarm}" Value="False" />
+                                <Condition Binding="{Binding Look.IsLightText}" Value="False" />
+                              </MultiDataTrigger.Conditions>
+                              <Setter Property="Effect" Value="{DynamicResource Theme.GaugeDarkTextEdge}" />
+                            </MultiDataTrigger>
                           </Style.Triggers>
                         </Style>
                       </TextBlock.Style>
                     </TextBlock>
                   </Viewbox>
-                  <TextBlock Text="{Binding Caption}" FontSize="22" MaxWidth="96" TextTrimming="CharacterEllipsis"
-                             Foreground="{DynamicResource Theme.Foreground}" Effect="{DynamicResource Theme.GaugeTextEdge}"
+                  <TextBlock x:Name="NumberCaption" Text="{Binding Caption}" MaxWidth="96" TextTrimming="CharacterEllipsis"
                              HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,2"
-                             Visibility="{Binding DataContext.Root.ShowsNumberCaptions, RelativeSource={RelativeSource AncestorType=Viewbox}, Converter={StaticResource BoolToVisibility}}" />
+                             Visibility="{Binding DataContext.Root.ShowsNumberCaptions, RelativeSource={RelativeSource AncestorType=Viewbox}, Converter={StaticResource BoolToVisibility}}">
+                    <TextBlock.Style>
+                      <Style TargetType="TextBlock" BasedOn="{StaticResource GaugeCaptionLook}">
+                        <Setter Property="FontSize" Value="22" />
+                        <Setter Property="Foreground" Value="{DynamicResource Theme.Foreground}" />
+                        <Setter Property="Effect" Value="{DynamicResource Theme.GaugeTextEdge}" />
+                      </Style>
+                    </TextBlock.Style>
+                  </TextBlock>
                 </Grid>
               </Grid>
             </Viewbox>
@@ -253,7 +388,17 @@
                        FontWeight="SemiBold"
                        VerticalAlignment="Center"
                        TextTrimming="CharacterEllipsis"
-                       Visibility="{Binding HasRowLineText, Converter={StaticResource BoolToVisibility}}" />
+                       Visibility="{Binding HasPlainRowLineText, Converter={StaticResource BoolToVisibility}}" />
+            <!-- The caption with a look of its own (0.15.0 WP7b): what the look leaves out is the caption's as above; a size
+                 too large for the room is made smaller, not cut; up or down by a percent of the strip -->
+            <Viewbox x:Name="LookedCaption" Stretch="Uniform" StretchDirection="DownOnly"
+                     views:RowLinePanel.ShiftPercent="{Binding CaptionLook.OffsetY, FallbackValue=0}"
+                     Visibility="{Binding HasLookedRowLineText, Converter={StaticResource BoolToVisibility}}">
+              <views:LookedText Text="{Binding Name}" Look="{Binding CaptionLook}"
+                                TextElement.Foreground="{DynamicResource Theme.Hint}"
+                                TextElement.FontSize="{Binding Root.NameFontSize}"
+                                TextElement.FontWeight="SemiBold" />
+            </Viewbox>
             <views:DividerLine Stroke="{DynamicResource Theme.LineStroke}" Effect="{DynamicResource Theme.TextEdge}" Inset="0" Flat="True" />
           </views:RowLinePanel>
           <TextBlock Text="{Binding Name}"

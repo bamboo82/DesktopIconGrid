@@ -24,6 +24,9 @@ public sealed class ClockTileHandler(Action<Notice> notify, Func<Window?> ownerP
 
     public string Description => Strings.Clock_Desc;
 
+    /// <summary>The time and the timer's countdown take a look of their own (0.15.0 WP7b).</summary>
+    public bool HasTextLook => true;
+
     public SpecialIconItem CreateItem()
     {
         var item = new SpecialIconItem { Name = Strings.Clock_Name, Kind = Kind };

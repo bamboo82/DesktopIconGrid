@@ -1,9 +1,11 @@
 using System.ComponentModel;
 using System.Globalization;
+using System.Windows;
 using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
 using DesktopIconGrid.Core.Models;
+using DesktopIconGrid.Core.SpecialIcons;
 using DesktopIconGrid.Infrastructure;
 using DesktopIconGrid.Resources;
 using DesktopIconGrid.Services;
@@ -27,13 +29,49 @@ public sealed class SymbolChoice(SymbolEntry entry)
     public override string ToString() => Name;
 }
 
+/// <summary>What the text icon window sets (0.15.0 WP7b): what is shown differs, nothing else.</summary>
+public enum TextWindowMode
+{
+    /// <summary>A shortcut's or a group's text or symbol icon: everything, as before.</summary>
+    Icon,
+
+    /// <summary>A row line's caption: the text (or a symbol) and its look; no picture and no place.</summary>
+    Caption,
+
+    /// <summary>A widget's own text: the look only, with a sample of what the widget shows now.</summary>
+    Widget,
+}
+
+/// <summary>
+/// How a caption or a widget's text is drawn without a look of its own (0.15.0 WP7b): what the window starts from, and
+/// what is not written when it is kept, so that OK without a change leaves the text as it was.
+/// </summary>
+/// <param name="Size">The size it is drawn at: a caption's in the bar's units, a widget's in its tile's 100.</param>
+/// <param name="Weight">Its weight; the Bold box starts ticked from bold up.</param>
+/// <param name="Family">Its font, which "(as before)" in the font list stands for.</param>
+/// <param name="TileSize">The bar's icon size, which a widget's preview is drawn at.</param>
+public sealed record TextLookDefaults(double Size, FontWeight Weight, FontFamily Family, int TileSize = LauncherSettings.DefaultIconSize)
+{
+    /// <summary>Drawn bold (or heavier): the Bold box starts ticked.</summary>
+    public bool Bold => Weight.ToOpenTypeWeight() >= FontWeights.Bold.ToOpenTypeWeight();
+}
+
 /// <summary>
 /// Backs the Text icon window. The Text side is the characters, font, size and weight drawn instead of an image; the
 /// Symbol side (0.12.0 WP3) is a symbol of <see cref="SymbolCatalog"/>, found by a search. Both have the text colour and
-/// the tile colour. Switching sides keeps both sides' values while the window is open; OK saves the side shown.
+/// the tile colour. Switching sides keeps both sides' values while the window is open; OK saves the side shown. The same
+/// window sets a row line's caption and a widget's text (0.15.0 WP7b, <see cref="TextWindowMode"/>), whose look is a
+/// <see cref="TextLook"/>.
 /// </summary>
 public sealed class TextIconViewModel : ObservableObject
 {
+    /// <summary>The longest caption the Caption mode's box takes; a text icon keeps <see cref="TextIcon.MaxTextLength"/>.</summary>
+    public const int MaxCaptionLength = 100;
+
+    private readonly TextLookDefaults? _defaults;
+    private readonly FontChoice? _ownFont;
+    private readonly string _widgetName = string.Empty;
+
     /// <summary>The Text side keeps the fit its icon came with (only the built-in glyphs have it); it has no control for it.</summary>
     private readonly bool _fit;
     private string _text;
@@ -58,18 +96,40 @@ public sealed class TextIconViewModel : ObservableObject
     /// <param name="picture">The item's picture, which the text can be put over (0.14.0 WP6); the preview draws it under the text.</param>
     /// <param name="canOverImage">The item has a picture or a default icon to put the text over: the box is offered.</param>
     public TextIconViewModel(TextIcon? current, string suggestedText, ImageSource? picture = null, bool canOverImage = false)
+        : this(TextWindowMode.Icon, current, suggestedText, picture, canOverImage, defaults: null, widgetName: null)
     {
+    }
+
+    private TextIconViewModel(
+        TextWindowMode mode, TextIcon? current, string suggestedText, ImageSource? picture, bool canOverImage, TextLookDefaults? defaults, string? widgetName)
+    {
+        Mode = mode;
+        _defaults = defaults;
+        _widgetName = widgetName ?? string.Empty;
+        // A caption or a widget starts from its own font, "(as before)", first in the list (0.15.0 WP7b). A font that came
+        // with the look from a PC that has it, and this one does not, stays a choice so that OK here keeps it, when its name
+        // passes the check every synced text shown in a window passes.
+        _ownFont = defaults is null ? null : new FontChoice(string.Empty, Strings.TextIcon_OwnFont, defaults.Family);
+        var missing = defaults is not null && current?.FontFamily is { } wanted && TextIconFonts.Find(wanted) is null
+                      && !string.Equals(wanted, SymbolCatalog.FontFamily, StringComparison.OrdinalIgnoreCase)
+                      && wanted.Length <= 100 && CommandTileSettings.IsShowable(wanted)
+            ? new FontChoice(wanted.Trim(), string.Format(CultureInfo.CurrentCulture, Strings.TextIcon_MissingFont, wanted.Trim()), defaults.Family)
+            : null;
+        Fonts = _ownFont is null ? TextIconFonts.Installed
+            : missing is null ? [_ownFont, .. TextIconFonts.Installed]
+            : [_ownFont, missing, .. TextIconFonts.Installed];
         Picture = picture;
-        CanOverImage = canOverImage;
-        _overImage = canOverImage && current is { OverImage: true };
+        CanOverImage = canOverImage && mode == TextWindowMode.Icon;
+        _overImage = CanOverImage && current is { OverImage: true };
         _place = current?.Corner ?? TextIcon.PlaceCenter;
         // An icon that is a symbol opens on Symbol with its symbol chosen; the Text side then starts as for a new icon.
-        _isSymbol = SymbolCatalog.IsSymbol(current);
+        _isSymbol = mode != TextWindowMode.Widget && SymbolCatalog.IsSymbol(current) && current!.Text.Length > 0;
         var text = _isSymbol ? null : current;
         _text = text?.Text ?? Suggest(suggestedText);
-        _selectedFont = TextIconFonts.Find(text?.FontFamily) ?? TextIconFonts.DefaultChoice();
-        _fontSizeText = (text?.FontSize ?? TextIcon.DefaultFontSize).ToString(CultureInfo.CurrentCulture);
-        _bold = text?.Bold ?? false;
+        _selectedFont = TextIconFonts.Find(text?.FontFamily) ?? (text is null ? null : Fonts.FirstOrDefault(f => f.Source.Length > 0 && f.Source == text.FontFamily?.Trim()))
+                        ?? _ownFont ?? TextIconFonts.DefaultChoice();
+        _fontSizeText = (text?.FontSize ?? defaults?.Size ?? TextIcon.DefaultFontSize).ToString(CultureInfo.CurrentCulture);
+        _bold = text?.Bold ?? defaults?.Bold ?? false;
         _offsetY = current?.OffsetY ?? 0; // on both sides, like the colours
         _fit = text?.Fit ?? false;
         _color = current?.Color ?? string.Empty;
@@ -90,11 +150,113 @@ public sealed class TextIconViewModel : ObservableObject
     /// <summary>The size the preview is drawn at: the bar's icon size (0.12.0 A2).</summary>
     public int PreviewSize { get; init; } = LauncherSettings.DefaultIconSize;
 
-    public IReadOnlyList<FontChoice> Fonts => TextIconFonts.Installed;
+    /// <summary>
+    /// The window for a row line's caption (0.15.0 WP7b): its text, empty for none, or a symbol (drawn in the symbol font),
+    /// and its look. <paramref name="defaults"/> is the caption as it is drawn without a look.
+    /// </summary>
+    public static TextIconViewModel ForCaption(string? caption, TextLook? look, TextLookDefaults defaults)
+    {
+        ArgumentNullException.ThrowIfNull(defaults);
+        var text = Showable(caption?.Trim() ?? string.Empty, MaxCaptionLength);
+        var symbol = text.Length > 0 && string.Equals(look?.Font, SymbolCatalog.FontFamily, StringComparison.OrdinalIgnoreCase);
+        return new TextIconViewModel(TextWindowMode.Caption, StartingIcon(text, look, defaults, symbol), string.Empty, null, false, defaults, null);
+    }
+
+    /// <summary>
+    /// The window for a widget's own text (0.15.0 WP7b): the look only, with <paramref name="sample"/>, what the widget shows
+    /// now, where the text box is. <paramref name="name"/> goes in the title.
+    /// </summary>
+    public static TextIconViewModel ForWidget(string name, string sample, TextLook? look, TextLookDefaults defaults)
+    {
+        ArgumentNullException.ThrowIfNull(defaults);
+        return new TextIconViewModel(
+            TextWindowMode.Widget, StartingIcon(Showable(sample ?? string.Empty, MaxCaptionLength), look, defaults, symbol: false), string.Empty, null, false, defaults,
+            Showable(name ?? string.Empty, MaxCaptionLength));
+    }
+
+    /// <summary>
+    /// <paramref name="text"/> as a window may show it (0.15.0 WP7b): a caption that came through sync, a widget's output and
+    /// name pass the check every synced text shown in a window passes (<see cref="CommandTileSettings.IsShowable"/>). What
+    /// does not loses the characters that change how the rest reads without being seen (controls, format characters, line
+    /// and paragraph separators), other spaces become plain ones and a long run of them is cut to the longest allowed, so
+    /// the box shows what OK saves. At most <paramref name="max"/> characters.
+    /// </summary>
+    public static string Showable(string text, int max)
+    {
+        ArgumentNullException.ThrowIfNull(text);
+        if (!CommandTileSettings.IsShowable(text))
+        {
+            var kept = new System.Text.StringBuilder(text.Length);
+            foreach (var c in text)
+            {
+                var category = char.GetUnicodeCategory(c);
+                if (category is UnicodeCategory.Control or UnicodeCategory.Format or UnicodeCategory.LineSeparator or UnicodeCategory.ParagraphSeparator)
+                {
+                    continue;
+                }
+
+                var plain = category == UnicodeCategory.SpaceSeparator ? ' ' : c;
+                if (plain == ' ' && kept.Length >= CommandTileSettings.MaxSpaceRun
+                    && kept.ToString(kept.Length - CommandTileSettings.MaxSpaceRun, CommandTileSettings.MaxSpaceRun).All(k => k == ' '))
+                {
+                    continue;
+                }
+
+                kept.Append(plain);
+            }
+
+            text = kept.ToString();
+        }
+
+        return text.Length > max ? text[..max] : text;
+    }
+
+    /// <summary>The look's values as the fields a text icon has, which the window starts from.</summary>
+    private static TextIcon StartingIcon(string text, TextLook? look, TextLookDefaults defaults, bool symbol) =>
+        new(text, look?.Font, look?.Size ?? defaults.Size, look?.Bold ?? defaults.Bold, look?.Color, Fit: symbol, look?.TileColor)
+        {
+            OffsetY = look?.OffsetY ?? 0,
+        };
+
+    /// <summary>What the window sets.</summary>
+    public TextWindowMode Mode { get; }
+
+    public bool IsIconMode => Mode == TextWindowMode.Icon;
+
+    public bool IsCaptionMode => Mode == TextWindowMode.Caption;
+
+    public bool IsWidgetMode => Mode == TextWindowMode.Widget;
+
+    /// <summary>The title says what is being set: 文字或符號圖示, 標題文字, or "&lt;name&gt; 的文字".</summary>
+    public string Title => Mode switch
+    {
+        TextWindowMode.Caption => Strings.TextIcon_TitleCaption,
+        TextWindowMode.Widget => string.Format(CultureInfo.CurrentCulture, Strings.TextIcon_TitleWidget, _widgetName),
+        _ => Strings.TextIcon_Title,
+    };
+
+    /// <summary>The Text and Symbol switch: a widget has neither, it shows its own text.</summary>
+    public bool ShowsSides => Mode != TextWindowMode.Widget;
+
+    /// <summary>The text box is the widget's sample, which cannot be changed here.</summary>
+    public bool IsTextReadOnly => Mode == TextWindowMode.Widget;
+
+    /// <summary>The label of the text row: 文字, 標題 or 目前顯示.</summary>
+    public string TextLabel => Mode switch
+    {
+        TextWindowMode.Caption => Strings.TextIcon_Caption,
+        TextWindowMode.Widget => Strings.TextIcon_Sample,
+        _ => Strings.TextIcon_Text,
+    };
+
+    /// <summary>The label of the tile colour's row: a caption's is a plate behind its text.</summary>
+    public string TileColorLabel => Mode == TextWindowMode.Caption ? Strings.TextIcon_PlateColour : Strings.TextIcon_TileColour;
+
+    public IReadOnlyList<FontChoice> Fonts { get; }
 
     public IReadOnlyList<double> FontSizes => TextIcon.SuggestedFontSizes;
 
-    public int MaxTextLength => TextIcon.MaxTextLength;
+    public int MaxTextLength => Mode == TextWindowMode.Caption ? MaxCaptionLength : TextIcon.MaxTextLength;
 
     // ----- the two sides --------------------------------------------------------------------------
 
@@ -193,10 +355,15 @@ public sealed class TextIconViewModel : ObservableObject
         NotifyIcon();
     }
 
-    /// <summary>The hint under the fields: the Text side's, or the one for text over the picture, on both sides.</summary>
-    public string Hint => _overImage ? Strings.TextIcon_HintOver : Strings.TextIcon_Hint;
+    /// <summary>The hint under the fields: the Text side's, or the one for text over the picture, on both sides; a caption's.</summary>
+    public string Hint => Mode == TextWindowMode.Caption ? Strings.TextIcon_CaptionHint : _overImage ? Strings.TextIcon_HintOver : Strings.TextIcon_Hint;
 
-    public bool ShowsHint => _overImage || !_isSymbol;
+    public bool ShowsHint => Mode switch
+    {
+        TextWindowMode.Caption => true,
+        TextWindowMode.Widget => false,
+        _ => _overImage || !_isSymbol,
+    };
 
     // ----- Text ------------------------------------------------------------------------------------
 
@@ -363,13 +530,67 @@ public sealed class TextIconViewModel : ObservableObject
     public ICommand ClearTileColorCommand { get; }
 
     public bool CanSave => IsColorValid && IsTileColorValid
-                           && (_isSymbol ? _symbol is not null || _keptSymbol is not null : _text.Trim().Length > 0 && IsFontSizeValid);
+                           && (_isSymbol ? _symbol is not null || _keptSymbol is not null
+                               : (_text.Trim().Length > 0 || Mode != TextWindowMode.Icon) && IsFontSizeValid); // an empty caption is none
 
     /// <summary>The icon as OK would save it, for the preview; "Aa" while the text is empty, nothing before a symbol is chosen.</summary>
     public TextIcon? PreviewIcon => Build(_text.Trim().Length == 0 ? "Aa" : null);
 
     /// <summary>The icon of the side shown.</summary>
     public TextIcon? ToTextIcon() => Build(null);
+
+    /// <summary>
+    /// The caption as OK saves it (0.15.0 WP7b): its text, empty for none, and its look; a symbol is its character in the
+    /// symbol font, at the caption's size.
+    /// </summary>
+    public (string Text, TextLook? Look) ToCaption()
+    {
+        if (_isSymbol)
+        {
+            return (_symbol?.Text ?? _keptSymbol?.Text ?? string.Empty, LookOf(SymbolCatalog.FontFamily, withTextFields: false));
+        }
+
+        return (_text.Trim(), LookOf(_selectedFont is { Source.Length: > 0 } font ? font.Source : null, withTextFields: true));
+    }
+
+    /// <summary>The widget's look as OK saves it (0.15.0 WP7b); <see langword="null"/> when nothing differs from its own.</summary>
+    public TextLook? ToLook() => LookOf(_selectedFont is { Source.Length: > 0 } font ? font.Source : null, withTextFields: true);
+
+    /// <summary>The text the preview draws in Caption and Widget mode: the caption or the sample (a symbol's character).</summary>
+    public string PreviewText => _isSymbol ? _symbol?.Text ?? _keptSymbol?.Text ?? string.Empty : _text.Trim();
+
+    /// <summary>The look the preview draws in Caption and Widget mode.</summary>
+    public TextLook? PreviewLook => Mode == TextWindowMode.Icon ? null : _isSymbol ? ToCaption().Look : ToLook();
+
+    /// <summary>The caption's or the widget's text without a look (what the preview inherits): its size.</summary>
+    public double DefaultSize => _defaults?.Size ?? TextIcon.DefaultFontSize;
+
+    /// <summary>Its weight.</summary>
+    public FontWeight DefaultWeight => _defaults?.Weight ?? FontWeights.Normal;
+
+    /// <summary>Its font, the bar's.</summary>
+    public FontFamily DefaultFamily => _defaults?.Family ?? SystemFonts.MessageFontFamily;
+
+    /// <summary>A widget's preview draws the plate as the tile's fill.</summary>
+    public Brush? PreviewPlateBrush => _tileColor.Length > 0 && LauncherSettings.IsValidColor(_tileColor) ? ThemeManager.ToBrush(_tileColor) : null;
+
+    /// <summary>
+    /// The look of the fields shown: a size and a weight only when they differ from the text's own (<see cref="_defaults"/>),
+    /// so that OK without a change leaves no look at all.
+    /// </summary>
+    private TextLook? LookOf(string? font, bool withTextFields)
+    {
+        var parsed = TryParseFontSize(out var size);
+        return new TextLook
+        {
+            Font = font,
+            Size = withTextFields && parsed && size != _defaults?.Size ? size : null,
+            Bold = withTextFields && _bold != (_defaults?.Bold ?? false) ? _bold : null,
+            Color = _color.Length == 0 ? null : _color,
+            TileColor = _tileColor.Length == 0 ? null : _tileColor,
+            OffsetY = _offsetY,
+        }.Normalized();
+    }
 
     /// <summary>The heading of <paramref name="group"/> in the UI language.</summary>
     public static string GroupName(SymbolGroup group) => group switch
@@ -412,6 +633,9 @@ public sealed class TextIconViewModel : ObservableObject
     private void NotifyIcon()
     {
         OnPropertyChanged(nameof(PreviewIcon));
+        OnPropertyChanged(nameof(PreviewText));
+        OnPropertyChanged(nameof(PreviewLook));
+        OnPropertyChanged(nameof(PreviewPlateBrush));
         OnPropertyChanged(nameof(CanSave));
     }
 

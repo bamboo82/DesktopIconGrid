@@ -160,6 +160,11 @@ public sealed class DialogService(IIconProvider icons) : IDialogService, ILaunch
 
     public string? AskText(string title, string prompt, string? initialValue) => InputWindow.Show(Owner, title, prompt, initialValue);
 
+    public CaptionAnswer? EditCaption(string? caption, TextLook? look, TextLookDefaults defaults) => TextLookWindows.Caption(Owner, caption, look, defaults);
+
+    public LookAnswer? EditTextLook(string name, string sample, TextLook? look, TextLookDefaults defaults) =>
+        TextLookWindows.Widget(Owner, name, sample, look, defaults);
+
     public IReadOnlyList<InstalledApp> ShowAddApp(IReadOnlySet<string> locationsOnBar)
     {
         var viewModel = new AddAppViewModel(locationsOnBar);

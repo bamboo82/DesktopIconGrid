@@ -33,6 +33,14 @@ public sealed class SeparatorItem : LauncherItem
     /// <summary>One of <see cref="Kinds"/>. Another value (from a newer version) is kept and drawn as a line.</summary>
     public string Kind { get; set; } = Line;
 
+    /// <summary>
+    /// How a row line's caption is drawn (0.15.0 WP7b): font, size, bold, colour, a plate behind the text and up or down,
+    /// set in the text icon window's Caption mode. <see langword="null"/> is the caption as before; kept with any kind so
+    /// that switching kinds and back does not lose it, and drawn only on a row line with a caption. A version before 0.15.0
+    /// keeps it unread with the item.
+    /// </summary>
+    public TextLook? CaptionLook { get; set; }
+
     /// <summary>Whether a separator of <paramref name="kind"/> has a text of its own: a caption, and a row line's caption.</summary>
     public static bool HasText(string? kind) =>
         string.Equals(kind?.Trim(), Label, StringComparison.OrdinalIgnoreCase) || string.Equals(kind?.Trim(), RowLine, StringComparison.OrdinalIgnoreCase);
@@ -76,6 +84,7 @@ public sealed class SeparatorItem : LauncherItem
         if (source is SeparatorItem separator)
         {
             Kind = separator.Kind?.Trim() ?? Line;
+            CaptionLook = separator.CaptionLook?.Normalized();
         }
     }
 }

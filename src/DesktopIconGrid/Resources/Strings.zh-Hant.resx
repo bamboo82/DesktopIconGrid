@@ -3098,4 +3098,31 @@ SHA-256：{3}
   <data name="TextIcon_OffsetToolTip" xml:space="preserve">
     <value>把文字或符號往上（−）或往下（+）移，單位是方塊高度的百分比</value>
   </data>
+  <data name="TextIcon_TitleCaption" xml:space="preserve">
+    <value>標題文字</value>
+  </data>
+  <data name="TextIcon_TitleWidget" xml:space="preserve">
+    <value>{0} 的文字</value>
+  </data>
+  <data name="TextIcon_Sample" xml:space="preserve">
+    <value>目前顯示：</value>
+  </data>
+  <data name="TextIcon_Caption" xml:space="preserve">
+    <value>標題：</value>
+  </data>
+  <data name="TextIcon_PlateColour" xml:space="preserve">
+    <value>底板顏色：</value>
+  </data>
+  <data name="TextIcon_OwnFont" xml:space="preserve">
+    <value>（原本的字型）</value>
+  </data>
+  <data name="TextIcon_CaptionHint" xml:space="preserve">
+    <value>標題留空就會拿掉標題，線條保留。</value>
+  </data>
+  <data name="TextLook_Menu" xml:space="preserve">
+    <value>文字外觀…</value>
+  </data>
+  <data name="TextIcon_MissingFont" xml:space="preserve">
+    <value>{0}（這部電腦沒有）</value>
+  </data>
 </root>

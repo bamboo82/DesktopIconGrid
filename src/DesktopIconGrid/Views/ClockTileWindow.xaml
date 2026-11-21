@@ -49,9 +49,14 @@
                Visibility="{Binding IsPomodoro, Converter={StaticResource BoolToVisibility}}" />
     </StackPanel>
 
-    <StackPanel Grid.Row="4" Grid.ColumnSpan="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,8,0,0">
-      <Button Content="{x:Static r:Strings.Common_OK}" Style="{StaticResource DialogButton}" IsDefault="True" IsEnabled="{Binding CanSave}" Click="Ok_Click" />
-      <Button Content="{x:Static r:Strings.Common_Cancel}" Style="{StaticResource DialogButton}" IsCancel="True" />
-    </StackPanel>
+    <!-- 文字外觀… at the left: the widget's own text in the text icon window, saved with OK here (0.15.0 WP7b) -->
+    <DockPanel Grid.Row="4" Grid.ColumnSpan="2" Margin="0,8,0,0" LastChildFill="False">
+      <Button x:Name="TextLookButton" DockPanel.Dock="Left" Content="{x:Static r:Strings.TextLook_Menu}" Style="{StaticResource DialogButton}"
+              Margin="0" Click="TextLook_Click" />
+      <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+        <Button Content="{x:Static r:Strings.Common_OK}" Style="{StaticResource DialogButton}" IsDefault="True" IsEnabled="{Binding CanSave}" Click="Ok_Click" />
+        <Button Content="{x:Static r:Strings.Common_Cancel}" Style="{StaticResource DialogButton}" IsCancel="True" />
+      </StackPanel>
+    </DockPanel>
   </Grid>
 </Window>

@@ -42,6 +42,9 @@ public sealed class CommandTileHandler : ISpecialIconHandler
 
     public string Description => Strings.Command_Desc;
 
+    /// <summary>The output's text takes a look of its own (0.15.0 WP7b); it is no part of the approval.</summary>
+    public bool HasTextLook => true;
+
     public SpecialIconItem CreateItem()
     {
         var item = new SpecialIconItem { Name = Strings.Command_DefaultName, Kind = Kind };

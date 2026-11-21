@@ -9,6 +9,68 @@ The owner relays replies.
 
 ---
 
+## 2026-11-21 (152) — 0.15.0 WP7b: the text icon window for captions and widgets
+
+- **Runs:** 255 (`0e05418`, WP7a with the "This device" collection) green: Core 1354/1354, App 568/568.
+- **Review 41:** thank you. WP7b was nearly finished in the working tree when it came, and U2 changes the same edge
+  resources and gauge styles WP7b had just changed, so I commit WP7b first and U1, U2, U3 and the 50 MB limit after it,
+  each in its own commit, rather than build U2 on code that WP7b then rewrites. Answers noted: http stays for web icons,
+  the picker as a dialog, the lock out of the tray, 8 % kept; CLAUDE.md waits for the owner, through you and through my
+  question at the release check.
+- **Model (Core):** `TextLook` { `font`, `size`, `bold`, `color`, `tileColor`, `offsetY` }, every field optional,
+  `Normalized()` null when nothing is set (a blank font, a size that is no number, a bad colour, an offset out of range are
+  dropped; a size is held to 6–72), unknown fields kept (`ExtensionData`), the tolerant offset reader of WP7a.
+  `SeparatorItem.CaptionLook` (`captionLook`) and `SpecialIconItem.TextLook` (`textLook`), tidied at load and in copies.
+  Sync and import carry them with the item; nothing else changes.
+- **The window** has a mode (`TextWindowMode`): Icon as before; Caption (the text box, up to 100 characters, empty is no
+  caption; the Text/Symbol switch; the look; no picture box, no place; 底板顏色 for the plate; a hint that an empty caption
+  takes it away); Widget (the look only, a read-only sample of what the widget shows now where the text box is, no
+  switch). Titles: 文字或符號圖示, 標題文字, "<name> 的文字" (en "Text of <name>", zh-Hans "<name> 的文字"). It starts from the
+  text's own font (*(as before)*, first in the list), size and weight (`TextLookDefaults`) and writes only what differs:
+  OK without a change leaves no look. A symbol caption is its character in the symbol font, at the caption's size, and
+  opens on Symbol again. The preview draws a caption as its strip (caption, then line) and a widget's text on its tile.
+- **Showable text:** a caption that came through sync, a widget's sample and its name are shown as
+  `CommandTileSettings.IsShowable` allows: the characters it refuses (controls, format characters, line and paragraph
+  separators) are left out, other spaces made plain and a run of more than eight cut, so the box shows what OK saves. A font
+  the look came with that this PC lacks stays a choice, *<name> (not on this PC)*, only when its name passes the check and
+  is at most 100 characters (as the clock's zone does); otherwise *(as before)*.
+- **Row line captions:** 標題文字…, F2 and a double-click open the Caption mode. A caption without a look is the template's
+  own text, untouched; one with a look is a `LookedText` in a `Viewbox` (DownOnly: too large shrinks to fit the room, never
+  cut) beside it, and `RowLinePanel` takes the first visible child before the line as the caption and moves it by
+  `ShiftPercent` of the strip's height (the strip is as high as the caption, so a moved caption reaches a little past it;
+  it is not cut). An empty caption takes its look away too.
+- **Widgets that got it:** the clock (time, timer and break countdown), all seven monitors (CPU, disk, memory, battery,
+  network, microphone, volume) and the command tile: 文字外觀… in the menu (shared menu, shown by
+  `ISpecialIconHandler.HasTextLook`) and a button at the left of the button row in `ClockTileWindow`, `MonitorIconWindow` and
+  `CommandTileWindow` (saved with OK there). **Left out:** the Drive bucket and the sound replayer (a picture, with a short
+  "NN%" / REC / LOOP only while busy), Voice and Send to PC (glyphs). The look is drawn at once on the same gauge
+  (`ItemViewModel.ApplyTextLook`): a command tile does not run again, a clock's timer goes on. The look is not in a command
+  tile's hash.
+- **Rules as drawn:** in the gauge's 100-unit box, each text's own values moved from attributes to style setters (same
+  drawing) and the look's triggers win over them. Font (before the bar's) and colour go to the value and its caption; size,
+  weight and up or down to the value. A size is in the tile's 100 units (the units the value is drawn in), so it grows with
+  the icon; the ring's and the bar's value is made smaller where it is wider than 60 / 96 units, the number's box already
+  shrinks. The colour is the normal state's: in the number style orange and red still win (`GaugeState.IsAlarm`), the green
+  and the neutral grey are replaced; ring and bar text was never level-coloured. On a plate without a colour the text is
+  white or near-black by contrast. The plate is the tile's fill with a text icon's tile corner. While see-through, text in a
+  chosen colour keeps an edge in the tone that stands out from that colour (four new window resources beside
+  `Theme.TextEdge`: light and dark, bar and gauge units), none on a plate.
+- **Tests:** Core: an empty look is none and nothing is written; normalising; only what is set is written, in the plan's
+  names, and read back; a caption look and a widget look through the layout file, the model, `Clone` and `CopyContentFrom`;
+  bad values tidied at load and a newer version's field kept. App: each mode's title, switch, read-only box, picture box,
+  previews and plate label, and OK without a change leaving no look; a caption look holding only what differs, a symbol
+  caption and its reopening, the showable cleaning, a missing font kept; the row line's command and double-click saving the
+  look, Cancel, and an empty caption taking the look away; a widget's look saved from its menu on the same gauge, with the
+  sample and defaults offered; the clock (number style) and a ring with a look (font, size, weight, colour, plate, up or
+  down, the ring's size cut to fit) and **without one as before: the template's values, and pixel for pixel after a look is
+  taken away**; orange and red winning over a chosen colour, green and grey not; a row line caption with a look (font, size,
+  colour, plate, a fifth of the strip down) and pixel for pixel without; `LookedText`'s edge, plate colour and font chain;
+  the window's fit in its two new modes in three languages at 100 and 150 %.
+- **Not tested:** on screen; a look on a real clock with its timer, a real monitor and a command tile's output; a caption
+  with a look in the twin at the pointer and in a group's popup (same template); a synced look arriving from another PC.
+
+This entry claims no run for its own commit.
+
 ## 2026-11-21 (151) — 0.15.0 WP7a: a text or symbol icon moved up or down
 
 - **Runs:** 253 (`1da7c61`, the WP5 fix) green: Core 1338/1338, App 551/551. 254 (`5326254`, WP6): Core 1338/1338, App

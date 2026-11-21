@@ -320,6 +320,20 @@ public partial class MainWindow : Window
     /// <summary>The edge of a gauge's value in <see cref="GaugeState.NeutralColor"/>, the clock's time among them (review 38 T2).</summary>
     internal const string GaugeNeutralEdgeKey = "Theme.GaugeNeutralEdge";
 
+    /// <summary>
+    /// The edge of light text in a colour of its own (0.15.0 WP7b: a caption's or a widget's chosen colour), near-black;
+    /// <see cref="DarkTextEdgeKey"/> is white, for dark text. The see-through edge stays on over a chosen colour, in the
+    /// tone that stands out from that colour rather than from the theme's.
+    /// </summary>
+    internal const string LightTextEdgeKey = "Theme.LightTextEdge";
+
+    internal const string DarkTextEdgeKey = "Theme.DarkTextEdge";
+
+    /// <summary>The same two edges in a gauge's box of 100 units (0.15.0 WP7b).</summary>
+    internal const string GaugeLightTextEdgeKey = "Theme.GaugeLightTextEdge";
+
+    internal const string GaugeDarkTextEdgeKey = "Theme.GaugeDarkTextEdge";
+
     /// <summary>The blur of the edge, in the bar's units.</summary>
     internal const double TextEdgeBlur = 3;
 
@@ -346,6 +360,10 @@ public partial class MainWindow : Window
             resources.Remove(TextEdgeKey);
             resources.Remove(GaugeTextEdgeKey);
             resources.Remove(GaugeNeutralEdgeKey);
+            resources.Remove(LightTextEdgeKey);
+            resources.Remove(DarkTextEdgeKey);
+            resources.Remove(GaugeLightTextEdgeKey);
+            resources.Remove(GaugeDarkTextEdgeKey);
             resources.Remove(ThemeManager.LineStrokeKey);
             return;
         }
@@ -354,6 +372,10 @@ public partial class MainWindow : Window
         resources[TextEdgeKey] = TextEdgeFor(foreground);
         resources[GaugeTextEdgeKey] = TextEdgeFor(foreground, box);
         resources[GaugeNeutralEdgeKey] = TextEdgeFor(GaugeState.NeutralColor, box);
+        resources[LightTextEdgeKey] = TextEdgeFor("#FFFFFF");
+        resources[DarkTextEdgeKey] = TextEdgeFor("#000000");
+        resources[GaugeLightTextEdgeKey] = TextEdgeFor("#FFFFFF", box);
+        resources[GaugeDarkTextEdgeKey] = TextEdgeFor("#000000", box);
         resources[ThemeManager.LineStrokeKey] = ThemeManager.ToBrush(foreground); // at full strength
     }
 

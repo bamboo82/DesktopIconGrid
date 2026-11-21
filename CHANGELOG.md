@@ -24,6 +24,9 @@ version numbers follow [Semantic Versioning](https://semver.org/).
   dragging (icons, groups, special icons, separators), in the bar, its groups and the window at the pointer. Files
   dropped from elsewhere are still added or opened, and the bar itself still moves. The first drag it stops says how
   to unlock it. It syncs with the other settings.
+- A row line's caption and a widget's own text (the clock, the monitors, the command tile) have a look of their own:
+  font, size, bold, colour, a plate and up or down, set in the text icon window, which shows only what each needs. A
+  widget's is under *Text look…* in its menu and its own window; warning and alarm colours still win over a chosen one.
 - A text or symbol icon can be moved up or down a little: *Up or down* in the text icon window, −20 % to +20 % of the
   tile with *Reset*, alone on a tile and over the picture in every position.
 - *Show at pointer while held* under Settings ▸ Keys: while that combination is held, the bar shows at the mouse

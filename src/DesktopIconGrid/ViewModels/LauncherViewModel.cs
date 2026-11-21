@@ -66,6 +66,8 @@ public sealed partial class LauncherViewModel : ObservableObject, ISyncHost
     {
         _workspacePositions = workspacePositions ?? new WorkspacePositions(null);
         Trust = trust ?? new CommandTrust(null);
+        // 文字外觀… in a widget's own window shows what this bar's tile shows (0.15.0 WP7b).
+        TextLookWindows.Tiles = id => ItemViewModelOf(id) is { } shown ? WidgetTile(shown) : null;
         _isMissing = isMissing ?? (shortcut => LocationProbe.IsMissing(shortcut, IconWorker.IsOnSlowStorage));
         Model = model;
         Keys = WindowKeyMap.From(model.Settings);
@@ -262,6 +264,12 @@ public sealed partial class LauncherViewModel : ObservableObject, ISyncHost
 
     /// <summary>The size of the names under the icons and of separators' captions: 11 at 100 %, by the text size (0.13.0 WP4).</summary>
     public double NameFontSize => 11 * Model.Settings.TextFactor;
+
+    /// <summary>
+    /// A row line's caption without a look of its own (0.15.0 WP7b): the names' size, semi-bold (shown as not bold), in the
+    /// bar's font.
+    /// </summary>
+    public TextLookDefaults CaptionDefaults => new(NameFontSize, System.Windows.FontWeights.SemiBold, UiFonts.BarFontFamily(), IconSize);
 
     /// <summary>The height of the line of a name under an icon: 16 at 100 %, by the text size; icons keep theirs.</summary>
     public double NameHeight => Math.Ceiling(LabelHeight * Model.Settings.TextFactor);
@@ -916,8 +924,8 @@ public sealed partial class LauncherViewModel : ObservableObject, ISyncHost
     }
 
     /// <summary>
-    /// A row line's caption (0.14.0): asked with the current text; an empty answer takes the caption away, Cancel changes
-    /// nothing.
+    /// A row line's caption (0.14.0) and its look (0.15.0 WP7b), in the text icon window's Caption mode in place of the plain
+    /// question: an empty text takes the caption away, and its look with it; Cancel changes nothing.
     /// </summary>
     public void EditSeparatorText(ItemViewModel item)
     {
@@ -926,17 +934,84 @@ public sealed partial class LauncherViewModel : ObservableObject, ISyncHost
             return;
         }
 
-        var answer = _dialogs.AskText(Strings.Separator_LabelTitle, Strings.Separator_LabelPrompt, separator.Name);
-        if (answer is null || answer.Trim() == (separator.Name?.Trim() ?? string.Empty))
+        if (_dialogs.EditCaption(separator.Name, separator.CaptionLook, CaptionDefaults) is not { } answer)
+        {
+            return;
+        }
+
+        var text = answer.Text?.Trim() ?? string.Empty;
+        var look = text.Length == 0 ? null : answer.Look?.Normalized();
+        if (text == (separator.Name?.Trim() ?? string.Empty) && Equals(look, separator.CaptionLook))
         {
             return;
         }
 
         var draft = (SeparatorItem)separator.Clone();
-        draft.Name = answer.Trim();
+        draft.Name = text;
+        draft.CaptionLook = look;
         Model.Update(draft);
         item.RefreshFromModel();
         Save();
+    }
+
+    /// <summary>
+    /// 文字外觀… of a widget (0.15.0 WP7b): its look in the text icon window's Widget mode, with what its tile shows now;
+    /// saved on OK and drawn at once, without making the widget anew (a command tile does not run again). Cancel, or OK
+    /// without a change, changes nothing.
+    /// </summary>
+    public void EditTextLook(ItemViewModel item)
+    {
+        if (item.Model is not SpecialIconItem special || !item.CanEditTextLook)
+        {
+            return;
+        }
+
+        var (sample, defaults) = WidgetTile(item) ?? (special.Name, TextLookWindows.FallbackDefaults());
+        if (_dialogs.EditTextLook(special.Name, sample, special.TextLook, defaults) is not { } answer)
+        {
+            return;
+        }
+
+        var look = answer.Look?.Normalized();
+        if (Equals(look, special.TextLook))
+        {
+            return;
+        }
+
+        var draft = (SpecialIconItem)special.Clone();
+        draft.TextLook = look;
+        Model.Update(draft);
+        item.RefreshFromModel();
+        item.ApplyTextLook();
+        Save();
+    }
+
+    /// <summary>What a widget's tile shows now and how its text is drawn without a look (0.15.0 WP7b); none without a gauge.</summary>
+    internal (string Sample, TextLookDefaults Defaults)? WidgetTile(ItemViewModel item) =>
+        item.Gauge is { } gauge ? (gauge.Label, gauge.LookDefaults(UiFonts.BarFontFamily(), IconSize)) : null;
+
+    /// <summary>The view model of the item with <paramref name="id"/> on the bar or in a group whose popup was shown; none else.</summary>
+    internal ItemViewModel? ItemViewModelOf(Guid id)
+    {
+        var lists = new Stack<ItemListViewModel>();
+        lists.Push(RootItems);
+        while (lists.Count > 0)
+        {
+            foreach (var item in lists.Pop().Items)
+            {
+                if (item.Model.Id == id)
+                {
+                    return item;
+                }
+
+                if (item.CreatedChildren is { } children)
+                {
+                    lists.Push(children);
+                }
+            }
+        }
+
+        return null;
     }
 
     /// <summary>Gives the item a colour tag (<see cref="ColorTags"/>), or takes it away with <see langword="null"/>.</summary>

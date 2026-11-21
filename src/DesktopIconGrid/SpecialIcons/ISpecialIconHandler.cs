@@ -49,6 +49,13 @@ public interface ISpecialIconHandler
     /// <summary>Extra tooltip line shown when no gauge detail is visible.</summary>
     string? GetToolTip(SpecialIconItem item) => null;
 
+    /// <summary>
+    /// The icon draws text of its own on its tile, whose look (font, size, bold, colour, plate, up or down) can be set:
+    /// 文字外觀… in its menu and in its own window (0.15.0 WP7b, <see cref="SpecialIconItem.TextLook"/>). The clock, the
+    /// monitors and the command tile; the icons that draw a glyph or a picture do not.
+    /// </summary>
+    bool HasTextLook => false;
+
     /// <summary>Single click / Enter, with the modifier keys held at the time.</summary>
     LaunchResult Activate(SpecialIconItem item, ActivationModifiers modifiers);
 

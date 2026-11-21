@@ -390,6 +390,56 @@ public sealed class DialogFitTests(WpfThread wpf)
         });
     }
 
+    [Theory]
+    [InlineData("en-US", 1.0, "caption")]
+    [InlineData("en-US", 1.5, "caption")]
+    [InlineData("zh-Hant", 1.0, "caption")]
+    [InlineData("zh-Hant", 1.5, "caption")]
+    [InlineData("zh-Hans", 1.0, "caption")]
+    [InlineData("zh-Hans", 1.5, "caption")]
+    [InlineData("en-US", 1.0, "widget")]
+    [InlineData("en-US", 1.5, "widget")]
+    [InlineData("zh-Hant", 1.0, "widget")]
+    [InlineData("zh-Hant", 1.5, "widget")]
+    [InlineData("zh-Hans", 1.0, "widget")]
+    [InlineData("zh-Hans", 1.5, "widget")]
+    public void The_text_icon_window_for_a_caption_or_a_widget_fits_and_its_buttons_are_in_sight(string language, double scale, string mode)
+    {
+        // 0.15.0 WP7b: the same window in its Caption and Widget modes.
+        wpf.Invoke(() =>
+        {
+            var before = System.Threading.Thread.CurrentThread.CurrentUICulture;
+            System.Threading.Thread.CurrentThread.CurrentUICulture = System.Globalization.CultureInfo.GetCultureInfo(language);
+            Services.UiFonts.Configure(null, null, scale);
+            var defaults = new TextLookDefaults(11, FontWeights.SemiBold, new System.Windows.Media.FontFamily("Segoe UI"));
+            var viewModel = mode == "caption"
+                ? TextIconViewModel.ForCaption("工作 Projects", new TextLook { Color = "#FF0000", TileColor = "#2D4A6E" }, defaults)
+                : TextIconViewModel.ForWidget("Clock", "14:05", new TextLook { Size = 30 }, defaults);
+            var window = new TextIconWindow { DataContext = viewModel };
+            try
+            {
+                window.Show();
+                Settle(window);
+                var root = (FrameworkElement)window.Content;
+                var what = $"{language} at {scale:P0}, {mode}";
+                FitsAcross(root, root.ActualWidth, what);
+                var client = root.TranslatePoint(new Point(0, root.ActualHeight), window).Y;
+                foreach (var label in new[] { Strings.Common_OK, Strings.Common_Cancel })
+                {
+                    var button = LogicalDescendants<Button>(window).Single(b => Equals(b.Content, label));
+                    var bottom = button.TranslatePoint(new Point(0, button.ActualHeight), window).Y;
+                    Assert.True(button.IsVisible && bottom <= client + 0.5, $"{what}: {label} ends at {bottom}, below {client}");
+                }
+            }
+            finally
+            {
+                window.Close();
+                Services.UiFonts.Configure(null);
+                System.Threading.Thread.CurrentThread.CurrentUICulture = before;
+            }
+        });
+    }
+
     [Fact]
     public void Item_properties_scroll_on_a_short_screen_with_the_advanced_options_open()
     {

@@ -32,6 +32,8 @@ public sealed class ClockTileViewModel : ObservableObject
         ArgumentNullException.ThrowIfNull(item);
         var settings = ClockTileSettings.From(item);
         _name = item.Name;
+        ItemId = item.Id;
+        TextLook = item.TextLook;
         Zones = [new ZoneChoice(null, Strings.Clock_ThisPc), .. TimeZoneInfo.GetSystemTimeZones().Select(zone => new ZoneChoice(zone.Id, zone.DisplayName))];
         var id = settings.TimeZoneId?.Trim();
         if (!string.IsNullOrEmpty(id)
@@ -94,9 +96,16 @@ public sealed class ClockTileViewModel : ObservableObject
 
     public bool CanSave => _name.Trim().Length > 0 && (!HasTimer || Read(_minutes) is not null) && (!IsPomodoro || Read(_breakMinutes) is not null);
 
+    /// <summary>The widget's id: 文字外觀… shows what its tile shows now (0.15.0 WP7b).</summary>
+    public Guid ItemId { get; }
+
+    /// <summary>The widget's text look as 文字外觀… here left it (0.15.0 WP7b); written on OK with the rest.</summary>
+    public TextLook? TextLook { get; set; }
+
     public void Apply(SpecialIconItem item)
     {
         ArgumentNullException.ThrowIfNull(item);
+        item.TextLook = TextLook; // 文字外觀… here (0.15.0 WP7b)
         item.Name = _name.Trim();
         new ClockTileSettings(_zone.Id, _timer.Kind, Read(_minutes) ?? ClockTileSettings.Default.Minutes, Read(_breakMinutes) ?? ClockTileSettings.Default.BreakMinutes).ApplyTo(item);
     }

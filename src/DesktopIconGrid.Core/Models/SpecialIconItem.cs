@@ -11,6 +11,14 @@ public sealed class SpecialIconItem : LauncherItem
 
     public Dictionary<string, string> Settings { get; set; } = new(StringComparer.OrdinalIgnoreCase);
 
+    /// <summary>
+    /// How the widget's own text is drawn (0.15.0 WP7b): the clock's time, a gauge's number, the command tile's output, set
+    /// in the text icon window's Widget mode (文字外觀…). <see langword="null"/> is the text as before. Only the handlers
+    /// that draw text of their own read it; a version before 0.15.0 keeps it unread with the item. It is no part of what a
+    /// command tile's approval covers: it changes how its output looks, not what runs.
+    /// </summary>
+    public TextLook? TextLook { get; set; }
+
     public string? GetSetting(string key) =>
         Settings.TryGetValue(key, out var value) && !string.IsNullOrWhiteSpace(value) ? value : null;
 
@@ -41,6 +49,7 @@ public sealed class SpecialIconItem : LauncherItem
         {
             Kind = special.Kind.Trim();
             Settings = new Dictionary<string, string>(special.Settings, StringComparer.OrdinalIgnoreCase);
+            TextLook = special.TextLook?.Normalized();
         }
     }
 }

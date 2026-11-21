@@ -130,6 +130,33 @@ internal sealed class RecordingDialogs : IDialogService
         return TextAnswer;
     }
 
+    /// <summary>What the caption window answers (0.15.0 WP7b); <see langword="null"/> is Cancel.</summary>
+    public CaptionAnswer? CaptionAnswer { get; set; }
+
+    /// <summary>The caption and look the caption window was opened with, and how often.</summary>
+    public (string? Caption, TextLook? Look) OfferedCaption { get; private set; }
+
+    public int CaptionQuestions { get; private set; }
+
+    public CaptionAnswer? EditCaption(string? caption, TextLook? look, TextLookDefaults defaults)
+    {
+        CaptionQuestions++;
+        OfferedCaption = (caption, look);
+        return CaptionAnswer;
+    }
+
+    /// <summary>What the text look window answers (0.15.0 WP7b); <see langword="null"/> is Cancel.</summary>
+    public LookAnswer? LookAnswer { get; set; }
+
+    /// <summary>The widget's name, sample, look and defaults the text look window was opened with.</summary>
+    public (string Name, string Sample, TextLook? Look, TextLookDefaults Defaults)? OfferedLook { get; private set; }
+
+    public LookAnswer? EditTextLook(string name, string sample, TextLook? look, TextLookDefaults defaults)
+    {
+        OfferedLook = (name, sample, look, defaults);
+        return LookAnswer;
+    }
+
     /// <summary>What a folder picker answers.</summary>
     public string? Folder { get; set; }
 

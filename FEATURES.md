@@ -120,6 +120,25 @@ units; what passes the tile's edge is cut. Stored as `offsetY`, written only whe
 (out of range, a fraction, text) is 0, and the rest of the icon is still read. A version before 0.15.0 draws the text
 in the middle.
 
+**The same window for captions and widgets** (0.15.0, the owner's request). The text icon window also sets a row line's
+caption and a widget's own text; only what it shows differs, and its title says what is being set:
+
+| Mode | Title | Shows |
+| --- | --- | --- |
+| Icon | 文字或符號圖示 / *Text or symbol icon* | Everything, as before. |
+| Caption | 標題文字 / *Caption text* | The caption (up to 100 characters; empty is no caption, and its look goes with it), font, size, bold, colour, 底板顏色 / *Plate colour*, up or down, and the Text and Symbol switch: a caption can be a symbol, drawn in the symbol font at the caption's size. No picture box and no place. |
+| Widget | "<name> 的文字" / *Text of <name>* | The look only, with what the widget shows now, read-only, where the text box is. No switch, no picture box, no place. |
+
+The look (`TextLook`: `font`, `size`, `bold`, `color`, `tileColor`, `offsetY`) has every field optional, and absent is
+the text as it was drawn before 0.15.0, pixel for pixel. The window starts from the text's own font (*(as before)*,
+first in the font list), size and weight, and writes only what differs, so OK without a change leaves no look. A font
+that came with a look from a PC that has it, and this one does not, stays a choice, *<name> (not on this PC)*, when its
+name passes the showable check; a caption and a widget's text are shown as that check allows (the characters it refuses
+left out, other spaces made plain, a long run of spaces cut), so the box shows what OK saves. A size is a caption's in the
+bar's units and a widget's in its tile's 100 units, the units its value is drawn in (the clock's time at 42 for up to
+four characters), so it grows with the icon. The preview draws a caption as its strip, caption then line, and a widget's
+text on its tile.
+
 **Advanced** (0.7.0), the options a Windows `.lnk` has:
 
 | Field | Notes |
@@ -282,7 +301,17 @@ what a shell would act on in a host) is not offered.
 ### 2.4 Special icons (active icons)
 
 A special icon has behaviour of its own: a click action, a live value, drops of files onto it
-and a kind-specific properties dialog. Available now from *Add special icon ▸*:
+and a kind-specific properties dialog. Since 0.15.0 the clock, every monitor (CPU, disk, memory, battery, network,
+microphone, volume) and the command tile have *文字外觀… / Text look…* in their menu and as a button in their own window:
+the text icon window's Widget mode sets the look of the text they draw, saved as `textLook` with the item and drawn at
+once, without the widget being made anew (a command tile does not run again; the look is no part of its approval). The
+font and the colour go to the value and its caption, the size, the weight and up or down to the value. The colour is the
+normal state's: a value's warning and alarm colours (orange, red) still win; on a plate without a colour of its own the
+text is white or near-black, whichever reads better. The plate is the tile's fill, with a text icon's tile corner. The
+ring's and the bar's value is made smaller where it would not fit; the number style's box already does that. While the
+bar is see-through, text in a chosen colour keeps an edge in the tone that stands out from it, and none on a plate. The
+Drive bucket and the sound replayer, which draw a picture with a short text only while busy, and Voice and Send to PC,
+which draw a glyph, have no text look. Available now from *Add special icon ▸*:
 
 - **CPU usage** — the processor's busy percentage, refreshed every 2 seconds; click opens Task Manager.
 - **Disk usage** — how full a drive of your choice is, refreshed every 10 seconds; click opens the drive.
@@ -471,6 +500,14 @@ and keep them. Since 0.8.0 lines and gaps are saved with the name "Divider" or "
 line. The two row kinds are saved as "Divider" too, a row line with a caption by its caption; versions before
 0.14.0 draw both as a line and keep them as they are. A row line whose caption is the word "Divider" reads back
 without one.
+
+A row line's caption has a look of its own since 0.15.0: *Text…* (標題文字…), `F2` and a double-click open the text icon
+window's Caption mode in place of the plain question, and the look is saved as `captionLook` with the item (kept with
+any kind, drawn only on a row line with a caption; a version before 0.15.0 keeps it unread). The font goes first and the
+bar's after it for what it lacks; the colour replaces the caption's grey; the plate is the rounded plate a text icon has
+over a picture, just behind the text; a size too large for the room is made smaller, never cut; up or down is a percent
+of the strip's height. While the bar is see-through the caption keeps its edge, in the tone that stands out from a chosen
+colour, and none on a plate. A caption without a look is drawn by the template exactly as before.
 
 ### 2.6 Colour tags (0.7.0)
 

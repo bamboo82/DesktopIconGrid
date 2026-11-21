@@ -3,6 +3,7 @@ using System.Windows;
 using System.Windows.Media;
 using DesktopIconGrid.Core.SpecialIcons;
 using DesktopIconGrid.Infrastructure;
+using DesktopIconGrid.Services;
 
 namespace DesktopIconGrid.SpecialIcons;
 
@@ -35,6 +36,13 @@ public sealed class GaugeState : ObservableObject
     private CommandLevel? _level;
     private GaugeHistory? _history;
     private double? _historyMax;
+    private GaugeLook? _look;
+
+    /// <summary>How wide the ring's value may be with a size of its own (0.15.0 WP7b): inside the ring, 64 units across.</summary>
+    public const double RingTextWidth = 60;
+
+    /// <summary>How wide the bar's value may be with a size of its own: the tile less its sides.</summary>
+    public const double BarTextWidth = 96;
 
     public GaugeState(string caption, GaugeStyle style, double warningAt, double criticalAt, string initialDetail)
     {
@@ -78,6 +86,7 @@ public sealed class GaugeState : ObservableObject
                 OnPropertyChanged(nameof(Label));
                 OnPropertyChanged(nameof(LabelFontSize));
                 OnPropertyChanged(nameof(LabelMaxWidth));
+                OnPropertyChanged(nameof(LookLabelSize));
             }
         }
     }
@@ -113,9 +122,65 @@ public sealed class GaugeState : ObservableObject
             {
                 OnPropertyChanged(nameof(LevelBrush));
                 OnPropertyChanged(nameof(IsNeutral));
+                OnPropertyChanged(nameof(IsAlarm));
             }
         }
     }
+
+    /// <summary>
+    /// The widget's text look (0.15.0 WP7b), or <see langword="null"/> for the text as before. The tile template's triggers
+    /// read it; see <see cref="GaugeLook"/>.
+    /// </summary>
+    public GaugeLook? Look
+    {
+        get => _look;
+        set
+        {
+            if (SetProperty(ref _look, value))
+            {
+                OnPropertyChanged(nameof(LookLabelSize));
+            }
+        }
+    }
+
+    /// <summary>
+    /// The value's size with a look that sets one, in the tile's units: the ring's and the bar's made smaller where the
+    /// value would be wider than they have room for (<see cref="RingTextWidth"/>, <see cref="BarTextWidth"/>); the number
+    /// style's box makes its own smaller.
+    /// </summary>
+    public double LookLabelSize
+    {
+        get
+        {
+            if (_look is not { HasSize: true } look)
+            {
+                return 0;
+            }
+
+            var weight = look.HasBold ? look.Weight : IsRing ? FontWeights.SemiBold : IsNumber ? FontWeights.Bold : FontWeights.Normal;
+            return Style switch
+            {
+                GaugeStyle.Ring => LookFonts.FitSize(Label, look.Size, RingTextWidth, look.Family, weight),
+                GaugeStyle.Bar => LookFonts.FitSize(Label, look.Size, BarTextWidth, look.Family, weight),
+                _ => look.Size,
+            };
+        }
+    }
+
+    /// <summary>
+    /// The value's text as it is drawn without a look (0.15.0 WP7b), what the text icon window's Widget mode starts from:
+    /// the ring's at 26 semi-bold, the bar's at 22, the number's at its size for the text shown now, bold; in
+    /// <paramref name="family"/>, the bar's font. <paramref name="tileSize"/> is the icon size its preview is drawn at.
+    /// </summary>
+    public ViewModels.TextLookDefaults LookDefaults(FontFamily family, int tileSize) => Style switch
+    {
+        GaugeStyle.Ring => new(26, FontWeights.SemiBold, family, tileSize),
+        GaugeStyle.Bar => new(22, FontWeights.Normal, family, tileSize),
+        _ => new(LabelFontSize, FontWeights.Bold, family, tileSize),
+    };
+
+    /// <summary>The value is in the warning or the alarm colour, which win over a look's colour (0.15.0 WP7b).</summary>
+    public bool IsAlarm => ReferenceEquals(LevelBrush, WarningBrush) || ReferenceEquals(LevelBrush, CriticalBrush);
 
     /// <summary>Raised once, when <see cref="Detach"/> is called.</summary>
     public event EventHandler? Detached;

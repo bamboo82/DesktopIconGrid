@@ -31,6 +31,8 @@ public sealed class MonitorIconViewModel : ObservableObject
         ShowsDrive = showsDrive;
         Title = string.Format(Strings.Monitor_Title, kindName);
         _name = item.Name;
+        ItemId = item.Id;
+        TextLook = item.TextLook;
 
         var settings = MonitorIconSettings.From(item);
         _selectedStyle = StyleChoices.First(c => c.Style == settings.Style);
@@ -96,9 +98,16 @@ public sealed class MonitorIconViewModel : ObservableObject
         || name.StartsWith("Disk ", StringComparison.Ordinal)
         || Drives.Any(d => name == string.Format(Strings.Monitor_DiskName, d.Root.TrimEnd('\\')));
 
+    /// <summary>The widget's id: 文字外觀… shows what its tile shows now (0.15.0 WP7b).</summary>
+    public Guid ItemId { get; }
+
+    /// <summary>The widget's text look as 文字外觀… here left it (0.15.0 WP7b); written on OK with the rest.</summary>
+    public TextLook? TextLook { get; set; }
+
     public void Apply(SpecialIconItem item)
     {
         ArgumentNullException.ThrowIfNull(item);
+        item.TextLook = TextLook; // 文字外觀… here (0.15.0 WP7b)
         item.Name = _name.Trim();
         new MonitorIconSettings(_selectedStyle.Style, ShowsDrive ? _selectedDrive?.Root : null).ApplyTo(item);
     }

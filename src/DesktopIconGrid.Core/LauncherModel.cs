@@ -180,6 +180,7 @@ public sealed class LauncherModel
         if (item is SeparatorItem separator)
         {
             separator.Kind = separator.Kind?.Trim() is { Length: > 0 } kind ? kind : SeparatorItem.Line; // a caption may be empty
+            separator.CaptionLook = separator.CaptionLook?.Normalized();
             if (SeparatorItem.SavedName(separator.Kind, separator.Name) is not null)
             {
                 separator.Name = string.Empty; // only a caption has a name (a row line's too); the others' is there for 0.6.0
@@ -199,6 +200,7 @@ public sealed class LauncherModel
         {
             special.Kind = special.Kind?.Trim() ?? string.Empty;
             special.Settings ??= new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            special.TextLook = special.TextLook?.Normalized();
             if (item.Name.Length == 0)
             {
                 item.Name = special.Kind.Length == 0 ? CoreStrings.Item_SpecialIconPlaceholder : special.Kind;

@@ -850,6 +850,15 @@ public partial class IconGridControl : UserControl
         }
     }
 
+    /// <summary>文字外觀… in a widget's menu (0.15.0 WP7b).</summary>
+    private void TextLook_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is MenuItem { DataContext: ItemViewModel item })
+        {
+            item.Root.EditTextLook(item);
+        }
+    }
+
     /// <summary>
     /// A double-click on a separator with a caption (a row line or a label) asks for its text, as the Properties key does
     /// (0.14.0); on the other kinds it does nothing, as before.

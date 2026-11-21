@@ -8,8 +8,10 @@ namespace DesktopIconGrid.Views;
 /// <see cref="Gap"/>, then the line to <see cref="Inset"/> before the right edge (標題 ────────). A caption too long for
 /// the strip is cut with an ellipsis so the line keeps at least <see cref="MinLine"/>; in a strip too narrow for that
 /// to leave the caption half of it (a bar one icon wide), the caption may take the strip up to the insets, as a
-/// label's does, and the line what is left. The first child is the caption, the second the line; without a caption
-/// shown the line takes the strip, inset at both ends.
+/// label's does, and the line what is left. The last child is the line; the caption is the first visible child before
+/// it (0.15.0 WP7b: the caption as before, or the caption with a look of its own); without a caption shown the line
+/// takes the strip, inset at both ends. A caption with <see cref="ShiftPercentProperty"/> is moved down (up, when
+/// negative) by that percent of the strip's height: a caption look's up or down.
 /// </summary>
 public sealed class RowLinePanel : Panel
 {
@@ -19,9 +21,39 @@ public sealed class RowLinePanel : Panel
 
     public const double MinLine = 24;
 
-    private UIElement? Caption => InternalChildren.Count > 0 && InternalChildren[0].Visibility == Visibility.Visible ? InternalChildren[0] : null;
+    /// <summary>How far the caption is moved down, in percent of the strip's height (0.15.0 WP7b); negative is up.</summary>
+    public static readonly DependencyProperty ShiftPercentProperty = DependencyProperty.RegisterAttached(
+        "ShiftPercent", typeof(int), typeof(RowLinePanel), new FrameworkPropertyMetadata(0, FrameworkPropertyMetadataOptions.AffectsParentArrange));
 
-    private UIElement? Line => InternalChildren.Count > 1 ? InternalChildren[1] : null;
+    public static int GetShiftPercent(DependencyObject element)
+    {
+        ArgumentNullException.ThrowIfNull(element);
+        return (int)element.GetValue(ShiftPercentProperty);
+    }
+
+    public static void SetShiftPercent(DependencyObject element, int value)
+    {
+        ArgumentNullException.ThrowIfNull(element);
+        element.SetValue(ShiftPercentProperty, value);
+    }
+
+    private UIElement? Caption
+    {
+        get
+        {
+            for (var i = 0; i < InternalChildren.Count - 1; i++)
+            {
+                if (InternalChildren[i].Visibility == Visibility.Visible)
+                {
+                    return InternalChildren[i];
+                }
+            }
+
+            return null;
+        }
+    }
+
+    private UIElement? Line => InternalChildren.Count > 1 ? InternalChildren[^1] : null;
 
     /// <summary>The room the caption may take in a strip <paramref name="width"/> wide.</summary>
     internal static double CaptionRoom(double width)
@@ -45,6 +77,14 @@ public sealed class RowLinePanel : Panel
             height = caption.DesiredSize.Height;
         }
 
+        foreach (UIElement child in InternalChildren)
+        {
+            if (child != Caption && child != Line)
+            {
+                child.Measure(new Size(0, 0)); // a caption not shown takes no room
+            }
+        }
+
         Line?.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
         return new Size(width + MinLine + (2 * Inset), height);
     }
@@ -62,8 +102,17 @@ public sealed class RowLinePanel : Panel
 
             var captionWidth = Math.Min(caption.DesiredSize.Width, room);
             var captionHeight = caption.DesiredSize.Height;
-            caption.Arrange(new Rect(Inset, Math.Max(0, (finalSize.Height - captionHeight) / 2), captionWidth, captionHeight));
+            var shift = GetShiftPercent(caption) * finalSize.Height / 100;
+            caption.Arrange(new Rect(Inset, Math.Max(0, (finalSize.Height - captionHeight) / 2) + shift, captionWidth, captionHeight));
             start = Inset + captionWidth + Gap;
+        }
+
+        foreach (UIElement child in InternalChildren)
+        {
+            if (child != Caption && child != Line)
+            {
+                child.Arrange(new Rect(0, 0, 0, 0));
+            }
         }
 
         Line?.Arrange(new Rect(start, 0, Math.Max(0, finalSize.Width - start - Inset), finalSize.Height));

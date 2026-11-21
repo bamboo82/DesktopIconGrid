@@ -3098,4 +3098,31 @@ The place was not changed; what was copied stays there.</value>
   <data name="TextIcon_OffsetToolTip" xml:space="preserve">
     <value>Moves the text or symbol up (−) or down (+), in percent of the tile's height</value>
   </data>
+  <data name="TextIcon_TitleCaption" xml:space="preserve">
+    <value>Caption text</value>
+  </data>
+  <data name="TextIcon_TitleWidget" xml:space="preserve">
+    <value>Text of {0}</value>
+  </data>
+  <data name="TextIcon_Sample" xml:space="preserve">
+    <value>Shows now:</value>
+  </data>
+  <data name="TextIcon_Caption" xml:space="preserve">
+    <value>Caption:</value>
+  </data>
+  <data name="TextIcon_PlateColour" xml:space="preserve">
+    <value>Plate colour:</value>
+  </data>
+  <data name="TextIcon_OwnFont" xml:space="preserve">
+    <value>(as before)</value>
+  </data>
+  <data name="TextIcon_CaptionHint" xml:space="preserve">
+    <value>An empty caption takes the caption away; the line stays.</value>
+  </data>
+  <data name="TextLook_Menu" xml:space="preserve">
+    <value>Text look…</value>
+  </data>
+  <data name="TextIcon_MissingFont" xml:space="preserve">
+    <value>{0} (not on this PC)</value>
+  </data>
 </root>

@@ -36,6 +36,9 @@ public abstract class MonitorHandlerBase(SystemMonitor monitor, Func<Window?> ow
     /// </summary>
     public virtual bool Wheel(SpecialIconItem item, int notches) => false;
 
+    /// <summary>Every monitor's value and caption take a look of their own (0.15.0 WP7b).</summary>
+    public bool HasTextLook => true;
+
     public bool ShowProperties(SpecialIconItem item, bool isNew)
     {
         var viewModel = new MonitorIconViewModel(item, ShowsDrive, DisplayName);
