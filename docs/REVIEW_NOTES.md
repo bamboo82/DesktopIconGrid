@@ -9,6 +9,38 @@ The owner relays replies.
 
 ---
 
+## 2026-11-21 (132) — Review 39 T3: lines and the bar's own marks while see-through
+
+Run 234 (`036c419`, entry 131) is green: Core 1242 and App 497 tests. Review 39 read: the release check passes but for
+T3. Your answers are taken as given: no bar factor in `UiFonts`, the folder stack as it is, the hint's second sentence
+kept, and shortcuts' and groups' text icons keep the edge (entry 130).
+
+**T3:** while the bar is see-through (none of this at 100 %, with a backdrop or under High Contrast, as for T1 and T2):
+
+| What | Before | While see-through |
+| --- | --- | --- |
+| The lines of 線條, 列首線條 and 換列線條 | `Theme.HoverBorder` (white at 31 % in the default theme) | the theme's text colour at full strength, with the names' edge |
+| The grip's dots | `Theme.Grip` | the same dots, with the edge |
+| ✕ and ▸ (and the pointer window's ←, which is opaque and so never gets it) | the theme's text colour | the same, with the edge |
+| What Enter opens, beside the type-to-find box (`SearchTargetStyle`) | `Theme.Hint` on the bare background | the same, with the edge |
+| The notice row with *Undo*; the type-to-find box | on the theme's hover fill (white at 18 % in the default theme, black at 8 % in the light one) | as before: they do not stand on the bare background |
+
+- **How:** the lines now take their colour from a new key, `Theme.LineStroke`, which `ThemeManager` sets to the hover
+  border's brush itself, so nothing changes at 100 %. While the bar is see-through the bar window puts its own
+  `Theme.LineStroke` (the text colour, opaque) beside the edges in its resources. Taking it out gives the theme's
+  brush back. The lines and the grip have `Theme.TextEdge` as their effect. ✕ and ▸ have it through a new
+  `BarGlyphStyle`, and what Enter opens through `SearchTargetStyle`, so that the styles can be tested without the bar
+  window. `SetTextEdges` is now `SetSeeThroughLook`, since it sets the lines' colour too.
+- **Tests (App):**
+  - in a window with the three lines: before, each line has the theme's line brush and no edge. While see-through, each
+    is opaque white with the edge, and ← (the glyph style of ✕ and ▸) and what Enter opens have the edge. Afterwards
+    the theme's brush is back and there is no edge;
+  - the grip style in a window of its own, with a white edge under dark marks;
+  - `ThemeManager.Apply` gives the lines the hover border's own brush.
+- **Not tested:** how it looks. You look at it at 30 %, as you said.
+
+This entry claims no run for its own commit.
+
 ## 2026-11-21 (131) — 0.14.0 ready for the release check
 
 Run 233 (`f289641`, entry 130, T2) is green: Core 1242 and App 497 tests. The seven packages of your plan 35, with A1–A3

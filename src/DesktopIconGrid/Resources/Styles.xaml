@@ -24,6 +24,7 @@
   <SolidColorBrush x:Key="Theme.Hint" Color="#FFFFFFFF" Opacity="0.65" />
   <SolidColorBrush x:Key="Theme.Hover" Color="#2EFFFFFF" />
   <SolidColorBrush x:Key="Theme.HoverBorder" Color="#50FFFFFF" />
+  <SolidColorBrush x:Key="Theme.LineStroke" Color="#50FFFFFF" />
   <SolidColorBrush x:Key="Theme.Pressed" Color="#50FFFFFF" />
   <SolidColorBrush x:Key="Theme.Grip" Color="#70FFFFFF" />
   <SolidColorBrush x:Key="Theme.Accent" Color="#FF4C8BF5" />
@@ -136,8 +137,10 @@
     </DrawingImage.Drawing>
   </DrawingImage>
 
+  <!-- The move grip; on a see-through background its dots have the names' edge (review 39 T3) -->
   <Style x:Key="GripStyle" TargetType="Border">
     <Setter Property="Background" Value="{DynamicResource Theme.GripPattern}" />
+    <Setter Property="Effect" Value="{DynamicResource Theme.TextEdge}" />
     <Setter Property="Margin" Value="4,6,3,6" />
     <Setter Property="Cursor" Value="SizeAll" />
   </Style>
@@ -175,6 +178,11 @@
     </Setter>
   </Style>
 
+  <!-- The glyph of a bar button (✕, ▸, ←): on a see-through background it has the names' edge (review 39 T3) -->
+  <Style x:Key="BarGlyphStyle" TargetType="TextBlock">
+    <Setter Property="Effect" Value="{DynamicResource Theme.TextEdge}" />
+  </Style>
+
   <!-- Small text buttons inside the bar (the Undo of the removal banner) -->
   <Style x:Key="BarTextButtonStyle" TargetType="Button" BasedOn="{StaticResource BarButtonStyle}">
     <Setter Property="Width" Value="Auto" />
@@ -199,9 +207,11 @@
     <Setter Property="BorderThickness" Value="1" />
   </Style>
 
-  <!-- What Enter opens, shown beside the search box (the match may sit inside a closed group) -->
+  <!-- What Enter opens, shown beside the search box (the match may sit inside a closed group); it stands on the bare
+       background, so on a see-through one it has the names' edge (review 39 T3) -->
   <Style x:Key="SearchTargetStyle" TargetType="TextBlock">
     <Setter Property="Foreground" Value="{DynamicResource Theme.Hint}" />
+    <Setter Property="Effect" Value="{DynamicResource Theme.TextEdge}" />
     <Setter Property="FontSize" Value="11" />
     <Setter Property="VerticalAlignment" Value="Center" />
     <Setter Property="TextTrimming" Value="CharacterEllipsis" />

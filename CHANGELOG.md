@@ -47,7 +47,8 @@ version numbers follow [Semantic Versioning](https://semver.org/).
   on its background still reaches it. While the background is see-through, text is smoothed in grey instead of with
   ClearType, and names, captions, the empty bar's line, the Voice and Send to PC glyphs (and any text or symbol icon in
   the theme's colour without a tile colour), a gauge's text and the clock's grey time have a thin edge in the
-  contrasting tone, so they can be read over a light desktop too. Under Windows High Contrast the background stays opaque. The value is stored and synced as before.
+  contrasting tone, so they can be read over a light desktop too. The separators' lines are drawn in the text colour
+  with that edge then, and the grip, ✕ and ▸ have it as well. Under Windows High Contrast the background stays opaque. The value is stored and synced as before.
 - The data location has a Settings tab of its own, *Portable*, the last; *General* keeps the language. Nothing in the
   block changed, and the notice that sends you there names the new tab.
 - *Background transparency* sits under *Bar background* on the Appearance tab, with the other background settings.

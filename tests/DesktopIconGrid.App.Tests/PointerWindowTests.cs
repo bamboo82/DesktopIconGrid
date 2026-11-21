@@ -331,7 +331,7 @@ public sealed class PointerWindowTests(WpfThread wpf) : IDisposable
             Assert.Null(voice.FitBox!.Effect);
             Assert.Null(Text("12:34").Effect);
 
-            MainWindow.SetTextEdges(window.Resources, "#FFFFFF", bar.IconSize);
+            MainWindow.SetSeeThroughLook(window.Resources, "#FFFFFF", bar.IconSize);
             window.UpdateLayout();
             var edge = window.Resources[MainWindow.TextEdgeKey];
             var gaugeEdge = (System.Windows.Media.Effects.DropShadowEffect)window.Resources[MainWindow.GaugeTextEdgeKey];
@@ -352,11 +352,67 @@ public sealed class PointerWindowTests(WpfThread wpf) : IDisposable
             Assert.Equal(System.Windows.Media.Color.FromRgb(0x1A, 0x1A, 0x1A), neutralEdge.Color); // the grey is light: a dark edge
             Assert.Equal(System.Windows.Media.Color.FromRgb(0x1A, 0x1A, 0x1A), gaugeEdge.Color); // under the white of the dark theme
 
-            MainWindow.SetTextEdges(window.Resources, null, bar.IconSize);
+            MainWindow.SetSeeThroughLook(window.Resources, null, bar.IconSize);
             Assert.Null(voice.FitBox!.Effect);
             Assert.Null(Text("42%").Effect);
             Assert.Null(Text("12:34").Effect);
         }
+    }
+
+    [Fact]
+    public void Lines_take_the_text_colour_and_the_edge_while_see_through_and_the_bars_marks_the_edge()
+    {
+        // Review 39 T3: the three line separators, in the theme's faint line colour on a solid background, in the text colour
+        // with the names' edge on a see-through one; the grip, the glyphs of ✕, ▸ and ←, and what Enter opens get the edge.
+        var model = Shortcuts(2);
+        model.Add(new SeparatorItem { Kind = SeparatorItem.Line });
+        model.Add(new SeparatorItem { Kind = SeparatorItem.RowHead });
+        model.Add(new SeparatorItem { Kind = SeparatorItem.RowLine });
+        WithWindow(model, (window, bar) =>
+        {
+            var lines = Descendants(window).OfType<DividerLine>().Where(line => line.IsVisible).ToList();
+            Assert.Equal(3, lines.Count);
+            var theme = window.FindResource(DesktopIconGrid.Services.ThemeManager.LineStrokeKey);
+            Assert.All(lines, line => Assert.Same(theme, line.Stroke));
+            Assert.All(lines, line => Assert.Null(line.Effect));
+            var back = Descendants(window).OfType<System.Windows.Controls.TextBlock>().Single(block => block.Text == "←");
+            var target = Descendants(window).OfType<System.Windows.Controls.TextBlock>().Single(block => block.Style == window.FindResource("SearchTargetStyle"));
+            Assert.Null(back.Effect);
+            Assert.Null(target.Effect);
+
+            MainWindow.SetSeeThroughLook(window.Resources, "#FFFFFF", bar.IconSize);
+            window.UpdateLayout();
+            var edge = window.Resources[MainWindow.TextEdgeKey];
+            Assert.All(lines, line =>
+            {
+                var stroke = Assert.IsType<SolidColorBrush>(line.Stroke);
+                Assert.Equal((Colors.White, 1.0), (stroke.Color, stroke.Opacity)); // the text colour, at full strength
+                Assert.Same(edge, line.Effect);
+            });
+            Assert.Same(edge, back.Effect); // the glyph style ✕ and ▸ have on the bar
+            Assert.Same(edge, target.Effect);
+
+            MainWindow.SetSeeThroughLook(window.Resources, null, bar.IconSize);
+            Assert.All(lines, line => Assert.Same(theme, line.Stroke)); // the theme's own again
+            Assert.All(lines, line => Assert.Null(line.Effect));
+            Assert.Null(back.Effect);
+
+            // The grip lives only on the bar; its style, in a window of its own.
+            var grip = new System.Windows.Controls.Border { Style = (Style)window.FindResource("GripStyle"), Width = 10, Height = 40 };
+            var host = new Window { Content = grip, Width = 60, Height = 80, ShowInTaskbar = false, ShowActivated = false };
+            try
+            {
+                host.Show();
+                Assert.Null(grip.Effect);
+                MainWindow.SetSeeThroughLook(host.Resources, "#202020", bar.IconSize);
+                Assert.Same(host.Resources[MainWindow.TextEdgeKey], grip.Effect);
+                Assert.Equal(Colors.White, Assert.IsType<System.Windows.Media.Effects.DropShadowEffect>(grip.Effect).Color); // under dark marks
+            }
+            finally
+            {
+                host.Close();
+            }
+        });
     }
 
     [Fact]

@@ -42,6 +42,7 @@ public class AppearanceTests
         ThemeManager.Apply(ThemeCatalog.Classic, resources);
         Assert.Equal(1.0, Assert.IsType<SolidColorBrush>(resources[ThemeManager.BarBackgroundKey]).Opacity);
         Assert.True(((Freezable)resources[ThemeManager.BarBackgroundKey]).IsFrozen);
+        Assert.Same(resources[ThemeManager.HoverBorderKey], resources[ThemeManager.LineStrokeKey]); // the lines' own colour (review 39 T3)
     }
 
     [Fact]

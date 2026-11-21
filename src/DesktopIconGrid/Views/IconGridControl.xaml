@@ -227,7 +227,8 @@
           </ContextMenu>
         </Button.ContextMenu>
         <Grid>
-          <views:DividerLine Stroke="{DynamicResource Theme.HoverBorder}"
+          <!-- On a see-through background the lines are in the text colour with the names' edge (review 39 T3) -->
+          <views:DividerLine Stroke="{DynamicResource Theme.LineStroke}" Effect="{DynamicResource Theme.TextEdge}"
                              Visibility="{Binding ShowsDivider, Converter={StaticResource BoolToVisibility}}" />
           <!-- A row line (0.14.0): its caption, when it has one, then the line to the right edge -->
           <views:RowLinePanel Visibility="{Binding IsRowLineSeparator, Converter={StaticResource BoolToVisibility}}">
@@ -239,7 +240,7 @@
                        VerticalAlignment="Center"
                        TextTrimming="CharacterEllipsis"
                        Visibility="{Binding HasRowLineText, Converter={StaticResource BoolToVisibility}}" />
-            <views:DividerLine Stroke="{DynamicResource Theme.HoverBorder}" Inset="0" Flat="True" />
+            <views:DividerLine Stroke="{DynamicResource Theme.LineStroke}" Effect="{DynamicResource Theme.TextEdge}" Inset="0" Flat="True" />
           </views:RowLinePanel>
           <TextBlock Text="{Binding Name}"
                      Effect="{DynamicResource Theme.TextEdge}"

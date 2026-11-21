@@ -55,7 +55,7 @@
                 Click="Back_Click"
                 ToolTip="{x:Static r:Strings.Pointer_BackToolTip}"
                 AutomationProperties.Name="{x:Static r:Strings.Pointer_BackName}">
-          <TextBlock Text="←" FontSize="12" />
+          <TextBlock Text="←" FontSize="12" Style="{StaticResource BarGlyphStyle}" />
         </Button>
         <TextBlock x:Name="GroupTitle"
                    Foreground="{DynamicResource Theme.Foreground}"

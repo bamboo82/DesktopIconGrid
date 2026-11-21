@@ -98,7 +98,7 @@
                 ToolTip="{Binding CloseButtonToolTip}"
                 AutomationProperties.Name="{Binding CloseButtonToolTip}"
                 Click="Close_Click">
-          <TextBlock Text="✕" />
+          <TextBlock Text="✕" Style="{StaticResource BarGlyphStyle}" />
         </Button>
         <Button x:Name="OptionsButton"
                 Style="{StaticResource BarButtonStyle}"
@@ -106,7 +106,7 @@
                 ToolTip="{x:Static r:Strings.Main_Options}"
                 AutomationProperties.Name="{x:Static r:Strings.Main_OptionsMenuName}"
                 Click="Options_Click">
-          <TextBlock Text="▸" FontSize="11" />
+          <TextBlock Text="▸" FontSize="11" Style="{StaticResource BarGlyphStyle}" />
           <Button.ContextMenu>
             <ContextMenu>
               <MenuItem Header="{x:Static r:Strings.Menu_Settings}" Command="{Binding OpenSettingsCommand}" InputGestureText="{Binding KeyText[OpenSettings]}" />

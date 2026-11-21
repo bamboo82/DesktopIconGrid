@@ -18,6 +18,12 @@ public static class ThemeManager
     public const string HintKey = "Theme.Hint";
     public const string HoverKey = "Theme.Hover";
     public const string HoverBorderKey = "Theme.HoverBorder";
+
+    /// <summary>
+    /// The separators' lines: the hover border's colour, which the bar window replaces with the text colour while its
+    /// background is see-through (review 39 T3).
+    /// </summary>
+    public const string LineStrokeKey = "Theme.LineStroke";
     public const string PressedKey = "Theme.Pressed";
     public const string GripKey = "Theme.Grip";
     public const string GripPatternKey = "Theme.GripPattern";
@@ -49,7 +55,9 @@ public static class ThemeManager
         resources[ForegroundKey] = ToBrush(palette.Foreground);
         resources[HintKey] = ToBrush(palette.Foreground, opacity: 0.65);
         resources[HoverKey] = ToBrush(palette.Hover);
-        resources[HoverBorderKey] = ToBrush(palette.HoverBorder);
+        var hoverBorder = ToBrush(palette.HoverBorder);
+        resources[HoverBorderKey] = hoverBorder;
+        resources[LineStrokeKey] = hoverBorder;
         resources[PressedKey] = ToBrush(palette.Pressed);
         resources[GripKey] = grip;
         resources[GripPatternKey] = CreateGripPattern(grip);

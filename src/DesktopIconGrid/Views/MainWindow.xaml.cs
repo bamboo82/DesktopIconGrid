@@ -323,7 +323,7 @@ public partial class MainWindow : Window
         // On a see-through background the edges of text are smoothed in grey: ClearType works its colours out against the
         // bar's own colour, not against what shows through, and would fringe there.
         TextOptions.SetTextRenderingMode(this, _seeThrough ? TextRenderingMode.Grayscale : TextRenderingMode.Auto);
-        ApplyTextEdge(palette);
+        ApplySeeThroughLook(palette);
 
         ThemeManager.Apply(palette, translucentBar: active || _seeThrough, tintOpacity: _viewModel.Opacity / 100.0);
         DialogTheme.Configure(settings.FluentDialogs);
@@ -334,8 +334,9 @@ public partial class MainWindow : Window
     }
 
     /// <summary>
-    /// The window's resource the names, captions, the empty bar's line, a group's heading, and text and symbol icons in the
-    /// theme's text colour without a tile colour (review 38 T2) take as their effect.
+    /// The window's resource the names, captions, the empty bar's line, a group's heading, text and symbol icons in the
+    /// theme's text colour without a tile colour (review 38 T2), the separators' lines, the grip, the glyphs of ✕ and ▸, and
+    /// what Enter opens beside the type-to-find box (review 39 T3) take as their effect.
     /// </summary>
     internal const string TextEdgeKey = "Theme.TextEdge";
 
@@ -352,26 +353,28 @@ public partial class MainWindow : Window
     /// While the background is see-through, the names under the icons, the captions of labels and row lines, the empty
     /// bar's line and a group's heading get a thin soft edge in the tone that stands out from their colour (near-black
     /// under light text, white under dark), so they can be read over a light or a dark desktop alike (review 37 T1); so do
-    /// the glyphs and text of icons drawn in the theme's colour straight on the background (review 38 T2). Before 0.14.0
-    /// the theme's colour was always behind them. At 100 %, with a backdrop and under High Contrast there is none. They are
-    /// resources of this window, so the group's popup has them too and the pointer window, which is opaque, does not; one
-    /// frozen effect of each is shared by every text.
+    /// the glyphs and text of icons drawn in the theme's colour straight on the background (review 38 T2), and the grip,
+    /// ✕ and ▸; and the separators' lines, drawn in the theme's faint line colour that leaned on the solid background, are
+    /// drawn in the text colour then (review 39 T3). Before 0.14.0 the theme's colour was always behind them. At 100 %,
+    /// with a backdrop and under High Contrast nothing of this is set. They are resources of this window, so the group's
+    /// popup has them too and the pointer window, which is opaque, does not; one frozen effect of each is shared.
     /// </summary>
-    private void ApplyTextEdge(ThemePalette palette) => SetTextEdges(Resources, _seeThrough ? palette.Foreground : null, _viewModel.IconSize);
+    private void ApplySeeThroughLook(ThemePalette palette) => SetSeeThroughLook(Resources, _seeThrough ? palette.Foreground : null, _viewModel.IconSize);
 
     /// <summary>
-    /// Puts the edges in <paramref name="resources"/> for text of <paramref name="foreground"/>, or takes them out with
-    /// <see langword="null"/>. A gauge is drawn in a box of 100 units that its icon scales, and an effect is scaled with what
-    /// it is drawn in, so the gauge's edges are as much wider in the box as the box is smaller than 100: on the bar they
-    /// look as the names' do.
+    /// Puts the edges and the lines' colour in <paramref name="resources"/> for text of <paramref name="foreground"/>, or
+    /// takes them out with <see langword="null"/>, which leaves the theme's own. A gauge is drawn in a box of 100 units that
+    /// its icon scales, and an effect is scaled with what it is drawn in, so the gauge's edges are as much wider in the box
+    /// as the box is smaller than 100: on the bar they look as the names' do.
     /// </summary>
-    internal static void SetTextEdges(ResourceDictionary resources, string? foreground, double iconSize)
+    internal static void SetSeeThroughLook(ResourceDictionary resources, string? foreground, double iconSize)
     {
         if (foreground is null)
         {
             resources.Remove(TextEdgeKey);
             resources.Remove(GaugeTextEdgeKey);
             resources.Remove(GaugeNeutralEdgeKey);
+            resources.Remove(ThemeManager.LineStrokeKey);
             return;
         }
 
@@ -379,6 +382,7 @@ public partial class MainWindow : Window
         resources[TextEdgeKey] = TextEdgeFor(foreground);
         resources[GaugeTextEdgeKey] = TextEdgeFor(foreground, box);
         resources[GaugeNeutralEdgeKey] = TextEdgeFor(GaugeState.NeutralColor, box);
+        resources[ThemeManager.LineStrokeKey] = ThemeManager.ToBrush(foreground); // at full strength
     }
 
     /// <summary>
