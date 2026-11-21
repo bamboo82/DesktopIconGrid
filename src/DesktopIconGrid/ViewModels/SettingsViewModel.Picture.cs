@@ -112,6 +112,13 @@ public sealed partial class SettingsViewModel
 
     public void RemovePicture() => Picture = null;
 
+    /// <summary>The strip of 調整位置… (0.15.0 WP6): the theme's colour and text as chosen now, and the background's opacity.</summary>
+    internal Views.PicturePositionWindow.StripLook PictureStripLook()
+    {
+        var palette = PreviewPalette();
+        return new Views.PicturePositionWindow.StripLook(palette.Background, palette.Foreground, LauncherSettings.MaxOpacity - Transparency);
+    }
+
     /// <summary>What the text stands on with the picture shown: its average blended into the colour by its strength.</summary>
     private string? PictureBasis() => PictureShown && _picture is { Average: { } average } picture && IsColorValid
         ? ThemeCatalog.Blend(_backgroundColor, average, picture.Strength)

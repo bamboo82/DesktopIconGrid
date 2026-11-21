@@ -3062,4 +3062,31 @@ The place was not changed; what was copied stays there.</value>
   <data name="Picture_NoAnswer" xml:space="preserve">
     <value>The server did not answer, or not with the picture.</value>
   </data>
+  <data name="Settings_AdjustPicture" xml:space="preserve">
+    <value>Adjust position…</value>
+  </data>
+  <data name="Position_Title" xml:space="preserve">
+    <value>Picture position</value>
+  </data>
+  <data name="Position_Hint" xml:space="preserve">
+    <value>Drag the frame, or click, to choose what the bar shows. The arrow keys move it; the wheel, + and − zoom.</value>
+  </data>
+  <data name="Position_PictureName" xml:space="preserve">
+    <value>The picture, with a frame over what the bar shows</value>
+  </data>
+  <data name="Position_Zoom" xml:space="preserve">
+    <value>Zoom</value>
+  </data>
+  <data name="Position_StripLabel" xml:space="preserve">
+    <value>How the bar looks:</value>
+  </data>
+  <data name="Position_Centre" xml:space="preserve">
+    <value>Centre</value>
+  </data>
+  <data name="Position_Samples" xml:space="preserve">
+    <value>Notes,Mail,Music,Photos</value>
+  </data>
+  <data name="Position_Missing" xml:space="preserve">
+    <value>This PC does not have that picture yet.</value>
+  </data>
 </root>

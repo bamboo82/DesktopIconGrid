@@ -199,6 +199,9 @@
                 </Border>
                 <Button x:Name="ChoosePictureButton" Content="{x:Static r:Strings.Settings_ChoosePicture}" Padding="10,2" Margin="0,0,6,0" VerticalAlignment="Center" Click="ChoosePicture_Click" />
                 <Button x:Name="PictureFromWebButton" Content="{x:Static r:Strings.Settings_PictureFromWeb}" Padding="10,2" Margin="0,0,6,0" VerticalAlignment="Center" Click="PictureFromWeb_Click" />
+                <!-- Where it lies and how far it is zoomed (0.15.0 WP6) -->
+                <Button x:Name="AdjustPictureButton" Content="{x:Static r:Strings.Settings_AdjustPicture}" Padding="10,2" Margin="0,0,6,0" VerticalAlignment="Center"
+                        IsEnabled="{Binding HasPicture}" Click="AdjustPicture_Click" />
                 <Button x:Name="RemovePictureButton" Content="{x:Static r:Strings.Settings_RemovePicture}" Padding="10,2" VerticalAlignment="Center"
                         IsEnabled="{Binding HasPicture}" Click="RemovePicture_Click" />
               </WrapPanel>

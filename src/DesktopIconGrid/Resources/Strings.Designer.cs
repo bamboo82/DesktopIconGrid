@@ -4380,6 +4380,78 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Centre.
+        /// </summary>
+        public static string Position_Centre {
+            get {
+                return ResourceManager.GetString("Position_Centre", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Drag the frame, or click, to choose what the bar shows. The arrow keys move it; [rest of string was truncated]";.
+        /// </summary>
+        public static string Position_Hint {
+            get {
+                return ResourceManager.GetString("Position_Hint", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to This PC does not have that picture yet..
+        /// </summary>
+        public static string Position_Missing {
+            get {
+                return ResourceManager.GetString("Position_Missing", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The picture, with a frame over what the bar shows.
+        /// </summary>
+        public static string Position_PictureName {
+            get {
+                return ResourceManager.GetString("Position_PictureName", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Notes,Mail,Music,Photos.
+        /// </summary>
+        public static string Position_Samples {
+            get {
+                return ResourceManager.GetString("Position_Samples", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to How the bar looks:.
+        /// </summary>
+        public static string Position_StripLabel {
+            get {
+                return ResourceManager.GetString("Position_StripLabel", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Picture position.
+        /// </summary>
+        public static string Position_Title {
+            get {
+                return ResourceManager.GetString("Position_Title", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Zoom.
+        /// </summary>
+        public static string Position_Zoom {
+            get {
+                return ResourceManager.GetString("Position_Zoom", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Advanced.
         /// </summary>
         public static string Props_Advanced {
@@ -5519,6 +5591,15 @@ namespace DesktopIconGrid.Resources {
         public static string Separator_RowLineText {
             get {
                 return ResourceManager.GetString("Separator_RowLineText", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Adjust position….
+        /// </summary>
+        public static string Settings_AdjustPicture {
+            get {
+                return ResourceManager.GetString("Settings_AdjustPicture", resourceCulture);
             }
         }
 

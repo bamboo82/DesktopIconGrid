@@ -79,6 +79,14 @@ picture…*, *From a web address…* and *Remove*, and *Picture strength* (20–
   strength. The background transparency fades the colour and the picture together; with Mica or Acrylic it lies over
   the tinted backdrop the same way. Under High Contrast there is no picture. The bar keeps one bitmap for its size,
   made again at most every 100 ms while an edge is dragged.
+- *Adjust position…* (0.15.0): the whole picture fitted into about 560 × 320, dimmed but for a bright frame over what
+  the bar shows (the bar's own proportions, upright for an upright bar), and a small cross at the focus point. Drag the
+  frame, or click anywhere, to move the focus; the arrow keys move it by 1 % (Shift: 5 %). Zoom with the slider
+  (100–400 %), the wheel over the picture, or + and −, by 10; the frame shrinks as the zoom grows. Under it, a strip
+  shows the bar at its proportions with the picture as fitted and a few sample icons with names, at the strength and
+  background transparency Settings has, so reading over it can be judged. *Centre* puts the focus in the middle at
+  zoom 100. It changes Settings' pending picture at OK; the bar changes at Save. The frame is the fit's rectangle
+  (`BackgroundFit`) in the preview's units.
 - Reading over it: while a picture is drawn, the see-through look's edges are on at every opacity, and the light or
   dark text is chosen for the picture's average blended into the colour by its strength. The focus colour's contrast
   warning uses the same blend.

@@ -193,6 +193,30 @@ public partial class SettingsWindow : Window
 
     private void RemovePicture_Click(object sender, RoutedEventArgs e) => ViewModel?.RemovePicture();
 
+    /// <summary>
+    /// 調整位置… (0.15.0 WP6): where the picture lies on the bar, at the bar's real proportions, and how far it is zoomed;
+    /// Settings' pending picture changes at that window's OK, the bar at Save.
+    /// </summary>
+    private void AdjustPicture_Click(object sender, RoutedEventArgs e)
+    {
+        if (ViewModel is not { Picture: { } image } viewModel)
+        {
+            return;
+        }
+
+        if (BackgroundPictures.Load(AppPaths.BackgroundsDirectory, image) is not { } picture)
+        {
+            MessageBox.Show(this, Strings.Position_Missing, Strings.Position_Title, MessageBoxButton.OK, MessageBoxImage.Information);
+            return;
+        }
+
+        var bar = (Owner as MainWindow)?.PictureAreaSize() ?? new Size(600, 80);
+        if (PicturePositionWindow.Adjust(this, picture, bar, image, viewModel.PictureStripLook()) is { } adjusted)
+        {
+            viewModel.Picture = adjusted;
+        }
+    }
+
     private void Save_Click(object sender, RoutedEventArgs e)
     {
         // A size typed into the icon size box and not yet read: Enter presses Save without leaving the box (0.15.0 WP8).

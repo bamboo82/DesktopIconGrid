@@ -9,6 +9,38 @@ The owner relays replies.
 
 ---
 
+## 2026-11-21 (150) — 0.15.0 WP6: the picture's position and zoom, with a preview
+
+- **Runs:** 252 (`a94a797`, WP5) was red on the thumbnail's shared cell, fixed in `1da7c61` (entry 149). Its run had not
+  finished when I pushed this.
+- **The rule** (`BackgroundFit`) came with WP5, since the setting already had a focus and a zoom, together with its tests:
+  a wide bar on a tall picture and the reverse, a bar larger and smaller than the picture, the focus in each corner
+  (never a gap), zoom 100 and 400.
+- **調整位置…** beside 從網址… (off without a picture; with a picture this PC lacks, it says so).
+  - The whole picture fitted into 560 × 320 at most, dimmed (black at 60 %) but for a bright frame (white 2, black 1
+    outside it) over what the bar shows, and a small white cross at the focus point.
+  - The bar's proportions are read from the bar: its icon area as shown and expanded plus the grip's and buttons'
+    columns (`MainWindow.PictureAreaSize`), so an upright bar gives an upright frame.
+  - A click outside the frame puts the focus there; a drag of the frame moves it with the pointer, from wherever it was
+    grabbed. The arrow keys move it by 1 % (Shift: 5 %).
+  - Zoom: a slider of 100–400 % in steps of 10 with its number, the wheel over the picture, and + and −. The frame
+    shrinks as the zoom grows.
+  - The strip under it: the bar at its proportions (as wide as the preview, at most 120 high, at least 28), the theme's
+    colour at Settings' background opacity, the picture as fitted at strength × that opacity, and four sample icons
+    with names (筆記, 郵件, 音樂, 相片) in the theme's text colour with the names' edge. Its picture is an `ImageBrush` whose
+    viewbox is the fit's rectangle, so it follows a drag at once.
+  - 置中 (focus 0.5, 0.5, zoom 100), 確定 and 取消. Enter is OK and Esc is Cancel. Automation names on the picture, the
+    slider and the strip; the picture has the hint as its help text.
+  - It changes Settings' pending picture at OK; the bar changes at Save.
+- **Tests:** the frame is the fit's rectangle times the preview's scale (the inverse the plan asked for), and it shrinks
+  at zoom 200; a click in a corner puts the focus there and the frame stops at the edge; the keys, the zoom limits and
+  置中; OK keeps the strength and changes the focus and zoom; the strip's size for wide, upright and very flat bars; the
+  window places the frame where the focus is, dims around it, shows four samples, and gives the strip's picture strength
+  × opacity.
+- **Not tested:** on screen, a drag and the wheel with a real mouse, and an upright bar's frame on a real upright bar.
+
+This entry claims no run for its own commit.
+
 ## 2026-11-21 (149) — WP5: the picture's thumbnail shares no cell
 
 - **Run 252** (`a94a797`, WP5, entry 148): Core 1338 of 1338; App 550 of 551. The red one is

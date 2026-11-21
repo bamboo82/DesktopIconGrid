@@ -1062,6 +1062,18 @@ public partial class MainWindow : Window
             : new Size(6 * _viewModel.CellWidth, 2 * _viewModel.CellHeight);
     }
 
+    /// <summary>
+    /// The background picture's area in WPF units (0.15.0 WP6): the inside of the bar's frame as it is shown and expanded,
+    /// its icon area and the grip's and buttons' columns, whose proportions 調整位置… shows.
+    /// </summary>
+    internal Size PictureAreaSize()
+    {
+        var area = BarIconArea();
+        return new Size(
+            area.Width + BarLayout.ColumnDefinitions[0].Width.Value + BarLayout.ColumnDefinitions[2].Width.Value + MainGrid.Margin.Left + MainGrid.Margin.Right,
+            area.Height + MainGrid.Margin.Top + MainGrid.Margin.Bottom);
+    }
+
     /// <summary>The Show-at-pointer window, made the first time it is needed; none once the bar is closing.</summary>
     private PointerWindow? EnsurePointerWindow()
     {

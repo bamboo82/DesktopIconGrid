@@ -3062,4 +3062,31 @@ SHA-256：{3}
   <data name="Picture_NoAnswer" xml:space="preserve">
     <value>伺服器沒有回應，或沒有傳回圖片。</value>
   </data>
+  <data name="Settings_AdjustPicture" xml:space="preserve">
+    <value>調整位置…</value>
+  </data>
+  <data name="Position_Title" xml:space="preserve">
+    <value>圖片位置</value>
+  </data>
+  <data name="Position_Hint" xml:space="preserve">
+    <value>拖曳外框或按一下，選擇工具列顯示的部分。方向鍵可移動；滾輪、+ 與 − 可縮放。</value>
+  </data>
+  <data name="Position_PictureName" xml:space="preserve">
+    <value>圖片，外框標示工具列顯示的部分</value>
+  </data>
+  <data name="Position_Zoom" xml:space="preserve">
+    <value>縮放</value>
+  </data>
+  <data name="Position_StripLabel" xml:space="preserve">
+    <value>工具列的樣子：</value>
+  </data>
+  <data name="Position_Centre" xml:space="preserve">
+    <value>置中</value>
+  </data>
+  <data name="Position_Samples" xml:space="preserve">
+    <value>筆記,郵件,音樂,相片</value>
+  </data>
+  <data name="Position_Missing" xml:space="preserve">
+    <value>這台電腦還沒有那張圖片。</value>
+  </data>
 </root>
