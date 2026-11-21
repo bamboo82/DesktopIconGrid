@@ -9,6 +9,21 @@ The owner relays replies.
 
 ---
 
+## 2026-11-21 (129) — Run 231 was red: the colour hint ran past the 外觀 page in English
+
+Run 231 (`4e4d223`, WP2, entry 128) failed four App tests of 495, all new ones of mine, all in English: the 外觀 tab at
+90, 100 and 150 %, and Settings with the bar at 150 % and the dialogs at 100 %. Core 1242 passed.
+
+- **What:** "Text and highlight colours adapt to the colour." ended at 513.8 units on a page 504 wide. That line sits
+  beside the colour box in a horizontal `StackPanel`, which never lets it wrap. Before WP2 the page was not tall enough
+  to scroll and was about 17 units wider; with WP2's sixteen rows it scrolls, the scroll bar takes that width, and the
+  English line no longer fits. So 外觀 does scroll at 100 %, as entry 128 expected, and that is now measured.
+- **The fix:** the box is docked at the left of a `DockPanel`, and the two lines that take turns beside it (the hint and
+  "Use #RRGGBB") are in the width left and wrap there. Nothing else on the page sits in a horizontal panel with text.
+- **Tests:** unchanged; they found it.
+
+This entry claims no run for its own commit.
+
 ## 2026-11-21 (128) — 0.14.0 WP2: dialogs and menus get their own font and text size
 
 Run 230 (`7a0edca`, WP7, entry 127) is green: Core 1209 and App 481 tests. Review 38 came while I was on this: T2 is
