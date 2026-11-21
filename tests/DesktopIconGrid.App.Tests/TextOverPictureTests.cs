@@ -16,11 +16,20 @@ public sealed class TextOverPictureTests(WpfThread wpf)
     [Fact]
     public void The_text_takes_the_whole_tile_or_a_box_of_55_percent_in_its_corner()
     {
-        Assert.Equal(new Rect(0, 0, 48, 48), TextOverPicture.BoxFor(null, 48));
-        Assert.Equal(new Rect(0, 0, 26.4, 26.4), TextOverPicture.BoxFor(TextIcon.PlaceTopLeft, 48));
-        Assert.Equal(new Rect(48 - 26.4, 0, 26.4, 26.4), TextOverPicture.BoxFor(TextIcon.PlaceTopRight, 48));
-        Assert.Equal(new Rect(0, 48 - 26.4, 26.4, 26.4), TextOverPicture.BoxFor(TextIcon.PlaceBottomLeft, 48));
-        Assert.Equal(new Rect(48 - 26.4, 48 - 26.4, 26.4, 26.4), TextOverPicture.BoxFor(TextIcon.PlaceBottomRight, 48));
+        Near(new Rect(0, 0, 48, 48), TextOverPicture.BoxFor(null, 48));
+        Near(new Rect(0, 0, 26.4, 26.4), TextOverPicture.BoxFor(TextIcon.PlaceTopLeft, 48));
+        Near(new Rect(48 - 26.4, 0, 26.4, 26.4), TextOverPicture.BoxFor(TextIcon.PlaceTopRight, 48));
+        Near(new Rect(0, 48 - 26.4, 26.4, 26.4), TextOverPicture.BoxFor(TextIcon.PlaceBottomLeft, 48));
+        Near(new Rect(48 - 26.4, 48 - 26.4, 26.4, 26.4), TextOverPicture.BoxFor(TextIcon.PlaceBottomRight, 48));
+    }
+
+    /// <summary>The same box within a thousandth of a unit: 48 × 0.55 is 26.400000000000002 in doubles.</summary>
+    private static void Near(Rect expected, Rect actual)
+    {
+        Assert.Equal(expected.X, actual.X, 3);
+        Assert.Equal(expected.Y, actual.Y, 3);
+        Assert.Equal(expected.Width, actual.Width, 3);
+        Assert.Equal(expected.Height, actual.Height, 3);
     }
 
     [Fact]

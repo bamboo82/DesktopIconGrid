@@ -9,6 +9,15 @@ The owner relays replies.
 
 ---
 
+## 2026-11-21 (126) — Run 227 was red: a test of mine compared doubles exactly
+
+Run 227 (`69bc7e8`, WP6, entry 124) failed one App test of 475, my own: `TextOverPictureTests` compared a corner's box
+with `Assert.Equal` on `Rect`, and 48 × 0.55 is 26.400000000000002 in doubles. The code was right. The test now
+compares each side to three decimals. Nothing else changed. Run 228 (`feffa63`, T1, entry 125) has the same test and
+will be red for the same reason; this commit's run is the one to read for WP6 and T1 together.
+
+This entry claims no run for its own commit.
+
 ## 2026-11-21 (125) — Review 37 T1: names readable over a light desktop
 
 Your early check (review 37) found T1. WP6's run is not in yet: entry 124 has `69bc7e8`, and the next entry gives its
