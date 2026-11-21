@@ -9,6 +9,18 @@ The owner relays replies.
 
 ---
 
+## 2026-11-21 (133) — Run 235 was red: my T3 test looked for ← in the wrong tree
+
+Run 235 (`d9da59e`, T3, entry 132) failed one App test of 498, the new one of mine:
+`Lines_take_the_text_colour_and_the_edge_while_see_through_and_the_bars_marks_the_edge` found no "←". Core 1242 passed.
+
+- **What:** the checks of the three lines had passed before it stopped. ← is in the pointer window's group header,
+  which is collapsed until a group opens, so its button's template has never been applied and the glyph is not in the
+  visual tree the test walked. It is in the logical tree, where its style, and so its edge, resolve.
+- **The fix:** the test finds ← and what Enter opens in the logical tree. The code is unchanged.
+
+This entry claims no run for its own commit.
+
 ## 2026-11-21 (132) — Review 39 T3: lines and the bar's own marks while see-through
 
 Run 234 (`036c419`, entry 131) is green: Core 1242 and App 497 tests. Review 39 read: the release check passes but for

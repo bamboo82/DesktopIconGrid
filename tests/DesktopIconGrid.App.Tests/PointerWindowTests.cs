@@ -375,8 +375,9 @@ public sealed class PointerWindowTests(WpfThread wpf) : IDisposable
             var theme = window.FindResource(DesktopIconGrid.Services.ThemeManager.LineStrokeKey);
             Assert.All(lines, line => Assert.Same(theme, line.Stroke));
             Assert.All(lines, line => Assert.Null(line.Effect));
-            var back = Descendants(window).OfType<System.Windows.Controls.TextBlock>().Single(block => block.Text == "←");
-            var target = Descendants(window).OfType<System.Windows.Controls.TextBlock>().Single(block => block.Style == window.FindResource("SearchTargetStyle"));
+            // ← is in the group's header, collapsed, so its button has no template yet: it is in the logical tree only.
+            var back = LogicalDescendants(window).OfType<System.Windows.Controls.TextBlock>().Single(block => block.Text == "←");
+            var target = LogicalDescendants(window).OfType<System.Windows.Controls.TextBlock>().Single(block => block.Style == window.FindResource("SearchTargetStyle"));
             Assert.Null(back.Effect);
             Assert.Null(target.Effect);
 
@@ -458,6 +459,21 @@ public sealed class PointerWindowTests(WpfThread wpf) : IDisposable
             DesktopIconGrid.Core.Launching.LaunchResult.Started;
 
         public bool ShowProperties(SpecialIconItem item, bool isNew) => false;
+    }
+
+    private static IEnumerable<object> LogicalDescendants(DependencyObject root)
+    {
+        foreach (var child in LogicalTreeHelper.GetChildren(root))
+        {
+            yield return child;
+            if (child is DependencyObject node)
+            {
+                foreach (var below in LogicalDescendants(node))
+                {
+                    yield return below;
+                }
+            }
+        }
     }
 
     private static IEnumerable<DependencyObject> Descendants(DependencyObject root)
