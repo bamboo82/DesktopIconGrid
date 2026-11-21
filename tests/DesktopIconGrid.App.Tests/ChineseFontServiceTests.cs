@@ -11,8 +11,10 @@ namespace DesktopIconGrid.App.Tests;
 
 /// <summary>
 /// The parts of the font install that nothing tested in 0.12.0 (review 28): the service as the app wires it, the time
-/// limit, the registry and the announcement to the running programs.
+/// limit, the registry and the announcement to the running programs. In the WPF collection: the announcement adds a font
+/// for the whole session, and WPF draws with what it adds (run 245).
 /// </summary>
+[Collection(WpfWindowsCollection.Name)]
 public sealed class ChineseFontServiceTests : IDisposable
 {
     private readonly string _root = Directory.CreateTempSubdirectory("dig-font-service-").FullName;
@@ -189,9 +191,11 @@ public sealed class ChineseFontServiceTests : IDisposable
             return;
         }
 
-        // A copy of one of Windows' own fonts: GDI refuses the two-glyph test font, which WPF reads (run 197).
+        // A copy of one of Windows' own fonts: GDI refuses the two-glyph test font, which WPF reads (run 197). Not one the
+        // app or its tests draw with: WPF takes the copy as one more face of that family, and once it was Arial, a test
+        // drawing Arial text after the copy was deleted failed with FileNotFoundException (run 245).
         var windows = Environment.GetFolderPath(Environment.SpecialFolder.Fonts);
-        var real = new[] { "arial.ttf", "segoeui.ttf", "consola.ttf" }.Select(name => Path.Combine(windows, name)).First(File.Exists);
+        var real = new[] { "georgia.ttf", "trebuc.ttf", "verdana.ttf", "pala.ttf" }.Select(name => Path.Combine(windows, name)).First(File.Exists);
         var font = Path.Combine(Folder("announce"), "DigAnnounceTest.ttf");
         File.Copy(real, font);
         var watch = System.Diagnostics.Stopwatch.StartNew();
@@ -202,7 +206,9 @@ public sealed class ChineseFontServiceTests : IDisposable
         }
         finally
         {
+            // Taken away again, and said so, before the folder with the copy is deleted.
             NativeMethods.RemoveFontResourceW(font);
+            NativeMethods.SendMessageTimeoutW(NativeMethods.HWND_BROADCAST, NativeMethods.WM_FONTCHANGE, IntPtr.Zero, IntPtr.Zero, NativeMethods.SMTO_ABORTIFHUNG, 1000, out _);
         }
     }
 }

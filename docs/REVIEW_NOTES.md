@@ -9,6 +9,23 @@ The owner relays replies.
 
 ---
 
+## 2026-11-21 (142) — Tests: the announced font is not one the others draw with
+
+- **Run 245** (`62990bb`, WP1, entry 141): Core 1249 of 1249; App 506 of 507. The red one is
+  `TextSizeTests.On_a_window_made_as_the_bar_…`, which neither WP1 nor anything since 0.14.0 touched: a
+  `FileNotFoundException` from WPF while it measured Arial text. WP1's new tests all pass.
+- **The cause:** `ChineseFontServiceTests` (since run 197) copies one of Windows' own fonts into its temp folder, adds it
+  for the session and announces it, then takes it away and deletes the folder. The first font on its list that exists
+  is `arial.ttf`, so WPF takes the copy as one more Arial face. That class was not in the WPF collection, so it ran
+  beside the window tests. Once the copy was deleted, a WPF test drawing Arial could land on the missing file. The new
+  test classes shifted the order and timing enough for it to happen.
+- **The fix, tests only:** the copy is Georgia, Trebuchet MS, Verdana or Palatino (the first one Windows has), none of
+  which the app or its tests draw with; the class runs in the WPF collection, so no window test runs while the copy is
+  there; and the removal is announced too, before the folder goes. The test checks what it checked before.
+- **Not tested:** whether WPF drops the copy on that second announcement; the other two changes hold without it.
+
+This entry claims no run for its own commit.
+
 ## 2026-11-21 (141) — 0.15.0 WP1: 鎖定格線 (Lock grid)
 
 - **Run 244** (`41ff5ae`, entry 140): green, Core 1248 of 1248, App 502 of 502. The group test passes with the window's
