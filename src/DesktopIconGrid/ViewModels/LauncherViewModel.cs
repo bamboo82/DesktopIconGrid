@@ -10,6 +10,7 @@ using DesktopIconGrid.Core.Launching;
 using DesktopIconGrid.Core.Models;
 using DesktopIconGrid.Core.SpecialItems;
 using DesktopIconGrid.Core.Storage;
+using DesktopIconGrid.Core.Sync;
 using DesktopIconGrid.Infrastructure;
 using DesktopIconGrid.Resources;
 using DesktopIconGrid.Services;
@@ -1750,6 +1751,11 @@ public sealed partial class LauncherViewModel : ObservableObject, ISyncHost
 
         ApplyLocalSettings(edited.Local); // first: ApplySettings' SettingsChanged registers the hotkeys from it
         ApplySettings(edited.Settings);
+        if (edited.ThisPc is { } thisPc)
+        {
+            ApplyThisPc?.Invoke(thisPc); // this PC's name and receiving, kept in sync.json (0.14.0 WP5, A3)
+        }
+
         if (edited.Move is { } move)
         {
             MoveDataAsync(move).ContinueWith(
@@ -1759,6 +1765,39 @@ public sealed partial class LauncherViewModel : ObservableObject, ISyncHost
                 TaskScheduler.Default);
         }
     }
+
+    /// <summary>Saves what Settings' Send to PC tab changed in <c>sync.json</c> (0.14.0 WP5, A3); set by the host.</summary>
+    public Action<ThisPcChoice>? ApplyThisPc { get; set; }
+
+    /// <summary>
+    /// The bar's Send to PC icons follow a PC renamed on its own Settings tab (0.14.0 A3): the name kept with each icon, and
+    /// its caption while it is the one made from that name. A layout change like any other, saved and synced once; every
+    /// PC that sees the same name writes the same icon (<see cref="SendToNames.Follow"/>).
+    /// </summary>
+    public void FollowDeviceNames(IReadOnlyList<InboxDevice> listed)
+    {
+        ArgumentNullException.ThrowIfNull(listed);
+        var changed = Model.SpecialIconsOf(SpecialIconKinds.SendToDevice).Where(icon => SendToNames.Follow(icon, listed, Strings.SendTo_NameFor)).ToList();
+        if (changed.Count == 0)
+        {
+            return;
+        }
+
+        foreach (var icon in changed)
+        {
+            if (_viewModels.TryGetValue(icon.Id, out var viewModel))
+            {
+                viewModel.RefreshFromModel();
+            }
+        }
+
+        AppLog.Default.Info("Inbox", $"{changed.Count} Send to PC icon(s) follow a PC renamed on its own Settings tab");
+        Save();
+    }
+
+    /// <summary>Whether a Send to PC icon of the bar has a PC to send to, whose name it may follow.</summary>
+    public bool HasSendTargets() =>
+        Model.SpecialIconsOf(SpecialIconKinds.SendToDevice).Any(icon => icon.GetSetting(SendToNames.DeviceIdKey) is not null);
 
     // ----- this PC's own settings (review 27 B4) -------------------------------------------------------
 

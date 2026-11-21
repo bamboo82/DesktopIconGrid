@@ -22,13 +22,17 @@ public interface IReceiving
 
     /// <summary>A Send to PC icon's mark changed: says this PC's name when that turned receiving on, takes it back when off.</summary>
     void Changed();
+
+    /// <summary>The receive folder as the dialog names it (0.14.0 WP5): Downloads unless another was chosen in Settings.</summary>
+    string ReceiveFolderName => Strings.Inbox_Downloads;
 }
 
 /// <summary>
 /// Receives files other PCs sent to this one through the sync folder (<see cref="FolderInbox"/>) or Google Drive
 /// (<see cref="DriveInbox"/>): once a minute while the bar runs and this PC receives, what waits is moved to the
-/// Downloads folder, marked as downloaded from elsewhere (so SmartScreen and Office's Protected View treat it so), and
-/// announced. Nothing is opened.
+/// receive folder (Downloads unless another was chosen in Settings, 0.14.0 WP5), marked as downloaded from elsewhere
+/// (so SmartScreen and Office's Protected View treat it so), and announced. Nothing is opened. It also lets the bar's
+/// Send to PC icons follow the PCs they send to when those are renamed (0.14.0 A3).
 /// </summary>
 public sealed class InboxService : IDisposable, IReceiving
 {
@@ -67,6 +71,59 @@ public sealed class InboxService : IDisposable, IReceiving
     /// <summary>Whether the bar holds a Send to PC icon; set once the bar exists.</summary>
     public Func<bool> HasSendIcon { get; set; } = () => false;
 
+    /// <summary>Whether a Send to PC icon of the bar has a PC to send to, whose name it may need to follow; set once the bar exists.</summary>
+    public Func<bool> HasSendTargets { get; set; } = () => false;
+
+    /// <summary>Gives the bar the other PCs as they are listed now, so its Send to PC icons follow a renamed one (0.14.0 A3).</summary>
+    public Action<IReadOnlyList<InboxDevice>>? FollowNames { get; set; }
+
+    /// <summary>The bar's data folder, which the receive folder must keep out of; tests give their own.</summary>
+    internal Func<string> DataDirectory { get; set; } = () => DataFolders.Current.Directory;
+
+    /// <summary>How often the other PCs are listed to follow their names: a look every minute would list Drive as often.</summary>
+    internal static TimeSpan FollowEvery { get; set; } = TimeSpan.FromMinutes(5);
+
+    private DateTime _followedAt = DateTime.MinValue;
+    private bool _following;
+
+    /// <summary>
+    /// The folder chosen in Settings as it is used (0.14.0 WP5), or Downloads when none is: what the menu's tool tip,
+    /// Settings and the Send to PC dialog name. Nothing is checked or made here.
+    /// </summary>
+    public string ChosenFolder => ReceiveFolder.Expand(_sync.Settings.ReceiveFolder) ?? DownloadsPath();
+
+    /// <summary>
+    /// Where the files of a look go: the folder chosen in Settings while it keeps the rules (it is made when missing), else
+    /// Downloads; with the chosen folder and why, when it could not be used (a stick pulled out). Checked at each look that
+    /// has files, so a folder that comes back is used again.
+    /// </summary>
+    internal (string Folder, string? Chosen, ReceiveFolderProblem Problem) ReceiveTarget()
+    {
+        var downloads = DownloadsPath();
+        if (ReceiveFolder.Expand(_sync.Settings.ReceiveFolder) is not { } chosen)
+        {
+            return (downloads, null, ReceiveFolderProblem.None);
+        }
+
+        var problem = ReceiveFolder.Check(chosen, DataDirectory(), _sync.UsesFolder ? _sync.Settings.SyncFolder : null);
+        return problem == ReceiveFolderProblem.None ? (chosen, chosen, problem) : (downloads, chosen, problem);
+    }
+
+    /// <summary>
+    /// A folder as the notices name it: the Downloads folder by the word for it in the UI's language, as before 0.14.0;
+    /// another by its last name, a drive by its root. The full name is in the menu's tool tip and Settings.
+    /// </summary>
+    internal static string FolderShownName(string? folder)
+    {
+        if (string.IsNullOrWhiteSpace(folder) || Core.Storage.DataLocation.SameFolder(folder, DownloadsPath()))
+        {
+            return Strings.Inbox_Downloads;
+        }
+
+        var name = Path.GetFileName(folder.TrimEnd('\\', '/'));
+        return string.IsNullOrEmpty(name) ? folder : name;
+    }
+
     /// <summary>Whether a sync folder is in use, so that receiving can be turned on at all.</summary>
     public bool CanReceive => (_sync.UsesFolder || UsesDrive) && FolderInbox.IsDeviceId(_sync.Settings.DeviceId);
 
@@ -87,6 +144,45 @@ public sealed class InboxService : IDisposable, IReceiving
                 Look(); // says this PC's name, or takes it back when no marked icon keeps receiving on
             }
         }
+    }
+
+    /// <summary>
+    /// Keeps what Settings' Send to PC tab changed (0.14.0 WP5, A3) in <c>sync.json</c>: this PC's name (empty is Windows'
+    /// name for it), whether it receives, and the receive folder; then a look says the name again where this PC is listed,
+    /// or takes it back.
+    /// </summary>
+    public void ApplyThisPc(ViewModels.ThisPcChoice choice)
+    {
+        ArgumentNullException.ThrowIfNull(choice);
+        var settings = _sync.Settings;
+        var name = string.IsNullOrWhiteSpace(choice.DeviceName) ? SyncSettings.DefaultDeviceName() : choice.DeviceName.Trim();
+        if (string.Equals(name, settings.DeviceName, StringComparison.Ordinal)
+            && string.Equals(choice.ReceiveFolder, settings.ReceiveFolder, StringComparison.Ordinal)
+            && choice.ReceiveFiles == settings.ReceiveFiles)
+        {
+            return;
+        }
+
+        if (!string.Equals(name, settings.DeviceName, StringComparison.Ordinal))
+        {
+            AppLog.Default.Info("Inbox", $"This PC is called \"{name}\" now (it was \"{settings.DeviceName}\")");
+        }
+
+        if (!string.Equals(choice.ReceiveFolder, settings.ReceiveFolder, StringComparison.Ordinal))
+        {
+            AppLog.Default.Info("Inbox", choice.ReceiveFolder is null ? "Files from the other PCs go to Downloads again" : $"Files from the other PCs go to {choice.ReceiveFolder}");
+        }
+
+        if (choice.ReceiveFiles != settings.ReceiveFiles)
+        {
+            AppLog.Default.Info("Inbox", choice.ReceiveFiles ? "Receiving files from other PCs turned on" : "Receiving files from other PCs turned off");
+        }
+
+        settings.DeviceName = name;
+        settings.ReceiveFolder = choice.ReceiveFolder;
+        settings.ReceiveFiles = choice.ReceiveFiles;
+        _sync.SaveSettings();
+        Look();
     }
 
     /// <summary>
@@ -137,6 +233,8 @@ public sealed class InboxService : IDisposable, IReceiving
 
     void IReceiving.Opened() => _backOff.Reset();
 
+    string IReceiving.ReceiveFolderName => FolderShownName(ChosenFolder);
+
     /// <summary>After the dialog's caller has put a new icon on the bar, so that it counts.</summary>
     void IReceiving.Changed() => _dispatcher.InvokeAsync(Look, DispatcherPriority.Background);
 
@@ -161,6 +259,7 @@ public sealed class InboxService : IDisposable, IReceiving
         var receiving = IsReceiving;
         if (!receiving && _announced == false)
         {
+            FollowNamesSometimes(inbox); // a PC that only sends follows the names of the PCs it sends to as well
             return; // off unless the user asked for it: no folder is made in the sync folder and nothing is taken
         }
 
@@ -180,18 +279,19 @@ public sealed class InboxService : IDisposable, IReceiving
                 return;
             }
 
-            var (received, waiting, announced, failure) = await Task.Run(() => TakeAsync(inbox));
-            _announced = announced || _announced == true;
-            if (failure is null)
+            var take = await Task.Run(() => TakeAsync(inbox, ReceiveTarget));
+            _announced = take.Announced || _announced == true;
+            if (take.Failure is null)
             {
                 _backOff.Reset();
+                FollowNamesSometimes(inbox);
             }
             else
             {
-                Failed(failure, started);
+                Failed(take.Failure, started);
             }
 
-            foreach (var notice in Notices(received, waiting))
+            foreach (var notice in Notices(take.Received, take.Waiting, take.Folder, take.FellBackFrom))
             {
                 _show(notice);
             }
@@ -217,12 +317,17 @@ public sealed class InboxService : IDisposable, IReceiving
     /// space. Twenty files in one look were twenty balloons, each replacing the last (review of WP1, F1). The warning
     /// comes last, so it is the balloon that stays (release check U4).
     /// </summary>
+    /// <param name="folder">Where the look saved its files, which the warning about disk space names; Downloads when not given.</param>
+    /// <param name="fellBackFrom">The folder chosen in Settings when it could not be used and the files went to Downloads: one more warning, last, names both.</param>
     internal static IReadOnlyList<Notice> Notices(
         IEnumerable<(string Path, string Sender, bool Marked)> received,
-        IEnumerable<(string Name, string Sender, long Size, long Free)> waiting)
+        IEnumerable<(string Name, string Sender, long Size, long Free)> waiting,
+        string? folder = null,
+        string? fellBackFrom = null)
     {
         var notices = new List<Notice>();
-        foreach (var fromOne in received.GroupBy(file => file.Sender, StringComparer.Ordinal))
+        var saved = received.ToList();
+        foreach (var fromOne in saved.GroupBy(file => file.Sender, StringComparer.Ordinal))
         {
             var files = fromOne.ToList();
             notices.Add(files.Count == 1 ? ReceivedNotice(files[0].Path, files[0].Sender, files[0].Marked) : ReceivedNotice(files));
@@ -231,12 +336,32 @@ public sealed class InboxService : IDisposable, IReceiving
         foreach (var fromOne in waiting.GroupBy(file => file.Sender, StringComparer.Ordinal))
         {
             var first = fromOne.First();
-            var notice = WaitingNotice(first.Name, first.Sender, first.Size, first.Free);
+            var notice = WaitingNotice(first.Name, first.Sender, first.Size, first.Free, folder);
             var more = fromOne.Count() - 1;
             notices.Add(more == 0 ? notice : notice with { Message = $"{notice.Message}\n{string.Format(Strings.Inbox_AndMore, more)}" });
         }
 
+        if (fellBackFrom is not null && saved.Count > 0)
+        {
+            notices.Add(FellBackNotice(fellBackFrom, [.. saved.Select(file => file.Path)]));
+        }
+
         return notices;
+    }
+
+    /// <summary>
+    /// The folder chosen in Settings could not be used, so the look's files went to Downloads (0.14.0 WP5): a warning that
+    /// names the folder and the first file (and how many more); a click shows that file. The setting is kept.
+    /// </summary>
+    internal static Notice FellBackNotice(string chosen, IReadOnlyList<string> savedPaths)
+    {
+        var message = string.Format(Strings.Inbox_FolderFellBack, chosen, Path.GetFileName(savedPaths[0]));
+        return new Notice(
+            Strings.Inbox_FolderFellBackTitle,
+            savedPaths.Count == 1 ? message : $"{message}\n{string.Format(Strings.Inbox_AndMore, savedPaths.Count - 1)}",
+            NoticeKind.Warning,
+            NoticeTarget.Folder,
+            savedPaths[0]);
     }
 
     /// <summary>
@@ -263,7 +388,7 @@ public sealed class InboxService : IDisposable, IReceiving
     /// <summary>A file received: information, and a click shows it in its folder, under the name it was saved as (WP1 N3).</summary>
     internal static Notice ReceivedNotice(string savedPath, string sender, bool marked)
     {
-        var message = string.Format(Strings.Inbox_Received, Path.GetFileName(savedPath));
+        var message = string.Format(Strings.Inbox_Received, Path.GetFileName(savedPath), FolderShownName(Path.GetDirectoryName(savedPath)));
         return new Notice(
             string.Format(Strings.Inbox_ReceivedTitle, sender),
             marked ? message : $"{message}\n{Strings.Inbox_NotMarked}",
@@ -273,14 +398,15 @@ public sealed class InboxService : IDisposable, IReceiving
     }
 
     /// <summary>A file that waits for disk space: a problem of receiving, so a click opens the Sync window (WP1 N3).</summary>
-    internal static Notice WaitingNotice(string name, string sender, long size, long free) => new(
+    internal static Notice WaitingNotice(string name, string sender, long size, long free, string? folder = null) => new(
         string.Format(Strings.Inbox_WaitingTitle, sender),
         string.Format(
             Strings.Inbox_WaitingForSpace,
             name,
             SpecialIcons.SystemMonitor.FormatBytes(size),
             SpecialIcons.SystemMonitor.FormatBytes(free),
-            SpecialIcons.SystemMonitor.FormatBytes(FolderInbox.FreeSpaceFloor)),
+            SpecialIcons.SystemMonitor.FormatBytes(FolderInbox.FreeSpaceFloor),
+            FolderShownName(folder)),
         NoticeKind.Warning,
         NoticeTarget.Sync);
 
@@ -298,19 +424,43 @@ public sealed class InboxService : IDisposable, IReceiving
         }
     }
 
-    private static async Task<(List<(string Path, string Sender, bool Marked)> Received, List<(string Name, string Sender, long Size, long Free)> Waiting, bool Announced, Exception? Failure)> TakeAsync(IInbox inbox)
+    /// <summary>What one look took, what waits for room, where it saved them, and why it stopped, when it did.</summary>
+    private sealed record TakeResult(
+        List<(string Path, string Sender, bool Marked)> Received,
+        List<(string Name, string Sender, long Size, long Free)> Waiting,
+        bool Announced,
+        Exception? Failure,
+        string? Folder = null,
+        string? FellBackFrom = null);
+
+    /// <param name="target">Where the files go (<see cref="ReceiveTarget"/>), asked only when files wait.</param>
+    private static async Task<TakeResult> TakeAsync(IInbox inbox, Func<(string Folder, string? Chosen, ReceiveFolderProblem Problem)> target)
     {
         var received = new List<(string, string, bool)>();
         var waiting = new List<(string, string, long, long)>();
         var announced = false;
+        string? folder = null;
+        string? fellBackFrom = null;
         try
         {
             await inbox.AnnounceAsync(CancellationToken.None).ConfigureAwait(false);
             announced = true;
-            var downloads = DownloadsPath();
-            foreach (var file in await inbox.PendingAsync(WasDelivered, CancellationToken.None).ConfigureAwait(false))
+            var pending = await inbox.PendingAsync(WasDelivered, CancellationToken.None).ConfigureAwait(false);
+            if (pending.Count > 0)
             {
-                if (FreeBytes(downloads) is { } free && !FolderInbox.HasRoom(free, file.Size))
+                var (into, chosen, problem) = target();
+                folder = into;
+                if (problem != ReceiveFolderProblem.None)
+                {
+                    fellBackFrom = chosen;
+                    AppLog.Default.Warning("Inbox", $"The receive folder \"{chosen}\" cannot be used ({problem}): what arrives now goes to Downloads, {into}; the setting is kept");
+                }
+            }
+
+            foreach (var file in pending)
+            {
+                var into = folder!;
+                if (FreeBytes(into) is { } free && !FolderInbox.HasRoom(free, file.Size))
                 {
                     // It stays in the inbox and is taken at a later look, when there is room. Said once per file, with
                     // the numbers the user needs; a smaller file after it may still fit.
@@ -322,7 +472,7 @@ public sealed class InboxService : IDisposable, IReceiving
 
                     if (firstTime)
                     {
-                        AppLog.Default.Warning("Inbox", $"\"{file.Name}\" ({file.Size} bytes) from {file.SenderName} waits: {free} bytes free on the Downloads drive");
+                        AppLog.Default.Warning("Inbox", $"\"{file.Name}\" ({file.Size} bytes) from {file.SenderName} waits: {free} bytes free on the drive of {into}");
                         waiting.Add((file.Name, file.SenderName, file.Size, free));
                     }
 
@@ -331,7 +481,7 @@ public sealed class InboxService : IDisposable, IReceiving
 
                 try
                 {
-                    var (path, marked, cleared) = await inbox.ReceiveAsync(file, downloads, MarkAsDownloaded, CancellationToken.None).ConfigureAwait(false);
+                    var (path, marked, cleared) = await inbox.ReceiveAsync(file, into, MarkAsDownloaded, CancellationToken.None).ConfigureAwait(false);
                     if (!cleared)
                     {
                         lock (Delivered)
@@ -340,7 +490,7 @@ public sealed class InboxService : IDisposable, IReceiving
                         }
                     }
 
-                    AppLog.Default.Info("Inbox", $"Received \"{Path.GetFileName(path)}\" ({file.Size} bytes) from {file.SenderName}{(marked ? string.Empty : ", not marked as downloaded")}");
+                    AppLog.Default.Info("Inbox", $"Received \"{Path.GetFileName(path)}\" ({file.Size} bytes) from {file.SenderName} into {into}{(marked ? string.Empty : ", not marked as downloaded")}");
                     received.Add((path, file.SenderName, marked)); // where it was saved: the notice's click shows it
                 }
                 catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or DriveException or System.Net.Http.HttpRequestException)
@@ -353,10 +503,39 @@ public sealed class InboxService : IDisposable, IReceiving
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or DriveException or System.Net.Http.HttpRequestException or InvalidOperationException)
         {
             // The folder is not there, Drive did not answer, or the sign-in has lapsed: tried again at a later look.
-            return (received, waiting, announced, ex);
+            return new TakeResult(received, waiting, announced, ex, folder, fellBackFrom);
         }
 
-        return (received, waiting, announced, null);
+        return new TakeResult(received, waiting, announced, null, folder, fellBackFrom);
+    }
+
+    /// <summary>
+    /// Lists the other PCs, at most every <see cref="FollowEvery"/>, and gives the list to the bar so its Send to PC icons
+    /// follow a PC renamed on its own Settings tab (0.14.0 A3). Only while an icon has a PC to send to; a list that
+    /// cannot be made changes nothing.
+    /// </summary>
+    private async void FollowNamesSometimes(IInbox inbox)
+    {
+        if (_following || FollowNames is not { } follow || !HasSendTargets() || DateTime.UtcNow - _followedAt < FollowEvery)
+        {
+            return;
+        }
+
+        _following = true;
+        _followedAt = DateTime.UtcNow;
+        try
+        {
+            var listed = await Task.Run(() => inbox.DevicesAsync(CancellationToken.None));
+            await _dispatcher.InvokeAsync(() => follow(listed));
+        }
+        catch (Exception ex) when (ex is not OutOfMemoryException)
+        {
+            AppLog.Default.Debug("Inbox", $"The other PCs could not be listed to follow their names: {ex.Message}"); // tried at a later look
+        }
+        finally
+        {
+            _following = false;
+        }
     }
 
     private static long? FreeBytes(string folder)

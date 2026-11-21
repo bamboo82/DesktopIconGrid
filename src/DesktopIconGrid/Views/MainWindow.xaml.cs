@@ -1164,7 +1164,7 @@ public partial class MainWindow : Window
         SendToMenuItem.IsChecked = SendToEntry.Exists;
         ReceiveFilesMenuItem.IsChecked = Inbox?.ReceiveSetting == true;
         ReceiveFilesMenuItem.IsEnabled = Inbox?.CanReceive == true;
-        ReceiveFilesMenuItem.ToolTip = Inbox?.CanReceive == true ? Strings.Menu_ReceiveFilesToolTip : Strings.SendTo_NeedsFolder;
+        ReceiveFilesMenuItem.ToolTip = Inbox is { CanReceive: true } inbox ? string.Format(Strings.Menu_ReceiveFilesToolTip, inbox.ChosenFolder) : Strings.SendTo_NeedsFolder;
         ToolTipService.SetShowOnDisabled(ReceiveFilesMenuItem, true);
         PopulateWorkspaceEntries(menu);
         menu.PlacementTarget = button;

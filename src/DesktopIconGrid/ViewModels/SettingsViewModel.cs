@@ -446,7 +446,7 @@ public sealed partial class SettingsViewModel : ObservableObject
     public string? WindowKeyUsing(string hotkey) =>
         string.IsNullOrWhiteSpace(hotkey) ? null : WindowKeyRows.FirstOrDefault(row => HotkeyGesture.SameCombination(row.Text, hotkey))?.Label;
 
-    public bool CanSave => !HasAppearanceProblem && !HasKeysProblem && !HasVoiceProblem && !HasPortableProblem;
+    public bool CanSave => !HasAppearanceProblem && !HasKeysProblem && !HasVoiceProblem && !HasSendToProblem && !HasPortableProblem;
 
     // ----- tabs (review 27 B1) -----------------------------------------------------------------------
 
@@ -477,6 +477,7 @@ public sealed partial class SettingsViewModel : ObservableObject
         HasAppearanceProblem ? string.Format(Strings.Settings_FixOnTab, Strings.Settings_TabAppearance)
         : HasKeysProblem ? string.Format(Strings.Settings_FixOnTab, Strings.Settings_TabKeys)
         : HasVoiceProblem ? string.Format(Strings.Settings_FixOnTab, Strings.Settings_TabVoice)
+        : HasSendToProblem ? string.Format(Strings.Settings_FixOnTab, Strings.Settings_TabSendTo)
         : HasPortableProblem ? string.Format(Strings.Settings_FixOnTab, Strings.Settings_TabPortable)
         : string.Empty;
 

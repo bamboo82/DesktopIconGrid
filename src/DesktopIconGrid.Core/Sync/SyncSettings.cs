@@ -74,6 +74,13 @@ public sealed class SyncSettings
     public bool ReceiveFiles { get; set; }
 
     /// <summary>
+    /// Where files from the other PCs are saved (0.14.0 WP5): a folder as the user gave it (environment variables, and in
+    /// a portable copy <c>%APPDRIVE%</c>, kept unexpanded), or <see langword="null"/> for Windows' Downloads folder, as
+    /// before. This PC's alone: never synced, imported or sent. See <see cref="ReceiveFolder"/>.
+    /// </summary>
+    public string? ReceiveFolder { get; set; }
+
+    /// <summary>
     /// These settings stand in for a <c>sync.json</c> that is there but could not be read (another program held it).
     /// They are kept in memory only: <see cref="SyncSettingsStore.Save"/> never writes them over the file, so the link,
     /// the folder, the Google client and the device id in it are all there at the next start.
@@ -131,6 +138,7 @@ public sealed class SyncSettings
         ClientSecretsByPc = ClientSecretsByPc?.Where(pair => !string.IsNullOrWhiteSpace(pair.Key) && !string.IsNullOrWhiteSpace(pair.Value))
             .ToDictionary(pair => pair.Key.Trim(), pair => pair.Value.Trim(), StringComparer.Ordinal) is { Count: > 0 } secrets ? secrets : null;
         SyncFolder = string.IsNullOrWhiteSpace(SyncFolder) ? null : SyncFolder.Trim();
+        ReceiveFolder = string.IsNullOrWhiteSpace(ReceiveFolder) ? null : ReceiveFolder.Trim();
         MachineFingerprint = string.IsNullOrWhiteSpace(MachineFingerprint) ? null : MachineFingerprint.Trim();
         LinkedProfile = string.IsNullOrWhiteSpace(LinkedProfile) ? null : LinkedProfile.Trim();
         LinkedFileId = string.IsNullOrWhiteSpace(LinkedFileId) ? null : LinkedFileId.Trim();

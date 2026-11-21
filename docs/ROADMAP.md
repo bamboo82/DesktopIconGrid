@@ -270,9 +270,10 @@ folder.
 - **0.13.0 "Where it lives, how it reads"** (released 2026-11-21): the owner's requests after 0.12.2 — the data
   folder in `portable.txt` and Settings, icons that came out small, hint text colour, *Send to PC* before sync, the
   interface's font and text size.
-- **0.14.0** (in progress): the owner's requests after 0.13.0 — separators that start a new row (across the bar,
-  with a caption if wanted, or at a row's start), a transparency that fades only the background, and dialogs' own
-  font and text size.
+- **0.14.0 "Rows, looks and places"** (in progress): the owner's requests after 0.13.0 — separators that start a new
+  row (across the bar, with a caption if wanted, or at a row's start), a transparency that fades only the background,
+  the data location on a tab of its own, a Send to PC tab (this PC's name, the receive folder), text or symbols over an
+  icon's picture, the program's icon set, and dialogs' own font and text size.
 - **1.0.0 "Ship it"**: the existing backlog — installer (MSIX/winget), code signing, toast notifications with
   actions.
 

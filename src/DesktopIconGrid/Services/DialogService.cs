@@ -59,7 +59,9 @@ public sealed class DialogService(IIconProvider icons) : IDialogService, ILaunch
         _logWindow.Show();
     }
 
-    public void ShowSync()
+    public void ShowSync() => ShowSync(Owner);
+
+    private void ShowSync(Window? owner)
     {
         if (SyncViewModelFactory is null)
         {
@@ -67,7 +69,7 @@ public sealed class DialogService(IIconProvider icons) : IDialogService, ILaunch
             return;
         }
 
-        var window = new SyncWindow { DataContext = SyncViewModelFactory(), Owner = Owner };
+        var window = new SyncWindow { DataContext = SyncViewModelFactory(), Owner = owner };
         window.ShowDialog();
     }
 
@@ -86,11 +88,20 @@ public sealed class DialogService(IIconProvider icons) : IDialogService, ILaunch
         var viewModel = new SettingsViewModel(current, local);
         viewModel.UseChineseFont(ChineseFonts);
         viewModel.UseDataFolders(DataFolders.Current);
+        viewModel.UseThisPc(ThisPcNow?.Invoke());
         var window = new SettingsWindow { DataContext = viewModel, Owner = Owner };
+        viewModel.OpenSync = () =>
+        {
+            ShowSync(window); // over the Settings window, which waits for it
+            return ThisPcNow?.Invoke();
+        };
         return window.ShowDialog() == true
-            ? new SettingsResult(viewModel.ToSettings(), viewModel.ToLocalSettings(), viewModel.PlannedMove, viewModel.ImportThisPcRequested)
+            ? new SettingsResult(viewModel.ToSettings(), viewModel.ToLocalSettings(), viewModel.PlannedMove, viewModel.ImportThisPcRequested, viewModel.ToThisPc())
             : null;
     }
+
+    /// <summary>This PC's name, receiving and receive folder for Settings' Send to PC tab (0.14.0 WP5, A3); none in tests.</summary>
+    public Func<ThisPcSettings>? ThisPcNow { get; set; }
 
     public void ShowNameTable(LauncherViewModel launcher)
     {

@@ -9,6 +9,91 @@ The owner relays replies.
 
 ---
 
+## 2026-11-21 (123) — 0.14.0 WP5 with A3: a *Send to PC* tab, the receive folder, and one name for each PC
+
+Run 225 (`914f013`, entry 122, WP4) is green: Core 1177 and App 451 tests. Review 36 is read: there are no findings,
+and your answers are taken as given. The release name, "Rows, looks and places", is now in CHANGELOG, FEATURES §12 and
+the roadmap. This entry is WP5 with A3. WP6, WP7 and WP2 follow.
+
+- **The tab:** *Send to PC* (傳送到電腦 / 发送到电脑), before *Portable*: 外觀, 視窗, 按鍵, 語音, 一般, 傳送到電腦,
+  可攜. In order:
+  - this PC's name (A3), with its hint;
+  - the receive box (`SyncSettings.ReceiveFiles`, the same value as the menu's item), with its hint;
+  - *Folder location* with *Browse…*, *Back to Downloads* (enabled only when another folder is chosen), *Open folder*,
+    the reason when the folder is refused, and the hint;
+  - *Sync across PCs* (a sync folder, Google Drive, or not set up), with *Sync across PCs…*, which opens the Sync window
+    over Settings and then refreshes the row. The hint shows only when sync is not set up.
+
+  The tab's values come from `sync.json` (`ThisPcSettings`, given by the dialog service) and go back there at Save
+  (`ThisPcChoice` → `InboxService.ApplyThisPc`). Nothing on the tab is in the layout.
+- **The receive folder (Core: `Sync/ReceiveFolder.cs`):**
+  - It is stored as `receiveFolder` in `sync.json`. Nothing is written for Downloads (`null`), and the box showing the
+    Downloads path counts as Downloads. Variables are expanded where the folder is used, and a portable copy writes a
+    path on its drive with `%APPDRIVE%` (`DataLocation.ForStorage`).
+  - The rules: a full name (a drive or `\\server\share`; Windows' rules written out, as for the data folder), at most
+    248 characters (260 less the shortest file name), not the data folder or in it, not the sync folder or in it. A
+    folder that only contains the sync folder is allowed.
+  - On the disk the folder must be there or be made, and must take a file. A file of that name is refused.
+  - The name rules are checked as you type. The disk check runs at Save: it opens the tab and shows the reason beside
+    the box, which is cleared when the text changes.
+  - **At arrival** the rules are checked again, in each look that has files. When the folder fails, the files go to
+    Downloads, a Warning goes to the log, and one warning notice comes last, naming the folder and the first file
+    ("and N more"). The setting is kept.
+  - The free-space floor counts on the drive of the folder used. The mark, the name rules and no overwriting are as
+    before.
+- **Texts that said Downloads:**
+  - Inbox_Received names the folder by its last name ("the folder “From laptop”"), with Downloads by its word (下載).
+  - Inbox_WaitingForSpace names the folder too. I shortened the English so the balloon test's case (a 60-character
+    name, "and 99 more") stays at 242 of 255.
+  - SendTo_Receives says "(into “…”)".
+  - Menu_ReceiveFilesToolTip gives the full path.
+  - SendTo_Desc says "that PC's receive folder (Downloads unless changed there)".
+  - The Send to PC dialog ends with SendTo_FolderInSettings.
+- **One name (A3):**
+  - The name is `SyncSettings.DeviceName`, so the Sync window's box shows the same value, with the same rules.
+  - **Where it shows:**
+    - the Send to PC list and the captions made from it;
+    - "saved by" on the copies, which `SyncProfile.SavedBy` already took from it;
+    - the log;
+    - the arrival notice.
+  - **The arrival notice** was the one place that showed something else: a PC that sends but does not receive
+    published no name, so its files came "from 3fa9b2c1". Such a PC now leaves `sender-<id>.json` with its name in the
+    inbox it sends to. The folder inbox rewrites the card only when its name changes; Drive writes it once per run
+    and inbox. The receiver reads the card first, then the sender's own `device.json`, then the start of the id.
+    There is no `~` in the card's name, so 0.13.0 passes it over. The id's start remains only for a PC that has no
+    name anywhere.
+  - **Renaming:** `SendToNames.Follow` (Core) runs when the inbox lists the PCs: at most every 5 minutes, while an
+    icon has a PC, whether this PC receives or not. If the icon's PC is listed under another name, the stored
+    `deviceName` takes that name, and the caption follows while it equals `SendTo_NameFor` of the old name. A typed
+    caption stays, and so does one made in another language (it is not this PC's format). Nothing else changes, not
+    even `ModifiedAt`, so two PCs write the same icon (tested). The bar saves once; the next look finds nothing.
+  - **Two PCs with one name:** `InboxDevice` got a `Label` (by default its name). The dialog shows
+    `NOTEBOOK (3fa9)` while the icon keeps the real name.
+- **Tests:**
+  - **Core (1207):**
+    - `ReceiveFolderTests`: the expansion, the name rules (14 cases), the length limit, the disk (made, a file, cannot
+      be made), and `sync.json`;
+    - `SendToNamesTests`: the labels, following, a typed caption, two PCs writing the same icon, not listed or no PC;
+    - the card in `FolderInboxTests` and `DriveInboxTests`;
+    - the existing Drive test's file count, which now includes the card.
+  - **App:**
+    - `SendToTabTests` (5 tests);
+    - in `NoticeTargetTests`, the fallback warning and the folder names;
+    - in `SendToDeviceTests`, the labels and the box's text;
+    - in `LauncherViewModelTests`, following and saving once;
+    - `DialogFitTests` with seven tabs, the theory covering *Send to PC* too (a long Downloads path, its hint shown) in
+      three languages at 90, 100 and 150 %.
+- **Not tested:**
+  - the folder picker;
+  - *Open folder*;
+  - the Sync window over Settings;
+  - a real stick pulled out;
+  - a share as the receive folder;
+  - two real PCs following a rename through a sync folder and through Drive;
+  - a 0.13.0 PC beside a 0.14.0 one.
+
+This entry claims no run for its own commit.
+
 ## 2026-11-21 (122) — 0.14.0 WP4: the data location on a tab of its own, *Portable*
 
 Run 224 (`251b781`, entry 121, WP3) is green: Core 1177 and App 442 tests. `SeeThroughTests` passed on CI's own

@@ -70,6 +70,24 @@ public sealed class SendToDeviceTests : IDisposable
     }
 
     [Fact]
+    public async Task Two_PCs_of_one_name_are_told_apart_in_the_list_and_the_icon_keeps_the_real_name()
+    {
+        // 0.14.0 A3: names may be the same (the id tells the PCs apart); the list shows the id's first four characters.
+        var item = NewIcon();
+        var viewModel = new SendToDeviceViewModel(item, receives: false, receivesByMenu: false, Listing(new(Desktop, "NOTEBOOK"), new(Laptop, "NOTEBOOK")), receiveFolder: "From other PCs");
+
+        await viewModel.LookAsync();
+
+        Assert.Equal(["NOTEBOOK (bbbb)", "NOTEBOOK (aaaa)"], viewModel.Devices.Select(device => device.Label));
+        viewModel.SelectedDevice = viewModel.Devices[1];
+        Assert.Equal(string.Format(Strings.SendTo_NameFor, "NOTEBOOK"), viewModel.Name);
+        viewModel.Apply(item);
+        Assert.Equal(("NOTEBOOK", Laptop), (item.GetSetting(SendToDeviceHandler.DeviceNameKey), item.GetSetting(SendToDeviceHandler.DeviceIdKey)));
+        Assert.Equal(string.Format(Strings.SendTo_Receives, "From other PCs"), viewModel.ReceivesText); // 0.14.0 WP5: this PC's folder
+        Assert.Equal(string.Format(Strings.SendTo_Receives, Strings.Inbox_Downloads), new SendToDeviceViewModel(NewIcon(), false, false, Listing()).ReceivesText);
+    }
+
+    [Fact]
     public async Task With_no_other_PC_yet_the_box_alone_lets_the_icon_be_saved_to_receive()
     {
         var viewModel = new SendToDeviceViewModel(NewIcon(), receives: true, receivesByMenu: false, Listing());

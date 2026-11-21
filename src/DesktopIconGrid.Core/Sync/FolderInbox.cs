@@ -5,7 +5,11 @@ using DesktopIconGrid.Core.Storage;
 namespace DesktopIconGrid.Core.Sync;
 
 /// <summary>Another PC that shares the sync folder and can be sent files.</summary>
-public sealed record InboxDevice(string Id, string Name);
+public sealed record InboxDevice(string Id, string Name)
+{
+    /// <summary>What a list shows for it: its name, with the start of its id when another PC has the same name (<see cref="SendToNames.Labels"/>).</summary>
+    public string Label { get; init; } = Name;
+}
 
 /// <summary>Why a file could not be sent, for a message in the user's language.</summary>
 public enum SendProblem
@@ -238,7 +242,33 @@ public sealed class FolderInbox : IInbox
         File.Copy(source.FullName, part, overwrite: true);
         File.SetAttributes(part, FileAttributes.Normal); // read-only or hidden does not travel: the receiver must be able to mark, see and delete it
         File.Move(part, final);
+        WriteSenderCard(target);
         return name;
+    }
+
+    /// <summary>
+    /// The card a sender leaves in the inbox it sends to, with its name (0.14.0 A3): a PC that sends but does not receive
+    /// says its name nowhere else, so its files were announced with the start of its id. The name has no <c>~</c>, so a
+    /// version before 0.14.0 passes it over as something it did not put there.
+    /// </summary>
+    public static string SenderCardName(string senderId) => $"sender-{senderId.ToLowerInvariant()}.json";
+
+    /// <summary>Writes this PC's <see cref="SenderCardName"/> in <paramref name="targetFolder"/> when it is missing or says another name.</summary>
+    private void WriteSenderCard(string targetFolder)
+    {
+        try
+        {
+            var file = Path.Combine(targetFolder, SenderCardName(_deviceId));
+            var json = JsonSerializer.Serialize(new DeviceInfo(_deviceName), Json);
+            if (!File.Exists(file) || File.ReadAllText(file) != json)
+            {
+                File.WriteAllText(file, json);
+            }
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            AppLog.Default.Debug("Inbox", $"This PC's name could not be left with what it sent: {ex.Message}"); // the file went; its sender shows by its id
+        }
     }
 
     /// <summary>
@@ -282,7 +312,7 @@ public sealed class FolderInbox : IInbox
                 }
 
                 taken += info.Length;
-                files.Add(new InboxFile(info.FullName, PlainName(info.Name[(separator + 1)..]), sender, NameOf(Path.Combine(_root, sender), sender), info.Length));
+                files.Add(new InboxFile(info.FullName, PlainName(info.Name[(separator + 1)..]), sender, SenderName(mine, sender), info.Length));
                 if (files.Count == MaxPerLook)
                 {
                     break;
@@ -419,11 +449,20 @@ public sealed class FolderInbox : IInbox
         return path;
     }
 
-    private static string NameOf(string deviceFolder, string id)
+    private static string NameOf(string deviceFolder, string id) => NameIn(Path.Combine(deviceFolder, DeviceFile), id) ?? id[..8];
+
+    /// <summary>
+    /// The name of the PC that sent a file to <paramref name="mine"/>: from the card it left with it (0.14.0 A3), else from
+    /// its own inbox while it receives, else the start of its id.
+    /// </summary>
+    private string SenderName(string mine, string sender) =>
+        NameIn(Path.Combine(mine, SenderCardName(sender)), sender) ?? NameOf(Path.Combine(_root, sender), sender);
+
+    /// <summary>The name in a small <c>{"name": …}</c> file, made fit to show; <see langword="null"/> when there is none to read.</summary>
+    private static string? NameIn(string file, string id)
     {
         try
         {
-            var file = Path.Combine(deviceFolder, DeviceFile);
             if (File.Exists(file) && new FileInfo(file).Length < 4096)
             {
                 return CleanName(JsonSerializer.Deserialize<DeviceInfo>(File.ReadAllText(file), Json)?.Name, id);
@@ -434,7 +473,7 @@ public sealed class FolderInbox : IInbox
             // Unnamed.
         }
 
-        return id[..8];
+        return null;
     }
 
     /// <summary>

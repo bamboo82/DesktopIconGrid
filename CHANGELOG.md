@@ -5,7 +5,7 @@ version numbers follow [Semantic Versioning](https://semver.org/).
 
 ## [0.14.0] – Unreleased
 
-The owner's requests after 0.13.0.
+"Rows, looks and places": the owner's requests after 0.13.0.
 
 ### Added
 
@@ -18,6 +18,15 @@ The owner's requests after 0.13.0.
   *Gap*, *Label…*. A label turned into a row line keeps its text, and so does the reverse; a double-click on a label
   edits its text too, as `F2` does. A drop just before either goes at the end of the row above, and the drop marker
   shows it there. Versions before 0.14.0 draw both as a line and keep them.
+- Settings ▸ *Send to PC*, a tab for this PC alone: its name, *Receive files from my other PCs*, the folder received
+  files go to, and how sync is set up (with the button to the Sync window). The folder is Downloads unless another is
+  chosen; it must be a full name, not in the bar's data folder or the sync folder, and be there or be made and take a
+  file. One that fails at Save is refused with the reason beside it; one that fails when files arrive (a stick pulled
+  out) sends them to Downloads with one warning, and the setting stays. The notices name the folder.
+- This PC's name is the one name everywhere: the Send to PC lists and captions on the other PCs, the notices for the
+  files it sent (a PC that only sends leaves a card with its name beside them), the copies it saved, and the log. A
+  renamed PC is renamed on the others' Send to PC icons, and their captions follow unless typed by hand. Two PCs with
+  one name are told apart in the list by the start of their ids: NOTEBOOK (3fa9).
 
 ### Changed
 

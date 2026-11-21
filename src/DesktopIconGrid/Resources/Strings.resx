@@ -2238,7 +2238,7 @@ Details are in {1}.</value>
     <value>Send to {0}</value>
   </data>
   <data name="SendTo_Desc" xml:space="preserve">
-    <value>Drop files on it to send them to another of your PCs through your sync folder or Google Drive. They arrive in that PC's Downloads folder.</value>
+    <value>Drop files on it to send them to another of your PCs through your sync folder or Google Drive. They arrive in that PC's receive folder (Downloads unless changed there).</value>
   </data>
   <data name="SendTo_Device" xml:space="preserve">
     <value>Send to:</value>
@@ -2265,7 +2265,7 @@ Details are in {1}.</value>
     <value>File from {0}</value>
   </data>
   <data name="Inbox_Received" xml:space="preserve">
-    <value>“{0}” is in your Downloads folder.</value>
+    <value>“{0}” is in the folder “{1}”.</value>
   </data>
   <data name="Paste_TextTitle" xml:space="preserve">
     <value>Upload the copied text?</value>
@@ -2286,13 +2286,13 @@ Details are in {1}.</value>
     <value>Receive files from my other PCs</value>
   </data>
   <data name="Menu_ReceiveFilesToolTip" xml:space="preserve">
-    <value>Files other PCs send to this one through the sync folder or Google Drive are put in Downloads. A PC also receives while a Send to PC icon there has “This PC also receives files” ticked.</value>
+    <value>Files other PCs send to this one through the sync folder or Google Drive are saved in {0}. A PC also receives while a Send to PC icon there has “This PC also receives files” ticked.</value>
   </data>
   <data name="Inbox_WaitingTitle" xml:space="preserve">
     <value>File from {0} is waiting</value>
   </data>
   <data name="Inbox_WaitingForSpace" xml:space="preserve">
-    <value>“{0}” ({1}) cannot be received yet: your Downloads drive has {2} free and receiving always leaves {3} free. Free up space; it is taken within a minute of there being room.</value>
+    <value>“{0}” ({1}) cannot be received yet: the drive of “{4}” has {2} free and receiving always leaves {3} free. Free up space and it is taken within a minute.</value>
   </data>
   <data name="SendTo_ProblemNoInbox" xml:space="preserve">
     <value>that PC is not receiving files. On that PC, add a Send to PC icon or tick “Receive files from my other PCs”, and give it a minute.</value>
@@ -2481,7 +2481,7 @@ Details are in {1}.</value>
     <value>no answer within 20 seconds.</value>
   </data>
   <data name="SendTo_Receives" xml:space="preserve">
-    <value>This PC also receives files (into Downloads)</value>
+    <value>This PC also receives files (into “{0}”)</value>
   </data>
   <data name="SendTo_ReceivesByMenu" xml:space="preserve">
     <value>Turned on in the bar's menu.</value>
@@ -2791,5 +2791,77 @@ The place was not changed; what was copied stays there.</value>
   </data>
   <data name="Settings_TabPortable" xml:space="preserve">
     <value>Portable</value>
+  </data>
+  <data name="Settings_TabSendTo" xml:space="preserve">
+    <value>Send to PC</value>
+  </data>
+  <data name="Settings_PcName" xml:space="preserve">
+    <value>This PC's name:</value>
+  </data>
+  <data name="Settings_PcNameHint" xml:space="preserve">
+    <value>Send to PC on your other PCs, sync and the notices for received files call this PC by this name.</value>
+  </data>
+  <data name="Settings_ReceiveHint" xml:space="preserve">
+    <value>Also in the bar's menu. A Send to PC icon with “This PC also receives files” ticked always receives.</value>
+  </data>
+  <data name="Settings_ReceiveFolder" xml:space="preserve">
+    <value>Folder location:</value>
+  </data>
+  <data name="Settings_ReceiveFolderName" xml:space="preserve">
+    <value>Folder for files from your other PCs</value>
+  </data>
+  <data name="Settings_ReceiveFolderReset" xml:space="preserve">
+    <value>Back to Downloads</value>
+  </data>
+  <data name="Settings_ReceiveFolderPickTitle" xml:space="preserve">
+    <value>Choose the folder for files from your other PCs</value>
+  </data>
+  <data name="Settings_ReceiveFolderHint" xml:space="preserve">
+    <value>Files sent from your other PCs are saved in this folder. This setting belongs to this PC and does not sync.</value>
+  </data>
+  <data name="Settings_ReceiveNotAbsolute" xml:space="preserve">
+    <value>“{0}” is not a full folder name: give it with its drive, or as \\server\share.</value>
+  </data>
+  <data name="Settings_ReceiveTooLong" xml:space="preserve">
+    <value>“{0}” is longer than Windows allows for a folder.</value>
+  </data>
+  <data name="Settings_ReceiveInDataFolder" xml:space="preserve">
+    <value>“{0}” is in the bar's data folder. Choose a folder of its own.</value>
+  </data>
+  <data name="Settings_ReceiveInSyncFolder" xml:space="preserve">
+    <value>“{0}” is in the sync folder: what is saved there would be sent on to your other PCs.</value>
+  </data>
+  <data name="Settings_ReceiveNotAFolder" xml:space="preserve">
+    <value>“{0}” is a file, not a folder.</value>
+  </data>
+  <data name="Settings_ReceiveCannotUse" xml:space="preserve">
+    <value>“{0}” cannot be made or written to.</value>
+  </data>
+  <data name="Settings_SyncState" xml:space="preserve">
+    <value>Sync across PCs:</value>
+  </data>
+  <data name="Settings_SyncStateFolder" xml:space="preserve">
+    <value>Set up (sync folder)</value>
+  </data>
+  <data name="Settings_SyncStateDrive" xml:space="preserve">
+    <value>Set up (Google Drive)</value>
+  </data>
+  <data name="Settings_SyncStateNone" xml:space="preserve">
+    <value>Not set up</value>
+  </data>
+  <data name="Settings_SendToNeedsSync" xml:space="preserve">
+    <value>Sending and receiving files needs Sync across PCs to be set up first.</value>
+  </data>
+  <data name="Inbox_Downloads" xml:space="preserve">
+    <value>Downloads</value>
+  </data>
+  <data name="Inbox_FolderFellBackTitle" xml:space="preserve">
+    <value>The receive folder could not be used</value>
+  </data>
+  <data name="Inbox_FolderFellBack" xml:space="preserve">
+    <value>“{0}” could not be used, so “{1}” was saved in Downloads.</value>
+  </data>
+  <data name="SendTo_FolderInSettings" xml:space="preserve">
+    <value>The receive folder is in Settings › Send to PC.</value>
   </data>
 </root>

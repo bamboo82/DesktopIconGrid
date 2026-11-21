@@ -32,7 +32,8 @@ public sealed class SendToDeviceViewModel : ObservableObject
     /// <param name="receives">The box's first state: ticked for a new icon, else whether the icon carries this PC's mark.</param>
     /// <param name="receivesByMenu">The menu's <em>Receive files from my other PCs</em> is on: the box shows ticked and cannot be changed.</param>
     /// <param name="look">Lists the other PCs that receive; called off the UI thread.</param>
-    public SendToDeviceViewModel(SpecialIconItem item, bool receives, bool receivesByMenu, Func<CancellationToken, Task<IReadOnlyList<InboxDevice>>> look)
+    /// <param name="receiveFolder">This PC's receive folder as the box names it (0.14.0 WP5); Downloads when not given.</param>
+    public SendToDeviceViewModel(SpecialIconItem item, bool receives, bool receivesByMenu, Func<CancellationToken, Task<IReadOnlyList<InboxDevice>>> look, string? receiveFolder = null)
     {
         ArgumentNullException.ThrowIfNull(item);
         ArgumentNullException.ThrowIfNull(look);
@@ -40,6 +41,7 @@ public sealed class SendToDeviceViewModel : ObservableObject
         _name = item.Name;
         _receives = receives;
         ReceivesByMenu = receivesByMenu;
+        ReceivesText = string.Format(Strings.SendTo_Receives, receiveFolder ?? Strings.Inbox_Downloads);
 
         // The PC chosen before is a choice as it was stored until the list says more, so that OK never drops it: the
         // list may be slow, fail, or lack that PC while it does not receive.
@@ -122,6 +124,9 @@ public sealed class SendToDeviceViewModel : ObservableObject
     }
 
     public bool ReceivesByMenu { get; }
+
+    /// <summary>The box's text, with the folder files arrive in on this PC (0.14.0 WP5; it was always Downloads).</summary>
+    public string ReceivesText { get; }
 
     public bool CanChangeReceives => !ReceivesByMenu;
 
@@ -206,6 +211,8 @@ public sealed class SendToDeviceViewModel : ObservableObject
             return;
         }
 
+        var labels = SendToNames.Labels(found); // two PCs of one name are told apart by their ids' start (0.14.0 A3)
+        found = [.. found.Select((device, index) => device with { Label = labels[index] })];
         var current = _device;
         var listed = current is null ? null : found.FirstOrDefault(device => string.Equals(device.Id, current.Id, StringComparison.OrdinalIgnoreCase));
         Devices = current is not null && listed is null ? [.. found, current] : found; // the PC chosen before stays a choice

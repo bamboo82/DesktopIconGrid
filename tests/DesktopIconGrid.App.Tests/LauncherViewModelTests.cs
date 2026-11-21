@@ -147,6 +147,36 @@ public sealed class LauncherViewModelTests : IDisposable
     }
 
     [Fact]
+    public void Send_to_PC_icons_follow_a_renamed_PC_and_the_bar_is_saved_once()
+    {
+        // 0.14.0 A3: a PC renamed on its own Settings tab is renamed on the others' icons; a typed caption stays.
+        var (viewModel, model, _) = Create();
+        const string laptop = "3fa9b2c1aaaaaaaaaaaaaaaaaaaaaaaa";
+        SpecialIconItem Icon(string caption) => new()
+        {
+            Name = caption,
+            Kind = DesktopIconGrid.Core.SpecialIcons.SpecialIconKinds.SendToDevice,
+            Settings = new(StringComparer.OrdinalIgnoreCase) { [SendToDeviceHandler.DeviceIdKey] = laptop, [SendToDeviceHandler.DeviceNameKey] = "Laptop" },
+        };
+        model.Add(Icon(string.Format(Strings.SendTo_NameFor, "Laptop")));
+        model.Add(Icon("The study"));
+        Assert.True(viewModel.HasSendTargets());
+        var layout = Path.Combine(_directory, "layout.json");
+        File.Delete(layout);
+
+        viewModel.FollowDeviceNames([new DesktopIconGrid.Core.Sync.InboxDevice(laptop, "Laptop 2")]);
+
+        var icons = model.Items.OfType<SpecialIconItem>().ToList();
+        Assert.Equal([string.Format(Strings.SendTo_NameFor, "Laptop 2"), "The study"], icons.Select(icon => icon.Name));
+        Assert.All(icons, icon => Assert.Equal("Laptop 2", icon.GetSetting(SendToDeviceHandler.DeviceNameKey)));
+        Assert.Contains("Laptop 2", File.ReadAllText(layout), StringComparison.Ordinal); // saved, to be synced
+
+        File.Delete(layout);
+        viewModel.FollowDeviceNames([new DesktopIconGrid.Core.Sync.InboxDevice(laptop, "Laptop 2")]);
+        Assert.False(File.Exists(layout)); // nothing to follow: nothing saved
+    }
+
+    [Fact]
     public void A_row_lines_text_is_asked_with_the_current_one_and_an_empty_answer_takes_it_away()
     {
         // 0.14.0 WP1 (A1): added without a question; Text… (or a double-click) asks; Cancel changes nothing.

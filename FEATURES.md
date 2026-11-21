@@ -345,8 +345,9 @@ first line, is cut with `…` at its own size (0.11.0).
   what waits (at most 20 files and 4 GB per look, and never leaving less than 1 GB free on that drive; a
   file that has to wait for space is announced once, with its size and the space there is, after the notice of
   the files received in the same look) into its
-  Downloads folder under a free name, marks it as downloaded from another computer
-  (so SmartScreen and Protected View apply), and shows a notification. Nothing received is opened. A file
+  receive folder under a free name (Downloads unless another was chosen in Settings ▸ Send to PC, below; until
+  0.14.0 always Downloads), marks it as downloaded from another computer
+  (so SmartScreen and Protected View apply), and shows a notification that names that folder. Nothing received is opened. A file
   arrives once, as a plain file: read-only and hidden attributes do not travel, it is marked before it
   gets its name, and when the drive keeps no such mark the notification says so. Files that Explorer
   reads and follows just by showing their folder (`.url`, `.lnk`, `.scf`, `.library-ms`,
@@ -355,6 +356,33 @@ first line, is cut with `…` at its own size (0.11.0).
   remove the ending to use one.
   Whoever can write to the sync folder can send, as they can change the synced bar. Not in: a click
   that opens the received file's folder.
+
+  **Settings ▸ Send to PC** (0.14.0) is this PC's own tab; nothing on it travels with the bar:
+  - *This PC's name* (A3) is the one name the others use for this PC: in their Send to PC lists and the captions
+    made from it (`Send to {0}`), in the notices for files it sent, for the copies it saved ("saved by"), and in the
+    log. It is the Sync window's *Device name* (the same value, kept in `sync.json`, at most 64 characters, Windows'
+    name for the PC when empty), and it can be set before sync is set up. A PC that sends but does not receive leaves
+    a small card with its name (`sender-<id>.json`) in the inbox it sends to, so its files are not announced with the
+    start of its id; versions before 0.14.0 pass the card over. A renamed PC is renamed on the others: a Send to PC
+    icon keeps the name of its PC (`deviceName`), and when the PCs are listed (at most every 5 minutes while the bar
+    runs and an icon has a PC) and its PC has another name, the kept name follows, and so does the caption while it
+    is the one made from the old name; a caption typed by hand stays. Only those two values change, not the icon's
+    time of change, so every PC that sees the new name writes the same icon and the next look finds nothing; the
+    change is saved and synced like any other. Two PCs may have the same name; a list then shows the first four
+    characters of the id after it, `NOTEBOOK (3fa9)`. The start of the id stays only for a PC without a name.
+  - *Receive files from my other PCs* is the menu's item (the same value), with its hint.
+  - *Folder location* is where received files go: Windows' Downloads folder unless another is chosen (*Browse…*,
+    *Back to Downloads*, *Open folder*). It is kept in `sync.json` as `receiveFolder` (not written for Downloads),
+    never synced, imported or sent; environment variables are expanded where it is used, and in a portable copy a path
+    on the program's drive is written with `%APPDRIVE%`. The folder must be a full name (a drive or a share), within
+    Windows' 248 characters, not the bar's data folder or in it, and not the sync folder or in it (a received file
+    would be sent on); at Save it must be there or be made, and take a file. A folder that fails is refused with the
+    reason beside the box, and the tab shows ⚠. The same rules are checked each time files arrive: when the folder
+    cannot be used then (a stick pulled out), the files go to Downloads, one warning names the folder and the file,
+    the log has a Warning, and the setting stays. The free-space rule counts on the folder's drive.
+  - *Sync across PCs* says how sync is set up (a sync folder, Google Drive, or not), with the button that opens the
+    Sync window over Settings; when it is not set up, a hint says sending and receiving need it.
+  - A Send to PC icon's own properties say, on their last line, that the receive folder is in Settings ▸ Send to PC.
 
 - **Clock** (0.10.0) — the time (`14:05`) on this PC or in a time zone you pick. *On a click* can be
   nothing, a countdown of N minutes, or a Pomodoro (N minutes of work, a break, and again until
@@ -771,11 +799,12 @@ warnings and errors. The last 2000 entries stay in memory and all of them are ap
 
 Settings live in the same JSON file as the layout and apply immediately on *Save*.
 
-The dialog (0.11.0) has six tabs: *Appearance* (theme, background, bar background, icon size, spacing, labels,
+The dialog (0.11.0) has seven tabs: *Appearance* (theme, background, bar background, icon size, spacing, labels,
 font, Chinese text and text size since 0.13.0, background transparency), *Window* (open with, the window check boxes, start with
 Windows, dock to an edge), *Keys* (the show/hide and show-at-pointer hotkeys, the keys in the bar), *Voice* (the voice
-hotkey and language, one hint), *General* (language) and *Portable* (the data location: on *General* in 0.13.0, a tab of
-its own, the last, since 0.14.0). Save and Cancel stay under every tab. A tab with a value that cannot be saved shows ⚠ before
+hotkey and language, one hint), *General* (language), *Send to PC* (this PC's name, receiving, the receive folder and
+sync, since 0.14.0) and *Portable* (the data location: on *General* in 0.13.0, a tab of its own, the last, since
+0.14.0). Save and Cancel stay under every tab. A tab with a value that cannot be saved shows ⚠ before
 its name, and the line beside Save names the first such tab. Ctrl+Tab and Ctrl+Shift+Tab change the tab and put the
 focus on its first control; Enter saves and Esc cancels. The page area is as tall as the tallest page, at most 560,
 and each page scrolls on a screen too short for it.
@@ -1036,9 +1065,11 @@ portable copy; icons that came out smaller than the others; hint text in the dia
 added before sync is set up; a font and a text size for the interface; and what the release check found (a note in
 `portable.txt`, the shell's frame at every size, names at larger text, icons and recordings in the import).
 
-**0.14.0** *(in progress)* — the owner's requests after 0.13.0: separators that start a new row (a line across the
-bar, with a caption if wanted, and a line at a row's start); the transparency slider fades only the bar's
-background; dialogs and menus get their own font and text size.
+**0.14.0 "Rows, looks and places"** *(in progress)* — the owner's requests after 0.13.0: separators that start a new row
+(a line across the bar, with a caption if wanted, and a line at a row's start); the transparency slider fades only the
+bar's background; the data location on a tab of its own; a Send to PC tab with this PC's name and the receive folder;
+text or symbols drawn over an icon's picture; the program's icon set; and dialogs and menus with their own font and
+text size.
 
 **1.0.0 "Ship it"** — the existing backlog: installer (MSIX/winget), code signing, and the Windows toast with
 actions.

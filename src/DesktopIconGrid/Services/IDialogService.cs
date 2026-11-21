@@ -108,7 +108,7 @@ public interface IDialogService
 /// for the data (0.13.0 WP1), carried out once the dialog is closed, and whether this PC's bar is to be brought into the
 /// portable copy instead (then nothing else of the dialog is kept).
 /// </summary>
-public sealed record SettingsResult(LauncherSettings Settings, DesktopIconGrid.Core.Storage.LocalSettings Local, DataMove? Move = null, bool ImportThisPc = false);
+public sealed record SettingsResult(LauncherSettings Settings, DesktopIconGrid.Core.Storage.LocalSettings Local, DataMove? Move = null, bool ImportThisPc = false, ThisPcChoice? ThisPc = null);
 
 /// <summary>A new place for the data, chosen in Settings ▸ General and checked there (0.13.0 WP1).</summary>
 /// <param name="Portable">The data goes where <c>portable.txt</c> says; false: to <c>%LocalAppData%</c>, and the file goes.</param>

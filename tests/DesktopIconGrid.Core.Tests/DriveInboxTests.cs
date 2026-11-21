@@ -142,7 +142,7 @@ public sealed class DriveInboxTests : IDisposable
 
         Assert.Equal([new InboxDevice(Desktop, "Desktop PC")], await laptop.DevicesAsync(default));
         Assert.Equal("report.pdf", await laptop.SendAsync(Desktop, MakeFile("report.pdf"), default));
-        Assert.Equal(afterAnnouncing + 1, _drive.Count);
+        Assert.Equal(afterAnnouncing + 2, _drive.Count); // the file, and the card with the sender's name (0.14.0 A3)
         Assert.Empty(await laptop.PendingAsync(null, default));
 
         var waiting = Assert.Single(await desktop.PendingAsync(null, default));
@@ -163,7 +163,23 @@ public sealed class DriveInboxTests : IDisposable
         Assert.True(marked && cleared);
         Assert.EndsWith(".part", Assert.Single(seen)); // marked before it had its name
         Assert.Empty(await desktop.PendingAsync(null, default));
-        Assert.Equal(afterAnnouncing, _drive.Count);
+        Assert.Equal(afterAnnouncing + 1, _drive.Count); // the card stays, for the next file
+    }
+
+    [Fact]
+    public async Task A_PC_that_only_sends_is_named_by_the_card_it_leaves_and_leaves_it_once_per_run()
+    {
+        // 0.14.0 A3: the laptop does not receive, so it says its name nowhere else; its files came "from 3fa9b2c1".
+        var laptop = new DriveInbox(_drive, Laptop, "Laptop");
+        var desktop = new DriveInbox(_drive, Desktop, "Desktop");
+        await desktop.AnnounceAsync(default);
+        var before = _drive.Count;
+
+        await laptop.SendAsync(Desktop, MakeFile("one.txt"), default);
+        await laptop.SendAsync(Desktop, MakeFile("two.txt"), default);
+
+        Assert.Equal(before + 3, _drive.Count); // two files and one card
+        Assert.All(await desktop.PendingAsync(null, default), file => Assert.Equal("Laptop", file.SenderName));
     }
 
     [Fact]

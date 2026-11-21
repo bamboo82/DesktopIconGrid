@@ -2211,6 +2211,33 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Downloads.
+        /// </summary>
+        public static string Inbox_Downloads {
+            get {
+                return ResourceManager.GetString("Inbox_Downloads", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to “{0}” could not be used, so “{1}” was saved in Downloads..
+        /// </summary>
+        public static string Inbox_FolderFellBack {
+            get {
+                return ResourceManager.GetString("Inbox_FolderFellBack", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The receive folder could not be used.
+        /// </summary>
+        public static string Inbox_FolderFellBackTitle {
+            get {
+                return ResourceManager.GetString("Inbox_FolderFellBackTitle", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to It could not be marked as downloaded from another computer (this drive keeps no [rest of string was truncated]";.
         /// </summary>
         public static string Inbox_NotMarked {
@@ -2220,7 +2247,7 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to “{0}” is in your Downloads folder..
+        ///   Looks up a localized string similar to “{0}” is in the folder “{1}”..
         /// </summary>
         public static string Inbox_Received {
             get {
@@ -2247,7 +2274,7 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to “{0}” ({1}) cannot be received yet: your Downloads drive has {2} free and receiv [rest of string was truncated]";.
+        ///   Looks up a localized string similar to “{0}” ({1}) cannot be received yet: the drive of “{4}” has {2} free and receivin [rest of string was truncated]";.
         /// </summary>
         public static string Inbox_WaitingForSpace {
             get {
@@ -3264,7 +3291,7 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Files other PCs send to this one through the sync folder or Google Drive are put [rest of string was truncated]";.
+        ///   Looks up a localized string similar to Files other PCs send to this one through the sync folder or Google Drive are sav [rest of string was truncated]";.
         /// </summary>
         public static string Menu_ReceiveFilesToolTip {
             get {
@@ -4983,6 +5010,15 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to The receive folder is in Settings › Send to PC..
+        /// </summary>
+        public static string SendTo_FolderInSettings {
+            get {
+                return ResourceManager.GetString("SendTo_FolderInSettings", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Files go through your sync folder or your Google Drive; the other PC takes them [rest of string was truncated]";.
         /// </summary>
         public static string SendTo_Hint {
@@ -5109,7 +5145,7 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to This PC also receives files (into Downloads).
+        ///   Looks up a localized string similar to This PC also receives files (into “{0}”).
         /// </summary>
         public static string SendTo_Receives {
             get {
@@ -5766,6 +5802,24 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to This PC's name:.
+        /// </summary>
+        public static string Settings_PcName {
+            get {
+                return ResourceManager.GetString("Settings_PcName", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Send to PC on your other PCs, sync and the notices for received files call this [rest of string was truncated]";.
+        /// </summary>
+        public static string Settings_PcNameHint {
+            get {
+                return ResourceManager.GetString("Settings_PcNameHint", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Show at pointer:.
         /// </summary>
         public static string Settings_PointerHotkey {
@@ -5798,6 +5852,123 @@ namespace DesktopIconGrid.Resources {
         public static string Settings_PointerHotkeySame {
             get {
                 return ResourceManager.GetString("Settings_PointerHotkeySame", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to “{0}” cannot be made or written to..
+        /// </summary>
+        public static string Settings_ReceiveCannotUse {
+            get {
+                return ResourceManager.GetString("Settings_ReceiveCannotUse", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Folder location:.
+        /// </summary>
+        public static string Settings_ReceiveFolder {
+            get {
+                return ResourceManager.GetString("Settings_ReceiveFolder", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Files sent from your other PCs are saved in this folder. This setting belongs to [rest of string was truncated]";.
+        /// </summary>
+        public static string Settings_ReceiveFolderHint {
+            get {
+                return ResourceManager.GetString("Settings_ReceiveFolderHint", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Folder for files from your other PCs.
+        /// </summary>
+        public static string Settings_ReceiveFolderName {
+            get {
+                return ResourceManager.GetString("Settings_ReceiveFolderName", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Choose the folder for files from your other PCs.
+        /// </summary>
+        public static string Settings_ReceiveFolderPickTitle {
+            get {
+                return ResourceManager.GetString("Settings_ReceiveFolderPickTitle", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Back to Downloads.
+        /// </summary>
+        public static string Settings_ReceiveFolderReset {
+            get {
+                return ResourceManager.GetString("Settings_ReceiveFolderReset", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Also in the bar's menu. A Send to PC icon with “This PC also receives files” tic [rest of string was truncated]";.
+        /// </summary>
+        public static string Settings_ReceiveHint {
+            get {
+                return ResourceManager.GetString("Settings_ReceiveHint", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to “{0}” is in the bar's data folder. Choose a folder of its own..
+        /// </summary>
+        public static string Settings_ReceiveInDataFolder {
+            get {
+                return ResourceManager.GetString("Settings_ReceiveInDataFolder", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to “{0}” is in the sync folder: what is saved there would be sent on to your other [rest of string was truncated]";.
+        /// </summary>
+        public static string Settings_ReceiveInSyncFolder {
+            get {
+                return ResourceManager.GetString("Settings_ReceiveInSyncFolder", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to “{0}” is a file, not a folder..
+        /// </summary>
+        public static string Settings_ReceiveNotAFolder {
+            get {
+                return ResourceManager.GetString("Settings_ReceiveNotAFolder", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to “{0}” is not a full folder name: give it with its drive, or as \\server\share..
+        /// </summary>
+        public static string Settings_ReceiveNotAbsolute {
+            get {
+                return ResourceManager.GetString("Settings_ReceiveNotAbsolute", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to “{0}” is longer than Windows allows for a folder..
+        /// </summary>
+        public static string Settings_ReceiveTooLong {
+            get {
+                return ResourceManager.GetString("Settings_ReceiveTooLong", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Sending and receiving files needs Sync across PCs to be set up first..
+        /// </summary>
+        public static string Settings_SendToNeedsSync {
+            get {
+                return ResourceManager.GetString("Settings_SendToNeedsSync", resourceCulture);
             }
         }
 
@@ -5865,6 +6036,42 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Sync across PCs:.
+        /// </summary>
+        public static string Settings_SyncState {
+            get {
+                return ResourceManager.GetString("Settings_SyncState", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Set up (Google Drive).
+        /// </summary>
+        public static string Settings_SyncStateDrive {
+            get {
+                return ResourceManager.GetString("Settings_SyncStateDrive", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Set up (sync folder).
+        /// </summary>
+        public static string Settings_SyncStateFolder {
+            get {
+                return ResourceManager.GetString("Settings_SyncStateFolder", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Not set up.
+        /// </summary>
+        public static string Settings_SyncStateNone {
+            get {
+                return ResourceManager.GetString("Settings_SyncStateNone", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Appearance.
         /// </summary>
         public static string Settings_TabAppearance {
@@ -5897,6 +6104,15 @@ namespace DesktopIconGrid.Resources {
         public static string Settings_TabPortable {
             get {
                 return ResourceManager.GetString("Settings_TabPortable", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Send to PC.
+        /// </summary>
+        public static string Settings_TabSendTo {
+            get {
+                return ResourceManager.GetString("Settings_TabSendTo", resourceCulture);
             }
         }
 

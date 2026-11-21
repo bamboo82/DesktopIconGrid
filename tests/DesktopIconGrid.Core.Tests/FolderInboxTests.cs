@@ -50,6 +50,26 @@ public sealed class FolderInboxTests : IDisposable
     }
 
     [Fact]
+    public void A_PC_that_only_sends_is_named_by_the_card_it_leaves_and_an_older_version_passes_it_over()
+    {
+        // 0.14.0 A3: the laptop does not receive (no device.json of its own), so its files came "from aaaaaaaa".
+        var laptop = new FolderInbox(Sync, Laptop, "Laptop");
+        var desktop = new FolderInbox(Sync, Desktop, "Desktop");
+        desktop.Announce();
+
+        laptop.Send(Desktop, MakeFile("one.txt"));
+        var card = Path.Combine(Sync, FolderInbox.FolderName, Desktop, FolderInbox.SenderCardName(Laptop));
+        Assert.True(File.Exists(card));
+        Assert.DoesNotContain('~', Path.GetFileName(card)); // what a version before 0.14.0 never takes for a file sent
+
+        var waiting = Assert.Single(desktop.Pending());
+        Assert.Equal(("one.txt", "Laptop"), (waiting.Name, waiting.SenderName));
+
+        new FolderInbox(Sync, Laptop, "Laptop 2").Send(Desktop, MakeFile("two.txt")); // renamed: the card follows
+        Assert.All(desktop.Pending(), file => Assert.Equal("Laptop 2", file.SenderName));
+    }
+
+    [Fact]
     public void Only_what_the_app_put_there_is_taken_and_names_never_leave_the_folder()
     {
         var desktop = new FolderInbox(Sync, Desktop, "Desktop");

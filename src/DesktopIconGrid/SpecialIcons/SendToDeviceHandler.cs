@@ -14,13 +14,13 @@ namespace DesktopIconGrid.SpecialIcons;
 
 /// <summary>
 /// "Send to PC": drop files on it (or paste them) and they go to another PC that shares the sync folder or the Google
-/// account, which puts them in its Downloads folder (<see cref="InboxService"/>). Its properties also say whether this
+/// account, which puts them in its receive folder, Downloads unless changed there (<see cref="InboxService"/>). Its properties also say whether this
 /// PC receives: the icon's local mark, set or taken away there on OK and never synced.
 /// </summary>
 public sealed class SendToDeviceHandler(IReceiving receiving, IDialogService dialogs, Func<Window?> ownerProvider, string pasteDirectory, CommandTrust trust) : ISpecialIconHandler
 {
-    public const string DeviceIdKey = "deviceId";
-    public const string DeviceNameKey = "deviceName";
+    public const string DeviceIdKey = SendToNames.DeviceIdKey;
+    public const string DeviceNameKey = SendToNames.DeviceNameKey;
 
     /// <summary>The paper plane symbol, one colour like the bar (0.12.0 A3; 0.11.0 had the outbox emoji, review 27 S5).</summary>
     public static TextIcon Glyph => BuiltInTextIcons.SendToDevice;
@@ -183,7 +183,7 @@ public sealed class SendToDeviceHandler(IReceiving receiving, IDialogService dia
         }
 
         receiving.Opened();
-        var viewModel = new SendToDeviceViewModel(item, receives: StartsTicked(item, isNew), receivesByMenu: receiving.ReceiveSetting, mine.DevicesAsync);
+        var viewModel = new SendToDeviceViewModel(item, receives: StartsTicked(item, isNew), receivesByMenu: receiving.ReceiveSetting, mine.DevicesAsync, receiving.ReceiveFolderName);
         var window = new SendToDeviceWindow { DataContext = viewModel, Owner = ownerProvider() };
         if (window.ShowDialog() != true)
         {

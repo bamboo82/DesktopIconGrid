@@ -332,6 +332,19 @@ public partial class App : Application
 
         // Only an icon added or saved on this PC counts (its local mark); one that came with a synced bar does not.
         _inbox.HasSendIcon = () => viewModel.Model.SpecialIconsOf(SpecialIconKinds.SendToDevice).Any(icon => trust.IsApproved(FolderInbox.IconMark(icon.Id)));
+
+        // 0.14.0 WP5, A3: Settings' Send to PC tab (this PC's name, receiving, the receive folder), and icons that follow a renamed PC.
+        _inbox.HasSendTargets = viewModel.HasSendTargets;
+        _inbox.FollowNames = viewModel.FollowDeviceNames;
+        viewModel.ApplyThisPc = _inbox.ApplyThisPc;
+        dialogs.ThisPcNow = () => new ThisPcSettings(
+            syncService.Settings.DeviceName,
+            syncService.Settings.ReceiveFiles,
+            syncService.Settings.ReceiveFolder,
+            InboxService.DownloadsPath(),
+            DataFolders.Current.Directory,
+            syncService.UsesFolder ? syncService.Settings.SyncFolder : null,
+            syncService.UsesFolder ? SyncSetup.Folder : syncService.IsGoogleConnected ? SyncSetup.Drive : SyncSetup.None);
         var window = new MainWindow(viewModel) { Inbox = _inbox };
         MainWindow = window;
         SessionEnding += (_, _) => window.EndSession(); // sign-out or shutdown: what waits is written first (review 28 U1)

@@ -125,18 +125,51 @@ public sealed class DriveInbox : IInbox
             throw new InboxSendException(SendProblem.TooLarge, $"{source.Name} is larger than 2 GB.");
         }
 
-        if (await DeviceFolderAsync(targetId, cancellationToken).ConfigureAwait(false) is not { } target
-            || !(await _files.ListChildrenAsync(target, cancellationToken).ConfigureAwait(false)).Any(entry => !entry.IsFolder && entry.Name == FolderInbox.DeviceFile))
+        var target = await DeviceFolderAsync(targetId, cancellationToken).ConfigureAwait(false);
+        var children = target is null ? null : await _files.ListChildrenAsync(target, cancellationToken).ConfigureAwait(false);
+        if (target is null || children is null || !children.Any(entry => !entry.IsFolder && entry.Name == FolderInbox.DeviceFile))
         {
             // No inbox, or one whose PC took its name back when it stopped receiving: nothing sent there would arrive.
             throw new InboxSendException(SendProblem.NoInbox, "That PC is not receiving files.");
         }
 
         var inboxName = FolderInbox.InboxName(_deviceId, source.Name);
-        await using var content = source.OpenRead();
-        await _files.UploadAsync(target, inboxName, "application/octet-stream", content, source.Length, null, null, cancellationToken).ConfigureAwait(false);
+        await using (var content = source.OpenRead())
+        {
+            await _files.UploadAsync(target, inboxName, "application/octet-stream", content, source.Length, null, null, cancellationToken).ConfigureAwait(false);
+        }
+
+        await WriteSenderCardAsync(target, children, cancellationToken).ConfigureAwait(false);
         return inboxName[(inboxName.IndexOf('~') + 1)..];
     });
+
+    /// <summary>The inboxes this run has left this PC's name in (<see cref="FolderInbox.SenderCardName"/>), by folder id: once per run each.</summary>
+    private readonly HashSet<string> _cardsLeft = new(StringComparer.Ordinal);
+
+    /// <summary>Leaves this PC's name beside what it sent (0.14.0 A3), once per run and inbox; a failure only costs the name.</summary>
+    private async Task WriteSenderCardAsync(string targetFolderId, IReadOnlyList<DriveEntry> children, CancellationToken cancellationToken)
+    {
+        lock (_cardsLeft)
+        {
+            if (!_cardsLeft.Add(targetFolderId))
+            {
+                return;
+            }
+        }
+
+        try
+        {
+            var name = FolderInbox.SenderCardName(_deviceId);
+            var existing = children.FirstOrDefault(entry => !entry.IsFolder && entry.Name == name);
+            var bytes = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(new FolderInbox.DeviceInfo(_deviceName), FolderInbox.Json));
+            using var content = new MemoryStream(bytes);
+            await _files.UploadAsync(targetFolderId, name, "application/json", content, bytes.Length, existing?.Id, null, cancellationToken).ConfigureAwait(false);
+        }
+        catch (Exception ex) when (ex is DriveException or HttpRequestException or IOException)
+        {
+            AppLog.Default.Debug("Inbox", $"This PC's name could not be left with what it sent: {ex.Message}");
+        }
+    }
 
     public Task<IReadOnlyList<InboxFile>> PendingAsync(Func<string, bool>? skip, CancellationToken cancellationToken) => Guarded<IReadOnlyList<InboxFile>>(async () =>
     {
@@ -148,7 +181,8 @@ public sealed class DriveInbox : IInbox
 
         long taken = 0;
         var names = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-        foreach (var entry in (await _files.ListChildrenAsync(mine, cancellationToken).ConfigureAwait(false)).OrderBy(entry => entry.ModifiedTime))
+        var children = await _files.ListChildrenAsync(mine, cancellationToken).ConfigureAwait(false);
+        foreach (var entry in children.OrderBy(entry => entry.ModifiedTime))
         {
             if (entry.IsFolder
                 || entry.IsGoogleFormat
@@ -167,7 +201,9 @@ public sealed class DriveInbox : IInbox
 
             if (!names.TryGetValue(sender, out var senderName))
             {
-                senderName = names[sender] = await NameOfDeviceAsync(sender, null, cancellationToken).ConfigureAwait(false);
+                // The card the sender left with it (0.14.0 A3), else its own inbox while it receives, else its id's start.
+                senderName = names[sender] = await CardNameAsync(children, sender, cancellationToken).ConfigureAwait(false)
+                    ?? await NameOfDeviceAsync(sender, null, cancellationToken).ConfigureAwait(false);
             }
 
             taken += size;
@@ -265,6 +301,25 @@ public sealed class DriveInbox : IInbox
         }
 
         return id[..8];
+    }
+
+    /// <summary>The name on the card <paramref name="sender"/> left among <paramref name="children"/>, or <see langword="null"/>.</summary>
+    private async Task<string?> CardNameAsync(IReadOnlyList<DriveEntry> children, string sender, CancellationToken cancellationToken)
+    {
+        var name = FolderInbox.SenderCardName(sender);
+        if (children.FirstOrDefault(entry => !entry.IsFolder && entry.Name == name) is not { Size: > 0 and < 4096 } card)
+        {
+            return null;
+        }
+
+        try
+        {
+            return FolderInbox.ShownName(JsonSerializer.Deserialize<FolderInbox.DeviceInfo>(await ReadTextAsync(card.Id, cancellationToken).ConfigureAwait(false), FolderInbox.Json)?.Name, sender);
+        }
+        catch (Exception ex) when (ex is JsonException or DriveException or HttpRequestException or IOException)
+        {
+            return null;
+        }
     }
 
     private async Task<string> ReadTextAsync(string fileId, CancellationToken cancellationToken)

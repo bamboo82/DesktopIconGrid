@@ -122,6 +122,33 @@ public class NoticeTargetTests
     }
 
     [Fact]
+    public void Files_that_went_to_Downloads_because_the_chosen_folder_failed_end_with_one_warning_that_names_both()
+    {
+        // 0.14.0 WP5: a stick pulled out; the setting is kept, and the warning comes last so its balloon stays.
+        var notices = InboxService.Notices([(@"C:\Users\me\Downloads\a.pdf", "Den", true), (@"C:\Users\me\Downloads\b.pdf", "Study", true)], [], fellBackFrom: @"E:\Inbox");
+
+        Assert.Equal([NoticeKind.Information, NoticeKind.Information, NoticeKind.Warning], notices.Select(notice => notice.Kind));
+        var warning = notices[2];
+        Assert.Equal((Strings.Inbox_FolderFellBackTitle, NoticeTarget.Folder, @"C:\Users\me\Downloads\a.pdf"), (warning.Title, warning.Target, warning.Path));
+        Assert.Equal([string.Format(Strings.Inbox_FolderFellBack, @"E:\Inbox", "a.pdf"), string.Format(Strings.Inbox_AndMore, 1)], warning.Message.Split('\n'));
+        Assert.Equal(string.Format(Strings.Inbox_FolderFellBack, @"E:\Inbox", "c.txt"), InboxService.Notices([(@"C:\x\c.txt", "Den", true)], [], fellBackFrom: @"E:\Inbox")[1].Message);
+        Assert.Empty(InboxService.Notices([], [], fellBackFrom: @"E:\Inbox")); // nothing received, nothing to say
+    }
+
+    [Fact]
+    public void A_notice_names_the_folder_a_file_went_to_and_Downloads_by_its_word()
+    {
+        // 0.14.0 WP5: it was always "is in your Downloads folder".
+        Assert.Equal(string.Format(Strings.Inbox_Received, "a.pdf", "From laptop"), InboxService.ReceivedNotice(@"E:\Inbox\From laptop\a.pdf", "Den", marked: true).Message);
+        Assert.Equal(Strings.Inbox_Downloads, InboxService.FolderShownName(InboxService.DownloadsPath()));
+        Assert.Equal(Strings.Inbox_Downloads, InboxService.FolderShownName(InboxService.DownloadsPath() + "\\"));
+        Assert.Equal(Strings.Inbox_Downloads, InboxService.FolderShownName(null));
+        Assert.Equal(@"E:\", InboxService.FolderShownName(@"E:\")); // a drive by its root
+        Assert.Contains("Inbox", InboxService.WaitingNotice("big.iso", "Den", 5_000_000_000, 1_000_000, @"E:\Inbox").Message, StringComparison.Ordinal);
+        Assert.Contains(Strings.Inbox_Downloads, InboxService.WaitingNotice("big.iso", "Den", 5_000_000_000, 1_000_000).Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Received_files_come_first_and_the_warning_last_so_the_balloon_that_stays_is_the_warning()
     {
         // Release check U4: each balloon replaces the one before.

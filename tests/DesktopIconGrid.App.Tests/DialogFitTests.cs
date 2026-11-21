@@ -100,8 +100,8 @@ public sealed class DialogFitTests(WpfThread wpf)
             var window = new SettingsWindow { DataContext = new SettingsViewModel(new LauncherSettings()) };
             try
             {
-                Assert.Equal(6, window.Tabs.Items.Count);
-                Assert.Equal(6, window.PageList.Count);
+                Assert.Equal(7, window.Tabs.Items.Count);
+                Assert.Equal(7, window.PageList.Count);
                 foreach (var page in window.PageList)
                 {
                     var grids = (page.Content is Grid root ? [root] : Array.Empty<Grid>()).Concat(LogicalDescendants<Grid>(page)).Distinct().ToList();
@@ -162,7 +162,7 @@ public sealed class DialogFitTests(WpfThread wpf)
 
                 window.Tabs.SelectedIndex = 4; // General, the shortest page
                 window.UpdateLayout();
-                Assert.Equal([false, false, false, false, true, false], window.PageList.Select(page => page.IsVisible));
+                Assert.Equal([false, false, false, false, true, false, false], window.PageList.Select(page => page.IsVisible));
                 Assert.Equal(height, window.ActualHeight, 1); // the page area keeps the tallest page's height
 
                 window.Tabs.SelectedIndex = 0;
@@ -187,25 +187,35 @@ public sealed class DialogFitTests(WpfThread wpf)
     [InlineData("zh-Hans", 0.9)]
     [InlineData("zh-Hans", 1.0)]
     [InlineData("zh-Hans", 1.5)]
-    public void The_Portable_tab_is_last_and_fits_and_the_tabs_stay_in_one_row(string language, double scale)
+    public void The_Send_to_PC_and_Portable_tabs_fit_and_the_seven_tabs_stay_in_one_row(string language, double scale)
     {
-        // 0.14.0 WP4: the data location on a tab of its own, moved there from General unchanged.
+        // 0.14.0 WP4: the data location on a tab of its own, moved there from General unchanged, the last; WP5: Send to PC
+        // before it, with a long Downloads folder and sync not set up (its hint shown).
         wpf.Invoke(() =>
         {
             var before = System.Threading.Thread.CurrentThread.CurrentUICulture;
             System.Threading.Thread.CurrentThread.CurrentUICulture = System.Globalization.CultureInfo.GetCultureInfo(language);
             Services.UiFonts.Configure(null, null, scale);
-            var window = new SettingsWindow { DataContext = new SettingsViewModel(new LauncherSettings()) };
+            var viewModel = new SettingsViewModel(new LauncherSettings());
+            viewModel.UseThisPc(new ThisPcSettings("BAMBOO-PC", true, null, @"C:\Users\somebody.with.a.long.name\Downloads", @"C:\Users\somebody\AppData\Local\DesktopIconGrid", null, SyncSetup.None));
+            var window = new SettingsWindow { DataContext = viewModel };
             try
             {
                 window.Show();
-                window.Tabs.SelectedIndex = window.PageList.ToList().IndexOf(window.PortablePage);
-                Settle(window);
+                var pages = window.PageList.ToList();
                 var what = $"{language} at {scale:P0}";
-                Assert.Equal(window.Tabs.Items.Count - 1, window.Tabs.SelectedIndex);
+                Assert.Equal([pages.Count - 2, pages.Count - 1], new[] { pages.IndexOf(window.SendToPage), pages.IndexOf(window.PortablePage) });
                 Assert.True(window.PortablePage.IsAncestorOf(window.DataLocationBlock), "the data location is not on the Portable tab");
                 Assert.False(window.GeneralPage.IsAncestorOf(window.DataLocationBlock));
+                Assert.True(window.SendToPage.IsAncestorOf(window.ReceiveFolderBlock));
+
+                window.Tabs.SelectedIndex = pages.IndexOf(window.SendToPage);
+                Settle(window);
                 TabsInOneRow(window, what);
+                FitsAcross(window.SendToPage, what);
+
+                window.Tabs.SelectedIndex = pages.IndexOf(window.PortablePage);
+                Settle(window);
                 FitsAcross(window.PortablePage, what);
             }
             finally

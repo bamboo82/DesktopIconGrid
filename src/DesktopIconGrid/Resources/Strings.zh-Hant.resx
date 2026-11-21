@@ -2238,7 +2238,7 @@
     <value>傳送到 {0}</value>
   </data>
   <data name="SendTo_Desc" xml:space="preserve">
-    <value>將檔案拖放到此圖示，即可透過同步資料夾或 Google 雲端硬碟傳送到您的另一台電腦，並存入該電腦的「下載」資料夾。</value>
+    <value>將檔案拖放到此圖示，即可透過同步資料夾或 Google 雲端硬碟傳送到您的另一台電腦，並存入該電腦的接收資料夾（未在該電腦上變更時為「下載」）。</value>
   </data>
   <data name="SendTo_Device" xml:space="preserve">
     <value>傳送到：</value>
@@ -2265,7 +2265,7 @@
     <value>來自 {0} 的檔案</value>
   </data>
   <data name="Inbox_Received" xml:space="preserve">
-    <value>「{0}」已存入「下載」資料夾。</value>
+    <value>「{0}」已存入「{1}」資料夾。</value>
   </data>
   <data name="Paste_TextTitle" xml:space="preserve">
     <value>要上傳複製的文字嗎？</value>
@@ -2286,13 +2286,13 @@
     <value>接收來自我其他電腦的檔案</value>
   </data>
   <data name="Menu_ReceiveFilesToolTip" xml:space="preserve">
-    <value>其他電腦透過同步資料夾或 Google 雲端硬碟傳送到這台電腦的檔案會存入「下載」資料夾。「傳送到電腦」圖示勾選了「這台電腦也接收檔案」的電腦也會接收。</value>
+    <value>其他電腦透過同步資料夾或 Google 雲端硬碟傳送到這台電腦的檔案會存入 {0}。「傳送到電腦」圖示勾選了「這台電腦也接收檔案」的電腦也會接收。</value>
   </data>
   <data name="Inbox_WaitingTitle" xml:space="preserve">
     <value>來自 {0} 的檔案正在等待</value>
   </data>
   <data name="Inbox_WaitingForSpace" xml:space="preserve">
-    <value>尚無法接收「{0}」（{1}）：「下載」資料夾所在的磁碟機只剩 {2} 可用空間，而接收時一律保留 {3}。請釋出一些空間；檔案會留在傳送到的位置，有足夠空間後一分鐘內會自動接收。</value>
+    <value>尚無法接收「{0}」（{1}）：「{4}」資料夾所在的磁碟機只剩 {2} 可用空間，而接收時一律保留 {3}。請釋出一些空間；檔案會留在傳送到的位置，有足夠空間後一分鐘內會自動接收。</value>
   </data>
   <data name="SendTo_ProblemNoInbox" xml:space="preserve">
     <value>該電腦未接收檔案。請在該電腦上新增「傳送到電腦」圖示，或勾選「接收來自我其他電腦的檔案」，並稍候一分鐘。</value>
@@ -2481,7 +2481,7 @@
     <value>20 秒內沒有回應。</value>
   </data>
   <data name="SendTo_Receives" xml:space="preserve">
-    <value>這台電腦也接收檔案（存入「下載」資料夾）</value>
+    <value>這台電腦也接收檔案（存入「{0}」資料夾）</value>
   </data>
   <data name="SendTo_ReceivesByMenu" xml:space="preserve">
     <value>已在工具列功能表中開啟。</value>
@@ -2791,5 +2791,77 @@ SHA-256：{3}
   </data>
   <data name="Settings_TabPortable" xml:space="preserve">
     <value>可攜</value>
+  </data>
+  <data name="Settings_TabSendTo" xml:space="preserve">
+    <value>傳送到電腦</value>
+  </data>
+  <data name="Settings_PcName" xml:space="preserve">
+    <value>這台電腦的名稱：</value>
+  </data>
+  <data name="Settings_PcNameHint" xml:space="preserve">
+    <value>其他電腦的「傳送到電腦」、同步與收到檔案的通知都以這個名稱稱呼這台電腦。</value>
+  </data>
+  <data name="Settings_ReceiveHint" xml:space="preserve">
+    <value>也可在工具列功能表中切換。工具列上有勾選「這台電腦也接收檔案」的「傳送到電腦」圖示時，一律接收。</value>
+  </data>
+  <data name="Settings_ReceiveFolder" xml:space="preserve">
+    <value>資料夾位置：</value>
+  </data>
+  <data name="Settings_ReceiveFolderName" xml:space="preserve">
+    <value>接收其他電腦檔案的資料夾</value>
+  </data>
+  <data name="Settings_ReceiveFolderReset" xml:space="preserve">
+    <value>還原為「下載」</value>
+  </data>
+  <data name="Settings_ReceiveFolderPickTitle" xml:space="preserve">
+    <value>選擇存放其他電腦傳來檔案的資料夾</value>
+  </data>
+  <data name="Settings_ReceiveFolderHint" xml:space="preserve">
+    <value>其他電腦傳來的檔案會存入這個資料夾。這項設定只屬於這台電腦，不會同步。</value>
+  </data>
+  <data name="Settings_ReceiveNotAbsolute" xml:space="preserve">
+    <value>「{0}」不是完整的資料夾名稱：請含磁碟機代號，或寫成 \\伺服器\共用資料夾。</value>
+  </data>
+  <data name="Settings_ReceiveTooLong" xml:space="preserve">
+    <value>「{0}」超過 Windows 允許的資料夾名稱長度。</value>
+  </data>
+  <data name="Settings_ReceiveInDataFolder" xml:space="preserve">
+    <value>「{0}」在工具列的資料夾中。請選擇另一個資料夾。</value>
+  </data>
+  <data name="Settings_ReceiveInSyncFolder" xml:space="preserve">
+    <value>「{0}」在同步資料夾中：存到那裡的檔案會被同步到您的其他電腦。</value>
+  </data>
+  <data name="Settings_ReceiveNotAFolder" xml:space="preserve">
+    <value>「{0}」是檔案，不是資料夾。</value>
+  </data>
+  <data name="Settings_ReceiveCannotUse" xml:space="preserve">
+    <value>無法建立或寫入「{0}」。</value>
+  </data>
+  <data name="Settings_SyncState" xml:space="preserve">
+    <value>跨電腦同步：</value>
+  </data>
+  <data name="Settings_SyncStateFolder" xml:space="preserve">
+    <value>已設定（同步資料夾）</value>
+  </data>
+  <data name="Settings_SyncStateDrive" xml:space="preserve">
+    <value>已設定（Google 雲端硬碟）</value>
+  </data>
+  <data name="Settings_SyncStateNone" xml:space="preserve">
+    <value>尚未設定</value>
+  </data>
+  <data name="Settings_SendToNeedsSync" xml:space="preserve">
+    <value>傳送與接收檔案需要先設定「跨電腦同步」。</value>
+  </data>
+  <data name="Inbox_Downloads" xml:space="preserve">
+    <value>下載</value>
+  </data>
+  <data name="Inbox_FolderFellBackTitle" xml:space="preserve">
+    <value>無法使用接收資料夾</value>
+  </data>
+  <data name="Inbox_FolderFellBack" xml:space="preserve">
+    <value>無法使用「{0}」，「{1}」已存入「下載」資料夾。</value>
+  </data>
+  <data name="SendTo_FolderInSettings" xml:space="preserve">
+    <value>接收資料夾在「設定」›「傳送到電腦」。</value>
   </data>
 </root>

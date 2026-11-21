@@ -96,12 +96,57 @@ public partial class SettingsWindow : Window
 
     private void Save_Click(object sender, RoutedEventArgs e)
     {
+        if (ViewModel is { } checking && !checking.TryCheckReceiveFolder())
+        {
+            Tabs.SelectedIndex = PageList.ToList().IndexOf(SendToPage); // the receive folder cannot be used: the reason is beside it
+            return;
+        }
+
         if (ViewModel is { } viewModel && !PlanDataMove(viewModel))
         {
             return; // a folder that cannot be used (said under the choice), or Cancel: the window stays open
         }
 
         DialogResult = true;
+    }
+
+    /// <summary>The receive folder from the folder picker (0.14.0 WP5); checked at Save.</summary>
+    private void BrowseReceiveFolder_Click(object sender, RoutedEventArgs e)
+    {
+        if (ViewModel is not { } viewModel)
+        {
+            return;
+        }
+
+        var dialog = new Microsoft.Win32.OpenFolderDialog
+        {
+            Title = Strings.Settings_ReceiveFolderPickTitle,
+            Multiselect = false,
+            InitialDirectory = DialogService.LocalFolderToOpen(Core.Sync.ReceiveFolder.Expand(viewModel.ReceiveFolderText)),
+        };
+        if (dialog.ShowDialog(this) == true && !string.IsNullOrWhiteSpace(dialog.FolderName))
+        {
+            viewModel.ReceiveFolderText = dialog.FolderName;
+        }
+    }
+
+    private void ResetReceiveFolder_Click(object sender, RoutedEventArgs e) => ViewModel?.ResetReceiveFolder();
+
+    private void OpenReceiveFolder_Click(object sender, RoutedEventArgs e)
+    {
+        if (ViewModel is { } viewModel && Core.Sync.ReceiveFolder.Expand(viewModel.ReceiveFolderText) is { } folder && System.IO.Directory.Exists(folder))
+        {
+            Core.Launching.ProcessLauncher.Start(new System.Diagnostics.ProcessStartInfo(folder) { UseShellExecute = true }).Process?.Dispose();
+        }
+    }
+
+    /// <summary>The Sync window over this one; then the tab says how sync is set up now (0.14.0 WP5).</summary>
+    private void OpenSync_Click(object sender, RoutedEventArgs e)
+    {
+        if (ViewModel is { OpenSync: { } open } viewModel && open() is { } now)
+        {
+            viewModel.RefreshFromSync(now);
+        }
     }
 
     /// <summary>
