@@ -77,6 +77,14 @@ public partial class PointerWindow : Window
     {
         var bar = BarIconArea();
         SetIconArea(bar);
+
+        // WPF skips a measure at the size an element was last measured at unless the element itself was invalidated. A
+        // change below the frame (a group's header shown or hidden, the icon area set) marks only the element it is on
+        // until a layout pass, and once the window has its content's size the frame's last measure was this same trial.
+        // So the layout is brought up to date first, and the frame is measured anew (UpdateLayout does nothing while a
+        // layout pass is running).
+        UpdateLayout();
+        Chrome.InvalidateMeasure();
         Chrome.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
         var around = new Size(Math.Max(0, Chrome.DesiredSize.Width - bar.Width), Math.Max(0, Chrome.DesiredSize.Height - bar.Height));
         var fitted = FitIconArea(bar, around, workArea);

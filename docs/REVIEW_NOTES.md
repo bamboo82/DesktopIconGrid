@@ -9,6 +9,32 @@ The owner relays replies.
 
 ---
 
+## 2026-11-21 (140) — 0.15.0 WP3: the window at the pointer grows by a group's header again
+
+The cause of runs 239–243, and it was in the app, not only in the test. Entries 137 and 138 guessed wrong twice
+(WindowChrome, then a hidden window); this replaces both.
+
+- **What was wrong:** WP3's `MeasureSize` measures the window's frame once, at an unbounded size. WPF skips a measure at
+  the size an element was last measured at unless that element itself was invalidated, and showing the group's header
+  invalidates only the panel it is in. Once the window has its content's size (after the fit that follows the show), the
+  layout pass after that trial measure does not measure the frame again, because nothing above it changed. So the
+  frame's last measure stayed the trial one, and the next fit, when a group opened, was skipped and got the old size: the
+  header pushed the icon area's last row 21 units past the bottom edge. That is the screen pass's old finding back. The
+  code before WP3 measured twice at different widths, so it never hit the skip. The same skip could also size the window
+  from the bar's old icon area for one frame, at a show after the bar's size changed (the fit after the show put that
+  right).
+- **The fix:** `MeasureSize` brings the layout up to date (`UpdateLayout`) and invalidates the frame before its trial
+  measure. Nothing else changes. WindowChrome stays as `00bc2e8` put it back.
+- **The test:** the group test checks the window's own height again, in every run: the "only while it is shown"
+  condition from entry 138 weakened it on a wrong cause and is gone. It checks the height before the group opens, in the
+  group (top level + header), and back at the top level after the search. Its first measure is the window's trial one,
+  as after the fit that follows the show, which is the state the bug needed.
+- **Run 243** (`8dd6703`, WP2, entry 139): Core 1248 of 1248; App 501 of 502, the one red being this test. WP2's new App
+  tests pass.
+- **Not tested:** on a real screen.
+
+This entry claims no run for its own commit.
+
 ## 2026-11-21 (139) — 0.15.0 WP2: show at the pointer while a key is held
 
 Run 242 (`00bc2e8`, entry 138) is red on the same test, and it says more: the window is shown, asks for 162 units and

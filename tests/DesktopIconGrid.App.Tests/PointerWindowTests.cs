@@ -181,9 +181,8 @@ public sealed class PointerWindowTests(WpfThread wpf) : IDisposable
     public void An_opened_group_adds_its_header_and_the_icon_area_keeps_its_size_and_a_search_goes_back()
     {
         // The screen pass found a group of 7 losing its second row to its header. Since 0.15.0 (WP3) the header is added
-        // under the search box and the icon area keeps the bar's size. The size the window asks for is what it is given
-        // while it is shown; on the CI machine it can lose the focus and hide itself, as it does after a click elsewhere
-        // (runs 239–241), so its own height is checked only while it is shown.
+        // under the search box and the icon area keeps the bar's size. Runs 239–242: the window kept the top level's
+        // height, because the measure it was fitted with had been the last one and WPF skipped it (entry 140).
         var model = Shortcuts(10);
         var tools = new GroupItem { Name = "Tools" };
         model.Add(tools);
@@ -195,28 +194,25 @@ public sealed class PointerWindowTests(WpfThread wpf) : IDisposable
         WithWindow(model, (window, bar) =>
         {
             EveryRowShows(window);
-            var topLevel = window.MeasureSize(Size.Empty).Height;
+            var topLevel = window.MeasureSize(Size.Empty).Height; // as when the window was fitted once it was shown
             var area = window.Icons.Height;
+            Assert.Equal(topLevel, window.ActualHeight, precision: 0);
 
             window.OpenGroup(bar.RootItems.Items.Single(item => item.Children is not null));
             window.UpdateLayout();
 
             EveryRowShows(window);
             var header = window.GroupHeader.ActualHeight + window.GroupHeader.Margin.Top + window.GroupHeader.Margin.Bottom;
-            var inGroup = window.MeasureSize(Size.Empty).Height;
             Assert.True(header > 10, $"the header takes {header}");
-            Assert.Equal(topLevel + header, inGroup, precision: 1);
+            Assert.Equal(topLevel + header, window.ActualHeight, precision: 0);
+            Assert.Equal(topLevel + header, window.MeasureSize(Size.Empty).Height, precision: 1);
             Assert.Equal(area, window.Icons.Height, precision: 1);
-            if (window.IsVisible)
-            {
-                window.UpdateLayout();
-                Assert.Equal(inGroup, window.ActualHeight, precision: 0);
-            }
 
             bar.SearchText = "Item 1"; // a search covers every group, so it goes back to the top level
             window.UpdateLayout();
 
             Assert.Null(window.OpenedGroup);
+            Assert.Equal(topLevel, window.ActualHeight, precision: 0);
             Assert.Equal(topLevel, window.MeasureSize(Size.Empty).Height, precision: 1);
         }, area: bar => Area(bar, 6, 2 * bar.CellHeight));
     }
