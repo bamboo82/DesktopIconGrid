@@ -168,6 +168,7 @@
 
           <TextBlock Grid.Row="1"
                      Text="{Binding Name}"
+                     Effect="{DynamicResource Theme.TextEdge}"
                      Foreground="{DynamicResource Theme.Foreground}"
                      FontSize="{Binding Root.NameFontSize}"
                      TextAlignment="Center"
@@ -219,6 +220,7 @@
           <!-- A row line (0.14.0): its caption, when it has one, then the line to the right edge -->
           <views:RowLinePanel Visibility="{Binding IsRowLineSeparator, Converter={StaticResource BoolToVisibility}}">
             <TextBlock Text="{Binding Name}"
+                       Effect="{DynamicResource Theme.TextEdge}"
                        Foreground="{DynamicResource Theme.Hint}"
                        FontSize="{Binding Root.NameFontSize}"
                        FontWeight="SemiBold"
@@ -228,6 +230,7 @@
             <views:DividerLine Stroke="{DynamicResource Theme.HoverBorder}" Inset="0" Flat="True" />
           </views:RowLinePanel>
           <TextBlock Text="{Binding Name}"
+                     Effect="{DynamicResource Theme.TextEdge}"
                      Foreground="{DynamicResource Theme.Hint}"
                      FontSize="{Binding Root.NameFontSize}"
                      FontWeight="SemiBold"
@@ -301,6 +304,7 @@
     </ScrollViewer>
 
     <TextBlock Text="{Binding EmptyHint}"
+               Effect="{DynamicResource Theme.TextEdge}"
                Foreground="{DynamicResource Theme.Hint}"
                FontSize="{Binding EmptyHintFontSize}"
                HorizontalAlignment="Center" VerticalAlignment="Center"

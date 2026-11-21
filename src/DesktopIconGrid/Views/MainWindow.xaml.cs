@@ -305,6 +305,7 @@ public partial class MainWindow : Window
         // On a see-through background the edges of text are smoothed in grey: ClearType works its colours out against the
         // bar's own colour, not against what shows through, and would fringe there.
         TextOptions.SetTextRenderingMode(this, _seeThrough ? TextRenderingMode.Grayscale : TextRenderingMode.Auto);
+        ApplyTextEdge(palette);
 
         ThemeManager.Apply(palette, translucentBar: active || _seeThrough, tintOpacity: _viewModel.Opacity / 100.0);
         DialogTheme.Configure(settings.FluentDialogs);
@@ -312,6 +313,43 @@ public partial class MainWindow : Window
         {
             ApplyPopupBackground(popupSource);
         }
+    }
+
+    /// <summary>The window's resource the names, captions, the empty bar's line and a group's heading take as their effect.</summary>
+    internal const string TextEdgeKey = "Theme.TextEdge";
+
+    /// <summary>
+    /// While the background is see-through, the names under the icons, the captions of labels and row lines, the empty
+    /// bar's line and a group's heading get a thin soft edge in the tone that stands out from their colour (near-black
+    /// under light text, white under dark), so they can be read over a light or a dark desktop alike (review 37 T1).
+    /// Before 0.14.0 the theme's colour was always behind them. At 100 %, with a backdrop and under High Contrast there is
+    /// none. It is a resource of this window, so the group's popup has it too and the pointer window, which is opaque,
+    /// does not; one frozen effect is shared by every text.
+    /// </summary>
+    private void ApplyTextEdge(ThemePalette palette)
+    {
+        if (!_seeThrough)
+        {
+            Resources.Remove(TextEdgeKey);
+            return;
+        }
+
+        Resources[TextEdgeKey] = TextEdgeFor(palette.Foreground);
+    }
+
+    /// <summary>The edge for text of <paramref name="foreground"/>: a shadow under the letters, no offset, a blur of 3.</summary>
+    internal static System.Windows.Media.Effects.DropShadowEffect TextEdgeFor(string foreground)
+    {
+        var edge = new System.Windows.Media.Effects.DropShadowEffect
+        {
+            Color = ThemeManager.ToColor(ThemeCatalog.Luminance(foreground) > 0.5 ? TextOverPicture.DarkOutline : "#FFFFFF"),
+            ShadowDepth = 0,
+            BlurRadius = 3,
+            Opacity = 0.95,
+            RenderingBias = System.Windows.Media.Effects.RenderingBias.Performance,
+        };
+        edge.Freeze();
+        return edge;
     }
 
     private void OnSystemParametersChanged(object? sender, PropertyChangedEventArgs e)

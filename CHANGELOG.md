@@ -37,7 +37,8 @@ version numbers follow [Semantic Versioning](https://semver.org/).
   Mica or Acrylic: icons, names, captions, lines, gauges, tiles and the notice row stay solid, on the bar and in a
   group's popup. Before, without a backdrop, the whole bar faded with it. The bar stays an ordinary window, so a click
   on its background still reaches it. While the background is see-through, text is smoothed in grey instead of with
-  ClearType. Under Windows High Contrast the background stays opaque. The value is stored and synced as before.
+  ClearType, and names, captions and the empty bar's line have a thin edge in the contrasting tone, so they can be read
+  over a light desktop too. Under Windows High Contrast the background stays opaque. The value is stored and synced as before.
 - The data location has a Settings tab of its own, *Portable*, the last; *General* keeps the language. Nothing in the
   block changed, and the notice that sends you there names the new tab.
 

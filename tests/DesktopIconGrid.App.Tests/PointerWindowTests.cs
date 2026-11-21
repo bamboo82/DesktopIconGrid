@@ -264,6 +264,44 @@ public sealed class PointerWindowTests(WpfThread wpf) : IDisposable
     }
 
     [Fact]
+    public void Names_and_captions_take_the_windows_text_edge_and_an_opaque_window_has_none()
+    {
+        // Review 37 T1: the bar sets the edge while its background is see-through; the pointer window, opaque, never does.
+        var model = Shortcuts(2);
+        model.Add(new SeparatorItem { Kind = SeparatorItem.RowLine, Name = "Work" });
+        WithWindow(model, (window, _) =>
+        {
+            System.Windows.Controls.TextBlock Text(string text) => Descendants(window).OfType<System.Windows.Controls.TextBlock>().First(block => block.Text == text);
+            Assert.Null(Text("Item 0").Effect);
+
+            var edge = MainWindow.TextEdgeFor("#FFFFFF");
+            window.Resources[MainWindow.TextEdgeKey] = edge;
+            window.UpdateLayout();
+            Assert.Same(edge, Text("Item 0").Effect);
+            Assert.Same(edge, Text("Work").Effect); // a row line's caption
+            Assert.Equal((0.0, true), (edge.ShadowDepth, edge.IsFrozen));
+            Assert.Equal(System.Windows.Media.Color.FromRgb(0x1A, 0x1A, 0x1A), edge.Color); // under light text
+            Assert.Equal(System.Windows.Media.Colors.White, MainWindow.TextEdgeFor("#202020").Color); // under dark text
+
+            window.Resources.Remove(MainWindow.TextEdgeKey);
+            Assert.Null(Text("Item 0").Effect);
+        });
+    }
+
+    private static IEnumerable<DependencyObject> Descendants(DependencyObject root)
+    {
+        for (var i = 0; i < VisualTreeHelper.GetChildrenCount(root); i++)
+        {
+            var child = VisualTreeHelper.GetChild(root, i);
+            yield return child;
+            foreach (var below in Descendants(child))
+            {
+                yield return below;
+            }
+        }
+    }
+
+    [Fact]
     public void A_row_lines_caption_keeps_24_units_of_line_unless_the_strip_is_one_icon_wide()
     {
         // 0.14.0 WP1 (A1): 6 in, 6 to the line, at least 24 of line, 6 from the edge; in a narrow strip it takes what a label would.

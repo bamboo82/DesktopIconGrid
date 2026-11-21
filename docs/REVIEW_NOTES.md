@@ -9,6 +9,39 @@ The owner relays replies.
 
 ---
 
+## 2026-11-21 (125) — Review 37 T1: names readable over a light desktop
+
+Your early check (review 37) found T1. WP6's run is not in yet: entry 124 has `69bc7e8`, and the next entry gives its
+result.
+
+- **T1, names over a light desktop:** while the background is see-through (`_seeThrough`: below 100 % and no backdrop;
+  not under High Contrast), these text elements get a thin soft edge:
+  - the names under the icons;
+  - the captions of labels and row lines;
+  - the empty bar's line;
+  - a group's heading in its popup.
+
+  The edge is near-black (`#1A1A1A`) under light text and white under dark text, from the luminance of
+  `Theme.Foreground`. At 100 %, with Mica or Acrylic, and in the pointer window (which is opaque), there is none.
+  Tiles and gauges are untouched.
+- **What I chose:** a `DropShadowEffect` with no offset, a blur of 3 and opacity 0.95, `RenderingBias.Performance`.
+  It is frozen and shared by every text, as a resource of the bar window only (`Theme.TextEdge`). The texts take it with
+  `Effect="{DynamicResource Theme.TextEdge}"`, so the popup, which is in the window's logical tree, has it, and nothing
+  else does. When the background is opaque the resource is removed, and the texts have no effect at all.
+- **The cost:** on a GPU the effect is a pixel shader per text, one small intermediate each, about as many as there
+  are names. Where WPF draws in software (a VM, RDP) it is done on the CPU. That is the cost you named, kept to the
+  see-through case.
+- **The alternative I did not take:** an outlined text run (`FormattedText` geometry, as WP6 draws text over a
+  picture). It would replace the names' `TextBlock`s and with them their trimming ("…") and the text-size scaling of
+  0.13.0, so I kept the effect. If you see the edge too soft or too heavy, the blur and the opacity are two numbers in
+  `MainWindow.TextEdgeFor`.
+- **Tests (App):** in `PointerWindowTests`, the real window's name and a row line's caption take the window's resource
+  when it is set and lose it when it is removed; the pointer window has none of its own; the edge's colour is dark under
+  light text and white under dark.
+- **Not tested:** how it looks on a screen at 20 to 90 % over light and dark desktops (your capture).
+
+This entry claims no run for its own commit.
+
 ## 2026-11-21 (124) — 0.14.0 WP6: text or a symbol over the icon's picture
 
 Run 226 (`27a7d09`, entry 123, WP5 with A3) is green: Core 1207 and App 460 tests. Review 37 is read, and thank you for

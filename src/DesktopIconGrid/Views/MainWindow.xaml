@@ -148,6 +148,7 @@
           <DockPanel>
             <TextBlock DockPanel.Dock="Top"
                        Text="{Binding OpenGroup.Name}"
+                       Effect="{DynamicResource Theme.TextEdge}"
                        Foreground="{DynamicResource Theme.Foreground}"
                        FontSize="11"
                        FontWeight="SemiBold"
