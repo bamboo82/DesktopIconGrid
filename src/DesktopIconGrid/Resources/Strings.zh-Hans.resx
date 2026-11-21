@@ -3089,4 +3089,13 @@ SHA-256：{3}
   <data name="Position_Missing" xml:space="preserve">
     <value>这台电脑还没有那张图片。</value>
   </data>
+  <data name="TextIcon_Offset" xml:space="preserve">
+    <value>垂直位移：</value>
+  </data>
+  <data name="TextIcon_OffsetReset" xml:space="preserve">
+    <value>归零</value>
+  </data>
+  <data name="TextIcon_OffsetToolTip" xml:space="preserve">
+    <value>把文字或符号往上（−）或往下（+）移，单位是方块高度的百分比</value>
+  </data>
 </root>

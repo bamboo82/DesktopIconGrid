@@ -24,6 +24,8 @@ version numbers follow [Semantic Versioning](https://semver.org/).
   dragging (icons, groups, special icons, separators), in the bar, its groups and the window at the pointer. Files
   dropped from elsewhere are still added or opened, and the bar itself still moves. The first drag it stops says how
   to unlock it. It syncs with the other settings.
+- A text or symbol icon can be moved up or down a little: *Up or down* in the text icon window, −20 % to +20 % of the
+  tile with *Reset*, alone on a tile and over the picture in every position.
 - *Show at pointer while held* under Settings ▸ Keys: while that combination is held, the bar shows at the mouse
   pointer, and letting go of any of its keys hides it. While it is held a click there is a plain click, whatever
   modifiers the combination has; a menu or a drag open at the moment you let go keeps the window until it ends. It

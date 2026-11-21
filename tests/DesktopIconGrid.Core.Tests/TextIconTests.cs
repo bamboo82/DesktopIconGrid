@@ -60,6 +60,75 @@ public class TextIconTests
     }
 
     [Fact]
+    public void Up_or_down_is_written_only_when_not_zero_and_read_back_on_text_and_symbol_through_the_layout_file()
+    {
+        // 0.15.0 WP7a: 垂直位移, whole percent of the tile, negative is up.
+        var plain = JsonSerializer.Serialize(new TextIcon("A").Normalized(), LayoutStorage.JsonOptions);
+        Assert.DoesNotContain("offsetY", plain, StringComparison.Ordinal);
+        Assert.Equal(0, JsonSerializer.Deserialize<TextIcon>(plain, LayoutStorage.JsonOptions)!.OffsetY);
+
+        var up = new TextIcon("記", Fit: true) { OffsetY = -20 }.Normalized()!;
+        var upJson = JsonSerializer.Serialize(up, LayoutStorage.JsonOptions);
+        Assert.Equal(-20, JsonDocument.Parse(upJson).RootElement.GetProperty("offsetY").GetInt32());
+        Assert.Equal(up, JsonSerializer.Deserialize<TextIcon>(upJson, LayoutStorage.JsonOptions));
+
+        var symbol = SymbolCatalog.Icon(SymbolCatalog.All[0], background: "#2D4A6E") with { OverImage = true, Place = TextIcon.PlaceBottomRight, OffsetY = 20 };
+        symbol = symbol.Normalized()!;
+        Assert.Equal(20, symbol.OffsetY);
+        Assert.Equal(symbol, JsonSerializer.Deserialize<TextIcon>(JsonSerializer.Serialize(symbol, LayoutStorage.JsonOptions), LayoutStorage.JsonOptions));
+
+        var directory = Path.Combine(Path.GetTempPath(), "DesktopIconGrid.Tests", Guid.NewGuid().ToString("N"));
+        try
+        {
+            var storage = new LayoutStorage(Path.Combine(directory, "layout.json"));
+            storage.Save(new LauncherLayout { Items = [new ShortcutItem { Name = "Notes", Location = "notepad.exe", TextIcon = up }, new GroupItem { Name = "G", TextIcon = symbol }] });
+            var loaded = storage.Load().Layout;
+            Assert.Equal(up, loaded.Items[0].TextIcon);
+            Assert.Equal(symbol, loaded.Items[1].TextIcon);
+            Assert.Equal(-20, LauncherModel.FromLayout(loaded).Items[0].TextIcon!.OffsetY);
+        }
+        finally
+        {
+            if (Directory.Exists(directory))
+            {
+                Directory.Delete(directory, recursive: true);
+            }
+        }
+    }
+
+    [Theory]
+    [InlineData(-20, -20)]
+    [InlineData(20, 20)]
+    [InlineData(7, 7)]
+    [InlineData(21, 0)]
+    [InlineData(-21, 0)]
+    [InlineData(int.MinValue, 0)]
+    public void Up_or_down_outside_minus_20_to_20_is_zero(int stored, int normalized)
+    {
+        Assert.Equal(normalized, new TextIcon("A") { OffsetY = stored }.Normalized()!.OffsetY);
+    }
+
+    [Theory]
+    [InlineData("2.5", 0)]
+    [InlineData("99999999999", 0)]
+    [InlineData("40", 0)] // read, then out of range
+    [InlineData("\"-7\"", -7)] // a number in quotes, as the layout reads its other numbers
+    [InlineData("\"up\"", 0)]
+    [InlineData("true", 0)]
+    [InlineData("null", 0)]
+    [InlineData("{\"by\":[1,2]}", 0)]
+    [InlineData("[3]", 0)]
+    public void Anything_else_at_load_is_zero_and_the_rest_of_the_icon_is_still_read(string value, int expected)
+    {
+        var json = "{\"text\":\"A\",\"offsetY\":" + value + ",\"bold\":true}";
+
+        var icon = JsonSerializer.Deserialize<TextIcon>(json, LayoutStorage.JsonOptions)!.Normalized()!;
+
+        Assert.Equal(expected, icon.OffsetY);
+        Assert.True(icon.Bold); // what follows the odd value is read as before
+    }
+
+    [Fact]
     public void Normalized_drops_empty_text_and_bad_values()
     {
         Assert.Null(new TextIcon("   ").Normalized());

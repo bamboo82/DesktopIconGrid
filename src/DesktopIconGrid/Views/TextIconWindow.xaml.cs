@@ -18,6 +18,8 @@ public partial class TextIconWindow : Window
 
     private TextIconViewModel? ViewModel => DataContext as TextIconViewModel;
 
+    private void ResetOffset_Click(object sender, RoutedEventArgs e) => ViewModel?.ResetOffset();
+
     /// <summary>The text's colour from the colour picker (0.15.0 WP4); the preview follows it, and Cancel puts back what the box had.</summary>
     private void PickColour_Click(object sender, RoutedEventArgs e)
     {

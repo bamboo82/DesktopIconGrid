@@ -162,6 +162,17 @@ public sealed class TextIconTile : Decorator
         _tile.CornerRadius = new CornerRadius(CornerAt32);
     }
 
+    /// <summary>
+    /// 垂直位移 (0.15.0 WP7a): how far down the text is drawn on a tile <paramref name="tileSize"/> high, its
+    /// <see cref="TextIcon.OffsetY"/> percent of the tile in whole units (negative is up), so that text on whole pixels
+    /// stays on them. The same alone on a tile and over a picture (<see cref="TextOverPicture"/>).
+    /// </summary>
+    public static double ShiftFor(TextIcon icon, double tileSize)
+    {
+        ArgumentNullException.ThrowIfNull(icon);
+        return Math.Round(icon.OffsetY * Math.Max(tileSize, 0) / 100);
+    }
+
     /// <summary>How high the text is drawn: fitted, about as high as the box it fills; else its own size.</summary>
     internal double DrawnSize(TextIcon icon) => icon.Fit
         ? Math.Max(TileSize, 0) * (1 - (2 * FitMargin))
@@ -205,6 +216,16 @@ public sealed class TextIconTile : Decorator
             _text.TextWrapping = TextWrapping.Wrap;
             _text.Margin = new Thickness(1);
             _tile.Child = _text;
+        }
+
+        // Up or down (0.15.0 WP7a): the fitted box or the text moves by its share of the tile, outside the fit box's scale;
+        // the tile (ClipToBounds) cuts what passes its edge.
+        _fit.ClearValue(RenderTransformProperty);
+        _text.ClearValue(RenderTransformProperty);
+        var shift = ShiftFor(icon, TileSize);
+        if (shift != 0)
+        {
+            (icon.Fit ? (FrameworkElement)_fit : _text).RenderTransform = new TranslateTransform(0, shift);
         }
 
         // Laid out as drawn from 20 units up, on whole pixels below (0.15.0 WP9): fitted text is drawn about as high as

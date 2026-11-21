@@ -112,6 +112,14 @@ middle), written only when set: a version before 0.14.0 draws the text tile alon
 (their Properties offer *Text or symbol icon…*); special icons have their own properties, without it. The names table
 draws no icons.
 
+**Up or down** (0.15.0, 垂直位移). Under the fields of both sides, before the colour, a slider moves the text or
+symbol down or up by whole percent of the tile's height, −20 to +20 (negative is up), with its number beside it and
+*Reset* (歸零) back to 0; the preview follows at once. It applies alone on a tile and over the picture, in the middle and
+in every corner (with a tile colour the plate moves with the text). The distance is that share of the tile in whole
+units; what passes the tile's edge is cut. Stored as `offsetY`, written only when it is not 0; any other value at load
+(out of range, a fraction, text) is 0, and the rest of the icon is still read. A version before 0.15.0 draws the text
+in the middle.
+
 **Advanced** (0.7.0), the options a Windows `.lnk` has:
 
 | Field | Notes |

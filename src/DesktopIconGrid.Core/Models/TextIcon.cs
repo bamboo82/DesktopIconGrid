@@ -74,6 +74,18 @@ public sealed record TextIcon(
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? Place { get; init; }
 
+    public const int MinOffsetY = -20;
+    public const int MaxOffsetY = 20;
+
+    /// <summary>
+    /// 垂直位移 (0.15.0 WP7a, the owner's request): how far the text or symbol is moved down, in whole percent of the
+    /// tile's height, −20 to +20; negative is up. Alone on a tile and over a picture, in every place; what moves past the
+    /// tile's edge is cut. Written only when it is not 0; anything else at load is 0.
+    /// </summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    [JsonConverter(typeof(OffsetConverter))]
+    public int OffsetY { get; init; }
+
     /// <summary>The corner the text is drawn in over the picture, or <see langword="null"/> for the middle (or no picture).</summary>
     [JsonIgnore]
     public string? Corner => OverImage ? CornerOf(Place) : null;
@@ -107,6 +119,35 @@ public sealed record TextIcon(
             Color = LauncherSettings.IsValidColor(Color) ? Color!.ToUpperInvariant() : null,
             Background = LauncherSettings.IsValidColor(Background) ? Background!.ToUpperInvariant() : null,
             Place = OverImage ? CornerOf(Place) : null, // the middle and another value are not written
+            OffsetY = OffsetY is >= MinOffsetY and <= MaxOffsetY ? OffsetY : 0,
         };
+    }
+}
+
+/// <summary>
+/// Reads <see cref="TextIcon.OffsetY"/> whatever is there (0.15.0 WP7a): a whole number as it is (out of range, it is 0 in
+/// <see cref="TextIcon.Normalized"/>), and anything else (a fraction, a number too large, text, true, an object) as 0,
+/// so that one odd value never costs the whole bar.
+/// </summary>
+public sealed class OffsetConverter : JsonConverter<int>
+{
+    public override int Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    {
+        switch (reader.TokenType)
+        {
+            case JsonTokenType.Number:
+                return reader.TryGetInt32(out var number) ? number : 0;
+            case JsonTokenType.String:
+                return int.TryParse(reader.GetString(), NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture, out var parsed) ? parsed : 0;
+            default:
+                reader.Skip(); // an object or an array is passed over whole
+                return 0;
+        }
+    }
+
+    public override void Write(Utf8JsonWriter writer, int value, JsonSerializerOptions options)
+    {
+        ArgumentNullException.ThrowIfNull(writer);
+        writer.WriteNumberValue(value);
     }
 }

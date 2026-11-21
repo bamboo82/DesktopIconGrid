@@ -3089,4 +3089,13 @@ The place was not changed; what was copied stays there.</value>
   <data name="Position_Missing" xml:space="preserve">
     <value>This PC does not have that picture yet.</value>
   </data>
+  <data name="TextIcon_Offset" xml:space="preserve">
+    <value>Up or down:</value>
+  </data>
+  <data name="TextIcon_OffsetReset" xml:space="preserve">
+    <value>Reset</value>
+  </data>
+  <data name="TextIcon_OffsetToolTip" xml:space="preserve">
+    <value>Moves the text or symbol up (−) or down (+), in percent of the tile's height</value>
+  </data>
 </root>

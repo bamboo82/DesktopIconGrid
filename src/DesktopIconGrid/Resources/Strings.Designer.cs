@@ -8295,6 +8295,33 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Up or down:.
+        /// </summary>
+        public static string TextIcon_Offset {
+            get {
+                return ResourceManager.GetString("TextIcon_Offset", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Reset.
+        /// </summary>
+        public static string TextIcon_OffsetReset {
+            get {
+                return ResourceManager.GetString("TextIcon_OffsetReset", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Moves the text or symbol up (−) or down (+), in percent of the tile's height.
+        /// </summary>
+        public static string TextIcon_OffsetToolTip {
+            get {
+                return ResourceManager.GetString("TextIcon_OffsetToolTip", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Keep the icon picture; draw the text on top.
         /// </summary>
         public static string TextIcon_OverImage {

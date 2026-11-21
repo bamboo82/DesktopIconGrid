@@ -9,6 +9,41 @@ The owner relays replies.
 
 ---
 
+## 2026-11-21 (151) — 0.15.0 WP7a: a text or symbol icon moved up or down
+
+- **Runs:** 253 (`1da7c61`, the WP5 fix) green: Core 1338/1338, App 551/551. 254 (`5326254`, WP6): Core 1338/1338, App
+  559/560. The red test, `SendToDeviceTests.Without_sync_a_new_icon_is_added_without_a_PC_and_later_starts_with_the_box_ticked`,
+  is a race between tests, not WP6: two `LauncherViewModelTests` (Repair for this PC or every PC) set `ThisDevice.Id`
+  and put it back, while the Send to PC test, in a parallel collection, approved its "added here" mark under one id and
+  looked it up under the other (`CommandTrust` keys approvals by the id). In the App tests nothing followed CLAUDE.md's
+  rule that classes setting the id go in "This device". Fixed here: the two tests moved, unchanged, into
+  `RepairForEveryPcTests` in a new "This device" collection that runs alone, after the parallel ones
+  (`DisableParallelization`), so no parallel test ever sees the id change. No test was skipped or widened.
+- **The setting** (`TextIcon.OffsetY`): whole percent of the tile's height, −20 to +20, negative is up, default 0 and not
+  written then. `Normalized` makes anything out of range 0. At load a converter reads a whole number as it is and
+  anything else (a fraction, a number too large, text, true, null, an object or array) as 0, so one odd value never
+  costs the whole bar; a number in quotes is read as the layout reads its other numbers.
+- **The window:** a row 垂直位移： / *Up or down:* in the shared section under both sides' fields (on the Text side right
+  under the size row), before the colour: a slider −20…+20 in steps of 1 (arrow keys 1, Page keys 5), its number
+  (`+7 %`, `−20 %` with a real minus sign, `0 %`), and 歸零 / *Reset* / 归零. The preview follows at once. It is shared by
+  both sides like the colours, so a symbol keeps its offset when the window opens again.
+- **Drawing:** the distance is the offset's share of the tile in whole units (`TextIconTile.ShiftFor`, rounded so that
+  text on whole pixels stays on them: 7 % of 32 is 2). Alone on a tile the fitted box (outside its scale) or the text at
+  its size gets a `TranslateTransform`; the tile already clipped to its bounds. Over the picture the placement in the
+  middle or in a corner's box gets the same distance, the plate moves with the text, and the drawing is clipped to the
+  tile (new: `PushClip`).
+- **Tests:** Core: written only when not 0, read back for text and for a symbol over a picture in a corner, through the
+  layout file and the model; −21, 21 and `int.MinValue` are 0, ±20 and 7 kept; nine odd values at load are 0 (or −7 for
+  `"-7"`), and the property after the odd value is still read. App: the editor holds the offset to its range, shows the
+  number, keeps it on the Symbol side and when reopened, and resets; the window's slider is bound and *Reset* works; the
+  drawn position (the middle of the ink rows from a render) for −20, 0 and +20 alone on a tile (fitted and at its size)
+  and over a picture in the middle, at the bottom right and at the top left, each with the outline and with a plate; a
+  plate pushed past the bottom ends at the tile's last row; alone on a tile the transform sits on the fit box, not on the
+  text, and goes away at 0. The text icon window's fit checks (three languages, 90–150 %) now include the new row.
+- **Not tested:** on screen, and at a scale other than 100 % (the distance is in whole units, not whole pixels there).
+
+This entry claims no run for its own commit.
+
 ## 2026-11-21 (150) — 0.15.0 WP6: the picture's position and zoom, with a preview
 
 - **Runs:** 252 (`a94a797`, WP5) was red on the thumbnail's shared cell, fixed in `1da7c61` (entry 149). Its run had not

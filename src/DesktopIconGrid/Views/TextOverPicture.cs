@@ -166,23 +166,30 @@ public sealed class TextOverPicture : FrameworkElement
             return;
         }
 
-        // The letters themselves (not their line) in the middle of the box.
-        var offset = new Vector(box.X + ((box.Width - ink.Width) / 2) - ink.X, box.Y + ((box.Height - ink.Height) / 2) - ink.Y);
+        // The letters themselves (not their line) in the middle of the box, then up or down by their share of the tile
+        // (0.15.0 WP7a), the plate with them; the tile cuts what passes its edge.
+        var offset = new Vector(
+            box.X + ((box.Width - ink.Width) / 2) - ink.X,
+            box.Y + ((box.Height - ink.Height) / 2) - ink.Y + TextIconTile.ShiftFor(icon, side));
         geometry.Transform = new TranslateTransform(offset.X, offset.Y);
         var placed = Rect.Offset(ink, offset);
         var fill = ThemeManager.ToBrush(textColor);
+        drawingContext.PushClip(new RectangleGeometry(new Rect(0, 0, side, side)));
         if (outlineColor is null)
         {
             var plate = placed;
             plate.Inflate(PlatePadding, PlatePadding);
             drawingContext.DrawRoundedRectangle(ThemeManager.ToBrush(icon.Background!), null, plate, PlateCorner, PlateCorner);
             drawingContext.DrawGeometry(fill, null, geometry);
-            return;
+        }
+        else
+        {
+            var pen = new Pen(ThemeManager.ToBrush(outlineColor), 2 * Outline) { LineJoin = PenLineJoin.Round };
+            pen.Freeze();
+            drawingContext.DrawGeometry(null, pen, geometry); // half of it outside the letters: one unit
+            drawingContext.DrawGeometry(fill, null, geometry); // the letters over the inner half
         }
 
-        var pen = new Pen(ThemeManager.ToBrush(outlineColor), 2 * Outline) { LineJoin = PenLineJoin.Round };
-        pen.Freeze();
-        drawingContext.DrawGeometry(null, pen, geometry); // half of it outside the letters: one unit
-        drawingContext.DrawGeometry(fill, null, geometry); // the letters over the inner half
+        drawingContext.Pop();
     }
 }

@@ -158,7 +158,7 @@
       </Grid>
     </StackPanel>
 
-    <!-- Colour and tile colour, on both sides -->
+    <!-- Up or down, colour and tile colour, on both sides -->
     <Grid Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2">
       <Grid.ColumnDefinitions>
         <ColumnDefinition Width="Auto" MinWidth="70" SharedSizeGroup="Label" />
@@ -168,11 +168,23 @@
         <RowDefinition Height="Auto" />
         <RowDefinition Height="Auto" />
         <RowDefinition Height="Auto" />
+        <RowDefinition Height="Auto" />
       </Grid.RowDefinitions>
 
-      <TextBlock x:Name="ColourLabel" Grid.Row="0" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.TextIcon_Colour}" Margin="0,0,12,8" />
-      <!-- The hint wraps in the width the box and the picker's button leave (0.15.0 WP4) -->
+      <!-- 垂直位移 (0.15.0 WP7a): up or down a little, for text and symbols alike; the preview follows at once -->
+      <TextBlock x:Name="OffsetLabel" Grid.Row="0" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.TextIcon_Offset}" Margin="0,0,12,8" />
       <DockPanel Grid.Row="0" Grid.Column="1" Margin="0,0,0,8">
+        <Button x:Name="ResetOffsetButton" DockPanel.Dock="Right" Content="{x:Static r:Strings.TextIcon_OffsetReset}" Padding="10,2" Margin="8,0,0,0"
+                VerticalAlignment="Center" Click="ResetOffset_Click" />
+        <TextBlock DockPanel.Dock="Right" Text="{Binding OffsetText}" MinWidth="44" TextAlignment="Right" VerticalAlignment="Center" />
+        <Slider x:Name="OffsetSlider" Minimum="{Binding MinOffsetY}" Maximum="{Binding MaxOffsetY}" Value="{Binding OffsetY}"
+                IsSnapToTickEnabled="True" TickFrequency="1" SmallChange="1" LargeChange="5" VerticalAlignment="Center" Margin="0,0,8,0"
+                AutomationProperties.LabeledBy="{Binding ElementName=OffsetLabel}" ToolTip="{x:Static r:Strings.TextIcon_OffsetToolTip}" />
+      </DockPanel>
+
+      <TextBlock x:Name="ColourLabel" Grid.Row="1" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.TextIcon_Colour}" Margin="0,0,12,8" />
+      <!-- The hint wraps in the width the box and the picker's button leave (0.15.0 WP4) -->
+      <DockPanel Grid.Row="1" Grid.Column="1" Margin="0,0,0,8">
         <TextBox x:Name="ColourBox" DockPanel.Dock="Left" Width="110" Padding="4,3" VerticalContentAlignment="Center" VerticalAlignment="Center"
                  AutomationProperties.LabeledBy="{Binding ElementName=ColourLabel}"
                  Text="{Binding Color, UpdateSourceTrigger=PropertyChanged}" />
@@ -183,10 +195,10 @@
                    Margin="8,0,0,0" VerticalAlignment="Center" />
       </DockPanel>
 
-      <TextBlock x:Name="TileColourLabel" Grid.Row="1" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.TextIcon_TileColour}"
+      <TextBlock x:Name="TileColourLabel" Grid.Row="2" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.TextIcon_TileColour}"
                  VerticalAlignment="Top" Margin="0,4,12,0" />
       <!-- The swatches on the row, the code, None and the warning under them: on one line they did not fit (release check V3) -->
-      <StackPanel Grid.Row="1" Grid.Column="1">
+      <StackPanel Grid.Row="2" Grid.Column="1">
         <views:ColourSwatches x:Name="TileSwatches" Colours="{Binding TileColors}" Selected="{Binding TileColor}"
                               Command="{Binding SelectTileColorCommand}" Margin="0,2,0,0" />
         <StackPanel x:Name="TileColourCode" Orientation="Horizontal" Margin="0,2,0,0">
@@ -201,7 +213,7 @@
                      Visibility="{Binding IsTileColorValid, Converter={StaticResource InverseBoolToVisibility}}" />
         </StackPanel>
       </StackPanel>
-      <TextBlock Grid.Row="2" Grid.Column="1" Style="{StaticResource DialogHint}" Margin="0,2,0,8" TextWrapping="Wrap"
+      <TextBlock Grid.Row="3" Grid.Column="1" Style="{StaticResource DialogHint}" Margin="0,2,0,8" TextWrapping="Wrap"
                  Text="{x:Static r:Strings.TextIcon_TileColourHint}" />
     </Grid>
 

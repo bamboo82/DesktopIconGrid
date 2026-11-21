@@ -40,6 +40,7 @@ public sealed class TextIconViewModel : ObservableObject
     private FontChoice? _selectedFont;
     private string _fontSizeText;
     private bool _bold;
+    private int _offsetY;
     private string _color;
     private string _tileColor;
     private bool _isSymbol;
@@ -69,6 +70,7 @@ public sealed class TextIconViewModel : ObservableObject
         _selectedFont = TextIconFonts.Find(text?.FontFamily) ?? TextIconFonts.DefaultChoice();
         _fontSizeText = (text?.FontSize ?? TextIcon.DefaultFontSize).ToString(CultureInfo.CurrentCulture);
         _bold = text?.Bold ?? false;
+        _offsetY = current?.OffsetY ?? 0; // on both sides, like the colours
         _fit = text?.Fit ?? false;
         _color = current?.Color ?? string.Empty;
         _tileColor = current?.Background ?? string.Empty;
@@ -249,6 +251,30 @@ public sealed class TextIconViewModel : ObservableObject
 
     public bool IsFontSizeValid => TryParseFontSize(out _);
 
+    /// <summary>垂直位移 (0.15.0 WP7a): how far the text or symbol is moved down, in percent of the tile, −20 to +20.</summary>
+    public int OffsetY
+    {
+        get => _offsetY;
+        set
+        {
+            if (SetProperty(ref _offsetY, Math.Clamp(value, TextIcon.MinOffsetY, TextIcon.MaxOffsetY)))
+            {
+                OnPropertyChanged(nameof(OffsetText));
+                NotifyIcon();
+            }
+        }
+    }
+
+    /// <summary>The offset as the row shows it: a sign and a percent (negative is up).</summary>
+    public string OffsetText => string.Create(CultureInfo.CurrentCulture, $"{_offsetY:+0;−0;0} %");
+
+    public int MinOffsetY => TextIcon.MinOffsetY;
+
+    public int MaxOffsetY => TextIcon.MaxOffsetY;
+
+    /// <summary>歸零: back to the middle.</summary>
+    public void ResetOffset() => OffsetY = 0;
+
     // ----- Symbol ----------------------------------------------------------------------------------
 
     /// <summary>Every symbol of the catalogue, in its order.</summary>
@@ -380,6 +406,7 @@ public sealed class TextIconViewModel : ObservableObject
     {
         OverImage = _overImage,
         Place = _overImage && _place != TextIcon.PlaceCenter ? _place : null,
+        OffsetY = _offsetY, // up or down, on both sides (0.15.0 WP7a)
     };
 
     private void NotifyIcon()
