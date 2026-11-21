@@ -3125,4 +3125,10 @@ The place was not changed; what was copied stays there.</value>
   <data name="TextIcon_MissingFont" xml:space="preserve">
     <value>{0} (not on this PC)</value>
   </data>
+  <data name="Settings_HoverStrengthLabel" xml:space="preserve">
+    <value>Hover strength:</value>
+  </data>
+  <data name="Settings_PictureStrengthLabel" xml:space="preserve">
+    <value>Picture strength:</value>
+  </data>
 </root>

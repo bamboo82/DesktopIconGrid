@@ -62,6 +62,11 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
           </Grid.RowDefinitions>
 
           <!-- Theme -->
@@ -121,103 +126,100 @@
             </DockPanel>
             <views:ColourSwatches Margin="0,8,0,0" Colours="{Binding Presets}" Command="{Binding SelectPresetCommand}" />
 
-            <!-- The custom theme's hover and focus border colours (0.15.0 WP4b): automatic, from the background, until unticked -->
-            <Grid Margin="0,10,0,0">
-              <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="*" />
-              </Grid.ColumnDefinitions>
-              <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-              </Grid.RowDefinitions>
-
-              <TextBlock x:Name="HoverColourLabel" Grid.Row="0" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Settings_HoverColour}" Margin="0,0,10,4" />
-              <WrapPanel Grid.Row="0" Grid.Column="1" Margin="0,0,0,4">
-                <Border Width="20" Height="20" Margin="0,0,6,0" VerticalAlignment="Center" Background="{Binding HoverChipBrush}"
-                        BorderBrush="{DynamicResource SwatchBorderBrush}" BorderThickness="1" CornerRadius="3" />
-                <TextBox x:Name="HoverColourBox" Width="86" Padding="4,3" VerticalContentAlignment="Center" VerticalAlignment="Center"
-                         Text="{Binding HoverColorText, UpdateSourceTrigger=PropertyChanged}"
-                         IsEnabled="{Binding HoverAutomatic, Converter={StaticResource InverseBool}}"
-                         AutomationProperties.Name="{x:Static r:Strings.Settings_HoverColourName}" />
-                <Button x:Name="PickHoverButton" Content="{x:Static r:Strings.Settings_PickColour}" Padding="10,2" Margin="6,0,0,0" VerticalAlignment="Center"
-                        IsEnabled="{Binding HoverAutomatic, Converter={StaticResource InverseBool}}" Click="PickHover_Click" />
-                <CheckBox x:Name="HoverAutomaticBox" Content="{x:Static r:Strings.Settings_Automatic}" ContentTemplate="{StaticResource WrappingLabel}" Margin="10,0,0,0" VerticalAlignment="Center"
-                          IsChecked="{Binding HoverAutomatic}" AutomationProperties.Name="{x:Static r:Strings.Settings_HoverAutomaticName}" />
-                <TextBlock Text="{x:Static r:Strings.Settings_UseHex}" Foreground="{DynamicResource WarningBrush}" Margin="10,0,0,0" VerticalAlignment="Center"
-                           Visibility="{Binding IsHoverColorValid, Converter={StaticResource InverseBoolToVisibility}}" />
-              </WrapPanel>
-              <DockPanel Grid.Row="1" Grid.Column="1" Margin="0,0,0,8" IsEnabled="{Binding HoverAutomatic, Converter={StaticResource InverseBool}}">
-                <TextBlock DockPanel.Dock="Left" Text="{x:Static r:Strings.Settings_HoverStrength}" VerticalAlignment="Center" Margin="0,0,8,0" />
-                <TextBlock DockPanel.Dock="Right" Text="{Binding HoverStrengthText}" MinWidth="40" TextAlignment="Right" VerticalAlignment="Center" />
-                <Slider Minimum="{Binding MinHoverStrength}" Maximum="{Binding MaxHoverStrength}" Value="{Binding HoverStrength}"
-                        IsSnapToTickEnabled="True" TickFrequency="5" VerticalAlignment="Center" Margin="0,0,8,0"
-                        AutomationProperties.Name="{x:Static r:Strings.Settings_HoverStrength}" />
-              </DockPanel>
-
-              <TextBlock x:Name="FocusColourLabel" Grid.Row="2" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Settings_FocusColour}" Margin="0,0,10,4" />
-              <WrapPanel Grid.Row="2" Grid.Column="1" Margin="0,0,0,4">
-                <Border Width="20" Height="20" Margin="0,0,6,0" VerticalAlignment="Center" Background="{Binding FocusChipBrush}"
-                        BorderBrush="{DynamicResource SwatchBorderBrush}" BorderThickness="1" CornerRadius="3" />
-                <TextBox x:Name="FocusColourBox" Width="86" Padding="4,3" VerticalContentAlignment="Center" VerticalAlignment="Center"
-                         Text="{Binding FocusColorText, UpdateSourceTrigger=PropertyChanged}"
-                         IsEnabled="{Binding FocusAutomatic, Converter={StaticResource InverseBool}}"
-                         AutomationProperties.Name="{x:Static r:Strings.Settings_FocusColourName}" />
-                <Button x:Name="PickFocusButton" Content="{x:Static r:Strings.Settings_PickColour}" Padding="10,2" Margin="6,0,0,0" VerticalAlignment="Center"
-                        IsEnabled="{Binding FocusAutomatic, Converter={StaticResource InverseBool}}" Click="PickFocus_Click" />
-                <CheckBox x:Name="FocusAutomaticBox" Content="{x:Static r:Strings.Settings_Automatic}" ContentTemplate="{StaticResource WrappingLabel}" Margin="10,0,0,0" VerticalAlignment="Center"
-                          IsChecked="{Binding FocusAutomatic}" AutomationProperties.Name="{x:Static r:Strings.Settings_FocusAutomaticName}" />
-                <TextBlock Text="{x:Static r:Strings.Settings_UseHex}" Foreground="{DynamicResource WarningBrush}" Margin="10,0,0,0" VerticalAlignment="Center"
-                           Visibility="{Binding IsFocusColorValid, Converter={StaticResource InverseBoolToVisibility}}" />
-              </WrapPanel>
-              <!-- A chosen focus colour too close to the background: a warning, Save still works -->
-              <TextBlock x:Name="FocusHardToSeeLine" Grid.Row="3" Grid.Column="1" Text="{x:Static r:Strings.Settings_FocusHardToSee}" Foreground="{DynamicResource WarningBrush}" TextWrapping="Wrap"
-                         Visibility="{Binding IsFocusHardToSee, Converter={StaticResource BoolToVisibility}}" />
-            </Grid>
-
-            <!-- The background picture (0.15.0 WP5): over the colour, under everything else, in the bar and the window at the pointer -->
-            <Grid Margin="0,10,0,0">
-              <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="*" />
-              </Grid.ColumnDefinitions>
-              <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-              </Grid.RowDefinitions>
-              <TextBlock x:Name="PictureLabel" Grid.Row="0" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Settings_Picture}" Margin="0,0,10,4" VerticalAlignment="Center" />
-              <WrapPanel Grid.Row="0" Grid.Column="1" Margin="0,0,0,4">
-                <!-- The thumbnail is the border's fill, so nothing shares a cell (DialogFitTests) -->
-                <Border Width="64" Height="36" Margin="0,0,8,0" VerticalAlignment="Center" ClipToBounds="True"
-                        Background="{Binding PictureThumbnailBrush}"
-                        BorderBrush="{DynamicResource SwatchBorderBrush}" BorderThickness="1" CornerRadius="3"
-                        AutomationProperties.Name="{x:Static r:Strings.Settings_Picture}">
-                  <TextBlock Text="{x:Static r:Strings.Settings_PictureNone}" HorizontalAlignment="Center" VerticalAlignment="Center"
-                             Visibility="{Binding HasPicture, Converter={StaticResource InverseBoolToVisibility}}" />
-                </Border>
-                <Button x:Name="ChoosePictureButton" Content="{x:Static r:Strings.Settings_ChoosePicture}" Padding="10,2" Margin="0,0,6,0" VerticalAlignment="Center" Click="ChoosePicture_Click" />
-                <Button x:Name="PictureFromWebButton" Content="{x:Static r:Strings.Settings_PictureFromWeb}" Padding="10,2" Margin="0,0,6,0" VerticalAlignment="Center" Click="PictureFromWeb_Click" />
-                <!-- Where it lies and how far it is zoomed (0.15.0 WP6) -->
-                <Button x:Name="AdjustPictureButton" Content="{x:Static r:Strings.Settings_AdjustPicture}" Padding="10,2" Margin="0,0,6,0" VerticalAlignment="Center"
-                        IsEnabled="{Binding HasPicture}" Click="AdjustPicture_Click" />
-                <Button x:Name="RemovePictureButton" Content="{x:Static r:Strings.Settings_RemovePicture}" Padding="10,2" VerticalAlignment="Center"
-                        IsEnabled="{Binding HasPicture}" Click="RemovePicture_Click" />
-              </WrapPanel>
-              <DockPanel Grid.Row="1" Grid.Column="1" Margin="0,0,0,4" IsEnabled="{Binding HasPicture}">
-                <TextBlock DockPanel.Dock="Left" Text="{x:Static r:Strings.Settings_PictureStrength}" VerticalAlignment="Center" Margin="0,0,8,0" />
-                <TextBlock DockPanel.Dock="Right" Text="{Binding PictureStrengthText}" MinWidth="40" TextAlignment="Right" VerticalAlignment="Center" />
-                <Slider Minimum="{Binding MinPictureStrength}" Maximum="{Binding MaxPictureStrength}" Value="{Binding PictureStrength}"
-                        IsSnapToTickEnabled="True" TickFrequency="5" VerticalAlignment="Center" Margin="0,0,8,0"
-                        AutomationProperties.Name="{x:Static r:Strings.Settings_PictureStrength}" />
-              </DockPanel>
-            </Grid>
           </StackPanel>
 
+          <!-- The custom theme's hover and focus border colours (0.15.0 WP4b): automatic, from the background, until unticked.
+               Rows of the tab's own grid, labels in the label column (review 41 U1); 自動 stays on the line of its box and button
+               where it fits and wraps under them where it does not. -->
+          <TextBlock x:Name="HoverColourLabel" Grid.Row="2" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Settings_HoverColour}" Margin="0,0,12,10"
+                     IsEnabled="{Binding IsCustomTheme}" />
+          <WrapPanel Grid.Row="2" Grid.Column="1" Margin="0,0,0,10" IsEnabled="{Binding IsCustomTheme}">
+            <Border Width="20" Height="20" Margin="0,0,6,0" VerticalAlignment="Center" Background="{Binding HoverChipBrush}"
+                    BorderBrush="{DynamicResource SwatchBorderBrush}" BorderThickness="1" CornerRadius="3" />
+            <TextBox x:Name="HoverColourBox" Width="86" Padding="4,3" VerticalContentAlignment="Center" VerticalAlignment="Center"
+                     Text="{Binding HoverColorText, UpdateSourceTrigger=PropertyChanged}"
+                     IsEnabled="{Binding HoverAutomatic, Converter={StaticResource InverseBool}}"
+                     AutomationProperties.Name="{x:Static r:Strings.Settings_HoverColourName}" />
+            <Button x:Name="PickHoverButton" Content="{x:Static r:Strings.Settings_PickColour}" Padding="10,2" Margin="6,0,0,0" VerticalAlignment="Center"
+                    IsEnabled="{Binding HoverAutomatic, Converter={StaticResource InverseBool}}" Click="PickHover_Click" />
+            <CheckBox x:Name="HoverAutomaticBox" Content="{x:Static r:Strings.Settings_Automatic}" ContentTemplate="{StaticResource WrappingLabel}" Margin="10,0,0,0" VerticalAlignment="Center"
+                      IsChecked="{Binding HoverAutomatic}" AutomationProperties.Name="{x:Static r:Strings.Settings_HoverAutomaticName}" />
+            <TextBlock Text="{x:Static r:Strings.Settings_UseHex}" Foreground="{DynamicResource WarningBrush}" Margin="10,0,0,0" VerticalAlignment="Center"
+                       Visibility="{Binding IsHoverColorValid, Converter={StaticResource InverseBoolToVisibility}}" />
+          </WrapPanel>
+
+          <Border x:Name="HoverStrengthLabel" Grid.Row="3" Grid.Column="0" Margin="0,0,12,10" IsEnabled="{Binding IsCustomTheme}">
+            <TextBlock Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Settings_HoverStrengthLabel}" Margin="0"
+                       IsEnabled="{Binding HoverAutomatic, Converter={StaticResource InverseBool}}" />
+          </Border>
+          <DockPanel Grid.Row="3" Grid.Column="1" Margin="0,0,0,10" IsEnabled="{Binding IsCustomTheme}">
+            <DockPanel IsEnabled="{Binding HoverAutomatic, Converter={StaticResource InverseBool}}">
+              <TextBlock DockPanel.Dock="Right" Text="{Binding HoverStrengthText}" MinWidth="40" TextAlignment="Right" VerticalAlignment="Center" />
+              <Slider Minimum="{Binding MinHoverStrength}" Maximum="{Binding MaxHoverStrength}" Value="{Binding HoverStrength}"
+                      IsSnapToTickEnabled="True" TickFrequency="5" VerticalAlignment="Center" Margin="0,0,8,0"
+                      AutomationProperties.Name="{x:Static r:Strings.Settings_HoverStrength}" />
+            </DockPanel>
+          </DockPanel>
+
+          <TextBlock x:Name="FocusColourLabel" Grid.Row="4" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Settings_FocusColour}" Margin="0,0,12,10"
+                     IsEnabled="{Binding IsCustomTheme}" />
+          <StackPanel Grid.Row="4" Grid.Column="1" Margin="0,0,0,10" IsEnabled="{Binding IsCustomTheme}">
+            <WrapPanel>
+              <Border Width="20" Height="20" Margin="0,0,6,0" VerticalAlignment="Center" Background="{Binding FocusChipBrush}"
+                      BorderBrush="{DynamicResource SwatchBorderBrush}" BorderThickness="1" CornerRadius="3" />
+              <TextBox x:Name="FocusColourBox" Width="86" Padding="4,3" VerticalContentAlignment="Center" VerticalAlignment="Center"
+                       Text="{Binding FocusColorText, UpdateSourceTrigger=PropertyChanged}"
+                       IsEnabled="{Binding FocusAutomatic, Converter={StaticResource InverseBool}}"
+                       AutomationProperties.Name="{x:Static r:Strings.Settings_FocusColourName}" />
+              <Button x:Name="PickFocusButton" Content="{x:Static r:Strings.Settings_PickColour}" Padding="10,2" Margin="6,0,0,0" VerticalAlignment="Center"
+                      IsEnabled="{Binding FocusAutomatic, Converter={StaticResource InverseBool}}" Click="PickFocus_Click" />
+              <CheckBox x:Name="FocusAutomaticBox" Content="{x:Static r:Strings.Settings_Automatic}" ContentTemplate="{StaticResource WrappingLabel}" Margin="10,0,0,0" VerticalAlignment="Center"
+                        IsChecked="{Binding FocusAutomatic}" AutomationProperties.Name="{x:Static r:Strings.Settings_FocusAutomaticName}" />
+              <TextBlock Text="{x:Static r:Strings.Settings_UseHex}" Foreground="{DynamicResource WarningBrush}" Margin="10,0,0,0" VerticalAlignment="Center"
+                         Visibility="{Binding IsFocusColorValid, Converter={StaticResource InverseBoolToVisibility}}" />
+            </WrapPanel>
+            <!-- A chosen focus colour too close to the background: a warning, Save still works -->
+            <TextBlock x:Name="FocusHardToSeeLine" Margin="0,4,0,0" Text="{x:Static r:Strings.Settings_FocusHardToSee}" Foreground="{DynamicResource WarningBrush}" TextWrapping="Wrap"
+                       Visibility="{Binding IsFocusHardToSee, Converter={StaticResource BoolToVisibility}}" />
+          </StackPanel>
+
+          <!-- The background picture (0.15.0 WP5): over the colour, under everything else, in the bar and the window at the pointer -->
+          <TextBlock x:Name="PictureLabel" Grid.Row="5" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Settings_Picture}" Margin="0,0,12,10"
+                     VerticalAlignment="Center" IsEnabled="{Binding IsCustomTheme}" />
+          <WrapPanel Grid.Row="5" Grid.Column="1" Margin="0,0,0,10" IsEnabled="{Binding IsCustomTheme}">
+            <!-- The thumbnail is the border's fill, so nothing shares a cell (DialogFitTests) -->
+            <Border Width="64" Height="36" Margin="0,0,8,0" VerticalAlignment="Center" ClipToBounds="True"
+                    Background="{Binding PictureThumbnailBrush}"
+                    BorderBrush="{DynamicResource SwatchBorderBrush}" BorderThickness="1" CornerRadius="3"
+                    AutomationProperties.Name="{x:Static r:Strings.Settings_Picture}">
+              <TextBlock Text="{x:Static r:Strings.Settings_PictureNone}" HorizontalAlignment="Center" VerticalAlignment="Center"
+                         Visibility="{Binding HasPicture, Converter={StaticResource InverseBoolToVisibility}}" />
+            </Border>
+            <Button x:Name="ChoosePictureButton" Content="{x:Static r:Strings.Settings_ChoosePicture}" Padding="10,2" Margin="0,0,6,0" VerticalAlignment="Center" Click="ChoosePicture_Click" />
+            <Button x:Name="PictureFromWebButton" Content="{x:Static r:Strings.Settings_PictureFromWeb}" Padding="10,2" Margin="0,0,6,0" VerticalAlignment="Center" Click="PictureFromWeb_Click" />
+            <!-- Where it lies and how far it is zoomed (0.15.0 WP6) -->
+            <Button x:Name="AdjustPictureButton" Content="{x:Static r:Strings.Settings_AdjustPicture}" Padding="10,2" Margin="0,0,6,0" VerticalAlignment="Center"
+                    IsEnabled="{Binding HasPicture}" Click="AdjustPicture_Click" />
+            <Button x:Name="RemovePictureButton" Content="{x:Static r:Strings.Settings_RemovePicture}" Padding="10,2" VerticalAlignment="Center"
+                    IsEnabled="{Binding HasPicture}" Click="RemovePicture_Click" />
+          </WrapPanel>
+
+          <Border x:Name="PictureStrengthLabel" Grid.Row="6" Grid.Column="0" Margin="0,0,12,10" IsEnabled="{Binding IsCustomTheme}">
+            <TextBlock Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Settings_PictureStrengthLabel}" Margin="0"
+                       IsEnabled="{Binding HasPicture}" />
+          </Border>
+          <DockPanel Grid.Row="6" Grid.Column="1" Margin="0,0,0,10" IsEnabled="{Binding IsCustomTheme}">
+            <DockPanel IsEnabled="{Binding HasPicture}">
+              <TextBlock DockPanel.Dock="Right" Text="{Binding PictureStrengthText}" MinWidth="40" TextAlignment="Right" VerticalAlignment="Center" />
+              <Slider Minimum="{Binding MinPictureStrength}" Maximum="{Binding MaxPictureStrength}" Value="{Binding PictureStrength}"
+                      IsSnapToTickEnabled="True" TickFrequency="5" VerticalAlignment="Center" Margin="0,0,8,0"
+                      AutomationProperties.Name="{x:Static r:Strings.Settings_PictureStrength}" />
+            </DockPanel>
+          </DockPanel>
+
           <!-- Bar background (Windows 11 backdrop) -->
-          <TextBlock Grid.Row="2" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Settings_BarBackground}" Margin="0,0,12,10" VerticalAlignment="Top" />
-          <StackPanel Grid.Row="2" Grid.Column="1" Margin="0,0,0,10">
+          <TextBlock Grid.Row="7" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Settings_BarBackground}" Margin="0,0,12,10" VerticalAlignment="Top" />
+          <StackPanel Grid.Row="7" Grid.Column="1" Margin="0,0,0,10">
             <ComboBox Width="200" HorizontalAlignment="Left" VerticalContentAlignment="Center"
                       ItemsSource="{Binding Backdrops}" SelectedItem="{Binding SelectedBackdrop}" DisplayMemberPath="Name"
                       IsEnabled="{Binding IsBackdropSupported}"
@@ -226,8 +228,8 @@
           </StackPanel>
 
           <!-- Background transparency: the background only, icons stay solid (0.14.0); beside the background rows since WP2 -->
-          <TextBlock Grid.Row="3" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Settings_Transparency}" Margin="0,0,12,10" VerticalAlignment="Top" />
-          <StackPanel Grid.Row="3" Grid.Column="1" Margin="0,0,0,10">
+          <TextBlock Grid.Row="8" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Settings_Transparency}" Margin="0,0,12,10" VerticalAlignment="Top" />
+          <StackPanel Grid.Row="8" Grid.Column="1" Margin="0,0,0,10">
             <DockPanel>
               <TextBlock DockPanel.Dock="Right" Text="{Binding TransparencyText}" MinWidth="52" TextAlignment="Right" VerticalAlignment="Center" />
               <Slider x:Name="TransparencySlider" Minimum="0" Maximum="{Binding MaxTransparency}"
@@ -241,9 +243,9 @@
           </StackPanel>
 
           <!-- Icon size -->
-          <TextBlock Grid.Row="4" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Settings_IconSize}" Margin="0,0,12,10" />
+          <TextBlock Grid.Row="9" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Settings_IconSize}" Margin="0,0,12,10" />
           <!-- A listed size or a typed whole number from 16 to 256 (0.15.0 WP8), read when the box is left or Save is pressed -->
-          <ComboBox x:Name="IconSizeBox" Grid.Row="4" Grid.Column="1" Width="110" HorizontalAlignment="Left" Margin="0,0,0,10"
+          <ComboBox x:Name="IconSizeBox" Grid.Row="9" Grid.Column="1" Width="110" HorizontalAlignment="Left" Margin="0,0,0,10"
                     IsEditable="True"
                     ItemsSource="{Binding IconSizeChoices}"
                     Text="{Binding IconSizeText, UpdateSourceTrigger=LostFocus}"
@@ -251,8 +253,8 @@
                     AutomationProperties.Name="{x:Static r:Strings.Settings_IconSizeName}" />
 
           <!-- Spacing -->
-          <TextBlock Grid.Row="5" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Settings_Spacing}" Margin="0,0,12,10" />
-          <DockPanel Grid.Row="5" Grid.Column="1" Margin="0,0,0,10">
+          <TextBlock Grid.Row="10" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Settings_Spacing}" Margin="0,0,12,10" />
+          <DockPanel Grid.Row="10" Grid.Column="1" Margin="0,0,0,10">
             <TextBlock DockPanel.Dock="Right" Text="{Binding CellPaddingText}" MinWidth="44" TextAlignment="Right" VerticalAlignment="Center" />
             <Slider Minimum="{Binding MinCellPadding}" Maximum="{Binding MaxCellPadding}"
                     Value="{Binding CellPadding}"
@@ -262,13 +264,13 @@
           </DockPanel>
 
           <!-- Labels -->
-          <TextBlock Grid.Row="6" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Settings_Labels}" Margin="0,0,12,10" />
-          <CheckBox ContentTemplate="{StaticResource WrappingLabel}" Grid.Row="6" Grid.Column="1" Content="{x:Static r:Strings.Settings_ShowLabels}" IsChecked="{Binding ShowLabels}" Margin="0,0,0,10" VerticalAlignment="Center" />
+          <TextBlock Grid.Row="11" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Settings_Labels}" Margin="0,0,12,10" />
+          <CheckBox ContentTemplate="{StaticResource WrappingLabel}" Grid.Row="11" Grid.Column="1" Content="{x:Static r:Strings.Settings_ShowLabels}" IsChecked="{Binding ShowLabels}" Margin="0,0,0,10" VerticalAlignment="Center" />
 
           <!-- Chinese text: Taipei Sans TC Light where this PC has it, else a button that installs it (0.12.0 WP5); for the bar
                and the dialogs alike (0.14.0 WP2) -->
-          <TextBlock x:Name="ChineseFontLabel" Grid.Row="7" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Settings_ChineseFont}" Margin="0,0,12,10" VerticalAlignment="Top" />
-          <StackPanel Grid.Row="7" Grid.Column="1" Margin="0,0,0,10">
+          <TextBlock x:Name="ChineseFontLabel" Grid.Row="12" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Settings_ChineseFont}" Margin="0,0,12,10" VerticalAlignment="Top" />
+          <StackPanel Grid.Row="12" Grid.Column="1" Margin="0,0,0,10">
             <!-- The button goes under the list when the row is too narrow for both (0.12.1, review 28: about 9 px to spare in English) -->
             <WrapPanel x:Name="ChineseFontRow">
               <ComboBox x:Name="ChineseFontList" MinWidth="220" Margin="0,0,8,4" VerticalContentAlignment="Center"
@@ -304,10 +306,10 @@
           </StackPanel>
 
           <!-- Bar text (0.14.0 WP2): the font and the size of the bar's names (0.13.0 WP4), with a sample -->
-          <TextBlock x:Name="BarTextHeading" Grid.Row="8" Grid.Column="0" Grid.ColumnSpan="2" Style="{StaticResource DialogLabel}" FontWeight="SemiBold"
+          <TextBlock x:Name="BarTextHeading" Grid.Row="13" Grid.Column="0" Grid.ColumnSpan="2" Style="{StaticResource DialogLabel}" FontWeight="SemiBold"
                      TextWrapping="Wrap" Text="{x:Static r:Strings.Settings_BarText}" Margin="0,6,0,8" />
-          <TextBlock x:Name="UiFontLabel" Grid.Row="9" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Settings_UiFont}" Margin="0,0,12,10" />
-          <ComboBox x:Name="UiFontList" Grid.Row="9" Grid.Column="1" MinWidth="220" HorizontalAlignment="Left" Margin="0,0,0,10" VerticalContentAlignment="Center"
+          <TextBlock x:Name="UiFontLabel" Grid.Row="14" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Settings_UiFont}" Margin="0,0,12,10" />
+          <ComboBox x:Name="UiFontList" Grid.Row="14" Grid.Column="1" MinWidth="220" HorizontalAlignment="Left" Margin="0,0,0,10" VerticalContentAlignment="Center"
                     ItemsSource="{Binding UiFontOptions}" SelectedItem="{Binding SelectedUiFont}" DisplayMemberPath="Name"
                     AutomationProperties.Name="{x:Static r:Strings.Settings_UiFontName}">
             <ComboBox.ItemsPanel>
@@ -316,12 +318,12 @@
               </ItemsPanelTemplate>
             </ComboBox.ItemsPanel>
           </ComboBox>
-          <TextBlock x:Name="TextSizeLabel" Grid.Row="10" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Settings_TextSize}" Margin="0,0,12,10" />
-          <ComboBox x:Name="TextSizeList" Grid.Row="10" Grid.Column="1" MinWidth="90" HorizontalAlignment="Left" Margin="0,0,0,10" VerticalContentAlignment="Center"
+          <TextBlock x:Name="TextSizeLabel" Grid.Row="15" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Settings_TextSize}" Margin="0,0,12,10" />
+          <ComboBox x:Name="TextSizeList" Grid.Row="15" Grid.Column="1" MinWidth="90" HorizontalAlignment="Left" Margin="0,0,0,10" VerticalContentAlignment="Center"
                     ItemsSource="{Binding TextScaleOptions}" SelectedItem="{Binding SelectedTextScale}" DisplayMemberPath="Name"
                     AutomationProperties.Name="{x:Static r:Strings.Settings_TextSizeName}" />
-          <TextBlock x:Name="BarSampleLabel" Grid.Row="11" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Settings_TextSample}" Margin="0,0,12,10" VerticalAlignment="Top" />
-          <StackPanel Grid.Row="11" Grid.Column="1" Margin="0,0,0,10">
+          <TextBlock x:Name="BarSampleLabel" Grid.Row="16" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Settings_TextSample}" Margin="0,0,12,10" VerticalAlignment="Top" />
+          <StackPanel Grid.Row="16" Grid.Column="1" Margin="0,0,0,10">
             <!-- In the chosen font and size at once -->
             <TextBlock x:Name="TextSample" Text="{x:Static r:Strings.Settings_BarSample}" FontFamily="{Binding SampleFontFamily}" HorizontalAlignment="Left" Margin="0,0,0,4"
                        TextOptions.TextFormattingMode="{Binding SampleFormatting}">
@@ -333,10 +335,10 @@
           </StackPanel>
 
           <!-- Dialog and menu text (0.14.0 WP2): the other windows', the menus' and the tooltips'; the bar's unless chosen -->
-          <TextBlock x:Name="DialogTextHeading" Grid.Row="12" Grid.Column="0" Grid.ColumnSpan="2" Style="{StaticResource DialogLabel}" FontWeight="SemiBold"
+          <TextBlock x:Name="DialogTextHeading" Grid.Row="17" Grid.Column="0" Grid.ColumnSpan="2" Style="{StaticResource DialogLabel}" FontWeight="SemiBold"
                      TextWrapping="Wrap" Text="{x:Static r:Strings.Settings_DialogText}" Margin="0,6,0,8" />
-          <TextBlock x:Name="DialogFontLabel" Grid.Row="13" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Settings_UiFont}" Margin="0,0,12,10" />
-          <ComboBox x:Name="DialogFontList" Grid.Row="13" Grid.Column="1" MinWidth="220" HorizontalAlignment="Left" Margin="0,0,0,10" VerticalContentAlignment="Center"
+          <TextBlock x:Name="DialogFontLabel" Grid.Row="18" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Settings_UiFont}" Margin="0,0,12,10" />
+          <ComboBox x:Name="DialogFontList" Grid.Row="18" Grid.Column="1" MinWidth="220" HorizontalAlignment="Left" Margin="0,0,0,10" VerticalContentAlignment="Center"
                     ItemsSource="{Binding DialogFontOptions}" SelectedItem="{Binding SelectedDialogFont}" DisplayMemberPath="Name"
                     AutomationProperties.Name="{x:Static r:Strings.Settings_DialogFontName}">
             <ComboBox.ItemsPanel>
@@ -345,12 +347,12 @@
               </ItemsPanelTemplate>
             </ComboBox.ItemsPanel>
           </ComboBox>
-          <TextBlock x:Name="DialogTextSizeLabel" Grid.Row="14" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Settings_TextSize}" Margin="0,0,12,10" />
-          <ComboBox x:Name="DialogTextSizeList" Grid.Row="14" Grid.Column="1" MinWidth="90" HorizontalAlignment="Left" Margin="0,0,0,10" VerticalContentAlignment="Center"
+          <TextBlock x:Name="DialogTextSizeLabel" Grid.Row="19" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Settings_TextSize}" Margin="0,0,12,10" />
+          <ComboBox x:Name="DialogTextSizeList" Grid.Row="19" Grid.Column="1" MinWidth="90" HorizontalAlignment="Left" Margin="0,0,0,10" VerticalContentAlignment="Center"
                     ItemsSource="{Binding DialogScaleOptions}" SelectedItem="{Binding SelectedDialogScale}" DisplayMemberPath="Name"
                     AutomationProperties.Name="{x:Static r:Strings.Settings_DialogTextSizeName}" />
-          <TextBlock x:Name="DialogSampleLabel" Grid.Row="15" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Settings_TextSample}" Margin="0,0,12,10" VerticalAlignment="Top" />
-          <StackPanel Grid.Row="15" Grid.Column="1" Margin="0,0,0,10">
+          <TextBlock x:Name="DialogSampleLabel" Grid.Row="20" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Settings_TextSample}" Margin="0,0,12,10" VerticalAlignment="Top" />
+          <StackPanel Grid.Row="20" Grid.Column="1" Margin="0,0,0,10">
             <TextBlock x:Name="DialogTextSample" Text="{x:Static r:Strings.Settings_DialogSample}" FontFamily="{Binding DialogSampleFontFamily}" HorizontalAlignment="Left" Margin="0,0,0,4"
                        TextOptions.TextFormattingMode="{Binding DialogSampleFormatting}">
               <TextBlock.LayoutTransform>

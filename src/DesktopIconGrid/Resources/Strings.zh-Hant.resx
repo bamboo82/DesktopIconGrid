@@ -3125,4 +3125,10 @@ SHA-256：{3}
   <data name="TextIcon_MissingFont" xml:space="preserve">
     <value>{0}（這部電腦沒有）</value>
   </data>
+  <data name="Settings_HoverStrengthLabel" xml:space="preserve">
+    <value>滑鼠停留強度：</value>
+  </data>
+  <data name="Settings_PictureStrengthLabel" xml:space="preserve">
+    <value>圖片濃度：</value>
+  </data>
 </root>

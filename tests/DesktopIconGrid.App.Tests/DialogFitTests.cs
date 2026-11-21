@@ -3,6 +3,7 @@ using System.Windows.Controls;
 using System.Windows.Threading;
 using DesktopIconGrid.Core.Models;
 using DesktopIconGrid.Resources;
+using DesktopIconGrid.Services;
 using DesktopIconGrid.ViewModels;
 using DesktopIconGrid.Views;
 
@@ -146,6 +147,56 @@ public sealed class DialogFitTests(WpfThread wpf)
         FrameworkElement { Name.Length: > 0 } named => named.Name,
         _ => element.GetType().Name,
     };
+
+    [Theory]
+    [InlineData("zh-Hant", 1.0)]
+    [InlineData("zh-Hant", 1.5)]
+    [InlineData("en-US", 1.0)]
+    [InlineData("zh-Hans", 1.0)]
+    public void The_custom_themes_colour_and_picture_rows_have_their_labels_in_the_tabs_label_column(string language, double scale)
+    {
+        // Review 41 U1: 滑鼠停留色彩, 滑鼠停留強度, 焦點外框色彩, 背景圖片 and 圖片濃度 sat indented inside the value column.
+        wpf.Invoke(() =>
+        {
+            var before = System.Threading.Thread.CurrentThread.CurrentUICulture;
+            System.Threading.Thread.CurrentThread.CurrentUICulture = System.Globalization.CultureInfo.GetCultureInfo(language);
+            Services.UiFonts.Configure(null, null, scale);
+            var window = new SettingsWindow { DataContext = new SettingsViewModel(new LauncherSettings { Theme = ThemeCatalog.CustomId }) };
+            try
+            {
+                window.Show();
+                Settle(window);
+                var themeLabel = LogicalDescendants<TextBlock>(window).First(t => t.Text == Strings.Settings_Theme);
+                var grid = Assert.IsType<Grid>(themeLabel.Parent);
+                var left = themeLabel.TranslatePoint(default, grid).X;
+                var what = $"{language} at {scale:P0}";
+                foreach (var label in new FrameworkElement[] { window.HoverColourLabel, window.HoverStrengthLabel, window.FocusColourLabel, window.PictureLabel, window.PictureStrengthLabel })
+                {
+                    Assert.Same(grid, label.Parent); // a row of the tab's own grid
+                    Assert.Equal(0, Grid.GetColumn(label));
+                    Assert.Equal(left, label.TranslatePoint(default, grid).X, 1);
+                    Assert.True(label.IsVisible, $"{what}: {label.Name} is not shown");
+                }
+
+                if (scale == 1.0)
+                {
+                    // 自動 on the line of its box and button where it fits.
+                    foreach (var (box, automatic) in new[] { (window.HoverColourBox, window.HoverAutomaticBox), (window.FocusColourBox, window.FocusAutomaticBox) })
+                    {
+                        var boxMiddle = box.TranslatePoint(new Point(0, box.ActualHeight / 2), grid).Y;
+                        var automaticMiddle = automatic.TranslatePoint(new Point(0, automatic.ActualHeight / 2), grid).Y;
+                        Assert.True(Math.Abs(boxMiddle - automaticMiddle) < 4, $"{what}: {automatic.Name} at {automaticMiddle}, its box at {boxMiddle}");
+                    }
+                }
+            }
+            finally
+            {
+                window.Close();
+                Services.UiFonts.Configure(null);
+                System.Threading.Thread.CurrentThread.CurrentUICulture = before;
+            }
+        });
+    }
 
     [Fact]
     public void Settings_show_one_page_at_a_time_in_the_height_of_the_tallest()

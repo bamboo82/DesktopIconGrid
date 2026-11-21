@@ -3125,4 +3125,10 @@ SHA-256：{3}
   <data name="TextIcon_MissingFont" xml:space="preserve">
     <value>{0}（这台电脑没有）</value>
   </data>
+  <data name="Settings_HoverStrengthLabel" xml:space="preserve">
+    <value>鼠标悬停强度：</value>
+  </data>
+  <data name="Settings_PictureStrengthLabel" xml:space="preserve">
+    <value>图片浓度：</value>
+  </data>
 </root>

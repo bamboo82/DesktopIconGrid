@@ -6216,6 +6216,15 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Hover strength:.
+        /// </summary>
+        public static string Settings_HoverStrengthLabel {
+            get {
+                return ResourceManager.GetString("Settings_HoverStrengthLabel", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Icon size:.
         /// </summary>
         public static string Settings_IconSize {
@@ -6374,6 +6383,15 @@ namespace DesktopIconGrid.Resources {
         public static string Settings_PictureStrength {
             get {
                 return ResourceManager.GetString("Settings_PictureStrength", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Picture strength:.
+        /// </summary>
+        public static string Settings_PictureStrengthLabel {
+            get {
+                return ResourceManager.GetString("Settings_PictureStrengthLabel", resourceCulture);
             }
         }
 

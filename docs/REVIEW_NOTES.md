@@ -9,6 +9,22 @@ The owner relays replies.
 
 ---
 
+## 2026-11-21 (154) — Review 41 U1: the custom theme's new rows in the tab's label column
+
+- **U1:** 滑鼠停留色彩, 滑鼠停留強度, 焦點外框色彩, 背景圖片 and 圖片濃度 are now rows of the 外觀 tab's own grid (rows 2–6, the
+  rows below them moved down by five), each label in the label column and its controls in the value column, so they line
+  up with 主題, 背景 and 工具列背景. The two strength labels got a colon like the others (new strings
+  `Settings_HoverStrengthLabel`, `Settings_PictureStrengthLabel`; the old ones stay the sliders' automation names). 自動
+  stays in the row's wrap panel after the box and 選擇顏色…, so it is on their line where it fits and wraps under them
+  where it does not; the focus row's warning is under its controls in the same cell. Each row is enabled only for the
+  custom theme, as the 背景 row is; a strength label greys with its slider (automatic, no picture).
+- **Tests:** in zh-Hant at 100 and 150 %, English and zh-Hans at 100 %: each of the five labels is a child of the tab's
+  grid, in column 0, at the 主題 label's left edge, and shown; at 100 % 自動 is on the line of its box for both colours. The
+  existing check that every control of every tab has a cell of its own covers the new rows.
+- **Not tested:** on screen, and 自動 wrapping under its box at a width where it does not fit.
+
+This entry claims no run for its own commit.
+
 ## 2026-11-21 (153) — WP7b: two tests corrected
 
 - **Run 256** (`4be2941`, WP7b): Core 1359/1359, App 586/588. Both red tests were the tests', not the app's:
