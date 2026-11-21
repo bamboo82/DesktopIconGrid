@@ -26,6 +26,15 @@ the variant: above 0.6 the theme uses the *light* set (dark text, black overlays
 otherwise the *dark* set (white text, white overlays, lighter blue accent). The border is the
 background darkened by half. This keeps labels readable for every colour the user can pick.
 
+**Picking the colour (0.15.0).** Beside the colour code, *Pick a colour…* opens the colour picker: a saturation and
+brightness square (240 × 160) with a ring, a hue strip with a thumb, the code and its red, green and blue as boxes, the
+colour it opened with and the new one side by side, and the swatches. All of them show one colour; a box with what is
+not a colour changes nothing until it is left, and then shows the colour again. The arrow keys move the ring or the thumb
+by one unit, ten with Shift; Enter is OK and Esc is Cancel. While it is open, the swatch beside the theme list follows
+the new colour; Cancel puts back what the box had, and the bar changes at Save, as before. The conversions
+(`ColourMath`: `#RRGGBB`, red-green-blue and hue-saturation-value) are in the core library and unit-tested. The text
+icon window's colour and tile colour have the same button.
+
 Existing layouts that only had a background colour keep their look: when a layout file has no
 `theme` field, the app picks *Classic* if the colour is still the default and *Custom* otherwise.
 

@@ -2939,4 +2939,49 @@ SHA-256：{3}
   <data name="Settings_IconSizeToolTip" xml:space="preserve">
     <value>選擇一個大小，或輸入 16 到 256 之間的整數。</value>
   </data>
+  <data name="Settings_PickColour" xml:space="preserve">
+    <value>選擇顏色…</value>
+  </data>
+  <data name="ColourPicker_Title" xml:space="preserve">
+    <value>選擇顏色</value>
+  </data>
+  <data name="ColourPicker_Current" xml:space="preserve">
+    <value>目前</value>
+  </data>
+  <data name="ColourPicker_New" xml:space="preserve">
+    <value>新的</value>
+  </data>
+  <data name="ColourPicker_CurrentName" xml:space="preserve">
+    <value>目前的顏色</value>
+  </data>
+  <data name="ColourPicker_NewName" xml:space="preserve">
+    <value>新的顏色</value>
+  </data>
+  <data name="ColourPicker_SquareName" xml:space="preserve">
+    <value>飽和度與亮度</value>
+  </data>
+  <data name="ColourPicker_SquareHelp" xml:space="preserve">
+    <value>按一下或拖曳即可選擇。方向鍵可移動標記；按住 Shift 一次移動十格。</value>
+  </data>
+  <data name="ColourPicker_HueName" xml:space="preserve">
+    <value>色相</value>
+  </data>
+  <data name="ColourPicker_HueHelp" xml:space="preserve">
+    <value>按一下或拖曳即可選擇色相。方向鍵可移動；按住 Shift 一次移動十格。</value>
+  </data>
+  <data name="ColourPicker_HexName" xml:space="preserve">
+    <value>顏色代碼</value>
+  </data>
+  <data name="ColourPicker_RedName" xml:space="preserve">
+    <value>紅色，0 到 255</value>
+  </data>
+  <data name="ColourPicker_GreenName" xml:space="preserve">
+    <value>綠色，0 到 255</value>
+  </data>
+  <data name="ColourPicker_BlueName" xml:space="preserve">
+    <value>藍色，0 到 255</value>
+  </data>
+  <data name="ColourPicker_NotAColour" xml:space="preserve">
+    <value>請使用 #RRGGBB，以及 0 到 255 的整數。</value>
+  </data>
 </root>

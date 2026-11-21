@@ -798,7 +798,7 @@ warnings and errors. The last 2000 entries stay in memory and all of them are ap
 | Launch on | single click (or double click) |
 | Always on top | off |
 | Lock grid | off (0.15.0; stored as `lockGrid` and synced; in the menus, not in Settings) |
-| Theme | Classic (Graphite, Paper, Midnight, Sand, or Custom colour) |
+| Theme | Classic (Graphite, Paper, Midnight, Sand, or Custom colour; since 0.15.0 the custom colour has *Pick a colour…*, the colour picker of [docs/THEMES.md](docs/THEMES.md), beside its code, and so do the text icon window's colour and tile colour) |
 | Bar background | solid colour (Mica or Acrylic on Windows 11 22H2+, tinted with the theme) |
 | Windows 11 style dialogs | on (follow the system light/dark mode). In both looks a hint under a field, and any other line that explains, is in the dialog's text colour, told apart by its place (0.13.0; it was grey); grey stays where it says something: the log's Debug lines and the Drive viewer's path dividers |
 | Dock to edge | not docked (top, bottom, left or right edge as a desktop toolbar) |

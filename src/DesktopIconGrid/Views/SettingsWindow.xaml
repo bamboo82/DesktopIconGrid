@@ -95,6 +95,9 @@
               <TextBox DockPanel.Dock="Left" Width="96" Padding="4,3" VerticalContentAlignment="Center" VerticalAlignment="Center"
                        Text="{Binding BackgroundColor, UpdateSourceTrigger=PropertyChanged}"
                        AutomationProperties.Name="{x:Static r:Strings.Settings_BackgroundColourName}" />
+              <!-- The colour picker (0.15.0 WP4); the swatch beside the theme follows it while it is open -->
+              <Button x:Name="PickBackgroundButton" DockPanel.Dock="Left" Content="{x:Static r:Strings.Settings_PickColour}" Padding="10,2" Margin="8,0,0,0"
+                      VerticalAlignment="Center" Click="PickBackground_Click" />
               <StackPanel Margin="10,0,0,0" VerticalAlignment="Center">
                 <TextBlock Text="{x:Static r:Strings.Settings_UseHex}" Foreground="{DynamicResource WarningBrush}" TextWrapping="Wrap"
                            Visibility="{Binding IsColorValid, Converter={StaticResource InverseBoolToVisibility}}" />

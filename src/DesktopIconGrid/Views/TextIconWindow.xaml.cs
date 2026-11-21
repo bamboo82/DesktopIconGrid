@@ -18,6 +18,32 @@ public partial class TextIconWindow : Window
 
     private TextIconViewModel? ViewModel => DataContext as TextIconViewModel;
 
+    /// <summary>The text's colour from the colour picker (0.15.0 WP4); the preview follows it, and Cancel puts back what the box had.</summary>
+    private void PickColour_Click(object sender, RoutedEventArgs e)
+    {
+        if (ViewModel is not { } viewModel)
+        {
+            return;
+        }
+
+        var before = viewModel.Color;
+        var chosen = ColourPickerWindow.Pick(this, before.Length > 0 && viewModel.IsColorValid ? before : null, colour => viewModel.Color = colour, viewModel.TileColors);
+        viewModel.Color = chosen ?? before;
+    }
+
+    /// <summary>The tile colour from the colour picker (0.15.0 WP4), as the text's colour.</summary>
+    private void PickTileColour_Click(object sender, RoutedEventArgs e)
+    {
+        if (ViewModel is not { } viewModel)
+        {
+            return;
+        }
+
+        var before = viewModel.TileColor;
+        var chosen = ColourPickerWindow.Pick(this, before.Length > 0 && viewModel.IsTileColorValid ? before : null, colour => viewModel.TileColor = colour, viewModel.TileColors);
+        viewModel.TileColor = chosen ?? before;
+    }
+
     /// <summary>An icon that is a symbol opens on Symbol, its symbol scrolled into view and the search box ready.</summary>
     private void ShowChosenSymbol()
     {

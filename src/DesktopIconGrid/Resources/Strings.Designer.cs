@@ -834,6 +834,132 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Blue, 0 to 255.
+        /// </summary>
+        public static string ColourPicker_BlueName {
+            get {
+                return ResourceManager.GetString("ColourPicker_BlueName", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Current.
+        /// </summary>
+        public static string ColourPicker_Current {
+            get {
+                return ResourceManager.GetString("ColourPicker_Current", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Current colour.
+        /// </summary>
+        public static string ColourPicker_CurrentName {
+            get {
+                return ResourceManager.GetString("ColourPicker_CurrentName", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Green, 0 to 255.
+        /// </summary>
+        public static string ColourPicker_GreenName {
+            get {
+                return ResourceManager.GetString("ColourPicker_GreenName", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Colour code.
+        /// </summary>
+        public static string ColourPicker_HexName {
+            get {
+                return ResourceManager.GetString("ColourPicker_HexName", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Click or drag to pick a hue. The arrow keys move it; with Shift, ten steps..
+        /// </summary>
+        public static string ColourPicker_HueHelp {
+            get {
+                return ResourceManager.GetString("ColourPicker_HueHelp", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Hue.
+        /// </summary>
+        public static string ColourPicker_HueName {
+            get {
+                return ResourceManager.GetString("ColourPicker_HueName", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to New.
+        /// </summary>
+        public static string ColourPicker_New {
+            get {
+                return ResourceManager.GetString("ColourPicker_New", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to New colour.
+        /// </summary>
+        public static string ColourPicker_NewName {
+            get {
+                return ResourceManager.GetString("ColourPicker_NewName", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Use #RRGGBB, and whole numbers from 0 to 255..
+        /// </summary>
+        public static string ColourPicker_NotAColour {
+            get {
+                return ResourceManager.GetString("ColourPicker_NotAColour", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Red, 0 to 255.
+        /// </summary>
+        public static string ColourPicker_RedName {
+            get {
+                return ResourceManager.GetString("ColourPicker_RedName", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Click or drag to pick. The arrow keys move the mark; with Shift, ten steps..
+        /// </summary>
+        public static string ColourPicker_SquareHelp {
+            get {
+                return ResourceManager.GetString("ColourPicker_SquareHelp", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Saturation and brightness.
+        /// </summary>
+        public static string ColourPicker_SquareName {
+            get {
+                return ResourceManager.GetString("ColourPicker_SquareName", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Pick a colour.
+        /// </summary>
+        public static string ColourPicker_Title {
+            get {
+                return ResourceManager.GetString("ColourPicker_Title", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Approve and run.
         /// </summary>
         public static string Command_ApproveButton {
@@ -5951,6 +6077,15 @@ namespace DesktopIconGrid.Resources {
         public static string Settings_PcNameHint {
             get {
                 return ResourceManager.GetString("Settings_PcNameHint", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Pick a colour….
+        /// </summary>
+        public static string Settings_PickColour {
+            get {
+                return ResourceManager.GetString("Settings_PickColour", resourceCulture);
             }
         }
 

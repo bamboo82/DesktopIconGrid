@@ -9,6 +9,47 @@ The owner relays replies.
 
 ---
 
+## 2026-11-21 (145) — 0.15.0 WP4: a colour picker for the custom theme
+
+- **Run 248** (`b34b78f`, WP9, entry 144): green, Core 1279 of 1279, App 527 of 527.
+- **Where:** 選擇顏色… / *Pick a colour…* beside the custom colour's code (Settings ▸ 外觀), and, since it dropped in
+  without redesign, beside the text icon window's colour and tile colour codes. That window's colour row is now a dock
+  panel, so its hint wraps in the room the button leaves.
+- **The picker** is a small dialog, `ColourPickerWindow`, with its view model `ColourPickerViewModel`; the three callers
+  open it through `ColourPickerWindow.Pick`. You asked for a reusable control in a dialog. The parts live in the dialog
+  itself because nothing shows them inline yet; if WP4b or WP6 want them inline, I will split them into a control then.
+  - The square is 240 × 160: white to the hue from left to right, and black over it from top to bottom. Its ring is black
+    outside and white inside, so it shows on light and dark.
+  - The hue strip is 240 × 16, red to red, with a white thumb.
+  - The code box and the R, G and B boxes. While a box holds what is not a colour, a line under them says "Use #RRGGBB,
+    and whole numbers from 0 to 255."
+  - The 目前 and 新的 chips (56 × 28), each with its code as a tooltip, and the swatch row (Settings' presets, or the text
+    icon window's list).
+  - 確定 and 取消: Enter is OK and Esc is Cancel. Focus starts on the square.
+- **In step:** the hue, saturation and value are kept as they were set. A box or a swatch sets red, green and blue, and
+  hue, saturation and value follow, except that a grey keeps the hue and black keeps the saturation, so the marks do not
+  jump. The box being typed in keeps its text (no jumping caret). A box with what is not a colour changes nothing, and
+  shows the colour again when it is left.
+- **Mouse and keys:** press and drag on the square or the strip (the mouse is captured), held to their edges. The
+  strip's right end stays just short of 360°, so the thumb does not jump back to the left. On the square the arrows move
+  the ring one unit (Shift: ten): right is more saturated, up is brighter. On the strip, Left and Right (Up and Down too)
+  move the thumb one unit, 1.5°, wrapping round. Every part has an automation name; the square and the strip have help
+  text and a tooltip.
+- **Live:** in Settings the swatch beside the theme list follows the new colour (the colour is set as it changes). Cancel
+  puts back what the box had, even a typed non-colour, and the bar changes at Save, as before. A box holding no colour
+  opens the picker at mid-grey. The text icon window's preview follows in the same way.
+- **Tests:**
+  - Core `ColourMathTests`: the round trip over a grid of 52³ colours, known colours, codes with and without `#`, what is
+    refused, channels 0–255, a hue that wraps and values held to 0–1;
+  - App `ColourPickerTests`: it opens at the colour; the square and the strip; the keys and the wrap; the boxes refuse,
+    apply and come back; a grey and black keep the marks; the swatches; the window's ring and thumb; the warning line;
+    Display text like the other dialogs. The fit test of the text icon window (three languages, 100 % and 150 %) covers
+    the new buttons.
+- **Not tested:** the dialog on screen, mouse drags, the order of keyboard focus, the live preview with a real Settings
+  window (the `Pick` call with its callback is a few lines in each window), and the square and strip in the Fluent look.
+
+This entry claims no run for its own commit.
+
 ## 2026-11-21 (144) — 0.15.0 WP9: sharp text in every window
 
 - **Run 247** (`ccf1627`, WP8, entry 143): green, Core 1279 of 1279, App 512 of 512.

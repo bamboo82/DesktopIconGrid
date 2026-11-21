@@ -1,0 +1,114 @@
+<Window x:Class="DesktopIconGrid.Views.ColourPickerWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:r="clr-namespace:DesktopIconGrid.Resources"
+        xmlns:views="clr-namespace:DesktopIconGrid.Views"
+        Title="{x:Static r:Strings.ColourPicker_Title}"
+        SizeToContent="WidthAndHeight"
+        ResizeMode="NoResize"
+        WindowStartupLocation="CenterOwner"
+        ShowInTaskbar="False"
+        Icon="{StaticResource AppIconImage}"
+        FocusManager.FocusedElement="{Binding ElementName=Square}">
+  <!-- The colour picker (0.15.0 WP4): the square, the strip, the code and its channels, the two chips and the swatches show one colour -->
+  <StackPanel Margin="14">
+    <!-- Saturation from left to right, brightness from bottom to top, of the hue the strip sets -->
+    <Grid x:Name="Square" Width="240" Height="160" HorizontalAlignment="Left" Focusable="True" Cursor="Cross" ClipToBounds="True"
+          MouseLeftButtonDown="Square_MouseLeftButtonDown" MouseMove="Square_MouseMove" MouseLeftButtonUp="Square_MouseLeftButtonUp"
+          KeyDown="Square_KeyDown"
+          AutomationProperties.Name="{x:Static r:Strings.ColourPicker_SquareName}"
+          AutomationProperties.HelpText="{x:Static r:Strings.ColourPicker_SquareHelp}"
+          ToolTip="{x:Static r:Strings.ColourPicker_SquareHelp}">
+      <Rectangle Fill="{Binding HueBrush}" />
+      <Rectangle>
+        <Rectangle.Fill>
+          <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+            <GradientStop Color="#FFFFFFFF" Offset="0" />
+            <GradientStop Color="#00FFFFFF" Offset="1" />
+          </LinearGradientBrush>
+        </Rectangle.Fill>
+      </Rectangle>
+      <Rectangle>
+        <Rectangle.Fill>
+          <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+            <GradientStop Color="#00000000" Offset="0" />
+            <GradientStop Color="#FF000000" Offset="1" />
+          </LinearGradientBrush>
+        </Rectangle.Fill>
+      </Rectangle>
+      <Canvas IsHitTestVisible="False">
+        <!-- A ring that shows on light and dark alike: black outside, white inside -->
+        <Ellipse x:Name="RingOuter" Width="14" Height="14" Stroke="#FF000000" StrokeThickness="1" />
+        <Ellipse x:Name="RingInner" Width="12" Height="12" Stroke="#FFFFFFFF" StrokeThickness="2" />
+      </Canvas>
+    </Grid>
+
+    <!-- The hue, red to red -->
+    <Grid x:Name="HueStrip" Width="240" Height="16" Margin="0,8,0,0" HorizontalAlignment="Left" Focusable="True" Cursor="Hand"
+          MouseLeftButtonDown="HueStrip_MouseLeftButtonDown" MouseMove="HueStrip_MouseMove" MouseLeftButtonUp="HueStrip_MouseLeftButtonUp"
+          KeyDown="HueStrip_KeyDown"
+          AutomationProperties.Name="{x:Static r:Strings.ColourPicker_HueName}"
+          AutomationProperties.HelpText="{x:Static r:Strings.ColourPicker_HueHelp}"
+          ToolTip="{x:Static r:Strings.ColourPicker_HueHelp}">
+      <Rectangle>
+        <Rectangle.Fill>
+          <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+            <GradientStop Color="#FFFF0000" Offset="0" />
+            <GradientStop Color="#FFFFFF00" Offset="0.1667" />
+            <GradientStop Color="#FF00FF00" Offset="0.3333" />
+            <GradientStop Color="#FF00FFFF" Offset="0.5" />
+            <GradientStop Color="#FF0000FF" Offset="0.6667" />
+            <GradientStop Color="#FFFF00FF" Offset="0.8333" />
+            <GradientStop Color="#FFFF0000" Offset="1" />
+          </LinearGradientBrush>
+        </Rectangle.Fill>
+      </Rectangle>
+      <Canvas IsHitTestVisible="False">
+        <Rectangle x:Name="HueThumb" Width="6" Height="20" Canvas.Top="-2" Fill="#FFFFFFFF" Stroke="#FF000000" StrokeThickness="1" RadiusX="1" RadiusY="1" />
+      </Canvas>
+    </Grid>
+
+    <!-- The code and its red, green and blue -->
+    <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+      <TextBlock Text="#" VerticalAlignment="Center" Margin="0,0,4,0" />
+      <TextBox x:Name="HexBox" Width="82" Padding="4,3" VerticalContentAlignment="Center"
+               Text="{Binding HexText, UpdateSourceTrigger=PropertyChanged}" LostKeyboardFocus="Box_LostKeyboardFocus"
+               AutomationProperties.Name="{x:Static r:Strings.ColourPicker_HexName}" />
+      <TextBlock Text="R" VerticalAlignment="Center" Margin="10,0,4,0" />
+      <TextBox x:Name="RedBox" Width="42" Padding="4,3" VerticalContentAlignment="Center"
+               Text="{Binding RedText, UpdateSourceTrigger=PropertyChanged}" LostKeyboardFocus="Box_LostKeyboardFocus"
+               AutomationProperties.Name="{x:Static r:Strings.ColourPicker_RedName}" />
+      <TextBlock Text="G" VerticalAlignment="Center" Margin="8,0,4,0" />
+      <TextBox x:Name="GreenBox" Width="42" Padding="4,3" VerticalContentAlignment="Center"
+               Text="{Binding GreenText, UpdateSourceTrigger=PropertyChanged}" LostKeyboardFocus="Box_LostKeyboardFocus"
+               AutomationProperties.Name="{x:Static r:Strings.ColourPicker_GreenName}" />
+      <TextBlock Text="B" VerticalAlignment="Center" Margin="8,0,4,0" />
+      <TextBox x:Name="BlueBox" Width="42" Padding="4,3" VerticalContentAlignment="Center"
+               Text="{Binding BlueText, UpdateSourceTrigger=PropertyChanged}" LostKeyboardFocus="Box_LostKeyboardFocus"
+               AutomationProperties.Name="{x:Static r:Strings.ColourPicker_BlueName}" />
+    </StackPanel>
+    <TextBlock x:Name="NotAColour" Text="{x:Static r:Strings.ColourPicker_NotAColour}" Foreground="{DynamicResource WarningBrush}" TextWrapping="Wrap"
+               MaxWidth="240" HorizontalAlignment="Left" Margin="0,4,0,0" Visibility="Collapsed" />
+
+    <!-- The colour it opened with and the new one, side by side -->
+    <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+      <StackPanel Margin="0,0,16,0">
+        <Border Width="56" Height="28" Background="{Binding CurrentBrush}" BorderBrush="{DynamicResource SwatchBorderBrush}" BorderThickness="1" CornerRadius="3"
+                AutomationProperties.Name="{x:Static r:Strings.ColourPicker_CurrentName}" ToolTip="{Binding Current}" />
+        <TextBlock Text="{x:Static r:Strings.ColourPicker_Current}" HorizontalAlignment="Center" Margin="0,2,0,0" />
+      </StackPanel>
+      <StackPanel>
+        <Border Width="56" Height="28" Background="{Binding NewBrush}" BorderBrush="{DynamicResource SwatchBorderBrush}" BorderThickness="1" CornerRadius="3"
+                AutomationProperties.Name="{x:Static r:Strings.ColourPicker_NewName}" ToolTip="{Binding Hex}" />
+        <TextBlock Text="{x:Static r:Strings.ColourPicker_New}" HorizontalAlignment="Center" Margin="0,2,0,0" />
+      </StackPanel>
+    </StackPanel>
+
+    <views:ColourSwatches Margin="0,10,0,0" MaxWidth="240" HorizontalAlignment="Left" Colours="{Binding Presets}" Selected="{Binding Hex}" Command="{Binding SelectPresetCommand}" />
+
+    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,14,0,0">
+      <Button Content="{x:Static r:Strings.Common_OK}" Style="{StaticResource DialogButton}" IsDefault="True" Click="Ok_Click" />
+      <Button Content="{x:Static r:Strings.Common_Cancel}" Style="{StaticResource DialogButton}" IsCancel="True" />
+    </StackPanel>
+  </StackPanel>
+</Window>

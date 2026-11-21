@@ -94,6 +94,22 @@ public partial class SettingsWindow : Window
         Dispatcher.BeginInvoke(DispatcherPriority.Input, () => page.MoveFocus(new TraversalRequest(FocusNavigationDirection.First)));
     }
 
+    /// <summary>
+    /// The custom colour from the colour picker (0.15.0 WP4): the swatch beside the theme follows the new colour while the
+    /// picker is open, and Cancel puts back what the box had.
+    /// </summary>
+    private void PickBackground_Click(object sender, RoutedEventArgs e)
+    {
+        if (ViewModel is not { } viewModel)
+        {
+            return;
+        }
+
+        var before = viewModel.BackgroundColor;
+        var chosen = ColourPickerWindow.Pick(this, viewModel.IsColorValid ? before : null, colour => viewModel.BackgroundColor = colour, viewModel.Presets);
+        viewModel.BackgroundColor = chosen ?? before;
+    }
+
     private void Save_Click(object sender, RoutedEventArgs e)
     {
         // A size typed into the icon size box and not yet read: Enter presses Save without leaving the box (0.15.0 WP8).

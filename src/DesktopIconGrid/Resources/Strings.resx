@@ -2939,4 +2939,49 @@ The place was not changed; what was copied stays there.</value>
   <data name="Settings_IconSizeToolTip" xml:space="preserve">
     <value>Pick a size, or type a whole number from 16 to 256.</value>
   </data>
+  <data name="Settings_PickColour" xml:space="preserve">
+    <value>Pick a colour…</value>
+  </data>
+  <data name="ColourPicker_Title" xml:space="preserve">
+    <value>Pick a colour</value>
+  </data>
+  <data name="ColourPicker_Current" xml:space="preserve">
+    <value>Current</value>
+  </data>
+  <data name="ColourPicker_New" xml:space="preserve">
+    <value>New</value>
+  </data>
+  <data name="ColourPicker_CurrentName" xml:space="preserve">
+    <value>Current colour</value>
+  </data>
+  <data name="ColourPicker_NewName" xml:space="preserve">
+    <value>New colour</value>
+  </data>
+  <data name="ColourPicker_SquareName" xml:space="preserve">
+    <value>Saturation and brightness</value>
+  </data>
+  <data name="ColourPicker_SquareHelp" xml:space="preserve">
+    <value>Click or drag to pick. The arrow keys move the mark; with Shift, ten steps.</value>
+  </data>
+  <data name="ColourPicker_HueName" xml:space="preserve">
+    <value>Hue</value>
+  </data>
+  <data name="ColourPicker_HueHelp" xml:space="preserve">
+    <value>Click or drag to pick a hue. The arrow keys move it; with Shift, ten steps.</value>
+  </data>
+  <data name="ColourPicker_HexName" xml:space="preserve">
+    <value>Colour code</value>
+  </data>
+  <data name="ColourPicker_RedName" xml:space="preserve">
+    <value>Red, 0 to 255</value>
+  </data>
+  <data name="ColourPicker_GreenName" xml:space="preserve">
+    <value>Green, 0 to 255</value>
+  </data>
+  <data name="ColourPicker_BlueName" xml:space="preserve">
+    <value>Blue, 0 to 255</value>
+  </data>
+  <data name="ColourPicker_NotAColour" xml:space="preserve">
+    <value>Use #RRGGBB, and whole numbers from 0 to 255.</value>
+  </data>
 </root>

@@ -9,6 +9,9 @@ version numbers follow [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- A colour picker for the custom theme's colour, under Settings ▸ Appearance: a saturation and brightness square, a
+  hue strip, the colour code and its red, green and blue, the old and new colour side by side, and the swatches. The
+  theme's preview follows it while it is open. The text icon window's colour and tile colour have it too.
 - *Lock grid* in the menu of the bar's empty area and in its ▸ menu: while it is ticked nothing on the grid moves by
   dragging (icons, groups, special icons, separators), in the bar, its groups and the window at the pointer. Files
   dropped from elsewhere are still added or opened, and the bar itself still moves. The first drag it stops says how
