@@ -3137,4 +3137,40 @@ The place was not changed; what was copied stays there.</value>
   <data name="Settings_PictureMissingHere" xml:space="preserve">
     <value>This PC does not have this picture</value>
   </data>
+  <data name="Settings_PointerAnchor" xml:space="preserve">
+    <value>Window position at the pointer:</value>
+  </data>
+  <data name="Settings_PointerAnchorName" xml:space="preserve">
+    <value>Window position at the pointer</value>
+  </data>
+  <data name="Settings_PointerAnchorX" xml:space="preserve">
+    <value>Horizontal</value>
+  </data>
+  <data name="Settings_PointerAnchorY" xml:space="preserve">
+    <value>Vertical</value>
+  </data>
+  <data name="Settings_PointerAnchorXName" xml:space="preserve">
+    <value>Window position at the pointer, horizontal, in percent</value>
+  </data>
+  <data name="Settings_PointerAnchorYName" xml:space="preserve">
+    <value>Window position at the pointer, vertical, in percent</value>
+  </data>
+  <data name="Settings_PointerAnchorReset" xml:space="preserve">
+    <value>Reset to default</value>
+  </data>
+  <data name="Settings_PointerAnchorDefault" xml:space="preserve">
+    <value>Default: top centre</value>
+  </data>
+  <data name="Settings_PointerAnchorValue" xml:space="preserve">
+    <value>Horizontal {0} %, vertical {1} %</value>
+  </data>
+  <data name="Settings_PointerAnchorHint" xml:space="preserve">
+    <value>The pointer lands on this point of the window; the window stays inside the screen's work area. Both ways of showing it use it.</value>
+  </data>
+  <data name="Settings_PointerAnchorInvalid" xml:space="preserve">
+    <value>Enter a whole number from 0 to 100.</value>
+  </data>
+  <data name="Settings_PointerAnchorHelp" xml:space="preserve">
+    <value>Click or drag to choose the point. Arrow keys move it by 1 %, with Ctrl from dot to dot; Home is the centre.</value>
+  </data>
 </root>

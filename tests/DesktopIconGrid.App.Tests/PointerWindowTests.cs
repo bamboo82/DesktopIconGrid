@@ -389,6 +389,78 @@ public sealed class PointerWindowTests(WpfThread wpf) : IDisposable
             }));
     }
 
+    /// <summary>The window's place on the screen, in device pixels.</summary>
+    private static DesktopIconGrid.Services.NativeMethods.RECT ScreenRect(Window window)
+    {
+        Assert.True(DesktopIconGrid.Services.NativeMethods.GetWindowRect(new WindowInteropHelper(window).Handle, out var rect));
+        return rect;
+    }
+
+    [Fact]
+    public void A_chosen_point_of_the_window_goes_under_the_pointer_in_both_forms_and_stays_there_when_a_group_opens()
+    {
+        // 0.16.0 WP2: with the bottom left corner chosen, the window's bottom left corner is on the pointer, in the tap form and
+        // the hold form; a group opening grows the window upward, the corner kept where the window opened. The pointer is the
+        // middle of the primary work area, so nothing is moved back inside it.
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        var model = Shortcuts(4);
+        var tools = new GroupItem { Name = "Tools" };
+        model.Add(tools);
+        model.Add(Shortcut(100), tools);
+        TestBar? bar = null;
+        PointerWindow? window = null;
+        var pointer = default(DesktopIconGrid.Services.NativeMethods.POINT);
+        try
+        {
+            wpf.Invoke(() =>
+            {
+                bar = new TestBar(_directory, model);
+                bar.ViewModel.Model.Settings.PointerAnchor = new PointerAnchor(0, 100);
+                var viewModel = bar.ViewModel;
+                var work = SystemParameters.WorkArea;
+                var scale = DesktopIconGrid.Services.ScreenGeometry.PrimaryScale();
+                pointer = new DesktopIconGrid.Services.NativeMethods.POINT { X = (int)((work.Left + (work.Width / 2)) * scale), Y = (int)((work.Top + (work.Height / 2)) * scale) };
+                window = new PointerWindow(viewModel) { BarIconArea = () => Area(viewModel, 6, 2 * viewModel.CellHeight), PointerPosition = () => pointer };
+            });
+            wpf.Settle();
+            foreach (var held in new[] { false, true })
+            {
+                wpf.Invoke(() =>
+                {
+                    window!.Dismiss();
+                    window.ShowAtPointer(held);
+                });
+                wpf.Settle();
+                wpf.Invoke(() =>
+                {
+                    var form = held ? "the hold form" : "the tap form";
+                    var shownWindow = window!;
+                    var shown = ScreenRect(shownWindow);
+                    Assert.True((pointer.X, pointer.Y) == (shown.Left, shown.Bottom), $"{form}: the window is at {shown.Left},{shown.Top}–{shown.Right},{shown.Bottom}, the pointer at {pointer.X},{pointer.Y}");
+
+                    shownWindow.OpenGroup(bar!.ViewModel.RootItems.Items.Single(item => item.Children is not null));
+                    shownWindow.UpdateLayout();
+
+                    var grown = ScreenRect(shownWindow);
+                    Assert.True(grown.Bottom - grown.Top > shown.Bottom - shown.Top, $"{form}: the window did not grow by the group's header");
+                    Assert.True((pointer.X, pointer.Y) == (grown.Left, grown.Bottom), $"{form}: with the group open the window is at {grown.Left},{grown.Top}–{grown.Right},{grown.Bottom}");
+                });
+            }
+        }
+        finally
+        {
+            wpf.Invoke(() =>
+            {
+                window?.CloseForGood();
+                bar?.Dispose();
+            });
+        }
+    }
+
     [Fact]
     public void The_notice_line_shows_under_the_icons_as_wide_as_they_are_and_the_window_grows_by_it()
     {

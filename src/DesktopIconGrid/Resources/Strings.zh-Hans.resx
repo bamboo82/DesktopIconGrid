@@ -3137,4 +3137,40 @@ SHA-256：{3}
   <data name="Settings_PictureMissingHere" xml:space="preserve">
     <value>这台电脑没有这张图片</value>
   </data>
+  <data name="Settings_PointerAnchor" xml:space="preserve">
+    <value>指针处窗口的位置：</value>
+  </data>
+  <data name="Settings_PointerAnchorName" xml:space="preserve">
+    <value>指针处窗口的位置</value>
+  </data>
+  <data name="Settings_PointerAnchorX" xml:space="preserve">
+    <value>水平</value>
+  </data>
+  <data name="Settings_PointerAnchorY" xml:space="preserve">
+    <value>垂直</value>
+  </data>
+  <data name="Settings_PointerAnchorXName" xml:space="preserve">
+    <value>指针处窗口的位置，水平（百分比）</value>
+  </data>
+  <data name="Settings_PointerAnchorYName" xml:space="preserve">
+    <value>指针处窗口的位置，垂直（百分比）</value>
+  </data>
+  <data name="Settings_PointerAnchorReset" xml:space="preserve">
+    <value>还原默认</value>
+  </data>
+  <data name="Settings_PointerAnchorDefault" xml:space="preserve">
+    <value>默认：上缘中央</value>
+  </data>
+  <data name="Settings_PointerAnchorValue" xml:space="preserve">
+    <value>水平 {0} %，垂直 {1} %</value>
+  </data>
+  <data name="Settings_PointerAnchorHint" xml:space="preserve">
+    <value>指针会落在窗口的这个位置；窗口不会超出屏幕工作区。两种显示方式都适用。</value>
+  </data>
+  <data name="Settings_PointerAnchorInvalid" xml:space="preserve">
+    <value>请输入 0 到 100 的整数。</value>
+  </data>
+  <data name="Settings_PointerAnchorHelp" xml:space="preserve">
+    <value>单击或拖动来选择位置。方向键每次移动 1 %，按住 Ctrl 则从一点移到下一点；Home 回到中央。</value>
+  </data>
 </root>

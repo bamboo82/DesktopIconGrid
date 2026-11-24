@@ -9,6 +9,62 @@ The owner relays replies.
 
 ---
 
+## 2026-11-24 (164) — 0.16.0 WP2: where the window sits relative to the pointer
+
+- **Run 268** (`0ff9cbe`, WP1, entry 163) green: Core 1368/1368, App 604/604.
+- **The setting (Core):** `PointerAnchor(int X, int Y)`, a record, as `LauncherSettings.PointerAnchor`, declared right after
+  `HoldAtPointerHotkey`, so it is written as `pointerAnchor` beside `showAtPointerHotkey`, only when set, and synced;
+  `CopyFrom` copies it, `Normalize` drops one out of range. `PointerAnchorConverter` reads it leniently: an object with
+  `x` and `y` (names in any case, other properties passed over), each a whole JSON number 0–100, else none: out of range, a
+  fraction, one missing, text, an object, an array, a bare number or a string are all none, and the rest of the settings is
+  read as ever. An older version keeps it untouched (`[JsonExtensionData]`, tested).
+- **The maths (Core, `PopupPlacement.AtPointer(…, anchor)`):** without an anchor (or with one out of range) exactly as before.
+  With one: the size is cut to the work area first (as before), then left = x − width × X / 100 and top = y − height ×
+  Y / 100 in whole pixels (integer division, so X = 50 centres an odd width to the same pixel as the default does), then
+  held inside the work area; GrabOffset is not used. No work area known: as computed.
+- **The window:** both forms pass the anchor from the bar's settings at each showing. It keeps the pointer where it opened;
+  while an anchor is set, `FitToContent` (a group opening or closing, the notice line, the refit after showing) places the
+  window again from that pointer, so the point stays where it was and the window grows or shrinks around it. Without one,
+  `FitToContent` keeps the top edge and the centre, as before. `PointerPosition` stands in for the pointer in tests.
+- **Settings, 按鍵:** a row directly under 按住時在指標處顯示, label 指標處視窗的位置 in the label column, always enabled.
+  - The picture is a `PointerAnchorPad` (a `Border`): one tab stop, its 2-unit border the focus ring, padding 4 so the ring
+    on an edge dot stays inside it. In it the window: 168 × 104, a 1-unit border, corner 6, nothing inside. Its dots and the
+    mark lie on a `Canvas`, so no grid cell holds two controls (`Every_tab_of_Settings_gives_each_control_a_cell_of_its_own`).
+    Geometry: the canvas is 166 × 102 inside the border, the dots' centres 3 in, so the edge dots sit on the border's inside,
+    and 0–100 % spans 160 × 96 units. The mark is a 14-unit ring, 2 thick, with a 4-unit dot.
+  - **Colours, a choice to look at:** the fill is the theme preview's (`PreviewBrush`), as you asked; so the border and the
+    dots (hover border), the ring (accent) and the focus ring (focus) are the preview's too (`PreviewHoverBorderBrush`,
+    `PreviewAccentBrush`, new, and `PreviewFocusBrush`), the theme being chosen, rather than the bar's applied `Theme.*`
+    resources, so the picture changes as one with the theme box. If you meant the applied ones, it is four bindings.
+  - Click or drag (the mouse held while the button is down): the whole percent under the pointer, rounded half away from
+    zero, held to 0–100 outside the picture, and on a dot when within 6 % of it both ways. Keys: the arrows by 1 %, Ctrl+arrow
+    to the next dot that way (the next multiple of 50, so 50 from a dot, and 37 → 50), Home 50/50; handled, so the page does
+    not scroll.
+  - The boxes 水平 [ ] % 垂直 [ ] %: plain text boxes 52 wide with the dialog's box padding, updated as typed. The icon size
+    box is an editable combo box; for a percent there is nothing to list, so I used the box itself. Say if you meant the
+    combo. A whole number 0–100 (spaces around it allowed) chooses the point with the other box's value; anything else
+    shows 請輸入 0 到 100 的整數。 in the warning colour under the boxes, puts ⚠ on 按鍵, and Save waits. A click, a key or
+    還原預設 puts the boxes right again.
+  - While none is chosen: the boxes show 50 and 0, the mark sits on the top-centre dot, the line 預設：上緣中央 is shown under
+    還原預設, which is disabled. A click on that very dot chooses 50/0, which is not the default (the top edge on the pointer
+    instead of 14 units above it); the line goes and 還原預設 comes on.
+  - UI Automation: the picture is one control named 指標處視窗的位置 with a read-only Value pattern, 水平 50 %，垂直 0 %, and
+    a value-changed event when it moves; the help text says how to use it (also its tooltip). The boxes have names of their
+    own.
+- **Strings (12):** the label, its name, 水平, 垂直, the two box names, 還原預設, 預設：上緣中央, the value, the hint (as you wrote
+  it), the red line and the help.
+- **Docs:** CHANGELOG (Added), FEATURES (a row in the settings table; the hold row points to it).
+- **Tests:** Core 1401 (+33): the nine named points with and without a work area, an odd width, corner anchors at the work
+  area's corners and on a monitor left of and above the primary, a window bigger than the work area, out of range as
+  without; the JSON: written only when set, 13 damaged forms as none with the rest read, four good ones, normalising and
+  copying, an older version. App: the dialog's defaults, a round trip with Reset, 10 clicks (snapped and not, whole
+  percents, outside the picture), the mark's place, the arrows with Ctrl and Home, 7 wrong box texts with ⚠ and Save, boxes
+  and picture together; the Keys tab fits at 90, 100 and 150 % in the three languages (none chosen, a box wrong, a point
+  chosen), the label in the label column right under the hold row; and the window with 0/100 chosen, in both forms, its
+  bottom left corner on the pointer and still there with a group open.
+- **Not tested:** real drags and key presses on the picture (the handlers only pass on to the tested view model), a screen
+  reader, the window near a real screen edge and on a second monitor, another DPI scale.
+
 ## 2026-11-24 (163) — 0.16.0 WP1: the window shown while the key is held has no search box
 
 - **Runs:** 266 (`6c76dcc`, the release commit, entry 162) green: Core 1368/1368, App 601/601. You made v0.15.0 on it

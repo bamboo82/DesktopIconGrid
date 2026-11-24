@@ -150,6 +150,14 @@ public sealed partial class SettingsViewModel
     /// <summary>The preview's icon with the keyboard focus: its border.</summary>
     public Brush PreviewFocusBrush => ThemeManager.ToBrush(PreviewPalette().Focus);
 
+    /// <summary>
+    /// The theme's hover border and accent as the preview has them: the picture of the window at the pointer on the Keys tab
+    /// draws its border and dots, and its pointer mark, in them (0.16.0 WP2).
+    /// </summary>
+    public Brush PreviewHoverBorderBrush => ThemeManager.ToBrush(PreviewPalette().HoverBorder);
+
+    public Brush PreviewAccentBrush => ThemeManager.ToBrush(PreviewPalette().Accent);
+
     /// <summary>While a colour is automatic its box shows the derived one, which follows the background.</summary>
     private void FollowDerived(bool hover)
     {
@@ -186,6 +194,7 @@ public sealed partial class SettingsViewModel
         {
             nameof(IsHoverColorValid), nameof(HoverChipBrush), nameof(IsFocusColorValid), nameof(FocusChipBrush), nameof(IsFocusHardToSee),
             nameof(PreviewBorderBrush), nameof(PreviewForegroundBrush), nameof(PreviewPointerOverBrush), nameof(PreviewPointerOverBorderBrush), nameof(PreviewFocusBrush),
+            nameof(PreviewHoverBorderBrush), nameof(PreviewAccentBrush),
         })
         {
             OnPropertyChanged(name);

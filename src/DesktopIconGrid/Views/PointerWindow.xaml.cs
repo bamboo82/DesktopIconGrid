@@ -76,6 +76,19 @@ public partial class PointerWindow : Window
     internal IInputElement StartElement => IsHoldForm ? Icons : SearchBox;
 
     /// <summary>
+    /// Where the mouse pointer is, in device pixels (tests put it where they need it). The window is placed around it when
+    /// it opens.
+    /// </summary>
+    internal Func<NativeMethods.POINT> PointerPosition { get; set; } = () => NativeMethods.GetCursorPos(out var pointer) ? pointer : default;
+
+    /// <summary>
+    /// The pointer where the window last opened (0.16.0 WP2): while a point of the window is chosen to go under the pointer
+    /// (<see cref="LauncherSettings.PointerAnchor"/>), a group opening or closing re-places the window from it, so that point
+    /// stays where it was on the screen when the window's height changes.
+    /// </summary>
+    private NativeMethods.POINT _openedAt;
+
+    /// <summary>
     /// The bar's icon area in WPF units, as the bar has it when shown and expanded (0.15.0 WP3; the bar window gives it,
     /// <see cref="MainWindow.BarIconArea"/>). Read at each opening, so a bar resized meanwhile shows at the next one.
     /// </summary>
@@ -205,11 +218,10 @@ public partial class PointerWindow : Window
         ShowBarMessage();
         new WindowInteropHelper(this).EnsureHandle();
         ApplyLook();
-        if (!NativeMethods.GetCursorPos(out var pointer))
-        {
-            pointer = default;
-        }
+        var pointer = PointerPosition();
+        _openedAt = pointer;
 
+        // The point of the window chosen to go under the pointer, in both forms; without one as before (0.16.0 WP2).
         var area = ScreenGeometry.AreaAt(pointer.X, pointer.Y);
         var scale = area?.Scale ?? ScreenGeometry.PrimaryScale();
         var size = MeasureSize(WorkAreaUnits(area));
@@ -219,7 +231,8 @@ public partial class PointerWindow : Window
             (int)Math.Ceiling(size.Width * scale),
             (int)Math.Ceiling(size.Height * scale),
             area?.WorkArea ?? default,
-            grabOffset: (int)Math.Round(GrabOffset * scale));
+            grabOffset: (int)Math.Round(GrabOffset * scale),
+            anchor: Anchor);
         ScreenGeometry.MoveToPixels(this, rect);
 
         Show();
@@ -406,9 +419,14 @@ public partial class PointerWindow : Window
         FitToContent();
     }
 
+    /// <summary>The point of the window put under the pointer (0.16.0 WP2), or none: the placement before 0.16.0.</summary>
+    private PointerAnchor? Anchor => _viewModel.Model.Settings.PointerAnchor;
+
     /// <summary>
     /// Resizes the shown window to what it shows now (a group's header, or back to the top level without it), keeping its
-    /// top edge and its centre where they are, as far as the work area allows.
+    /// top edge and its centre where they are, as far as the work area allows. With a point of the window chosen to go
+    /// under the pointer (0.16.0 WP2) it is placed again around the pointer where it opened, so that point stays put and
+    /// the window grows or shrinks around it.
     /// </summary>
     private void FitToContent()
     {
@@ -419,6 +437,20 @@ public partial class PointerWindow : Window
         }
 
         var scale = VisualTreeHelper.GetDpi(this).DpiScaleX;
+        if (Anchor is { } anchor)
+        {
+            var at = ScreenGeometry.AreaAt(_openedAt.X, _openedAt.Y);
+            var fitted = MeasureSize(WorkAreaUnits(at));
+            ScreenGeometry.MoveToPixels(this, PopupPlacement.AtPointer(
+                _openedAt.X,
+                _openedAt.Y,
+                (int)Math.Ceiling(fitted.Width * scale),
+                (int)Math.Ceiling(fitted.Height * scale),
+                at?.WorkArea ?? default,
+                anchor: anchor));
+            return;
+        }
+
         var centre = (now.Left + now.Right) / 2;
         var area = ScreenGeometry.AreaAt(centre, now.Top);
         var size = MeasureSize(WorkAreaUnits(area));

@@ -363,6 +363,68 @@ public sealed class DialogFitTests(WpfThread wpf)
         });
     }
 
+    [Theory]
+    [InlineData("en-US", 0.9)]
+    [InlineData("en-US", 1.0)]
+    [InlineData("en-US", 1.5)]
+    [InlineData("zh-Hant", 0.9)]
+    [InlineData("zh-Hant", 1.0)]
+    [InlineData("zh-Hant", 1.5)]
+    [InlineData("zh-Hans", 0.9)]
+    [InlineData("zh-Hans", 1.0)]
+    [InlineData("zh-Hans", 1.5)]
+    public void The_Keys_tab_with_the_windows_place_at_the_pointer_fits(string language, double scale)
+    {
+        // 0.16.0 WP2: the row under 按住時在指標處顯示, its label in the tab's label column: the picture, the two boxes, Reset,
+        // the default's line and the hint; then a box gone wrong (its red line) and a point chosen (no default line).
+        wpf.Invoke(() =>
+        {
+            var before = System.Threading.Thread.CurrentThread.CurrentUICulture;
+            System.Threading.Thread.CurrentThread.CurrentUICulture = System.Globalization.CultureInfo.GetCultureInfo(language);
+            Services.UiFonts.Configure(null, null, scale);
+            var viewModel = new SettingsViewModel(new LauncherSettings()); // no pointer key set: the row is enabled all the same
+            var window = new SettingsWindow { DataContext = viewModel };
+            try
+            {
+                window.Show();
+                window.Tabs.SelectedIndex = window.PageList.ToList().IndexOf(window.KeysPage);
+                Settle(window);
+                var what = $"{language} at {scale:P0}";
+                FitsAcross(window.KeysPage, what);
+
+                var holdLabel = LogicalDescendants<TextBlock>(window.KeysPage).First(t => t.Text == Strings.Settings_HoldHotkey);
+                var grid = Assert.IsType<Grid>(holdLabel.Parent);
+                Assert.Same(grid, window.PointerAnchorLabel.Parent);
+                Assert.Equal(Grid.GetRow(holdLabel) + 1, Grid.GetRow(window.PointerAnchorLabel)); // directly under it
+                Assert.Equal(0, Grid.GetColumn(window.PointerAnchorLabel));
+                Assert.Equal(holdLabel.TranslatePoint(default, grid).X, window.PointerAnchorLabel.TranslatePoint(default, grid).X, 1);
+                Assert.True(window.PointerAnchorPicture.IsVisible && window.PointerAnchorPicture.IsEnabled, $"{what}: the picture is not there to use");
+                Assert.True(window.PointerAnchorPicture.Focusable);
+                Assert.True(window.PointerAnchorStatusLine.IsVisible, $"{what}: no line for the default");
+                Assert.False(window.ResetPointerAnchorButton.IsEnabled);
+                Assert.False(window.PointerAnchorInvalidLine.IsVisible);
+
+                viewModel.PointerAnchorXText = "abc";
+                Settle(window);
+                Assert.True(window.PointerAnchorInvalidLine.IsVisible);
+                FitsAcross(window.KeysPage, what + ", a box wrong");
+
+                viewModel.PointerAnchor = new PointerAnchor(0, 100);
+                Settle(window);
+                Assert.False(window.PointerAnchorInvalidLine.IsVisible);
+                Assert.False(window.PointerAnchorStatusLine.IsVisible);
+                Assert.True(window.ResetPointerAnchorButton.IsEnabled);
+                FitsAcross(window.KeysPage, what + ", a point chosen");
+            }
+            finally
+            {
+                window.Close();
+                Services.UiFonts.Configure(null);
+                System.Threading.Thread.CurrentThread.CurrentUICulture = before;
+            }
+        });
+    }
+
     /// <summary>Every tab of Settings on the strip's first row, none past its end.</summary>
     private static void TabsInOneRow(SettingsWindow window, string what)
     {

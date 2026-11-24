@@ -80,6 +80,7 @@ public sealed partial class SettingsViewModel : ObservableObject
         _toggleHotkey = current.ToggleHotkey ?? string.Empty;
         _pointerHotkey = current.ShowAtPointerHotkey ?? string.Empty;
         _holdHotkey = current.HoldAtPointerHotkey ?? string.Empty;
+        ReadPointerAnchor(current); // where the window at the pointer sits (0.16.0 WP2)
         _voiceHotkey = _originalLocal.VoiceHotkey ?? string.Empty;
         VoiceLanguages = VoiceLanguageOptions(InstalledVoiceLanguages(), _originalLocal.VoiceLanguage);
         _selectedVoiceLanguage = VoiceLanguages.FirstOrDefault(l => string.Equals(l.Id, _originalLocal.VoiceLanguage, StringComparison.OrdinalIgnoreCase)) ?? VoiceLanguages[0];
@@ -514,8 +515,11 @@ public sealed partial class SettingsViewModel : ObservableObject
     /// <summary>The Appearance tab holds a value that cannot be saved: a custom background that is no colour.</summary>
     private bool HasAppearanceProblem => IsCustomTheme && !IsColorValid;
 
-    /// <summary>The Keys tab: a hotkey a window key has, or one of its hotkeys equal to another.</summary>
-    private bool HasKeysProblem => !IsHotkeyValid || !IsPointerHotkeyValid || !IsHoldHotkeyValid;
+    /// <summary>
+    /// The Keys tab: a hotkey a window key has, or one of its hotkeys equal to another; or a box of the window's place at the
+    /// pointer that is no whole number from 0 to 100 (0.16.0 WP2).
+    /// </summary>
+    private bool HasKeysProblem => !IsHotkeyValid || !IsPointerHotkeyValid || !IsHoldHotkeyValid || !IsPointerAnchorValid;
 
     /// <summary>The Voice tab: its hotkey is a window key's or one of the other two hotkeys.</summary>
     private bool HasVoiceProblem => !IsVoiceHotkeyValid;
@@ -629,6 +633,7 @@ public sealed partial class SettingsViewModel : ObservableObject
         settings.ToggleHotkey = IsHotkeyValid && HasHotkey ? _toggleHotkey : null;
         settings.ShowAtPointerHotkey = IsPointerHotkeyValid && HasPointerHotkey ? _pointerHotkey : null;
         settings.HoldAtPointerHotkey = IsHoldHotkeyValid && HasHoldHotkey ? _holdHotkey : null;
+        settings.PointerAnchor = _pointerAnchor; // none chosen: the placement before 0.16.0 (WP2)
         settings.WindowKeys = WindowKeys.Overrides(WindowKeyRows.ToDictionary(row => row.Action, row => row.Text));
         if (_original.WindowKeys?.Where(pair => !Enum.TryParse<WindowKeyAction>(pair.Key, out _)).ToList() is { Count: > 0 } unknown)
         {

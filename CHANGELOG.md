@@ -7,6 +7,15 @@ version numbers follow [Semantic Versioning](https://semver.org/).
 
 "Where the pointer is": the owner's requests after 0.15.0.
 
+### Added
+
+- *Window position at the pointer* under Settings ▸ Keys: which point of the window at the pointer goes under the
+  pointer, for both the show-at-pointer key and the key held to show it. Click or drag in the small picture of the
+  window (it snaps to the nine dots: corners, edges' middles and centre), use the arrow keys, or type the point in
+  percent across and down. The window still stays inside the screen's work area, and when a group opens in it the
+  point stays where it was. *Reset to default* goes back to the placement before: centred, the top edge just above the
+  pointer. It syncs with the other settings.
+
 ### Changed
 
 - The window shown while the *Show at pointer while held* combination is held has no search box. It is shorter by the

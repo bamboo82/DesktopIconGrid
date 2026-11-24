@@ -210,6 +210,12 @@ public sealed partial class LauncherSettings
     public string? HoldAtPointerHotkey { get; set; }
 
     /// <summary>
+    /// The point of the window at the pointer that is put under the pointer, in both its forms (0.16.0 WP2, the owner's
+    /// request); <see langword="null"/>, the default, for the placement before 0.16.0. It syncs, as the two keys above do.
+    /// </summary>
+    public PointerAnchor? PointerAnchor { get; set; }
+
+    /// <summary>
     /// The bar window's keys that differ from their defaults (<see cref="Models.WindowKeys"/>), by action name; an empty
     /// text turns a key off. <see langword="null"/> when every key is its default.
     /// </summary>
@@ -255,6 +261,7 @@ public sealed partial class LauncherSettings
         ToggleHotkey = source.ToggleHotkey;
         ShowAtPointerHotkey = source.ShowAtPointerHotkey;
         HoldAtPointerHotkey = source.HoldAtPointerHotkey;
+        PointerAnchor = source.PointerAnchor;
         WindowKeys = source.WindowKeys is null ? null : new Dictionary<string, string>(source.WindowKeys);
         Opacity = source.Opacity;
         CloseToTray = source.CloseToTray;
@@ -386,6 +393,14 @@ public sealed partial class LauncherSettings
         ToggleHotkey = string.IsNullOrWhiteSpace(ToggleHotkey) ? null : ToggleHotkey.Trim();
         ShowAtPointerHotkey = string.IsNullOrWhiteSpace(ShowAtPointerHotkey) ? null : ShowAtPointerHotkey.Trim();
         HoldAtPointerHotkey = string.IsNullOrWhiteSpace(HoldAtPointerHotkey) ? null : HoldAtPointerHotkey.Trim();
+
+        // Where the window at the pointer sits (0.16.0 WP2): two whole percents from 0 to 100, or none.
+        var anchor = PointerAnchor?.Normalized();
+        if (anchor != PointerAnchor)
+        {
+            PointerAnchor = anchor;
+            changed = true;
+        }
 
         var language = Languages.FirstOrDefault(l => string.Equals(l, Language?.Trim(), StringComparison.OrdinalIgnoreCase));
         if (language is null)

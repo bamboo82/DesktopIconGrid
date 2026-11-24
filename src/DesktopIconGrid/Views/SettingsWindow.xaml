@@ -427,6 +427,7 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
           </Grid.RowDefinitions>
 
           <!-- Show/hide hotkey -->
@@ -492,9 +493,86 @@
                        Visibility="{Binding HasHoldHotkeyClash, Converter={StaticResource BoolToVisibility}}" />
           </StackPanel>
 
+          <!-- Where the window at the pointer sits relative to the pointer, in both its forms (0.16.0 WP2): a picture of the window
+               with its nine named points and the point chosen, the same point in two boxes, and back to the default. Always
+               enabled, whether or not a pointer key is set. The picture's dots and mark lie on a canvas, so no grid cell holds two
+               controls (DialogFitTests). -->
+          <TextBlock x:Name="PointerAnchorLabel" Grid.Row="3" Grid.Column="0" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Settings_PointerAnchor}" Margin="0,0,12,10" VerticalAlignment="Top" />
+          <StackPanel x:Name="PointerAnchorRow" Grid.Row="3" Grid.Column="1" Margin="0,0,0,10">
+            <WrapPanel>
+              <!-- One tab stop; its border is the focus ring, its padding leaves room for the mark at an edge -->
+              <views:PointerAnchorPad x:Name="PointerAnchorPicture" Focusable="True" FocusVisualStyle="{x:Null}" Margin="0,0,12,6" Padding="4"
+                                      BorderThickness="2" CornerRadius="9" Cursor="Cross" HorizontalAlignment="Left" VerticalAlignment="Top"
+                                      ValueText="{Binding PointerAnchorValueText}"
+                                      MouseLeftButtonDown="PointerAnchor_MouseLeftButtonDown" MouseMove="PointerAnchor_MouseMove"
+                                      MouseLeftButtonUp="PointerAnchor_MouseLeftButtonUp"
+                                      KeyDown="PointerAnchor_KeyDown"
+                                      ToolTip="{x:Static r:Strings.Settings_PointerAnchorHelp}"
+                                      AutomationProperties.Name="{x:Static r:Strings.Settings_PointerAnchorName}"
+                                      AutomationProperties.HelpText="{x:Static r:Strings.Settings_PointerAnchorHelp}">
+                <views:PointerAnchorPad.Style>
+                  <Style TargetType="views:PointerAnchorPad">
+                    <Setter Property="BorderBrush" Value="Transparent" />
+                    <Style.Triggers>
+                      <Trigger Property="IsKeyboardFocused" Value="True">
+                        <Setter Property="BorderBrush" Value="{Binding PreviewFocusBrush}" />
+                      </Trigger>
+                    </Style.Triggers>
+                  </Style>
+                </views:PointerAnchorPad.Style>
+                <!-- A small window in the theme's colours as the theme's preview has them, nothing inside: it stands for both forms -->
+                <Border Width="168" Height="104" CornerRadius="6" BorderThickness="1"
+                        BorderBrush="{Binding PreviewHoverBorderBrush}" Background="{Binding PreviewBrush}">
+                  <Canvas x:Name="PointerAnchorCanvas" Background="Transparent">
+                    <Ellipse Width="6" Height="6" Canvas.Left="0" Canvas.Top="0" Fill="{Binding PreviewHoverBorderBrush}" />
+                    <Ellipse Width="6" Height="6" Canvas.Left="80" Canvas.Top="0" Fill="{Binding PreviewHoverBorderBrush}" />
+                    <Ellipse Width="6" Height="6" Canvas.Left="160" Canvas.Top="0" Fill="{Binding PreviewHoverBorderBrush}" />
+                    <Ellipse Width="6" Height="6" Canvas.Left="0" Canvas.Top="48" Fill="{Binding PreviewHoverBorderBrush}" />
+                    <Ellipse Width="6" Height="6" Canvas.Left="80" Canvas.Top="48" Fill="{Binding PreviewHoverBorderBrush}" />
+                    <Ellipse Width="6" Height="6" Canvas.Left="160" Canvas.Top="48" Fill="{Binding PreviewHoverBorderBrush}" />
+                    <Ellipse Width="6" Height="6" Canvas.Left="0" Canvas.Top="96" Fill="{Binding PreviewHoverBorderBrush}" />
+                    <Ellipse Width="6" Height="6" Canvas.Left="80" Canvas.Top="96" Fill="{Binding PreviewHoverBorderBrush}" />
+                    <Ellipse Width="6" Height="6" Canvas.Left="160" Canvas.Top="96" Fill="{Binding PreviewHoverBorderBrush}" />
+                    <!-- The pointer mark: a ring with a dot in its centre, on the point chosen, else on the middle of the top edge -->
+                    <Canvas x:Name="PointerAnchorMark" Width="14" Height="14" Canvas.Left="{Binding AnchorMarkLeft}" Canvas.Top="{Binding AnchorMarkTop}" IsHitTestVisible="False">
+                      <Ellipse Width="14" Height="14" Stroke="{Binding PreviewAccentBrush}" StrokeThickness="2" />
+                      <Ellipse Width="4" Height="4" Canvas.Left="5" Canvas.Top="5" Fill="{Binding PreviewAccentBrush}" />
+                    </Canvas>
+                  </Canvas>
+                </Border>
+              </views:PointerAnchorPad>
+              <StackPanel VerticalAlignment="Top">
+                <WrapPanel>
+                  <StackPanel Orientation="Horizontal" Margin="0,0,12,4">
+                    <TextBlock Text="{x:Static r:Strings.Settings_PointerAnchorX}" VerticalAlignment="Center" Margin="0,0,6,0" />
+                    <TextBox x:Name="PointerAnchorXBox" Width="52" Padding="4,3" VerticalContentAlignment="Center"
+                             Text="{Binding PointerAnchorXText, UpdateSourceTrigger=PropertyChanged}"
+                             AutomationProperties.Name="{x:Static r:Strings.Settings_PointerAnchorXName}" />
+                    <TextBlock Text="%" VerticalAlignment="Center" Margin="4,0,0,0" />
+                  </StackPanel>
+                  <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                    <TextBlock Text="{x:Static r:Strings.Settings_PointerAnchorY}" VerticalAlignment="Center" Margin="0,0,6,0" />
+                    <TextBox x:Name="PointerAnchorYBox" Width="52" Padding="4,3" VerticalContentAlignment="Center"
+                             Text="{Binding PointerAnchorYText, UpdateSourceTrigger=PropertyChanged}"
+                             AutomationProperties.Name="{x:Static r:Strings.Settings_PointerAnchorYName}" />
+                    <TextBlock Text="%" VerticalAlignment="Center" Margin="4,0,0,0" />
+                  </StackPanel>
+                </WrapPanel>
+                <!-- A box that is no whole number from 0 to 100: said in red as for a colour, and Save waits -->
+                <TextBlock x:Name="PointerAnchorInvalidLine" Text="{x:Static r:Strings.Settings_PointerAnchorInvalid}" Foreground="{DynamicResource WarningBrush}" TextWrapping="Wrap"
+                           Visibility="{Binding IsPointerAnchorValid, Converter={StaticResource InverseBoolToVisibility}}" />
+                <Button x:Name="ResetPointerAnchorButton" Content="{x:Static r:Strings.Settings_PointerAnchorReset}" Padding="10,2" Margin="0,4,0,0" HorizontalAlignment="Left"
+                        IsEnabled="{Binding IsPointerAnchorSet}" Click="ResetPointerAnchor_Click" />
+                <TextBlock x:Name="PointerAnchorStatusLine" Style="{StaticResource DialogHint}" Margin="0,6,0,0" Text="{Binding PointerAnchorStatus}"
+                           Visibility="{Binding IsPointerAnchorSet, Converter={StaticResource InverseBoolToVisibility}}" />
+              </StackPanel>
+            </WrapPanel>
+            <TextBlock Style="{StaticResource DialogHint}" Margin="0,2,0,0" Text="{x:Static r:Strings.Settings_PointerAnchorHint}" />
+          </StackPanel>
+
           <!-- Keys in the bar (WindowKeyMap): the table takes the full width -->
-          <TextBlock Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Settings_WindowKeys}" Margin="0,4,0,6" />
-          <StackPanel Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,0,0,10">
+          <TextBlock Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2" Style="{StaticResource DialogLabel}" Text="{x:Static r:Strings.Settings_WindowKeys}" Margin="0,4,0,6" />
+          <StackPanel Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,0,0,10">
             <ItemsControl ItemsSource="{Binding WindowKeyRows}" IsTabStop="False">
               <ItemsControl.ItemTemplate>
                 <DataTemplate>

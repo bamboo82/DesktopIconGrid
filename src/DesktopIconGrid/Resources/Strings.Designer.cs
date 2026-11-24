@@ -6414,6 +6414,114 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Window position at the pointer:.
+        /// </summary>
+        public static string Settings_PointerAnchor {
+            get {
+                return ResourceManager.GetString("Settings_PointerAnchor", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Default: top centre.
+        /// </summary>
+        public static string Settings_PointerAnchorDefault {
+            get {
+                return ResourceManager.GetString("Settings_PointerAnchorDefault", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Click or drag to choose the point. Arrow keys move it by 1 %, with Ctrl from dot [rest of string was truncated]";.
+        /// </summary>
+        public static string Settings_PointerAnchorHelp {
+            get {
+                return ResourceManager.GetString("Settings_PointerAnchorHelp", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The pointer lands on this point of the window; the window stays inside the scree [rest of string was truncated]";.
+        /// </summary>
+        public static string Settings_PointerAnchorHint {
+            get {
+                return ResourceManager.GetString("Settings_PointerAnchorHint", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Enter a whole number from 0 to 100..
+        /// </summary>
+        public static string Settings_PointerAnchorInvalid {
+            get {
+                return ResourceManager.GetString("Settings_PointerAnchorInvalid", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Window position at the pointer.
+        /// </summary>
+        public static string Settings_PointerAnchorName {
+            get {
+                return ResourceManager.GetString("Settings_PointerAnchorName", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Reset to default.
+        /// </summary>
+        public static string Settings_PointerAnchorReset {
+            get {
+                return ResourceManager.GetString("Settings_PointerAnchorReset", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Horizontal {0} %, vertical {1} %.
+        /// </summary>
+        public static string Settings_PointerAnchorValue {
+            get {
+                return ResourceManager.GetString("Settings_PointerAnchorValue", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Horizontal.
+        /// </summary>
+        public static string Settings_PointerAnchorX {
+            get {
+                return ResourceManager.GetString("Settings_PointerAnchorX", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Window position at the pointer, horizontal, in percent.
+        /// </summary>
+        public static string Settings_PointerAnchorXName {
+            get {
+                return ResourceManager.GetString("Settings_PointerAnchorXName", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Vertical.
+        /// </summary>
+        public static string Settings_PointerAnchorY {
+            get {
+                return ResourceManager.GetString("Settings_PointerAnchorY", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Window position at the pointer, vertical, in percent.
+        /// </summary>
+        public static string Settings_PointerAnchorYName {
+            get {
+                return ResourceManager.GetString("Settings_PointerAnchorYName", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Show at pointer:.
         /// </summary>
         public static string Settings_PointerHotkey {

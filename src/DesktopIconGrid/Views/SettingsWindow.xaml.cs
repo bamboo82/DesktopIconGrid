@@ -391,6 +391,69 @@ public partial class SettingsWindow : Window
 
     private void ClearVoiceHotkey_Click(object sender, RoutedEventArgs e) => SetHotkey(VoiceHotkeyBox, string.Empty);
 
+    // ----- the window's place at the pointer (0.16.0 WP2) ------------------------------------------------------------
+
+    /// <summary>A click on the picture puts the point there (snapped to a dot near it) and holds the mouse for a drag.</summary>
+    private void PointerAnchor_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        if (ViewModel is not { } viewModel)
+        {
+            return;
+        }
+
+        PointerAnchorPicture.Focus();
+        PointerAnchorPicture.CaptureMouse();
+        var at = e.GetPosition(PointerAnchorCanvas);
+        viewModel.MoveAnchorTo(at.X, at.Y);
+        e.Handled = true;
+    }
+
+    private void PointerAnchor_MouseMove(object sender, MouseEventArgs e)
+    {
+        if (PointerAnchorPicture.IsMouseCaptured && e.LeftButton == MouseButtonState.Pressed && ViewModel is { } viewModel)
+        {
+            var at = e.GetPosition(PointerAnchorCanvas);
+            viewModel.MoveAnchorTo(at.X, at.Y);
+        }
+    }
+
+    private void PointerAnchor_MouseLeftButtonUp(object sender, MouseButtonEventArgs e) => PointerAnchorPicture.ReleaseMouseCapture();
+
+    /// <summary>The arrows move the point by 1 %, with Ctrl from dot to dot; Home puts it in the window's centre.</summary>
+    private void PointerAnchor_KeyDown(object sender, KeyEventArgs e)
+    {
+        if (ViewModel is not { } viewModel)
+        {
+            return;
+        }
+
+        var dotToDot = Keyboard.Modifiers.HasFlag(ModifierKeys.Control);
+        switch (e.Key)
+        {
+            case Key.Left:
+                viewModel.NudgeAnchor(-1, 0, dotToDot);
+                break;
+            case Key.Right:
+                viewModel.NudgeAnchor(1, 0, dotToDot);
+                break;
+            case Key.Up:
+                viewModel.NudgeAnchor(0, -1, dotToDot);
+                break;
+            case Key.Down:
+                viewModel.NudgeAnchor(0, 1, dotToDot);
+                break;
+            case Key.Home:
+                viewModel.CentreAnchor();
+                break;
+            default:
+                return;
+        }
+
+        e.Handled = true; // the page does not scroll, and the focus stays on the picture
+    }
+
+    private void ResetPointerAnchor_Click(object sender, RoutedEventArgs e) => ViewModel?.ResetPointerAnchor();
+
     /// <summary>Stores a captured combination in the hotkey that <paramref name="box"/> shows, and hides that box's warning.</summary>
     private void SetHotkey(TextBox box, string text)
     {
