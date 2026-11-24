@@ -23,10 +23,19 @@ namespace DesktopIconGrid.Views;
 /// What it leaves out: the grip, ✕ and ▸, resizing and docking. Before 0.15.0 it was a small opaque window of three to
 /// six columns and at most five rows.
 /// </para>
+/// <para>
+/// It has two forms, chosen at each showing (0.16.0 WP1, the owner's request): the tap form, opened by the Show-at-pointer
+/// key, with the search box; and the hold form, shown while the key held to show the bar is down
+/// (<see cref="MainWindow"/>), without it: the window is shorter by the box's row, nothing takes the keys for typing, and
+/// the icon area has the keyboard focus.
+/// </para>
 /// </summary>
 public partial class PointerWindow : Window
 {
-    /// <summary>How far above the pointer the window's top edge goes, so the pointer rests on the search box.</summary>
+    /// <summary>
+    /// How far above the pointer the window's top edge goes: in the tap form the pointer rests on the search box, in the
+    /// hold form on the top row of icons or a group's header, 14 units under the top edge either way.
+    /// </summary>
     private const double GrabOffset = 14;
 
     private readonly LauncherViewModel _viewModel;
@@ -56,6 +65,17 @@ public partial class PointerWindow : Window
     internal ItemViewModel? OpenedGroup { get; private set; }
 
     /// <summary>
+    /// Whether the window was last shown in its hold form, without the search box (0.16.0 WP1); the tap form has it.
+    /// </summary>
+    internal bool IsHoldForm { get; private set; }
+
+    /// <summary>
+    /// Where the keys go when the window opens, when a group opens and when it goes back: the search box in the tap form;
+    /// in the hold form the icon area itself, from which an arrow key steps into the icons as Down does from the box.
+    /// </summary>
+    internal IInputElement StartElement => IsHoldForm ? Icons : SearchBox;
+
+    /// <summary>
     /// The bar's icon area in WPF units, as the bar has it when shown and expanded (0.15.0 WP3; the bar window gives it,
     /// <see cref="MainWindow.BarIconArea"/>). Read at each opening, so a bar resized meanwhile shows at the next one.
     /// </summary>
@@ -72,8 +92,8 @@ public partial class PointerWindow : Window
 
     /// <summary>
     /// The window's size in WPF units, its icon area set within it: the bar's icon area (<see cref="BarIconArea"/>), the
-    /// search box above it, in a group the group's header under the box, and the bar's notice line under the icons while
-    /// it has one, inside the border. Held to
+    /// search box above it in the tap form, in a group the group's header under the box (at the top in the hold form), and
+    /// the bar's notice line under the icons while it has one, inside the border. Held to
     /// <paramref name="workArea"/> (the pointer's monitor's work area, in WPF units at its scale): an icon area that would
     /// not fit gives up what does not, and the icons flow again in it as in a narrower bar (<see cref="FitIconArea"/>).
     /// </summary>
@@ -172,10 +192,15 @@ public partial class PointerWindow : Window
     /// right to take the foreground. A window made in the same turn of the dispatcher is measured before its bindings are
     /// alive (WPF attaches a binding made without a data context later, at DataBind priority): the bar makes it ahead
     /// (<see cref="MainWindow"/>), and it is fitted once more after it is shown.
+    /// <para>
+    /// <paramref name="held"/>: the hold form, without the search box and with the icon area focused (0.16.0 WP1). A search
+    /// left from the tap form is cleared either way, so it never filters the hold form.
+    /// </para>
     /// </summary>
-    public void ShowAtPointer()
+    public void ShowAtPointer(bool held = false)
     {
         _viewModel.ClearSearch();
+        SetForm(held);
         ShowRoot();
         ShowBarMessage();
         new WindowInteropHelper(this).EnsureHandle();
@@ -204,15 +229,30 @@ public partial class PointerWindow : Window
         }
 
         UpdateLayout();
-        if (!SearchBox.Focus())
+        if (!FocusStart())
         {
-            Dispatcher.BeginInvoke(DispatcherPriority.Loaded, () => SearchBox.Focus()); // once the box is laid out
+            Dispatcher.BeginInvoke(DispatcherPriority.Loaded, () => FocusStart()); // once it is laid out
         }
 
         Dispatcher.BeginInvoke(DispatcherPriority.Loaded, FitToContent); // the same size unless it was measured too early
 
         AppLog.Default.Debug("App", $"Icons shown at the pointer ({rect.Left},{rect.Top}, {rect.Width}×{rect.Height} px)");
     }
+
+    /// <summary>
+    /// The form of this showing (0.16.0 WP1): the search box's row is there in the tap form and collapsed in the hold
+    /// form, so the window is measured without it and the icons, or a group's header, sit directly at the top. The icon
+    /// area can take the focus only in the hold form: in the tap form Down steps from the box to the first icon, as before.
+    /// </summary>
+    private void SetForm(bool held)
+    {
+        IsHoldForm = held;
+        SearchRow.Visibility = held ? Visibility.Collapsed : Visibility.Visible;
+        Icons.Focusable = held;
+    }
+
+    /// <summary>Gives the keys to <see cref="StartElement"/>; whether it took them.</summary>
+    private bool FocusStart() => IsHoldForm ? Icons.Focus() : SearchBox.Focus();
 
     /// <summary>Hides the window and ends its search; the next press of the hotkey shows it again.</summary>
     public void Dismiss()
@@ -267,7 +307,8 @@ public partial class PointerWindow : Window
     /// <summary>
     /// Esc clears the text, then leaves an open group, then closes. Backspace in an empty box leaves the group.
     /// In the box the arrows move the frame and Enter opens the framed match (Down with no text steps into the
-    /// icons); typing while an icon has the focus goes back to the box.
+    /// icons); typing while an icon has the focus goes back to the box. In the hold form, which has no box (0.16.0 WP1),
+    /// typing starts nothing, and an arrow key on the icon area steps into the icons; Esc and Backspace are as above.
     /// </summary>
     protected override void OnPreviewKeyDown(KeyEventArgs e)
     {
@@ -289,7 +330,7 @@ public partial class PointerWindow : Window
                 else if (OpenedGroup is not null)
                 {
                     ShowRoot();
-                    SearchBox.Focus();
+                    FocusStart();
                 }
                 else
                 {
@@ -300,8 +341,18 @@ public partial class PointerWindow : Window
             case Key.Back when OpenedGroup is not null && !_viewModel.IsSearching && (!inBox || SearchBox.Text.Length == 0):
                 e.Handled = true;
                 ShowRoot();
-                SearchBox.Focus();
+                FocusStart();
                 return;
+        }
+
+        if (IsHoldForm)
+        {
+            if ((e.Key is Key.Up or Key.Down or Key.Left or Key.Right) && Icons.IsKeyboardFocused)
+            {
+                e.Handled = Icons.MoveFocus(new TraversalRequest(FocusNavigationDirection.First));
+            }
+
+            return; // no type-to-find: there is no box to type into
         }
 
         if (inBox)
@@ -325,10 +376,13 @@ public partial class PointerWindow : Window
     private void Back_Click(object sender, RoutedEventArgs e)
     {
         ShowRoot();
-        SearchBox.Focus();
+        FocusStart();
     }
 
-    /// <summary>Shows a group's icons in place of the top level, under a header with a way back; the window grows by the header, the icon area keeps its size.</summary>
+    /// <summary>
+    /// Shows a group's icons in place of the top level, under a header with a way back; the window grows by the header, the
+    /// icon area keeps its size. In the hold form the header is at the very top (0.16.0 WP1).
+    /// </summary>
     internal void OpenGroup(ItemViewModel group)
     {
         if (group.Children is not { } children)
@@ -341,7 +395,7 @@ public partial class PointerWindow : Window
         GroupTitle.Text = group.Name;
         GroupHeader.Visibility = Visibility.Visible;
         FitToContent();
-        SearchBox.Focus();
+        FocusStart();
     }
 
     private void ShowRoot()

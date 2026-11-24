@@ -217,6 +217,178 @@ public sealed class PointerWindowTests(WpfThread wpf) : IDisposable
         }, area: bar => Area(bar, 6, 2 * bar.CellHeight));
     }
 
+    /// <summary>
+    /// Shows <paramref name="model"/> at the pointer in each form in turn (true: the hold form), letting the WPF thread
+    /// settle after each showing as <see cref="WithWindow"/> does, and runs <paramref name="check"/> on each.
+    /// </summary>
+    private void InForms(LauncherModel model, Func<LauncherViewModel, Size> area, params (bool Held, Action<PointerWindow, LauncherViewModel> Check)[] steps)
+    {
+        TestBar? bar = null;
+        PointerWindow? window = null;
+        try
+        {
+            wpf.Invoke(() =>
+            {
+                bar = new TestBar(_directory, model);
+                var viewModel = bar.ViewModel;
+                window = new PointerWindow(viewModel) { BarIconArea = () => area(viewModel) };
+            });
+            wpf.Settle();
+            foreach (var (held, check) in steps)
+            {
+                wpf.Invoke(() =>
+                {
+                    window!.Dismiss();
+                    window.ShowAtPointer(held);
+                });
+                wpf.Settle();
+                wpf.Invoke(() =>
+                {
+                    window!.UpdateLayout();
+                    check(window, bar!.ViewModel);
+                });
+            }
+        }
+        finally
+        {
+            wpf.Invoke(() =>
+            {
+                window?.CloseForGood();
+                bar?.Dispose();
+            });
+        }
+    }
+
+    /// <summary>Where <paramref name="element"/>'s top left corner is in <paramref name="window"/>.</summary>
+    private static Point Origin(FrameworkElement element, Window window) => element.TranslatePoint(default, window);
+
+    [Fact]
+    public void The_hold_form_has_no_search_row_and_is_shorter_by_it_and_the_tap_form_is_as_before()
+    {
+        // 0.16.0 WP1, the owner's request: the window shown while the key is held has no search box. It is shorter by the
+        // box's row (with the gap under it), its icon area keeps the bar's size, and the icons sit directly at the top, as
+        // far from the top as from the side. The tap form keeps its box, laid out as before, also after a hold.
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        var tap = Size.Empty;
+        var row = 0.0;
+        var iconsTop = 0.0;
+        var area = Size.Empty;
+        InForms(
+            Shortcuts(8),
+            bar => Area(bar, 4, 2 * bar.CellHeight),
+            (false, (window, _) =>
+            {
+                Assert.False(window.IsHoldForm);
+                Assert.Equal(Visibility.Visible, window.SearchRow.Visibility);
+                tap = window.MeasureSize(Size.Empty);
+                Assert.Equal(tap.Height, window.ActualHeight, precision: 0);
+                row = window.SearchRow.ActualHeight + window.SearchRow.Margin.Top + window.SearchRow.Margin.Bottom;
+                Assert.True(row > 15, $"the search row takes {row}");
+                iconsTop = Origin(window.Icons, window).Y;
+                area = new Size(window.Icons.Width, window.Icons.Height);
+                Assert.Same(window.SearchBox, window.StartElement);
+                Assert.False(window.Icons.Focusable); // Down from the box steps to the first icon, not to the area
+            }),
+            (true, (window, _) =>
+            {
+                Assert.True(window.IsHoldForm);
+                Assert.Equal(Visibility.Collapsed, window.SearchRow.Visibility);
+                Assert.False(window.SearchBox.IsVisible);
+                var hold = window.MeasureSize(Size.Empty);
+                Assert.Equal(tap.Height - row, hold.Height, precision: 1);
+                Assert.Equal(tap.Width, hold.Width, precision: 1);
+                Assert.Equal(hold.Height, window.ActualHeight, precision: 0);
+                Assert.Equal(area, new Size(window.Icons.Width, window.Icons.Height));
+                var origin = Origin(window.Icons, window);
+                Assert.Equal(iconsTop - row, origin.Y, precision: 1);
+                Assert.Equal(origin.X, origin.Y, precision: 1); // directly at the top
+                Assert.Same(window.Icons, window.StartElement); // the keys go to the icon area, none to a text box
+                Assert.True(window.Icons.Focusable);
+            }),
+            (false, (window, _) =>
+            {
+                Assert.False(window.IsHoldForm);
+                Assert.Equal(Visibility.Visible, window.SearchRow.Visibility);
+                var again = window.MeasureSize(Size.Empty);
+                Assert.Equal(tap.Width, again.Width, precision: 1);
+                Assert.Equal(tap.Height, again.Height, precision: 1);
+                Assert.Equal(tap.Height, window.ActualHeight, precision: 0);
+                Assert.Equal(iconsTop, Origin(window.Icons, window).Y, precision: 1);
+                Assert.Same(window.SearchBox, window.StartElement);
+                Assert.False(window.Icons.Focusable);
+            }));
+    }
+
+    [Fact]
+    public void A_search_left_before_a_hold_never_filters_the_hold_form()
+    {
+        // 0.16.0 WP1: the hold form clears a search as the tap form does, so every icon is listed and none is faded.
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        InForms(
+            Shortcuts(6),
+            bar => Area(bar, 6, bar.CellHeight),
+            (false, (window, bar) =>
+            {
+                window.Dismiss();
+                bar.SearchText = "Item 3"; // typed into the bar's box, say, before the key was held
+                Assert.True(bar.IsSearching);
+                Assert.Contains(bar.RootItems.Items, item => item.IsSearchDimmed);
+
+                window.ShowAtPointer(held: true);
+                window.UpdateLayout();
+
+                Assert.False(bar.IsSearching);
+                Assert.Equal(string.Empty, bar.SearchText);
+                Assert.DoesNotContain(bar.RootItems.Items, item => item.IsSearchDimmed);
+                Assert.Equal(6, window.Icons.ItemsHost.Items.Count);
+                EveryRowShows(window);
+            }));
+    }
+
+    [Fact]
+    public void A_group_opened_in_the_hold_form_has_its_header_directly_at_the_top()
+    {
+        // 0.16.0 WP1: the way back is still there, at the very top; the window grows by the header and the gap under it.
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        var model = Shortcuts(4);
+        var tools = new GroupItem { Name = "Tools" };
+        model.Add(tools);
+        model.Add(Shortcut(100), tools);
+        InForms(
+            model,
+            bar => Area(bar, 6, 2 * bar.CellHeight),
+            (true, (window, bar) =>
+            {
+                var topLevel = window.MeasureSize(Size.Empty).Height;
+
+                window.OpenGroup(bar.RootItems.Items.Single(item => item.Children is not null));
+                window.UpdateLayout();
+
+                Assert.Equal(Visibility.Visible, window.GroupHeader.Visibility);
+                var header = Origin(window.GroupHeader, window);
+                Assert.Equal(header.X, header.Y, precision: 1); // nothing above it
+                var line = window.GroupHeader.ActualHeight + window.GroupHeader.Margin.Top + window.GroupHeader.Margin.Bottom;
+                Assert.True(line > 10, $"the header takes {line}");
+                Assert.Equal(header.Y + line, Origin(window.Icons, window).Y, precision: 1);
+                Assert.Equal(topLevel + line, window.MeasureSize(Size.Empty).Height, precision: 1);
+                Assert.Equal(topLevel + line, window.ActualHeight, precision: 0);
+                Assert.Same(window.Icons, window.StartElement);
+                Assert.Equal(Visibility.Collapsed, window.SearchRow.Visibility);
+            }));
+    }
+
     [Fact]
     public void The_notice_line_shows_under_the_icons_as_wide_as_they_are_and_the_window_grows_by_it()
     {

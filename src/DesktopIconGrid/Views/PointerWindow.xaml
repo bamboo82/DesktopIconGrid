@@ -27,8 +27,10 @@
          space around the content is a margin, not the border's padding -->
     <Rectangle x:Name="PictureLayer" IsHitTestVisible="False" Visibility="Collapsed" />
     <DockPanel Margin="3">
-      <!-- Search box with its placeholder, and what Enter opens -->
-      <DockPanel DockPanel.Dock="Top">
+      <!-- Search box with its placeholder, and what Enter opens. Not in the window shown while a key is held (0.16.0
+           WP1): collapsed then, with the gap under it, so what follows sits directly at the top. Each row above the icons
+           keeps its gap under it, so the tap form is laid out as before. -->
+      <DockPanel x:Name="SearchRow" DockPanel.Dock="Top" Margin="0,0,0,3">
         <TextBlock DockPanel.Dock="Right"
                    MaxWidth="140"
                    Style="{StaticResource SearchTargetStyle}"
@@ -63,7 +65,7 @@
       </DockPanel>
 
       <!-- An open group: back and its name -->
-      <DockPanel x:Name="GroupHeader" DockPanel.Dock="Top" Visibility="Collapsed" Margin="0,3,0,0">
+      <DockPanel x:Name="GroupHeader" DockPanel.Dock="Top" Visibility="Collapsed" Margin="0,0,0,3">
         <Button Style="{StaticResource BarButtonStyle}"
                 Width="22"
                 Click="Back_Click"
@@ -98,8 +100,9 @@
                    TextWrapping="Wrap" />
       </Border>
 
-      <!-- The bar's icon area, its size set from the bar's (0.15.0 WP3) -->
-      <views:IconGridControl x:Name="Icons" OpensGroupsInPlace="True" Margin="0,3,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" />
+      <!-- The bar's icon area, its size set from the bar's (0.15.0 WP3). In the window shown while a key is held it takes
+           the keyboard focus itself, without a frame (0.16.0 WP1; PointerWindow.FocusStart) -->
+      <views:IconGridControl x:Name="Icons" OpensGroupsInPlace="True" FocusVisualStyle="{x:Null}" HorizontalAlignment="Left" VerticalAlignment="Top" />
     </DockPanel>
     </Grid>
   </Border>

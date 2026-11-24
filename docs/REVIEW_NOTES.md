@@ -9,6 +9,42 @@ The owner relays replies.
 
 ---
 
+## 2026-11-24 (163) — 0.16.0 WP1: the window shown while the key is held has no search box
+
+- **Runs:** 266 (`6c76dcc`, the release commit, entry 162) green: Core 1368/1368, App 601/601. You made v0.15.0 on it
+  (annotated tag, `main` with Build 267, Release run 18); I checked the tag, `main`, both runs and the release's assets on
+  GitHub. Plan 37 started here; this commit sets the version to 0.16.0 and opens "[0.16.0] – Unreleased".
+- **One window, two forms** (`PointerWindow.ShowAtPointer(bool held)`): the bar's hold (`PointerHoldWindow.Show`) passes
+  `held: true`, the show-at-pointer key `false`. `SetForm` runs at each showing, before the measure: the search row
+  (`SearchRow`, now named) is collapsed in the hold form and visible in the tap form, so `MeasureSize` and the work-area
+  fit count without it; the icon area keeps `BarIconArea`.
+- **Directly at the top:** each row above the icons now keeps its gap of 3 under it (the search row and a group's header
+  `Margin="0,0,0,3"`, the icons none) instead of the next one keeping it above. The tap form is laid out exactly as
+  before (box, 3, header, 3, icons); in the hold form the icons, or a group's header with ←, start at the top, 4 units
+  from the top edge as from the side. So the hold form is shorter by the search row with its gap: the row's height + 3.
+  If you meant the row alone, say so and the icons get their 3 back in the hold form.
+- **Focus:** `StartElement` is the search box in the tap form and the icon area itself in the hold form (`Icons` is made
+  focusable only then, `FocusVisualStyle` null). I did not put the focus on the first icon: the icon style frames a
+  keyboard-focused icon in `Theme.Focus`, so the first icon would be framed at every hold, which reads as a selection. From
+  the area an arrow key steps into the icons (`MoveFocus(First)`), as Down does from the tap form's empty box; then the
+  arrows move between icons and Enter clicks the focused one (a plain click while held, as before). A text key does
+  nothing in the hold form; Esc and Backspace go back from a group or hide, as in the tap form, and give the keys back to
+  the area. In the tap form `Icons` stays unfocusable, so Down from the box still lands on the first icon. If you would
+  rather have the first icon focused (and framed) at once, it is one line in `FocusStart`.
+- **The search:** `ClearSearch` still runs first at each showing, so a search left from the bar never filters the hold
+  form. GrabOffset is unchanged: the pointer is 14 units under the top edge in both forms (on the top row of icons in the
+  hold form).
+- **Docs:** CHANGELOG (Changed), FEATURES (the hold row, with "Enter on a match" now "Enter on the icon that has the
+  focus"; the show-at-pointer row says the hold form has no box), §12 and the roadmap with 0.16.0 in progress. No strings.
+- **Tests (App, `PointerWindowTests`):** the hold form is the tap form's height less the search row and its gap, as wide,
+  with the bar's icon area, the icons at (4, 4), the area as the start element; the tap form after it is as before (height,
+  icons' place, the box as the start element, the area unfocusable); a search typed into the bar before a hold is cleared
+  and all six icons are listed, none faded; a group opened in the hold form has its header at the very top and the window
+  grows by the header and its gap.
+- **Not tested:** where Windows really puts the keyboard focus and real arrow keys during a hold (the tests check the
+  start element and focusability, not the live focus, which CI's desktop may not give a test window); the hold form on a
+  real screen.
+
 ## 2026-11-22 (162) — Release commit for v0.15.0
 
 Run 265 (`907d6ef`, entry 161) is green: Core 1368 and App 601 tests, and your release check (review 42) found nothing.

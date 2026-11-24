@@ -3,6 +3,17 @@
 All notable changes to Desktop Icon Grid. The format follows [Keep a Changelog](https://keepachangelog.com/);
 version numbers follow [Semantic Versioning](https://semver.org/).
 
+## [0.16.0] – Unreleased
+
+"Where the pointer is": the owner's requests after 0.15.0.
+
+### Changed
+
+- The window shown while the *Show at pointer while held* combination is held has no search box. It is shorter by the
+  box's row, its icons (or an open group's header with the way back) sit directly at the top, and the icon area has
+  the keyboard focus: an arrow key steps into the icons and Enter opens the one that has the focus; typing starts no
+  search. A search left from the bar is cleared when it shows. The window the show-at-pointer key opens keeps its box.
+
 ## [0.15.0] – 2026-11-22
 
 "Locked and at hand": the owner's requests after 0.14.0.

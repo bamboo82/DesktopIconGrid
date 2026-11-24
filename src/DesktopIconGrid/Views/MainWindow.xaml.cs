@@ -1032,11 +1032,15 @@ public partial class MainWindow : Window
         ShowPointerWindow(window);
     }
 
-    private void ShowPointerWindow(PointerWindow window)
+    /// <summary>
+    /// Shows the window at the pointer: in its tap form with the search box, or <paramref name="held"/>, while the key held
+    /// to show the bar is down, in its hold form without it (0.16.0 WP1).
+    /// </summary>
+    private void ShowPointerWindow(PointerWindow window, bool held = false)
     {
         _viewModel.IsGroupPopupOpen = false;
         CloseSearch();
-        window.ShowAtPointer();
+        window.ShowAtPointer(held);
     }
 
     // ----- held at the pointer (0.15.0 WP2) ----------------------------------------------------------
@@ -1091,14 +1095,17 @@ public partial class MainWindow : Window
             && (!gesture.Modifiers.HasFlag(ModifierKeys.Windows) || Down(0x5B) || Down(0x5C));
     }
 
-    /// <summary>The window at the pointer, as the hold sees it: busy while one of its menus is open or a drag from it runs.</summary>
+    /// <summary>
+    /// The window at the pointer, as the hold sees it: shown in its hold form, without the search box (0.16.0 WP1), and busy
+    /// while one of its menus is open or a drag from it runs.
+    /// </summary>
     private sealed class PointerHoldWindow(MainWindow bar, PointerWindow window) : IHoldWindow
     {
         public bool IsOpen => window.IsVisible;
 
         public bool IsBusy => window.IsMenuOpen || DragState.IsDragging;
 
-        public void Show() => bar.ShowPointerWindow(window);
+        public void Show() => bar.ShowPointerWindow(window, held: true);
 
         public void Hide() => window.Dismiss();
     }
