@@ -3,9 +3,14 @@
 All notable changes to Desktop Icon Grid. The format follows [Keep a Changelog](https://keepachangelog.com/);
 version numbers follow [Semantic Versioning](https://semver.org/).
 
-## [0.16.0] – Unreleased
+## [0.16.0] – 2026-11-24
 
 "Where the pointer is": the owner's requests after 0.15.0.
+
+Upgrading: 0.16.0 reads and writes the same layout format as 0.15.0 (version 1), so PCs on either can share a settings
+copy. A version before 0.16.0 keeps the window's position at the pointer and a widget's name look untouched when it loads,
+saves and syncs them, without using them: there the window at the pointer opens where it did before and the name is drawn
+as before. 0.15.0 keeps them also when a widget is changed in its own window or in *Text look…*.
 
 ### Added
 

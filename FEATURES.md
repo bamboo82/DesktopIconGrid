@@ -1183,9 +1183,12 @@ icon window for captions and widgets, with an offset; more icon sizes; sharp tex
 found (the new rows in Settings' label column, a stronger edge over a picture, a tooltip that goes with the focus, a
 picked file over 50 MB refused before it is read).
 
-**0.16.0 "Where the pointer is"** *(in progress)* — the owner's requests after 0.15.0: the window shown while a key is
-held without the search box; where the window at the pointer sits relative to the pointer; the custom theme's settings
-shown only for the custom theme, as one block; and a text look for a widget's name.
+**0.16.0 "Where the pointer is"** *(done, released 2026-11-24)* — the owner's requests after 0.15.0: the window shown
+while a key is held without the search box; where the window at the pointer sits relative to the pointer; the custom
+theme's settings shown only for the custom theme, as one block; a text look for a widget's name; and what the release
+check found (the caption inside a widget's tile taking the name look field by field, the name part's label).
+
+**Next** — nothing planned yet.
 
 **1.0.0 "Ship it"** — the existing backlog: installer (MSIX/winget), code signing, and the Windows toast with
 actions.

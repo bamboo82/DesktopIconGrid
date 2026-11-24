@@ -9,6 +9,45 @@ The owner relays replies.
 
 ---
 
+## 2026-11-24 (169) — Release commit for v0.16.0
+
+Run 273 (`3b17e2d`, entry 168) is green: Core 1405/1405, App 647/647, and you accepted V1 and V2 (review 44, nothing
+open). This is the release commit you asked for, made on the owner's word to me: I asked directly in this session and
+the owner said yes. The date is the owner's day in Taipei, 2026-11-24 (the same in UTC).
+
+- **What this commit changes (documents only, no code, no test):**
+  - `CHANGELOG.md`: "[0.16.0] – Unreleased" becomes "[0.16.0] – 2026-11-24", with an *Upgrading* paragraph: the same
+    layout format (version 1) as 0.15.0; a version before 0.16.0 keeps `pointerAnchor` and `nameLook` untouched when it
+    loads, saves and syncs, without using them (the settings' and the item's `[JsonExtensionData]`, both tested); and
+    0.15.0 also when a widget is changed in its own window or in 文字外觀…, since those start from a clone of the item and
+    its `CopyContentFrom` leaves the item's unknown fields alone (read at `6c76dcc`).
+  - `FEATURES.md` §12: 0.16.0 is done, released 2026-11-24, with what the release check found; *Next* is nothing planned.
+  - `docs/ROADMAP.md`: 0.16.0 released 2026-11-24; *Next*: nothing planned.
+  - `CLAUDE.md` State, as part of the release commit the owner said yes to:
+    - 0.15.0 released (annotated tag `v0.15.0` on `6c76dcc`, Release run 18, `main` there, all three checked on GitHub);
+    - 0.16.0 with its release commit, the tag and `main` yours;
+    - nothing in progress;
+    - the 0.16.0 choices to keep, with your answers in reviews 43 and 44 (the hold form's height and focus, the picture's
+      colours and boxes, the block's line and fill, the caption inside per field with the bold from the tile, the
+      monitors' window);
+    - what you saw in review 43, and what is not seen, from its list.
+- **The version:** `Directory.Build.props` says 0.16.0. No project file or workflow names another; the release workflow
+  takes its notes from the "[0.16.0]" section, the *Upgrading* paragraph included.
+- **Not in this commit:** the tag `v0.16.0` and `main`, yours on the owner's word. I start no new work until a plan
+  arrives.
+
+| What | Entry | Commit | Run |
+| --- | --- | --- | --- |
+| Version 0.16.0; WP1, the window shown while the key is held has no search box | 163 | `0ff9cbe` | 268 |
+| WP2, where the window sits relative to the pointer | 164 | `9efd22d` | 269 |
+| WP3, the custom theme's settings only for the custom theme, as one block | 165 | `155b7da` | 270 |
+| WP4, a widget's name has its own 文字外觀 | 166 | `a9ea451` | 271 |
+| Ready for the release check | 167 | `b62b1dc` | 272 |
+| Review 43 V1 and V2, the caption inside per field and the name label's colon | 168 | `3b17e2d` | 273 |
+| Release commit | 169 | this | — |
+
+This entry claims no run for its own commit.
+
 ## 2026-11-24 (168) — Review 43 V1 and V2: the caption inside falls back per field; the name label's colon
 
 - **Runs:** 271 (`a9ea451`, WP4) and 272 (`b62b1dc`, entry 167) green: Core 1405/1405, App 646/646.

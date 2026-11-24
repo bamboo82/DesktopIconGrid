@@ -278,9 +278,10 @@ folder.
   as the bar's twin, a key held to show it, a lock on the grid, a colour picker, hover and focus colours and a
   background picture (with its position and zoom, travelling with sync) for the custom theme, the text icon window for
   captions and widgets, with an offset, more icon sizes, and sharp text in every window.
-- **0.16.0 "Where the pointer is"** (in progress): the owner's requests after 0.15.0 — the window shown while a key
-  is held without the search box, the window's place relative to the pointer, the custom theme's settings only for the
-  custom theme, and a text look for a widget's name.
+- **0.16.0 "Where the pointer is"** (released 2026-11-24): the owner's requests after 0.15.0 — the window shown while
+  a key is held without the search box, the window's place relative to the pointer, the custom theme's settings only for
+  the custom theme, and a text look for a widget's name.
+- **Next**: nothing planned yet.
 - **1.0.0 "Ship it"**: the existing backlog — installer (MSIX/winget), code signing, toast notifications with
   actions.
 

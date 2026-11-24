@@ -94,18 +94,36 @@ After removing or editing a key in the `.resx` files, run `python3 -I tools/gen_
 
 ## State
 
-- Released: 0.14.0 "Rows, looks and places" on 2026-11-21 (release commit `fab4172`; annotated tag `v0.14.0` on it,
-  release run 17; REVIEW_NOTES entry 134 has its table), the owner's requests after 0.13.0 (plan 35: WP1–WP7 with
-  A1–A3; reviews 37–39: T1–T3). Before it 0.13.0 "Where it lives, how it reads" (tag `v0.13.0` on `361beb4`, entry
-  119), 0.12.2 (tag `v0.12.2` on `85b2f04`, entry 107), 0.12.1 (tag `v0.12.1` on `0326f82`, entry 100), 0.12.0 "Find
-  it, see it" (tag `v0.12.0` on `ca7b1c6`, entry 91), 0.11.0 (tag `v0.11.0` on `10dec5a`), and 0.10.0 (tag `v0.10.0`
-  on `254c55c`).
-- 0.15.0 "Locked and at hand", the owner's requests after 0.14.0 (plan 36: WP1–WP9 with WP4b, WP5b, WP7a and WP7b;
-  review 41: U1–U3), has its release commit, dated 2026-11-22 (REVIEW_NOTES entry 162 has its table). It came after the
-  review session's release check (review 42, no finding), on the owner's word. The tag `v0.15.0` and `main` are the
-  review session's, on the owner's word.
-- In progress: nothing. After 0.15.0 nothing is planned; 1.0.0 keeps the installer, code signing and the Windows toast
+- Released: 0.15.0 "Locked and at hand" on 2026-11-22 (release commit `6c76dcc`; annotated tag `v0.15.0` on it,
+  release run 18; REVIEW_NOTES entry 162 has its table), the owner's requests after 0.14.0 (plan 36: WP1–WP9 with WP4b,
+  WP5b, WP7a and WP7b; review 41: U1–U3). Before it 0.14.0 "Rows, looks and places" (tag `v0.14.0` on `fab4172`, entry
+  134), 0.13.0 "Where it lives, how it reads" (tag `v0.13.0` on `361beb4`, entry 119), 0.12.2 (tag `v0.12.2` on
+  `85b2f04`, entry 107), 0.12.1 (tag `v0.12.1` on `0326f82`, entry 100), 0.12.0 "Find it, see it" (tag `v0.12.0` on
+  `ca7b1c6`, entry 91), 0.11.0 (tag `v0.11.0` on `10dec5a`), and 0.10.0 (tag `v0.10.0` on `254c55c`).
+- 0.16.0 "Where the pointer is", the owner's requests after 0.15.0 (plan 37: WP1–WP4; review 43: V1, V2), has its
+  release commit, dated 2026-11-24 (REVIEW_NOTES entry 169 has its table). It came after the review session's release
+  check (review 43) and its look at V1 and V2 (review 44, nothing open), on the owner's word. The tag `v0.16.0` and `main`
+  are the review session's, on the owner's word.
+- In progress: nothing. After 0.16.0 nothing is planned; 1.0.0 keeps the installer, code signing and the Windows toast
   with actions.
+- Keep as designed (0.16.0):
+  - the window at the pointer has two forms, chosen at each showing: the tap form (the show-at-pointer key) with its
+    search box; the hold form without it, shorter by the box's row and its gap, the icons (or a group's header) 4 units
+    from the top as from the side, the keys on the icon area itself without a frame (an arrow steps into the icons), no
+    type-to-find; a search is cleared at each showing (entry 163, review 43);
+  - `pointerAnchor` `{ "x", "y" }` in whole percent beside the pointer keys, synced, read leniently (anything else is
+    none); none is the placement before (centred, top edge 14 units above the pointer); both forms; left = x − width × X /
+    100 in whole pixels, then inside the work area; a group opening or closing places the window again from the pointer
+    where it opened. The 按鍵 row: the picture in the theme preview's colours, nine dots, snap within 6 % each way, arrows
+    by 1 %, Ctrl to the next dot, Home the centre; plain percent boxes under it; always enabled (entry 164, review 43);
+  - the custom theme's six rows are there only while 主題 is 自訂, as the block 自訂主題 under the theme box, its label
+    column shared with the tab's (13 units in); its line and faint fill are the hover colours a theme of the dialog's own
+    lightness has, none under High Contrast; values kept while another theme is chosen (entry 165, review 43);
+  - `nameLook` on the widgets with 文字外觀…: the name under the tile is drawn with it only for such a widget, made smaller
+    to fit its cell with the ellipsis kept, up or down by its percent of the bar's name size × 4/3; the caption inside the
+    tile takes font and colour from it where set, else the value's, and bold from it, else the tile's own (review 43 V1,
+    review 44); the window's 時間 or 數值 and 名稱 parts, OK saves both; the monitors' window carries both (entries 166 and
+    168).
 - Keep as designed (0.15.0):
   - the window at the pointer is the bar's twin: its icon area has the bar's size as shown and expanded, so its rows, row
     lines and scrolling are the bar's, and its background is the bar's (`BarSurface`); no grip, ✕ or ▸, never resized
@@ -211,7 +229,12 @@ After removing or editing a key in the `.resx` files, run `python3 -I tools/gen_
     Settings at 150 % (780 wide, nothing cut); the picker, the hover and focus colours with the contrast warning; the
     picture at 40 % with the desktop through it, and the position dialog; up or down at −20 and +20 %; a caption's look,
     a CPU number and the clock's time with looks (set in the layout file); U1 at 100 %; U2 over a gradient with a white
-    disc at 60 %.
+    disc at 60 %;
+  - for 0.16.0 (reviews 43 and 44, a portable Release build on zh-TW Windows 11 at 100 %): the hold form without its box
+    (734 × 302 against the tap form's 734 × 329), the icons at the top; the placement without an anchor in both forms,
+    and anchors 0/100, 50/50 and 100/0 to the pixel in both; the 按鍵 row at 100 %; 外觀 with a built-in theme (the six
+    rows gone) and with 自訂 (the block's line and fill on the light dialog); the clock's name in Georgia, bold, yellow,
+    a CPU monitor's name on a plate moved down, and the clock's 時間 / 名稱 window.
 - Not seen anywhere:
   - a real notification banner, a real sign-out, a real Windows snap, and maximise on a second monitor;
   - the recogniser with a microphone (the reviewer asks the owner before it opens one);
@@ -225,5 +248,8 @@ After removing or editing a key in the `.resx` files, run `python3 -I tools/gen_
   - for 0.15.0: U3 with the pointer resting on an icon while Settings opens; the picture between two PCs (a folder or
     Drive); a real download; a file picked through the dialog; the 50 MB refusal; Mica or Acrylic under the picture and
     on the twin; mouse drags in the picker and the position dialog; a click with the hold key down; 文字外觀… from a
-    widget's menu and F2 on a row line; icons at 96–256; 125 %; English and zh-Hans; the zips.
+    widget's menu and F2 on a row line; icons at 96–256; 125 %; English and zh-Hans; the zips;
+  - for 0.16.0: drags and keys on the position picture; the anchor at a screen edge; the scroll into view when 自訂 is
+    chosen; the block on a dark dialog and in High Contrast; a long name shrunk to its cell; names hidden with a name look;
+    the name over a picture while see-through; 150 %; English and zh-Hans; the zips.
 - Nothing is open for the owner from this session.
