@@ -56,3 +56,34 @@ public sealed class ScaledTextFormattingConverter : IMultiValueConverter
         _ => null,
     };
 }
+
+/// <summary>
+/// The width a widget's name with a look may take before its ellipsis (0.16.0 WP4): the values are the cell's width, the
+/// bar's name size and the name's look (<see cref="ViewModels.ItemViewModel.NameLookWidth"/>).
+/// </summary>
+public sealed class NameLookWidthConverter : IMultiValueConverter
+{
+    public object Convert(object[] values, Type targetType, object? parameter, CultureInfo culture)
+    {
+        ArgumentNullException.ThrowIfNull(values);
+        return values.Length >= 3 && values[0] is double cellWidth && values[1] is double nameFontSize
+            ? ViewModels.ItemViewModel.NameLookWidth(cellWidth, nameFontSize, values[2] as Core.Models.TextLook)
+            : double.PositiveInfinity;
+    }
+
+    public object[] ConvertBack(object value, Type[] targetTypes, object? parameter, CultureInfo culture) =>
+        throw new NotSupportedException();
+}
+
+/// <summary>
+/// A line's height for its font size (0.16.0 WP4): what a widget's name moves up or down by a percent of
+/// (<see cref="Views.LookedText.LineFactor"/>).
+/// </summary>
+public sealed class LineHeightConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object? parameter, CultureInfo culture) =>
+        value is double size && double.IsFinite(size) ? size * Views.LookedText.LineFactor : 0.0;
+
+    public object ConvertBack(object value, Type targetType, object? parameter, CultureInfo culture) =>
+        throw new NotSupportedException();
+}

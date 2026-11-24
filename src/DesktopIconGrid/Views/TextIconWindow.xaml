@@ -33,6 +33,14 @@
       <RadioButton x:Name="SymbolMode" Content="{x:Static r:Strings.TextIcon_ModeSymbol}" IsChecked="{Binding IsSymbol}" MinWidth="0" />
     </StackPanel>
 
+    <!-- A widget's two parts (0.16.0 WP4): its value (時間 for the clock) and its name, each a look of its own, one shown at a
+         time; switching keeps both. The window's data is the part shown; this choice has the two parts as its own. -->
+    <StackPanel x:Name="PartChoice" Grid.Row="0" Grid.Column="0" Orientation="Horizontal" Margin="0,0,0,10" Visibility="Collapsed"
+                AutomationProperties.Name="{x:Static r:Strings.TextLook_PartsName}">
+      <RadioButton x:Name="ValuePart" GroupName="WidgetPart" Content="{Binding ValuePartLabel}" IsChecked="{Binding IsValuePart}" MinWidth="0" Margin="0,0,24,0" />
+      <RadioButton x:Name="NamePart" GroupName="WidgetPart" Content="{Binding NamePartLabel}" IsChecked="{Binding IsNamePart}" MinWidth="0" />
+    </StackPanel>
+
     <!-- Preview: the tile as the bar draws it, at the bar's icon size (16 to 64), on the bar's background -->
     <Border Grid.Row="0" Grid.RowSpan="2" Grid.Column="1" Width="88" Height="88" Margin="14,0,0,8"
             Background="{DynamicResource Theme.Background}"
@@ -59,6 +67,14 @@
           </Viewbox>
           <views:DividerLine Stroke="{DynamicResource Theme.LineStroke}" Inset="0" Flat="True" />
         </views:RowLinePanel>
+        <!-- A widget's name (0.16.0 WP4): as the bar draws it under the tile, at the bar's name size, made smaller where it is
+             too wide, the plate behind it; up or down by its percent of the name's line -->
+        <Viewbox x:Name="NamePreview" Stretch="Uniform" StretchDirection="DownOnly" MaxWidth="84" HorizontalAlignment="Center" VerticalAlignment="Center"
+                 Visibility="{Binding IsWidgetNameMode, Converter={StaticResource BoolToVisibility}}">
+          <views:LookedText x:Name="NamePreviewText" Text="{Binding PreviewText}" Look="{Binding PreviewLook}" ShiftBase="{Binding NameShiftBase}"
+                            TextElement.Foreground="{DynamicResource Theme.Foreground}" TextElement.FontSize="{Binding DefaultSize}"
+                            TextElement.FontWeight="{Binding DefaultWeight}" TextElement.FontFamily="{Binding DefaultFamily}" />
+        </Viewbox>
         <!-- A widget (0.15.0 WP7b): its text on its tile, in the tile's 100 units, the plate as the tile's fill -->
         <Viewbox x:Name="WidgetPreview" Width="{Binding PreviewSize}" Height="{Binding PreviewSize}"
                  Visibility="{Binding IsWidgetMode, Converter={StaticResource BoolToVisibility}}">
@@ -269,7 +285,7 @@
 
     <!-- Buttons -->
     <StackPanel Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,6,0,0">
-      <Button Content="{x:Static r:Strings.Common_OK}" Style="{StaticResource DialogButton}" IsDefault="True"
+      <Button x:Name="OkButton" Content="{x:Static r:Strings.Common_OK}" Style="{StaticResource DialogButton}" IsDefault="True"
               IsEnabled="{Binding CanSave}" Click="Ok_Click" />
       <Button Content="{x:Static r:Strings.Common_Cancel}" Style="{StaticResource DialogButton}" IsCancel="True" />
     </StackPanel>

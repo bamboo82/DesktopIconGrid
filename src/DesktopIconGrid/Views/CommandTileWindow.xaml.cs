@@ -22,9 +22,11 @@ public partial class CommandTileWindow : Window
     /// </summary>
     private void TextLook_Click(object sender, RoutedEventArgs e)
     {
-        if (DataContext is CommandTileViewModel viewModel && Services.TextLookWindows.Widget(this, viewModel.ItemId, viewModel.Name.Trim(), viewModel.TextLook) is { } answer)
+        if (DataContext is CommandTileViewModel viewModel
+            && Services.TextLookWindows.Widget(this, viewModel.ItemId, viewModel.Name.Trim(), viewModel.TextLook, viewModel.NameLook, isClock: false) is { } answer)
         {
             viewModel.TextLook = answer.Look;
+            viewModel.NameLook = answer.NameLook; // both parts (0.16.0 WP4)
         }
     }
 

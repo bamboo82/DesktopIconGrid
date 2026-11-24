@@ -97,6 +97,23 @@ public sealed class ItemViewModel : ObservableObject
     /// <summary>The widget draws text of its own whose look can be set: 文字外觀… is in its menu (0.15.0 WP7b).</summary>
     public bool CanEditTextLook => Model is SpecialIconItem && SpecialHandler.HasTextLook;
 
+    /// <summary>
+    /// A widget's name look (0.16.0 WP4), on the widgets whose 文字外觀… has it; <see langword="null"/> for the name as before.
+    /// </summary>
+    public TextLook? NameLook => CanEditTextLook ? (Model as SpecialIconItem)?.NameLook : null;
+
+    /// <summary>The name under the tile is drawn with its look (<see cref="Views.LookedText"/>) instead of the plain line.</summary>
+    public bool HasLookedName => NameLook is not null;
+
+    /// <summary>
+    /// How wide a name with <paramref name="look"/> may be before it is cut with an ellipsis (0.16.0 WP4): the name line's
+    /// width in a cell <paramref name="cellWidth"/> wide (its margins of 2 off), and for a look larger than the bar's name
+    /// (<paramref name="nameFontSize"/>) that width at the look's size, so the line is made smaller to fit the cell rather
+    /// than drawn wider, and a name too long at the bar's size is still cut as before.
+    /// </summary>
+    public static double NameLookWidth(double cellWidth, double nameFontSize, TextLook? look) =>
+        Math.Max(0, cellWidth - 4) * Math.Max(1, look?.Size is { } size && nameFontSize > 0 ? size / nameFontSize : 1);
+
     /// <summary>How much room the item takes in the grid: a divider is thin, a caption as wide as its text, and a row line across the bar.</summary>
     public FlowSlot Slot => SeparatorKind switch
     {
@@ -364,7 +381,16 @@ public sealed class ItemViewModel : ObservableObject
         if (_gauge is not null)
         {
             _gauge.Look = CanEditTextLook && (Model as SpecialIconItem)?.TextLook is { } look ? new GaugeLook(look, UiFonts.BarFontFamily()) : null;
+
+            // The caption inside the tile takes the name look's font, colour and bold in place of the value's (0.16.0 WP4).
+            _gauge.NameLook = NameLook is { } name
+                ? new GaugeLook(name with { Size = null, TileColor = null, OffsetY = 0 }, UiFonts.BarFontFamily())
+                : null;
         }
+
+        // The name under the tile (0.16.0 WP4).
+        OnPropertyChanged(nameof(NameLook));
+        OnPropertyChanged(nameof(HasLookedName));
     }
 
     /// <summary>Stops live updates; called when the item leaves the bar.</summary>

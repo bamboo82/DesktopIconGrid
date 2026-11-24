@@ -24,6 +24,12 @@ namespace DesktopIconGrid.Views;
 /// </summary>
 public sealed class LookedText : Decorator
 {
+    /// <summary>
+    /// A line's height for its font size (0.16.0 WP4): a widget's name moves up or down by its look's percent of the name's
+    /// line, the bar's name size times this, as a row line's caption moves by its strip's.
+    /// </summary>
+    public const double LineFactor = 4.0 / 3;
+
     public static readonly DependencyProperty TextProperty = DependencyProperty.Register(
         nameof(Text), typeof(string), typeof(LookedText), new FrameworkPropertyMetadata(string.Empty, Rebuild));
 

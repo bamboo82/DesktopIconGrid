@@ -130,27 +130,32 @@
                       </DataTrigger>
                     </Style.Triggers>
                   </Style>
-                  <!-- A caption under or over the value takes the font and the colour, not the size, weight or place -->
+                  <!-- A caption under or over the value takes the font and the colour, not the size, weight or place: the
+                       name's look's when the widget has one, with its bold too (0.16.0 WP4), else the value's as before
+                       (CaptionLook is then the value's own look) -->
                   <Style x:Key="GaugeCaptionLook" TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
                     <Style.Triggers>
-                      <DataTrigger Binding="{Binding Look.HasFont}" Value="True">
-                        <Setter Property="FontFamily" Value="{Binding Look.Family}" />
+                      <DataTrigger Binding="{Binding CaptionLook.HasFont}" Value="True">
+                        <Setter Property="FontFamily" Value="{Binding CaptionLook.Family}" />
                       </DataTrigger>
-                      <DataTrigger Binding="{Binding Look.HasColor}" Value="True">
-                        <Setter Property="Foreground" Value="{Binding Look.TextBrush}" />
+                      <DataTrigger Binding="{Binding NameLook.HasBold}" Value="True">
+                        <Setter Property="FontWeight" Value="{Binding NameLook.Weight}" />
+                      </DataTrigger>
+                      <DataTrigger Binding="{Binding CaptionLook.HasColor}" Value="True">
+                        <Setter Property="Foreground" Value="{Binding CaptionLook.TextBrush}" />
                         <Setter Property="Effect" Value="{x:Null}" />
                       </DataTrigger>
                       <MultiDataTrigger>
                         <MultiDataTrigger.Conditions>
-                          <Condition Binding="{Binding Look.EdgesColor}" Value="True" />
-                          <Condition Binding="{Binding Look.IsLightText}" Value="True" />
+                          <Condition Binding="{Binding CaptionLook.EdgesColor}" Value="True" />
+                          <Condition Binding="{Binding CaptionLook.IsLightText}" Value="True" />
                         </MultiDataTrigger.Conditions>
                         <Setter Property="Effect" Value="{DynamicResource Theme.GaugeLightTextEdge}" />
                       </MultiDataTrigger>
                       <MultiDataTrigger>
                         <MultiDataTrigger.Conditions>
-                          <Condition Binding="{Binding Look.EdgesColor}" Value="True" />
-                          <Condition Binding="{Binding Look.IsLightText}" Value="False" />
+                          <Condition Binding="{Binding CaptionLook.EdgesColor}" Value="True" />
+                          <Condition Binding="{Binding CaptionLook.IsLightText}" Value="False" />
                         </MultiDataTrigger.Conditions>
                         <Setter Property="Effect" Value="{DynamicResource Theme.GaugeDarkTextEdge}" />
                       </MultiDataTrigger>
@@ -343,6 +348,7 @@
             </Border>
           </Grid>
 
+          <!-- The name; a widget's with a look of its own is drawn below instead (0.16.0 WP4) -->
           <TextBlock Grid.Row="1"
                      Text="{Binding Name}"
                      Effect="{DynamicResource Theme.TextEdge}"
@@ -350,8 +356,53 @@
                      FontSize="{Binding Root.NameFontSize}"
                      TextAlignment="Center"
                      TextTrimming="CharacterEllipsis"
-                     Margin="2,1,2,0"
-                     Visibility="{Binding Root.ShowLabels, Converter={StaticResource BoolToVisibility}}" />
+                     Margin="2,1,2,0">
+            <TextBlock.Style>
+              <Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+                <Setter Property="Visibility" Value="{Binding Root.ShowLabels, Converter={StaticResource BoolToVisibility}}" />
+                <Style.Triggers>
+                  <DataTrigger Binding="{Binding HasLookedName}" Value="True">
+                    <Setter Property="Visibility" Value="Collapsed" />
+                  </DataTrigger>
+                </Style.Triggers>
+              </Style>
+            </TextBlock.Style>
+          </TextBlock>
+          <!-- A widget's name with a look of its own (0.16.0 WP4), made only for such a widget: as a row line's caption's, in the
+               bar's units, the bar's name size and weight where the look sets none; made smaller where it would not fit the
+               cell, and a name too long at the bar's size still cut; up or down by its percent of the name's line -->
+          <ContentControl Grid.Row="1" Focusable="False" IsTabStop="False"
+                          Visibility="{Binding Root.ShowLabels, Converter={StaticResource BoolToVisibility}}">
+            <ContentControl.Style>
+              <Style TargetType="ContentControl">
+                <Style.Triggers>
+                  <DataTrigger Binding="{Binding HasLookedName}" Value="True">
+                    <Setter Property="Content" Value="{Binding}" />
+                    <Setter Property="ContentTemplate">
+                      <Setter.Value>
+                        <DataTemplate>
+                          <Viewbox x:Name="LookedName" Stretch="Uniform" StretchDirection="DownOnly" Margin="2,1,2,0" HorizontalAlignment="Center">
+                            <views:LookedText x:Name="LookedNameText" Text="{Binding Name}" Look="{Binding NameLook}"
+                                              ShiftBase="{Binding Root.NameFontSize, Converter={StaticResource LineHeight}}"
+                                              TextElement.Foreground="{DynamicResource Theme.Foreground}"
+                                              TextElement.FontSize="{Binding Root.NameFontSize}">
+                              <views:LookedText.MaxWidth>
+                                <MultiBinding Converter="{StaticResource NameLookWidth}">
+                                  <Binding Path="Root.CellWidth" />
+                                  <Binding Path="Root.NameFontSize" />
+                                  <Binding Path="NameLook" />
+                                </MultiBinding>
+                              </views:LookedText.MaxWidth>
+                            </views:LookedText>
+                          </Viewbox>
+                        </DataTemplate>
+                      </Setter.Value>
+                    </Setter>
+                  </DataTrigger>
+                </Style.Triggers>
+              </Style>
+            </ContentControl.Style>
+          </ContentControl>
 
           <!-- Colour tag -->
           <Path Grid.RowSpan="2"

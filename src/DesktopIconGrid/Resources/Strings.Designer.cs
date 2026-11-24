@@ -8682,6 +8682,42 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Name.
+        /// </summary>
+        public static string TextLook_PartName {
+            get {
+                return ResourceManager.GetString("TextLook_PartName", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Time.
+        /// </summary>
+        public static string TextLook_PartTime {
+            get {
+                return ResourceManager.GetString("TextLook_PartTime", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Value.
+        /// </summary>
+        public static string TextLook_PartValue {
+            get {
+                return ResourceManager.GetString("TextLook_PartValue", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Which text.
+        /// </summary>
+        public static string TextLook_PartsName {
+            get {
+                return ResourceManager.GetString("TextLook_PartsName", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to The file no longer exists..
         /// </summary>
         public static string Upload_FileGone {

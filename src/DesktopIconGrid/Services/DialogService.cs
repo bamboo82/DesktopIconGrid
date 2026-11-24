@@ -162,8 +162,7 @@ public sealed class DialogService(IIconProvider icons) : IDialogService, ILaunch
 
     public CaptionAnswer? EditCaption(string? caption, TextLook? look, TextLookDefaults defaults) => TextLookWindows.Caption(Owner, caption, look, defaults);
 
-    public LookAnswer? EditTextLook(string name, string sample, TextLook? look, TextLookDefaults defaults) =>
-        TextLookWindows.Widget(Owner, name, sample, look, defaults);
+    public LookAnswer? EditTextLook(WidgetLookRequest request) => TextLookWindows.Widget(Owner, request);
 
     public IReadOnlyList<InstalledApp> ShowAddApp(IReadOnlySet<string> locationsOnBar)
     {

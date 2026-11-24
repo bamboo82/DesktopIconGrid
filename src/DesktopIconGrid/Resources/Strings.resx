@@ -3176,4 +3176,16 @@ The place was not changed; what was copied stays there.</value>
   <data name="Settings_CustomThemeBlock" xml:space="preserve">
     <value>Custom theme</value>
   </data>
+  <data name="TextLook_PartValue" xml:space="preserve">
+    <value>Value</value>
+  </data>
+  <data name="TextLook_PartTime" xml:space="preserve">
+    <value>Time</value>
+  </data>
+  <data name="TextLook_PartName" xml:space="preserve">
+    <value>Name</value>
+  </data>
+  <data name="TextLook_PartsName" xml:space="preserve">
+    <value>Which text</value>
+  </data>
 </root>

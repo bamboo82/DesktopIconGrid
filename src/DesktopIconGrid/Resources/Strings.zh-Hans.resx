@@ -3176,4 +3176,16 @@ SHA-256：{3}
   <data name="Settings_CustomThemeBlock" xml:space="preserve">
     <value>自定义主题</value>
   </data>
+  <data name="TextLook_PartValue" xml:space="preserve">
+    <value>数值</value>
+  </data>
+  <data name="TextLook_PartTime" xml:space="preserve">
+    <value>时间</value>
+  </data>
+  <data name="TextLook_PartName" xml:space="preserve">
+    <value>名称</value>
+  </data>
+  <data name="TextLook_PartsName" xml:space="preserve">
+    <value>要设置的文字</value>
+  </data>
 </root>

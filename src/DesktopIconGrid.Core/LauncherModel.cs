@@ -201,6 +201,7 @@ public sealed class LauncherModel
             special.Kind = special.Kind?.Trim() ?? string.Empty;
             special.Settings ??= new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
             special.TextLook = special.TextLook?.Normalized();
+            special.NameLook = special.NameLook?.Normalized();
             if (item.Name.Length == 0)
             {
                 item.Name = special.Kind.Length == 0 ? CoreStrings.Item_SpecialIconPlaceholder : special.Kind;

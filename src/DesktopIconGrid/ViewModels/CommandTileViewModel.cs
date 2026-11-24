@@ -38,6 +38,7 @@ public sealed class CommandTileViewModel : ObservableObject
         _name = item.Name;
         ItemId = item.Id;
         TextLook = item.TextLook;
+        NameLook = item.NameLook;
         _program = settings.Program;
         _arguments = settings.Arguments ?? string.Empty;
         _startIn = settings.StartIn ?? string.Empty;
@@ -142,10 +143,14 @@ public sealed class CommandTileViewModel : ObservableObject
     /// <summary>The widget's text look as 文字外觀… here left it (0.15.0 WP7b); written on OK with the rest.</summary>
     public TextLook? TextLook { get; set; }
 
+    /// <summary>The widget's name look as 文字外觀… here left it (0.16.0 WP4); written on OK with the rest.</summary>
+    public TextLook? NameLook { get; set; }
+
     public void Apply(SpecialIconItem item)
     {
         ArgumentNullException.ThrowIfNull(item);
         item.TextLook = TextLook; // 文字外觀… here (0.15.0 WP7b)
+        item.NameLook = NameLook; // and its name part (0.16.0 WP4)
         item.Name = _name.Trim();
         (Settings() ?? throw new InvalidOperationException("The dialog was saved with numbers that do not read.")).ApplyTo(item);
     }

@@ -128,6 +128,7 @@ caption and a widget's own text; only what it shows differs, and its title says 
 | Icon | 文字或符號圖示 / *Text or symbol icon* | Everything, as before. |
 | Caption | 標題文字 / *Caption text* | The caption (up to 100 characters; empty is no caption, and its look goes with it), font, size, bold, colour, 底板顏色 / *Plate colour*, up or down, and the Text and Symbol switch: a caption can be a symbol, drawn in the symbol font at the caption's size. No picture box and no place. |
 | Widget | "<name> 的文字" / *Text of <name>* | The look only, with what the widget shows now, read-only, where the text box is. No switch, no picture box, no place. |
+| Widget, name part (0.16.0) | the same | A second part of the widget's window, chosen at its top with the value's part (時間 / *Time* for the clock, 數值 / *Value* for the others) and 名稱 / *Name*: the name's look, with the name, read-only, where the text box is, and a preview of the name as the bar draws it under the tile, at the bar's name size; 底板顏色 / *Plate colour*. Switching parts keeps what was changed in the other; OK saves both, Cancel neither; a reset in one part leaves the other; OK waits until both parts can be saved. |
 
 The look (`TextLook`: `font`, `size`, `bold`, `color`, `tileColor`, `offsetY`) has every field optional, and absent is
 the text as it was drawn before 0.15.0, pixel for pixel. The window starts from the text's own font (*(as before)*,
@@ -311,7 +312,22 @@ text is white or near-black, whichever reads better. The plate is the tile's fil
 ring's and the bar's value is made smaller where it would not fit; the number style's box already does that. While the
 bar is see-through, text in a chosen colour keeps an edge in the tone that stands out from it, and none on a plate. The
 Drive bucket and the sound replayer, which draw a picture with a short text only while busy, and Voice and Send to PC,
-which draw a glyph, have no text look. Available now from *Add special icon ▸*:
+which draw a glyph, have no text look.
+
+Since 0.16.0 (the owner's request) the same widgets' names have a look of their own, set in the window's second part,
+名稱 / *Name*, and saved as `nameLook` with the item (synced with it; a version before 0.16.0 keeps it unread). Absent is
+the name as before, pixel for pixel, the value's font and colour still reaching the caption inside the tile. Present:
+
+- the name under the tile, while names are shown, has the look's font (the bar's after it), size in the bar's units, bold,
+  colour, plate and up or down (its percent of the name's line, the bar's name size × 4/3), as a row line's caption has
+  them; what it leaves out is the bar's name's (its size and weight, the theme's colour). A name wider than its cell at
+  the look's size is made smaller to fit rather than widening the cell, and a name too long even at the bar's size is cut
+  with an ellipsis as before. It keeps the see-through edge a caption has;
+- the caption inside the tile (the bar style's and the number style's, where the widget's name stands) takes the look's
+  font, colour and bold in place of the value's; its size, place and the tile stay the tile's (the look's size, plate and
+  up or down do not apply there). A name look that sets none of those three leaves that caption its own.
+
+Available now from *Add special icon ▸*:
 
 - **CPU usage** — the processor's busy percentage, refreshed every 2 seconds; click opens Task Manager.
 - **Disk usage** — how full a drive of your choice is, refreshed every 10 seconds; click opens the drive.

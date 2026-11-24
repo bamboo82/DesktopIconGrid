@@ -35,21 +35,38 @@ public static class TextLookWindows
         return new CaptionAnswer(text, saved);
     }
 
-    /// <summary>A widget's look, with what it shows now; <see langword="null"/> on Cancel.</summary>
-    public static LookAnswer? Widget(Window? owner, string name, string sample, TextLook? look, TextLookDefaults defaults)
+    /// <summary>
+    /// The name of a widget without a look, as the bar has it (0.16.0 WP4): its name size and weight, in its font; set by the
+    /// bar (<see cref="LauncherViewModel"/>). Without it, the bar's name at 100 %.
+    /// </summary>
+    public static Func<TextLookDefaults>? NameDefaults { get; set; }
+
+    /// <summary>The bar's name without a look at 100 %, in the bar's font: what a widget's name starts from without the bar.</summary>
+    public static TextLookDefaults FallbackNameDefaults() => new(11, FontWeights.Normal, UiFonts.BarFontFamily());
+
+    /// <summary>
+    /// A widget's looks (0.15.0 WP7b, 0.16.0 WP4): the window opens on the value's part, with what the widget shows now, and
+    /// has the name's part beside it; switching keeps both, OK saves both and Cancel neither. <see langword="null"/> on Cancel.
+    /// </summary>
+    public static LookAnswer? Widget(Window? owner, WidgetLookRequest request)
     {
-        var editor = TextIconViewModel.ForWidget(name, sample, look, defaults);
-        var window = new TextIconWindow { DataContext = editor, Owner = owner };
-        return window.ShowDialog() == true ? new LookAnswer(editor.ToLook()) : null;
+        ArgumentNullException.ThrowIfNull(request);
+        var parts = new WidgetLookParts(
+            TextIconViewModel.ForWidget(request.Name, request.Sample, request.Look, request.Defaults),
+            TextIconViewModel.ForWidgetName(request.Name, request.NameLook, request.NameDefaults),
+            request.IsClock);
+        var window = new TextIconWindow { DataContext = parts.Value, Parts = parts, Owner = owner };
+        return window.ShowDialog() == true ? parts.ToAnswer() : null;
     }
 
     /// <summary>
     /// 文字外觀… in a widget's own window: the widget with <paramref name="id"/> as the bar shows it (<see cref="Tiles"/>),
-    /// under the name typed there.
+    /// under the name typed there, with its value's and its name's looks.
     /// </summary>
-    public static LookAnswer? Widget(Window? owner, Guid id, string name, TextLook? look)
+    public static LookAnswer? Widget(Window? owner, Guid id, string name, TextLook? look, TextLook? nameLook, bool isClock)
     {
         var (sample, defaults) = Tiles?.Invoke(id) ?? (name, FallbackDefaults());
-        return Widget(owner, name, sample, look, defaults);
+        var nameDefaults = NameDefaults?.Invoke() ?? FallbackNameDefaults();
+        return Widget(owner, new WidgetLookRequest(name, sample, look, defaults, nameLook, nameDefaults, isClock));
     }
 }

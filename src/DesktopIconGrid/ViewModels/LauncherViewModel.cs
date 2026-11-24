@@ -68,6 +68,7 @@ public sealed partial class LauncherViewModel : ObservableObject, ISyncHost
         Trust = trust ?? new CommandTrust(null);
         // 文字外觀… in a widget's own window shows what this bar's tile shows (0.15.0 WP7b).
         TextLookWindows.Tiles = id => ItemViewModelOf(id) is { } shown ? WidgetTile(shown) : null;
+        TextLookWindows.NameDefaults = () => NameLookDefaults; // and its name's part, the bar's name (0.16.0 WP4)
         _isMissing = isMissing ?? (shortcut => LocationProbe.IsMissing(shortcut, IconWorker.IsOnSlowStorage));
         Model = model;
         Keys = WindowKeyMap.From(model.Settings);
@@ -270,6 +271,12 @@ public sealed partial class LauncherViewModel : ObservableObject, ISyncHost
     /// bar's font.
     /// </summary>
     public TextLookDefaults CaptionDefaults => new(NameFontSize, System.Windows.FontWeights.SemiBold, UiFonts.BarFontFamily(), IconSize);
+
+    /// <summary>
+    /// A widget's name without a look of its own (0.16.0 WP4): the bar's name size and weight, in the bar's font; what the
+    /// name part of 文字外觀… starts from and leaves unwritten when it is kept.
+    /// </summary>
+    public TextLookDefaults NameLookDefaults => new(NameFontSize, System.Windows.FontWeights.Normal, UiFonts.BarFontFamily(), IconSize);
 
     /// <summary>The height of the line of a name under an icon: 16 at 100 %, by the text size; icons keep theirs.</summary>
     public double NameHeight => Math.Ceiling(LabelHeight * Model.Settings.TextFactor);
@@ -955,9 +962,9 @@ public sealed partial class LauncherViewModel : ObservableObject, ISyncHost
     }
 
     /// <summary>
-    /// 文字外觀… of a widget (0.15.0 WP7b): its look in the text icon window's Widget mode, with what its tile shows now;
-    /// saved on OK and drawn at once, without making the widget anew (a command tile does not run again). Cancel, or OK
-    /// without a change, changes nothing.
+    /// 文字外觀… of a widget (0.15.0 WP7b): its value's look in the text icon window's Widget mode, with what its tile shows
+    /// now, and since 0.16.0 (WP4) its name's in the window's second part; both saved on OK and drawn at once, without making
+    /// the widget anew (a command tile does not run again). Cancel, or OK without a change, changes nothing.
     /// </summary>
     public void EditTextLook(ItemViewModel item)
     {
@@ -967,19 +974,24 @@ public sealed partial class LauncherViewModel : ObservableObject, ISyncHost
         }
 
         var (sample, defaults) = WidgetTile(item) ?? (special.Name, TextLookWindows.FallbackDefaults());
-        if (_dialogs.EditTextLook(special.Name, sample, special.TextLook, defaults) is not { } answer)
+        var request = new WidgetLookRequest(
+            special.Name, sample, special.TextLook, defaults, special.NameLook, NameLookDefaults,
+            string.Equals(special.Kind, SpecialIconKinds.Clock, StringComparison.OrdinalIgnoreCase));
+        if (_dialogs.EditTextLook(request) is not { } answer)
         {
             return;
         }
 
         var look = answer.Look?.Normalized();
-        if (Equals(look, special.TextLook))
+        var nameLook = answer.NameLook?.Normalized();
+        if (Equals(look, special.TextLook) && Equals(nameLook, special.NameLook))
         {
             return;
         }
 
         var draft = (SpecialIconItem)special.Clone();
         draft.TextLook = look;
+        draft.NameLook = nameLook;
         Model.Update(draft);
         item.RefreshFromModel();
         item.ApplyTextLook();

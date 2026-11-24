@@ -19,6 +19,15 @@ public sealed class SpecialIconItem : LauncherItem
     /// </summary>
     public TextLook? TextLook { get; set; }
 
+    /// <summary>
+    /// How the widget's name is drawn (0.16.0 WP4, the owner's request): the name under the tile, with its font, size, bold,
+    /// colour, plate and up or down as a row line's caption has them; and the caption inside the tile, which takes its font,
+    /// colour and bold in place of <see cref="TextLook"/>'s. <see langword="null"/> is the name as before, the value's font and
+    /// colour reaching that caption included. Set in the same window as <see cref="TextLook"/>, its 名稱 part; synced with
+    /// the item, kept unread by a version before 0.16.0, and, like it, no part of a command tile's approval.
+    /// </summary>
+    public TextLook? NameLook { get; set; }
+
     public string? GetSetting(string key) =>
         Settings.TryGetValue(key, out var value) && !string.IsNullOrWhiteSpace(value) ? value : null;
 
@@ -50,6 +59,7 @@ public sealed class SpecialIconItem : LauncherItem
             Kind = special.Kind.Trim();
             Settings = new Dictionary<string, string>(special.Settings, StringComparer.OrdinalIgnoreCase);
             TextLook = special.TextLook?.Normalized();
+            NameLook = special.NameLook?.Normalized();
         }
     }
 }

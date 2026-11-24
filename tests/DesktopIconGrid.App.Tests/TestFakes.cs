@@ -151,9 +151,13 @@ internal sealed class RecordingDialogs : IDialogService
     /// <summary>The widget's name, sample, look and defaults the text look window was opened with.</summary>
     public (string Name, string Sample, TextLook? Look, TextLookDefaults Defaults)? OfferedLook { get; private set; }
 
-    public LookAnswer? EditTextLook(string name, string sample, TextLook? look, TextLookDefaults defaults)
+    /// <summary>The name's look and defaults it was opened with, and whether the widget is the clock (0.16.0 WP4).</summary>
+    public (TextLook? NameLook, TextLookDefaults NameDefaults, bool IsClock)? OfferedNameLook { get; private set; }
+
+    public LookAnswer? EditTextLook(WidgetLookRequest request)
     {
-        OfferedLook = (name, sample, look, defaults);
+        OfferedLook = (request.Name, request.Sample, request.Look, request.Defaults);
+        OfferedNameLook = (request.NameLook, request.NameDefaults, request.IsClock);
         return LookAnswer;
     }
 

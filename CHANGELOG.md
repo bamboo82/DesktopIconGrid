@@ -15,6 +15,11 @@ version numbers follow [Semantic Versioning](https://semver.org/).
   percent across and down. The window still stays inside the screen's work area, and when a group opens in it the
   point stays where it was. *Reset to default* goes back to the placement before: centred, the top edge just above the
   pointer. It syncs with the other settings.
+- A widget's name has a *Text look…* of its own: the clock, the monitors and the command tile have a second part,
+  *Name*, beside *Time* or *Value* in that window, with the same font, size, bold, colour, plate and up or down. The
+  name under the tile takes it, made smaller to fit its cell rather than wider; the caption inside the tile takes its
+  font, colour and bold. Both parts are kept while you switch between them and saved together on OK. It syncs with the
+  widget.
 
 ### Changed
 

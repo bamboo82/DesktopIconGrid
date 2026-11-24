@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
@@ -17,6 +18,46 @@ public partial class TextIconWindow : Window
     }
 
     private TextIconViewModel? ViewModel => DataContext as TextIconViewModel;
+
+    private WidgetLookParts? _parts;
+
+    /// <summary>
+    /// A widget's two parts, its value and its name (0.16.0 WP4), shown one at a time: the window's data is the part shown,
+    /// and OK waits until both can be saved. None for a text icon or a caption.
+    /// </summary>
+    public WidgetLookParts? Parts
+    {
+        get => _parts;
+        set
+        {
+            if (_parts is not null)
+            {
+                _parts.PropertyChanged -= OnPartsChanged;
+            }
+
+            _parts = value;
+            PartChoice.DataContext = value;
+            PartChoice.Visibility = value is null ? Visibility.Collapsed : Visibility.Visible;
+            if (value is null)
+            {
+                OkButton.SetBinding(IsEnabledProperty, new Binding(nameof(TextIconViewModel.CanSave)));
+                return;
+            }
+
+            value.PropertyChanged += OnPartsChanged;
+            DataContext = value.Current;
+            OkButton.SetBinding(IsEnabledProperty, new Binding(nameof(WidgetLookParts.CanSave)) { Source = value });
+        }
+    }
+
+    /// <summary>The part chosen at the top: the window shows and edits it, the other keeps what was changed in it.</summary>
+    private void OnPartsChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(WidgetLookParts.Current) && _parts is { } parts)
+        {
+            DataContext = parts.Current;
+        }
+    }
 
     private void ResetOffset_Click(object sender, RoutedEventArgs e) => ViewModel?.ResetOffset();
 

@@ -34,6 +34,7 @@ public sealed class ClockTileViewModel : ObservableObject
         _name = item.Name;
         ItemId = item.Id;
         TextLook = item.TextLook;
+        NameLook = item.NameLook;
         Zones = [new ZoneChoice(null, Strings.Clock_ThisPc), .. TimeZoneInfo.GetSystemTimeZones().Select(zone => new ZoneChoice(zone.Id, zone.DisplayName))];
         var id = settings.TimeZoneId?.Trim();
         if (!string.IsNullOrEmpty(id)
@@ -102,10 +103,14 @@ public sealed class ClockTileViewModel : ObservableObject
     /// <summary>The widget's text look as 文字外觀… here left it (0.15.0 WP7b); written on OK with the rest.</summary>
     public TextLook? TextLook { get; set; }
 
+    /// <summary>The widget's name look as 文字外觀… here left it (0.16.0 WP4); written on OK with the rest.</summary>
+    public TextLook? NameLook { get; set; }
+
     public void Apply(SpecialIconItem item)
     {
         ArgumentNullException.ThrowIfNull(item);
         item.TextLook = TextLook; // 文字外觀… here (0.15.0 WP7b)
+        item.NameLook = NameLook; // and its name part (0.16.0 WP4)
         item.Name = _name.Trim();
         new ClockTileSettings(_zone.Id, _timer.Kind, Read(_minutes) ?? ClockTileSettings.Default.Minutes, Read(_breakMinutes) ?? ClockTileSettings.Default.BreakMinutes).ApplyTo(item);
     }

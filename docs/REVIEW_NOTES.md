@@ -9,6 +9,54 @@ The owner relays replies.
 
 ---
 
+## 2026-11-24 (166) — 0.16.0 WP4: a widget's name has its own 文字外觀
+
+- **Run 270** (`155b7da`, WP3, entry 165) green: Core 1401/1401, App 641/641.
+- **Model:** `SpecialIconItem.NameLook` (a `TextLook`), normalised as `textLook` is (at load in `LauncherModel`, and in
+  `CopyContentFrom`), written as `nameLook` only when set, synced with the item. An older version keeps it untouched when it
+  loads and saves (the item's `[JsonExtensionData]`, tested). Like `textLook` it is no part of a command tile's approval.
+- **Window:** `WidgetLookParts` holds two editors, the value's (`ForWidget`, as before) and the name's (`ForWidgetName`, a
+  new `TextWindowMode.WidgetName`), and which is shown. `TextIconWindow.Parts`: a two-button choice at the top
+  (`PartChoice`, radio buttons in the style of the Text/Symbol choice), 時間 for the clock and 數值 for the others, then
+  名稱; the window's data is the part shown, so every control edits that part and switching keeps both; OK is bound to both
+  parts' `CanSave` (a wrong colour in the part not shown holds it back); OK saves both, Cancel neither; 歸零 resets the part
+  shown. The name part: the name read-only where the text box is (label 名稱), the plate's label 底板顏色 as a caption's, no
+  hint, and a preview (`NamePreview`) of the name at the bar's name size on the bar's background, made smaller where it is
+  wider than the box, its plate behind it, up or down by its percent of the name's line. It starts from the bar's name:
+  its size and weight (`NameLookDefaults`), the bar's font as *(as before)*; OK without a change writes no look.
+- **Contract:** `IDialogService.EditTextLook(WidgetLookRequest)` (name, sample, the value's look and defaults, the name's
+  look and defaults, whether it is the clock) answers `LookAnswer(Look, NameLook)`. 文字外觀… from the menu saves both and
+  draws both at once, the same gauge (a command tile does not run again); OK without a change saves nothing.
+- **Properties windows:** the clock's and the command tile's, as you wrote, and the monitors' too, since it opens 文字外觀…
+  the same way: each view model carries `NameLook` beside `TextLook` and writes it on OK with the rest.
+- **The name under the tile:** the plain name line is as it was (its visibility now in its style, so a name look can hide
+  it). Beside it a `ContentControl` that gets content and a template only for a widget with a name look, so nothing more is
+  made for any other icon: a `LookedText` in a `Viewbox` (DownOnly) with the look; its size in the bar's units, the bar's
+  name size and weight where the look sets none; `MaxWidth` the name line's width (the cell less 4) times the look's size
+  over the bar's name size when larger (`NameLookWidthConverter`), so a larger name is made smaller to fit rather than
+  wider, and a name too long at the bar's size is still cut with its ellipsis; up or down by its percent of the bar's name
+  size × 4/3 (`LookedText.LineFactor`); the see-through edge as a caption's. Shown only while names are shown.
+- **The caption inside the tile:** `GaugeState.NameLook` is the name look without its size, plate and up or down, and
+  `CaptionLook` is it, else the value's `Look` (the same object, so without a name look nothing changes). The captions'
+  style (`BarCaption`, `NumberCaption`) reads `CaptionLook` for the font, the colour and the edge, and `NameLook` for
+  bold. Their size and place stay the tile's. **A choice to look at:** a name look that sets none of font, colour and bold
+  (only a size, say) leaves the caption its own, no longer the value's font and colour, reading "in place of the value's"
+  literally; if you want the value's to reach it then, `CaptionLook` falls back per field instead.
+- **Strings (4):** 數值 / 時間 / 名稱 and the choice's name for UI Automation (要設定的文字).
+- **Docs:** CHANGELOG (Added), FEATURES (the window's mode table, the widgets' paragraph).
+- **Tests:** Core 1405 (+4): written only when set and read back beside `textLook`; through the layout file, the model, a
+  clone, a copy (tidied as it is taken) and a sync copy; bad values tidied at load with a newer version's field kept, none
+  valid is no look; an older version keeps it. App, `NameLookAppTests` (5): the window's two parts (labels, the name's
+  defaults, switching keeps both, a reset in one leaves the other, OK held back by the other part, both in the answer; a
+  caption's window has no parts); both saved from the menu and drawn at once, the gauge's name look without size, plate and
+  place, the offered defaults the bar's name size and weight, the clock told as such, then the name look taken away; the
+  name line with each field (font chain, size, bold, colour, plate, the shift at 10 % of the line, the width) and what it
+  leaves out, then the plain line again; the inner caption with the value's font and colour and no name look, the name's
+  font, colour and bold with one (size 24 and no shift kept), and its own with a name look of a size only; the clock's
+  Properties carrying both. The existing look tests are unchanged and are the "absent draws as before" ones.
+- **Not tested:** the shrink-to-fit with real long names and fonts, the name's edge over a background picture, the menu
+  from a real right-click, English and zh-Hans in the two-part window.
+
 ## 2026-11-24 (165) — 0.16.0 WP3: the custom theme's settings only for the custom theme, as one block
 
 - **Run 269** (`9efd22d`, WP2, entry 164) green: Core 1401/1401, App 637/637.

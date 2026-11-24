@@ -40,6 +40,12 @@ public enum TextWindowMode
 
     /// <summary>A widget's own text: the look only, with a sample of what the widget shows now.</summary>
     Widget,
+
+    /// <summary>
+    /// A widget's name (0.16.0 WP4): the look only, with the name in the bar's name size as its sample; the second part of the
+    /// widget's window (<see cref="WidgetLookParts"/>).
+    /// </summary>
+    WidgetName,
 }
 
 /// <summary>
@@ -123,7 +129,7 @@ public sealed class TextIconViewModel : ObservableObject
         _overImage = CanOverImage && current is { OverImage: true };
         _place = current?.Corner ?? TextIcon.PlaceCenter;
         // An icon that is a symbol opens on Symbol with its symbol chosen; the Text side then starts as for a new icon.
-        _isSymbol = mode != TextWindowMode.Widget && SymbolCatalog.IsSymbol(current) && current!.Text.Length > 0;
+        _isSymbol = mode is not (TextWindowMode.Widget or TextWindowMode.WidgetName) && SymbolCatalog.IsSymbol(current) && current!.Text.Length > 0;
         var text = _isSymbol ? null : current;
         _text = text?.Text ?? Suggest(suggestedText);
         _selectedFont = TextIconFonts.Find(text?.FontFamily) ?? (text is null ? null : Fonts.FirstOrDefault(f => f.Source.Length > 0 && f.Source == text.FontFamily?.Trim()))
@@ -172,6 +178,17 @@ public sealed class TextIconViewModel : ObservableObject
         return new TextIconViewModel(
             TextWindowMode.Widget, StartingIcon(Showable(sample ?? string.Empty, MaxCaptionLength), look, defaults, symbol: false), string.Empty, null, false, defaults,
             Showable(name ?? string.Empty, MaxCaptionLength));
+    }
+
+    /// <summary>
+    /// The window for a widget's name (0.16.0 WP4): the look only, with the name drawn as the bar draws it under the tile;
+    /// <paramref name="defaults"/> is the bar's name without a look, its size in the bar's units.
+    /// </summary>
+    public static TextIconViewModel ForWidgetName(string name, TextLook? look, TextLookDefaults defaults)
+    {
+        ArgumentNullException.ThrowIfNull(defaults);
+        var shown = Showable(name ?? string.Empty, MaxCaptionLength);
+        return new TextIconViewModel(TextWindowMode.WidgetName, StartingIcon(shown, look, defaults, symbol: false), string.Empty, null, false, defaults, shown);
     }
 
     /// <summary>
@@ -227,30 +244,37 @@ public sealed class TextIconViewModel : ObservableObject
 
     public bool IsWidgetMode => Mode == TextWindowMode.Widget;
 
+    /// <summary>A widget's name (0.16.0 WP4): the preview draws it as the bar's name line.</summary>
+    public bool IsWidgetNameMode => Mode == TextWindowMode.WidgetName;
+
+    /// <summary>A widget's value or name: the look only, the text read-only, no sides (0.15.0 WP7b, 0.16.0 WP4).</summary>
+    private bool IsWidgetPart => Mode is TextWindowMode.Widget or TextWindowMode.WidgetName;
+
     /// <summary>The title says what is being set: 文字或符號圖示, 標題文字, or "&lt;name&gt; 的文字".</summary>
     public string Title => Mode switch
     {
         TextWindowMode.Caption => Strings.TextIcon_TitleCaption,
-        TextWindowMode.Widget => string.Format(CultureInfo.CurrentCulture, Strings.TextIcon_TitleWidget, _widgetName),
+        TextWindowMode.Widget or TextWindowMode.WidgetName => string.Format(CultureInfo.CurrentCulture, Strings.TextIcon_TitleWidget, _widgetName),
         _ => Strings.TextIcon_Title,
     };
 
     /// <summary>The Text and Symbol switch: a widget has neither, it shows its own text.</summary>
-    public bool ShowsSides => Mode != TextWindowMode.Widget;
+    public bool ShowsSides => !IsWidgetPart;
 
     /// <summary>The text box is the widget's sample, which cannot be changed here.</summary>
-    public bool IsTextReadOnly => Mode == TextWindowMode.Widget;
+    public bool IsTextReadOnly => IsWidgetPart;
 
     /// <summary>The label of the text row: 文字, 標題 or 目前顯示.</summary>
     public string TextLabel => Mode switch
     {
         TextWindowMode.Caption => Strings.TextIcon_Caption,
         TextWindowMode.Widget => Strings.TextIcon_Sample,
+        TextWindowMode.WidgetName => Strings.TextLook_PartName,
         _ => Strings.TextIcon_Text,
     };
 
     /// <summary>The label of the tile colour's row: a caption's is a plate behind its text.</summary>
-    public string TileColorLabel => Mode == TextWindowMode.Caption ? Strings.TextIcon_PlateColour : Strings.TextIcon_TileColour;
+    public string TileColorLabel => Mode is TextWindowMode.Caption or TextWindowMode.WidgetName ? Strings.TextIcon_PlateColour : Strings.TextIcon_TileColour;
 
     public IReadOnlyList<FontChoice> Fonts { get; }
 
@@ -361,7 +385,7 @@ public sealed class TextIconViewModel : ObservableObject
     public bool ShowsHint => Mode switch
     {
         TextWindowMode.Caption => true,
-        TextWindowMode.Widget => false,
+        TextWindowMode.Widget or TextWindowMode.WidgetName => false,
         _ => _overImage || !_isSymbol,
     };
 
@@ -570,6 +594,9 @@ public sealed class TextIconViewModel : ObservableObject
 
     /// <summary>Its font, the bar's.</summary>
     public FontFamily DefaultFamily => _defaults?.Family ?? SystemFonts.MessageFontFamily;
+
+    /// <summary>A widget name's line, whose height its up or down is a percent of (0.16.0 WP4), as on the bar.</summary>
+    public double NameShiftBase => DefaultSize * Views.LookedText.LineFactor;
 
     /// <summary>A widget's preview draws the plate as the tile's fill.</summary>
     public Brush? PreviewPlateBrush => _tileColor.Length > 0 && LauncherSettings.IsValidColor(_tileColor) ? ThemeManager.ToBrush(_tileColor) : null;

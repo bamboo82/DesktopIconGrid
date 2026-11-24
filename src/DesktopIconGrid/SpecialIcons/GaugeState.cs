@@ -38,6 +38,7 @@ public sealed class GaugeState : ObservableObject
     private GaugeHistory? _history;
     private double? _historyMax;
     private GaugeLook? _look;
+    private GaugeLook? _nameLook;
 
     /// <summary>How wide the ring's value may be with a size of its own (0.15.0 WP7b): inside the ring, 64 units across.</summary>
     public const double RingTextWidth = 60;
@@ -141,9 +142,32 @@ public sealed class GaugeState : ObservableObject
             if (SetProperty(ref _look, value))
             {
                 OnPropertyChanged(nameof(LookLabelSize));
+                OnPropertyChanged(nameof(CaptionLook));
             }
         }
     }
+
+    /// <summary>
+    /// The widget's name look as the caption inside the tile takes it (0.16.0 WP4): its font, colour and bold, not its size,
+    /// plate or up or down (the tile keeps those); <see langword="null"/> without a name look.
+    /// </summary>
+    public GaugeLook? NameLook
+    {
+        get => _nameLook;
+        set
+        {
+            if (SetProperty(ref _nameLook, value))
+            {
+                OnPropertyChanged(nameof(CaptionLook));
+            }
+        }
+    }
+
+    /// <summary>
+    /// What the caption inside the tile (the bar's and the number's) is drawn with: the name's look when the widget has one
+    /// (0.16.0 WP4), else the value's font and colour as before 0.16.0 (<see cref="Look"/>, the same object, so nothing changes).
+    /// </summary>
+    public GaugeLook? CaptionLook => _nameLook ?? _look;
 
     /// <summary>
     /// The value's size with a look that sets one, in the tile's units: the ring's and the bar's made smaller where the

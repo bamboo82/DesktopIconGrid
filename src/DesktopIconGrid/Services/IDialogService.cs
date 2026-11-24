@@ -76,10 +76,11 @@ public interface IDialogService
     CaptionAnswer? EditCaption(string? caption, TextLook? look, TextLookDefaults defaults);
 
     /// <summary>
-    /// A widget's text look in the text icon window's Widget mode (0.15.0 WP7b), with <paramref name="sample"/>, what the
-    /// widget shows now, and <paramref name="defaults"/>, its text without a look; <see langword="null"/> on Cancel.
+    /// A widget's 文字外觀… (0.15.0 WP7b): its value's look in the text icon window's Widget mode, with what the widget shows
+    /// now and its text without a look; and since 0.16.0 (WP4) its name's, in a second part of the same window. Both are
+    /// saved on OK; <see langword="null"/> on Cancel.
     /// </summary>
-    LookAnswer? EditTextLook(string name, string sample, TextLook? look, TextLookDefaults defaults);
+    LookAnswer? EditTextLook(WidgetLookRequest request);
 
     /// <summary>Asks for a folder, starting in <paramref name="initialFolder"/> when it exists; <see langword="null"/> on Cancel.</summary>
     string? PickFolder(string title, string? initialFolder);
@@ -133,5 +134,16 @@ public sealed record DataMove(bool Portable, string MarkerText, string Folder, b
 /// <summary>A row line's caption as the Caption mode saved it (0.15.0 WP7b): its text, empty for none, and its look.</summary>
 public sealed record CaptionAnswer(string Text, TextLook? Look);
 
-/// <summary>A widget's text look as the Widget mode saved it (0.15.0 WP7b); <see langword="null"/> when nothing differs from its own.</summary>
-public sealed record LookAnswer(TextLook? Look);
+/// <summary>
+/// A widget's looks as 文字外觀… saved them: its value's (0.15.0 WP7b) and its name's (0.16.0 WP4), each
+/// <see langword="null"/> when nothing differs from its own.
+/// </summary>
+public sealed record LookAnswer(TextLook? Look, TextLook? NameLook = null);
+
+/// <summary>
+/// What 文字外觀… of a widget opens with (0.16.0 WP4): its name, what it shows now (<paramref name="Sample"/>), its value's
+/// look and that text without one, its name's look and the name without one (the bar's name size and weight), and whether
+/// it is the clock, whose value part is called 時間.
+/// </summary>
+public sealed record WidgetLookRequest(
+    string Name, string Sample, TextLook? Look, TextLookDefaults Defaults, TextLook? NameLook, TextLookDefaults NameDefaults, bool IsClock);
