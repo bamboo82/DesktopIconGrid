@@ -3173,4 +3173,7 @@ SHA-256：{3}
   <data name="Settings_PointerAnchorHelp" xml:space="preserve">
     <value>单击或拖动来选择位置。方向键每次移动 1 %，按住 Ctrl 则从一点移到下一点；Home 回到中央。</value>
   </data>
+  <data name="Settings_CustomThemeBlock" xml:space="preserve">
+    <value>自定义主题</value>
+  </data>
 </root>

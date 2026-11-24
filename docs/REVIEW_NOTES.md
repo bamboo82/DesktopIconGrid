@@ -9,6 +9,43 @@ The owner relays replies.
 
 ---
 
+## 2026-11-24 (165) — 0.16.0 WP3: the custom theme's settings only for the custom theme, as one block
+
+- **Run 269** (`9efd22d`, WP2, entry 164) green: Core 1401/1401, App 637/637.
+- **The block:** a `Border` (`CustomThemeBlock`) in row 1 of the 外觀 grid, across both columns, right under 主題 and above
+  工具列背景: line 1, corner 6, padding 12/10/12/2, margin 0/0/0/12; in it the title 自訂主題 (DialogLabel, SemiBold,
+  8 under it) and a grid of its own (`CustomThemeGrid`) with the six rows. `Visibility` follows `IsCustomTheme` (Collapsed
+  otherwise), so the tab is shorter and the rows are out of the tab order. AutomationProperties.Name 自訂主題.
+- **The rows:** moved as they were: order, controls, names, hints, warnings and bindings, with two names added for the tests
+  (`BackgroundColourLabel`, `BackgroundColourBox`). Every `IsEnabled="{Binding IsCustomTheme}"` on them is gone; the inner
+  greying stays (自動, no picture). The rows below moved up five (16 rows now).
+- **Label column:** the tab grid's column 0 and the block grid's column 0 are one `SharedSizeGroup` (AppearanceLabels),
+  `Grid.IsSharedSizeScope` on the page, MinWidth 100 on both, so the labels inside line up with each other and the boxes
+  inside start on one line. The labels are 13 units in from the tab's: the line (1) and the padding (12).
+- **Line and fill, a choice to look at:** you wrote a Theme.HoverBorder line and the preview's hover fill at half strength.
+  Both come from a theme's colours, and the block sits on the dialog's surface: the default custom colour (#73806E, a dark
+  one by the theme rules) has a 31 % white hover border and an 18 % white hover fill, both gone on a light dialog, and the
+  bar's own theme may be dark or light whatever the dialog is. So the block takes the hover border, and half the hover
+  fill, that the theme rules give a theme of the dialog's own lightness (`ThemeCatalog.CreateCustom` of white or black by
+  `DialogTheme.IsDark`): on a light dialog, Fluent or classic, a 19 % black line and a 4 % black fill; on a dark Fluent
+  dialog a 31 % white line and a 9 % white fill. That is the fill in the classic look too: a 4 % tint keeps the text
+  readable. High Contrast: the system's text colour for the line and no fill. If you want the bar's `Theme.HoverBorder` and
+  the preview's hover fill as written, it is two lines in `SettingsWindow.PaintCustomThemeBlock`.
+- **Choosing 自訂** shows the block at once and calls `BringIntoView` on it at Loaded priority (after layout); another theme
+  hides it at once. Opening Settings on 自訂 scrolls nothing. No animation.
+- **Values:** as before, nothing is forgotten while another theme is chosen, and Save with another theme writes the colours,
+  hover strength and picture as they are (so the picture's file is not pruned).
+- **Docs:** CHANGELOG (Changed), FEATURES (the Theme row), docs/THEMES.md (the block). Strings: 自訂主題 / Custom theme /
+  自定义主题.
+- **Tests (App):** review 41 U1's fit test is now the block's: the block right under 主題 across both columns, its label column
+  as wide as the tab's, the six labels at one place 13 in, the six value cells starting on one line, the page fitting, and
+  自動 as before; at 100 and 150 % in the three languages (it was four cases). New: a built-in theme shows none of the
+  block's 21 named controls and the page is shorter; 自訂 shows them all, each enabled by its own rules (自動 ticked, no
+  picture, then unticked); back to a built-in theme they go and the page is as short as before. And leaving 自訂 and coming
+  back keeps the colour, both chosen colours with the strength and the picture, and Save with another theme keeps them.
+- **Not tested:** the `BringIntoView` scroll (the page's offset after choosing 自訂 depends on the screen's height); the
+  look of the line and fill on a real light and dark dialog and in High Contrast.
+
 ## 2026-11-24 (164) — 0.16.0 WP2: where the window sits relative to the pointer
 
 - **Run 268** (`0ff9cbe`, WP1, entry 163) green: Core 1368/1368, App 604/604.

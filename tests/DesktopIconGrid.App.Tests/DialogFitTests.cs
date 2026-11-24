@@ -152,10 +152,15 @@ public sealed class DialogFitTests(WpfThread wpf)
     [InlineData("zh-Hant", 1.0)]
     [InlineData("zh-Hant", 1.5)]
     [InlineData("en-US", 1.0)]
+    [InlineData("en-US", 1.5)]
     [InlineData("zh-Hans", 1.0)]
-    public void The_custom_themes_colour_and_picture_rows_have_their_labels_in_the_tabs_label_column(string language, double scale)
+    [InlineData("zh-Hans", 1.5)]
+    public void The_custom_themes_rows_are_one_block_under_the_theme_with_their_labels_in_its_label_column(string language, double scale)
     {
-        // Review 41 U1: 滑鼠停留色彩, 滑鼠停留強度, 焦點外框色彩, 背景圖片 and 圖片濃度 sat indented inside the value column.
+        // Review 41 U1 (the labels sat indented inside the value column), inside the block since 0.16.0 WP3: the block right
+        // under 主題 across both columns; its six labels in the block's label column, which is as wide as the tab's (one shared
+        // size group), each at one place, 13 units in from the tab's labels (the block's line and padding); the controls in its
+        // value column, starting on one line; and the page fits.
         wpf.Invoke(() =>
         {
             var before = System.Threading.Thread.CurrentThread.CurrentUICulture;
@@ -168,15 +173,29 @@ public sealed class DialogFitTests(WpfThread wpf)
                 Settle(window);
                 var themeLabel = LogicalDescendants<TextBlock>(window).First(t => t.Text == Strings.Settings_Theme);
                 var grid = Assert.IsType<Grid>(themeLabel.Parent);
-                var left = themeLabel.TranslatePoint(default, grid).X;
                 var what = $"{language} at {scale:P0}";
-                foreach (var label in new FrameworkElement[] { window.HoverColourLabel, window.HoverStrengthLabel, window.FocusColourLabel, window.PictureLabel, window.PictureStrengthLabel })
+                Assert.Same(grid, window.CustomThemeBlock.Parent);
+                Assert.Equal(Grid.GetRow(themeLabel) + 1, Grid.GetRow(window.CustomThemeBlock));
+                Assert.Equal((0, 2), (Grid.GetColumn(window.CustomThemeBlock), Grid.GetColumnSpan(window.CustomThemeBlock)));
+                Assert.True(window.CustomThemeBlock.IsVisible && window.CustomThemeTitle.IsVisible, $"{what}: the block is not shown");
+
+                var inner = window.CustomThemeGrid;
+                Assert.Equal(grid.ColumnDefinitions[0].ActualWidth, inner.ColumnDefinitions[0].ActualWidth, 1);
+                var left = themeLabel.TranslatePoint(default, grid).X + window.CustomThemeBlock.BorderThickness.Left + window.CustomThemeBlock.Padding.Left;
+                Assert.Equal(13, left - themeLabel.TranslatePoint(default, grid).X, 1);
+                foreach (var label in new FrameworkElement[] { window.BackgroundColourLabel, window.HoverColourLabel, window.HoverStrengthLabel, window.FocusColourLabel, window.PictureLabel, window.PictureStrengthLabel })
                 {
-                    Assert.Same(grid, label.Parent); // a row of the tab's own grid
+                    Assert.Same(inner, label.Parent); // a row of the block's own grid
                     Assert.Equal(0, Grid.GetColumn(label));
                     Assert.Equal(left, label.TranslatePoint(default, grid).X, 1);
                     Assert.True(label.IsVisible, $"{what}: {label.Name} is not shown");
                 }
+
+                var values = inner.Children.OfType<FrameworkElement>().Where(child => Grid.GetColumn(child) == 1).ToList();
+                Assert.Equal(6, values.Count);
+                var start = values[0].TranslatePoint(default, grid).X;
+                Assert.All(values, value => Assert.Equal(start, value.TranslatePoint(default, grid).X, 1));
+                FitsAcross(window.AppearancePage, what);
 
                 // 自動 on the line of its box and button where they fit together, under them where they do not.
                 foreach (var (box, automatic) in new[] { (window.HoverColourBox, window.HoverAutomaticBox), (window.FocusColourBox, window.FocusAutomaticBox) })
@@ -201,6 +220,93 @@ public sealed class DialogFitTests(WpfThread wpf)
                 System.Threading.Thread.CurrentThread.CurrentUICulture = before;
             }
         });
+    }
+
+    /// <summary>Every named control of the custom theme's six rows, and the block they are in (0.16.0 WP3).</summary>
+    private static FrameworkElement[] CustomThemeRows(SettingsWindow window) =>
+    [
+        window.CustomThemeBlock, window.CustomThemeTitle,
+        window.BackgroundColourLabel, window.BackgroundColourBox, window.PickBackgroundButton,
+        window.HoverColourLabel, window.HoverColourBox, window.PickHoverButton, window.HoverAutomaticBox, window.HoverStrengthLabel,
+        window.FocusColourLabel, window.FocusColourBox, window.PickFocusButton, window.FocusAutomaticBox,
+        window.PictureLabel, window.PictureThumbnailBox, window.ChoosePictureButton, window.PictureFromWebButton, window.AdjustPictureButton,
+        window.RemovePictureButton, window.PictureStrengthLabel,
+    ];
+
+    [Fact]
+    public void A_built_in_theme_has_no_custom_theme_rows_and_choosing_Custom_shows_them_as_their_own_rules_enable_them()
+    {
+        // 0.16.0 WP3, the owner's request: the six rows are not there unless 主題 is 自訂 (before, they were greyed), so the tab is
+        // shorter; with 自訂 they are, each enabled as its own rules say (自動, no picture), none greyed by the theme.
+        wpf.Invoke(() =>
+        {
+            var viewModel = new SettingsViewModel(new LauncherSettings());
+            var window = new SettingsWindow { DataContext = viewModel };
+            try
+            {
+                window.Show();
+                Settle(window);
+                Assert.False(viewModel.IsCustomTheme);
+                Assert.All(CustomThemeRows(window), element => Assert.False(element.IsVisible, $"{element.Name} is shown with a built-in theme"));
+                Assert.Equal(Visibility.Collapsed, window.CustomThemeBlock.Visibility);
+                var shorter = window.AppearancePage.ExtentHeight;
+
+                viewModel.SelectedTheme = viewModel.Themes.Single(theme => theme.IsCustom);
+                Settle(window);
+                Assert.All(CustomThemeRows(window), element => Assert.True(element.IsVisible, $"{element.Name} is not shown with 自訂"));
+                Assert.True(window.AppearancePage.ExtentHeight > shorter + 100, $"{window.AppearancePage.ExtentHeight} against {shorter}");
+                Assert.True(window.CustomThemeBlock.IsEnabled && window.BackgroundColourBox.IsEnabled && window.PickBackgroundButton.IsEnabled);
+                Assert.True(window.HoverAutomaticBox.IsEnabled && window.FocusAutomaticBox.IsEnabled && window.ChoosePictureButton.IsEnabled);
+                Assert.True(viewModel.HoverAutomatic && viewModel.FocusAutomatic && !viewModel.HasPicture);
+                Assert.False(window.HoverColourBox.IsEnabled || window.PickHoverButton.IsEnabled || window.FocusColourBox.IsEnabled);
+                Assert.False(window.AdjustPictureButton.IsEnabled || window.RemovePictureButton.IsEnabled);
+
+                viewModel.HoverAutomatic = false;
+                viewModel.FocusAutomatic = false;
+                Settle(window);
+                Assert.True(window.HoverColourBox.IsEnabled && window.PickHoverButton.IsEnabled && window.FocusColourBox.IsEnabled && window.PickFocusButton.IsEnabled);
+
+                viewModel.SelectedTheme = viewModel.Themes[0]; // back to a built-in theme: gone at once
+                Settle(window);
+                Assert.All(CustomThemeRows(window), element => Assert.False(element.IsVisible, $"{element.Name} is still shown"));
+                Assert.Equal(shorter, window.AppearancePage.ExtentHeight, 1);
+            }
+            finally
+            {
+                window.Close();
+            }
+        });
+    }
+
+    [Fact]
+    public void Leaving_the_custom_theme_and_coming_back_keeps_every_value_and_Save_with_another_theme_keeps_them_too()
+    {
+        // 0.16.0 WP3: as before, hiding the block forgets nothing.
+        var picture = new BackgroundImage { File = new string('b', 32) + ".png", Strength = 70, Zoom = 150, FocusX = 0.25, FocusY = 0.75 };
+        var viewModel = new SettingsViewModel(new LauncherSettings
+        {
+            Theme = ThemeCatalog.CustomId,
+            BackgroundColor = "#336699",
+            HoverColor = "#FF8800",
+            HoverStrength = 40,
+            FocusColor = "#00CC66",
+            BackgroundImage = picture,
+        });
+        var builtIn = viewModel.Themes[0];
+        Assert.False(builtIn.IsCustom);
+
+        viewModel.SelectedTheme = builtIn;
+        var saved = viewModel.ToSettings();
+        Assert.Equal(builtIn.Id, saved.Theme);
+        Assert.Equal(("#336699", "#FF8800", (int?)40, "#00CC66"), (saved.BackgroundColor, saved.HoverColor, saved.HoverStrength, saved.FocusColor));
+        Assert.Equal(picture, saved.BackgroundImage); // so the picture's file is not pruned either
+
+        viewModel.SelectedTheme = viewModel.Themes.Single(theme => theme.IsCustom);
+        Assert.Equal("#336699", viewModel.BackgroundColor);
+        Assert.Equal((false, "#FF8800", 40), (viewModel.HoverAutomatic, viewModel.HoverColorText, viewModel.HoverStrength));
+        Assert.Equal((false, "#00CC66"), (viewModel.FocusAutomatic, viewModel.FocusColorText));
+        Assert.Equal(picture, viewModel.Picture);
+        Assert.Equal(picture, viewModel.ToSettings().BackgroundImage);
     }
 
     [Fact]

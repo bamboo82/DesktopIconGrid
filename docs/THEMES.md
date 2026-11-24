@@ -8,6 +8,15 @@ recoloured.
 Themes are chosen in *Settings → Theme*. Four built-in themes ship alongside **Classic**,
 plus **Custom**, which derives a full palette from one background colour.
 
+Since 0.16.0 (the owner's request) the custom theme's own settings (background colour, hover colour and strength, focus
+border colour, background picture and picture strength) are on the *Appearance* tab only while *Custom* is chosen, as one
+block right under the theme box titled *Custom theme*: a 1-unit line with corner 6 and a faint fill, the line and fill
+being the hover border and half the hover fill that a theme of the dialog's own lightness has (a grey line and tint on a
+light dialog, a light one on a dark dialog; the system's colours under High Contrast), so the block reads whatever theme
+is being edited. Its labels line up in a label column as wide as the tab's, inside the block's padding of 12. Choosing *Custom* shows it and
+scrolls it into view; another theme hides it, and the tab is shorter. What is in it is kept while another theme is
+chosen, and Save with another theme keeps it too, the picture included. Before, the rows were always there and greyed.
+
 ## Palettes
 
 | Theme | Background | Border | Text | Hover | Grip | Accent | Intended for |

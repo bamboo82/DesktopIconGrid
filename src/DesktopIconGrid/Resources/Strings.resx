@@ -3173,4 +3173,7 @@ The place was not changed; what was copied stays there.</value>
   <data name="Settings_PointerAnchorHelp" xml:space="preserve">
     <value>Click or drag to choose the point. Arrow keys move it by 1 %, with Ctrl from dot to dot; Home is the centre.</value>
   </data>
+  <data name="Settings_CustomThemeBlock" xml:space="preserve">
+    <value>Custom theme</value>
+  </data>
 </root>

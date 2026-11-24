@@ -3,6 +3,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Threading;
+using DesktopIconGrid.Core.Models;
 using DesktopIconGrid.Resources;
 using DesktopIconGrid.Services;
 using DesktopIconGrid.ViewModels;
@@ -16,11 +17,25 @@ public partial class SettingsWindow : Window
         InitializeComponent();
         DialogTheme.Apply(this);
         WorkAreaFit.Attach(this);
-        DataContextChanged += (_, _) =>
+        PaintCustomThemeBlock();
+        DataContextChanged += (sender, e) =>
         {
+            if (e.OldValue is SettingsViewModel before)
+            {
+                before.PropertyChanged -= OnViewModelPropertyChanged;
+            }
+
             if (ViewModel is { } viewModel)
             {
                 viewModel.ConfirmInstall ??= AskToInstallFont;
+                viewModel.PropertyChanged += OnViewModelPropertyChanged;
+            }
+        };
+        Closed += (_, _) =>
+        {
+            if (ViewModel is { } viewModel)
+            {
+                viewModel.PropertyChanged -= OnViewModelPropertyChanged;
             }
         };
         Closed += (_, _) => ViewModel?.CancelInstall(); // Cancel, and Save too: a download does not outlive the window
@@ -58,6 +73,42 @@ public partial class SettingsWindow : Window
     }
 
     private SettingsViewModel? ViewModel => DataContext as SettingsViewModel;
+
+    /// <summary>
+    /// The custom theme's block on 外觀 (0.16.0 WP3): its 1-unit line is the hover border, and its faint fill half the hover
+    /// fill, that the theme rules give a surface of the dialog's own lightness (<see cref="ThemeCatalog.CreateCustom"/>):
+    /// on a light dialog a grey line and fill, on a dark one a light line and fill. The theme being edited, or the bar's,
+    /// may have a hover border the dialog's background hides (the default custom colour's is 31 % white, gone on a light
+    /// dialog), and the block must read as one. High Contrast keeps the system's colours: its text colour for the line, no
+    /// fill.
+    /// </summary>
+    private void PaintCustomThemeBlock()
+    {
+        if (SystemParameters.HighContrast)
+        {
+            CustomThemeBlock.SetResourceReference(Border.BorderBrushProperty, SystemColors.WindowTextBrushKey);
+            CustomThemeBlock.Background = null;
+            return;
+        }
+
+        var surface = ThemeCatalog.CreateCustom(DialogTheme.IsDark ? "#000000" : "#FFFFFF");
+        CustomThemeBlock.BorderBrush = ThemeManager.ToBrush(surface.HoverBorder);
+        var fill = (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(surface.Hover);
+        fill.A = (byte)(fill.A / 2);
+        CustomThemeBlock.Background = new System.Windows.Media.SolidColorBrush(fill);
+    }
+
+    /// <summary>
+    /// Choosing 自訂 in the theme box shows the custom theme's block at once and scrolls it into view once it is laid out
+    /// (0.16.0 WP3); another theme hides it at once. Opening Settings on the custom theme scrolls nothing.
+    /// </summary>
+    private void OnViewModelPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(SettingsViewModel.IsCustomTheme) && ViewModel is { IsCustomTheme: true })
+        {
+            Dispatcher.BeginInvoke(DispatcherPriority.Loaded, () => CustomThemeBlock.BringIntoView());
+        }
+    }
 
     /// <summary>The five pages, in the order of the tabs.</summary>
     internal IReadOnlyList<ScrollViewer> PageList => [.. Pages.Children.OfType<ScrollViewer>()];

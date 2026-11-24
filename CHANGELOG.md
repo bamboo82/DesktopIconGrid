@@ -22,6 +22,10 @@ version numbers follow [Semantic Versioning](https://semver.org/).
   box's row, its icons (or an open group's header with the way back) sit directly at the top, and the icon area has
   the keyboard focus: an arrow key steps into the icons and Enter opens the one that has the focus; typing starts no
   search. A search left from the bar is cleared when it shows. The window the show-at-pointer key opens keeps its box.
+- Settings ▸ Appearance shows the custom theme's settings (background colour, hover and focus colours, background
+  picture and their strengths) only while *Custom* is the theme, as one block titled *Custom theme* right under the
+  theme box; with another theme the tab is shorter. Choosing *Custom* brings the block into view. What is in it is kept
+  while another theme is chosen. Before, the rows were always there, greyed for the other themes.
 
 ## [0.15.0] – 2026-11-22
 

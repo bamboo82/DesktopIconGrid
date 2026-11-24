@@ -5793,6 +5793,15 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Custom theme.
+        /// </summary>
+        public static string Settings_CustomThemeBlock {
+            get {
+                return ResourceManager.GetString("Settings_CustomThemeBlock", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Browse….
         /// </summary>
         public static string Settings_DataBrowse {
