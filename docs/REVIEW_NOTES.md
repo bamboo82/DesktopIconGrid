@@ -9,6 +9,47 @@ The owner relays replies.
 
 ---
 
+## 2026-11-24 (167) — 0.16.0 ready for the release check
+
+Run 271 (`a9ea451`, entry 166, WP4) is green: Core 1405/1405, App 646/646. The four packages of your plan 37 are in, each
+green, so 0.16.0 is **ready for your release check**.
+
+| What | Entry | Commit | Run |
+| --- | --- | --- | --- |
+| Version 0.16.0; WP1, the window shown while the key is held has no search box | 163 | `0ff9cbe` | 268 |
+| WP2, where the window sits relative to the pointer | 164 | `9efd22d` | 269 |
+| WP3, the custom theme's settings only for the custom theme, as one block | 165 | `155b7da` | 270 |
+| WP4, a widget's name has its own 文字外觀 | 166 | `a9ea451` | 271 |
+| Ready for the release check | 167 | this | — |
+
+- **The version:** `Directory.Build.props` says 0.16.0. `CHANGELOG.md` "[0.16.0] – Unreleased" lists, under Added, the
+  window's position at the pointer and a widget's name look; under Changed, the window shown while the key is held without
+  its search box, and the custom theme's settings as a block shown only for that theme. FEATURES §12 and the roadmap say
+  *in progress* until the release commit. The layout format stays version 1: `pointerAnchor` and `nameLook` are optional,
+  absent is 0.15.0's behaviour.
+- **Open for you, asked in the entries:**
+  - entry 163: the hold form is shorter by the search row and the gap of 3 under it, so the icons sit 4 from the top as
+    from the side; and the keys go to the icon area itself, without a frame, an arrow key stepping into the icons, rather
+    than to the first icon, which the icon style would frame at every hold;
+  - entry 164: the picture's line, dots, ring and focus ring in the theme preview's colours (the theme being chosen, as its
+    fill), not the bar's applied `Theme.*` ones; and plain percent boxes rather than the icon size's combo box;
+  - entry 165: the block's line and faint fill as the theme rules make them for the dialog's own surface (light or dark),
+    not the bar's `Theme.HoverBorder` and the preview's hover fill, which the default custom colour makes invisible on a
+    light dialog; the same fill in the classic look; none under High Contrast;
+  - entry 166: a name look that sets none of font, colour and bold leaves the caption inside the tile its own, no longer
+    the value's; and the monitors' Properties window carries both looks as the clock's and the command tile's do.
+- **Not seen or tested yet:** a real hold with real keys and where Windows puts the focus; the anchor near a real screen
+  edge, on a second monitor and at another DPI scale; drags and keys on the picture, and a screen reader on it; the block's
+  line and fill on a real light, dark and High Contrast dialog, and its scroll into view; a long widget name shrunk to its
+  cell in real fonts, and the name's edge over a background picture; English and zh-Hans in the two-part window.
+
+  As before: a real notification banner, a real sign-out, a real Windows snap, maximise on a second monitor, the
+  recogniser with a microphone, Windows 10, another DPI scale.
+
+No release commit before your check and the owner's word.
+
+This entry claims no run for its own commit.
+
 ## 2026-11-24 (166) — 0.16.0 WP4: a widget's name has its own 文字外觀
 
 - **Run 270** (`155b7da`, WP3, entry 165) green: Core 1401/1401, App 641/641.
