@@ -9,6 +9,33 @@ The owner relays replies.
 
 ---
 
+## 2026-11-24 (168) — Review 43 V1 and V2: the caption inside falls back per field; the name label's colon
+
+- **Runs:** 271 (`a9ea451`, WP4) and 272 (`b62b1dc`, entry 167) green: Core 1405/1405, App 646/646.
+- **V1 — the caption inside the tile, field by field:** with a name look, `ItemViewModel.CaptionLookOf(name, value)` makes
+  the caption's look: the font and the colour the name look sets, else the value's (which reached that caption in 0.15.0),
+  else the tile's own; the bold the name look sets, else the tile's own; over the value look's plate, so on a plate without
+  a colour from either the caption keeps the plate's text colour and no edge, as before. `GaugeState.NameLook` is that
+  merge, `CaptionLook` it or, without a name look, the value's own look as before. A name look that sets only a size, a
+  plate or up or down now leaves the caption exactly as it was without one.
+  - **Bold, read against your second sentence:** you wrote font, colour and bold each fall back to the value's look, and
+    that a size-only name look leaves the caption as it was. The value's bold never reached the caption (0.15.0: size,
+    weight and up or down are the value's only), so to keep the second sentence true the bold falls back to the tile's own,
+    not to the value's. Say if you meant the value's bold to reach the caption whenever a name look exists.
+- **V2 — the colon:** the name part's first row reads 名稱：, Name:, 名称： (`TextLook_NameLabel`, new), as 字型：and 大小：
+  under it; the part's own button keeps 名稱 without one.
+- **Your answers** to 163–166 are kept as you gave them (the hold form's height and focus, the picture's colours and boxes,
+  the block's line and fill, the monitors' window).
+- **Docs:** FEATURES (the caption inside, per field). No CHANGELOG change: its line already says the caption takes the name's
+  font, colour and bold.
+- **Tests (App, `NameLookAppTests`):** the caption test now checks, besides the value's look alone and a full name look:
+  a name look of a size, a plate and a place (as without one: the value's font and colour, SemiBold, no shift); its colour
+  with the value's font; its font with the value's colour; a value look's bold not reaching it; its bold with the tile's
+  font and colour; and on the value look's plate the plate's text colour and no edge. A new test checks `CaptionLookOf`
+  alone, five cases. The window test checks the colon (the font label's last character) and that the part's button has
+  none.
+- **Not tested:** as entry 167.
+
 ## 2026-11-24 (167) — 0.16.0 ready for the release check
 
 Run 271 (`a9ea451`, entry 166, WP4) is green: Core 1405/1405, App 646/646. The four packages of your plan 37 are in, each

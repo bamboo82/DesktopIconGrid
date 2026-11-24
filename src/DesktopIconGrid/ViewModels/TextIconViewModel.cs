@@ -269,7 +269,7 @@ public sealed class TextIconViewModel : ObservableObject
     {
         TextWindowMode.Caption => Strings.TextIcon_Caption,
         TextWindowMode.Widget => Strings.TextIcon_Sample,
-        TextWindowMode.WidgetName => Strings.TextLook_PartName,
+        TextWindowMode.WidgetName => Strings.TextLook_NameLabel, // with its colon, as the rows under it (review 43 V2)
         _ => Strings.TextIcon_Text,
     };
 

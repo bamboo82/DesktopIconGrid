@@ -148,8 +148,10 @@ public sealed class GaugeState : ObservableObject
     }
 
     /// <summary>
-    /// The widget's name look as the caption inside the tile takes it (0.16.0 WP4): its font, colour and bold, not its size,
-    /// plate or up or down (the tile keeps those); <see langword="null"/> without a name look.
+    /// The look of the caption inside the tile while the widget has a name look (0.16.0 WP4): field by field, the font and the
+    /// colour the name look sets, else the value's, the bold the name look sets, else the tile's own, over the value look's
+    /// plate (review 43 V1, <see cref="ViewModels.ItemViewModel.CaptionLookOf"/>); never the name look's size, plate or up or
+    /// down, which the tile keeps. <see langword="null"/> without a name look.
     /// </summary>
     public GaugeLook? NameLook
     {
@@ -164,8 +166,9 @@ public sealed class GaugeState : ObservableObject
     }
 
     /// <summary>
-    /// What the caption inside the tile (the bar's and the number's) is drawn with: the name's look when the widget has one
-    /// (0.16.0 WP4), else the value's font and colour as before 0.16.0 (<see cref="Look"/>, the same object, so nothing changes).
+    /// What the caption inside the tile (the bar's and the number's) is drawn with: <see cref="NameLook"/> when the widget has
+    /// a name look (0.16.0 WP4), else the value's font and colour as before 0.16.0 (<see cref="Look"/>, the same object, so
+    /// nothing changes).
     /// </summary>
     public GaugeLook? CaptionLook => _nameLook ?? _look;
 

@@ -130,9 +130,9 @@
                       </DataTrigger>
                     </Style.Triggers>
                   </Style>
-                  <!-- A caption under or over the value takes the font and the colour, not the size, weight or place: the
-                       name's look's when the widget has one, with its bold too (0.16.0 WP4), else the value's as before
-                       (CaptionLook is then the value's own look) -->
+                  <!-- A caption under or over the value takes the font and the colour, not the size, weight or place. With a
+                       name look (0.16.0 WP4) each of font, colour and bold is the name look's where it sets it, else as before
+                       (review 43 V1: NameLook is that merge); without one CaptionLook is the value's own look -->
                   <Style x:Key="GaugeCaptionLook" TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
                     <Style.Triggers>
                       <DataTrigger Binding="{Binding CaptionLook.HasFont}" Value="True">

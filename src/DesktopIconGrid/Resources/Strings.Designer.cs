@@ -8682,6 +8682,15 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Name:.
+        /// </summary>
+        public static string TextLook_NameLabel {
+            get {
+                return ResourceManager.GetString("TextLook_NameLabel", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Name.
         /// </summary>
         public static string TextLook_PartName {

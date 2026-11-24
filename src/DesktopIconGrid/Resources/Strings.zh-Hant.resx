@@ -3188,4 +3188,7 @@ SHA-256：{3}
   <data name="TextLook_PartsName" xml:space="preserve">
     <value>要設定的文字</value>
   </data>
+  <data name="TextLook_NameLabel" xml:space="preserve">
+    <value>名稱：</value>
+  </data>
 </root>

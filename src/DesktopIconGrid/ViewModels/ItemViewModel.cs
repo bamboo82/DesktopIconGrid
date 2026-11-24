@@ -114,6 +114,25 @@ public sealed class ItemViewModel : ObservableObject
     public static double NameLookWidth(double cellWidth, double nameFontSize, TextLook? look) =>
         Math.Max(0, cellWidth - 4) * Math.Max(1, look?.Size is { } size && nameFontSize > 0 ? size / nameFontSize : 1);
 
+    /// <summary>
+    /// The look of the caption inside the tile of a widget with a name look (0.16.0 WP4, review 43 V1), field by field: its
+    /// font and its colour where <paramref name="name"/> sets them, else the value's (<paramref name="value"/>), which reached
+    /// that caption before 0.16.0, else the tile's own; its bold where the name look sets it, else the tile's own (the value's
+    /// never reached it); over the tile's plate, the value look's. The name look's size, plate and up or down are the name
+    /// line's only. So a name look that sets none of the three leaves the caption exactly as it was without one.
+    /// </summary>
+    internal static TextLook CaptionLookOf(TextLook name, TextLook? value)
+    {
+        ArgumentNullException.ThrowIfNull(name);
+        return new TextLook
+        {
+            Font = name.Font ?? value?.Font,
+            Color = name.Color ?? value?.Color,
+            TileColor = value?.TileColor,
+            Bold = name.Bold,
+        };
+    }
+
     /// <summary>How much room the item takes in the grid: a divider is thin, a caption as wide as its text, and a row line across the bar.</summary>
     public FlowSlot Slot => SeparatorKind switch
     {
@@ -382,10 +401,10 @@ public sealed class ItemViewModel : ObservableObject
         {
             _gauge.Look = CanEditTextLook && (Model as SpecialIconItem)?.TextLook is { } look ? new GaugeLook(look, UiFonts.BarFontFamily()) : null;
 
-            // The caption inside the tile takes the name look's font, colour and bold in place of the value's (0.16.0 WP4).
-            _gauge.NameLook = NameLook is { } name
-                ? new GaugeLook(name with { Size = null, TileColor = null, OffsetY = 0 }, UiFonts.BarFontFamily())
-                : null;
+            // The caption inside the tile takes what the name look sets of font, colour and bold, the rest as before (0.16.0 WP4,
+            // review 43 V1).
+            var value = (Model as SpecialIconItem)?.TextLook;
+            _gauge.NameLook = NameLook is { } name ? new GaugeLook(CaptionLookOf(name, CanEditTextLook ? value : null), UiFonts.BarFontFamily()) : null;
         }
 
         // The name under the tile (0.16.0 WP4).

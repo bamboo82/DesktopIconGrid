@@ -99,7 +99,9 @@ public sealed class NameLookAppTests(WpfThread wpf) : IDisposable
             Assert.Equal((Strings.TextLook_PartTime, Strings.TextLook_PartName), (parts.ValuePartLabel, parts.NamePartLabel));
             Assert.Equal(Strings.TextLook_PartValue, new WidgetLookParts(parts.Value, parts.Name, isClock: false).ValuePartLabel);
             var name = parts.Name;
-            Assert.Equal((parts.Value.Title, Strings.TextLook_PartName, Strings.TextIcon_PlateColour), (name.Title, name.TextLabel, name.TileColorLabel));
+            Assert.Equal((parts.Value.Title, Strings.TextLook_NameLabel, Strings.TextIcon_PlateColour), (name.Title, name.TextLabel, name.TileColorLabel));
+            Assert.Equal(Strings.TextIcon_Font[^1], name.TextLabel[^1]); // the colon the rows under it have (review 43 V2)
+            Assert.NotEqual(Strings.TextLook_PartName[^1], name.TextLabel[^1]); // the part's own button has none
             Assert.Equal((false, true, false, "Clock"), (name.ShowsSides, name.IsTextReadOnly, name.ShowsHint, name.Text));
             Assert.Equal(("11", false), (name.FontSizeText, name.Bold)); // the bar's name as it is drawn
             Assert.Null(name.ToLook());
@@ -331,13 +333,45 @@ public sealed class NameLookAppTests(WpfThread wpf) : IDisposable
                 Assert.Equal((24.0, FontWeights.Bold), (Caption().FontSize, Caption().FontWeight));
                 Assert.True(Caption().RenderTransform is null || Caption().RenderTransform.Value.IsIdentity);
 
-                // A name look that sets none of the three leaves the caption its own, not the value's.
-                bar.Dialogs.LookAnswer = new LookAnswer(new TextLook { Font = "Arial", Color = "#FF0000" }, new TextLook { Size = 20 });
-                bar.ViewModel.EditTextLook(item);
-                window.UpdateLayout();
+                // Field by field (review 43 V1): what the name look leaves out is as it was without one, the value's font and
+                // colour, the tile's weight.
+                void Answer(TextLook value, TextLook nameLook)
+                {
+                    bar.Dialogs.LookAnswer = new LookAnswer(value, nameLook);
+                    bar.ViewModel.EditTextLook(item);
+                    window.UpdateLayout();
+                }
+
+                var red = new TextLook { Font = "Arial", Color = "#FF0000" };
+                Answer(red, new TextLook { Size = 20, TileColor = "#123456", OffsetY = 10 }); // a size, a plate, a place: as without
+                Assert.StartsWith("Arial, ", Caption().FontFamily.Source, StringComparison.Ordinal);
+                Assert.Equal(Hex("#FF0000"), ColourOf(Caption().Foreground));
+                Assert.Equal((24.0, FontWeights.SemiBold), (Caption().FontSize, Caption().FontWeight));
+                Assert.True(Caption().RenderTransform is null || Caption().RenderTransform.Value.IsIdentity);
+
+                Answer(red, new TextLook { Color = "#00AA00" }); // its colour, the value's font
+                Assert.StartsWith("Arial, ", Caption().FontFamily.Source, StringComparison.Ordinal);
+                Assert.Equal(Hex("#00AA00"), ColourOf(Caption().Foreground));
+                Assert.Equal(FontWeights.SemiBold, Caption().FontWeight);
+
+                Answer(red, new TextLook { Font = "Georgia" }); // its font, the value's colour
+                Assert.StartsWith("Georgia, ", Caption().FontFamily.Source, StringComparison.Ordinal);
+                Assert.Equal(Hex("#FF0000"), ColourOf(Caption().Foreground));
+
+                Answer(new TextLook { Bold = true }, new TextLook { Color = "#00AA00" }); // the value's bold never reaches it
+                Assert.Equal(FontWeights.SemiBold, Caption().FontWeight);
+                Assert.Equal(plainFamily, Caption().FontFamily);
+
+                Answer(new TextLook { Size = 30 }, new TextLook { Bold = true }); // its bold, the tile's font and colour
+                Assert.Equal(FontWeights.Bold, Caption().FontWeight);
                 Assert.Equal(plainFamily, Caption().FontFamily);
                 Assert.Equal(plainColour, ColourOf(Caption().Foreground));
-                Assert.Equal(FontWeights.SemiBold, Caption().FontWeight);
+
+                // On the value look's plate, without a colour from either: the plate's text colour and no edge, as before.
+                Answer(new TextLook { TileColor = "#2D4A6E" }, new TextLook { Font = "Georgia" });
+                Assert.StartsWith("Georgia, ", Caption().FontFamily.Source, StringComparison.Ordinal);
+                Assert.Equal(Hex(ThemeCatalog.TextOnTile("#2D4A6E")), ColourOf(Caption().Foreground));
+                Assert.Null(Caption().Effect);
             });
         }
         finally
@@ -348,6 +382,18 @@ public sealed class NameLookAppTests(WpfThread wpf) : IDisposable
                 bar?.Dispose();
             });
         }
+    }
+
+    [Fact]
+    public void The_caption_inside_takes_each_of_font_colour_and_bold_from_the_name_look_where_it_sets_it_and_else_as_before()
+    {
+        // Review 43 V1, the rule alone.
+        var value = new TextLook { Font = "Arial", Size = 30, Bold = true, Color = "#FF0000", TileColor = "#2D4A6E", OffsetY = 5 };
+        Assert.Equal(new TextLook { Font = "Arial", Color = "#FF0000", TileColor = "#2D4A6E" }, ItemViewModel.CaptionLookOf(new TextLook { Size = 20, TileColor = "#123456", OffsetY = -5 }, value));
+        Assert.Equal(new TextLook { Font = "Georgia", Color = "#FF0000", TileColor = "#2D4A6E", Bold = false }, ItemViewModel.CaptionLookOf(new TextLook { Font = "Georgia", Bold = false }, value));
+        Assert.Equal(new TextLook { Font = "Arial", Color = "#00AA00", TileColor = "#2D4A6E" }, ItemViewModel.CaptionLookOf(new TextLook { Color = "#00AA00" }, value));
+        Assert.Equal(new TextLook { Bold = true }, ItemViewModel.CaptionLookOf(new TextLook { Bold = true }, null));
+        Assert.Null(ItemViewModel.CaptionLookOf(new TextLook { Size = 20 }, null).Normalized()); // nothing at all: as without
     }
 
     [Fact]

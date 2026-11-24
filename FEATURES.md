@@ -323,9 +323,10 @@ the name as before, pixel for pixel, the value's font and colour still reaching 
   them; what it leaves out is the bar's name's (its size and weight, the theme's colour). A name wider than its cell at
   the look's size is made smaller to fit rather than widening the cell, and a name too long even at the bar's size is cut
   with an ellipsis as before. It keeps the see-through edge a caption has;
-- the caption inside the tile (the bar style's and the number style's, where the widget's name stands) takes the look's
-  font, colour and bold in place of the value's; its size, place and the tile stay the tile's (the look's size, plate and
-  up or down do not apply there). A name look that sets none of those three leaves that caption its own.
+- the caption inside the tile (the bar style's and the number style's, where the widget's name stands) takes, field by
+  field, the font and the colour the look sets, else the value's as before, and the bold the look sets, else its own (the
+  value's bold never reached it); its size, place and the tile stay the tile's (the look's size, plate and up or down do
+  not apply there). So a name look that sets none of those three leaves that caption exactly as it was without one.
 
 Available now from *Add special icon ▸*:
 
