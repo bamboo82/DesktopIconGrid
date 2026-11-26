@@ -52,10 +52,14 @@ The owner relays replies.
     holding the panel, the sections' order with the choice and the group first and the line last, 此裝置 and 副本 there;
     in the two line states the state's text, the title, the state at the line's right and after the title, and opened,
     the hint); Google → folder → Google → a cancelled picker → folder with an account connected: the panel moves, the
-    line comes closed, the typed secret, the client ID and the connection stay, the window's height changes, and the
-    picker opens at the folder; a sign-in waiting in the browser opens the line, closed by hand it opens again when the
-    sign-in fails, and the status line says why; a folder with nothing of Google's shows neither host, collapsed, not
-    disabled.
+    line comes closed, the typed secret, the client ID and the connection stay, the content's height changes with the
+    window still `SizeToContent="Height"`, and the picker opens at the folder; a sign-in waiting in the browser opens the
+    line, closed by hand it opens again when the sign-in fails, and the status line says why; a folder with nothing of
+    Google's shows neither host, collapsed, not disabled.
+  - Run 277 (this commit's first form) failed on one check of mine, the window's own height after a switch: on CI's short
+    screen both places reach the work area's cap (704) and the body scrolls, so the height could not differ. The check
+    now measures the content (`Body.ExtentHeight`) and the window's `SizeToContent`; the next commit has it. All else
+    passed there: Core 1406/1406, App 676 of 677, the four states, the sign-in and the fit at both scales included.
   - `DialogFitTests`: the four states with every expander open (the line and the credentials) at 100 % and 150 % in
     three languages: `FitsAcross` and Close in sight. The headings test counts the four groups and the credentials, the
     headers that are text; the line's is checked above.

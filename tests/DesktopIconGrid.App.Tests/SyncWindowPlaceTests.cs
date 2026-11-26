@@ -216,7 +216,9 @@ public sealed class SyncWindowPlaceTests(WpfThread wpf) : IDisposable
                 window.Show();
                 SyncWindowStates.Settle(window);
                 window.SecretBox.Password = "typed, not yet saved";
-                var heightWithGroup = window.ActualHeight;
+                // The window sizes to its content up to the work area (WorkAreaFit), where the body scrolls: on CI's short screen
+                // both places reach that cap, so the content's height is what shows the window following it.
+                var contentWithGroup = window.Body.ExtentHeight;
                 Assert.True(window.AccountGroup.IsVisible);
 
                 dialog.Dialogs.Folder = _folder;
@@ -228,7 +230,8 @@ public sealed class SyncWindowPlaceTests(WpfThread wpf) : IDisposable
                 Assert.True(window.AccountLine.IsVisible && !window.AccountLine.IsExpanded); // an account is connected: the line, closed
                 Assert.Same(window.AccountLine, window.AccountPanel.Parent);
                 Assert.True(window.FolderRow.IsVisible && window.FolderHint.IsVisible);
-                Assert.True(Math.Abs(window.ActualHeight - heightWithGroup) > 1, $"the window kept its height: {window.ActualHeight}"); // it follows its content
+                Assert.True(Math.Abs(window.Body.ExtentHeight - contentWithGroup) > 1, $"the content kept its height: {window.Body.ExtentHeight}");
+                Assert.Equal(SizeToContent.Height, window.SizeToContent); // and the window follows it, up to the work area
                 Assert.Equal("typed, not yet saved", window.SecretBox.Password);
                 Assert.Equal("client.apps.googleusercontent.com", viewModel.ClientId);
                 Assert.True(viewModel.IsGoogleConnected);
