@@ -1503,7 +1503,7 @@
     <value>副本存放位置</value>
   </data>
   <data name="Sync_UseGoogle" xml:space="preserve">
-    <value>Google 云端硬盘（需要下方的 Google 登录）</value>
+    <value>Google 云端硬盘（需要 Google 登录）</value>
   </data>
   <data name="Sync_UseFolder" xml:space="preserve">
     <value>由 OneDrive、Dropbox 或网络共享保持同步的文件夹（无需登录）</value>
@@ -3193,5 +3193,8 @@ SHA-256：{3}
   </data>
   <data name="Menu_LockGridToolTip" xml:space="preserve">
     <value>拖动不会移动网格上的项目；从别处拖入的文件仍会加入。锁定也会固定工具栏大小。</value>
+  </data>
+  <data name="Sync_AccountForBucketsLine" xml:space="preserve">
+    <value>投递箱用的 Google 账户</value>
   </data>
 </root>

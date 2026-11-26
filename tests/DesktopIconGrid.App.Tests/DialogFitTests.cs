@@ -729,8 +729,10 @@ public sealed class DialogFitTests(WpfThread wpf)
                 window.Show();
                 Settle(window);
                 var content = (FrameworkElement)window.Content;
-                var headed = LogicalDescendants<HeaderedContentControl>(window).Where(control => control is GroupBox or Expander).ToList();
-                Assert.Equal(5, headed.Count); // four groups and the credentials
+                // Four groups and the credentials; the account's line with a folder (0.16.1 WP2) has its own header, checked in
+                // SyncWindowPlaceTests and below.
+                var headed = LogicalDescendants<HeaderedContentControl>(window).Where(control => control is GroupBox or Expander && control.Header is string).ToList();
+                Assert.Equal(5, headed.Count);
                 foreach (var control in headed)
                 {
                     var header = Assert.IsType<string>(control.Header);
@@ -934,6 +936,60 @@ public sealed class DialogFitTests(WpfThread wpf)
             finally
             {
                 window.Close();
+            }
+        });
+    }
+
+    [Theory]
+    [InlineData("en-US", 1.0)]
+    [InlineData("en-US", 1.5)]
+    [InlineData("zh-Hant", 1.0)]
+    [InlineData("zh-Hant", 1.5)]
+    [InlineData("zh-Hans", 1.0)]
+    [InlineData("zh-Hans", 1.5)]
+    public void Sync_fits_in_each_place_of_the_copies_with_everything_open(string language, double scale)
+    {
+        // 0.16.1 WP2: Google Drive with the account's group; a folder with nothing of Google's, with an account, with a bucket
+        // icon (the account's line at the end). Every expander open, the line and the credentials, so all of it is measured.
+        wpf.Invoke(() =>
+        {
+            var before = System.Threading.Thread.CurrentThread.CurrentUICulture;
+            System.Threading.Thread.CurrentThread.CurrentUICulture = System.Globalization.CultureInfo.GetCultureInfo(language);
+            Services.UiFonts.Configure(null, null, scale);
+            var folder = System.IO.Directory.CreateTempSubdirectory("dig-sync-fit-").FullName;
+            try
+            {
+                foreach (var state in SyncWindowStates.All)
+                {
+                    var dialog = SyncWindowStates.Make(state, folder);
+                    var window = new SyncWindow { DataContext = dialog.ViewModel };
+                    try
+                    {
+                        window.Show();
+                        SyncWindowStates.Settle(window);
+                        var what = $"{language} at {scale:P0}, {state}";
+                        foreach (var expander in LogicalDescendants<Expander>(window).Where(IsShown))
+                        {
+                            expander.IsExpanded = true;
+                        }
+
+                        SyncWindowStates.Settle(window);
+                        var root = (FrameworkElement)window.Content;
+                        FitsAcross(root, root.ActualWidth, what);
+                        var close = LogicalDescendants<Button>(window).Single(b => Equals(b.Content, Strings.Common_Close));
+                        Assert.True(close.TranslatePoint(new Point(0, close.ActualHeight), window).Y <= root.TranslatePoint(new Point(0, root.ActualHeight), window).Y + 0.5, $"{what}: Close is out of sight");
+                    }
+                    finally
+                    {
+                        window.Close();
+                    }
+                }
+            }
+            finally
+            {
+                Services.UiFonts.Configure(null);
+                System.Threading.Thread.CurrentThread.CurrentUICulture = before;
+                System.IO.Directory.Delete(folder, recursive: true);
             }
         });
     }

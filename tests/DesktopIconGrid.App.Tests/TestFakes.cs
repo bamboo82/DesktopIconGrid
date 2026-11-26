@@ -164,7 +164,14 @@ internal sealed class RecordingDialogs : IDialogService
     /// <summary>What a folder picker answers.</summary>
     public string? Folder { get; set; }
 
-    public string? PickFolder(string title, string? initialFolder) => Folder;
+    /// <summary>Where the folder picker was last asked to open.</summary>
+    public string? LastPickStart { get; private set; }
+
+    public string? PickFolder(string title, string? initialFolder)
+    {
+        LastPickStart = initialFolder;
+        return Folder;
+    }
 
     /// <summary>The questions asked with named buttons, and the answers given to them in turn; none left answers with the default.</summary>
     public List<string> Choices { get; } = [];

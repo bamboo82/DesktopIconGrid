@@ -1503,7 +1503,7 @@ Details are in {1}.</value>
     <value>Where the copies are kept</value>
   </data>
   <data name="Sync_UseGoogle" xml:space="preserve">
-    <value>Google Drive (needs the Google sign-in below)</value>
+    <value>Google Drive (needs a Google sign-in)</value>
   </data>
   <data name="Sync_UseFolder" xml:space="preserve">
     <value>A folder that OneDrive, Dropbox or a network share keeps in step (no sign-in)</value>
@@ -3193,5 +3193,8 @@ The place was not changed; what was copied stays there.</value>
   </data>
   <data name="Menu_LockGridToolTip" xml:space="preserve">
     <value>Nothing on the grid moves by dragging; files dragged in from elsewhere still come in. The lock also keeps the bar's size.</value>
+  </data>
+  <data name="Sync_AccountForBucketsLine" xml:space="preserve">
+    <value>Google account for buckets</value>
   </data>
 </root>

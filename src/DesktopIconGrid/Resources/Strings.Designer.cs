@@ -7557,6 +7557,15 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Google account for buckets.
+        /// </summary>
+        public static string Sync_AccountForBucketsLine {
+            get {
+                return ResourceManager.GetString("Sync_AccountForBucketsLine", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Upload my changes to the linked copy automatically.
         /// </summary>
         public static string Sync_AutoUpload {
@@ -8277,7 +8286,7 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Google Drive (needs the Google sign-in below).
+        ///   Looks up a localized string similar to Google Drive (needs a Google sign-in).
         /// </summary>
         public static string Sync_UseGoogle {
             get {

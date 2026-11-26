@@ -9,6 +9,60 @@ The owner relays replies.
 
 ---
 
+## 2026-11-26 (171) — 0.16.1 WP2: the sync window shows only what belongs to the chosen place
+
+- **Runs:** 276 (`5845106`, WP1, entry 170) green: Core 1405/1405, App 658/658, the eleven new `BarResizingTests` among
+  them (the hit test at the five points on Windows included).
+- **The rule** (`SyncViewModel.AccountPlace`, from `PlaceOfAccount(usesGoogle, connected, connecting, bucketIcon)`):
+  Google Drive → `Group`; a folder → `Line` while an account is connected, a sign-in started here runs, or a bucket icon
+  is on the bar; else `Hidden`. `ShowsAccountGroup` and `ShowsAccountLine` drive the two hosts' visibility.
+- **One panel, two hosts:** the group's content is now `AccountPanel` (the hint, Connect, Cancel or Disconnect with the
+  state, the credentials expander), and `SyncWindow.PlaceAccount` moves it between `AccountGroup` (under the choice) and
+  `AccountLine` (the expander after 副本). The old host's `Content` is set to null first (its presenter lets a UIElement go
+  at once), then the new host takes it. Nothing is made again, so the secret in the PasswordBox (copied by hand) and the
+  rest stay as typed. Hidden, the panel stays in the host it was in, collapsed with it.
+- **The line:** an `Expander` (`Margin="0,10,0,0"`) after 副本 and before the progress bar and the two status lines, which
+  stay at the bottom where a problem is said. Its header is a DockPanel: the title 投遞箱用的 Google 帳戶 (it wraps) and,
+  docked right, `ConnectionText` in `DialogHint`. That style has had the dialog's text colour since 0.13.0, so the state is
+  told apart by its place; say if you meant grey. The header is stretched to the width the template gives it
+  (`FitAccountLineHeader`: the slot of the header's ContentPresenter less its margin, after each size change of the
+  line), since the classic template puts a header at the left at its own width; the Fluent one is handled the same way,
+  whatever it does with its chevron. UI Automation: the title as its name, the state as its help text.
+  - It opens by itself while `IsConnecting` and when `ConnectFailed` (a sign-in that ended neither connected nor
+    cancelled), only while the place is the line, and comes back closed each time the panel moves into it.
+- **The folder hint** is collapsed with Google Drive (`UsesFolder`), as the folder's row already was.
+- **The bucket icon:** `LauncherLayout.HasSpecialIcon(kind)` (Core; groups in groups too, the kind matched as
+  `LauncherModel.SpecialIconsOf` does), read from `ExportLayout()` when the dialog opens and after each of its operations,
+  since a copy loaded here can bring one or take it. For "any view mode's layout": the bar, its groups and the window at
+  the pointer show one item tree; workspaces name shortcuts only, and the layout history holds past copies, not the bar.
+  So there is nothing more to search; say if you meant something else.
+- **A sign-in:** `ConnectAsync` is internal now (tests await it, the command does not), with `IsConnecting` around the run
+  and `ConnectFailed` after it. `RunAsync` returns how it ended (`Done`, `Cancelled`, `Failed`, `NotRun`): a cancel is no
+  failure, nor is a sign-in that worked when the listing after it failed.
+- **The folder across a switch:** choosing Google Drive takes the folder out of `sync.json` (`UseGoogleDriveAsync` since
+  0.8.0: a folder there is the choice), and the plan allows no new setting. So the account and the credentials are kept
+  across a switch, and the folder only while the dialog is open: the picker opens at it again (`_lastFolder`). Say if the
+  owner wants the folder kept in `sync.json` across a switch; that is a new setting.
+- **Strings:** `Sync_UseGoogle` reworded (en "Google Drive (needs a Google sign-in)", zh-Hant Google 雲端硬碟（需要 Google
+  登入）, zh-Hans Google 云端硬盘（需要 Google 登录）); new `Sync_AccountForBucketsLine` (en "Google account for buckets",
+  zh-Hant 投遞箱用的 Google 帳戶, zh-Hans 投递箱用的 Google 账户: 账户 as the group's heading has it, where the plan wrote 帐户).
+- **Docs:** FEATURES §9 (the dialog), CHANGELOG.
+- **Tests:**
+  - App `SyncWindowPlaceTests`: the rule's six cases; the four states shown (the named parts visible or not, the host
+    holding the panel, the sections' order with the choice and the group first and the line last, 此裝置 and 副本 there;
+    in the two line states the state's text, the title, the state at the line's right and after the title, and opened,
+    the hint); Google → folder → Google → a cancelled picker → folder with an account connected: the panel moves, the
+    line comes closed, the typed secret, the client ID and the connection stay, the window's height changes, and the
+    picker opens at the folder; a sign-in waiting in the browser opens the line, closed by hand it opens again when the
+    sign-in fails, and the status line says why; a folder with nothing of Google's shows neither host, collapsed, not
+    disabled.
+  - `DialogFitTests`: the four states with every expander open (the line and the credentials) at 100 % and 150 % in
+    three languages: `FitsAcross` and Close in sight. The headings test counts the four groups and the credentials, the
+    headers that are text; the line's is checked above.
+  - Core `LauncherLayoutTests`: on the bar, in a group, in a group in a group, a kind written with spaces and capitals.
+- **Not tested:** a real sign-in (the test's browser is a task it holds; the loopback listener does start); the classic
+  and the Windows 11 look side by side (CI draws the one its Windows gives); High Contrast; a screen reader on the line.
+
 ## 2026-11-26 (170) — 0.16.1 WP1: the lock keeps the bar's size
 
 - **Runs:** 274 (`d01002a`, the release commit, entry 169) green: Core 1405/1405, App 647/647. You made v0.16.0 on it

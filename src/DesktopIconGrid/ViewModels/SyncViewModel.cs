@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Windows.Input;
+using DesktopIconGrid.Core.SpecialIcons;
 using DesktopIconGrid.Core.Sync;
 using DesktopIconGrid.Infrastructure;
 using DesktopIconGrid.Resources;
@@ -20,12 +21,23 @@ public sealed class SyncViewModel : ObservableObject
     private string _statusText = string.Empty;
     private RemoteProfile? _selectedProfile;
     private string _newProfileName;
+    private bool _isConnecting;
+    private bool _connectFailed;
+    private bool _hasBucketIcon;
+
+    /// <summary>
+    /// The folder last in use while this window is open: choosing Google Drive takes the folder out of the settings (that
+    /// is the choice), and the picker opens there again when a folder is chosen once more (0.16.1 WP2).
+    /// </summary>
+    private string? _lastFolder;
 
     public SyncViewModel(SyncCoordinator sync, IDialogService dialogs)
     {
         _sync = sync;
         _dialogs = dialogs;
         _newProfileName = Settings.LinkedProfile ?? string.Empty;
+        _hasBucketIcon = ReadBucketIcon();
+        _lastFolder = Settings.SyncFolder;
         _sync.PropertyChanged += (_, e) =>
         {
             if (e.PropertyName is null or nameof(SyncCoordinator.Status))
@@ -151,7 +163,7 @@ public sealed class SyncViewModel : ObservableObject
     /// <summary>The folder choice, and then the folder's copies listed (tests await it; the command does not).</summary>
     internal async Task ChooseFolderAsync()
     {
-        var folder = _dialogs.PickFolder(Strings.Sync_PickFolderTitle, Settings.SyncFolder ?? SuggestedFolder());
+        var folder = _dialogs.PickFolder(Strings.Sync_PickFolderTitle, Settings.SyncFolder ?? _lastFolder ?? SuggestedFolder());
         if (folder is null || !ConfirmUnlink(folder))
         {
             NotifyStateChanged(); // the radio button goes back to what is in use
@@ -163,6 +175,7 @@ public sealed class SyncViewModel : ObservableObject
             try
             {
                 await Service.UseFolderAsync(folder, ct); // after an upload that is running; the folder is made on a worker
+                _lastFolder = Settings.SyncFolder;
                 StatusText = string.Format(Strings.Sync_UsingFolder, Settings.SyncFolder);
             }
             catch (ArgumentException ex)
@@ -224,6 +237,57 @@ public sealed class SyncViewModel : ObservableObject
     public string ConnectionText => IsGoogleConnected
         ? string.Format(Strings.Sync_ConnectedAs, Settings.AccountEmail ?? Strings.Common_AGoogleAccount)
         : Strings.Sync_NotConnected;
+
+    // ----- what the window shows of the account (0.16.1 WP2) -------------------------------------
+
+    /// <summary>
+    /// Where the Google account's part is: its group under the choice of place while Google Drive keeps the copies; with
+    /// a folder, the window's last line while an account is connected, a sign-in is under way or a bucket icon is on the
+    /// bar, and nowhere otherwise. Hidden or moved, nothing in it is forgotten.
+    /// </summary>
+    public SyncAccountPlace AccountPlace => PlaceOfAccount(UsesGoogle, IsGoogleConnected, IsConnecting, HasBucketIcon);
+
+    /// <summary>The rule of <see cref="AccountPlace"/>.</summary>
+    internal static SyncAccountPlace PlaceOfAccount(bool usesGoogle, bool connected, bool connecting, bool bucketIcon) =>
+        usesGoogle ? SyncAccountPlace.Group
+        : connected || connecting || bucketIcon ? SyncAccountPlace.Line
+        : SyncAccountPlace.Hidden;
+
+    public bool ShowsAccountGroup => AccountPlace == SyncAccountPlace.Group;
+
+    public bool ShowsAccountLine => AccountPlace == SyncAccountPlace.Line;
+
+    /// <summary>A Google Drive bucket icon is on the bar or in one of its groups; read again whenever the window's state is told.</summary>
+    public bool HasBucketIcon => _hasBucketIcon;
+
+    /// <summary>A sign-in started here is under way: the account's line is open while it runs.</summary>
+    public bool IsConnecting
+    {
+        get => _isConnecting;
+        private set
+        {
+            if (SetProperty(ref _isConnecting, value))
+            {
+                NotifyAccountPlace();
+            }
+        }
+    }
+
+    /// <summary>The last sign-in started here failed (the status line says why): the account's line opens to show it.</summary>
+    public bool ConnectFailed
+    {
+        get => _connectFailed;
+        private set => SetProperty(ref _connectFailed, value);
+    }
+
+    private bool ReadBucketIcon() => _sync.ExportLayout().HasSpecialIcon(SpecialIconKinds.GoogleDriveBucket);
+
+    private void NotifyAccountPlace()
+    {
+        OnPropertyChanged(nameof(AccountPlace));
+        OnPropertyChanged(nameof(ShowsAccountGroup));
+        OnPropertyChanged(nameof(ShowsAccountLine));
+    }
 
     public string LinkedText
     {
@@ -376,12 +440,32 @@ public sealed class SyncViewModel : ObservableObject
 
     public void CancelPendingOperation() => _operation?.Cancel();
 
-    private Task ConnectAsync() => RunAsync(Strings.Common_FinishSignIn, async ct =>
+    /// <summary>The sign-in, and then the copies listed (tests await it; the command does not).</summary>
+    internal async Task ConnectAsync()
     {
-        var user = await Service.ConnectAsync(ct);
-        StatusText = string.Format(Strings.Sync_ConnectedAsDot, user.EmailAddress ?? Strings.Common_AGoogleAccount);
-        await RefreshProfilesAsync(ct);
-    });
+        if (IsBusy)
+        {
+            return;
+        }
+
+        ConnectFailed = false;
+        IsConnecting = true;
+        var outcome = RunOutcome.Failed;
+        try
+        {
+            outcome = await RunAsync(Strings.Common_FinishSignIn, async ct =>
+            {
+                var user = await Service.ConnectAsync(ct);
+                StatusText = string.Format(Strings.Sync_ConnectedAsDot, user.EmailAddress ?? Strings.Common_AGoogleAccount);
+                await RefreshProfilesAsync(ct);
+            });
+        }
+        finally
+        {
+            IsConnecting = false;
+            ConnectFailed = outcome == RunOutcome.Failed && !IsGoogleConnected; // cancelled is no failure; a list that failed after it is not one of the sign-in
+        }
+    }
 
     private Task DisconnectAsync()
     {
@@ -548,16 +632,26 @@ public sealed class SyncViewModel : ObservableObject
                           ?? Profiles.FirstOrDefault(p => string.Equals(p.Name, Settings.LinkedProfile, StringComparison.OrdinalIgnoreCase));
     }
 
-    private async Task RunAsync(string status, Func<CancellationToken, Task> action)
+    /// <summary>How an operation of the dialog ended.</summary>
+    private enum RunOutcome
+    {
+        Done,
+        Cancelled,
+        Failed,
+        NotRun,
+    }
+
+    private async Task<RunOutcome> RunAsync(string status, Func<CancellationToken, Task> action)
     {
         if (IsBusy)
         {
-            return;
+            return RunOutcome.NotRun;
         }
 
         _operation = new CancellationTokenSource();
         IsBusy = true;
         StatusText = status;
+        var outcome = RunOutcome.Done;
         try
         {
             await action(_operation.Token);
@@ -565,10 +659,12 @@ public sealed class SyncViewModel : ObservableObject
         catch (OperationCanceledException)
         {
             StatusText = Strings.Common_Cancelled;
+            outcome = RunOutcome.Cancelled;
         }
         catch (Exception ex) when (SyncCoordinator.IsSyncError(ex))
         {
             StatusText = ex.Message;
+            outcome = RunOutcome.Failed;
         }
         finally
         {
@@ -577,10 +673,15 @@ public sealed class SyncViewModel : ObservableObject
             IsBusy = false;
             NotifyStateChanged();
         }
+
+        return outcome;
     }
 
     private void NotifyStateChanged()
     {
+        _hasBucketIcon = ReadBucketIcon(); // a copy loaded here may have brought one, or taken it
+        OnPropertyChanged(nameof(HasBucketIcon));
+        NotifyAccountPlace();
         OnPropertyChanged(nameof(UsesFolder));
         OnPropertyChanged(nameof(UsesGoogle));
         OnPropertyChanged(nameof(SyncFolder));

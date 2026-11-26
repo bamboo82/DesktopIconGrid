@@ -31,4 +31,27 @@ public sealed class LauncherLayout
     /// <summary>Properties written by a newer version that this one does not know; kept so saving never drops them.</summary>
     [JsonExtensionData]
     public Dictionary<string, JsonElement>? ExtensionData { get; set; }
+
+    /// <summary>
+    /// Whether the layout holds a special icon of <paramref name="kind"/> anywhere: on the bar or in a group, a group in a
+    /// group included (the sync window shows the Google account with a folder in use only when a bucket needs it, 0.16.1
+    /// WP2).
+    /// </summary>
+    public bool HasSpecialIcon(string kind) =>
+        Walk(Items).OfType<SpecialIconItem>().Any(icon => string.Equals(icon.Kind?.Trim(), kind, StringComparison.OrdinalIgnoreCase));
+
+    private static IEnumerable<LauncherItem> Walk(IEnumerable<LauncherItem> items)
+    {
+        foreach (var item in items)
+        {
+            yield return item;
+            if (item is GroupItem group)
+            {
+                foreach (var inner in Walk(group.Items))
+                {
+                    yield return inner;
+                }
+            }
+        }
+    }
 }

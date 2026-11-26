@@ -1027,6 +1027,20 @@ Keeps named copies of the settings and icons where several PCs can share them: o
   copies with their save time and device, *Save as* a new copy, *Overwrite* or *Load* the selected
   copy, *Delete* a copy. The Google account's group has a short heading and says what the account is for in a line
   under it, and a problem is said once at the bottom of the dialog, in the fuller of its two lines (0.12.2).
+  Since 0.16.1 (the owner's request) it shows only what belongs to the place chosen for the copies. With Google Drive:
+  the two choices, and the account's group directly under them as before; the folder's row and its hint are not shown.
+  With a folder: the two choices, the folder's row and hint, and the Google account only when something needs it (an
+  account is connected, a sign-in is under way, or a Google Drive Buckets icon is on the bar or in a group; the layout
+  holds no other place for one), then as the dialog's last section under the copies: one line, closed at first, *Google
+  account for buckets* (投遞箱用的 Google 帳戶) with the account's state at its right (*Connected as …* or *Not
+  connected*); opened, it holds the same group (what the account is for, *Connect*, *Cancel* or *Disconnect*, the Google
+  API credentials). It opens by itself while a sign-in runs and when one fails, and is closed each time it comes back.
+  Switching place changes what is shown at once and the window's height follows; the two choices stay at the top, and
+  *This device*, the copies and the status lines stay. What is not shown is collapsed (out of the Tab order and of UI
+  Automation), not disabled, and nothing in it is forgotten: the account's part is one panel moved between the two
+  places, so a secret typed and not yet saved stays. The first choice reads *Google Drive (needs a Google sign-in)*.
+  Choosing Google Drive still takes the folder out of the settings (that is the choice); while the dialog is open the
+  folder picker opens at that folder again.
 - **Linked copy**: saving or loading links the device to that copy. Changes are then uploaded
   automatically a few seconds after they happen, and at startup the app offers to load the
   copy when another device saved a newer version. Auto-upload never overwrites a newer copy

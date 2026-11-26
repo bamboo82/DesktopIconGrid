@@ -20,6 +20,13 @@ either share a settings copy as before.
   notice at the first refused drag says it too.
 - A press on the bar's bare background (its frame line and the margins around the icons, the grip and the buttons) moves
   the bar, as a press on the empty part of the grid already did.
+- *Sync across PCs* shows only what belongs to the place chosen for the copies. With Google Drive, the Google account's
+  group follows the choice and the folder's note is gone. With a folder, the Google account appears only when something
+  needs it (an account already connected, a sign-in under way, or a Google Drive Buckets icon on the bar), and then as
+  the window's last line, closed, with the account's state at its right; open it for the same group as before. It opens
+  by itself while a sign-in runs and when one fails. Nothing typed in it is lost by switching, and the folder picker
+  opens at the folder used before Google Drive was chosen in between. The first choice now reads *Google Drive (needs a
+  Google sign-in)*.
 
 ## [0.16.0] – 2026-11-24
 
