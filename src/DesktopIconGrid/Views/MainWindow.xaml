@@ -8,11 +8,11 @@
         ResizeMode="CanResize"
         MinWidth="120"
         MinHeight="64"
-        ShowInTaskbar="False"
         Topmost="{Binding AlwaysOnTop}"
         Icon="{StaticResource AppIconImage}">
 
-  <!-- ResizeMode and the resize border are BarResizing's from the start (0.16.1 WP1): none while the grid is locked. -->
+  <!-- ResizeMode and the resize border are BarResizing's from the start (0.16.1 WP1): none while the grid is locked.
+       ShowInTaskbar and the tool-window style follow the setting hideFromTaskbar (0.17.0 WP1, ApplyTaskbarPresence). -->
   <WindowChrome.WindowChrome>
     <WindowChrome CaptionHeight="0"
                   ResizeBorderThickness="6"

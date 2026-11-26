@@ -3,6 +3,29 @@
 All notable changes to Desktop Icon Grid. The format follows [Keep a Changelog](https://keepachangelog.com/);
 version numbers follow [Semantic Versioning](https://semver.org/).
 
+## [0.17.0] – Unreleased
+
+"On the taskbar": the owner's requests after 0.16.1.
+
+Upgrading: The bar now has a taskbar button and an Alt+Tab entry; to keep it off both as before, tick 不在工作列與 Alt+Tab
+中顯示工具列 in 設定 → 視窗. 0.17.0 reads and writes the same layout format as 0.16.1 (version 1): the new setting is written
+only when it is ticked, and a version before 0.17.0 keeps it untouched without using it, so there the bar has no button,
+as before.
+
+### Added
+
+- *Keep the bar off the taskbar and out of Alt+Tab* under Settings ▸ Window, right under *Always on top*, for the bar as
+  it was before 0.17.0; the tray icon and the show/hide hotkey still bring it up. It applies when Settings is saved,
+  both ways, without a restart, and syncs with the other settings.
+
+### Changed
+
+- The bar has a taskbar button and an Alt+Tab entry, like any program's window. A click on the button brings the bar
+  to the front, a click while it is in front minimises it, and the next restores it; the show/hide hotkey, the tray
+  icon and a second start bring a minimised bar back too. A floating bar with *Lock grid* on keeps a minimise box for
+  this, and still cannot be resized. A bar docked to a screen edge is not minimised: its button only brings it forward.
+- An auto-hidden bar comes out whenever it is activated: from its taskbar button, and when a dialog of its own closes.
+
 ## [0.16.1] – 2026-11-27
 
 The owner's requests after 0.16.0.

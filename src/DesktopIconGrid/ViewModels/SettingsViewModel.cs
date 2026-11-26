@@ -53,6 +53,7 @@ public sealed partial class SettingsViewModel : ObservableObject
     private string _holdHotkey;
     private int _transparency;
     private bool _closeToTray;
+    private bool _hideFromTaskbar;
     private bool _startWithWindows;
     private bool _startHidden;
     private DockEdgeOption _selectedDockEdge;
@@ -87,6 +88,7 @@ public sealed partial class SettingsViewModel : ObservableObject
         WindowKeyRows = Enum.GetValues<WindowKeyAction>().Select(action => new WindowKeyRow(action, WindowKeys.For(current, action))).ToList();
         _transparency = LauncherSettings.MaxOpacity - current.Opacity;
         _closeToTray = current.CloseToTray;
+        _hideFromTaskbar = current.HideFromTaskbar;
         _fluentDialogs = current.FluentDialogs;
         _startWithWindows = current.StartWithWindows;
         _startHidden = current.StartHidden;
@@ -286,6 +288,13 @@ public sealed partial class SettingsViewModel : ObservableObject
     {
         get => _closeToTray;
         set => SetProperty(ref _closeToTray, value);
+    }
+
+    /// <summary>Keep the bar off the taskbar and out of Alt+Tab, as before 0.17.0 (WP1); off, it has a taskbar button.</summary>
+    public bool HideFromTaskbar
+    {
+        get => _hideFromTaskbar;
+        set => SetProperty(ref _hideFromTaskbar, value);
     }
 
     /// <summary>Start at sign-in through the current user's Run key.</summary>
@@ -650,6 +659,7 @@ public sealed partial class SettingsViewModel : ObservableObject
         settings.DialogFont = SelectedDialogFont.Id; // null: the bar's; "": Windows' own (0.14.0 WP2)
         settings.DialogTextScale = SelectedDialogScale.Percent; // null: the bar's; 100 is kept
         settings.CloseToTray = _closeToTray;
+        settings.HideFromTaskbar = _hideFromTaskbar;
         settings.StartWithWindows = _startWithWindows;
         settings.StartHidden = _startHidden;
         settings.DockEdge = _selectedDockEdge.Id;

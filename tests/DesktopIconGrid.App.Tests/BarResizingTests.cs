@@ -92,6 +92,18 @@ public sealed class BarResizingTests(WpfThread wpf) : IDisposable
     public void Only_an_unlocked_bar_that_is_not_auto_hidden_is_resized_by_hand(bool locked, bool autoHidden, bool resizable) =>
         Assert.Equal(resizable, BarResizing.CanResize(locked, autoHidden));
 
+    [Theory]
+    [InlineData(false, false, false, true, ResizeMode.CanResize)]
+    [InlineData(false, false, true, true, ResizeMode.CanResize)] // docked, at its inner edge
+    [InlineData(false, false, false, false, ResizeMode.CanResize)]
+    [InlineData(true, false, false, true, ResizeMode.CanMinimize)] // floating, locked, on the taskbar (0.17.0 WP1)
+    [InlineData(true, false, false, false, ResizeMode.NoResize)] // off the taskbar, as in 0.16.1
+    [InlineData(true, false, true, true, ResizeMode.NoResize)] // docked is not minimised
+    [InlineData(false, true, true, true, ResizeMode.NoResize)] // auto-hidden
+    [InlineData(true, true, true, false, ResizeMode.NoResize)]
+    public void A_locked_bar_floating_on_the_taskbar_keeps_only_its_minimise_box(bool locked, bool autoHidden, bool docked, bool onTaskbar, ResizeMode mode) =>
+        Assert.Equal(mode, BarResizing.ModeFor(locked, autoHidden, docked, onTaskbar));
+
     [Fact]
     public void Locked_the_edges_and_corners_are_the_bars_own_and_unlocked_they_resize_again()
     {
@@ -105,7 +117,7 @@ public sealed class BarResizingTests(WpfThread wpf) : IDisposable
             using var bar = new TestBar(_directory, One());
             var window = BarLike();
             var surface = new BarSurface(window, BarResizing.ResizeBorder, "Test bar");
-            var resizing = new BarResizing(window, surface, bar.ViewModel, () => false);
+            var resizing = new BarResizing(window, surface, bar.ViewModel, () => false, () => false);
             resizing.Apply();
             window.Show();
             try
@@ -116,13 +128,24 @@ public sealed class BarResizingTests(WpfThread wpf) : IDisposable
                 Assert.Equal(resizeCodes, Probe(handle));
                 Assert.NotEqual(0L, NativeMethods.GetStyle(handle) & NativeMethods.WS_THICKFRAME);
 
-                bar.ViewModel.LockGrid = true; // from either menu
+                bar.ViewModel.LockGrid = true; // from either menu; on the taskbar, the default since 0.17.0
 
-                Assert.Equal(ResizeMode.NoResize, window.ResizeMode);
+                Assert.Equal(ResizeMode.CanMinimize, window.ResizeMode);
                 Assert.Equal(new Thickness(0), WindowChrome.GetWindowChrome(window).ResizeBorderThickness);
                 Assert.Equal([HtClient, HtClient, HtClient, HtClient, HtClient], Probe(handle)); // no resize cursor, no drag
                 var style = NativeMethods.GetStyle(handle);
                 Assert.Equal(0L, style & NativeMethods.WS_THICKFRAME); // Size greyed in the system menu, no snap
+                Assert.Equal(0L, style & WsMaximizeBox);
+                Assert.NotEqual(0L, style & WsMinimizeBox); // its taskbar button can minimise it (0.17.0 WP1)
+
+                var settings = bar.Model.Settings.Clone();
+                settings.HideFromTaskbar = true; // off the taskbar, as in 0.16.1: a save in Settings
+                bar.ViewModel.ApplySettings(settings);
+
+                Assert.Equal(ResizeMode.NoResize, window.ResizeMode);
+                Assert.Equal([HtClient, HtClient, HtClient, HtClient, HtClient], Probe(handle));
+                style = NativeMethods.GetStyle(handle);
+                Assert.Equal(0L, style & NativeMethods.WS_THICKFRAME);
                 Assert.Equal(0L, style & WsMaximizeBox);
                 Assert.Equal(0L, style & WsMinimizeBox);
 
@@ -149,17 +172,17 @@ public sealed class BarResizingTests(WpfThread wpf) : IDisposable
             using var bar = new TestBar(_directory, One());
             var autoHidden = false;
             var window = BarLike();
-            var resizing = new BarResizing(window, new BarSurface(window, BarResizing.ResizeBorder, "Test bar"), bar.ViewModel, () => autoHidden);
+            var resizing = new BarResizing(window, new BarSurface(window, BarResizing.ResizeBorder, "Test bar"), bar.ViewModel, () => autoHidden, () => autoHidden);
             bar.ViewModel.LockGrid = true;
-            Assert.Equal(ResizeMode.NoResize, window.ResizeMode);
+            Assert.Equal(ResizeMode.CanMinimize, window.ResizeMode); // floating on the taskbar: only its minimise box (0.17.0)
 
             autoHidden = true; // docked with auto-hide: what docking asks for
             resizing.Apply();
-            Assert.Equal(ResizeMode.NoResize, window.ResizeMode);
+            Assert.Equal(ResizeMode.NoResize, window.ResizeMode); // a docked bar is not minimised
 
             autoHidden = false; // undocked: what Undock asks for
             resizing.Apply();
-            Assert.Equal(ResizeMode.NoResize, window.ResizeMode); // still locked: docking does not turn resizing back on
+            Assert.Equal(ResizeMode.CanMinimize, window.ResizeMode); // still locked: docking does not turn resizing back on
             Assert.Equal(new Thickness(0), WindowChrome.GetWindowChrome(window).ResizeBorderThickness);
             Assert.False(resizing.CanResizeNow);
 
@@ -183,7 +206,7 @@ public sealed class BarResizingTests(WpfThread wpf) : IDisposable
             using var bar = new TestBar(_directory, model);
             var window = new MainWindow(bar.ViewModel); // never shown: no handle, hotkeys or tray icon
 
-            Assert.Equal(ResizeMode.NoResize, window.ResizeMode); // locked from the start: no sizing frame when it is made
+            Assert.Equal(ResizeMode.CanMinimize, window.ResizeMode); // locked from the start: no sizing frame when it is made
             Assert.Equal(new Thickness(0), WindowChrome.GetWindowChrome(window).ResizeBorderThickness);
             Assert.False(window.CanResizeByHand);
 
@@ -192,10 +215,12 @@ public sealed class BarResizingTests(WpfThread wpf) : IDisposable
             Assert.Equal(new Thickness(BarResizing.ResizeBorder), WindowChrome.GetWindowChrome(window).ResizeBorderThickness);
 
             var layout = bar.ViewModel.ExportLayout();
-            layout.Settings.LockGrid = true; // another PC locked it, and its copy comes in
+            layout.Settings.LockGrid = true; // another PC locked it and keeps the bar off the taskbar, and its copy comes in
+            layout.Settings.HideFromTaskbar = true;
             bar.ViewModel.ReplaceLayout(layout);
             Assert.Equal(ResizeMode.NoResize, window.ResizeMode);
             Assert.Equal(new Thickness(0), WindowChrome.GetWindowChrome(window).ResizeBorderThickness);
+            Assert.False(window.ShowInTaskbar);
 
             var item = window.OptionsButton.ContextMenu.Items.OfType<MenuItem>().Single(entry => Equals(entry.Header, Strings.Menu_LockGrid));
             Assert.Equal(Strings.Menu_LockGridToolTip, item.ToolTip);

@@ -54,6 +54,25 @@ public partial class MainWindow
                 Expand();
             }
         };
+
+        // Brought forward by its taskbar button (0.17.0 WP1), or given the keyboard back by a dialog of its own that
+        // closed: an auto-hidden bar comes out, as an active window should be seen.
+        Activated += (_, _) =>
+        {
+            if (IsAutoHide && _collapsed)
+            {
+                Expand();
+            }
+        };
+
+        // A docked bar keeps its edge (0.17.0 WP1): SC_MINIMIZE is ignored (BarWndProc); minimised some other way, it comes back.
+        StateChanged += (_, _) =>
+        {
+            if (WindowState == WindowState.Minimized && IsDocked)
+            {
+                WindowState = WindowState.Normal;
+            }
+        };
     }
 
     /// <summary>Reads the dock settings and docks, re-docks or undocks. Runs once the window has a handle and on every settings change.</summary>

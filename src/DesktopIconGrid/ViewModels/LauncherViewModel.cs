@@ -328,6 +328,12 @@ public sealed partial class LauncherViewModel : ObservableObject, ISyncHost
         }
     }
 
+    /// <summary>
+    /// The bar keeps off the taskbar and out of Alt+Tab (0.17.0 WP1; set in Settings, synced): the window follows it at
+    /// once, from a save and from a sync.
+    /// </summary>
+    public bool HideFromTaskbar => Model.Settings.HideFromTaskbar;
+
     /// <summary>The colours the bar is currently drawn with: with a background picture shown, its text chosen for the picture (0.15.0 WP5).</summary>
     public ThemePalette Palette => ThemeCatalog.Resolve(Model.Settings, pictureShown: ShownPicture is not null);
 
@@ -2273,6 +2279,7 @@ public sealed partial class LauncherViewModel : ObservableObject, ISyncHost
         OnPropertyChanged(nameof(EmptyHintFontSize));
         OnPropertyChanged(nameof(AlwaysOnTop));
         OnPropertyChanged(nameof(LockGrid));
+        OnPropertyChanged(nameof(HideFromTaskbar));
         OnPropertyChanged(nameof(Opacity));
         OnPropertyChanged(nameof(Palette));
         OnPropertyChanged(nameof(PopupWidth));

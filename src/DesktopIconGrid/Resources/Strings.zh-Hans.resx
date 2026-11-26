@@ -3197,4 +3197,10 @@ SHA-256：{3}
   <data name="Sync_AccountForBucketsLine" xml:space="preserve">
     <value>投递箱用的 Google 账户</value>
   </data>
+  <data name="Settings_HideFromTaskbar" xml:space="preserve">
+    <value>不在任务栏和 Alt+Tab 中显示工具栏</value>
+  </data>
+  <data name="Settings_HideFromTaskbarHint" xml:space="preserve">
+    <value>工具栏仍可从系统托盘图标或显示/隐藏热键调出。</value>
+  </data>
 </root>

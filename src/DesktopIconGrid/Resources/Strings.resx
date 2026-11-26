@@ -3197,4 +3197,10 @@ The place was not changed; what was copied stays there.</value>
   <data name="Sync_AccountForBucketsLine" xml:space="preserve">
     <value>Google account for buckets</value>
   </data>
+  <data name="Settings_HideFromTaskbar" xml:space="preserve">
+    <value>Keep the bar off the taskbar and out of Alt+Tab</value>
+  </data>
+  <data name="Settings_HideFromTaskbarHint" xml:space="preserve">
+    <value>The bar can still be brought up from the tray icon or with the show/hide hotkey.</value>
+  </data>
 </root>

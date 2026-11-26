@@ -9,6 +9,73 @@ The owner relays replies.
 
 ---
 
+## 2026-11-27 (175) — 0.17.0 WP1: the bar on the taskbar, unless the owner turns it off
+
+- **Runs:** 281 (`e8e241b`, the release commit, entry 174) green: Core 1406/1406, App 681/681. You made v0.16.1 on it
+  (annotated tag, `main` with Build 282, Release run 20 with both zips and `SHA256SUMS.txt`; I checked all of it on
+  GitHub). Plan 39 starts here: this commit sets the version to 0.17.0 and opens "[0.17.0] – Unreleased".
+- **The setting:** `LauncherSettings.HideFromTaskbar` (`hideFromTaskbar`) beside `CloseToTray`, written only when true
+  (`JsonIgnore(WhenWritingDefault)`), copied by `CopyFrom`, so it syncs as the other window settings do. A version before
+  0.17.0 keeps it in its extension data. `LauncherViewModel.HideFromTaskbar` is raised with the other settings
+  (`NotifyAppearanceChanged`), so a save in Settings and a sync both reach the window.
+- **On and off the taskbar** (`MainWindow.ApplyTaskbarPresence`): `MainWindow.xaml` no longer says
+  `ShowInTaskbar="False"`. The constructor sets `ShowInTaskbar` from the setting before the window exists;
+  `OnSourceInitialized` puts on or takes off `WS_EX_TOOLWINDOW` (what `HideFromAltTab` did, now both ways); a change of the
+  setting does both on the shown bar. Off the taskbar the window is owned by WPF's hidden window, has no `WS_EX_APPWINDOW`
+  and is a tool window, so it is in neither the taskbar nor Alt+Tab, as in 0.16.1. On it, it is unowned, with
+  `WS_EX_APPWINDOW` and no tool-window style, so it is in both, with `app.ico` and *Desktop Icon Grid*.
+  - **Which way it applies at once:** WPF's own hide and show. `Window.OnShowInTaskbarChanged` (read in WPF's `Window.cs`,
+    release/10.0) hides a visible window with `SetWindowPos(… SWP_HIDEWINDOW | SWP_NOACTIVATE …)`, changes its owner and
+    `WS_EX_APPWINDOW`, and shows it again the same way, without activating it. I change the tool-window style just before,
+    so the taskbar reads both at that showing. No `ITaskbarList`; the flash is that one hide and show in one dispatcher
+    operation. A hidden bar has no button and takes the styles when it is next shown.
+- **The 視窗 tab:** `HideFromTaskbarBox` right under 永遠在最上層 and `HideFromTaskbarHint` under it (`DialogHint`, margin
+  `22,4,0,0`). zh-Hant as you wrote both. Two words differ from your text so that the hint names the setting as its label
+  does: en "the show/hide hotkey" (the label is "Show/hide hotkey:"), zh-Hans 显示/隐藏热键 (the label is 显示/隐藏热键：)
+  where you wrote 快捷键; 系统托盘图标 as you wrote it. Say if you want your words.
+- **The button, case by case:**
+  - a click while the bar is not in front: Windows activates it; an auto-hidden bar comes out (`Activated` →
+    `Expand()`). That also happens when a dialog of the bar's own closes and gives it the keyboard back, where 0.16.1 left
+    it tucked away while it had the keyboard; I find that right for an active window, say if not;
+  - a click while it is in front minimises it, the next restores it: Windows' own, with the minimise box. The floating
+    unlocked bar has it (`CanResize`); locked and floating on the taskbar, `BarResizing.ModeFor` gives `CanMinimize` (the
+    minimise box, no sizing frame, no maximise box, border 0), so Alt+Space has Minimize on; locked off the taskbar,
+    `NoResize` as before;
+  - the show/hide hotkey, the tray icon and a second start: `ToggleVisibility`, `ShowBar` and `ShowFromOtherInstance`
+    restore a minimised bar as they did; untouched;
+  - docked: `BarWndProc` handles `WM_SYSCOMMAND` `SC_MINIMIZE` while docked (ignored), and a docked bar minimised some
+    other way comes back at once (`StateChanged`); I do not know every path Windows uses to minimise (Win+M), hence both.
+    A docked bar locked or with auto-hide has no minimise box (`NoResize`); unlocked without auto-hide it keeps
+    `CanResize`, and its button's minimise is the one ignored;
+  - hidden (✕ to the tray, the key, Start hidden): no button, as Windows does for a hidden window;
+  - the saved place: `CurrentPlacement` already took `RestoreBounds` when the window is not normal; unchanged, now tested.
+- **Win+D:** not seen, and I cannot run it here. With the option off the bar is an ordinary window with a button, and I
+  expect show desktop to put it away with the other windows and bring it back with the second Win+D. What Windows does to
+  0.16.1's tool window (owned, no button), and to the bar with the option on, I do not know for certain. If 0.16.1 left
+  the bar on the desktop, the default now changes that: please look at both against 0.16.1 and decide.
+- **Also:** `ShowFromOtherInstance`'s summary had slipped above `Run`'s; it is back on its method.
+- **Docs:** CHANGELOG with the Upgrading line as you gave it (the layout part added after it); FEATURES §1 (a *Taskbar
+  button* row; the close button and tray rows say a hidden bar has no button and how the bar is found off the taskbar),
+  §7 (the setting's row) and §12; the roadmap. Version 0.17.0.
+- **Tests:**
+  - Core `HideFromTaskbarSettingTests`: off by default, written only when on and read back, copied by `CopyFrom` and
+    `Clone`, kept by an older version's settings.
+  - App `BarTaskbarTests`, on the real bar shown: the default has `ShowInTaskbar`, `WS_EX_APPWINDOW`, no tool-window style
+    and no owner; Settings saved with the setting on gives none of them, a tool window owned by WPF's, still shown; off again
+    brings them back, without a restart; a bar made with it on has no button from the first. A floating bar minimised by
+    `SC_MINIMIZE` (what its button sends) and closed while minimised saves its restored place, and a bar started from that
+    place is normal and there. `IgnoresMinimize` for docked and floating, minimise with Windows' low bits, restore,
+    maximise and another message. The Settings round trip.
+  - App `BarResizingTests`: `ModeFor` in eight cases; locked on the taskbar → `CanMinimize` (minimise box on, sizing frame
+    and maximise box off, HTCLIENT at the five points), then off the taskbar from a Settings save → `NoResize`; the docked
+    case and the unshown bar updated (locked from the start is `CanMinimize` now; a sync that also takes the bar off the
+    taskbar gives `NoResize` and no button).
+  - `DialogFitTests`: the 視窗 tab at 100 % and 150 % in three languages: `FitsAcross`, the box right under 永遠在最上層,
+    the hint after it 22 units in, both shown, off by default, the box bound.
+- **Not tested:** a real taskbar (the button, its icon and title, clicks on it), the Alt+Tab list, Win+D and Win+M, the
+  flash's length, a docked bar with the shell, the window at the pointer and dialogs with the bar minimised, High
+  Contrast, a scale other than 100 %.
+
 ## 2026-11-27 (174) — Release commit for v0.16.1
 
 Run 280 (`8161c13`, entry 173) is green: Core 1406/1406, App 681/681, and you accepted W1 (review 46, nothing open). This

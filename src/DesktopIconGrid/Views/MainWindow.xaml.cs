@@ -78,8 +78,16 @@ public partial class MainWindow : Window
         MainGrid.MouseLeftButtonDown += GridBackground_MouseLeftButtonDown;
         BarFrame.MouseLeftButtonDown += BarFrame_MouseLeftButtonDown;
         InitializeDocking();
-        _resizing = new BarResizing(this, _surface, viewModel, () => IsAutoHide);
+        _resizing = new BarResizing(this, _surface, viewModel, () => IsAutoHide, () => IsDocked);
         _resizing.Apply(); // a bar that starts locked has no sizing frame from the first
+        ApplyTaskbarPresence(); // made with its taskbar button, or without (0.17.0 WP1)
+        viewModel.PropertyChanged += (_, e) =>
+        {
+            if (string.IsNullOrEmpty(e.PropertyName) || e.PropertyName == nameof(LauncherViewModel.HideFromTaskbar))
+            {
+                ApplyTaskbarPresence(); // from a save in Settings or a sync, at once
+            }
+        };
     }
 
     /// <summary>Whether the bar can be resized by hand just now (0.16.1 WP1); tests read it.</summary>
@@ -90,9 +98,10 @@ public partial class MainWindow : Window
         base.OnSourceInitialized(e);
         ApplyPlacement();
 
-        HideFromAltTab();
+        ApplyTaskbarPresence(); // the tool-window style, now that there is a window to have it
         if (HwndSource.FromHwnd(new WindowInteropHelper(this).Handle) is { } source)
         {
+            source.AddHook(BarWndProc);
             _hotkey = new GlobalHotkey(source);
             _hotkey.Pressed += (_, _) => ToggleVisibility();
             _pointerHotkey = new GlobalHotkey(source, GlobalHotkey.PointerIds);
@@ -535,19 +544,53 @@ public partial class MainWindow : Window
         base.OnClosed(e);
     }
 
-    /// <summary>A utility bar with a tray icon should not also sit in Alt+Tab.</summary>
-    private void HideFromAltTab()
+    /// <summary>
+    /// Puts the bar on the taskbar and in Alt+Tab, or keeps it off both as every version before 0.17.0 did, as
+    /// <see cref="LauncherViewModel.HideFromTaskbar"/> says (0.17.0 WP1). Off the taskbar the window is a tool window, so
+    /// Alt+Tab leaves it out too. Before the window exists only <see cref="Window.ShowInTaskbar"/> is set, and the window is
+    /// made with it. On a shown window the tool-window style changes first and then ShowInTaskbar, which WPF applies by
+    /// hiding the window and showing it again without activating it: the taskbar reads a window's styles only when it is
+    /// shown, so the button comes or goes at once, with no more than that flash. A hidden bar takes it when it is shown.
+    /// </summary>
+    private void ApplyTaskbarPresence()
     {
+        var off = _viewModel.HideFromTaskbar;
         var handle = new WindowInteropHelper(this).Handle;
-        if (handle == IntPtr.Zero)
+        if (handle != IntPtr.Zero)
         {
-            return;
+            var style = NativeMethods.GetExStyle(handle);
+            var wanted = off ? style | NativeMethods.WS_EX_TOOLWINDOW : style & ~NativeMethods.WS_EX_TOOLWINDOW;
+            if (wanted != style)
+            {
+                NativeMethods.SetExStyle(handle, wanted);
+            }
         }
 
-        NativeMethods.SetExStyle(handle, NativeMethods.GetExStyle(handle) | NativeMethods.WS_EX_TOOLWINDOW);
+        if (ShowInTaskbar == off)
+        {
+            ShowInTaskbar = !off;
+            AppLog.Default.Info("App", off ? "Bar kept off the taskbar and out of Alt+Tab" : "Bar on the taskbar and in Alt+Tab");
+        }
     }
 
-    /// <summary>Called when a second copy of the app was started: make the bar visible and bring it forward.</summary>
+    /// <summary>
+    /// A docked bar is not minimised (0.17.0 WP1): it keeps its edge. SC_MINIMIZE, from its taskbar button, Win+Down or
+    /// its system menu, is ignored while it is docked; the button then only brings the bar forward.
+    /// </summary>
+    internal static bool IgnoresMinimize(int message, IntPtr wParam, bool docked) =>
+        docked && message == NativeMethods.WM_SYSCOMMAND && (wParam.ToInt64() & 0xFFF0) == NativeMethods.SC_MINIMIZE;
+
+    private IntPtr BarWndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
+    {
+        if (IgnoresMinimize(msg, wParam, IsDocked))
+        {
+            handled = true;
+            AppLog.Default.Debug("App", "Docked bar not minimised");
+        }
+
+        return IntPtr.Zero;
+    }
+
     /// <summary>
     /// Carries out the command line of a start (this one's, or another start's, handed over by <see cref="CommandPipe"/>),
     /// in order; consecutive <c>--add</c> paths for one group become one addition.
@@ -678,6 +721,7 @@ public partial class MainWindow : Window
         }
     }
 
+    /// <summary>Called when a second copy of the app was started: make the bar visible and bring it forward.</summary>
     public void ShowFromOtherInstance()
     {
         Show();

@@ -6108,6 +6108,24 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Keep the bar off the taskbar and out of Alt+Tab.
+        /// </summary>
+        public static string Settings_HideFromTaskbar {
+            get {
+                return ResourceManager.GetString("Settings_HideFromTaskbar", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The bar can still be brought up from the tray icon or with the show/hide hotkey..
+        /// </summary>
+        public static string Settings_HideFromTaskbarHint {
+            get {
+                return ResourceManager.GetString("Settings_HideFromTaskbarHint", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Show at pointer while held:.
         /// </summary>
         public static string Settings_HoldHotkey {

@@ -174,6 +174,14 @@ public sealed partial class LauncherSettings
     /// <summary>The close button hides the bar to the notification area instead of exiting.</summary>
     public bool CloseToTray { get; set; } = true;
 
+    /// <summary>
+    /// Keeps the bar off the taskbar and out of Alt+Tab, as every version before 0.17.0 had it (0.17.0 WP1, the owner's
+    /// request). Off by default: the bar has a taskbar button and an Alt+Tab entry like any program's window. Written only
+    /// when on; a version before 0.17.0 keeps it unread and never shows a button. It syncs, as the other window settings do.
+    /// </summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public bool HideFromTaskbar { get; set; }
+
     /// <summary>Screen edge the bar is docked to as a desktop toolbar (maximised windows stay clear of it), one of <see cref="DockEdges"/>.</summary>
     public string DockEdge { get; set; } = DockNone;
 
@@ -265,6 +273,7 @@ public sealed partial class LauncherSettings
         WindowKeys = source.WindowKeys is null ? null : new Dictionary<string, string>(source.WindowKeys);
         Opacity = source.Opacity;
         CloseToTray = source.CloseToTray;
+        HideFromTaskbar = source.HideFromTaskbar;
         StartWithWindows = source.StartWithWindows;
         StartHidden = source.StartHidden;
         DockEdge = source.DockEdge;

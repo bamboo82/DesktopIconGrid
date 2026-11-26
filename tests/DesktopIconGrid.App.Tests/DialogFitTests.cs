@@ -531,6 +531,57 @@ public sealed class DialogFitTests(WpfThread wpf)
         });
     }
 
+    [Theory]
+    [InlineData("zh-Hant", 1.0)]
+    [InlineData("zh-Hant", 1.5)]
+    [InlineData("en-US", 1.0)]
+    [InlineData("en-US", 1.5)]
+    [InlineData("zh-Hans", 1.0)]
+    [InlineData("zh-Hans", 1.5)]
+    public void The_Window_tab_with_the_taskbar_choice_fits(string language, double scale)
+    {
+        // 0.17.0 WP1: 不在工作列與 Alt+Tab 中顯示工具列 right under 永遠在最上層, its hint under it indented as the start-up hint is.
+        wpf.Invoke(() =>
+        {
+            var before = System.Threading.Thread.CurrentThread.CurrentUICulture;
+            System.Threading.Thread.CurrentThread.CurrentUICulture = System.Globalization.CultureInfo.GetCultureInfo(language);
+            Services.UiFonts.Configure(null, null, scale);
+            var viewModel = new SettingsViewModel(new LauncherSettings());
+            var window = new SettingsWindow { DataContext = viewModel };
+            try
+            {
+                window.Show();
+                window.Tabs.SelectedIndex = window.PageList.ToList().IndexOf(window.WindowPage);
+                Settle(window);
+                var what = $"{language} at {scale:P0}";
+                FitsAcross(window.WindowPage, what);
+
+                var box = window.HideFromTaskbarBox;
+                var hint = window.HideFromTaskbarHint;
+                var panel = Assert.IsType<StackPanel>(box.Parent);
+                var onTop = panel.Children.OfType<CheckBox>().First();
+                Assert.Equal(Strings.Menu_AlwaysOnTop, onTop.Content);
+                Assert.Equal(panel.Children.IndexOf(onTop) + 1, panel.Children.IndexOf(box)); // right under 永遠在最上層
+                Assert.Equal(panel.Children.IndexOf(box) + 1, panel.Children.IndexOf(hint));
+                Assert.Equal(Strings.Settings_HideFromTaskbar, box.Content);
+                Assert.Equal(Strings.Settings_HideFromTaskbarHint, hint.Text);
+                Assert.True(box.IsVisible && hint.IsVisible, $"{what}: the choice or its hint is not shown");
+                Assert.Equal(22, hint.TranslatePoint(default, panel).X - box.TranslatePoint(default, panel).X, 1);
+                Assert.Equal(TextWrapping.Wrap, hint.TextWrapping);
+
+                Assert.False(box.IsChecked == true); // off by default: the bar has a taskbar button
+                box.IsChecked = true;
+                Assert.True(viewModel.HideFromTaskbar);
+            }
+            finally
+            {
+                window.Close();
+                Services.UiFonts.Configure(null);
+                System.Threading.Thread.CurrentThread.CurrentUICulture = before;
+            }
+        });
+    }
+
     /// <summary>Every tab of Settings on the strip's first row, none past its end.</summary>
     private static void TabsInOneRow(SettingsWindow window, string what)
     {

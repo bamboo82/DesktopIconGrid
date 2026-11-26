@@ -15,6 +15,8 @@ internal static partial class NativeMethods
     public const long WS_CAPTION = 0x00C00000; // WS_BORDER | WS_DLGFRAME: a title bar
     public const long WS_THICKFRAME = 0x00040000; // a sizing border
     public const long WS_EX_TOOLWINDOW = 0x00000080;
+    public const int WM_SYSCOMMAND = 0x0112;
+    public const int SC_MINIMIZE = 0xF020;
     public const long WS_EX_NOACTIVATE = 0x08000000;
 
     public const uint SWP_NOSIZE = 0x0001;

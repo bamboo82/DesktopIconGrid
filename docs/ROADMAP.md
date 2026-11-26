@@ -283,6 +283,8 @@ folder.
   the custom theme, and a text look for a widget's name.
 - **0.16.1** (released 2026-11-27): the owner's requests after 0.16.0 — the lock on the grid keeps the bar's size
   too, and the sync window shows only what belongs to the place chosen for the copies.
+- **0.17.0 "On the taskbar"** (in progress): the owner's requests after 0.16.1 — a taskbar button and an Alt+Tab entry
+  for the bar unless Settings keeps it off them, and the tray icon when the program runs as administrator.
 - **Next**: nothing planned yet.
 - **1.0.0 "Ship it"**: the existing backlog — installer (MSIX/winget), code signing, toast notifications with
   actions.
