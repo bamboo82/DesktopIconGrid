@@ -3,6 +3,24 @@
 All notable changes to Desktop Icon Grid. The format follows [Keep a Changelog](https://keepachangelog.com/);
 version numbers follow [Semantic Versioning](https://semver.org/).
 
+## [0.16.1] – Unreleased
+
+The owner's requests after 0.16.0.
+
+Upgrading: 0.16.1 reads and writes the same layout format as 0.16.0 (version 1) and stores nothing new, so PCs on
+either share a settings copy as before.
+
+### Changed
+
+- *Lock grid* also keeps the bar's size. While it is on, no edge or corner of the bar can be dragged and none shows a
+  resize cursor: a press there moves the bar, as a press on its empty part does; a docked bar's inner edge is fixed too.
+  The bar's system menu has *Size*, *Maximize* and *Minimize* greyed, and Windows snaps it to no half or whole screen.
+  Moving it, docking it, ▸ and the bar's own changes of size (icon size, spacing, text size, names shown) work as
+  before, and so does every edge once the lock is off. The lock's menu items have a tooltip that says so, and the
+  notice at the first refused drag says it too.
+- A press on the bar's bare background (its frame line and the margins around the icons, the grip and the buttons) moves
+  the bar, as a press on the empty part of the grid already did.
+
 ## [0.16.0] – 2026-11-24
 
 "Where the pointer is": the owner's requests after 0.15.0.

@@ -281,6 +281,8 @@ folder.
 - **0.16.0 "Where the pointer is"** (released 2026-11-24): the owner's requests after 0.15.0 — the window shown while
   a key is held without the search box, the window's place relative to the pointer, the custom theme's settings only for
   the custom theme, and a text look for a widget's name.
+- **0.16.1** (in progress): the owner's requests after 0.16.0 — the lock on the grid keeps the bar's size too, and
+  the sync window shows only what belongs to the place chosen for the copies.
 - **Next**: nothing planned yet.
 - **1.0.0 "Ship it"**: the existing backlog — installer (MSIX/winget), code signing, toast notifications with
   actions.

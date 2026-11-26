@@ -40,6 +40,9 @@ public partial class MainWindow : Window
     private readonly BarPicture _picture;
     private readonly BarSurface _surface;
 
+    /// <summary>Whether the bar can be resized by hand: not while its grid is locked or it is docked with auto-hide (0.16.1 WP1).</summary>
+    private readonly BarResizing _resizing;
+
     /// <summary>The icon area as the bar last had it shown and expanded (0.15.0 WP3): the window at the pointer has its size.</summary>
     private Size? _iconArea;
 
@@ -49,7 +52,7 @@ public partial class MainWindow : Window
         DataContext = viewModel;
         InitializeComponent();
         TextSharpness.Apply(this); // whole-pixel text; the background decides the smoothing (BarSurface) (0.15.0 WP9)
-        _surface = new BarSurface(this, resizeBorder: 6, "Bar");
+        _surface = new BarSurface(this, BarResizing.ResizeBorder, "Bar");
         _picture = new BarPicture(BarLayout, PictureLayer);
         IconsColumn.SizeChanged += (_, _) => NoteIconArea();
         UiFonts.ApplyBar(this); // the bar's font, Chinese in Taipei Sans TC Light where this PC has it (0.12.0 WP5, 0.14.0 WP2)
@@ -73,8 +76,14 @@ public partial class MainWindow : Window
         Deactivated += OnDeactivated;
         SystemParameters.StaticPropertyChanged += OnSystemParametersChanged;
         MainGrid.MouseLeftButtonDown += GridBackground_MouseLeftButtonDown;
+        BarFrame.MouseLeftButtonDown += BarFrame_MouseLeftButtonDown;
         InitializeDocking();
+        _resizing = new BarResizing(this, _surface, viewModel, () => IsAutoHide);
+        _resizing.Apply(); // a bar that starts locked has no sizing frame from the first
     }
+
+    /// <summary>Whether the bar can be resized by hand just now (0.16.1 WP1); tests read it.</summary>
+    internal bool CanResizeByHand => _resizing.CanResizeNow;
 
     protected override void OnSourceInitialized(EventArgs e)
     {
@@ -1406,6 +1415,24 @@ public partial class MainWindow : Window
             return;
         }
 
+        MoveByPress();
+    }
+
+    /// <summary>
+    /// Pressing on the bar's bare background (its frame line and the margins around the grid, the grip and the buttons)
+    /// moves it as the grid's empty part does (0.16.1 WP1): while the bar cannot be resized by hand its edges have no
+    /// resize border, and a press at them lands here or on what is there.
+    /// </summary>
+    private void BarFrame_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        if (ReferenceEquals(e.OriginalSource, BarFrame))
+        {
+            MoveByPress();
+        }
+    }
+
+    private void MoveByPress()
+    {
         _viewModel.IsGroupPopupOpen = false;
         try
         {

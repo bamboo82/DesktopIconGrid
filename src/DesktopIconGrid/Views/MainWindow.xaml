@@ -12,6 +12,7 @@
         Topmost="{Binding AlwaysOnTop}"
         Icon="{StaticResource AppIconImage}">
 
+  <!-- ResizeMode and the resize border are BarResizing's from the start (0.16.1 WP1): none while the grid is locked. -->
   <WindowChrome.WindowChrome>
     <WindowChrome CaptionHeight="0"
                   ResizeBorderThickness="6"
@@ -135,7 +136,8 @@
               <MenuItem Header="{x:Static r:Strings.Menu_NewGroup}" Command="{Binding NewGroupCommand}" InputGestureText="{Binding KeyText[NewGroup]}" />
               <Separator />
               <MenuItem Header="{x:Static r:Strings.Menu_AlwaysOnTop}" IsCheckable="True" IsChecked="{Binding AlwaysOnTop, Mode=TwoWay}" />
-              <MenuItem Header="{x:Static r:Strings.Menu_LockGrid}" IsCheckable="True" IsChecked="{Binding LockGrid, Mode=TwoWay}" />
+              <MenuItem Header="{x:Static r:Strings.Menu_LockGrid}" IsCheckable="True" IsChecked="{Binding LockGrid, Mode=TwoWay}"
+                        ToolTip="{x:Static r:Strings.Menu_LockGridToolTip}" />
               <MenuItem x:Name="SendToMenuItem" Header="{x:Static r:Strings.Menu_SendTo}" IsCheckable="True" Click="SendTo_Click" />
               <MenuItem x:Name="ReceiveFilesMenuItem" Header="{x:Static r:Strings.Menu_ReceiveFiles}" IsCheckable="True" Click="ReceiveFiles_Click" />
               <MenuItem Header="{x:Static r:Strings.Menu_RestoreLayout}" Command="{Binding RestoreLayoutCommand}" />

@@ -119,16 +119,15 @@ public partial class MainWindow
             }
         }
 
+        _resizing.Apply(); // not by hand with auto-hide; at the inner edge without it, unless the grid is locked (0.16.1 WP1)
         if (IsAutoHide)
         {
-            ResizeMode = ResizeMode.NoResize;
             Expand();
             StartAutoHideTimer();
         }
         else
         {
             StopAutoHideTimer();
-            ResizeMode = ResizeMode.CanResize;
             ReDock();
         }
     }
@@ -182,7 +181,7 @@ public partial class MainWindow
         _collapsed = false;
         MinWidth = _baseMinWidth;
         MinHeight = _baseMinHeight;
-        ResizeMode = ResizeMode.CanResize;
+        _resizing.Apply(); // free again: resizable at every edge, unless the grid is locked (0.16.1 WP1)
         Grip.Visibility = Visibility.Visible;
         SetBinding(TopmostProperty, new Binding(nameof(LauncherViewModel.AlwaysOnTop)));
         if (_hiddenForFullScreen)
@@ -252,7 +251,10 @@ public partial class MainWindow
         return Math.Max(current, minimum);
     }
 
-    /// <summary>The user resized the docked bar at its inner edge: the new size is the new thickness.</summary>
+    /// <summary>
+    /// The docked bar's size changed: resized by hand at its inner edge (not while the grid is locked, 0.16.1 WP1) or by
+    /// the program (a larger icon size): the new size is the new thickness.
+    /// </summary>
     private void OnDockedSizeChanged()
     {
         if (!IsDocked || IsAutoHide || _movingForDock || _appBar is null)

@@ -515,7 +515,8 @@
           </MenuItem>
           <Separator />
           <MenuItem Header="{x:Static r:Strings.Menu_LaunchMultiLaunch}" Command="{Binding Root.LaunchMultiLaunchCommand}" />
-          <MenuItem Header="{x:Static r:Strings.Menu_LockGrid}" IsCheckable="True" IsChecked="{Binding Root.LockGrid, Mode=TwoWay}" />
+          <MenuItem Header="{x:Static r:Strings.Menu_LockGrid}" IsCheckable="True" IsChecked="{Binding Root.LockGrid, Mode=TwoWay}"
+                    ToolTip="{x:Static r:Strings.Menu_LockGridToolTip}" />
           <MenuItem Header="{x:Static r:Strings.Menu_Settings}" Command="{Binding Root.OpenSettingsCommand}" />
         </ContextMenu>
       </ScrollViewer.ContextMenu>

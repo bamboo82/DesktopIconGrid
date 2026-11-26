@@ -303,7 +303,8 @@ public sealed partial class LauncherViewModel : ObservableObject, ISyncHost
     /// <summary>
     /// Nothing on the grid moves by dragging while this is on (0.15.0 WP1): no drag starts from an item in the bar, a
     /// group or the window at the pointer, and no drop moves one of the bar's items (<see cref="Views.IconGridControl"/>).
-    /// Turning it off takes back the notice that it is on. Saved and synced with the settings.
+    /// The bar keeps its size too: it cannot be resized by hand (0.16.1 WP1, <see cref="Views.BarResizing"/>). Turning
+    /// it off takes back the notice that it is on. Saved and synced with the settings.
     /// </summary>
     public bool LockGrid
     {
@@ -322,7 +323,7 @@ public sealed partial class LauncherViewModel : ObservableObject, ISyncHost
                 SetBarMessage(null);
             }
 
-            AppLog.Default.Info("Layout", value ? "Grid locked: nothing on it moves by dragging" : "Grid unlocked");
+            AppLog.Default.Info("Layout", value ? "Grid locked: nothing on it moves by dragging, and the bar keeps its size" : "Grid unlocked");
             Save();
         }
     }
@@ -2155,10 +2156,6 @@ public sealed partial class LauncherViewModel : ObservableObject, ISyncHost
     /// <summary>A copy of the current settings, items and window placement.</summary>
     public LauncherLayout ExportLayout() => Model.ToLayout();
 
-    /// <summary>
-    /// Replaces the settings and items with those of <paramref name="layout"/> (for example a copy downloaded
-    /// from Google Drive), keeping this device's window placement.
-    /// </summary>
     /// <summary>Raised when the background picture's file came from the sync place: the bar draws it (0.15.0 WP5b).</summary>
     public event EventHandler? PictureChanged;
 
@@ -2176,6 +2173,10 @@ public sealed partial class LauncherViewModel : ObservableObject, ISyncHost
         PictureChanged?.Invoke(this, EventArgs.Empty);
     }
 
+    /// <summary>
+    /// Replaces the settings and items with those of <paramref name="layout"/> (for example a copy downloaded
+    /// from Google Drive), keeping this device's window placement.
+    /// </summary>
     public void ReplaceLayout(LauncherLayout layout)
     {
         ArgumentNullException.ThrowIfNull(layout);

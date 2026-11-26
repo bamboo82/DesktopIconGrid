@@ -19,10 +19,12 @@ namespace DesktopIconGrid.Views;
 /// (<see cref="MainWindow.SetSeeThroughLook"/>).
 /// </summary>
 /// <param name="window">The window; its content paints <c>Theme.BarBackground</c>.</param>
-/// <param name="resizeBorder">How far in from its edges the window can be resized: the bar's 6, nothing for a window that is not resized.</param>
+/// <param name="resizeBorder">How far in from its edges the window can be resized at first (<see cref="ResizeBorder"/>).</param>
 /// <param name="name">How the log names the window.</param>
 internal sealed class BarSurface(Window window, double resizeBorder, string name)
 {
+    private double _resizeBorder = resizeBorder;
+
     /// <summary>Windows paints the chosen backdrop behind the window.</summary>
     public bool BackdropActive { get; private set; }
 
@@ -31,6 +33,27 @@ internal sealed class BarSurface(Window window, double resizeBorder, string name
 
     /// <summary>Whether Windows is in High Contrast; tests stand in for it.</summary>
     internal Func<bool> HighContrast { get; set; } = () => SystemParameters.HighContrast;
+
+    /// <summary>
+    /// How far in from its edges the window can be resized, in units: the bar's 6 (<see cref="BarResizing"/>), nothing for
+    /// a window that is not resized and for the bar while it cannot be (0.16.1 WP1). Inside it the window answers as an
+    /// edge to drag; without it every point is the window's own, so a press at the edge does what a press on what is
+    /// there does. A change takes effect at once.
+    /// </summary>
+    public double ResizeBorder
+    {
+        get => _resizeBorder;
+        set
+        {
+            if (_resizeBorder.Equals(value))
+            {
+                return;
+            }
+
+            _resizeBorder = value;
+            SetChrome();
+        }
+    }
 
     /// <summary>
     /// Brings the window's background to the settings: <paramref name="backdrop"/> (<see cref="LauncherSettings.BarBackdrop"/>),
@@ -56,16 +79,7 @@ internal sealed class BarSurface(Window window, double resizeBorder, string name
         if (active != BackdropActive)
         {
             BackdropActive = active;
-
-            // For DWM to paint behind the client area WPF must not: extend the frame into it and leave the window transparent.
-            WindowChrome.SetWindowChrome(window, new WindowChrome
-            {
-                CaptionHeight = 0,
-                ResizeBorderThickness = new Thickness(resizeBorder),
-                GlassFrameThickness = active ? new Thickness(-1) : new Thickness(0),
-                CornerRadius = new CornerRadius(0),
-                UseAeroCaptionButtons = false,
-            });
+            SetChrome();
             AppLog.Default.Info("App", active ? $"{name} background: {wanted} backdrop" : $"{name} background: solid colour");
         }
 
@@ -100,4 +114,16 @@ internal sealed class BarSurface(Window window, double resizeBorder, string name
         TextOptions.SetTextRenderingMode(window, TextSharpness.RenderingFor(SeeThrough, active));
         MainWindow.SetSeeThroughLook(window.Resources, SeeThrough || picture ? palette.Foreground : null, iconSize, picture);
     }
+
+    /// <summary>The window's frame: none drawn, no caption, <see cref="ResizeBorder"/> at its edges, the backdrop's glass or none.</summary>
+    private void SetChrome() =>
+        // For DWM to paint behind the client area WPF must not: with a backdrop, extend the frame into it and leave the window transparent.
+        WindowChrome.SetWindowChrome(window, new WindowChrome
+        {
+            CaptionHeight = 0,
+            ResizeBorderThickness = new Thickness(_resizeBorder),
+            GlassFrameThickness = BackdropActive ? new Thickness(-1) : new Thickness(0),
+            CornerRadius = new CornerRadius(0),
+            UseAeroCaptionButtons = false,
+        });
 }

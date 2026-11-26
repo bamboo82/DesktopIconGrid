@@ -2934,7 +2934,7 @@ SHA-256：{3}
     <value>锁定网格</value>
   </data>
   <data name="Main_GridLocked" xml:space="preserve">
-    <value>网格已锁定。在工具栏的空白处右击即可解除。</value>
+    <value>网格已锁定，也会固定工具栏大小。在工具栏的空白处右击即可解除。</value>
   </data>
   <data name="Settings_IconSizeToolTip" xml:space="preserve">
     <value>选择一个大小，或输入 16 到 256 之间的整数。</value>
@@ -3190,5 +3190,8 @@ SHA-256：{3}
   </data>
   <data name="TextLook_NameLabel" xml:space="preserve">
     <value>名称：</value>
+  </data>
+  <data name="Menu_LockGridToolTip" xml:space="preserve">
+    <value>拖动不会移动网格上的项目；从别处拖入的文件仍会加入。锁定也会固定工具栏大小。</value>
   </data>
 </root>

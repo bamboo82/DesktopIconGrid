@@ -9,6 +9,70 @@ The owner relays replies.
 
 ---
 
+## 2026-11-26 (170) — 0.16.1 WP1: the lock keeps the bar's size
+
+- **Runs:** 274 (`d01002a`, the release commit, entry 169) green: Core 1405/1405, App 647/647. You made v0.16.0 on it
+  (annotated tag, `main` with Build 275, Release run 19, all green; I checked the tag and the three runs on GitHub). Plan 38
+  starts here: this commit sets the version to 0.16.1 and opens "[0.16.1] – Unreleased".
+- **One place decides** (`Views/BarResizing.cs`, new): `CanResize(locked, autoHidden)` is `!locked && !autoHidden`;
+  `Apply()` sets `ResizeMode` (CanResize or NoResize) and the resize border (6 or 0) together. It follows `LockGrid`'s
+  `PropertyChanged`, which either menu raises and a sync raises too (`NotifyAppearanceChanged`, also from `ReplaceLayout`).
+  `MainWindow` makes it after `InitializeDocking` and applies it at once, so a bar that starts locked has no sizing frame
+  from its first showing. `MainWindow.Docking` no longer sets `ResizeMode` itself: its three assignments (auto-hide on,
+  docked without it, `Undock`) are `_resizing.Apply()`, so docking or undocking cannot turn resizing back on while locked.
+- **Why the border too:** WindowChrome's own hit test does not look at `ResizeMode`. With NoResize alone the 6-unit border
+  would still answer HTLEFT and the like, show the resize cursor, and the drag would only be refused by Windows for want
+  of a sizing frame. `BarSurface.ResizeBorder` is now settable and rebuilds the chrome with the glass it has (one
+  `SetChrome` for this and the backdrop's change); at 0 WindowChrome answers HTCLIENT everywhere, so the edge is the bar's
+  own. A press there reaches what is there, as anywhere on the bar: an icon, ✕ or ▸ takes it as a click; the grip and the
+  grid's empty part move the bar, as before. Most of the 6 units, though, is the bar's bare background: the 1-unit frame
+  line and the margins around the grid (2 above and below), the grip (4 to its left) and the buttons (2), where a press
+  did nothing. So that a press there does what a press on the bar's background does, `BarFrame` now moves the bar on a
+  press whose source is itself (`MoveByPress`, shared with the grid's empty part; the grip's own handler is untouched).
+  Unlocked, the band is the resize border and nothing changes there; the one place where unlocked behaviour changes is
+  the right column's gap between ✕ and ▸ beyond the band, which now moves the bar too. Say if you would rather keep that
+  gap inert (a check of the lock in the handler).
+- **Docked:** your plan says a docked bar is already not resizable. That holds with auto-hide (NoResize since 0.4.0);
+  docked without it, the inner edge sets the thickness (`OnDockedSizeChanged`). While locked that edge is fixed too;
+  unlocked, both are as before. The bar's own size changes still reach a docked bar's thickness through the same handler.
+  One change with auto-hide, locked or not: its border is 0 now as well, so its edges no longer show the resize cursor
+  they showed without resizing (WindowChrome answered them as edges; Windows refused the drag for want of a frame).
+- **Maximise by double-click and Windows snap:**
+  - the bar has no caption (`CaptionHeight="0"`), so no double-click maximises it, locked or not: a double-click on the
+    grip turns 永遠在最上層 as before, and a press on the grid's empty part moves the bar;
+  - unlocked, nothing changes: the window has a sizing frame and a maximise box, so Windows may snap or maximise it when it
+    is dragged to a screen edge or with Win+arrows, as in 0.16.0;
+  - locked, the window has neither, and Windows snaps and maximises only windows with a sizing frame, so neither happens;
+    the system menu (Alt+Space) has *Size* and *Maximize* greyed, *Move* stays;
+  - *Minimize* is greyed too: WPF's NoResize takes the minimise box with the frame. `ResizeMode.CanMinimize` would keep it
+    (frame and maximise box off, minimise box on). I kept NoResize, as your plan says and as the auto-hide bar has it; say
+    if the owner wants minimise kept while locked;
+  - a bar already maximised when the lock comes on stays so; *Restore* in the system menu is Windows' and not touched.
+- **Wording:** a new tooltip on both 鎖定格線 items, the ▸ menu's and the empty area's: zh-Hant 拖曳不會移動格線上的項目；從別處拖入
+  的檔案仍會加入。鎖定也會固定工具列大小。 (en "Nothing on the grid moves by dragging; files dragged in from elsewhere still come
+  in. The lock also keeps the bar's size."; zh-Hans 拖动不会移动网格上的项目；从别处拖入的文件仍会加入。锁定也会固定工具栏大小。).
+  The notice at the first refused drag: 格線已鎖定，也會固定工具列大小。在工具列的空白處按右鍵即可解除。 (en "The grid is locked,
+  which also keeps the bar's size. Right-click …"; zh-Hans 网格已锁定，也会固定工具栏大小。…). Nothing is said on a resize
+  attempt. The log line on locking says the size is kept.
+- **Also:** `ReplaceLayout`'s summary had slipped above `PictureChanged` in 0.15.0 WP5b; it is back on its method.
+- **Docs:** CHANGELOG "[0.16.1] – Unreleased" (Changed); FEATURES §1 (*Edges / corners* names `BarResizing`; *Lock grid*
+  no longer lists resizing among what still works, and has a 0.16.1 paragraph and the notice's new text), §7's lock row,
+  §12 and the roadmap with 0.16.1 in progress. Version 0.16.1 in `Directory.Build.props`.
+- **Tests (App, `BarResizingTests`):** the rule's four cases; a shown window with the bar's chrome, asked `WM_NCHITTEST` at
+  the left edge, the top edge, the top-left corner, the right edge and the bottom-right corner: unlocked HTLEFT, HTTOP,
+  HTTOPLEFT, HTRIGHT, HTBOTTOMRIGHT with `WS_THICKFRAME`; locked HTCLIENT at all five, the border 0, and no
+  `WS_THICKFRAME`, `WS_MAXIMIZEBOX` or `WS_MINIMIZEBOX`; unlocked again, the five codes and the styles back; locked,
+  docked with auto-hide and undocked (through `Apply` as docking calls it) stays NoResize, and unlocked with auto-hide is
+  NoResize as before; the bar's own `MainWindow` (never shown: no handle, hotkeys or tray icon) made locked is NoResize
+  with the border 0, follows a menu's unlock to CanResize and 6, and a sync's `ReplaceLayout` with `lockGrid` back to
+  NoResize, and its ▸ item has the tooltip; the empty area's item has it; the tooltip and the notice carry the words in
+  each language.
+- **Not tested:** the real docking path with the lock (it calls `Apply`, read, not run: the shell calls need a desktop, as
+  `AppBarTests` says); a real press and drag at an edge (the move from the bare background included), the cursor,
+  Alt+Space's greyed items, Win+arrows and a snap by dragging — by hand; Mica or Acrylic on a locked bar (a window without
+  a sizing frame, as the window at the pointer and the auto-hide bar have had, neither seen with a backdrop); a bar
+  maximised before locking; a scale other than 100 %.
+
 ## 2026-11-24 (169) — Release commit for v0.16.0
 
 Run 273 (`3b17e2d`, entry 168) is green: Core 1405/1405, App 647/647, and you accepted V1 and V2 (review 44, nothing

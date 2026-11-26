@@ -2934,7 +2934,7 @@ SHA-256：{3}
     <value>鎖定格線</value>
   </data>
   <data name="Main_GridLocked" xml:space="preserve">
-    <value>格線已鎖定。在工具列的空白處按右鍵即可解除。</value>
+    <value>格線已鎖定，也會固定工具列大小。在工具列的空白處按右鍵即可解除。</value>
   </data>
   <data name="Settings_IconSizeToolTip" xml:space="preserve">
     <value>選擇一個大小，或輸入 16 到 256 之間的整數。</value>
@@ -3190,5 +3190,8 @@ SHA-256：{3}
   </data>
   <data name="TextLook_NameLabel" xml:space="preserve">
     <value>名稱：</value>
+  </data>
+  <data name="Menu_LockGridToolTip" xml:space="preserve">
+    <value>拖曳不會移動格線上的項目；從別處拖入的檔案仍會加入。鎖定也會固定工具列大小。</value>
   </data>
 </root>

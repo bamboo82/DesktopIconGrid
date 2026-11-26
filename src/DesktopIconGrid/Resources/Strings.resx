@@ -2934,7 +2934,7 @@ The place was not changed; what was copied stays there.</value>
     <value>Lock grid</value>
   </data>
   <data name="Main_GridLocked" xml:space="preserve">
-    <value>The grid is locked. Right-click an empty part of the bar to unlock it.</value>
+    <value>The grid is locked, which also keeps the bar's size. Right-click an empty part of the bar to unlock it.</value>
   </data>
   <data name="Settings_IconSizeToolTip" xml:space="preserve">
     <value>Pick a size, or type a whole number from 16 to 256.</value>
@@ -3190,5 +3190,8 @@ The place was not changed; what was copied stays there.</value>
   </data>
   <data name="TextLook_NameLabel" xml:space="preserve">
     <value>Name:</value>
+  </data>
+  <data name="Menu_LockGridToolTip" xml:space="preserve">
+    <value>Nothing on the grid moves by dragging; files dragged in from elsewhere still come in. The lock also keeps the bar's size.</value>
   </data>
 </root>

@@ -3156,7 +3156,7 @@ namespace DesktopIconGrid.Resources {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to The grid is locked. Right-click an empty part of the bar to unlock it..
+        ///   Looks up a localized string similar to The grid is locked, which also keeps the bar's size. Right-click an empty part o [rest of string was truncated]";.
         /// </summary>
         public static string Main_GridLocked {
             get {
@@ -3386,6 +3386,15 @@ namespace DesktopIconGrid.Resources {
         public static string Menu_LockGrid {
             get {
                 return ResourceManager.GetString("Menu_LockGrid", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Nothing on the grid moves by dragging; files dragged in from elsewhere still com [rest of string was truncated]";.
+        /// </summary>
+        public static string Menu_LockGridToolTip {
+            get {
+                return ResourceManager.GetString("Menu_LockGridToolTip", resourceCulture);
             }
         }
 
