@@ -1033,7 +1033,7 @@ Keeps named copies of the settings and icons where several PCs can share them: o
   account is connected, a sign-in is under way, or a Google Drive Buckets icon is on the bar or in a group; the layout
   holds no other place for one), then as the dialog's last section under the copies: one line, closed at first, *Google
   account for buckets* (投遞箱用的 Google 帳戶) with the account's state at its right (*Connected as …* or *Not
-  connected*); opened, it holds the same group (what the account is for, *Connect*, *Cancel* or *Disconnect*, the Google
+  connected*), 8 units before the line's arrow; opened, it holds the same group (what the account is for, *Connect*, *Cancel* or *Disconnect*, the Google
   API credentials). It opens by itself while a sign-in runs and when one fails, and is closed each time it comes back.
   Switching place changes what is shown at once and the window's height follows; the two choices stay at the top, and
   *This device*, the copies and the status lines stay. What is not shown is collapsed (out of the Tab order and of UI

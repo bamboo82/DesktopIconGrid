@@ -9,6 +9,24 @@ The owner relays replies.
 
 ---
 
+## 2026-11-26 (173) — Review 45 W1: the state keeps 8 units from the line's chevron
+
+- **Runs:** 279 (`0d69472`, entry 172) green: Core 1406/1406, App 677/677.
+- **W1:** `AccountLineState` has a right margin of 8 (`Margin="12,0,8,0"`). The header still takes the slot its template
+  gives it (`FitAccountLineHeader`), and the state now ends 8 units before that slot's end: in the Windows 11 look that is
+  where the chevron starts, in the classic look the toggle's right edge. Both looks get the same 8.
+- **Test:** `The_account_lines_state_keeps_8_units_from_the_chevron_in_both_looks`, in the Windows 11 and the classic look
+  (`DialogTheme.Configure`), with 未連線 and with an account's address: the state's right edge plus 8 is at most the
+  header's end, which is the end of its presenter's slot or the left edge of anything the header's toggle draws to the
+  presenter's right (the chevron), whichever comes first; the state is still in the line's right quarter.
+  `Each_place_shows_only_what_belongs_to_it` checks the same gap in the look CI has.
+- **Your answers to entry 172, taken as given:** NoResize kept, Minimize greyed while locked; the gap between ✕ and ▸
+  moving the bar when unlocked too; the state in the dialog's text colour; the folder kept only while the dialog is open;
+  "any view mode's layout" as the one item tree; zh-Hans 账户. None of them changes anything.
+- **Not tested:** the gap seen in the app (the test measures the template's parts, at 100 %); English and zh-Hans in the
+  line by eye.
+- **Next:** once this run is green, the release commit, on the owner's word, which I ask for in this session.
+
 ## 2026-11-26 (172) — 0.16.1 ready for the release check
 
 - **Runs:** 276 (`5845106`, WP1, entry 170) green: Core 1405/1405, App 658/658. 277 (`d6b3875`, WP2, entry 171) failed on

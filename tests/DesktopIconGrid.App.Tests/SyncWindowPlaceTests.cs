@@ -2,6 +2,8 @@ using System.IO;
 using System.Net.Http;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
+using System.Windows.Media;
 using System.Windows.Threading;
 using DesktopIconGrid.Core.Models;
 using GroupItem = DesktopIconGrid.Core.Models.GroupItem;
@@ -188,6 +190,7 @@ public sealed class SyncWindowPlaceTests(WpfThread wpf) : IDisposable
                     var stateLeft = window.AccountLineState.TranslatePoint(default, window.AccountLine).X;
                     Assert.True(right <= window.AccountLine.ActualWidth + 0.5 && right >= window.AccountLine.ActualWidth * 0.75, $"{state}: the state ends at {right} of {window.AccountLine.ActualWidth}");
                     Assert.True(titleRight <= stateLeft + 0.5, $"{state}: the title ends at {titleRight}, the state starts at {stateLeft}");
+                    Assert.True(right + 8 <= HeaderEnd(window) + 0.5, $"{state}: the state ends at {right}, against the chevron"); // review 45 W1
 
                     window.AccountLine.IsExpanded = true; // opened, it holds the group as it is under the choice
                     SyncWindowStates.Settle(window);
@@ -201,6 +204,83 @@ public sealed class SyncWindowPlaceTests(WpfThread wpf) : IDisposable
                 window.Close();
             }
         });
+    }
+
+    [Theory]
+    [InlineData(true, SyncWindowStates.FolderWithBucket)]
+    [InlineData(true, SyncWindowStates.FolderWithAccount)]
+    [InlineData(false, SyncWindowStates.FolderWithBucket)]
+    [InlineData(false, SyncWindowStates.FolderWithAccount)]
+    public void The_account_lines_state_keeps_8_units_from_the_chevron_in_both_looks(bool fluent, string state)
+    {
+        // Review 45 W1: closed, the line read 「未連線∨」 in the Windows 11 look, the state against the chevron.
+        wpf.Invoke(() =>
+        {
+            var was = DialogTheme.UseFluent;
+            DialogTheme.Configure(fluent);
+            var dialog = SyncWindowStates.Make(state, _folder);
+            var window = new SyncWindow { DataContext = dialog.ViewModel };
+            try
+            {
+                window.Show();
+                SyncWindowStates.Settle(window);
+                var what = $"{(fluent ? "Windows 11" : "classic")} look, {state}";
+                Assert.True(window.AccountLine.IsVisible && !window.AccountLine.IsExpanded, what);
+                var right = window.AccountLineState.TranslatePoint(new Point(window.AccountLineState.ActualWidth, 0), window.AccountLine).X;
+                var end = HeaderEnd(window);
+                Assert.True(right + 8 <= end + 0.5, $"{what}: the state ends at {right}, the header may reach {end}");
+                Assert.True(right >= window.AccountLine.ActualWidth * 0.75, $"{what}: the state ends at {right} of {window.AccountLine.ActualWidth}");
+            }
+            finally
+            {
+                window.Close();
+                DialogTheme.Configure(was);
+            }
+        });
+    }
+
+    /// <summary>
+    /// How far right the account line's header may reach, in the line's units: the end of the slot the template gives the
+    /// header, or the left edge of anything the template draws to the right of it (the Windows 11 look's chevron).
+    /// </summary>
+    private static double HeaderEnd(SyncWindow window)
+    {
+        var presenter = (FrameworkElement)VisualTreeHelper.GetParent(window.AccountLineHeader);
+        var parent = (UIElement)VisualTreeHelper.GetParent(presenter);
+        var end = parent.TranslatePoint(new Point(LayoutInformation.GetLayoutSlot(presenter).Right, 0), window.AccountLine).X;
+        var start = presenter.TranslatePoint(default, window.AccountLine).X;
+        DependencyObject? toggle = presenter;
+        while (toggle is not null and not ToggleButton)
+        {
+            toggle = VisualTreeHelper.GetParent(toggle);
+        }
+
+        foreach (var drawn in Visuals(toggle ?? parent).OfType<FrameworkElement>())
+        {
+            if (drawn.IsVisible && drawn.ActualWidth > 0 && !drawn.IsAncestorOf(presenter) && !ReferenceEquals(drawn, presenter) && !presenter.IsAncestorOf(drawn))
+            {
+                var left = drawn.TranslatePoint(default, window.AccountLine).X;
+                if (left > start + 1)
+                {
+                    end = Math.Min(end, left);
+                }
+            }
+        }
+
+        return end;
+    }
+
+    private static IEnumerable<DependencyObject> Visuals(DependencyObject root)
+    {
+        for (var i = 0; i < VisualTreeHelper.GetChildrenCount(root); i++)
+        {
+            var child = VisualTreeHelper.GetChild(root, i);
+            yield return child;
+            foreach (var below in Visuals(child))
+            {
+                yield return below;
+            }
+        }
     }
 
     [Fact]

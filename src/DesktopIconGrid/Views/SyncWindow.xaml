@@ -151,8 +151,9 @@
                   AutomationProperties.Name="{x:Static r:Strings.Sync_AccountForBucketsLine}"
                   AutomationProperties.HelpText="{Binding ConnectionText}">
           <Expander.Header>
+            <!-- The state keeps 8 units from the end of the header's slot, before the Windows 11 look's chevron (review 45 W1) -->
             <DockPanel x:Name="AccountLineHeader">
-              <TextBlock x:Name="AccountLineState" DockPanel.Dock="Right" Style="{StaticResource DialogHint}" Margin="12,0,0,0"
+              <TextBlock x:Name="AccountLineState" DockPanel.Dock="Right" Style="{StaticResource DialogHint}" Margin="12,0,8,0"
                          VerticalAlignment="Center" Text="{Binding ConnectionText}" />
               <TextBlock x:Name="AccountLineTitle" Text="{x:Static r:Strings.Sync_AccountForBucketsLine}" TextWrapping="Wrap"
                          VerticalAlignment="Center" />
