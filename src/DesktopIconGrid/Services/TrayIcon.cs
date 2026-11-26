@@ -59,7 +59,7 @@ public sealed class TrayIcon : IDisposable
 
     /// <summary>The icon drawn from <paramref name="image"/> at the notification area's size.</summary>
     public TrayIcon(ImageSource image, string text)
-        : this(image, null, text)
+        : this(image, null, text, ShellMessages.AllowOnWindow)
     {
     }
 
@@ -68,11 +68,17 @@ public sealed class TrayIcon : IDisposable
     /// exact at 16, 20, 24 and 32 px, the nearest otherwise, chosen again when the scaling changes.
     /// </summary>
     public TrayIcon(IconFrames frames, string text)
-        : this(null, frames, text)
+        : this(null, frames, text, ShellMessages.AllowOnWindow)
     {
     }
 
-    private TrayIcon(ImageSource? image, IconFrames? frames, string text)
+    /// <summary>For tests: <paramref name="allowMessage"/> stands in for the call that lets Explorer's messages in.</summary>
+    internal TrayIcon(ImageSource image, string text, Func<IntPtr, uint, bool> allowMessage)
+        : this(image, null, text, allowMessage)
+    {
+    }
+
+    private TrayIcon(ImageSource? image, IconFrames? frames, string text, Func<IntPtr, uint, bool> allowMessage)
     {
         _image = image;
         _frames = frames;
@@ -86,6 +92,11 @@ public sealed class TrayIcon : IDisposable
             ExtendedWindowStyle = WsExToolWindow,
         });
         _source.AddHook(WndProc);
+
+        // Run as administrator, the program gets Explorer's messages only where its window lets them in (0.17.0 WP2): the
+        // icon's callback and TaskbarCreated, before the icon is added.
+        ShellMessages.Allow(allowMessage, _source.Handle, CallbackMessage, "tray icon");
+        ShellMessages.Allow(allowMessage, _source.Handle, _taskbarCreated, "tray icon");
         _icon = CreateIconNow(SmallIconSize());
         Add();
     }

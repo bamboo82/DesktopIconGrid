@@ -68,6 +68,13 @@ internal static partial class NativeMethods
     [DllImport("user32.dll", CharSet = CharSet.Unicode)]
     public static extern uint RegisterWindowMessage(string lpString);
 
+    public const uint MSGFLT_ALLOW = 1;
+
+    /// <summary>Lets <paramref name="message"/> from a process of lower integrity (Explorer, while this one runs elevated) reach the window (0.17.0 WP2).</summary>
+    [DllImport("user32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static extern bool ChangeWindowMessageFilterEx(IntPtr hwnd, uint message, uint action, IntPtr pChangeFilterStruct);
+
     /// <summary>The window's extended style. 32-bit user32 has no GetWindowLongPtr export, so it reads GetWindowLong there.</summary>
     public static long GetExStyle(IntPtr hwnd) =>
         IntPtr.Size == 8 ? GetWindowLongPtr(hwnd, GWL_EXSTYLE).ToInt64() : GetWindowLong(hwnd, GWL_EXSTYLE);

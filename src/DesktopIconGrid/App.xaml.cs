@@ -171,6 +171,7 @@ public partial class App : Application
         DataLocation.PublishProgramDrive();
         AppLog.Default.AttachFile(Path.Combine(AppPaths.LogsDirectory, "app.log"));
         AppLog.Default.Info("App", $"Desktop Icon Grid {Assembly.GetExecutingAssembly().GetName().Version?.ToString(3)} starting");
+        Elevation.NoteAtStart(AppLog.Default, Elevation.IsElevated); // what cannot work when run as administrator (0.17.0 WP2)
         if (DataLocation.IsPortable)
         {
             AppLog.Default.Info("App", $"Portable mode ({DataLocation.PortableMarker} found): data in {DataLocation.Directory}, %{DataLocation.AppDriveVariable}% = {Environment.GetEnvironmentVariable(DataLocation.AppDriveVariable)}");

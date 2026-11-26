@@ -26,6 +26,13 @@ as before.
   this, and still cannot be resized. A bar docked to a screen edge is not minimised: its button only brings it forward.
 - An auto-hidden bar comes out whenever it is activated: from its taskbar button, and when a dialog of its own closes.
 
+### Fixed
+
+- Run as administrator (for example started from an elevated terminal), the tray icon works: a click on it or its menu
+  did nothing, and it did not come back after Explorer restarted. A docked bar gets the shell's notifications then too.
+  Files still cannot be dropped on the bar from Explorer while it runs as administrator (Windows does not allow it), and
+  programs started from it run as administrator; the log says both at start.
+
 ## [0.16.1] – 2026-11-27
 
 The owner's requests after 0.16.0.

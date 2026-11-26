@@ -33,11 +33,17 @@ public sealed class AppBar : IDisposable
     private bool _registered;
     private bool _disposed;
 
-    public AppBar(HwndSource source)
+    /// <param name="source">The bar's window.</param>
+    /// <param name="allowMessage">For tests: stands in for the call that lets Explorer's notifications in.</param>
+    public AppBar(HwndSource source, Func<IntPtr, uint, bool>? allowMessage = null)
     {
         _source = source;
         _callbackMessage = NativeMethods.RegisterWindowMessage("DesktopIconGrid.AppBar");
         _source.AddHook(WndProc);
+
+        // The shell's ABN_* notifications come as this message; run as administrator, the bar's window gets them only if it
+        // lets the message in (0.17.0 WP2), before the bar is registered with it.
+        ShellMessages.Allow(allowMessage ?? ShellMessages.AllowOnWindow, _source.Handle, _callbackMessage, "docked bar");
     }
 
     /// <summary>The shell moved something (another bar, the taskbar, the work area): dock again.</summary>

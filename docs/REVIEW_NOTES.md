@@ -9,6 +9,35 @@ The owner relays replies.
 
 ---
 
+## 2026-11-27 (176) — 0.17.0 WP2: the tray icon works when the program runs as administrator
+
+- **Runs:** 283 (`9c9380c`, WP1, entry 175) green: Core 1409/1409, App 705/705, the 24 new tests among them (the real bar
+  shown, on and off the taskbar both ways, and minimised and closed).
+- **The filter** (`Services/ShellMessages.cs`): `AllowOnWindow(window, message)` is
+  `ChangeWindowMessageFilterEx(window, message, MSGFLT_ALLOW, null)`; `Allow(allow, window, message, what)` calls it
+  through `allow` (the real call, or a test's recorder), logs the first failure of a run (with the error) and throws for
+  nothing, `EntryPointNotFoundException` included. It is called the same way whether or not the program is elevated.
+  - **The tray's window:** in `TrayIcon`'s constructor, after its hidden window is made and its hook added, and before
+    the icon is made and `NIM_ADD`: `WM_USER + 1` (the icon's callback) and `TaskbarCreated`, each on that window.
+  - **The docked bar:** docking uses a callback message (`RegisterWindowMessage("DesktopIconGrid.AppBar")`, the
+    `uCallbackMessage` of every `SHAppBarMessage`, which carries the shell's `ABN_POSCHANGED` and `ABN_FULLSCREENAPP`), so
+    `AppBar`'s constructor lets that one message in on the bar's window, before the bar is ever registered (`ABM_NEW`
+    comes later, when it docks). Nothing else of the bar's is widened.
+  - Not touched: no other message, no `MSGFLT_RESET`, no change to who can send what to the bar; the hotkeys, the pipe
+    and the window messages the system itself sends need nothing.
+- **What cannot be fixed, said instead** (`Services/Elevation.cs`): `IsElevated()` asks `WindowsPrincipal.IsInRole`
+  for the Administrators group, which a filtered (unelevated) token does not have for use; `NoteAtStart(log, probe)`
+  writes the one line you gave, at Info, right after the start line in `App`, only when the probe says elevated. No
+  dialog.
+- **Docs:** CHANGELOG *Fixed*; FEATURES §1's tray row.
+- **Tests (App, `ShellMessagesTests`):** a `TrayIcon` made with a recorder lets in exactly the callback and
+  `TaskbarCreated`, in that order, on its own window; an `AppBar` made on a window with a recorder lets in exactly its
+  callback message on that window; the real call on a fresh window returns true unelevated (CI), and a refusal throws
+  nothing and is asked each time; the note is logged once at Info when the probe says elevated, and nothing when not.
+- **Not tested:** an elevated start (it needs the owner's UAC answer, as you said): the icon's click, its menu and its
+  return after Explorer restarts while elevated, the docked bar's notifications while elevated, the log line from a real
+  elevated token.
+
 ## 2026-11-27 (175) — 0.17.0 WP1: the bar on the taskbar, unless the owner turns it off
 
 - **Runs:** 281 (`e8e241b`, the release commit, entry 174) green: Core 1406/1406, App 681/681. You made v0.16.1 on it
