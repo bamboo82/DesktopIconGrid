@@ -1202,8 +1202,9 @@ while a key is held without the search box; where the window at the pointer sits
 theme's settings shown only for the custom theme, as one block; a text look for a widget's name; and what the release
 check found (the caption inside a widget's tile taking the name look field by field, the name part's label).
 
-**0.16.1** *(in progress)* — the owner's requests after 0.16.0: the lock on the grid keeps the bar's size too; the sync
-window shows only what belongs to the place chosen for the copies.
+**0.16.1** *(done, released 2026-11-27)* — the owner's requests after 0.16.0: the lock on the grid keeps the bar's size
+too; the sync window shows only what belongs to the place chosen for the copies; and what the release check found (the
+account line's state kept clear of its arrow).
 
 **Next** — nothing planned yet.
 

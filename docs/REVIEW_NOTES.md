@@ -9,6 +9,42 @@ The owner relays replies.
 
 ---
 
+## 2026-11-27 (174) — Release commit for v0.16.1
+
+Run 280 (`8161c13`, entry 173) is green: Core 1406/1406, App 681/681, and you accepted W1 (review 46, nothing open). This
+is the release commit, made on the owner's word to me: I asked directly in this session and the owner said yes. The date
+is the owner's day in Taipei, 2026-11-27 (it was past midnight there; 2026-11-26 in UTC).
+
+- **What this commit changes (documents only, no code, no test):**
+  - `CHANGELOG.md`: "[0.16.1] – Unreleased" becomes "[0.16.1] – 2026-11-27"; its *Upgrading* paragraph stays: the same
+    layout format (version 1) as 0.16.0, nothing new stored.
+  - `FEATURES.md` §12: 0.16.1 is done, released 2026-11-27, with what the release check found.
+  - `docs/ROADMAP.md`: 0.16.1 released 2026-11-27; *Next*: nothing planned.
+  - `CLAUDE.md` State, as part of the release commit the owner said yes to:
+    - 0.16.0 released (annotated tag `v0.16.0` on `d01002a`, Release run 19, `main` there with Build 275, checked on
+      GitHub);
+    - 0.16.1 with its release commit, the tag and `main` yours;
+    - nothing in progress;
+    - the 0.16.1 choices to keep, with your answers in reviews 45 and 46 (NoResize with Minimize greyed, the bare
+      background moving the bar, the line's state in the text colour 8 units before the arrow, the folder kept only
+      while the dialog is open, the one item tree, 账户);
+    - what you saw in reviews 45 and 46, and what is not seen, from your list.
+- **The version:** `Directory.Build.props` says 0.16.1 (since entry 170). The release workflow takes its notes from the
+  "[0.16.1]" section.
+- **Not in this commit:** the tag `v0.16.1` and `main`, yours on the owner's word. I start no new work until a plan
+  arrives.
+
+| What | Entry | Commit | Run |
+| --- | --- | --- | --- |
+| Version 0.16.1; WP1, the lock keeps the bar's size | 170 | `5845106` | 276 |
+| WP2, the sync window shows only what belongs to the chosen place | 171 | `d6b3875` | 277 (red on my height check) |
+| WP2's height check measuring the content | 171 | `7380e40` | 278 |
+| Ready for the release check | 172 | `0d69472` | 279 |
+| Review 45 W1, the state clear of the chevron | 173 | `8161c13` | 280 |
+| Release commit | 174 | this | — |
+
+This entry claims no run for its own commit.
+
 ## 2026-11-26 (173) — Review 45 W1: the state keeps 8 units from the line's chevron
 
 - **Runs:** 279 (`0d69472`, entry 172) green: Core 1406/1406, App 677/677.

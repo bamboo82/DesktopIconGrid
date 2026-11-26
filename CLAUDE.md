@@ -94,18 +94,29 @@ After removing or editing a key in the `.resx` files, run `python3 -I tools/gen_
 
 ## State
 
-- Released: 0.15.0 "Locked and at hand" on 2026-11-22 (release commit `6c76dcc`; annotated tag `v0.15.0` on it,
-  release run 18; REVIEW_NOTES entry 162 has its table), the owner's requests after 0.14.0 (plan 36: WP1–WP9 with WP4b,
-  WP5b, WP7a and WP7b; review 41: U1–U3). Before it 0.14.0 "Rows, looks and places" (tag `v0.14.0` on `fab4172`, entry
-  134), 0.13.0 "Where it lives, how it reads" (tag `v0.13.0` on `361beb4`, entry 119), 0.12.2 (tag `v0.12.2` on
-  `85b2f04`, entry 107), 0.12.1 (tag `v0.12.1` on `0326f82`, entry 100), 0.12.0 "Find it, see it" (tag `v0.12.0` on
-  `ca7b1c6`, entry 91), 0.11.0 (tag `v0.11.0` on `10dec5a`), and 0.10.0 (tag `v0.10.0` on `254c55c`).
-- 0.16.0 "Where the pointer is", the owner's requests after 0.15.0 (plan 37: WP1–WP4; review 43: V1, V2), has its
-  release commit, dated 2026-11-24 (REVIEW_NOTES entry 169 has its table). It came after the review session's release
-  check (review 43) and its look at V1 and V2 (review 44, nothing open), on the owner's word. The tag `v0.16.0` and `main`
-  are the review session's, on the owner's word.
-- In progress: nothing. After 0.16.0 nothing is planned; 1.0.0 keeps the installer, code signing and the Windows toast
+- Released: 0.16.0 "Where the pointer is" on 2026-11-24 (release commit `d01002a`; annotated tag `v0.16.0` on it,
+  release run 19; REVIEW_NOTES entry 169 has its table), the owner's requests after 0.15.0 (plan 37: WP1–WP4; review 43:
+  V1, V2). Before it 0.15.0 "Locked and at hand" (tag `v0.15.0` on `6c76dcc`, entry 162), 0.14.0 "Rows, looks and places"
+  (tag `v0.14.0` on `fab4172`, entry 134), 0.13.0 "Where it lives, how it reads" (tag `v0.13.0` on `361beb4`, entry 119),
+  0.12.2 (tag `v0.12.2` on `85b2f04`, entry 107), 0.12.1 (tag `v0.12.1` on `0326f82`, entry 100), 0.12.0 "Find it, see it"
+  (tag `v0.12.0` on `ca7b1c6`, entry 91), 0.11.0 (tag `v0.11.0` on `10dec5a`), and 0.10.0 (tag `v0.10.0` on `254c55c`).
+- 0.16.1, the owner's requests after 0.16.0 (plan 38: WP1, WP2; review 45: W1), has its release commit, dated
+  2026-11-27 (REVIEW_NOTES entry 174 has its table). It came after the review session's release check (review 45) and its
+  look at W1 (review 46, nothing open), on the owner's word. The tag `v0.16.1` and `main` are the review session's, on the
+  owner's word.
+- In progress: nothing. After 0.16.1 nothing is planned; 1.0.0 keeps the installer, code signing and the Windows toast
   with actions.
+- Keep as designed (0.16.1):
+  - the lock keeps the bar's size: `BarResizing` is the one place that decides; locked, or docked with auto-hide, the bar
+    has NoResize and no resize border, so its edge is its own (no resize cursor; Size, Maximize and Minimize greyed; no
+    snap); a press on the bar's bare background moves it as the grid's empty part does, the gap between ✕ and ▸ too
+    (entry 170, review 45);
+  - the sync window by place: with Google Drive the account's group under the choice and no folder hint; with a folder
+    the account only while an account, a sign-in or a bucket icon needs it, as the last section, one closed line
+    (`AccountLine`) with the state at its right, 8 units before the arrow, in the dialog's text colour; one panel moved
+    between the two places; it opens by itself while a sign-in runs and when one fails; the folder kept only while the
+    dialog is open (no new setting); "any view mode's layout" is the one item tree; zh-Hans 账户 (entries 171 and 173,
+    reviews 45 and 46).
 - Keep as designed (0.16.0):
   - the window at the pointer has two forms, chosen at each showing: the tap form (the show-at-pointer key) with its
     search box; the hold form without it, shorter by the box's row and its gap, the icons (or a group's header) 4 units
@@ -234,7 +245,14 @@ After removing or editing a key in the `.resx` files, run `python3 -I tools/gen_
     (734 × 302 against the tap form's 734 × 329), the icons at the top; the placement without an anchor in both forms,
     and anchors 0/100, 50/50 and 100/0 to the pixel in both; the 按鍵 row at 100 %; 外觀 with a built-in theme (the six
     rows gone) and with 自訂 (the block's line and fill on the light dialog); the clock's name in Georgia, bold, yellow,
-    a CPU monitor's name on a plate moved down, and the clock's 時間 / 名稱 window.
+    a CPU monitor's name on a plate moved down, and the clock's 時間 / 名稱 window;
+  - for 0.16.1 (reviews 45 and 46, a portable Release build on zh-TW Windows 11 at 100 %): the bar unlocked (the edge codes,
+    the resize cursor, resizing by the left and bottom edges) and locked from the start and from the empty area's menu (no
+    sizing frame, maximise or minimise box, HTCLIENT at six points, the arrow at the edge, a drag at an edge or a corner
+    moving the bar at 760 × 300), unlocked again at once; the locked bar with Mica and Acrylic at 40 %; the sync window
+    with a folder and no bucket icon (nothing of the account), Google Drive chosen there (the folder's row and hint gone,
+    the group under the choice), a folder with a bucket icon (the closed line with 未連線, opened); the first choice's
+    text; the state 8 units clear of the chevron.
 - Not seen anywhere:
   - a real notification banner, a real sign-out, a real Windows snap, and maximise on a second monitor;
   - the recogniser with a microphone (the reviewer asks the owner before it opens one);
@@ -251,5 +269,8 @@ After removing or editing a key in the `.resx` files, run `python3 -I tools/gen_
     widget's menu and F2 on a row line; icons at 96–256; 125 %; English and zh-Hans; the zips;
   - for 0.16.0: drags and keys on the position picture; the anchor at a screen edge; the scroll into view when 自訂 is
     chosen; the block on a dark dialog and in High Contrast; a long name shrunk to its cell; names hidden with a name look;
-    the name over a picture while see-through; 150 %; English and zh-Hans; the zips.
+    the name over a picture while see-through; 150 %; English and zh-Hans; the zips;
+  - for 0.16.1: an account connected in the line; the line opening by itself around a sign-in; the line in the classic
+    look and High Contrast; the docked bar with the lock; Win+arrows and a snap while locked; Alt+Space's menu itself; a
+    bar maximised before locking; Mica or Acrylic on a focused bar; 150 %; English and zh-Hans; the zips.
 - Nothing is open for the owner from this session.
