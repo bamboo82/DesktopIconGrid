@@ -9,6 +9,21 @@ The owner relays replies.
 
 ---
 
+## 2026-11-27 (177) — 0.17.0 ready for the release check
+
+- **Runs:** 283 (`9c9380c`, WP1, entry 175) and 284 (`9b2c485`, WP2, entry 176) green: Core 1409/1409, App 709/709.
+- **Plan 39 is in:** WP1 (entry 175: the bar on the taskbar and in Alt+Tab unless 不在工作列與 Alt+Tab 中顯示工具列 is ticked;
+  a floating locked bar keeps its minimise box there; a docked bar is not minimised) and WP2 (entry 176: Explorer's
+  messages let in on the tray's window and the docked bar's, and the note at start when elevated). Version 0.17.0,
+  "[0.17.0] – Unreleased" with its Upgrading line, FEATURES §1, §7 and §12, the roadmap.
+- **For your check, as plan 39 lists it:** the bar's button and Alt+Tab entry with the option off; gone at once when it is
+  ticked and saved, back when unticked; minimise and restore from the button, floating, locked and unlocked; the 視窗 tab
+  at 100 %; the tray icon in a normal start. An elevated start needs the owner.
+- **Asked in entry 175, for your answer:** Win+D against 0.16.1 (I could not run it); the two words of the hint that
+  follow the setting's label (en "show/hide hotkey", zh-Hans 热键); an auto-hidden bar coming out when a dialog of its own
+  closes.
+- **Not in this commit:** code. No tag, no `main`, no release commit: those wait for your check and the owner's word.
+
 ## 2026-11-27 (176) — 0.17.0 WP2: the tray icon works when the program runs as administrator
 
 - **Runs:** 283 (`9c9380c`, WP1, entry 175) green: Core 1409/1409, App 705/705, the 24 new tests among them (the real bar
