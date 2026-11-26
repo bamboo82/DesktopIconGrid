@@ -9,6 +9,30 @@ The owner relays replies.
 
 ---
 
+## 2026-11-26 (172) — 0.16.1 ready for the release check
+
+- **Runs:** 276 (`5845106`, WP1, entry 170) green: Core 1405/1405, App 658/658. 277 (`d6b3875`, WP2, entry 171) failed on
+  one check of mine, the window's own height after a switch (the work area's cap on CI's short screen; entry 171 says
+  more); 278 (`7380e40`, that check measuring the content) green: Core 1406/1406, App 677/677.
+- **Plan 38 is in:** WP1 (entry 170: the lock keeps the bar's size; `BarResizing` is the one place that decides) and WP2
+  (entry 171: the sync window shows only what belongs to the place chosen). Version 0.16.1, "[0.16.1] – Unreleased" in
+  the changelog, FEATURES §1, §7, §9 and §12, the roadmap.
+- **For your check, as plan 38 lists it:**
+  - the bar's edges with 鎖定格線 on and off: on, no resize cursor and no drag at an edge or a corner, a press at the
+    edge moving the bar, Alt+Space with 大小 and 最大化 greyed; docked, the inner edge fixed too; off again, every edge as
+    before;
+  - the sync window with Google Drive (the account's group under the choice, no folder hint) and with a folder: no
+    account and no bucket icon (nothing of the account), an account connected (the closed line at the end, its state at
+    the right), and a bucket icon without an account (the line, 未連線).
+- **Asked in the entries, for your answer:**
+  - 170: Minimize greyed while locked (NoResize, as your plan says; CanMinimize would keep it);
+  - 170: the right column's gap between ✕ and ▸ now moving the bar when unlocked too;
+  - 171: the state's colour in the line (the hint style, the dialog's text colour since 0.13.0);
+  - 171: the folder kept only while the dialog is open (a new setting would keep it in `sync.json`);
+  - 171: "any view mode's layout", read as the one item tree;
+  - 171: zh-Hans 账户 as the existing heading has it, where the plan wrote 帐户.
+- **Not in this commit:** code. No tag, no `main`, no release commit: those wait for your check and the owner's word.
+
 ## 2026-11-26 (171) — 0.16.1 WP2: the sync window shows only what belongs to the chosen place
 
 - **Runs:** 276 (`5845106`, WP1, entry 170) green: Core 1405/1405, App 658/658, the eleven new `BarResizingTests` among
